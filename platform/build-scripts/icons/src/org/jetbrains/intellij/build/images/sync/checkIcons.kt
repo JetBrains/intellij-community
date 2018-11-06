@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync
 
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.images.imageSize
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -11,91 +10,30 @@ import java.io.File
 import java.io.IOException
 import java.io.OutputStream
 import java.io.PrintStream
-import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.function.Consumer
 import java.util.stream.Collectors
 
-private const val repoArg = "repos"
-private const val patternArg = "skip.dirs.pattern"
-private const val syncIcons = "sync.icons"
-private const val syncDevIcons = "sync.dev.icons"
-private const val syncRemovedIconsInDev = "sync.dev.icons.removed"
-private const val syncIconsAndCreateReview = "sync.icons.and.create.review"
-private const val syncDevIconsAndCreateReview = "sync.dev.icons.and.create.review"
-
-fun main(args: Array<String>) {
-  if (args.isEmpty()) printUsageAndExit()
-  val repos = args.find(repoArg)?.split(",") ?: emptyList()
-  if (repos.size < 2) printUsageAndExit()
-  val skipPattern = args.find(patternArg)
-  checkIcons(ignoreCaseInDirName(repos[0]), ignoreCaseInDirName(repos[1]), skipPattern,
-             args.find(syncIcons)?.toBoolean() ?: false,
-             args.find(syncDevIcons)?.toBoolean() ?: false,
-             args.find(syncRemovedIconsInDev)?.toBoolean() ?: true,
-             args.find(syncIconsAndCreateReview)?.toBoolean() ?: false,
-             args.find(syncDevIconsAndCreateReview)?.toBoolean() ?: false)
-}
-
-private fun ignoreCaseInDirName(path: String): String {
-  return Files.list(Paths.get(path).parent)
-    .filter { it.toAbsolutePath().toString().equals(FileUtil.toSystemDependentName(path), ignoreCase = true) }
-    .findFirst()
-    .get()
-    .toAbsolutePath()
-    .toString()
-}
-
-private fun Array<String>.find(arg: String) = find { it.startsWith("$arg=") }?.removePrefix("$arg=")
-
-private fun printUsageAndExit() {
-  println("""
-    |Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [option=...]
-    |Options:
-    |* `$repoArg` - comma-separated repository paths, first is developers' repo, second is designers'
-    |* `$patternArg` - test data folders regular expression
-    |* `$syncDevIcons` - update icons in developers' repo. Switch off to run check only
-    |* `$syncIcons` - update icons in designers' repo. Switch off to run check only
-    |* `$syncRemovedIconsInDev` - remove icons in developers' repo removed by designers
-    |* `$syncIconsAndCreateReview` - update icons in designers' repo and create branch review, implies $syncIcons
-    |* `$syncDevIconsAndCreateReview` - update icons in developers' repo and create branch review, implies $syncDevIcons
-  """.trimMargin())
-  System.exit(1)
-}
-
 private lateinit var icons: Map<String, GitObject>
 private lateinit var devIcons: Map<String, GitObject>
-internal lateinit var iconsRepo: File
 
-/**
- * @param devRepoDir developers' git repo
- * @param iconsRepoDir designers' git repo
- * @param skipDirsPattern dir name pattern to skip unnecessary icons
- */
-fun checkIcons(
-  devRepoDir: String, iconsRepoDir: String, skipDirsPattern: String?,
-  doSyncIconsRepo: Boolean = false, doSyncDevRepo: Boolean = false,
-  doSyncRemovedIconsInDev: Boolean = true,
-  doSyncIconsAndCreateReview: Boolean = false,
-  doSyncDevIconsAndCreateReview: Boolean = false,
-  loggerImpl: Consumer<String> = Consumer { println(it) },
-  errorHandler: Consumer<String> = Consumer { error(it) },
-  devIconsVerifier: Runnable? = null
-) {
+fun main(args: Array<String>) = checkIcons(Context())
+
+internal fun checkIcons(context: Context,
+                        loggerImpl: Consumer<String> = Consumer { println(it) },
+                        errorHandler: Consumer<String> = Consumer { error(it) }) {
   logger = loggerImpl
-  iconsRepo = findGitRepoRoot(iconsRepoDir)
-  icons = readIconsRepo(iconsRepo, iconsRepoDir)
-  val devRepoRoot = findGitRepoRoot(devRepoDir)
+  context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
+  icons = readIconsRepo(context.iconsRepo, context.iconsRepoDir)
+  val devRepoRoot = findGitRepoRoot(context.devRepoDir)
   val devRepoVcsRoots = vcsRoots(devRepoRoot)
-  devIcons = readDevRepo(devRepoRoot, devRepoDir, devRepoVcsRoots, skipDirsPattern)
+  devIcons = readDevRepo(devRepoRoot, context.devRepoDir, devRepoVcsRoots, context.skipDirsPattern)
   val devIconsTmp = HashMap(devIcons)
-  val addedByDesigners = mutableListOf<String>()
   val modified = mutableListOf<String>()
   val consistent = mutableListOf<String>()
   icons.forEach { icon, gitObject ->
     if (!devIconsTmp.containsKey(icon)) {
-      addedByDesigners += icon
+      context.addedByDesigners += icon
     }
     else if (gitObject.hash != devIconsTmp[icon]?.hash) {
       modified += icon
@@ -105,39 +43,32 @@ fun checkIcons(
     }
     devIconsTmp.remove(icon)
   }
-  val addedByDev = devIconsTmp.keys
-  val modifiedByDev = callWithTimer("Searching for modified by developers") {
+  context.addedByDev = devIconsTmp.keys
+  context.modifiedByDev = callWithTimer("Searching for modified by developers") {
     modifiedByDev(modified)
   }
-  val removedByDev = callWithTimer("Searching for removed by developers") {
-    removedByDev(addedByDesigners, devRepoVcsRoots, File(devRepoDir))
+  context.removedByDev = callWithTimer("Searching for removed by developers") {
+    removedByDev(context.addedByDesigners, devRepoVcsRoots, File(context.devRepoDir))
   }
-  val modifiedByDesigners = modified.filter { !modifiedByDev.contains(it) }
-  val removedByDesigners = callWithTimer("Searching for removed by designers") {
-    removedByDesigners(addedByDev, iconsRepo, File(iconsRepoDir).relativeTo(iconsRepo).path.let {
+  context.modifiedByDesigners = modified.filter { !context.modifiedByDev.contains(it) }.toMutableList()
+  context.removedByDesigners = callWithTimer("Searching for removed by designers") {
+    removedByDesigners(context.addedByDev, context.iconsRepo, File(context.iconsRepoDir).relativeTo(context.iconsRepo).path.let {
       if (it.isEmpty()) "" else "$it/"
     })
   }
-  if (doSyncIconsRepo || doSyncIconsAndCreateReview) {
-    syncAdded(addedByDev, devIcons, File(iconsRepoDir)) { iconsRepo }
-    syncModified(modifiedByDev, icons, devIcons)
-    syncRemoved(removedByDev, icons)
+  if (context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) {
+    log("Syncing icons repo:")
+    syncAdded(context.addedByDev, devIcons, File(context.iconsRepoDir)) { context.iconsRepo }
+    syncModified(context.modifiedByDev, icons, devIcons)
+    syncRemoved(context.removedByDev, icons)
   }
-  if (doSyncDevRepo || doSyncDevIconsAndCreateReview) {
-    syncAdded(addedByDesigners, icons, File(devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
-    syncModified(modifiedByDesigners, devIcons, icons)
-    if (doSyncRemovedIconsInDev) syncRemoved(removedByDesigners, devIcons)
+  if (context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) {
+    log("Syncing dev repo:")
+    syncAdded(context.addedByDesigners, icons, File(context.devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
+    syncModified(context.modifiedByDesigners, devIcons, icons)
+    if (context.doSyncRemovedIconsInDev) syncRemoved(context.removedByDesigners, devIcons)
   }
-  report(
-    devRepoRoot, devIcons.size, icons.size, skippedDirs.size,
-    addedByDev, removedByDev, modifiedByDev,
-    addedByDesigners, removedByDesigners, modifiedByDesigners,
-    consistent, errorHandler,
-    doNotify = !doSyncIconsRepo && !doSyncDevRepo || doSyncIconsAndCreateReview || doSyncDevIconsAndCreateReview,
-    doSyncIconsAndCreateReview = doSyncIconsAndCreateReview,
-    doSyncDevIconsAndCreateReview = doSyncDevIconsAndCreateReview,
-    devIconsVerifier = devIconsVerifier
-  )
+  report(context, devRepoRoot, devIcons.size, icons.size, skippedDirs.size, consistent, errorHandler)
 }
 
 private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) =

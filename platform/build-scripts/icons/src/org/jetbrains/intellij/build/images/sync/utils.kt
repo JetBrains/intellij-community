@@ -27,7 +27,7 @@ internal fun execute(workingDir: File?, vararg command: String, silent: Boolean 
     process.waitFor(1, TimeUnit.MINUTES)
     val error = errOutputFile.readText().trim()
     if (process.exitValue() != 0) {
-      error("Command ${command.joinToString(" ")} failed with ${process.exitValue()} : $output\n$error")
+      error("Command ${command.joinToString(" ")} failed in ${workingDir?.absolutePath} with ${process.exitValue()} : $output\n$error")
     }
     output
   }
@@ -76,12 +76,13 @@ internal fun <T> retry(maxRetries: Int = 20,
                        doRetry: (Throwable) -> Boolean = { true },
                        action: () -> T): T {
   repeat(maxRetries) {
+    val number = it + 1
     try {
       return action()
     }
     catch (e: Exception) {
-      if (doRetry(e)) {
-        log("${it + 1} attempt of $maxRetries has failed. Retrying in ${secondsBeforeRetry}s..")
+      if (number < maxRetries && doRetry(e)) {
+        log("$number attempt of $maxRetries has failed with ${e.message}. Retrying in ${secondsBeforeRetry}s..")
         TimeUnit.SECONDS.sleep(secondsBeforeRetry)
       }
       else throw e

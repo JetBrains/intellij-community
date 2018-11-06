@@ -4,14 +4,15 @@ package org.jetbrains.intellij.build.images.sync
 import org.apache.http.HttpHeaders
 import org.apache.http.client.methods.HttpRequestBase
 import org.apache.http.entity.ContentType
+import java.io.File
 import java.net.URLEncoder
 import java.text.SimpleDateFormat
 import java.util.*
 
 internal fun isUnderTeamCity() = BUILD_SERVER != null
 private val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
-internal val BUILD_CONF = System.getProperty("teamcity.buildType.id")
-internal val BUILD_ID = System.getProperty("teamcity.build.id")
+private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
+private val BUILD_ID = System.getProperty("teamcity.build.id")
 
 private fun teamCityGet(path: String) = get("$BUILD_SERVER/httpAuth/app/rest/$path") {
   teamCityAuth()
@@ -28,9 +29,9 @@ private fun HttpRequestBase.teamCityAuth() {
 
 private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
 
-internal fun isNotificationRequired(isSuccess: Boolean): Boolean {
+internal fun isNotificationRequired(context: Context): Boolean {
   val request = "builds?locator=buildType:$BUILD_CONF,count:1"
-  return if (isSuccess) {
+  return if (context.isSuccess()) {
     // notify on fail -> success
     val previousBuild = teamCityGet(request)
     previousBuild.contains("status=\"FAILURE\"")
@@ -41,7 +42,7 @@ internal fun isNotificationRequired(isSuccess: Boolean): Boolean {
       calendar.time
     })
     // remind of failure once per day
-    val previousBuild = teamCityGet("$request,sinceDate:${URLEncoder.encode(dayAgo, "UTF-8")}")
+    val previousBuild = teamCityGet("$request,sinceDate:${URLEncoder.encode(dayAgo, Charsets.UTF_8.name())}")
     previousBuild.contains("count=\"0\"")
   }
 }
@@ -52,59 +53,55 @@ internal val DEFAULT_INVESTIGATOR by lazy {
 }
 
 internal class Investigator(val email: String = DEFAULT_INVESTIGATOR,
-                            val commits: Collection<CommitInfo> = emptyList(),
-                            val icons: Collection<String> = emptyList(),
-                            var isAssigned: Boolean = false,
-                            var assignedReview: String? = null)
+                            val commits: Map<File, Collection<CommitInfo>> = emptyMap(),
+                            var isAssigned: Boolean = false)
 
-internal fun isInvestigationAssigned() = teamCityGet("investigations?locator=buildType:$BUILD_CONF").contains("assignee")
-
-internal fun assignInvestigation(input: Investigator?): Investigator {
-  var investigator = input
-  if (investigator != null) assignInvestigation(investigator)
-  when {
-    investigator != null && !investigator.isAssigned -> {
-      investigator = Investigator(DEFAULT_INVESTIGATOR,
-                                  investigator.commits, investigator.icons,
-                                  assignedReview = investigator.assignedReview)
-      assignInvestigation(investigator)
-    }
-    investigator == null -> {
-      log("Unable to determine committer email for investigation assignment")
-      investigator = Investigator()
-      assignInvestigation(investigator)
-    }
-  }
-  return investigator!!
+internal fun isInvestigationAssigned() = teamCityGet("investigations?locator=buildType:$BUILD_CONF").run {
+  contains("assignee") && !contains("GIVEN_UP")
 }
 
-private fun assignInvestigation(investigator: Investigator) {
+internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
   try {
     val id = teamCityGet("users/email:${investigator.email}/id")
     val text = investigator.run {
-      (if (commits.isNotEmpty()) "commits ${commits.map { it.hash }.joinToString()}\n" else "") +
-      (if (icons.isNotEmpty()) "icons ${icons.joinToString()}\n" else "") +
-      (if (assignedReview != null) "review and cherry-pick $assignedReview\n" else "")
-    } + "https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
+      (if (commits.isNotEmpty()) "commits: ${commits.entries.joinToString {
+        "${getOriginUrl(it.key)} : ${it.value.map(CommitInfo::hash)}"
+      }},"
+      else "") +
+      (if (context.createdReviews.isNotEmpty()) " reviews created: ${context.createdReviews.map(Review::url)}," else "")
+    } + " build: ${thisBuildReportableLink()}, see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
     teamCityPost("investigations", """
-            |<investigation state="TAKEN">
-            |    <assignee id="$id"/>
-            |    <assignment>
-            |        <text>$text</text>
-            |    </assignment>
-            |    <scope>
-            |        <buildTypes count="1">
-            |            <buildType id="$BUILD_CONF"/>
-            |        </buildTypes>
-            |    </scope>
-            |    <target anyProblem="true"/>
-            |    <resolution type="whenFixed"/>
-            |</investigation>
-          """.trimMargin())
+      <investigation state="TAKEN">
+          <assignee id="$id"/>
+          <assignment>
+              <text><![CDATA[$text]]></text>
+          </assignment>
+          <scope>
+              <buildTypes count="1">
+                  <buildType id="$BUILD_CONF"/>
+              </buildTypes>
+          </scope>
+          <target anyProblem="true"/>
+          <resolution type="whenFixed"/>
+      </investigation>""".trimIndent())
     investigator.isAssigned = true
-    log("Investigation is assigned to ${investigator.email}, see ${investigator.commits}")
+    log("Investigation is assigned to ${investigator.email} with message '$text'")
   }
   catch (e: Exception) {
     log("Unable to assign investigation to ${investigator.email}, ${e.message}")
   }
+  return if (!investigator.isAssigned && investigator.email != DEFAULT_INVESTIGATOR) {
+    Investigator(DEFAULT_INVESTIGATOR, investigator.commits).also {
+      assignInvestigation(it, context)
+    }
+  }
+  else investigator
 }
+
+internal fun thisBuildReportableLink() =
+  "${System.getProperty("intellij.icons.report.buildserver")}/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF"
+
+internal fun triggeredBy() = System.getProperty("teamcity.build.triggeredBy.username")
+  ?.takeIf { it.isNotBlank() }
+  ?.let { teamCityGet("users/username:$it/email") }
+  ?.removeSuffix(System.lineSeparator())

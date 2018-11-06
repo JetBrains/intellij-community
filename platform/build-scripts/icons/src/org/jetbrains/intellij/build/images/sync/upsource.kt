@@ -6,6 +6,7 @@ import org.apache.http.HttpHeaders
 import org.apache.http.client.methods.HttpRequestBase
 import org.apache.http.entity.ContentType
 import java.net.URLEncoder
+import java.util.concurrent.TimeUnit
 
 private val UPSOURCE = System.getProperty("upsource.url")
 
@@ -29,11 +30,20 @@ private fun HttpRequestBase.upsourceAuthAndLog() {
 internal class Review(val id: String, val url: String)
 
 @Suppress("ReplaceSingleLineLet")
-internal fun createReview(projectId: String, vararg revisions: String): Review {
+internal fun createReview(projectId: String, branch: String, commits: Collection<String>): Review {
+  var revisions = emptyList<String>()
+  repeat(20) {
+    revisions = getBranchRevisions(projectId, branch, commits.size)
+    if (revisions.isEmpty()) {
+      if (it == 19) error("$commits are not found")
+      log("Upsource hasn't updated branch list yet. Retrying in 30s..")
+      TimeUnit.SECONDS.sleep(30)
+    }
+  }
   val reviewId = upsourcePost("createReview", """{
-    "projectId" : "$projectId",
-    "revisions" : [
-      ${revisions.joinToString { "\"$it\"" }}
+      "projectId" : "$projectId",
+      "revisions" : [
+        ${revisions.joinToString { "\"$it\"" }}
     ]}""")
     .let { extract(it, Regex(""""reviewId":\{([^}]+)""")) }
     .let { extract(it, Regex(""""reviewId":"([^,"]+)"""")) }
@@ -42,12 +52,27 @@ internal fun createReview(projectId: String, vararg revisions: String): Review {
   return review
 }
 
+private fun getBranchRevisions(projectId: String, branch: String, limit: Int) =
+  extractAll(upsourceGet("getRevisionsListFiltered", """{
+      "projectId" : "$projectId",
+      "limit" : $limit,
+      "query" : "branch: $branch"
+    }"""), Regex(""""revisionId":"([^,"]+)""""))
+
 internal fun addReviewer(projectId: String, review: Review, email: String) {
-  actionOnReviewer("addParticipantToReview", projectId, review, email)
+  try {
+    actionOnReviewer("addParticipantToReview", projectId, review, email)
+  }
+  catch (e: Exception) {
+    e.printStackTrace()
+    if (email != DEFAULT_INVESTIGATOR) addReviewer(projectId, review, DEFAULT_INVESTIGATOR)
+  }
 }
 
 private fun removeReviewer(projectId: String, review: Review, email: String) {
-  actionOnReviewer("removeParticipantFromReview", projectId, review, email)
+  callSafely {
+    actionOnReviewer("removeParticipantFromReview", projectId, review, email)
+  }
 }
 
 private fun actionOnReviewer(action: String, projectId: String, review: Review, email: String) {
@@ -69,10 +94,12 @@ private fun userId(email: String, projectId: String): String {
   return extract(invitation, Regex(""""userId":"([^,"]+)""""))
 }
 
-private fun extract(json: String, regex: Regex) = json
+private fun extract(json: String, regex: Regex) = extractAll(json, regex).last()
+
+private fun extractAll(json: String, regex: Regex) = json
   .replace(" ", "")
-  .replace(System.lineSeparator(), "").let {
-    regex.find(it)?.groupValues?.lastOrNull() ?: error(it)
+  .replace(System.lineSeparator(), "").let { str ->
+    regex.findAll(str).map { it.groupValues.last() }.toList()
   }
 
 internal fun postComment(projectId: String, review: Review, comment: String) {

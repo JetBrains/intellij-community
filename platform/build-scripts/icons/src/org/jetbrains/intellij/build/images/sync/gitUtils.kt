@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 import java.io.IOException
-import java.util.*
 import java.util.stream.Collectors
 import java.util.stream.Stream
 
@@ -137,7 +136,14 @@ internal fun commitAndPush(repo: File, branch: String, message: String): String 
   return commitInfo(repo)?.hash ?: error("Unable to read last commit")
 }
 
-internal fun deleteBranch(repo: File, branch: String) = push(repo, ":$branch")
+internal fun deleteBranch(repo: File, branch: String) {
+  try {
+    push(repo, ":$branch")
+  }
+  catch (e: Exception) {
+    if (e.message?.contains("remote ref does not exist") == false) throw e
+  }
+}
 
 private fun push(repo: File, spec: String) =
   retry(doRetry = { it.message?.contains("remote end hung up unexpectedly") == true }) {
@@ -161,9 +167,7 @@ internal fun latestChangeCommit(path: String, repo: File? = null): CommitInfo? {
         val commitInfo = commitInfo(foundRepo, "--", path)
         if (commitInfo != null) {
           synchronized(latestChangeCommitsGuard) {
-            val tmp = HashMap(latestChangeCommits)
-            tmp[file] = commitInfo
-            latestChangeCommits = tmp
+            latestChangeCommits += file to commitInfo
           }
         }
         else return null
@@ -242,9 +246,7 @@ private fun head(repo: File): String {
   if (!heads.containsKey(repo)) {
     synchronized(headsGuard) {
       if (!heads.containsKey(repo)) {
-        val tmp = HashMap(heads)
-        tmp[repo] = execute(repo, GIT, "rev-parse", "--abbrev-ref", "HEAD", silent = true).removeSuffix(System.lineSeparator())
-        heads = tmp
+        heads += repo to execute(repo, GIT, "rev-parse", "--abbrev-ref", "HEAD", silent = true).removeSuffix(System.lineSeparator())
       }
     }
   }
@@ -278,3 +280,8 @@ internal data class CommitInfo(
   val committerEmail: String,
   val repo: File
 )
+
+internal fun initGit(repo: File, user: String, email: String) {
+  execute(repo, GIT, "config", "user.name", user)
+  execute(repo, GIT, "config", "user.email", email)
+}
