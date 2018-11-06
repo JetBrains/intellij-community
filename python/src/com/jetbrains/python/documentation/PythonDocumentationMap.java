@@ -176,7 +176,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
         continue;
       }
       if (entry.getKey().endsWith("?")) {
-        String regex = "\\{" + entry.getKey().replace("?", "\\?") + "([^}]+)\\}";
+        String regex = "\\{" + Pattern.quote(entry.getKey()) + "([^}]+)\\}";
 
         Matcher matcher = Pattern.compile(regex).matcher(urlPattern);
         if (matcher.find()) {
