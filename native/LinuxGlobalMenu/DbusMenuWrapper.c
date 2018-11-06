@@ -507,25 +507,30 @@ void setItemIcon(DbusmenuMenuitem *item, const char *iconBytesPng, int iconBytes
 //    _logmsg(LOG_LEVEL_ERROR, "\tcan't set %d icon bytes for item %s", iconBytesCount, _getItemLabel(item));
 }
 
-void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int jkeycode) {
-  GVariantBuilder builder;
-  g_variant_builder_init(&builder, G_VARIANT_TYPE_ARRAY);
-  if ((jmodifiers & JMOD_SHIFT) != 0)
-    g_variant_builder_add(&builder, "s",  DBUSMENU_MENUITEM_SHORTCUT_SHIFT);
-  if ((jmodifiers & JMOD_CTRL) != 0)
-    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_CONTROL);
-  if ((jmodifiers & JMOD_ALT) != 0)
-    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_ALT);
-  if ((jmodifiers & JMOD_META) != 0)
-    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_SUPER);
+// java modifiers
+static const int SHIFT_MASK          = 1 << 0;
+static const int CTRL_MASK           = 1 << 1;
+static const int META_MASK           = 1 << 2;
+static const int ALT_MASK            = 1 << 3;
 
-  char* xname = XKeysymToString(jkeycode);
+void setItemShortcut(DbusmenuMenuitem *item, int jmodifiers, int x11keycode) {
+  char* xname = XKeysymToString(x11keycode);
   if (xname == NULL) {
-    _logmsg(LOG_LEVEL_ERROR, "XKeysymToString returns null for jkeycode=%d", jkeycode);
+    // _logmsg(LOG_LEVEL_ERROR, "XKeysymToString returns null for x11keycode=%d", x11keycode);
     return;
   }
+  // _logmsg(LOG_LEVEL_INFO, "XKeysymToString returns %s for x11keycode=%d", xname, x11keycode);
 
-  // _logmsg(LOG_LEVEL_INFO, "XKeysymToString returns %s for jkeycode=%d", xname, jkeycode);
+  GVariantBuilder builder;
+  g_variant_builder_init(&builder, G_VARIANT_TYPE_ARRAY);
+  if ((jmodifiers & SHIFT_MASK) != 0)
+    g_variant_builder_add(&builder, "s",  DBUSMENU_MENUITEM_SHORTCUT_SHIFT);
+  if ((jmodifiers & CTRL_MASK) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_CONTROL);
+  if ((jmodifiers & ALT_MASK) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_ALT);
+  if ((jmodifiers & META_MASK) != 0)
+    g_variant_builder_add(&builder, "s", DBUSMENU_MENUITEM_SHORTCUT_SUPER);
 
   g_variant_builder_add(&builder, "s", xname);
 
