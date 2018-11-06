@@ -13,17 +13,23 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -33,13 +39,16 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -369,6 +378,127 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertEquals(GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST, settings.getPreferredTestRunner());
   }
 
+  @Test
+  public void testSavePackagePrefixAfterReOpenProject() throws IOException {
+    @Language("Groovy") String buildScript = new GradleBuildScriptBuilderEx().withJavaPlugin().generate();
+    createProjectSubDir("src/main/java");
+    createProjectSubFile("src/main/java/Main.java", "");
+    importProject(buildScript);
+    Application application = ApplicationManager.getApplication();
+    IdeModifiableModelsProvider modelsProvider = new IdeModifiableModelsProviderImpl(myProject);
+    try {
+      Module module = modelsProvider.findIdeModule("project.main");
+      ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
+      SourceFolder sourceFolder = findSource(modifiableRootModel, "java");
+      sourceFolder.setPackagePrefix("prefix.package.some");
+      application.invokeAndWait(() -> application.runWriteAction(() -> modelsProvider.commit()));
+    }
+    finally {
+      application.invokeAndWait(() -> modelsProvider.dispose());
+    }
+    assertSourcePackagePrefix("project.main", "java", "prefix.package.some");
+    importProject(buildScript);
+    assertSourcePackagePrefix("project.main", "java", "prefix.package.some");
+  }
+
+  @Ignore // Remove after published plugin ext with package prefix configuration
+  @Test
+  public void testPartialImportPackagePrefix() throws IOException {
+    createProjectSubDir("src/main/java");
+    createProjectSubFile("src/main/java/Main.java", "");
+    createProjectSubDir("src/main/kotlin");
+    createProjectSubFile("src/main/kotlin/Main.kt", "");
+    importProject(
+      new GradleBuildScriptBuilderEx()
+        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withJavaPlugin()
+        .withKotlinPlugin("1.3.0")
+        .addPostfix("idea {")
+        .addPostfix("  module {")
+        .addPostfix("    settings {")
+        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
+        .addPostfix("    }")
+        .addPostfix("  }")
+        .addPostfix("}")
+        .generate());
+    assertSourcePackagePrefix("project.main", "java", "prefix.package.some");
+    assertSourcePackagePrefix("project.main", "kotlin", "");
+  }
+
+  @Ignore // Remove after published plugin ext with package prefix configuration
+  @Test
+  public void testImportPackagePrefix() throws IOException {
+    createProjectSubDir("src/main/java");
+    createProjectSubFile("src/main/java/Main.java", "");
+    importProject(
+      new GradleBuildScriptBuilderEx()
+        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withJavaPlugin()
+        .addPostfix("idea {")
+        .addPostfix("  module {")
+        .addPostfix("    settings {")
+        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
+        .addPostfix("    }")
+        .addPostfix("  }")
+        .addPostfix("}")
+        .generate());
+    assertSourcePackagePrefix("project.main", "java", "prefix.package.some");
+  }
+
+  @Ignore // Remove after published plugin ext with package prefix configuration
+  @Test
+  public void testChangeImportPackagePrefix() throws IOException {
+    createProjectSubDir("src/main/java");
+    createProjectSubFile("src/main/java/Main.java", "");
+    importProject(
+      new GradleBuildScriptBuilderEx()
+        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withJavaPlugin()
+        .addPostfix("idea {")
+        .addPostfix("  module {")
+        .addPostfix("    settings {")
+        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
+        .addPostfix("    }")
+        .addPostfix("  }")
+        .addPostfix("}")
+        .generate());
+    assertSourcePackagePrefix("project.main", "java", "prefix.package.some");
+    importProject(
+      new GradleBuildScriptBuilderEx()
+        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withJavaPlugin()
+        .addPostfix("idea {")
+        .addPostfix("  module {")
+        .addPostfix("    settings {")
+        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.other'")
+        .addPostfix("    }")
+        .addPostfix("  }")
+        .addPostfix("}")
+        .generate());
+    assertSourcePackagePrefix("project.main", "java", "prefix.package.other");
+  }
+
+  /**
+   * This method needed for printing debug information about project
+   */
+  @SuppressWarnings("unused")
+  protected void printProjectStructure() {
+    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    for (Module module : moduleManager.getModules()) {
+      System.out.println(module);
+      ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+      for (ContentEntry contentEntry : moduleRootManager.getContentEntries()) {
+        System.out.println(contentEntry.getUrl());
+        for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
+          System.out.println(sourceFolder);
+          String packagePrefix = sourceFolder.getPackagePrefix();
+          if (packagePrefix.isEmpty()) continue;
+          System.out.println("package prefix = " + packagePrefix);
+        }
+      }
+    }
+  }
+
   @NotNull
   @Override
   protected String injectRepo(String config) {
@@ -384,6 +514,37 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       script;
   }
 
+  protected void assertSourcePackagePrefix(@NotNull String moduleName, @NotNull String sourcePath, @NotNull String packagePrefix) {
+    SourceFolder sourceFolder = findSource(moduleName, sourcePath);
+    assertNotNull("Source folder " + sourcePath + " not found in module " + moduleName, sourceFolder);
+    assertEquals(packagePrefix, sourceFolder.getPackagePrefix());
+  }
+
+  @Nullable
+  protected SourceFolder findSource(@NotNull String moduleName, @NotNull String sourcePath) {
+    return findSource(getRootManager(moduleName), sourcePath);
+  }
+
+  @Nullable
+  protected SourceFolder findSource(@NotNull ModuleRootModel moduleRootManager, @NotNull String sourcePath) {
+    ContentEntry[] contentRoots = moduleRootManager.getContentEntries();
+    Module module = moduleRootManager.getModule();
+    String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(module) : null;
+    for (ContentEntry contentRoot : contentRoots) {
+      for (SourceFolder f : contentRoot.getSourceFolders()) {
+        rootUrl = getAbsolutePath(rootUrl == null ? contentRoot.getUrl() : rootUrl);
+        String folderUrl = getAbsolutePath(f.getUrl());
+        if (folderUrl.startsWith(rootUrl)) {
+          int length = rootUrl.length() + 1;
+          folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
+        }
+        if (folderUrl.equals(sourcePath)) {
+          return f;
+        }
+      }
+    }
+    return null;
+  }
 }
 
 

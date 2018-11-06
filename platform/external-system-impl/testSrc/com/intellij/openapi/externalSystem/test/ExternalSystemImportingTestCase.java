@@ -227,7 +227,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     assertTrue(e.isCompilerOutputPathInherited());
   }
 
-  private static String getAbsolutePath(String path) {
+  protected static String getAbsolutePath(String path) {
     path = VfsUtilCore.urlToPath(path);
     path = PathUtil.getCanonicalPath(path);
     return FileUtil.toSystemIndependentName(path);
@@ -407,7 +407,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return getRootManager(moduleName).getContentEntries();
   }
 
-  private ModuleRootManager getRootManager(String module) {
+  protected ModuleRootManager getRootManager(String module) {
     return ModuleRootManager.getInstance(getModule(module));
   }
 
