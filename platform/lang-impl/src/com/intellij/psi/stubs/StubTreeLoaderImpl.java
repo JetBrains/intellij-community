@@ -80,7 +80,12 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       }
     }
     catch (IOException e) {
-      LOG.info(e); // content can be not cached yet, and the file can be deleted on disk already, without refresh
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(e);
+      } else {
+        // content can be not cached yet, and the file can be deleted on disk already, without refresh
+        LOG.info("Can't load file content for stub building: " + e.getMessage());
+      }
     }
 
     return null;
