@@ -45,6 +45,7 @@ class ApplicationDispatcher(private val application: Application) : Dispatcher {
     }
 }
 
+@UseExperimental(InternalCoroutinesApi::class)
 private class ApplicationCoroutineContext(
     private val application: Application,
     private val executor: ScheduledExecutorService
