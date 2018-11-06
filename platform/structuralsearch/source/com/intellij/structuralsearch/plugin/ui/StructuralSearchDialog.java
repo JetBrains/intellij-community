@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -29,10 +30,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.DimensionService;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -59,14 +57,19 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.LafIconLookup;
+import com.intellij.util.ui.TextTransferable;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -108,6 +111,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   private JCheckBox myReformat; // replace
   private JCheckBox myUseStaticImport; // replace
   FileTypeSelector myFileTypesComboBox;
+  ActionToolbarImpl myOptionsToolbar;
   EditorTextField mySearchCriteriaEdit;
   EditorTextField myReplaceCriteriaEdit;
   OnePixelSplitter mySearchEditorPanel;
@@ -263,7 +267,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     myFileType = StructuralSearchUtil.getDefaultFileType();
   }
 
-  public Configuration createConfiguration(Configuration template) {
+  private Configuration createConfiguration(Configuration template) {
     if (myReplace) {
       return (template == null) ? new ReplaceConfiguration(USER_DEFINED, USER_DEFINED) : new ReplaceConfiguration(template);
     }
@@ -273,6 +277,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private void setText(String text) {
+    text = text.trim();
     setTextForEditor(text, mySearchCriteriaEdit);
     if (myReplace) {
       setTextForEditor(text, myReplaceCriteriaEdit);
@@ -495,6 +500,8 @@ public class StructuralSearchDialog extends DialogWrapper {
           ConfigurationManager.getInstance(getProject()).showSaveTemplateAsDialog(getConfiguration());
         }
       },
+      new CopyConfigurationAction(),
+      new PasteConfigurationAction(),
       new DumbAwareAction(SSRBundle.message("copy.existing.template.button")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -533,10 +540,9 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     };
     final DefaultActionGroup optionsActionGroup = new DefaultActionGroup(filterAction, templateActionGroup);
-    final ActionToolbarImpl optionsToolbar =
-      (ActionToolbarImpl)actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, optionsActionGroup, true);
-    optionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    optionsToolbar.setForceMinimumSize(true);
+    myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, optionsActionGroup, true);
+    myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    myOptionsToolbar.setForceMinimumSize(true);
 
     final JPanel northPanel = new JPanel(null);
     final GroupLayout layout = new GroupLayout(northPanel);
@@ -554,7 +560,7 @@ public class StructuralSearchDialog extends DialogWrapper {
             .addComponent(fileTypeLabel)
             .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 5, 5)
             .addComponent(myFileTypesComboBox, 125, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addComponent(optionsToolbar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+            .addComponent(myOptionsToolbar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
     );
     layout.setVerticalGroup(
       layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
@@ -564,7 +570,7 @@ public class StructuralSearchDialog extends DialogWrapper {
             .addComponent(myMatchCase)
             .addComponent(fileTypeLabel)
             .addComponent(myFileTypesComboBox)
-            .addComponent(optionsToolbar)
+            .addComponent(myOptionsToolbar)
     );
 
     return northPanel;
@@ -616,9 +622,9 @@ public class StructuralSearchDialog extends DialogWrapper {
 
       if (editor != null) {
         final SelectionModel selectionModel = editor.getSelectionModel();
-
-        if (selectionModel.hasSelection()) {
-          setText(selectionModel.getSelectedText());
+        final String selectedText = selectionModel.getSelectedText();
+        if (selectedText != null && !loadConfiguration(selectedText)) {
+          setText(selectedText);
           myScopePanel.setScope(null);
           setSomeText = true;
         }
@@ -743,7 +749,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     return myEditConfigOnly || myScopePanel.getScope() != null;
   }
 
-  private void reportMessage(String message, boolean error, JComponent component) {
+  void reportMessage(String message, boolean error, JComponent component) {
     com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
       component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
       component.repaint();
@@ -752,7 +758,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       final Balloon balloon = JBPopupFactory.getInstance()
                                             .createHtmlTextBalloonBuilder(message, error ? MessageType.ERROR : MessageType.WARNING, null)
                                             .createBalloon();
-      if (component == mySearchCriteriaEdit) {
+      if (component != myScopePanel) {
         balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
       }
       else {
@@ -806,6 +812,32 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
     else {
       myTargetComboBox.setEnabled(false);
+    }
+  }
+
+  boolean loadConfiguration(String text) {
+    if (text == null) {
+      return false;
+    }
+    text = text.trim();
+    final Configuration configuration;
+    if (text.startsWith("<searchConfiguration ") && text.endsWith("</searchConfiguration>")) {
+      configuration = new SearchConfiguration();
+    }
+    else if (text.startsWith("<replaceConfiguration ") && text.endsWith("</replaceConfiguration>")) {
+      configuration = new ReplaceConfiguration();
+    }
+    else {
+      return false;
+    }
+    try {
+      final Element element = JDOMUtil.load(text);
+      configuration.readExternal(element);
+      loadConfiguration(configuration);
+      return true;
+    }
+    catch (IOException | JDOMException ignored) {
+      return false;
     }
   }
 
@@ -972,6 +1004,36 @@ public class StructuralSearchDialog extends DialogWrapper {
                                       ? new CompositeShortcutSet(searchShortcutSet, replaceShortcutSet)
                                       : new CompositeShortcutSet(replaceShortcutSet, searchShortcutSet);
       registerCustomShortcutSet(shortcutSet, getRootPane());
+    }
+  }
+
+  private class CopyConfigurationAction extends AnAction implements DumbAware {
+
+    CopyConfigurationAction() {
+      super("Copy Template to Clipboard");
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final Element element = new Element(myConfiguration instanceof SearchConfiguration ? "searchConfiguration" : "replaceConfiguration");
+      myConfiguration.writeExternal(element);
+      final TextTransferable transferable = new TextTransferable(JDOMUtil.writeElement(element));
+      CopyPasteManager.getInstance().setContents(transferable);
+    }
+  }
+
+  private class PasteConfigurationAction extends AnAction implements DumbAware {
+
+    PasteConfigurationAction() {
+      super("Paste Template from Clipboard");
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      final String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+      if (!loadConfiguration(contents)) {
+        reportMessage("No template found on the clipboard", false, myOptionsToolbar);
+      }
     }
   }
 }
