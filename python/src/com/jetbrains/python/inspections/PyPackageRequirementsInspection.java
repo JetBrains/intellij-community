@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * @author vlan
@@ -395,19 +397,51 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
-        installPackages(project);
+        final List<PyRequirement> requirements = proceedWithoutHashCheckingMode(project, mySdk, myUnsatisfied);
+        if (!requirements.isEmpty()) installPackages(project, requirements);
       }
     }
 
-    private void installPackages(@NotNull final Project project) {
-      final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
-      final List<PyPackage> packages = manager.getPackages();
-      if (packages == null) {
-        return;
+    @NotNull
+    private static List<PyRequirement> proceedWithoutHashCheckingMode(@NotNull Project project,
+                                                                      @NotNull Sdk sdk,
+                                                                      @NotNull List<PyRequirement> requirements) {
+      final Predicate<String> hashOption = option -> option.startsWith("--hash");
+
+      if (StreamEx.of(requirements).flatCollection(PyRequirement::getInstallOptions).anyMatch(hashOption)) {
+        if (askToProceedWithoutHashCheckingMode(project) == Messages.CANCEL) return Collections.emptyList();
+
+        final PyPackageManager packageManager = PyPackageManager.getInstance(sdk);
+        return StreamEx
+          .of(requirements)
+          .map(
+            requirement ->
+              StreamEx.of(requirement.getInstallOptions()).anyMatch(hashOption)
+              ? packageManager.parseRequirement(StreamEx.of(requirement.getInstallOptions()).filter(hashOption.negate()).joining(" "))
+              : requirement
+          )
+          .nonNull()
+          .toList();
       }
+
+      return requirements;
+    }
+
+    private static int askToProceedWithoutHashCheckingMode(@NotNull Project project) {
+      final String message =
+        "Some of your requirements have '--hash' option.\n\n" +
+        "Package managers do not support this option in one-by-one installation mode that is used by " +
+        ApplicationNamesInfo.getInstance().getFullProductName() +
+        ".\n" +
+        "Hash-checking mode will be disabled for the current installation.\n" +
+        "Would you like to proceed?";
+      return Messages.showOkCancelDialog(project, message, "Hash-Checking Mode", "Install Anyway", "Cancel", Messages.getWarningIcon());
+    }
+
+    private void installPackages(@NotNull Project project, @NotNull List<PyRequirement> requirements) {
       final List<PyRequirement> chosen;
-      if (myUnsatisfied.size() > 1) {
-        final PyChooseRequirementsDialog dialog = new PyChooseRequirementsDialog(project, myUnsatisfied);
+      if (requirements.size() > 1) {
+        final PyChooseRequirementsDialog dialog = new PyChooseRequirementsDialog(project, requirements);
         if (dialog.showAndGet()) {
           chosen = dialog.getMarkedElements();
         }
@@ -416,14 +450,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
         }
       }
       else {
-        chosen = myUnsatisfied;
+        chosen = requirements;
       }
       if (chosen.isEmpty()) {
         return;
       }
       boolean hasManagement;
       try {
-        hasManagement = manager.hasManagement();
+        hasManagement = PyPackageManager.getInstance(mySdk).hasManagement();
       }
       catch (ExecutionException e) {
         hasManagement = false;
