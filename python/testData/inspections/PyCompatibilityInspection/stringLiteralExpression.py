@@ -48,7 +48,7 @@ a = <warning descr="Python version 3.4, 3.5, 3.6, 3.7 do not support a 'UR' pref
 # combined, PY-32321
 b = <warning descr="Python version 3.4, 3.5, 3.6, 3.7 do not allow to mix bytes and non-bytes literals">u"" b""</warning>
 b = <warning descr="Python version 3.4, 3.5, 3.6, 3.7 do not allow to mix bytes and non-bytes literals">r"" b""</warning>
-b = <warning descr="Python version 3.4, 3.5, 3.6, 3.7 do not allow to mix bytes and non-bytes literals">f"" b""</warning>
+b = <warning descr="Python version 3.4, 3.5, 3.6, 3.7 do not allow to mix bytes and non-bytes literals"><error descr="Python version 2.7 does not support a 'F' prefix"><warning descr="Python version 2.6, 2.7, 3.4, 3.5 do not support a 'F' prefix">f</warning></error>"" b""</warning>
 
 # never was available
 a = <error descr="Python version 2.7 does not support a 'RR' prefix"><warning descr="Python version 2.6, 2.7, 3.4, 3.5, 3.6, 3.7 do not support a 'RR' prefix">rr</warning></error>""
