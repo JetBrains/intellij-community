@@ -1,11 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
-import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -22,8 +20,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
@@ -65,7 +61,6 @@ public abstract class UsefulTestCase extends TestCase {
   public static final String TEMP_DIR_MARKER = "unitTest_";
   public static final boolean OVERWRITE_TESTDATA = Boolean.getBoolean("idea.tests.overwrite.data");
 
-  private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
 
   private static final Map<String, Long> TOTAL_SETUP_COST_MILLIS = new HashMap<>();
@@ -87,12 +82,13 @@ public abstract class UsefulTestCase extends TestCase {
 
   static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
 
+  private static final String DEFAULT_SETTINGS_EXTERNALIZED;
+  private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
   static {
     // Radar #5755208: Command line Java applications need a way to launch without a Dock icon.
     System.setProperty("apple.awt.UIElement", "true");
 
     try {
-      CodeInsightSettings defaultSettings = new CodeInsightSettings();
       Element oldS = new Element("temp");
       defaultSettings.writeExternal(oldS);
       DEFAULT_SETTINGS_EXTERNALIZED = JDOMUtil.writeElement(oldS);
@@ -246,9 +242,7 @@ public abstract class UsefulTestCase extends TestCase {
     new RunAll()
       .append(() -> {
         try {
-          Element newS = new Element("temp");
-          settings.writeExternal(newS);
-          Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS));
+          checkCodeInsightSettingsEqual(defaultSettings, settings);
         }
         catch (AssertionError error) {
           CodeInsightSettings clean = new CodeInsightSettings();
@@ -265,7 +259,7 @@ public abstract class UsefulTestCase extends TestCase {
       .append(() -> {
         currentCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
         try {
-          checkSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings);
+          checkCodeStyleSettingsEqual(oldCodeStyleSettings, currentCodeStyleSettings);
         }
         finally {
           currentCodeStyleSettings.clearCodeStyleSettings();
@@ -846,17 +840,26 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  private static void checkSettingsEqual(CodeStyleSettings expected, CodeStyleSettings settings) {
-    if (expected == null || settings == null) return;
+  private static void checkCodeStyleSettingsEqual(@NotNull CodeStyleSettings expected, @NotNull CodeStyleSettings settings) {
+    if (!expected.equals(settings)) {
+      Element oldS = new Element("temp");
+      expected.writeExternal(oldS);
+      Element newS = new Element("temp");
+      settings.writeExternal(newS);
 
-    Element oldS = new Element("temp");
-    expected.writeExternal(oldS);
-    Element newS = new Element("temp");
-    settings.writeExternal(newS);
+      String newString = JDOMUtil.writeElement(newS);
+      String oldString = JDOMUtil.writeElement(oldS);
+      Assert.assertEquals("Code style settings damaged", oldString, newString);
+    }
+  }
 
-    String newString = JDOMUtil.writeElement(newS);
-    String oldString = JDOMUtil.writeElement(oldS);
-    Assert.assertEquals("Code style settings damaged", oldString, newString);
+  private static void checkCodeInsightSettingsEqual(@NotNull CodeInsightSettings oldSettings,
+                                                    @NotNull CodeInsightSettings settings) {
+    if (!oldSettings.equals(settings)) {
+      Element newS = new Element("temp");
+      settings.writeExternal(newS);
+      Assert.assertEquals("Code insight settings damaged", DEFAULT_SETTINGS_EXTERNALIZED, JDOMUtil.writeElement(newS));
+    }
   }
 
   public boolean isPerformanceTest() {
