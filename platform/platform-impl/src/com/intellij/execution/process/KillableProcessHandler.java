@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.remote.RemoteProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   private boolean myShouldKillProcessSoftly = true;
   private final boolean myMediatedProcess;
-  private boolean myShouldKillProcessSoftlyWithWinP = false;
+  private boolean myShouldKillProcessSoftlyWithWinP = SystemInfo.isWin10OrNewer && Registry.is("use.winp.for.graceful.process.termination");
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
