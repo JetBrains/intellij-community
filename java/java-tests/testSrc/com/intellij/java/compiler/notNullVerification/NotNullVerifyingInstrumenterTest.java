@@ -7,6 +7,7 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
@@ -286,26 +287,13 @@ public class NotNullVerifyingInstrumenterTest {
   private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
     String testDir = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification";
     String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
-    File classesDir = tempDir.newFolder("output");
-
-    List<String> cmdLine = ContainerUtil.newArrayList("-d", classesDir.getAbsolutePath(), "-classpath", testDir + "/annotations.jar");
-    if (withDebugInfo) cmdLine.add("-g");
-
     File testFile = new File(testDir, testName + ".java");
-    if (testFile.exists()) {
-      cmdLine.add(testFile.getPath());
-      com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(cmdLine));
-    }
-    else {
-      testFile = new File(testDir, testName + ".groovy");
-      if (testFile.exists()) {
-        cmdLine.add(testFile.getPath());
-        org.codehaus.groovy.tools.FileSystemCompiler.main(ArrayUtil.toStringArray(cmdLine));
-      }
-      else {
-        throw new FileNotFoundException("No test source for " + testName);
-      }
-    }
+    if (!testFile.exists()) testFile = new File(testDir, testName + ".groovy");
+    if (!testFile.exists()) throw new FileNotFoundException("No test source for " + testName);
+    File classesDir = tempDir.newFolder("output");
+    List<String> args = ContainerUtil.newArrayList("-classpath", testDir + "/annotations.jar");
+    if (withDebugInfo) args.add("-g");
+    IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 
     File[] files = classesDir.listFiles();
     assertNotNull(files);

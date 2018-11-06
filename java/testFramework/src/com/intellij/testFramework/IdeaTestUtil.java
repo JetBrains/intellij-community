@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -26,6 +27,7 @@ import org.junit.Assert;
 import org.junit.Assume;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 @TestOnly
@@ -181,5 +183,21 @@ public class IdeaTestUtil extends PlatformTestUtil {
     //noinspection ConstantConditions
     Assume.assumeTrue("Cannot find JDK, checked paths: " + paths, false);
     return null;
+  }
+
+  @SuppressWarnings("UnnecessaryFullyQualifiedName")
+  public static void compileFile(File source, File out, String... options) {
+    Assert.assertTrue("source does not exist: " + source.getPath(), source.isFile());
+    List<String> args = new ArrayList<>();
+    args.add("-d");
+    args.add(out.getAbsolutePath());
+    ContainerUtil.addAll(args, options);
+    args.add(source.getAbsolutePath());
+    if (source.getName().endsWith(".groovy")) {
+      org.codehaus.groovy.tools.FileSystemCompiler.main(ArrayUtil.toStringArray(args));
+    }
+    else {
+      com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(args));
+    }
   }
 }
