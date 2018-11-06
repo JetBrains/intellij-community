@@ -5,11 +5,16 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBus;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import org.jetbrains.annotations.NonNls;
@@ -57,6 +62,8 @@ public class PyCharmInitialConfigurator {
       propertiesComponent.setValue("PyCharm.InitialConfiguration.V7", true);
     }
 
+    disableRunAnything();
+
     if (!propertiesComponent.isValueSet(DISPLAYED_PROPERTY)) {
       bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
         @Override
@@ -69,5 +76,17 @@ public class PyCharmInitialConfigurator {
     }
 
     Registry.get("ide.ssh.one.time.password").setValue(true);
+  }
+
+  private static void disableRunAnything() {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ActionManager manager = ActionManager.getInstance();
+      DefaultActionGroup group = ObjectUtils.tryCast(manager.getAction("ToolbarRunGroup"), DefaultActionGroup.class);
+      AnAction runAnythingAction = manager.getAction("RunAnything");
+      if (group != null && runAnythingAction != null) {
+        group.remove(runAnythingAction);
+      }
+      manager.unregisterAction("RunAnything");
+    }, ModalityState.any());
   }
 }
