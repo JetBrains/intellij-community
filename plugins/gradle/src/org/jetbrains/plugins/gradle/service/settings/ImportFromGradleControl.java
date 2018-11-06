@@ -33,6 +33,7 @@ public class ImportFromGradleControl
       result.setGradleHome(gradleHome);
     }
     result.setStoreProjectFilesExternally(ThreeState.UNSURE);
+    result.setUseQualifiedModuleNames(true);
     return result;
   }
   
