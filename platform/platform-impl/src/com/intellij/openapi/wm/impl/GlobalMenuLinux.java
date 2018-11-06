@@ -24,7 +24,7 @@ import javax.imageio.ImageIO;
 import javax.swing.Timer;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.peer.ComponentPeer;
 import java.io.ByteArrayOutputStream;
@@ -62,7 +62,7 @@ interface GlobalMenuLib extends Library {
   void setItemLabel(Pointer item, String label);
   void setItemEnabled(Pointer item, boolean isEnabled);
   void setItemIcon(Pointer item, byte[] iconBytesPng, int iconBytesCount);
-  void setItemShortcut(Pointer item, int jmodifiers, int jkeycode);
+  void setItemShortcut(Pointer item, int jmodifiers, int x11keycode);
 
   void toggleItemStateChecked(Pointer item, boolean isChecked);
 
@@ -92,11 +92,6 @@ interface GlobalMenuLib extends Library {
   int ITEM_SUBMENU = 1;
   int ITEM_CHECK = 2;
   int ITEM_RADIO = 3;
-
-  int JMOD_SHIFT = 1;
-  int JMOD_CTRL  = 1 << 1;
-  int JMOD_ALT   = 1 << 2;
-  int JMOD_META  = 1 << 3;
 }
 
 public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
@@ -571,6 +566,9 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     boolean isChecked = false;
     byte[] iconPngBytes;
 
+    int jmodifiers;
+    int jkeycode;
+
     JMenuItem jitem;
     Pointer nativePeer;
     boolean toDelete = false;
@@ -613,6 +611,12 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         res = true;
       }
       iconPngBytes = isToggleable() ? null : _icon2png(peer.getIcon());
+
+      final KeyStroke ks = peer.getAccelerator();
+      if (ks != null) {
+        jkeycode = ks.getKeyCode();
+        jmodifiers = ks.getModifiers();
+      }
       return res;
     }
 
@@ -633,6 +637,13 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       ourLib.setItemIcon(nativePeer, iconPngBytes, iconPngBytes != null ? iconPngBytes.length : 0);
       if (isToggleable())
         ourLib.toggleItemStateChecked(nativePeer, isChecked);
+      if (jkeycode != 0) {
+        final int x11keycode = X11KeyCodes.jkeycode2X11code(jkeycode, 0);
+        if (x11keycode != 0)
+          ourLib.setItemShortcut(nativePeer, jmodifiers, x11keycode);
+        else if (!TRACE_DISABLED)
+          _trace("unknown x11 keycode for jcode=" + jkeycode);
+      }
     }
 
     MenuItemInternal findCorrespondingChild(@NotNull Component target) {
@@ -820,25 +831,6 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     }
   }
 
-  private static int _calcModifiers(JMenuItem jmenuitem) {
-    if (jmenuitem == null || jmenuitem.getAccelerator() == null)
-      return 0;
-
-    final int modifiers = jmenuitem.getAccelerator().getModifiers();
-    int result = 0;
-    if ((modifiers & InputEvent.SHIFT_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_SHIFT;
-    if ((modifiers & InputEvent.CTRL_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_CTRL;
-    if ((modifiers & InputEvent.META_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_META;
-    if ((modifiers & InputEvent.ALT_DOWN_MASK) != 0 ) result |= GlobalMenuLib.JMOD_ALT;
-    return result;
-  }
-
-  private static int _calcKeyCode(JMenuItem jmenuitem) {
-    if (jmenuitem == null || jmenuitem.getAccelerator() == null)
-      return 0;
-    return jmenuitem.getAccelerator().getKeyCode();
-  }
-
   private static String _buildMnemonicLabel(JMenuItem jmenuitem) {
     String text = jmenuitem.getText();
     final int mnemonicCode = jmenuitem.getMnemonic();
@@ -941,6 +933,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     final String msg = String.format(fmt, args);
     _trace(msg);
   }
+
   private static void _trace(String msg) {
     if (TRACE_DISABLED)
       return;
