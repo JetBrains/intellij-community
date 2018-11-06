@@ -38,9 +38,9 @@ public class VcsFreezingProcess {
     try {
       LOG.debug("saving documents, blocking project autosync");
       saveAndBlockInAwt();
-      LOG.debug("freezing the ChangeListManager");
-      freeze();
       try {
+        LOG.debug("freezing the ChangeListManager");
+        freeze();
         LOG.debug("running the operation");
         myRunnable.run();
         LOG.debug("operation completed.");
