@@ -2588,6 +2588,17 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-32240
+  public void testTypingNTFunctionInheritorField() {
+    doTest("str",
+           "from typing import NamedTuple\n" +
+           "\n" +
+           "class A(NamedTuple(\"NT\", [(\"user\", str)])):\n" +
+           "    pass\n" +
+           "    \n" +
+           "expr = A(undefined).user");
+  }
+
   // PY-4351
   public void testCollectionsNTInheritorField() {
     // Seems that this case won't be supported because
