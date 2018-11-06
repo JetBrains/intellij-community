@@ -38,6 +38,7 @@ import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import one.util.streamex.StreamEx;
@@ -606,7 +607,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
       if (file == null) return null;
 
-      if (file instanceof PyiFile) { //TODO: why???
+      if (file instanceof PyiFile) {
         return null;
       }
 
