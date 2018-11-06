@@ -47,30 +47,15 @@ class WindowsJavaFinder extends JavaHomeFinder {
     TreeSet<File> roots = new TreeSet<>();
     File javaHome = getJavaHome();
     if (javaHome != null) {
-      File parentFile = javaHome.getParentFile();
-      if (parentFile != null) {
-        roots.add(parentFile);
-      }
+      roots.add(javaHome);
     }
     File[] fsRoots = File.listRoots();
     for (File root : fsRoots) {
       if (root.exists()) {
-        File[] children = root.listFiles((dir, name) -> name.contains("Program Files"));
-        if (children != null) {
-          for (File child : children) {
-            if (child.isDirectory()) {
-              roots.add(child);
-              File[] subFolders = child.listFiles((dir, name) -> name.equals("Java"));
-              if (subFolders != null) {
-                for (File subFolder : subFolders) {
-                  if (subFolder.isDirectory()) {
-                    roots.add(subFolder);
-                  }
-                }
-              }
-            }
-          }
-        }
+        File candidate = new File(new File(root, "Program Files"), "Java");
+        if (candidate.isDirectory()) roots.add(candidate);
+        candidate =  new File(new File(root, "Program Files (x86)"), "Java");
+        if (candidate.isDirectory()) roots.add(candidate);
       }
     }
     return roots;
