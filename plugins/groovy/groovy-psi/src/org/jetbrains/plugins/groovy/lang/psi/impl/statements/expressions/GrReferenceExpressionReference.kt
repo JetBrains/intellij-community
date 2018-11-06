@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
 
+import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
@@ -9,8 +10,12 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrSuper
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrThisReferenceResolver.resolveThisExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunner
+import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCachingReference
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyLValueProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyRValueProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*
 import java.util.*
 
@@ -24,7 +29,16 @@ abstract class GrReferenceExpressionReference(ref: GrReferenceExpressionImpl) : 
     return doResolveNonStatic(incomplete)
   }
 
-  abstract fun doResolveNonStatic(incomplete: Boolean): Collection<GroovyResolveResult>
+  protected open fun doResolveNonStatic(incomplete: Boolean): Collection<GroovyResolveResult> {
+    val expression = element
+    val name = expression.referenceName ?: return emptyList()
+    val kinds = expression.resolveKinds()
+    val processor = buildProcessor(name, expression, kinds)
+    GrReferenceResolveRunner(expression, processor).resolveReferenceExpression()
+    return processor.results
+  }
+
+  protected abstract fun buildProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>): GrResolverProcessor<*>
 }
 
 class GrRValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceExpressionReference(ref) {
@@ -38,23 +52,20 @@ class GrRValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceE
     expression.handleSpecialCases()?.let {
       return it
     }
-    val name = expression.referenceName ?: return emptyList()
-    val kinds = if (expression.isQualified) {
-      EnumSet.of(FIELD, PROPERTY, VARIABLE)
-    }
-    else {
-      EnumSet.of(FIELD, PROPERTY, VARIABLE, BINDING)
-    }
-    val processor = GroovyRValueProcessor(name, expression, kinds)
-    GrReferenceResolveRunner(expression, processor).resolveReferenceExpression()
-    return processor.results
+    return super.doResolveNonStatic(incomplete)
+  }
+
+  override fun buildProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>): GrResolverProcessor<*> {
+    return GroovyRValueProcessor(name, place, kinds)
   }
 }
 
-class GrLValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceExpressionReference(ref) {
+class GrLValueExpressionReference(ref: GrReferenceExpressionImpl, private val argument: Argument?) : GrReferenceExpressionReference(ref) {
 
-  override fun doResolveNonStatic(incomplete: Boolean): Collection<GroovyResolveResult> {
-    return element.doPolyResolve(incomplete, false)
+  override fun buildProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>): GrResolverProcessor<*> {
+    return GroovyLValueProcessor(name, place, kinds) {
+      if (argument == null) null else arrayOf(argument.type)
+    }
   }
 }
 
@@ -69,4 +80,13 @@ private fun GrReferenceExpression.handleSpecialCases(): Collection<GroovyResolve
     }
   }
   return null
+}
+
+private fun GrReferenceExpressionImpl.resolveKinds(): Set<GroovyResolveKind> {
+  return if (isQualified) {
+    EnumSet.of(FIELD, PROPERTY, VARIABLE)
+  }
+  else {
+    EnumSet.of(FIELD, PROPERTY, VARIABLE, BINDING)
+  }
 }
