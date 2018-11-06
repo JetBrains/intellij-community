@@ -278,6 +278,22 @@ fun JDialogFixture.waitForPageTransitionFinished(locationOnScreen: JDialogFixtur
   robot().waitForIdle()
 }
 
+fun NewProjectDialogModel.typeGroupAndArtifact(group: String, artifact: String){
+  with(guiTestCase){
+    with(connectDialog()){
+      waitForPageTransitionFinished {
+        textfield(textGroupId).target().locationOnScreen
+      }
+      logUIStep("Fill GroupId with `$group`")
+      textfield(textGroupId).click()
+      typeText(group)
+      logUIStep("Fill ArtifactId with `$artifact`")
+      textfield(textArtifactId).click()
+      typeText(artifact)
+    }
+  }
+}
+
 fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions: NewProjectDialogModel.GradleProjectOptions) {
   with(guiTestCase) {
     fileSystemUtils.assertProjectPathExists(projectPath)
@@ -290,15 +306,7 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
           checkboxTree(NewProjectDialogModel.Constants.libJava).uncheck()
       }
       button(buttonNext).click()
-      waitForPageTransitionFinished {
-        textfield(textGroupId).target().locationOnScreen
-      }
-      logUIStep("Fill GroupId with `${gradleOptions.group}`")
-      textfield(textGroupId).click()
-      typeText(gradleOptions.group)
-      logUIStep("Fill ArtifactId with `${gradleOptions.artifact}`")
-      textfield(textArtifactId).click()
-      typeText(gradleOptions.artifact)
+      typeGroupAndArtifact(gradleOptions.group, gradleOptions.artifact)
       button(buttonNext).click()
       waitForPageTransitionFinished {
         checkbox(NewProjectDialogModel.GradleOptions.UseAutoImport.title).target().locationOnScreen
@@ -332,6 +340,9 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
 fun NewProjectDialogModel.typeProjectNameAndLocation(projectPath: String){
   with(guiTestCase){
     with(connectDialog()){
+      waitForPageTransitionFinished {
+        textfield(textProjectLocation).target().locationOnScreen
+      }
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
       shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
@@ -368,23 +379,14 @@ fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: 
 
       }
       button(buttonNext).click()
-
-      logUIStep("Fill $textGroupId with `${mavenOptions.group}`")
-      typeText(mavenOptions.group)
-      shortcut(Key.TAB)
-      logUIStep("Fill $textArtifactId with `${mavenOptions.artifact}`")
-      typeText(mavenOptions.artifact)
+      typeGroupAndArtifact(mavenOptions.group, mavenOptions.artifact)
 
       button(buttonNext).click()
 
       if (mavenOptions.useArchetype) {
         button(buttonNext).click()
       }
-
-      logUIStep("Fill `$textProjectLocation` with `$projectPath`")
-      textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-      typeText(projectPath)
+      typeProjectNameAndLocation(projectPath)
 
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
@@ -401,10 +403,7 @@ fun NewProjectDialogModel.createKotlinProject(projectPath: String, framework: St
       jList(framework).clickItem(framework)
       button(buttonNext).click()
 
-      logUIStep("Fill $textProjectLocation with `$projectPath`")
-      textfield(textProjectLocation).click()
-      shortcut(Modifier.CONTROL + Key.X, Modifier.META + Key.X)
-      typeText(projectPath)
+      typeProjectNameAndLocation(projectPath)
 
       logUIStep("Close New Project dialog with Finish")
       button(buttonFinish).click()
