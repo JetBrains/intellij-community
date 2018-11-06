@@ -110,7 +110,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
         String description = action.getTemplatePresentation().getDescription();
         if (Registry.is("show.configurables.ids.in.settings.always")) {
           String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
-          return String.format("[%s] %s", presentableId, description);
+          return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
         }
         return description;
       }
