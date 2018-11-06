@@ -108,7 +108,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
     NOTIFICATION_GROUP.createNotification(title, message, type, notificationListener).setImportant(false).notify(getProject());
   }
 
-  private static class HotSwapNotificationListener implements NotificationListener {
+  private static class HotSwapNotificationListener extends NotificationListener.Adapter {
     final WeakReference<XDebugSession> mySessionRef;
 
     HotSwapNotificationListener(WeakReference<XDebugSession> sessionRef) {
@@ -116,10 +116,7 @@ public class HotSwapProgressImpl extends HotSwapProgress {
     }
 
     @Override
-    public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-      if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
-        return;
-      }
+    protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
       XDebugSession session = SoftReference.dereference(mySessionRef);
       if (session == null) {
         return;
