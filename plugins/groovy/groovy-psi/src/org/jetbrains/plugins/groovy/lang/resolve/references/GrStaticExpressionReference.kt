@@ -1,10 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.util.Consumer
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext
-import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver
+import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyReferenceBase
 import org.jetbrains.plugins.groovy.lang.resolve.doResolveStatic
 
@@ -15,11 +21,29 @@ class GrStaticExpressionReference(element: GrReferenceExpression) : GroovyRefere
     return InferenceContext.TOP_CONTEXT.resolve(this, false, Resolver)
   }
 
-  private object Resolver : GroovyResolver<GrStaticExpressionReference> {
+  private object Resolver : DependentResolver<GrStaticExpressionReference>() {
 
-    override fun resolve(ref: GrStaticExpressionReference, incomplete: Boolean): Collection<GroovyResolveResult> {
+    override fun doResolve(ref: GrStaticExpressionReference, incomplete: Boolean): Collection<GroovyResolveResult> {
       return ref.element.doResolveStatic()?.let(::listOf) ?: emptyList()
+    }
+
+    override fun collectDependencies(ref: GrStaticExpressionReference, consumer: Consumer<in PsiPolyVariantReference>) {
+      ref.element.qualifier?.accept(object : PsiRecursiveElementWalkingVisitor() {
+
+        override fun visitElement(element: PsiElement) {
+          when (element) {
+            is GrReferenceExpression,
+            is GrMethodCall,
+            is GrParenthesizedExpression -> super.visitElement(element)
+          }
+        }
+
+        override fun elementFinished(element: PsiElement) {
+          if (element is GrReferenceExpression) {
+            consumer.consume(element.staticReference)
+          }
+        }
+      })
     }
   }
 }
-
