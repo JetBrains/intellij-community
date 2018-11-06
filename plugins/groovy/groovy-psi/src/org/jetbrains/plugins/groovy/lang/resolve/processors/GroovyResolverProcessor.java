@@ -157,7 +157,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   }
 
   @Override
-  public boolean shouldProcess(DeclarationKind kind) {
+  public boolean shouldProcess(@NotNull DeclarationKind kind) {
     if (kind == DeclarationKind.METHOD) {
       if (myStopExecutingMethods) return false;
       if (isPropertyResolve() && !myAcceptableKinds.contains(GroovyResolveKind.METHOD)) return false;

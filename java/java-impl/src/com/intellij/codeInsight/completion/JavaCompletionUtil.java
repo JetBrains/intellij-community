@@ -207,7 +207,7 @@ public class JavaCompletionUtil {
       }
 
       @Override
-      public boolean shouldProcess(DeclarationKind kind) {
+      public boolean shouldProcess(@NotNull DeclarationKind kind) {
         return member instanceof PsiEnumConstant ? kind == DeclarationKind.ENUM_CONST :
                member instanceof PsiField ? kind == DeclarationKind.FIELD :
                kind == DeclarationKind.METHOD;
