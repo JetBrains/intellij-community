@@ -63,7 +63,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
   class ComponentProcessor(val delegate: PsiScopeProcessor, val place: PsiElement, val name: String?) : PsiScopeProcessor {
 
     override fun execute(method: PsiElement, state: ResolveState): Boolean {
-      method as? PsiMethod ?: return true
+      if (method !is PsiMethod) return true
 
       val prefix = if (GroovyPropertyUtils.isSetterLike(method, "set")) {
         if (!delegate.execute(method, state)) return false

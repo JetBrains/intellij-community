@@ -13,9 +13,9 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 class ReferenceExpressionConstraint(private val callRef: GrReferenceExpression, private val leftType: PsiType?) : ConstraintFormula {
 
   override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
-    session as? GroovyInferenceSession ?: return true
+    if (session !is GroovyInferenceSession) return true
     val resolved = callRef.advancedResolve()
-    resolved as? GroovyMethodResult ?: return true
+    if (resolved !is GroovyMethodResult) return true
     resolved.candidate?.let {
       val typeParameters = it.method.typeParameters
       val nestedSession = GroovyInferenceSession(typeParameters, it.siteSubstitutor, callRef, emptyList(), session.skipClosureBlock)
