@@ -63,6 +63,7 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
     this.title = title
     setOKButtonText(okText)
     init()
+    pack()
     accountsList.selectedIndex = 0
   }
 
@@ -77,7 +78,9 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
   override fun createCenterPanel(): JComponent? {
     return JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
       .apply { description?.run(::addToTop) }
-      .addToCenter(JBScrollPane(accountsList).apply { preferredSize = JBDimension(150, 80) })
+      .addToCenter(JBScrollPane(accountsList).apply {
+        preferredSize = JBDimension(150, 20 * (accountsList.itemsCount + 1))
+      })
       .apply { setDefaultCheckBox?.run(::addToBottom) }
   }
 
