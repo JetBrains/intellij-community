@@ -47,3 +47,5 @@ fun GrExpression?.isThisExpression(): Boolean {
 fun GrOperatorExpression.multiResolve(): Array<out GroovyResolveResult> {
   return reference?.multiResolve(false) ?: GroovyResolveResult.EMPTY_ARRAY
 }
+
+fun elementInfo(element: PsiElement): String = "Element: $element; class: ${element.javaClass}; text: ${element.text}"
