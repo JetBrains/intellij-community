@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.newui.CellPluginComponent
 import com.intellij.ide.plugins.newui.TabHeaderComponent
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction
 import com.intellij.openapi.options.ex.ConfigurableCardPanel
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickButtonWhenEnabled
 import com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickCancelButton
@@ -137,10 +138,13 @@ class PluginDialogFixture(robot: Robot, pluginDialog: JDialog) : JDialogFixture(
       waitFor {
         val pluginPathTextField: JTextField =
           waitUntilFound(target(), JTextField::class.java, Timeouts.defaultTimeout) { it.isEnabled && it.isShowing }
+        clickRefresh()
         JTextComponentFixture(robot(), pluginPathTextField).deleteText().enterText(pluginPath)
         pluginPathTextField.text == pluginPath
       }
     }
+
+    fun clickRefresh() = actionButtonByClass(RefreshFileChooserAction::class.java.simpleName).click()
 
     fun clickOk() = findAndClickButtonWhenEnabled(this, "OK")
 
