@@ -195,16 +195,24 @@ public class IdeaTestUtil extends PlatformTestUtil {
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
   public static void compileFile(@NotNull File source, @NotNull File out, String... options) {
     Assert.assertTrue("source does not exist: " + source.getPath(), source.isFile());
+
     List<String> args = new ArrayList<>();
     args.add("-d");
     args.add(out.getAbsolutePath());
     ContainerUtil.addAll(args, options);
     args.add(source.getAbsolutePath());
+
     if (source.getName().endsWith(".groovy")) {
-      org.codehaus.groovy.tools.FileSystemCompiler.main(ArrayUtil.toStringArray(args));
+      try {
+        org.codehaus.groovy.tools.FileSystemCompiler.commandLineCompile(ArrayUtil.toStringArray(args));
+      }
+      catch (Exception e) {
+        throw new IllegalStateException(e);
+      }
     }
     else {
-      com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(args));
+      int result = com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(args));
+      if (result != 0) throw new IllegalStateException("javac failed with exit code " + result);
     }
   }
 }
