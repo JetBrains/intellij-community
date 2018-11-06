@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getContainingCall
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 import org.jetbrains.plugins.groovy.lang.resolve.wrapClassType
 
 class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
@@ -28,6 +29,9 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
   override fun getParentClassName(): String = componentDelegateFqn
 
   override fun processDynamicElements(qualifierType: PsiType, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState) {
+    if (!processor.shouldProcessMethods()) {
+      return
+    }
     val name = processor.getHint(NameHint.KEY)?.getName(state)
     val componentClass = getComponentClass(place) ?: return
     val componentProcessor = ComponentProcessor(processor, place, name)

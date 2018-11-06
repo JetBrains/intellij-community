@@ -33,6 +33,8 @@ val log: Logger = logger(::log)
 @JvmField
 val NON_CODE: Key<Boolean?> = Key.create("groovy.process.non.code.members")
 
+val sorryCannotKnowElementKind: Key<Boolean> = Key.create("groovy.skip.kind.check.please")
+
 fun initialState(processNonCodeMembers: Boolean): ResolveState = ResolveState.initial().put(NON_CODE, processNonCodeMembers)
 
 fun ResolveState.processNonCodeMembers(): Boolean = get(NON_CODE).let { it == null || it }

@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
 import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.getResolveKind
+import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 open class KindsResolverProcessor(
   protected val name: String,
@@ -41,9 +42,20 @@ open class KindsResolverProcessor(
     val elementName = getName(state, element)
     if (name != elementName) return true
 
-    val kind = getResolveKind(element) ?: return true
-    if (kind !in kinds) {
-      return true
+    val kind = requireNotNull(getResolveKind(element)) {
+      "Unknown kind. ${elementInfo(element)}"
+    }
+
+    if (state[sorryCannotKnowElementKind] == true) {
+      if (kind !in kinds) {
+        // return without exception
+        return true
+      }
+    }
+    else {
+      require(kind in kinds) {
+        "Unneeded kind. ${elementInfo(element)}"
+      }
     }
 
     if (kind in candidates) {
