@@ -38,6 +38,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 import java.io.ByteArrayOutputStream;
 import java.util.*;
@@ -429,5 +430,41 @@ public class ConsoleViewImplTest extends LightPlatformTestCase {
     myConsole.waitAllRequests();
     assertEquals(expectedText.toString(), myConsole.getText());
     assertEquals(expectedRegisteredTokens, registered);
+  }
+
+  public void testBackspaceDeletesPreviousOutput() {
+    assertPrintedText(new String[]{"Test", "\b"}, "Tes");
+    assertPrintedText(new String[]{"Test", "\b", "\b"}, "Te");
+    assertPrintedText(new String[]{"Hello", "\b\b\b\b", "allo"}, "Hallo");
+    assertPrintedText(new String[]{"A\b\b\bha\bop", "\bul\bpp", "\b\bsl\be"}, "house");
+    assertPrintedText(new String[]{"\b\bTest\b\b\b\b\b", "Done", "\b\b\b"}, "D");
+    assertPrintedText(new String[]{"\b\b\b\b\b\b\b"}, "");
+    assertPrintedText(new String[]{"The\b\b\b\b", "first lint", "\be\n",
+      "\b\b\bsecond lone", "\b\b\bine\n",
+      "\bthird\b\b\b\b\b\b\b\bthe third line"}, "first line\nsecond line\nthe third line");
+    assertPrintedText(new String[]{"\n\n\b\bStart\nEnq\bd"}, "\n\nStart\nEnd");
+    assertPrintedText(new String[]{"\nEnter your pass:", "\rsecreq\bt"}, "\nsecret");
+    assertPrintedText(new String[]{"test\b\b\b\b\b\bline1\n\blinee\b2\r\n\blin\b\b\b\bline?", "\b3\n", "Done\n"},
+                      "line1\nline2\nline3\nDone\n");
+  }
+
+  private void assertPrintedText(@NotNull String[] textToPrint, @NotNull String expectedText) {
+    myConsole.clear();
+    myConsole.waitAllRequests();
+    Assert.assertEquals("", myConsole.getText());
+    for (String text : textToPrint) {
+      myConsole.print(text, ConsoleViewContentType.NORMAL_OUTPUT);
+    }
+    myConsole.flushDeferredText();
+    Assert.assertEquals(expectedText, myConsole.getText());
+
+    myConsole.clear();
+    myConsole.waitAllRequests();
+    Assert.assertEquals("", myConsole.getText());
+    for (String text : textToPrint) {
+      myConsole.print(text, ConsoleViewContentType.NORMAL_OUTPUT);
+      myConsole.flushDeferredText();
+    }
+    Assert.assertEquals(expectedText, myConsole.getText());
   }
 }

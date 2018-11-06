@@ -5,6 +5,7 @@ import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.fixtures.ActionButtonFixture
 import com.intellij.testGuiFramework.fixtures.GutterFixture
+import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.framework.toPrintable
@@ -81,46 +82,62 @@ fun GuiTestCase.closeProject() {
 
 /**
  * Provide waiting for background tasks to finish
- * This function should be used instead of  [waitForBackgroundTasksToFinish]
+ * This function should be used instead of  [IdeFrameFixture.waitForBackgroundTasksToFinish]
  * because sometimes the latter doesn't wait enough time
+ * The function searches for async icon indicator and waits for its disappearing
+ * This occurs several times as background processes often goes one after another.
  * */
-fun GuiTestCase.waitAMoment(attempts: Int = 0) {
-  val maxAttempts = 3
-  ideFrame {
-    this.waitForBackgroundTasksToFinish()
-    val asyncIcon = indexingProcessIconNullable(Timeouts.noTimeout)
-    if(asyncIcon != null){
-      val timeoutForBackgroundTasks = Timeouts.minutes10
-      try {
-        asyncIcon.click()
-        waitForPanelToDisappear(
-          panelTitle = "Background Tasks",
-          timeoutToAppear = Timeouts.seconds01,
-          timeoutToDisappear = timeoutForBackgroundTasks
-        )
-      }
-      catch (e: IllegalStateException){
-        // asyncIcon searched earlier might disappear at all (it's ok)
-        // or new one is shown. So let's try to search it again
-        if(attempts < maxAttempts)
-          waitAMoment(attempts + 1)
-        else{
-          if(indexingProcessIconNullable(Timeouts.noTimeout) !=null)
-            throw WaitTimedOutError("Async icon is shown, but we cannot click on it after $maxAttempts attempts")
+fun GuiTestCase.waitAMoment() {
+  fun isWaitIndicatorPresent(): Boolean {
+    var result = false
+    ideFrame {
+      result = indexingProcessIconNullable(Timeouts.seconds03) != null
+    }
+    return result
+  }
+  fun waitBackgroundTaskOneAttempt() {
+    ideFrame {
+      this.waitForBackgroundTasksToFinish()
+      val asyncIcon = indexingProcessIconNullable(Timeouts.seconds03)
+      if (asyncIcon != null) {
+        val timeoutForBackgroundTasks = Timeouts.minutes10
+        try {
+          asyncIcon.click()
+          waitForPanelToDisappear(
+            panelTitle = "Background Tasks",
+            timeoutToAppear = Timeouts.seconds01,
+            timeoutToDisappear = timeoutForBackgroundTasks
+          )
         }
-      }
-      catch (e: IllegalComponentStateException){
-        // do nothing - asyncIcon disappears, background process has stopped
-      }
-      catch (e: ComponentLookupException){
-        // do nothing - panel hasn't appeared and it seems ok
-      }
-      catch (e: WaitTimedOutError) {
-        throw WaitTimedOutError("Background process hadn't finished after ${timeoutForBackgroundTasks.toPrintable()}")
+        catch (ignore: NullPointerException) {
+          // if asyncIcon disappears at once after getting the NPE from fest might occur
+          // but it's ok - nothing to wait anymore
+        }
+        catch (ignore: IllegalComponentStateException) {
+          // do nothing - asyncIcon disappears, background process has stopped
+        }
+        catch (ignore: ComponentLookupException) {
+          // do nothing - panel hasn't appeared and it seems ok
+        }
+        catch (ignore: IllegalStateException) {
+          // asyncIcon searched earlier might disappear at all (it's ok)
+        }
+        catch (e: WaitTimedOutError) {
+          throw WaitTimedOutError("Background process hadn't finished after ${timeoutForBackgroundTasks.toPrintable()}")
+        }
       }
     }
   }
-  robot().waitForIdle()
+
+  val maxAttemptsWaitForBackgroundTasks = 3
+  var currentAttempt = maxAttemptsWaitForBackgroundTasks
+  while (isWaitIndicatorPresent() && currentAttempt >= 0){
+    waitBackgroundTaskOneAttempt()
+    currentAttempt--
+  }
+  if (currentAttempt < 0) {
+    throw WaitTimedOutError("Background processes still continue after $maxAttemptsWaitForBackgroundTasks attempts to wait for their finishing")
+  }
 }
 
 /**

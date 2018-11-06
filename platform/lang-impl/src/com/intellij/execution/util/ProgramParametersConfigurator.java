@@ -59,7 +59,7 @@ public class ProgramParametersConfigurator {
 
   public static void addMacroSupport(@NotNull ExpandableTextField expandableTextField) {
     if (Registry.is("allow.macros.for.run.configurations")) {
-      expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.Add, "Insert Macros", ()
+      expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.InlineAdd, AllIcons.General.InlineAddHover, "Insert Macros", ()
         -> MacrosDialog.show(expandableTextField, macro -> {
         if (macro instanceof PromptMacro) return true;
         return !(macro instanceof PromptingMacro) && !(macro instanceof EditorMacro);

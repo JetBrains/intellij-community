@@ -78,7 +78,7 @@ class RepositoryBrowserPanel(
         if (file.isDirectory) {
           return PlatformIcons.FOLDER_ICON
         }
-        return FileTypeManager.getInstance().getFileTypeByFileName(file.name).icon
+        return FileTypeManager.getInstance().getFileTypeByFileName(file.nameSequence).icon
       }
     }
     fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) {

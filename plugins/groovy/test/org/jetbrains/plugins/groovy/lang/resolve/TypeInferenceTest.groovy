@@ -840,18 +840,6 @@ class A { Closure foo = { 42 } }
     doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
   }
 
-  void testMapClassReference() {
-    doExprTest '[:].class', null
-    doExprTest '[class : 1].class', 'java.lang.Integer'
-    doExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
-    doExprTest 'new HashMap().class', null
-
-    doCSExprTest '[:].class', null
-    doCSExprTest '[class : 1].class', 'java.lang.Integer'
-    doCSExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
-    doCSExprTest 'new HashMap().class', null
-  }
-
   void testUnknownClass() {
     doExprTest 'a.class', null
     doCSExprTest 'a.class', 'java.lang.Class'

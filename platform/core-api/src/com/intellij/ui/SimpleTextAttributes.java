@@ -58,6 +58,7 @@ public final class SimpleTextAttributes {
     new SimpleTextAttributes(STYLE_PLAIN, UIUtil.getListSelectionForeground());
   public static final SimpleTextAttributes EXCLUDED_ATTRIBUTES = new SimpleTextAttributes(STYLE_ITALIC, Color.GRAY);
 
+  public static final SimpleTextAttributes LINK_PLAIN_ATTRIBUTES = new SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor());
   public static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE, JBUI.CurrentTheme.Link.linkColor());
   public static final SimpleTextAttributes LINK_BOLD_ATTRIBUTES = new SimpleTextAttributes(STYLE_UNDERLINE | STYLE_BOLD, JBUI.CurrentTheme.Link.linkColor());
 

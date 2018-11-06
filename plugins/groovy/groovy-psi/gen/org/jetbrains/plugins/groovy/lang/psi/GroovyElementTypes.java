@@ -1,3 +1,5 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.psi;
 
@@ -59,6 +61,7 @@ public interface GroovyElementTypes {
   GroovyElementType ASSERT_STATEMENT = new GroovyElementType("ASSERT_STATEMENT");
   GroovyElementType ASSIGNMENT_EXPRESSION = new GroovyElementType("ASSIGNMENT_EXPRESSION");
   GroovyElementType AS_EXPRESSION = new GroovyElementType("AS_EXPRESSION");
+  GroovyElementType ATTRIBUTE_EXPRESSION = new GroovyElementType("ATTRIBUTE_EXPRESSION");
   GroovyElementType BAND_EXPRESSION = new GroovyElementType("BAND_EXPRESSION");
   GroovyElementType BLOCK_STATEMENT = new GroovyElementType("BLOCK_STATEMENT");
   GroovyElementType BOR_EXPRESSION = new GroovyElementType("BOR_EXPRESSION");

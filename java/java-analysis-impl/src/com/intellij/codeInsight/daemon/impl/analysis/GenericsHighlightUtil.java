@@ -669,8 +669,8 @@ public class GenericsHighlightUtil {
     if (!checkEqualsSuper && MethodSignatureUtil.isSubsignature(superSignature, signatureToCheck)) {
       return null;
     }
-    if (!javaVersionService.isAtLeast(aClass, JavaSdkVersion.JDK_1_8)) {
-      //javac <= 1.7 didn't check transitive overriding rules for interfaces
+    if (!javaVersionService.isCompilerVersionAtLeast(aClass, JavaSdkVersion.JDK_1_7)) {
+      //javac <= 1.6 didn't check transitive overriding rules for interfaces
       if (superContainingClass != null && !superContainingClass.isInterface() && checkContainingClass.isInterface() && !aClass.equals(superContainingClass)) return null;
     }
     if (aClass.equals(checkContainingClass)) {

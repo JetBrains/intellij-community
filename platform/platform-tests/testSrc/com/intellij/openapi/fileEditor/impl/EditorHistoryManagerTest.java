@@ -39,17 +39,22 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
 
     openProjectPerformTaskCloseProject(dir, project -> {
       Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      EditorTestUtil.waitForLoading(editor);
       EditorTestUtil.addFoldRegion(editor, 15, 16, ".", true);
       FileEditorManager.getInstance(project).closeFile(virtualFile);
     });
 
     GCUtil.tryGcSoftlyReachableObjects();
-    assertNull(FileDocumentManager.getInstance().getCachedDocument(virtualFile));
+    if (FileDocumentManager.getInstance().getCachedDocument(virtualFile) != null) {
+      String dumpPath = publishHeapDump("EditorHistoryManagerTest");
+      fail("Document wasn't collected, see heap dump at " + dumpPath);
+    }
 
     openProjectPerformTaskCloseProject(dir, project -> {});
 
     openProjectPerformTaskCloseProject(dir, project -> {
       Editor newEditor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, virtualFile), false);
+      EditorTestUtil.waitForLoading(newEditor);
       assertEquals("[FoldRegion +(15:16), placeholder='.']", Arrays.toString(newEditor.getFoldingModel().getAllFoldRegions()));
     });
   }

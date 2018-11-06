@@ -367,6 +367,11 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     }
   }
 
+  void testPluginWithoutVersion() {
+    doHighlightingTest("pluginWithoutVersion.xml")
+    testHighlightingInIdeaProject("pluginWithoutVersion.xml")
+  }
+
   void testOrderAttributeHighlighting() {
     doHighlightingTest("orderAttributeHighlighting.xml")
   }

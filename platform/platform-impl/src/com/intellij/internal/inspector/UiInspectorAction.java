@@ -681,7 +681,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
             if (renderer instanceof JLabel) {
               //noinspection UseOfSystemOutOrSystemErr
               System.out.println((component != null ? getComponentName(component)+ " " : "" )
-                                 + ((JLabel)renderer).getText().replace("\tat", "\n\tat"));
+                                 + ((JLabel)renderer).getText().replace("\r", "").replace("\tat", "\n\tat"));
               return true;
             }
           }

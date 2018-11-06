@@ -177,7 +177,6 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
     currentUi = ui
     centerPanel.setContent(currentUi.getPanel())
     southAdditionalPanel.setContent(currentUi.getSouthPanel())
-    setErrorText(null)
     currentUi.getPreferredFocus().requestFocus()
     tokenAcquisitionError = null
   }

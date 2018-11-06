@@ -190,7 +190,7 @@ abstract class GitImplBase implements Git {
       if (outputType == ProcessOutputTypes.STDOUT) {
         myOutputCollector.outputLineReceived(line);
       }
-      else if (outputType == ProcessOutputTypes.STDERR) {
+      else if (outputType == ProcessOutputTypes.STDERR && !looksLikeProgress(line)) {
         myOutputCollector.errorLineReceived(line);
       }
     }

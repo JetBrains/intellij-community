@@ -323,7 +323,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
             errorMessageBuilder.append(error.getMessage());
             Throwable cause = error.getCause();
             if (cause != null) errorMessageBuilder.append(": ").append(cause.getMessage());
-            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString()).asWarning());
+            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString()).asWarning().withOKEnabled());
           }
           startTrackingValidation();
         }

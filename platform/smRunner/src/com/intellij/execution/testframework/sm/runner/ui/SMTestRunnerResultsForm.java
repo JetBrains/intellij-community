@@ -609,7 +609,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       update.run();
     }
     else if (!myDisposed && myRequests.add(update)) {
-      myUpdateTreeRequests.addRequest(update, 100);
+      myUpdateTreeRequests.addRequest(update, 50);
     }
 
     myAnimator.setCurrentTestCase(newTestOrSuite);

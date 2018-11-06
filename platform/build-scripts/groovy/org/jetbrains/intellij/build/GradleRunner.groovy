@@ -70,7 +70,11 @@ class GradleRunner {
     command.add("${projectDir.absolutePath}/$gradleScript".toString())
     command.addAll(tasks)
     command.add('--stacktrace')
-    command.add('--no-daemon')
+    if (System.getProperty("intellij.build.use.gradle.daemon", "false").toBoolean()) {
+      command.add('--daemon')
+    } else {
+      command.add('--no-daemon')
+    }
     def processBuilder = new ProcessBuilder(command).directory(projectDir)
     processBuilder.environment().put("JAVA_HOME", javaHome)
     def process = processBuilder.start()

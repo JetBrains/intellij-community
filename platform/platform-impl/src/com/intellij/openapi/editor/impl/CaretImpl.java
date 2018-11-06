@@ -689,10 +689,13 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   public int getOffset() {
     validateCallContext();
     validateContext(false);
-    PositionMarker marker = myPositionMarker;
-    if (marker == null) return 0; // caret was disposed
-    assert marker.isValid();
-    return marker.getStartOffset();
+    while (true) {
+      PositionMarker marker = myPositionMarker;
+      if (marker == null) return 0; // caret was disposed
+      int startOffset = marker.getStartOffset();
+      // double checking to avoid "concurrent dispose and return -1 from already disposed marker" race
+      if (marker.isValid() && marker == myPositionMarker) return startOffset;
+    }
   }
 
   @Override

@@ -7,9 +7,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.util.PsiUtilCore;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,15 +65,7 @@ public class UnstableApiUsageInspection extends AnnotatedElementInspectionBase {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }
-
-    PsiFile containingPsiFile = element.getContainingFile();
-    if (containingPsiFile == null) {
-      return false;
-    }
-    VirtualFile containingVirtualFile = containingPsiFile.getVirtualFile();
-    if (containingVirtualFile == null) {
-      return false;
-    }
-    return ProjectFileIndex.getInstance(element.getProject()).isInLibraryClasses(containingVirtualFile);
+    VirtualFile containingVirtualFile = PsiUtilCore.getVirtualFile(element);
+    return containingVirtualFile != null && ProjectFileIndex.getInstance(element.getProject()).isInLibraryClasses(containingVirtualFile);
   }
 }

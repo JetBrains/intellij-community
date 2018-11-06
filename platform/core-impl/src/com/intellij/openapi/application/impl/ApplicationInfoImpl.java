@@ -820,6 +820,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
     final String pluginsHost = System.getProperty("idea.plugins.host");
     if (pluginsHost != null) {
+      myPluginManagerUrl = pluginsHost;
       myPluginsListUrl = myPluginsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
       myChannelsListUrl = myChannelsListUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);
       myPluginsDownloadUrl = myPluginsDownloadUrl.replace(DEFAULT_PLUGINS_HOST, pluginsHost);

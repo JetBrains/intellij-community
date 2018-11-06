@@ -67,8 +67,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   @Override
-  public void visitPyFunction(final PyFunction node) {
-    if (!PyiUtil.isOverload(node, myTypeEvalContext)) {
+  public void visitPyFunction(@NotNull final PyFunction node) {
+    if (!PyiUtil.isOverload(node, myTypeEvalContext) && !PyUnusedLocalInspectionSkipper.Companion.skip(node, myTypeEvalContext)) {
       processScope(node);
     }
   }

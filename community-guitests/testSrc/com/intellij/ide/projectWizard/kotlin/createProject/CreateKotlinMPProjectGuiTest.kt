@@ -22,6 +22,7 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
   data class TestParameters(
     val projectName: String,
     val project: ProjectProperties,
+    val gradleGroup: String,
     val suffixes: Map<TargetPlatform, String>) : Serializable {
     override fun toString() = projectName
   }
@@ -67,8 +68,9 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
       )
 
       testParameters.project.modules.forEach { platform: TargetPlatform ->
+        val shownProjectName = if(testParameters.gradleGroup.isEmpty()) projectName else "${testParameters.gradleGroup}.$projectName"
         listOf("Main", "Test").forEach { moduleKind: String ->
-          val path = arrayOf(projectName, "${projectName}_${testParameters.suffixes[platform]!!}$moduleKind", "Kotlin")
+          val path = arrayOf(shownProjectName, "${testParameters.suffixes[platform]!!}$moduleKind", "Kotlin")
           projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[platform]!!, path = *path)
         }
       }
@@ -99,6 +101,8 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
       TargetPlatform.Native to "ios"
     )
 
+    private const val libraryGroup = "com.example"
+
     @JvmStatic
     @Parameterized.Parameters(name = "{0}")
     fun data(): Collection<TestParameters> {
@@ -106,22 +110,26 @@ class CreateKotlinMPProjectGuiTest(private val testParameters: TestParameters) :
         TestParameters(
           projectName = "kotlin_mpp_library",
           project = kotlinProjects.getValue(Projects.KotlinMPProjectLibrary),
-          suffixes = suffixes
+          suffixes = suffixes,
+          gradleGroup = libraryGroup
         ),
         TestParameters(
           projectName = "kotlin_mpp_client_server",
           project = kotlinProjects.getValue(Projects.KotlinMPProjectClientServer),
-          suffixes = suffixes
+          suffixes = suffixes,
+          gradleGroup = ""
         ),
         TestParameters(
           projectName = "kotlin_mpp_native",
           project = kotlinProjects.getValue(Projects.KotlinProjectNative),
-          suffixes = suffixes
+          suffixes = suffixes,
+        gradleGroup = ""
         ),
         TestParameters(
           projectName = "kotlin_mpp_mobile_library",
           project = kotlinProjects.getValue(Projects.KotlinMPProjectMobileLibrary),
-          suffixes = mobileSuffixes
+          suffixes = mobileSuffixes,
+          gradleGroup = libraryGroup
         )
       )
     }

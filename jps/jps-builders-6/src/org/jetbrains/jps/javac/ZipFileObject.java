@@ -25,8 +25,8 @@ public class ZipFileObject extends JpsFileObject {
 
   @NotNull
   private static URI createUri(final File zipFile, String relPath) {
-    final StringBuilder buf = new StringBuilder();
     final String p = FileUtilRt.toSystemIndependentName(zipFile.getPath());
+    final StringBuilder buf = new StringBuilder(p.length() + relPath.length() + 5);
     if (!p.startsWith("/")) {
       buf.append("///");
     }

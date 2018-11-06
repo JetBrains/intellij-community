@@ -84,7 +84,7 @@ public class ScratchUtil {
   @Nullable
   private static FileType getFileTypeFromName(@NotNull VirtualFile file) {
     if (file.getExtension() == null) return null;
-    FileType result = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+    FileType result = FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence());
     if (result == UnknownFileType.INSTANCE || StringUtil.isEmpty(result.getDefaultExtension())) {
       return null;
     }

@@ -156,7 +156,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
     searchToolbarWrapper1.setHorizontalSizeReferent(replaceToolbarWrapper1);
 
-    JLabel closeLabel = new JLabel(null, AllIcons.Actions.Cross, SwingConstants.RIGHT);
+    JLabel closeLabel = new JLabel(null, AllIcons.Actions.Close, SwingConstants.RIGHT);
     closeLabel.setBorder(JBUI.Borders.empty(5));
     closeLabel.setVerticalAlignment(SwingConstants.TOP);
     closeLabel.addMouseListener(new MouseAdapter() {

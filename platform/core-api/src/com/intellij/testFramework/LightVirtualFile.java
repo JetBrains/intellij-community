@@ -84,7 +84,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     myLanguage = language;
     FileType type = language.getAssociatedFileType();
     if (type == null) {
-      type = FileTypeRegistry.getInstance().getFileTypeByFileName(getName());
+      type = FileTypeRegistry.getInstance().getFileTypeByFileName(getNameSequence());
     }
     setFileType(type);
   }

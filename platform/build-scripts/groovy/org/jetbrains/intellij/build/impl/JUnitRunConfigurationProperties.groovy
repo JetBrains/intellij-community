@@ -27,7 +27,7 @@ class JUnitRunConfigurationProperties extends RunConfigurationProperties {
       messages.error("Cannot run configuration from '$file.name': module name is not specified")
     }
     Map<String, String> options = configuration.option?.collectEntries { [it.@name, it.@value] }
-    def testKind = options["TEST_OBJECT"]
+    def testKind = options["TEST_OBJECT"] ?: "class"
     List<String> testClassPatterns
     if (testKind == "class") {
       testClassPatterns = [options["MAIN_CLASS_NAME"]]
@@ -53,7 +53,7 @@ class JUnitRunConfigurationProperties extends RunConfigurationProperties {
             find { it.@name == "BuildArtifacts" && it.@enabled == "true" }?.
             artifact?.collect { it.@name } ?: []
 
-    def vmParameters = options["VM_PARAMETERS"].tokenize()
+    def vmParameters = (options["VM_PARAMETERS"] ?: "-ea").tokenize()
     def envVariables = first(configuration.envs)?.env?.collectEntries { [it.@name, it.@value] } ?: [:]
     return new JUnitRunConfigurationProperties(configuration.@name, moduleName, testClassPatterns, vmParameters, requiredArtifacts, envVariables)
   }

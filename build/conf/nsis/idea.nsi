@@ -1406,28 +1406,33 @@ Function un.getRegKey
   StrCmp $R2 $INSTDIR HKCU admin
 HKCU:
   StrCpy $baseRegKey "HKCU"
-  goto Done
+  Goto Done
 admin:
   ReadRegStr $R2 HKLM "Software\${MANUFACTURER}\${PRODUCT_REG_VER}" ""
   StrCpy $R2 "$R2\bin"
   StrCmp $R2 $INSTDIR HKLM cant_find_installation
 HKLM:
   StrCpy $baseRegKey "HKLM"
-  goto Done
+  Goto Done
+
 cant_find_installation:
-  ;admin perm. is required to uninstall?
+; compare installdir with default user location
+  ${UnStrStr} $R0 $INSTDIR $LOCALAPPDATA\${MANUFACTURER}
+  StrCmp $R0 $INSTDIR HKCU 0
+
+; compare installdir with default admin location
   ${If} ${RunningX64}
-look_at_program_files_64:
     ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES64
     StrCmp $R0 $INSTDIR HKLM look_at_program_files_32
   ${Else}
 look_at_program_files_32:
     ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
-    StrCmp $R0 $INSTDIR HKCU uninstaller_relocated
+    StrCmp $R0 $INSTDIR HKCU undefined_location
   ${EndIf}
-uninstaller_relocated:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
-  Abort
+
+; installdir does not contain known default locations
+undefined_location:
+  Goto HKLM
 Done:
 FunctionEnd
 
@@ -1438,6 +1443,14 @@ FunctionEnd
 
 
 Function un.onInit
+; Uninstallation was run from installation dir?
+  IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" get_reg_key 0
+  goto end_of_uninstall
+
+get_reg_key:
   SetRegView 32
   Call un.getRegKey
   StrCmp $baseRegKey "HKLM" required_admin_perm UAC_Done
@@ -1457,6 +1470,14 @@ copy_uninstall:
   CopyFiles "$OUTDIR\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
   Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  IfFileExists "$INSTDIR\bin\*.*" 0 delete_install_dir
+  StrCpy $0 "$INSTDIR\bin"
+  Call un.deleteDirIfEmpty
+delete_install_dir:
+  IfFileExists "$INSTDIR\*.*" 0 quit
+  StrCpy $0 "$INSTDIR"
+  Call un.deleteDirIfEmpty
+quit:
   Quit
 
 UAC_Elevate:
@@ -1475,6 +1496,10 @@ UAC_Success:
 UAC_Admin:
   SetShellVarContext all
   StrCpy $baseRegKey "HKLM"
+  Goto UAC_Done
+end_of_uninstall:
+  MessageBox MB_OK|MB_ICONEXCLAMATION "$(uninstaller_relocated)"
+  Abort
 UAC_Done:
   !insertmacro MUI_UNGETLANGUAGE
   !insertmacro INSTALLOPTIONS_EXTRACT "DeleteSettings.ini"
@@ -1671,15 +1696,7 @@ Section "Uninstall"
   StrCpy $1 "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}"
   StrCpy $2 "InstallLocation"
   Call un.OMReadRegStr
-  StrCmp $INSTDIR "$3\bin" check_if_IDE_in_use invalid_installation_dir
-invalid_installation_dir:
-  ;check if uninstaller runs from not installation folder
-  IfFileExists "$INSTDIR\IdeaWin32.dll" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" check_if_IDE_in_use 0
-  goto end_of_uninstall
-check_if_IDE_in_use:
+  DetailPrint "uninstall location: $3"
   ;check if the uninstalled application is running
   Call un.checkIfIDEInUse
   ; Uninstaller is in the \bin directory, we need upper level dir

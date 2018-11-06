@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.AccessorProcessor;
 
 import java.beans.Introspector;
 import java.util.ArrayList;
@@ -80,7 +80,7 @@ public class GroovyPropertyUtils {
       final GrExpression fromText = GroovyPsiElementFactory.getInstance(context.getProject()).createExpressionFromText("this", context);
       return findPropertySetter(fromText.getType(), propertyName, context);
     }
-    final PropertyProcessor processor = new PropertyProcessor(type, propertyName, PropertyKind.SETTER, () -> null, context);
+    final AccessorProcessor processor = new AccessorProcessor(propertyName, PropertyKind.SETTER, () -> null, context);
     ResolveUtil.processAllDeclarations(type, processor, ResolveState.initial(), context);
     return PsiImplUtil.extractUniqueElement(processor.getResultsArray());
   }

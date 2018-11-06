@@ -8,7 +8,9 @@ import org.junit.Test
 class GradleMavenRepositoriesImportTest: GradleImportingTestCase() {
   @Test
   fun `test maven repositories imported`() {
-    importProject("""
+    currentExternalProjectSettings.isResolveExternalAnnotations = true
+    try {
+      importProject("""
       |repositories {
       |  maven {
       |    name "test"
@@ -18,9 +20,12 @@ class GradleMavenRepositoriesImportTest: GradleImportingTestCase() {
       |
     """.trimMargin())
 
-    val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(myProject)
+      val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(myProject)
 
-    assertContainsElements(repositoriesConfiguration.repositories, RemoteRepositoryDescription("test", "test", "file:////tmp/repo"))
+      assertContainsElements(repositoriesConfiguration.repositories, RemoteRepositoryDescription("test", "test", "file:////tmp/repo"))
+    } finally {
+      currentExternalProjectSettings.isResolveExternalAnnotations = false
+    }
   }
 
 }

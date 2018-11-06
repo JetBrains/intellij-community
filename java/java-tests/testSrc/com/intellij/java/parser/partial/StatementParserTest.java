@@ -113,6 +113,8 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchRules6() { doParserTest("case 1 -> digit = '1'"); }
   public void testSwitchRules7() { doParserTest("case 1 -> '1';"); }
   public void testSwitchRules8() { doParserTest("case 1 -> ;"); }
+  public void testSwitchRules9() { doParserTest("case b -> f(b);"); }
+  public void testSwitchRules10() { doParserTest("case (b) -> f(b);"); }
 
   public void testSyncNormal() { doParserTest("synchronized(o){}"); }
   public void testSyncIncomplete0() { doParserTest("synchronized"); }

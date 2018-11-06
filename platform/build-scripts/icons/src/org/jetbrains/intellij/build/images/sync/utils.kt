@@ -16,25 +16,26 @@ internal fun String.splitNotBlank(delimiter: String): List<String> = this.split(
 internal fun String.splitWithTab(): List<String> = this.split("\t".toRegex())
 
 internal fun execute(workingDir: File?, vararg command: String, silent: Boolean = false): String {
+  val errOutputFile = File.createTempFile("errOutput", "txt")
   val processCall = {
     val process = ProcessBuilder(*command.filter { it.isNotBlank() }.toTypedArray())
       .directory(workingDir)
       .redirectOutput(ProcessBuilder.Redirect.PIPE)
-      .redirectError(ProcessBuilder.Redirect.PIPE)
+      .redirectError(errOutputFile)
       .start()
     val output = process.inputStream.bufferedReader().use { it.readText() }
-    val error = process.errorStream.bufferedReader().use { it.readText() }
     process.waitFor(1, TimeUnit.MINUTES)
+    val error = errOutputFile.readText().trim()
     if (process.exitValue() != 0) {
-      error("Command ${command.joinToString(" ")} failed with ${process.exitValue()} : $error")
+      error("Command ${command.joinToString(" ")} failed with ${process.exitValue()} : $output\n$error")
     }
     output
   }
-  return if (silent) {
-    processCall()
+  return try {
+    if (silent) processCall() else callWithTimer("Executing command ${command.joinToString(" ")}", processCall)
   }
-  else {
-    callWithTimer("Executing command ${command.joinToString(" ")}", processCall)
+  finally {
+    errOutputFile.delete()
   }
 }
 
@@ -68,4 +69,23 @@ internal fun <T> callWithTimer(msg: String? = null, call: () -> T): T {
   finally {
     log("Took ${System.currentTimeMillis() - start} ms")
   }
+}
+
+internal fun <T> retry(maxRetries: Int = 20,
+                       secondsBeforeRetry: Long = 30,
+                       doRetry: (Throwable) -> Boolean = { true },
+                       action: () -> T): T {
+  repeat(maxRetries) {
+    try {
+      return action()
+    }
+    catch (e: Exception) {
+      if (doRetry(e)) {
+        log("${it + 1} attempt of $maxRetries has failed. Retrying in ${secondsBeforeRetry}s..")
+        TimeUnit.SECONDS.sleep(secondsBeforeRetry)
+      }
+      else throw e
+    }
+  }
+  error("Unable to complete")
 }

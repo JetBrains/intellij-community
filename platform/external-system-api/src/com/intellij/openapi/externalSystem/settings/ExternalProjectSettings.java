@@ -31,7 +31,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   private boolean myUseAutoImport;
   private boolean myCreateEmptyContentRootDirectories;
-  private boolean myUseQualifiedModuleNames = true;
+  private boolean myUseQualifiedModuleNames = !ExternalSystemApiUtil.isJavaCompatibleIde();
 
   public String getExternalProjectPath() {
     return myExternalProjectPath;
@@ -99,5 +99,6 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
     receiver.myModules = myModules != null ? new HashSet<>(myModules) : new HashSet<>();
     receiver.myUseAutoImport = myUseAutoImport;
     receiver.myCreateEmptyContentRootDirectories = myCreateEmptyContentRootDirectories;
+    receiver.myUseQualifiedModuleNames = myUseQualifiedModuleNames;
   }
 }

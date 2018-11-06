@@ -89,7 +89,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
-  public PythonConsoleView(final Project project, final String title, final Sdk sdk, final boolean testMode) {
+  public PythonConsoleView(final Project project, final String title, @Nullable final Sdk sdk, final boolean testMode) {
     super(project, title, PythonLanguage.getInstance());
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
@@ -100,9 +100,11 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     super.setPrompt(null);
     setUpdateFoldingsEnabled(false);
     LanguageLevel languageLevel = LanguageLevel.getDefault();
-    final PythonSdkFlavor sdkFlavor = PythonSdkFlavor.getFlavor(sdk);
-    if (sdkFlavor != null) {
-      languageLevel = sdkFlavor.getLanguageLevel(sdk);
+    if (sdk != null) {
+      final PythonSdkFlavor sdkFlavor = PythonSdkFlavor.getFlavor(sdk);
+      if (sdkFlavor != null) {
+        languageLevel = sdkFlavor.getLanguageLevel(sdk);
+      }
     }
     myPyHighlighter = new PyHighlighter(languageLevel);
     myScheme = getConsoleEditor().getColorsScheme();

@@ -57,6 +57,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.io.Decompressor;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
@@ -79,6 +80,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
@@ -574,6 +577,17 @@ public class PlatformTestUtil {
   @NotNull
   public static String getRtJarPath() {
     return SystemProperties.getJavaHome() + "/lib/rt.jar";
+  }
+
+  @NotNull
+  public static URL getRtJarURL() {
+    String home = SystemProperties.getJavaHome();
+    try {
+      return JavaVersion.current().feature >= 9 ? new URL("jrt:" + home) : new File(home + "/lib/rt.jar").toURI().toURL();
+    }
+    catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void saveProject(@NotNull Project project) {

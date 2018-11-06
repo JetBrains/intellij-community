@@ -395,9 +395,7 @@ public class PackageChooserDialog extends PackageChooser {
             CommonBundle.getErrorTitle(),
             Messages.getErrorIcon()
           );
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(e);
-          }
+          LOG.debug(e);
         }
       };
       ApplicationManager.getApplication().runReadAction(action);

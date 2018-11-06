@@ -939,6 +939,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         return PluginManagerCore.getPluginByClassName(className);
       }
     }
+    Throwable cause = t.getCause();
+    if (cause != null) {
+      return findPluginId(cause);
+    }
 
     return null;
   }

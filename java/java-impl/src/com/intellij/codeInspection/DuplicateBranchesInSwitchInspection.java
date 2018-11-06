@@ -9,17 +9,21 @@ import com.intellij.psi.controlFlow.ControlFlow;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.ReturnValue;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static com.siyeh.ig.migration.TryWithIdenticalCatchesInspection.collectCommentTexts;
 
 /**
  * @author Pavel.Dolgov
@@ -79,22 +83,32 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
 
     List<Branch> branches = new ArrayList<>();
     List<PsiStatement> statementList = null;
-    for (PsiStatement statement : body.getStatements()) {
-      if (statement instanceof PsiSwitchLabelStatement) {
+    Comments comments = new Comments();
+
+    for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiSwitchLabelStatement) {
+        PsiSwitchLabelStatement switchLabel = (PsiSwitchLabelStatement)child;
         if (statementList != null) {
-          branches.add(new Branch(statementList, hasImplicitBreak(statement)));
+          branches.add(new Branch(statementList, hasImplicitBreak(switchLabel), comments.fetchTexts()));
           statementList = null;
         }
-        continue;
+        comments.addFrom(switchLabel);
       }
-      if (statementList == null) {
-        if (isIgnoredSingleStatement(statement)) continue; // trivial duplicate branches are probably OK
-        statementList = new ArrayList<>();
+      else if (child instanceof PsiStatement) {
+        PsiStatement statement = (PsiStatement)child;
+        if (statementList == null) {
+          statementList = new ArrayList<>();
+        }
+        statementList.add(statement);
+        comments.addFrom(statement);
       }
-      statementList.add(statement);
+      else {
+        comments.addPending(child);
+      }
     }
+
     if (statementList != null) {
-      branches.add(new Branch(statementList, true));
+      branches.add(new Branch(statementList, true, comments.fetchTexts()));
     }
     return branches;
   }
@@ -102,7 +116,8 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
   static boolean areDuplicates(List<Branch> branches, int index, int otherIndex) {
     Branch branch = branches.get(index);
     Branch otherBranch = branches.get(otherIndex);
-    if (branch.canFallThrough() || otherBranch.canFallThrough()) {
+    if (branch.canFallThrough() || otherBranch.canFallThrough() ||
+        branch.isSimpleExit() != otherBranch.isSimpleExit()) {
       return false;
     }
 
@@ -110,6 +125,9 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     if (match != null) {
       Match otherMatch = otherBranch.match(branch);
       if (otherMatch != null) {
+        if (branch.isSimpleExit() && otherBranch.isSimpleExit() && !Arrays.equals(branch.myCommentTexts, otherBranch.myCommentTexts)) {
+          return false;
+        }
         return ReturnValue.areEquivalent(match.getReturnValue(), otherMatch.getReturnValue());
       }
     }
@@ -127,24 +145,15 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     return statement instanceof PsiBreakStatement && ((PsiBreakStatement)statement).getLabelIdentifier() == null;
   }
 
-  private static boolean isIgnoredSingleStatement(@NotNull PsiStatement statement) {
-    if (statement instanceof PsiBreakStatement) {
-      return true;
-    }
-    if (statement instanceof PsiReturnStatement) {
-      PsiExpression value = ((PsiReturnStatement)statement).getReturnValue();
-      return value == null || ExpressionUtils.isNullLiteral(value);
-    }
-    return false;
-  }
-
   private static class Branch {
     private final PsiStatement[] myStatements;
+    private final String[] myCommentTexts;
+    private final boolean myIsSimpleExit;
 
     private DuplicatesFinder myFinder;
     private Boolean myCanFallThrough;
 
-    Branch(@NotNull List<PsiStatement> statementList, boolean hasImplicitBreak) {
+    Branch(@NotNull List<PsiStatement> statementList, boolean hasImplicitBreak, String[] commentTexts) {
       int lastIndex = statementList.size() - 1;
       PsiStatement lastStatement = statementList.get(lastIndex);
       if (hasImplicitBreak ||
@@ -154,10 +163,12 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
           lastStatement instanceof PsiThrowStatement) {
         myCanFallThrough = false; // in more complex cases it will be computed lazily
       }
+      myIsSimpleExit = lastIndex == 0 && isSimpleExit(lastStatement);
       if (lastIndex > 0 && isBreakWithoutLabel(lastStatement)) {
         statementList = statementList.subList(0, lastIndex); // trailing 'break' is already taken into account in myCanFallThrough
       }
       myStatements = statementList.toArray(PsiStatement.EMPTY_ARRAY);
+      myCommentTexts = commentTexts;
     }
 
     @Nullable
@@ -170,6 +181,10 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
         myCanFallThrough = calculateCanFallThrough(myStatements);
       }
       return myCanFallThrough;
+    }
+
+    boolean isSimpleExit() {
+      return myIsSimpleExit;
     }
 
     @NotNull
@@ -205,6 +220,58 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
         }
       }
       return true;
+    }
+
+    private static boolean isSimpleExit(@Nullable PsiStatement statement) {
+      if (statement instanceof PsiBreakStatement ||
+          statement instanceof PsiContinueStatement ||
+          statement instanceof PsiThrowStatement) {
+        return true;
+      }
+      if (statement instanceof PsiReturnStatement) {
+        return isSimpleExpression(((PsiReturnStatement)statement).getReturnValue());
+      }
+      return false;
+    }
+
+    private static boolean isSimpleExpression(@Nullable PsiExpression expression) {
+      expression = PsiUtil.deparenthesizeExpression(expression);
+      if (expression == null || expression instanceof PsiLiteralExpression) {
+        return true;
+      }
+      if (expression instanceof PsiReferenceExpression) {
+        PsiExpression qualifier = ((PsiReferenceExpression)expression).getQualifierExpression();
+        return qualifier == null || qualifier instanceof PsiQualifiedExpression;
+      }
+      if (expression instanceof PsiUnaryExpression) {
+        return isSimpleExpression(((PsiUnaryExpression)expression).getOperand());
+      }
+      return false;
+    }
+  }
+
+  private static class Comments {
+    private final List<String> myTexts = new ArrayList<>();
+    private final List<PsiElement> myPending = new ArrayList<>();
+
+    String[] fetchTexts() {
+      String[] result = ArrayUtil.toStringArray(myTexts);
+      myTexts.clear();
+      return result;
+    }
+
+    void addFrom(PsiStatement statement) {
+      // The comments followed by a switch label are attached to that switch label.
+      // They're pending until we know if the next statement is a label or not.
+      for (PsiElement pending : myPending) {
+        collectCommentTexts(pending, myTexts);
+      }
+      myPending.clear();
+      collectCommentTexts(statement, myTexts);
+    }
+
+    public void addPending(PsiElement element) {
+      myPending.add(element);
     }
   }
 }

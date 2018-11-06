@@ -19,7 +19,6 @@ import com.intellij.find.FindUtil;
 import com.intellij.find.actions.CompositeActiveComponent;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -52,7 +51,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.testDiscovery.instrumentation.TestDiscoveryInstrumentationUtils;
 import com.intellij.uast.UastMetaLanguage;
 import com.intellij.ui.ActiveComponent;
@@ -161,7 +159,7 @@ public class ShowAffectedTestsAction extends AnAction {
     DiscoveredTestsTree tree = showTree(project, dataContext, presentableName);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       if (DumbService.isDumb(project)) return;
-      String className = ReadAction.compute(() -> getClassName(psiClass));
+      String className = ReadAction.compute(() -> DiscoveredTestsTreeModel.getClassName(psiClass));
       if (className == null) return;
       List<Couple<String>> classesAndMethods = ContainerUtil.newSmartList(Couple.of(className, null));
       processTestDiscovery(project, createTreeProcessor(tree), classesAndMethods, Collections.emptyList());
@@ -407,7 +405,7 @@ public class ShowAffectedTestsAction extends AnAction {
             testMethodPsi[0] = ArrayUtil.getFirstElement(testClassPsi[0].findMethodsByName(testMethod, checkBases));
           }
         }));
-        if (testMethodPsi[0] != null) {
+        if (testClassPsi[0] != null) {
           if (!processor.process(testClassPsi[0], testMethodPsi[0], parameter)) return false;
         }
         return true;
@@ -487,7 +485,7 @@ public class ShowAffectedTestsAction extends AnAction {
   @Nullable
   private static Couple<String> getMethodKey(@NotNull PsiMethod method) {
     PsiClass c = method.getContainingClass();
-    String fqn = c != null ? getClassName(c) : null;
+    String fqn = c != null ? DiscoveredTestsTreeModel.getClassName(c) : null;
     return fqn == null ? null : Couple.of(fqn, methodSignature(method));
   }
 
@@ -495,17 +493,6 @@ public class ShowAffectedTestsAction extends AnAction {
   private static String methodSignature(@NotNull PsiMethod method) {
     String tail = TestDiscoveryInstrumentationUtils.SEPARATOR + ClassUtil.getAsmMethodSignature(method);
     return (method.isConstructor() ? "<init>" : method.getName()) + tail;
-  }
-
-  @Nullable
-  private static String getClassName(@NotNull PsiClass c) {
-    if (c instanceof PsiAnonymousClass) {
-      PsiClass containingClass = PsiTreeUtil.getParentOfType(c, PsiClass.class);
-      if (containingClass != null) {
-        return ClassUtil.getJVMClassName(containingClass) + JavaAnonymousClassesHelper.getName((PsiAnonymousClass)c);
-      }
-    }
-    return ClassUtil.getJVMClassName(c);
   }
 
   @Nullable

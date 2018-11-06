@@ -92,7 +92,7 @@ public class ComplexUndoTest extends EditorUndoTestCase {
       assertEquals(WINDOWS_1251, virtualFile2.getCharset());
       Editor editor = getEditor(virtualFile);
       Editor editor2 = getEditor(virtualFile2);
-      String string = StringUtil.repeat(String.valueOf(utf8character), 1024 * 10);
+      String string = StringUtil.repeat(String.valueOf(utf8character), 1024);
       typeInText(editor, string);
       typeInText(editor2, string);
       WriteCommandAction.runWriteCommandAction(getProject(), () -> editor.getDocument().deleteString(0, editor.getDocument().getTextLength()));

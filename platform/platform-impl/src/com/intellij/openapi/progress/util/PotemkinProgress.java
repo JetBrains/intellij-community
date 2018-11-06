@@ -60,7 +60,8 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
 
     // problem (IDEA-192282): LWCToolkit event might be posted before PotemkinProgress appears,
     // and it then just sits in the queue blocking the whole UI until the progress is finished.
-    return event instanceof InvocationEvent && event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit");
+    return event instanceof InvocationEvent && event.toString().contains(",runnable=sun.lwawt.macosx.LWCToolkit") ||
+           event instanceof MyInvocationEvent;
   }
 
   @NotNull
@@ -216,5 +217,15 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
     }, this));
 
     started.waitFor();
+  }
+
+  public static void invokeLaterNotBlocking(Object source, Runnable runnable) {
+    Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(new MyInvocationEvent(source, runnable));
+  }
+
+  private static class MyInvocationEvent extends InvocationEvent {
+    public MyInvocationEvent(Object source, Runnable runnable) {
+      super(source, runnable);
+    }
   }
 }

@@ -6,9 +6,9 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -318,7 +318,7 @@ public class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesUpdater
       }
     }
     catch (AbstractMethodError ame) { // acceptsDirectory is missed
-      if (pusher != null) throw new ExtensionException(pusher.getClass());
+      if (pusher != null) throw PluginManagerCore.createPluginException("Failed to apply pusher " + pusher.getClass(), ame, pusher.getClass());
       throw ame;
     }
   }

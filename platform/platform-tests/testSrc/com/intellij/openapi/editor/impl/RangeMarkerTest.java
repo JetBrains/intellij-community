@@ -1129,7 +1129,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     AtomicReference<List<Integer>> minOffsets = new AtomicReference<>();
     AtomicInteger failPrinted = new AtomicInteger();
     String text = StringUtil.repeat("blah", 1000);
-    IntStream.range(0, 10_000).parallel().forEach(iter -> {
+    IntStream.range(0, 1_000).parallel().forEach(iter -> {
       DocumentEx doc = new DocumentImpl(text, true);
       List<Integer> offsets = new ArrayList<>();
 
@@ -1171,10 +1171,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
         throw e;
       }
     });
-    if (minOffsets.get() == null) {
-      System.out.println("Can't find anything, giving up");
-    }
-    else {
+    if (minOffsets.get() != null) {
       System.err.println("Moves and offsets ("+minOffsets.get().size()+"): " + minOffsets);
       fail();
     }

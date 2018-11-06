@@ -28,13 +28,10 @@ public class AllIcons {
     public static final Icon Clear = IconLoader.getIcon("/actions/clear.png"); // 16x16
     public static final Icon Close = IconLoader.getIcon("/actions/close.svg"); // 16x16
     public static final Icon CloseHovered = IconLoader.getIcon("/actions/closeHovered.svg"); // 16x16
-    public static final Icon CloseNew = IconLoader.getIcon("/actions/closeNew.png"); // 16x16
-    public static final Icon CloseNewHovered = IconLoader.getIcon("/actions/closeNewHovered.png"); // 16x16
     public static final Icon Collapseall = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
     public static final Icon Commit = IconLoader.getIcon("/actions/commit.svg"); // 16x16
     public static final Icon Compile = IconLoader.getIcon("/actions/compile.svg"); // 16x16
     public static final Icon Copy = IconLoader.getIcon("/actions/copy.svg"); // 16x16
-    public static final Icon Cross = IconLoader.getIcon("/actions/cross.png"); // 12x12
     public static final Icon DiagramDiff = IconLoader.getIcon("/actions/diagramDiff.svg"); // 16x16
     public static final Icon Diff = IconLoader.getIcon("/actions/diff.svg"); // 16x16
     public static final Icon DiffWithClipboard = IconLoader.getIcon("/actions/diffWithClipboard.svg"); // 16x16
@@ -168,6 +165,16 @@ public class AllIcons {
     @Deprecated
     public static final Icon CheckedGrey = AllIcons.Actions.Checked;
 
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Close */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon CloseNew = AllIcons.Actions.Close;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon CloseNewHovered = AllIcons.Actions.CloseHovered;
+
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.IntentionBulb */
     @SuppressWarnings("unused")
     @Deprecated
@@ -177,6 +184,11 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon CreatePatch = IconLoader.getIcon("/actions/createPatch.png");
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Close */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Cross = AllIcons.Actions.Close;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Cancel */
     @SuppressWarnings("unused")
@@ -755,6 +767,7 @@ public class AllIcons {
   }
 
   public final static class FileTypes {
+    public static final Icon AddAny = IconLoader.getIcon("/fileTypes/addAny.svg"); // 16x16
     public static final Icon Any_type = IconLoader.getIcon("/fileTypes/any_type.svg"); // 16x16
     public static final Icon Archive = IconLoader.getIcon("/fileTypes/archive.svg"); // 16x16
     public static final Icon AS = IconLoader.getIcon("/fileTypes/as.svg"); // 16x16
@@ -816,14 +829,12 @@ public class AllIcons {
     public static final Icon AutoscrollFromSource = IconLoader.getIcon("/general/autoscrollFromSource.svg"); // 16x16
     public static final Icon AutoscrollToSource = IconLoader.getIcon("/general/autoscrollToSource.svg"); // 16x16
     public static final Icon Balloon = IconLoader.getIcon("/general/balloon.svg"); // 16x16
-    public static final Icon BalloonClose = IconLoader.getIcon("/general/balloonClose.png"); // 32x32
     public static final Icon BalloonError = IconLoader.getIcon("/general/balloonError.svg"); // 16x16
     public static final Icon BalloonInformation = IconLoader.getIcon("/general/balloonInformation.svg"); // 16x16
     public static final Icon BalloonWarning = IconLoader.getIcon("/general/balloonWarning.svg"); // 16x16
     public static final Icon BalloonWarning12 = IconLoader.getIcon("/general/balloonWarning12.svg"); // 12x12
     public static final Icon CollapseComponent = IconLoader.getIcon("/general/collapseComponent.svg"); // 12x12
     public static final Icon CollapseComponentHover = IconLoader.getIcon("/general/collapseComponentHover.svg"); // 12x12
-    public static final Icon ComboUpPassive = IconLoader.getIcon("/general/comboUpPassive.png"); // 16x16
     public static final Icon ContextHelp = IconLoader.getIcon("/general/contextHelp.svg"); // 16x16
     public static final Icon CopyHovered = IconLoader.getIcon("/general/copyHovered.svg"); // 16x16
     public static final Icon Divider = IconLoader.getIcon("/general/divider.svg"); // 2x19
@@ -846,6 +857,8 @@ public class AllIcons {
     public static final Icon InheritedMethod = IconLoader.getIcon("/general/inheritedMethod.png"); // 11x14
     public static final Icon Inline_edit = IconLoader.getIcon("/general/inline_edit.svg"); // 16x16
     public static final Icon Inline_edit_hovered = IconLoader.getIcon("/general/inline_edit_hovered.svg"); // 16x16
+    public static final Icon InlineAdd = IconLoader.getIcon("/general/inlineAdd.svg"); // 16x16
+    public static final Icon InlineAddHover = IconLoader.getIcon("/general/inlineAddHover.svg"); // 16x16
     public static final Icon InspectionsError = IconLoader.getIcon("/general/inspectionsError.svg"); // 14x14
     public static final Icon InspectionsEye = IconLoader.getIcon("/general/inspectionsEye.svg"); // 14x14
     public static final Icon InspectionsOff = IconLoader.getIcon("/general/inspectionsOff.png"); // 16x16
@@ -910,35 +923,40 @@ public class AllIcons {
     @Deprecated
     public static final Icon ArrowDown_white = AllIcons.General.ArrowDown;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon AutohideOff = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+    public static final Icon AutohideOff = AllIcons.General.Pin_tab;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon AutohideOffInactive = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+    public static final Icon AutohideOffInactive = AllIcons.General.Pin_tab;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Pin_tab */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Pin_tab */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon AutohideOffPressed = IconLoader.getIcon("/general/pin_tab.svg"); // 16x16
+    public static final Icon AutohideOffPressed = AllIcons.General.Pin_tab;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Ide.Notification.Close */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon BalloonClose = AllIcons.Ide.Notification.Close;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Bullet = IconLoader.getIcon("/general/bullet.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Collapseall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Collapseall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon CollapseAll = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
+    public static final Icon CollapseAll = AllIcons.Actions.Collapseall;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Collapseall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Collapseall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon CollapseAllHover = IconLoader.getIcon("/actions/collapseall.svg"); // 16x16
+    public static final Icon CollapseAllHover = AllIcons.Actions.Collapseall;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")
@@ -993,12 +1011,17 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png");
+    public static final Icon ComboUpPassive = IconLoader.getIcon("/general/comboUpPassive.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
+    /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon Configure = IconLoader.getIcon("/general/settings.svg"); // 16x16
+    public static final Icon ConfigurableDefault = IconLoader.getIcon("/general/configurableDefault.png");
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Settings */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Configure = AllIcons.General.Settings;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Welcome.CreateNewProject */
     @SuppressWarnings("unused")
@@ -1025,30 +1048,30 @@ public class AllIcons {
     @Deprecated
     public static final Icon DownloadPlugin = IconLoader.getIcon("/general/downloadPlugin.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Settings */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon EditColors = IconLoader.getIcon("/general/settings.svg"); // 16x16
+    public static final Icon EditColors = AllIcons.General.Settings;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Edit */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon EditItemInSection = IconLoader.getIcon("/actions/edit.svg"); // 16x16
+    public static final Icon EditItemInSection = AllIcons.Actions.Edit;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon ErrorsInProgress = IconLoader.getIcon("/general/errorsInProgress.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Expandall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Expandall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ExpandAll = IconLoader.getIcon("/actions/expandall.svg"); // 16x16
+    public static final Icon ExpandAll = AllIcons.Actions.Expandall;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.Actions.Expandall */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Expandall */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon ExpandAllHover = IconLoader.getIcon("/actions/expandall.svg"); // 16x16
+    public static final Icon ExpandAllHover = AllIcons.Actions.Expandall;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export */
     @SuppressWarnings("unused")
@@ -1375,15 +1398,15 @@ public class AllIcons {
     @Deprecated
     public static final Icon Tab_grey_right_inner = IconLoader.getIcon("/general/tab_grey_right_inner.png");
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.Settings */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.Settings */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon TemplateProjectSettings = IconLoader.getIcon("/general/settings.svg"); // 16x16
+    public static final Icon TemplateProjectSettings = AllIcons.General.Settings;
 
-    /** @deprecated to be removed in IDEA 2020 - AllIcons.General.ProjectStructure */
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ProjectStructure */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon TemplateProjectStructure = IconLoader.getIcon("/general/projectStructure.svg"); // 16x16
+    public static final Icon TemplateProjectStructure = AllIcons.General.ProjectStructure;
 
     /** @deprecated to be removed in IDEA 2020 */
     @SuppressWarnings("unused")
@@ -1692,10 +1715,6 @@ public class AllIcons {
   public final static class Modules {
     public static final Icon AddExcludedRoot = IconLoader.getIcon("/modules/addExcludedRoot.svg"); // 16x16
     public static final Icon Annotation = IconLoader.getIcon("/modules/annotation.svg"); // 16x16
-    public static final Icon DeleteContentFolder = IconLoader.getIcon("/modules/deleteContentFolder.png"); // 9x9
-    public static final Icon DeleteContentFolderRollover = IconLoader.getIcon("/modules/deleteContentFolderRollover.png"); // 9x9
-    public static final Icon DeleteContentRoot = IconLoader.getIcon("/modules/deleteContentRoot.png"); // 9x9
-    public static final Icon DeleteContentRootRollover = IconLoader.getIcon("/modules/deleteContentRootRollover.png"); // 9x9
     public static final Icon EditFolder = IconLoader.getIcon("/modules/editFolder.svg"); // 16x16
     public static final Icon ExcludedGeneratedRoot = IconLoader.getIcon("/modules/excludedGeneratedRoot.svg"); // 16x16
     public static final Icon ExcludeRoot = IconLoader.getIcon("/modules/excludeRoot.svg"); // 16x16
@@ -1725,6 +1744,26 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon AddContentEntry = AllIcons.General.Add;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Close */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DeleteContentFolder = AllIcons.Actions.Close;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DeleteContentFolderRollover = AllIcons.Actions.CloseHovered;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Close */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DeleteContentRoot = AllIcons.Actions.Close;
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.CloseHovered */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon DeleteContentRootRollover = AllIcons.Actions.CloseHovered;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.Edit */
     @SuppressWarnings("unused")
@@ -1782,7 +1821,6 @@ public class AllIcons {
     public static final Icon AbstractClass = IconLoader.getIcon("/nodes/abstractClass.svg"); // 16x16
     public static final Icon AbstractException = IconLoader.getIcon("/nodes/abstractException.svg"); // 16x16
     public static final Icon AbstractMethod = IconLoader.getIcon("/nodes/abstractMethod.svg"); // 16x16
-    public static final Icon Advice = IconLoader.getIcon("/nodes/advice.svg"); // 16x16
     public static final Icon Alias = IconLoader.getIcon("/nodes/alias.svg"); // 16x16
     public static final Icon Annotationtype = IconLoader.getIcon("/nodes/annotationtype.svg"); // 16x16
     public static final Icon AnonymousClass = IconLoader.getIcon("/nodes/anonymousClass.svg"); // 16x16
@@ -1851,15 +1889,15 @@ public class AllIcons {
       public static final Icon RenderKit = IconLoader.getIcon("/nodes/jsf/renderKit.svg"); // 16x16
       public static final Icon Validator = IconLoader.getIcon("/nodes/jsf/validator.svg"); // 16x16
 
-      /** @deprecated to be removed in IDEA 2020 - AllIcons.Nodes.Parameter */
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Parameter */
       @SuppressWarnings("unused")
       @Deprecated
-      public static final Icon GenericValue = IconLoader.getIcon("/nodes/parameter.svg"); // 16x16
+      public static final Icon GenericValue = AllIcons.Nodes.Parameter;
 
-      /** @deprecated to be removed in IDEA 2020 - AllIcons.Nodes.UpFolder */
+      /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.UpFolder */
       @SuppressWarnings("unused")
       @Deprecated
-      public static final Icon NavigationCase = IconLoader.getIcon("/nodes/upFolder.svg"); // 16x16
+      public static final Icon NavigationCase = AllIcons.Nodes.UpFolder;
 
     }
     public static final Icon Jsr45 = IconLoader.getIcon("/nodes/jsr45.svg"); // 16x16
@@ -1929,6 +1967,11 @@ public class AllIcons {
     public static final Icon WebFolder = IconLoader.getIcon("/nodes/webFolder.svg"); // 16x16
     public static final Icon Weblistener = IconLoader.getIcon("/nodes/weblistener.svg"); // 16x16
     public static final Icon Write_access = IconLoader.getIcon("/nodes/write-access.svg"); // 16x16
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Nodes.Tag */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Advice = AllIcons.Nodes.Tag;
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.General.ArrowDown */
     @SuppressWarnings("unused")

@@ -176,6 +176,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
     private fun splitIntoNotCachedAndCached(sources: Set<String>,
                                             cache: Cache<String, Set<RepoPackage>>): Pair<Set<String>, Set<RepoPackage>> {
+      if (sources.isEmpty()) return emptySet<String>() to emptySet()
+
       val notCached = mutableSetOf<String>()
       val cached = mutableSetOf<RepoPackage>()
 
@@ -235,6 +237,8 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
     private fun sourceToStubPackagesAvailableToInstall(sourceToInstalledRuntimeAndStubPkgs: Map<String, List<Pair<PyPackage, PyPackage?>>>,
                                                        availablePackages: List<RepoPackage>): Map<String, Set<RepoPackage>> {
+      if (sourceToInstalledRuntimeAndStubPkgs.isEmpty()) return emptyMap()
+
       val stubPkgsAvailableToInstall = mutableMapOf<String, RepoPackage>()
       availablePackages.forEach { if (it.name.endsWith(STUBS_SUFFIX)) stubPkgsAvailableToInstall[it.name] = it }
 

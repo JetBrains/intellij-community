@@ -772,7 +772,7 @@ public class PluginManagerConfigurableNew
 
     myTrendingPanel.getEmptyText().setText("Marketplace plugins are not loaded.")
       .appendSecondaryText("Check the internet connection and ", StatusText.DEFAULT_ATTRIBUTES, null)
-      .appendSecondaryText("refresh", SimpleTextAttributes.LINK_ATTRIBUTES, e -> myTrendingRunnable.run());
+      .appendSecondaryText("refresh", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> myTrendingRunnable.run());
 
     ApplicationManager.getApplication().executeOnPooledThread(runnable);
     return createScrollPane(myTrendingPanel, false);
@@ -904,7 +904,7 @@ public class PluginManagerConfigurableNew
     };
 
     myUpdatesPanel.getEmptyText().setText("No updates available.")
-      .appendSecondaryText("Check new updates", SimpleTextAttributes.LINK_ATTRIBUTES, e -> myUpdatesRunnable.run());
+      .appendSecondaryText("Check new updates", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES, e -> myUpdatesRunnable.run());
 
     ApplicationManager.getApplication().executeOnPooledThread(runnable);
     return createScrollPane(myUpdatesPanel, false);
@@ -1414,17 +1414,19 @@ public class PluginManagerConfigurableNew
 
   @NotNull
   private static Url createSearchUrl(@NotNull String query, int count) {
-    return Urls.newFromEncoded("http://plugins.jetbrains.com/api/search?" + query +
-                               "&build=" + URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getApiVersion()) +
+    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
+    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/search?" + query +
+                               "&build=" + URLUtil.encodeURIComponent(instance.getApiVersion()) +
                                "&max=" + count);
   }
 
   @NotNull
   private static Url createSearchSuggestUrl(@NotNull String query) {
-    return Urls.newFromEncoded("http://plugins.jetbrains.com/api/searchSuggest?term=" +
+    ApplicationInfoEx instance = ApplicationInfoImpl.getShadowInstance();
+    return Urls.newFromEncoded(instance.getPluginManagerUrl() + "/api/searchSuggest?term=" +
                                URLUtil.encodeURIComponent(query) +
                                "&productCode=" +
-                               URLUtil.encodeURIComponent(ApplicationInfoImpl.getShadowInstance().getBuild().getProductCode()));
+                               URLUtil.encodeURIComponent(instance.getBuild().getProductCode()));
   }
 
   private static boolean forceHttps() {

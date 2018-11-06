@@ -669,6 +669,7 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.skipUnusedLocal" interface="com.jetbrains.python.inspections.PyUnusedLocalInspectionSkipper"/>
     <extensionPoint qualifiedName="Pythonid.pyReferenceCustomTargetChecker" interface="com.jetbrains.python.psi.impl.references.PyReferenceCustomTargetChecker"/>
     <extensionPoint qualifiedName="Pythonid.pyTestFixtureExtension" interface="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureExtension"/>
     <extensionPoint qualifiedName="Pythonid.pyTestConfigurationSelector"  interface="com.jetbrains.python.testing.PyTestConfigurationSelector"/>
@@ -784,6 +785,7 @@
     <typeProvider implementation="com.jetbrains.numpy.codeInsight.NumpyDocStringTypeProvider"/>
     <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
     <pyClassMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyClassMembersProvider"/>
+    <documentationLinkProvider implementation="com.jetbrains.numpy.codeInsight.SciPyDocumentationLinkProvider"/>
 
     <!-- PyDocstring -->
     <typeProvider implementation="com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider"/>

@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +106,14 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
     if (SearchEverywhereDataKeys.ITEM_STRING_DESCRIPTION.is(dataId)) {
       AnAction action = getAction((GotoActionModel.MatchedValue)element);
-      return action == null ? null : action.getTemplatePresentation().getDescription();
+      if (action != null) {
+        String description = action.getTemplatePresentation().getDescription();
+        if (Registry.is("show.configurables.ids.in.settings.always")) {
+          String presentableId = StringUtil.notNullize(ActionManager.getInstance().getId(action), "class: " + action.getClass().getName());
+          return String.format("[%s] %s", presentableId, StringUtil.notNullize(description));
+        }
+        return description;
+      }
     }
 
     return null;

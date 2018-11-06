@@ -93,15 +93,15 @@ public final class GutterTooltipHelper {
     boolean useSingleLink = Registry.is("gutter.tooltip.single.link");
     String packageName = null;
     boolean addedSingleLink = useSingleLink && appendLink(sb, element);
-    PsiElement skipped = null;
+    PsiElement original = element; // use original member as a first separate link
     if (skip && (element instanceof PsiMethod || element instanceof PsiField)) {
-      skipped = element; // use skipped member as first separate link
       element = getContainingElement(element);
     }
     while (element != null) {
       String name = getPresentableName(element);
       if (name != null) {
-        boolean addedLink = !useSingleLink && appendLink(sb, skipped != null ? skipped : element);
+        boolean addedLink = !useSingleLink && appendLink(sb, original != null ? original : element);
+        original = null; // do not use a link to the original element if it is already added
         // Swing uses simple HTML processing and paints a link incorrectly if it contains different fonts.
         // This is the reason why I use monospaced font not only for element name, but for a whole link.
         // By the same reason I have to comment out support for deprecated elements.
@@ -123,9 +123,8 @@ public final class GutterTooltipHelper {
           break;
         }
       }
-      if (parent != null) sb.append(" in ");
+      if (name != null && parent != null) sb.append(" in ");
       element = parent;
-      skipped = null;
     }
     if (addedSingleLink) sb.append("</code></a>");
     appendPackageName(sb, packageName);
@@ -179,6 +178,9 @@ public final class GutterTooltipHelper {
   @Nullable
   private static PsiElement getContainingElement(@NotNull PsiElement element) {
     PsiMember member = getStubOrPsiParentOfType(element, PsiMember.class);
+    if (member == null && element instanceof PsiMember) {
+      member = ((PsiMember)element).getContainingClass();
+    }
     return member != null ? member : element.getContainingFile();
   }
 

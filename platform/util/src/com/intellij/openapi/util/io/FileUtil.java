@@ -18,6 +18,7 @@ package com.intellij.openapi.util.io;
 import com.intellij.CommonBundle;
 import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -596,10 +597,32 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static File findSequentNonexistentFile(@NotNull File parentFolder, @NotNull  String filePrefix, @NotNull String extension) {
+    return findSequentFile(parentFolder, filePrefix, extension, new Condition<File>() {
+      @Override
+      public boolean value(File file) {
+        return !file.exists();
+      }
+    });
+  }
+
+  /**
+   * Checks sequentially files with names filePrefix.extension, filePrefix1.extension, e.t.c
+   * and returns the first file which conforms to the provided condition.
+   *
+   * @param parentFolder the parent folder of the file to be returned
+   * @param filePrefix the prefix of the file to be returned
+   * @param extension the extension of the file to be returned
+   * @param condition the check of the file to be returned
+   */
+  @NotNull
+  public static File findSequentFile(@NotNull File parentFolder,
+                                     @NotNull String filePrefix,
+                                     @NotNull String extension,
+                                     @NotNull Condition<? super File> condition) {
     int postfix = 0;
     String ext = extension.isEmpty() ? "" : '.' + extension;
     File candidate = new File(parentFolder, filePrefix + ext);
-    while (candidate.exists()) {
+    while (!condition.value(candidate)) {
       postfix++;
       candidate = new File(parentFolder, filePrefix + postfix + ext);
     }

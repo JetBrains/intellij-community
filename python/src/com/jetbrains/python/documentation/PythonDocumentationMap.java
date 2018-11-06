@@ -2,6 +2,7 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -20,6 +21,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author yole
@@ -92,13 +96,15 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
 
     public State() {
       addEntry(PyQt4, PYQT4_DOC_URL);
-      addEntry("PyQt5", "http://doc.qt.io/qt-5/{class.name.lower}.html#{functionOrProp.name}");
+      addEntry("PyQt5", "http://doc.qt.io/qt-5/{class.name.lower}.html#{functionToProperty.name}{isProperty?-prop}");
       addEntry("PySide", "http://pyside.github.io/docs/pyside/{module.name.slashes}/{class.name}.html#{module.name}.{element.qname}");
-      addEntry("gtk", "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
+      addEntry("gtk",
+               "http://library.gnome.org/devel/pygtk/stable/class-gtk{class.name.lower}.html#method-gtk{class.name.lower}--{function.name.dashes}");
       addEntry("wx", "http://www.wxpython.org/docs/api/{module.name}.{class.name}-class.html#{function.name}");
-      addEntry("numpy", "http://docs.scipy.org/doc/numpy/reference/{}generated/{module.name}.{element.name}.html");
-      addEntry("scipy", "http://docs.scipy.org/doc/scipy/reference/{}generated/{module.name}.{element.name}.html");
       addEntry("kivy", "http://kivy.org/docs/api-{module.name}.html");
+      addEntry("matplotlib", "http://matplotlib.org/api/{module.basename}_api.html#{element.qname}");
+      addEntry("pyramid", "http://docs.pylonsproject.org/projects/pyramid/en/latest/api/{module.basename}.html#{element.qname}");
+      addEntry("flask", "http://flask.pocoo.org/docs/latest/api/#{element.qname}");
     }
 
     public List<Entry> getEntries() {
@@ -138,11 +144,26 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-    for (Entry e: myState.getEntries()) {
+    for (Entry e : myState.getEntries()) {
       if (PyQt4.equals(e.myPrefix) && PYQT4_DOC_URL_OLD.equals(e.myUrlPattern)) {
         // old URL is broken, switch to new one
         e.setUrlPattern(PYQT4_DOC_URL);
       }
+    }
+    addAbsentEntriesFromDefaultState(myState);
+    removeEntriesThatHandledSpecially(myState);
+  }
+
+  private static void removeEntriesThatHandledSpecially(@NotNull State state) {
+    ArrayList<String> strings = Lists.newArrayList("django", "numpy", "scipy");
+    // those packages are handled by implementations of PythonDocumentationLinkProvider
+    state.setEntries(state.getEntries().stream().filter((entry -> !strings.contains(entry.myPrefix))).collect(Collectors.toList()));
+  }
+
+  private static void addAbsentEntriesFromDefaultState(@NotNull State state) {
+    State defaultState = new State();
+    for (Entry e : defaultState.myEntries) {
+        state.addEntry(e.getPrefix(), e.getUrlPattern());
     }
   }
 
@@ -187,10 +208,15 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     else {
       macros.put("element.qname", "");
     }
-    macros.put("function.name", element instanceof PyFunction ? element.getName() : "");
-    macros.put("functionOrProp.name", element instanceof PyFunction && element.getName() != null ? functionOrProp(element.getName()) : "");
+    String functionName = element instanceof PyFunction && element.getName() != null ? element.getName() : "";
+    macros.put("function.name", functionName);
+    macros.put("functionToProperty.name", functionToProperty(functionName));
     macros.put("module.name", moduleQName.toString());
     macros.put("python.version", pyVersion);
+    macros.put("module.basename", moduleQName.getLastComponent());
+
+    macros.put("functionIsProperty?", Boolean.toString(!functionName.equals(functionToProperty(functionName))));
+
     final String pattern = transformPattern(urlPattern, macros);
     if (pattern == null) {
       return rootForPattern(urlPattern);
@@ -198,10 +224,10 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     return pattern;
   }
 
-  private static String functionOrProp(@NotNull String name) {
+  private static String functionToProperty(@NotNull String name) {
     String functionOrProp = StringUtil.getPropertyName(name);
-    if (!name.equals(functionOrProp)) {
-      functionOrProp += functionOrProp + "-prop";
+    if (functionOrProp == null) {
+      functionOrProp = name;
     }
     return functionOrProp;
   }
@@ -215,12 +241,21 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
         }
         continue;
       }
+      if (entry.getKey().endsWith("?")) {
+        String regex = "\\{" + entry.getKey().replace("?", "\\?") + "([^}]+)\\}";
+
+        Matcher matcher = Pattern.compile(regex).matcher(urlPattern);
+        if (matcher.find()) {
+          String value = Boolean.valueOf(entry.getValue()) ? matcher.group(1) : "";
+
+          urlPattern = urlPattern.replaceAll(regex, value);
+        }
+      }
       urlPattern = urlPattern
         .replace("{" + entry.getKey() + "}", entry.getValue())
         .replace("{" + entry.getKey() + ".lower}", entry.getValue().toLowerCase())
         .replace("{" + entry.getKey() + ".slashes}", entry.getValue().replace(".", "/"))
         .replace("{" + entry.getKey() + ".dashes}", entry.getValue().replace("_", "-"));
-
     }
     return urlPattern.replace("{}", "");
   }

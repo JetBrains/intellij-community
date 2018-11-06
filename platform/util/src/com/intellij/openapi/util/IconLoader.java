@@ -269,30 +269,6 @@ public final class IconLoader {
   }
 
   @Nullable
-  private static URL findURL(@NotNull String path, @Nullable Object context) {
-    URL url;
-    if (context instanceof Class) {
-      url = ((Class)context).getResource(path);
-    }
-    else if (context instanceof ClassLoader) {
-      // Paths in ClassLoader getResource shouldn't start with "/"
-      url = ((ClassLoader)context).getResource(path.startsWith("/") ? path.substring(1) : path);
-    }
-    else {
-      LOG.warn("unexpected: " + context);
-      return null;
-    }
-    // Find either PNG or SVG icon. The icon will then be wrapped into CachedImageIcon
-    // which will load proper icon version depending on the context - UI theme, DPI.
-    // SVG version, when present, has more priority than PNG.
-    // See for details: com.intellij.util.ImageLoader.ImageDescList#create
-    if (url != null || !path.endsWith(".png")) return url;
-    url = findURL(path.substring(0, path.length() - 4) + ".svg", context);
-    if (url != null && !path.startsWith(LAF_PREFIX)) LOG.info("replace '" + path + "' with '" + url + "'");
-    return url;
-  }
-
-  @Nullable
   public static Icon findIcon(URL url) {
     return findIcon(url, true);
   }
@@ -885,10 +861,23 @@ public final class IconLoader {
           URL url = null;
           String path = myOverriddenPath;
           if (path != null) {
-            url = findURL(path, myClassLoader);
+            if (myClassLoader != null) {
+              path = StringUtil.trimStart(path, "/"); // Paths in ClassLoader getResource shouldn't start with "/"
+              url = findURL(path, new Function<String, URL>() {
+                @Override
+                public URL fun(String path) {
+                  return myClassLoader.getResource(path);
+                }
+              });
+            }
             if (url == null && myClass != null) {
               // Some plugins use findIcon("icon.png",IconContainer.class)
-              url = findURL(path, myClass);
+              url = findURL(path, new Function<String, URL>() {
+                @Override
+                public URL fun(String path) {
+                  return myClass.getResource(path);
+                }
+              });
             }
           }
           if (url == null) {
@@ -917,6 +906,28 @@ public final class IconLoader {
           return new MyUrlResolver(path.substring(1), null, classLoader, myHandleNotFound).resolve();
         }
         return this;
+      }
+
+      @Nullable
+      @SuppressWarnings("DuplicateExpressions")
+      private static URL findURL(@NotNull String path, @NotNull Function<String, URL> urlProvider) {
+        URL url = urlProvider.fun(path);
+        if (url != null) return url;
+
+        // Find either PNG or SVG icon. The icon will then be wrapped into CachedImageIcon
+        // which will load proper icon version depending on the context - UI theme, DPI.
+        // SVG version, when present, has more priority than PNG.
+        // See for details: com.intellij.util.ImageLoader.ImageDescList#create
+        if (path.endsWith(".png")) {
+          path = path.substring(0, path.length() - 4) + ".svg";
+        }
+        else if (path.endsWith(".svg")) {
+          path = path.substring(0, path.length() - 4) + ".png";
+        }
+        else {
+          LOG.debug("unexpected path: ", path);
+        }
+        return urlProvider.fun(path);
       }
     }
   }

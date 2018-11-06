@@ -1873,7 +1873,8 @@ public class UsageViewImpl implements UsageViewEx {
       }
 
       else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
+        Node[] nodes = ApplicationManager.getApplication().isDispatchThread() ? getSelectedNodes() : null;
+        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(nodes));
       }
 
       else if (key == PlatformDataKeys.EXPORTER_TO_TEXT_FILE) {
@@ -1881,12 +1882,13 @@ public class UsageViewImpl implements UsageViewEx {
       }
 
       else if (key == USAGES_KEY) {
-        final Set<Usage> selectedUsages = getSelectedUsages();
-        sink.put(USAGES_KEY, selectedUsages.toArray(Usage.EMPTY_ARRAY));
+        final Set<Usage> selectedUsages = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsages() : null;
+        sink.put(USAGES_KEY, selectedUsages == null ? null : selectedUsages.toArray(Usage.EMPTY_ARRAY));
       }
 
       else if (key == USAGE_TARGETS_KEY) {
-        sink.put(USAGE_TARGETS_KEY, getSelectedUsageTargets());
+        UsageTarget[] targets = ApplicationManager.getApplication().isDispatchThread() ? getSelectedUsageTargets() : null;
+        sink.put(USAGE_TARGETS_KEY, targets);
       }
 
       else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {

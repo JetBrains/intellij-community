@@ -288,6 +288,7 @@ object GuiTestLocalLauncher {
       .plus("-Didea.system.path=${GuiTestOptions.systemPath}")
       .plus("-Dfile.encoding=${GuiTestOptions.encoding}")
       .plusIf(!ide.ideType.platformPrefix.isNullOrEmpty(), "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
+      .plus(ide.ideType.ideSpecificOptions)
       .plus(customVmOptions)
       .plus("-Xdebug")
       .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug},address=${GuiTestOptions.debugPort}")

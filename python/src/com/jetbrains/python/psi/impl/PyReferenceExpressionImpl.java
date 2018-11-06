@@ -2,9 +2,9 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
@@ -385,7 +385,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
       catch (AbstractMethodError e) {
-        LOG.info(new ExtensionException(provider.getClass()));
+        LOG.info(PluginManagerCore.createPluginException("Failed to get expression type via " + provider.getClass(), e, provider.getClass()));
       }
     }
     return null;

@@ -38,8 +38,8 @@ public class PathUtils {
 
   public static URI toURI(String localPath) {
     try {
-      final StringBuilder buf = new StringBuilder();
       final String p = FileUtilRt.toSystemIndependentName(localPath);
+      final StringBuilder buf = new StringBuilder(p.length() + 3);
       if (!p.startsWith("/")) {
         buf.append("///");
       }

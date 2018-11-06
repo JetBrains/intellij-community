@@ -168,6 +168,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       Collection<String> scripts = initScripts.getModifiable(rootProjectPath);
       scripts.add(compilerOptionsInitScript);
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, join(scripts, SystemProperties.getLineSeparator()));
+      userData.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, executionName);
 
       ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
                                  taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);

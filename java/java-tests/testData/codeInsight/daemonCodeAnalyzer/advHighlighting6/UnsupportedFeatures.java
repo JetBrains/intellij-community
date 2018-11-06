@@ -24,6 +24,11 @@ class UnsupportedFeatures {
     switch (<error descr="Incompatible types. Found: 'java.lang.String', required: 'byte, char, short or int'">list.get(0)</error>) {
       case "foo": break;
     }
+
+    switch (list.size()) {
+      <error descr="Enhanced 'switch' blocks are not supported at language level '6'">case 0 -> throw new IllegalStateException("empty list");</error>
+      default -> System.out.println("it's okay");
+    }
   }
 
   void f(<error descr="Receiver parameters are not supported at language level '6'">Object this</error>) { }

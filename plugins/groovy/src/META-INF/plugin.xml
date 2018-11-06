@@ -87,7 +87,6 @@
     <groovyFrameworkConfigNotification order="last"
                                        implementation="org.jetbrains.plugins.groovy.config.DefaultGroovyFrameworkConfigNotification"/>
 
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.CategoryMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyMemberContributor"/>

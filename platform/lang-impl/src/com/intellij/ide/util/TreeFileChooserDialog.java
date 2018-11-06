@@ -215,7 +215,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     if (myInitialFile != null) {
       name = myInitialFile.getName();
     }
-    PsiElement context = myInitialFile == null ? null : myInitialFile;
+    PsiElement context = myInitialFile;
     myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoFileModel(), name, true, context) {
       @Override
       protected void close(final boolean isOk) {

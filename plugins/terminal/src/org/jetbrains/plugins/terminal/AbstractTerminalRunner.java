@@ -27,8 +27,11 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.jediterm.terminal.RequestOrigin;
+import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.ui.TerminalSession;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,10 +43,10 @@ import java.util.concurrent.ExecutionException;
  * @author traff
  */
 public abstract class AbstractTerminalRunner<T extends Process> {
-  private static final Logger LOG = Logger.getInstance(AbstractTerminalRunner.class.getName());
+  private static final Logger LOG = Logger.getInstance(AbstractTerminalRunner.class);
   @NotNull
   protected final Project myProject;
-  private JBTerminalSystemSettingsProvider mySettingsProvider;
+  private final JBTerminalSystemSettingsProvider mySettingsProvider;
 
   public JBTerminalSystemSettingsProvider getSettingsProvider() {
     return mySettingsProvider;
@@ -85,6 +88,11 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   }
 
   protected abstract T createProcess(@Nullable String directory) throws ExecutionException;
+
+  @ApiStatus.Experimental
+  protected T createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
+    return createProcess(directory);
+  }
 
   protected abstract ProcessHandler createProcessHandler(T process);
 
@@ -176,15 +184,26 @@ public abstract class AbstractTerminalRunner<T extends Process> {
   public void openSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
                                      @Nullable String directory) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
+    Dimension size = terminalWidget.getTerminalPanel().getTerminalSizeFromComponent();
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
         // Create Server process
-        final T process = createProcess(directory);
+        final T process = createProcess(directory, terminalWidget.getCommandHistoryFilePath());
+        TtyConnector connector = createTtyConnector(process);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Initial resize to " + size);
+        }
+        if (size != null) {
+          // Resize ASAP once the process started.
+          // Even though it will be resized in invokeLater, it takes some time until invokeLater is executed.
+          // Sometimes it's enough to have cropped output, if the output is restricted by the terminal width.
+          TerminalStarter.resizeTerminal(terminalWidget.getTerminal(), connector, size, RequestOrigin.User);
+        }
 
         ApplicationManager.getApplication().invokeLater(() -> {
           try {
-            terminalWidget.createTerminalSession(createTtyConnector(process));
+            terminalWidget.createTerminalSession(connector);
             terminalWidget.start();
             terminalWidget.getComponent().revalidate();
             terminalWidget.notifyStarted();
