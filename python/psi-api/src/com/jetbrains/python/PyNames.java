@@ -621,6 +621,7 @@ public class PyNames {
   }
 
   public static boolean isRightOperatorName(@Nullable String name) {
+    if ("__rshift__".equals(name)) return false;
     return name != null && (name.matches("__r[a-z]+__") || CONTAINS.equals(name));
   }
 

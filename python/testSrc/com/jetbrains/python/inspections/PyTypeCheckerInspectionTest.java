@@ -683,6 +683,18 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                  "f(A)");
   }
 
+  // PY-32205
+  public void testRightShift() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("class Bin:\n" +
+                         "    def __rshift__(self, other: int):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "Bin() >> 1")
+    );
+  }
+
   // PY-32313
   public void testMatchingAgainstMultipleBoundTypeVar() {
     runWithLanguageLevel(
