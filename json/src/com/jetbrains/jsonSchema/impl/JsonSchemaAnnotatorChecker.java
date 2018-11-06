@@ -286,8 +286,10 @@ class JsonSchemaAnnotatorChecker {
               JsonValidationError.FixableIssueKind.ProhibitedProperty,
               new JsonValidationError.ProhibitedPropertyIssueData(name), JsonErrorPriority.LOW_PRIORITY);
       }
-      else if (ThreeState.UNSURE.equals(pair.getFirst()) && property.getValue() != null) {
-        checkObjectBySchemaRecordErrors(pair.getSecond(), property.getValue());
+      else if (ThreeState.UNSURE.equals(pair.getFirst())) {
+        for (JsonValueAdapter propertyValue : property.getValues()) {
+          checkObjectBySchemaRecordErrors(pair.getSecond(), propertyValue);
+        }
       }
       set.add(name);
     }
@@ -519,9 +521,9 @@ class JsonSchemaAnnotatorChecker {
         if (props.size() == values.size()) {
           for (JsonPropertyAdapter prop : props) {
             if (!values.containsKey(prop.getName())) return false;
-            JsonValueAdapter value = prop.getValue();
-            if (value == null) continue;
-            if (!checkEnumValue(values.get(prop.getName()), walker, value, walker.getNodeTextForValidation(value.getDelegate()), stringEq)) return false;
+            for (JsonValueAdapter value : prop.getValues()) {
+              if (!checkEnumValue(values.get(prop.getName()), walker, value, walker.getNodeTextForValidation(value.getDelegate()), stringEq)) return false;
+            }
           }
 
           return true;
