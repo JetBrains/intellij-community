@@ -4499,4 +4499,18 @@ public class UIUtil {
   public static boolean isRetina(@NotNull GraphicsDevice device) {
     return UIUtil.DetectRetinaKit.isOracleMacRetinaDevice(device);
   }
+
+  private static final String tagKey = "onair.jcomponent.tag";
+
+  @SuppressWarnings("unused")
+  public static void tagComponentAs(@NotNull JComponent c, @NotNull String tag) {
+    // Used in OnAir for dialog rendering
+    c.putClientProperty(tagKey, tag);
+  }
+
+  @Nullable
+  @SuppressWarnings("unused")
+  public static String getComponentTag(@NotNull JComponent c) {
+    return (String)c.getClientProperty(tagKey);
+  }
 }

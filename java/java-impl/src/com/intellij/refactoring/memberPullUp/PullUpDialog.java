@@ -146,6 +146,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   @Override
   protected void addCustomElementsToCentralPanel(JPanel panel) {
     myJavaDocPanel = new DocCommentPanel(RefactoringBundle.message("javadoc.for.abstracts"));
+    UIUtil.tagComponentAs(myJavaDocPanel, "PullUpDialog.JavaDocPanel");
     myJavaDocPanel.setPolicy(JavaRefactoringSettings.getInstance().PULL_UP_MEMBERS_JAVADOC);
     panel.add(myJavaDocPanel, BorderLayout.EAST);
     updateAbstractState();

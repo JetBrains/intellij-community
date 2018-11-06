@@ -684,7 +684,7 @@ public abstract class DialogWrapper {
         buttonsPanel.add(Box.createRigidArea(JBUI.size(hgap, 0)));
       }
     }
-
+    UIUtil.tagComponentAs(buttonsPanel, "DialogWrapper.ButtonsPanel");
     return buttonsPanel;
   }
 
