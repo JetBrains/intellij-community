@@ -20,7 +20,6 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -285,13 +284,11 @@ public class NotNullVerifyingInstrumenterTest {
   }
 
   private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnotations) throws IOException {
-    String testDir = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification";
+    String testDir = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
     String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
-    File testFile = new File(testDir, testName + ".java");
-    if (!testFile.exists()) testFile = new File(testDir, testName + ".groovy");
-    if (!testFile.exists()) throw new FileNotFoundException("No test source for " + testName);
+    File testFile = IdeaTestUtil.findSourceFile(testDir + testName);
     File classesDir = tempDir.newFolder("output");
-    List<String> args = ContainerUtil.newArrayList("-classpath", testDir + "/annotations.jar");
+    List<String> args = ContainerUtil.newArrayList("-classpath", testDir + "annotations.jar");
     if (withDebugInfo) args.add("-g");
     IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 

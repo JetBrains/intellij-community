@@ -185,8 +185,15 @@ public class IdeaTestUtil extends PlatformTestUtil {
     return null;
   }
 
+  public static File findSourceFile(@NotNull String basePath) {
+    File testFile = new File(basePath + ".java");
+    if (!testFile.exists()) testFile = new File(basePath + ".groovy");
+    if (!testFile.exists()) throw new IllegalArgumentException("No test source for " + basePath);
+    return testFile;
+  }
+
   @SuppressWarnings("UnnecessaryFullyQualifiedName")
-  public static void compileFile(File source, File out, String... options) {
+  public static void compileFile(@NotNull File source, @NotNull File out, String... options) {
     Assert.assertTrue("source does not exist: " + source.getPath(), source.isFile());
     List<String> args = new ArrayList<>();
     args.add("-d");
