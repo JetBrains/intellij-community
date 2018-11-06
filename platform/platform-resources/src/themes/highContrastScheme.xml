@@ -1,10 +1,10 @@
 <scheme name="High сontrast" version="142" parent_scheme="Darcula">
   <metaInfo>
-    <property name="created">2018-10-23T12:21:16</property>
+    <property name="created">2018-11-06T13:11:44</property>
     <property name="ide">idea</property>
     <property name="ideVersion">2019.1.0.0</property>
-    <property name="modified">2018-10-23T12:21:18</property>
-    <property name="originalScheme">High сontrast</property>
+    <property name="modified">2018-11-06T13:11:49</property>
+    <property name="originalScheme">_@user_High сontrast</property>
   </metaInfo>
   <colors>
     <option name="ADDED_LINES_COLOR" value="9924" />
@@ -13,7 +13,7 @@
     <option name="CARET_ROW_COLOR" value="66" />
     <option name="CONSOLE_BACKGROUND_KEY" value="0" />
     <option name="DELETED_LINES_COLOR" value="ffa14f" />
-    <option name="DOCUMENTATION_COLOR" value="40174d" />
+    <option name="DOCUMENTATION_COLOR" value="281a33" />
     <option name="ERROR_HINT" value="800002" />
     <option name="FILESTATUS_ADDED" value="62cc47" />
     <option name="FILESTATUS_COPIED" value="62cc47" />
@@ -725,7 +725,8 @@
     </option>
     <option name="WARNING_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="734900" />
+        <option name="FOREGROUND" value="ffffff" />
+        <option name="BACKGROUND" value="804a00" />
         <option name="ERROR_STRIPE_COLOR" value="ffb300" />
         <option name="EFFECT_TYPE" value="4" />
       </value>

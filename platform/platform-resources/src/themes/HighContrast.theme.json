@@ -9,6 +9,7 @@
     "*": {
       "background": "#000000",
       "foreground": "#FFFFFF",
+
       "selectionBackground": "#3333FF",
       "selectionForeground": "#FFFFFF",
       "selectionInactiveBackground": "#383838",
@@ -21,6 +22,9 @@
       "disabledText": "#E0861F",
       "inactiveForeground": "#E0861F",
 
+      "acceleratorForeground": "#E6E6E6",
+      "acceleratorSelectionForeground": "#E6E6E6",
+
       "errorForeground": "#FA3232"
     },
 
@@ -31,25 +35,24 @@
       "pressedBorderColor": "#1AEBFF"
     },
 
-    "Button.darcula": {
-      "startColor": "#000000",
-      "endColor": "#000000",
-      "outlineStartColor": "#FFFFFF",
-      "outlineEndColor": "#FFFFFF",
-      "focusedOutlineColor": "#1AEBFF",
+    "Button": {
+      "startBackground": "#000000",
+      "endBackground": "#000000",
+      "startBorderColor": "#FFFFFF",
+      "endBorderColor": "#FFFFFF",
+      "focusedBorderColor": "#1AEBFF",
 
-      "defaultStartColor": "#1AEBFF",
-      "defaultEndColor": "#1AEBFF",
-      "defaultOutlineColor": "#1AEBFF",
-      "outlineDefaultStartColor": "#1AEBFF",
-      "outlineDefaultEndColor": "#1AEBFF",
-      "defaultFocusedOutlineColor": "#000000",
+      "disabledBorderColor": "#AA6E28",
 
-      "selectedButtonForeground": "#000000",
-
-      "disabledOutlineColor": "#AA6E28",
-
-      "smallComboButtonBackground": "#000000"
+      "default": {
+        "foreground": "#000000",
+        "startBackground": "#1AEBFF",
+        "endBackground": "#1AEBFF",
+        "startBorderColor": "#1AEBFF",
+        "endBorderColor": "#1AEBFF",
+        "focusedBorderColor": "#000000",
+        "focusColor": "#1AEBFF"
+      }
     },
 
     "Borders": {
@@ -69,10 +72,23 @@
 
     "CompletionPopup":  {
       "matchForeground": "#ED94FF",
-      "matchSelectionForeground": "#ED94FF"
+      "matchSelectionForeground": "#ED94FF",
+      "grayForeground": "#E0861F"
     },
 
-    "Component.grayForeground": "#E0861F",
+    "Component": {
+      "grayForeground": "#E0861F",
+
+      "borderColor": "#e6e6e6",
+      "disabledBorderColor": "#AA6E28",
+      "focusedBorderColor": "#1AEBFF",
+
+      "focusColor": "#1AEBFF",
+      "focusErrorColor": "#E6194B",
+      "inactiveFocusErrorColor": "#800002",
+      "focusWarningColor": "#F58231",
+      "inactiveFocusWarningColor": "#804605"
+    },
 
     "DebuggerTabs.active.background": "#000080",
 
@@ -127,23 +143,18 @@
       "parentFocusedFrameForeground": "#FFFFFF"
     },
 
-    "Focus": {
-      "borderColor": "#1AEBFF",
-      "defaultButtonBorderColor": "#1AEBFF"
-    },
-
-    "Group.separatorColor": "#b3b3b3",
+   "Group.separatorColor": "#b3b3b3",
 
     "Label": {
       "selectedDisabledForeground": "#E0861F",
       "grayForeground": "#E0861F"
     },
 
-    "link": {
-      "foreground": "#D2F53C",
-      "hover.foreground": "#D2F53C",
-      "pressed.foreground": "#D2F53C",
-      "visited.foreground": "#D2F53C"
+    "Link": {
+      "activeForeground": "#D2F53C",
+      "hoverForeground": "#D2F53C",
+      "pressedForeground": "#D2F53C",
+      "visitedForeground": "#D2F53C"
     },
 
     "Menu": {
@@ -185,12 +196,6 @@
       }
     },
 
-    "Outline": {
-      "color": "#e6e6e6",
-      "disabledColor": "#AA6E28",
-      "focusedColor": "#1AEBFF"
-    },
-
     "Plugins": {
       "Tab": {
         "active.background": "#3333FF",
@@ -216,8 +221,9 @@
 
     "Popup": {
       "paintBorder": true,
-      "Border.color": "#e6e6e6",
-      "Toolbar.Border.color": "#b3b3b3",
+      "borderColor": "#e6e6e6",
+      "inactiveBorderColor": "#e6e6e6",
+      "Toolbar.borderColor": "#b3b3b3",
       "separatorColor": "#b3b3b3",
       "Separator.foreground": "#FFFFFF",
       "Header.activeBackground": "#000080",
@@ -245,8 +251,6 @@
       "passedEndColor": "#15451E"
     },
 
-    "RadioButton.darcula.selectionDisabledColor": "#FF0000",
-
     "SearchEverywhere": {
       "Tab.active": {
         "background": "#3333FF",
@@ -256,7 +260,15 @@
         "borderColor": "#b3b3b3",
         "grayForeground": "#E0861F"
       },
-      "Advertiser.background": "#000080"
+      "Advertiser": {
+        "background": "#000080",
+        "borderInsets": "3,8,5,0"
+      }
+    },
+
+    "SearchMatch": {
+      "startBackground": "#FFD333FF",
+      "endBackground": "#FFD333FF"
     },
 
     "Separator.foreground": "#b3b3b3",
@@ -272,8 +284,8 @@
     "StatusBar.borderColor": "#b3b3b3",
 
     "TabbedPane": {
-      "selectedColor": "#1AEBFF",
-      "selectedDisabledColor": "#AA6E28",
+      "underlineColor": "#1AEBFF",
+      "disabledUnderlineColor": "#AA6E28",
       "contentAreaColor": "#b3b3b3"
     },
 
@@ -290,6 +302,8 @@
       "borderColor": "#FFFFFF"
     },
 
+    "ToolBar.comboBoxButtonBackground": "#000000",
+
     "ToolTip": {
       "background": "#450073",
       "Actions": {
@@ -299,19 +313,19 @@
     },
 
     "ToolWindow": {
-      "header": {
-        "active.background": "#450073",
-        "background": "#281A33",
-        "border.background": "#e6e6e6",
-        "tab.selected": {
-          "active.background": "#9C23D9FF",
-          "background": "#4D0080FF"
-        },
-        "tab.hovered": {
-          "active.background": "#9C23D9FF",
-          "background": "#4D0080FF"
-        }
+      "Header.borderColor": "#e6e6e6",
+
+      "active": {
+        "Header.background": "#450073",
+        "HeaderTab.background": "#9C23D9FF",
+        "HeaderTab.hoverBackground": "#9C23D9FF"
       },
+      "inactive": {
+        "Header.background": "#281A33",
+        "HeaderTab.background": "#4D0080FF",
+        "HeaderTab.hoverBackground": "#4D0080FF"
+      },
+
       "Button": {
         "hoverBackground": "#3333FF",
         "selectedBackground": "#3333FF",
@@ -319,9 +333,22 @@
       }
     },
 
+    "ValidationTooltip": {
+      "errorBackground": "#800002",
+      "errorBorderColor": "#E6194B",
+      "warningBackground": "#804605",
+      "warningBorderColor": "#F58231"
+    },
+
     "VersionControl": {
-      "Log.Commit.currentBranchBackground": "#0D0D40",
-      "Log.Commit.unmatchedForeground": "#E0861F",
+      "Log.Commit": {
+        "currentBranchBackground": "#0D0D40",
+        "unmatchedForeground": "#E0861F"
+      },
+      "Ref": {
+        "backgroundBase": "#3333FF",
+        "backgroundBrightness": 0.7
+      },
       "FileHistory.Commit.selectedBranchBackground": "#0D0D40"
     },
 
