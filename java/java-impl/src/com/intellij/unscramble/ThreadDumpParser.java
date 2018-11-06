@@ -29,9 +29,9 @@ import java.util.regex.Pattern;
  * @author yole
  */
 public class ThreadDumpParser {
-  private static final Pattern ourThreadStartPattern = Pattern.compile("^\\s*\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
-  private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^\\s*Thread (\\d+): \\(state = (.+)\\)");
-  private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(?:\\s)*(.+) \\[([A-Z_, ]*)]");
+  private static final Pattern ourThreadStartPattern = Pattern.compile("^\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
+  private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^Thread (\\d+): \\(state = (.+)\\)");
+  private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(.+) \\[([A-Z_, ]*)]");
   private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) State: (.+) CPU usage on sample: .+");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
   private static final Pattern ourThreadStatePattern2 = Pattern.compile("java\\.lang\\.Thread\\.State: (.+)");
@@ -55,7 +55,7 @@ public class ThreadDumpParser {
       if (line.startsWith("============") || line.contains("Java-level deadlock")) {
         break;
       }
-      ThreadState state = tryParseThreadStart(line);
+      ThreadState state = tryParseThreadStart(line.trim());
       if (state != null) {
         if (lastThreadState != null) {
           lastThreadState.setStackTrace(lastThreadStack.toString(), !haveNonEmptyStackTrace);
@@ -221,11 +221,15 @@ public class ThreadDumpParser {
 
   @Nullable
   private static Matcher matchYourKit(String line) {
-    Matcher m = ourYourkitThreadStartPattern.matcher(line);
-    if (m.matches()) return m;
+    if (line.contains("[")) {
+      Matcher m = ourYourkitThreadStartPattern.matcher(line);
+      if (m.matches()) return m;
+    }
 
-    m = ourYourkitThreadStartPattern2.matcher(line);
-    if (m.matches()) return m;
+    if (line.contains("CPU usage on sample:")) {
+      Matcher m = ourYourkitThreadStartPattern2.matcher(line);
+      if (m.matches()) return m;
+    }
 
     return null;
   }
