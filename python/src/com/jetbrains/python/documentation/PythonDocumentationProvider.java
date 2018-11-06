@@ -7,6 +7,7 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.ExternalDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -37,7 +38,6 @@ import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
-import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
 import one.util.streamex.StreamEx;
@@ -634,7 +634,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           if (quickDocExtractor != null) {
             final Document document = documentSupplier.get();
             if (document != null) {
-              String quickDoc = quickDocExtractor.apply(document);
+              String quickDoc = ReadAction.compute(() -> quickDocExtractor.apply(document));
               if (StringUtil.isNotEmpty(quickDoc)) {
                 return quickDoc;
               }
