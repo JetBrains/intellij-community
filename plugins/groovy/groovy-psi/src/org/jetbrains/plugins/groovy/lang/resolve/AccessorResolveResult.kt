@@ -6,7 +6,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isApplicable
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer
 
-class PropertyResolveResult(
+class AccessorResolveResult(
   element: PsiMethod,
   place: PsiElement,
   state: ResolveState,

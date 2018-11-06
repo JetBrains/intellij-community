@@ -11,8 +11,8 @@ import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.util.checkKind
 import org.jetbrains.plugins.groovy.lang.psi.util.getAccessorName
+import org.jetbrains.plugins.groovy.lang.resolve.AccessorResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
-import org.jetbrains.plugins.groovy.lang.resolve.PropertyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
 class AccessorProcessor(
@@ -37,7 +37,7 @@ class AccessorProcessor(
     if (elementName != accessorName) return true
     if (!element.checkKind(propertyKind)) return true
 
-    myResults += PropertyResolveResult(
+    myResults += AccessorResolveResult(
       element = element,
       place = place,
       state = state,
