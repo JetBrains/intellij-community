@@ -17,6 +17,7 @@ import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.JTextArea
+import javax.swing.ListSelectionModel
 
 class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
                                 accounts: Collection<GithubAccount>,
@@ -38,6 +39,7 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
     }
   }
   private val accountsList: JBList<GithubAccount> = JBList<GithubAccount>(accounts).apply {
+    selectionMode = ListSelectionModel.SINGLE_SELECTION
     cellRenderer = object : ColoredListCellRenderer<GithubAccount>() {
       override fun customizeCellRenderer(list: JList<out GithubAccount>,
                                          value: GithubAccount,
