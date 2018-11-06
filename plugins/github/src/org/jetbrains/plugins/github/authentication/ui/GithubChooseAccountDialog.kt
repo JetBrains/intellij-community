@@ -67,6 +67,8 @@ class GithubChooseAccountDialog(project: Project?, parentComponent: Component?,
     accountsList.selectedIndex = 0
   }
 
+  override fun getDimensionServiceKey() = "Github.Dialog.Accounts.Choose"
+
   override fun doValidate(): ValidationInfo? {
     return if (accountsList.selectedValue == null) ValidationInfo("Account is not selected", accountsList) else null
   }
