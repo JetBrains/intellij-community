@@ -68,7 +68,13 @@ class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, priv
   }
 
   fun build(): GroovyInferenceSession {
-    if (!startFromTop) {
+    if (startFromTop) {
+      val session = GroovyInferenceSession(siteTypeParams, PsiSubstitutor.EMPTY, ref, closureSkipList, skipClosureBlock)
+      val methodCall = ref.parent as? GrMethodCall ?: return session
+      session.addConstraint(ExpressionConstraint(getMostTopLevelCall(methodCall), left))
+      return session
+    }
+    else {
       val typeParameters = ArrayUtil.mergeArrays(siteTypeParams, candidate.method.typeParameters)
       val session = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock)
       session.addConstraint(MethodCallConstraint(ref, candidate))
@@ -78,12 +84,6 @@ class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, priv
       if (returnType == null || PsiType.VOID == returnType) return session
       session.repeatInferencePhases()
       session.addConstraint(TypeConstraint(left, returnType, ref))
-      return session
-    }
-    else {
-      val session = GroovyInferenceSession(siteTypeParams, PsiSubstitutor.EMPTY, ref, closureSkipList, skipClosureBlock)
-      val methodCall = ref.parent as? GrMethodCall ?: return session
-      session.addConstraint(ExpressionConstraint(getMostTopLevelCall(methodCall), left))
       return session
     }
   }
