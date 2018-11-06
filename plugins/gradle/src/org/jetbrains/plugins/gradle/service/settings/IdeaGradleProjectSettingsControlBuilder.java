@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBCheckBox;
@@ -120,7 +121,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Nullable
   private JBCheckBox myResolveExternalAnnotationsCheckBox;
-  private boolean dropResolveExternalAnnotationsCheckBox;
+  private boolean dropResolveExternalAnnotationsCheckBox = !Registry.is("external.system.import.resolve.annotations", false);
 
   @Nullable
   private JBCheckBox myStoreExternallyCheckBox;

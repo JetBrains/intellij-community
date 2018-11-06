@@ -20,6 +20,7 @@ class ExternalAnnotationsImporter : MavenImporter("org.apache.maven.plugins", "m
   override fun isApplicable(mavenProject: MavenProject?): Boolean  {
     return super.isApplicable(mavenProject) && Registry.`is`("external.system.import.resolve.annotations")
   }
+
   override fun processChangedModulesOnly(): Boolean = false
 
   override fun process(modifiableModelsProvider: IdeModifiableModelsProvider?,
