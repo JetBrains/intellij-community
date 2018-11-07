@@ -563,7 +563,7 @@ update_install_dir:
     ${LogText} ""
     ${LogText} "  NOTE: Specified install dir: $INSTDIR is required administrative rights."
     ${LogText} "  It is corresponding with the admin mode in silent config file."
-    ${LogText} "  But installation has been run with user mode. So install dir has been changed to: "
+    ${LogText} "  But installation has been run with user mode. So install folder has been changed to the default: "
     StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
     ${LogText} "  $INSTDIR "
     ${LogText} ""
