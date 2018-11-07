@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
@@ -20,7 +20,7 @@ import static com.intellij.openapi.vcs.changes.ui.CommitHelper.hasOnlyWarnings;
 
 public class DefaultCommitResultHandler implements CommitResultHandler {
 
-  @NotNull private final Project myProject;
+  @NotNull private final VcsNotifier myNotifier;
   @NotNull private final Collection<Change> myIncludedChanges;
   @NotNull private final String myCommitMessage;
   @NotNull private final CommitHelper.GeneralCommitProcessor myCommitProcessor;
@@ -31,7 +31,7 @@ public class DefaultCommitResultHandler implements CommitResultHandler {
                                     @NotNull String commitMessage,
                                     @NotNull CommitHelper.GeneralCommitProcessor commitProcessor,
                                     @NotNull Set<String> feedback) {
-    myProject = project;
+    myNotifier = VcsNotifier.getInstance(project);
     myIncludedChanges = includedChanges;
     myCommitMessage = commitMessage;
     myCommitProcessor = commitProcessor;
@@ -53,18 +53,17 @@ public class DefaultCommitResultHandler implements CommitResultHandler {
     int errorsSize = errors.size();
     int warningsSize = myCommitProcessor.getVcsExceptions().size() - errorsSize;
 
-    VcsNotifier notifier = VcsNotifier.getInstance(myProject);
     String message = getCommitSummary();
     if (errorsSize > 0) {
       String title = pluralize(message("message.text.commit.failed.with.error"), errorsSize);
-      notifier.notifyError(title, message);
+      myNotifier.notifyError(title, message);
     }
     else if (warningsSize > 0) {
       String title = pluralize(message("message.text.commit.finished.with.warning"), warningsSize);
-      notifier.notifyImportantWarning(title, message);
+      myNotifier.notifyImportantWarning(title, message);
     }
     else {
-      notifier.notifySuccess(message);
+      myNotifier.notifySuccess(message);
     }
   }
 
