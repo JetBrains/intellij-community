@@ -40,34 +40,47 @@ import org.junit.runners.Suite
 * */
 @RunWith(Suite::class)
 @Suite.SuiteClasses(
-    KotlinCreateProjectGuiTestSuite.PreparationSteps::class
-  , KotlinCreateProjectGuiTestSuite.KotlinCreateProject::class
+    PreparationSteps::class
+  , KotlinCreateGradleProject::class
 )
-class KotlinCreateProjectGuiTestSuite : GuiTestSuite() {
+class KotlinCreateGradleProjectGuiTestSuite : GuiTestSuite()
 
-  @RunWith(GuiTestSuiteRunner::class)
-  @RunWithIde(CommunityIde::class)
-  @FirstStartWith(CommunityIdeFirstStart::class)
-  @Suite.SuiteClasses(
-        InstallPluginGuiTest::class
-      , CreateSdksGuiTest::class
-  )
-  class PreparationSteps
+@RunWith(Suite::class)
+@Suite.SuiteClasses(
+    PreparationSteps::class
+  , KotlinCreateOtherProject::class
+)
+class KotlinCreateOtherProjectGuiTestSuite : GuiTestSuite()
 
-  @RunWith(Suite::class)
-  @RunWithIde(CommunityIde::class)
-  @Suite.SuiteClasses(
-    CreateKotlinProjectGuiTest::class
-    , CreateGradleProjectAndConfigureKotlinGuiTest::class
-    , CreateGradleProjectAndConfigureOldKotlinGuiTest::class
-    , CreateGradleProjectWithKotlinGuiTest::class
-    , CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest::class
-    , CreateGradleKotlinDslProjectWithKotlinGuiTest::class
-    , CreateKotlinMPProjectGuiTest::class
-    , CreateJavaProjectAndConfigureKotlinGuiTest::class
-    , CreateJavaProjectWithKotlinGuiTest::class // attempt to find a workaround to failing java_with_jvm test when it runs first ever time
-    , CreateMavenProjectWithKotlinGuiTest::class
-    , CreateMavenProjectAndConfigureKotlinGuiTest::class
-  )
-  class KotlinCreateProject
-}
+
+@RunWith(GuiTestSuiteRunner::class)
+@RunWithIde(CommunityIde::class)
+@FirstStartWith(CommunityIdeFirstStart::class)
+@Suite.SuiteClasses(
+  InstallPluginGuiTest::class
+  , CreateSdksGuiTest::class
+)
+class PreparationSteps
+
+@RunWith(Suite::class)
+@RunWithIde(CommunityIde::class)
+@Suite.SuiteClasses(
+  CreateGradleProjectAndConfigureKotlinGuiTest::class
+  , CreateGradleProjectAndConfigureOldKotlinGuiTest::class
+  , CreateGradleProjectWithKotlinGuiTest::class
+  , CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest::class
+  , CreateGradleKotlinDslProjectWithKotlinGuiTest::class
+)
+class KotlinCreateGradleProject
+
+@RunWith(Suite::class)
+@RunWithIde(CommunityIde::class)
+@Suite.SuiteClasses(
+  CreateKotlinProjectGuiTest::class
+  , CreateKotlinMPProjectGuiTest::class
+  , CreateJavaProjectAndConfigureKotlinGuiTest::class
+  , CreateJavaProjectWithKotlinGuiTest::class // attempt to find a workaround to failing java_with_jvm test when it runs first ever time
+  , CreateMavenProjectWithKotlinGuiTest::class
+  , CreateMavenProjectAndConfigureKotlinGuiTest::class
+)
+class KotlinCreateOtherProject
