@@ -272,7 +272,8 @@ public class FSOperations {
         else {
           boolean markDirty = forceDirty;
           if (!markDirty) {
-            markDirty = tsStorage.getStamp(_file, rd.getTarget()) != attrs.lastModifiedTime().toMillis();
+            // for symlinks the attr structure reflects the symlink's timestamp and not symlink's target timestamp
+            markDirty = tsStorage.getStamp(_file, rd.getTarget()) != (attrs.isRegularFile()? attrs.lastModifiedTime().toMillis() : lastModified(f));
           }
           if (markDirty) {
             // if it is full project rebuild, all storages are already completely cleared;
@@ -336,8 +337,12 @@ public class FSOperations {
   }
 
   public static long lastModified(File file) {
+    return lastModified(file.toPath());
+  }
+
+  private static long lastModified(Path path) {
     try {
-      return Files.getLastModifiedTime(file.toPath()).toMillis();
+      return Files.getLastModifiedTime(path).toMillis();
     }
     catch (IOException e) {
       LOG.warn(e);
