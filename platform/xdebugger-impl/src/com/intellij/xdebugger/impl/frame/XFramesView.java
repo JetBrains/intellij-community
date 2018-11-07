@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -235,6 +236,13 @@ public class XFramesView extends XDebugView {
     return myBuilders.computeIfAbsent(executionStack, k -> new StackFramesListBuilder(executionStack, session));
   }
 
+  private void withCurrentBuilder(Consumer<StackFramesListBuilder> consumer) {
+    StackFramesListBuilder builder = myBuilders.get(mySelectedStack);
+    if (builder != null) {
+      consumer.consume(builder);
+    }
+  }
+
   @Override
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
     myRefresh = event == SessionEvent.SETTINGS_CHANGED;
@@ -330,7 +338,7 @@ public class XFramesView extends XDebugView {
 
   private void updateFrames(XExecutionStack executionStack, @NotNull XDebugSession session, @Nullable XStackFrame frameToSelect) {
     if (mySelectedStack != null) {
-      getOrCreateBuilder(mySelectedStack, session).stop();
+      withCurrentBuilder(StackFramesListBuilder::stop);
     }
 
     mySelectedStack = executionStack;
@@ -355,8 +363,8 @@ public class XFramesView extends XDebugView {
   private void processFrameSelection(XDebugSession session, boolean force) {
     mySelectedFrameIndex = myFramesList.getSelectedIndex();
     myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
-    getOrCreateBuilder(mySelectedStack, session).setToSelect(null);
-    
+    withCurrentBuilder(b -> b.setToSelect(null));
+
     Object selected = myFramesList.getSelectedValue();
     if (selected instanceof XStackFrame) {
       if (session != null) {
