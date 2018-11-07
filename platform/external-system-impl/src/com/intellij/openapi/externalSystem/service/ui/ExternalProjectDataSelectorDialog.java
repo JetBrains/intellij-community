@@ -375,10 +375,9 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
       ModuleData moduleData = (ModuleData)node.getData();
       String ideParentGrouping = moduleData.getIdeParentGrouping();
       DataNode structuralParent = ideParentGrouping != null ? ideGroupingMap.get(ideParentGrouping) : null;
-      if (structuralParent == null) continue;
+      DataNodeCheckedTreeNode treeParentNode = structuralParent != null ? treeNodeMap.get(structuralParent) : null;
 
       DataNodeCheckedTreeNode treeNode = treeNodeMap.get(node);
-      DataNodeCheckedTreeNode treeParentNode = treeNodeMap.get(structuralParent);
 
       if (treeParentNode == null) {
         treeParentNode = treeNodeMap.get(node.getParent());
