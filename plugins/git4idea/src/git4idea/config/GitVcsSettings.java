@@ -251,7 +251,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   public boolean shouldUpdateBranchInfo() {
-    return false;
+    return myState.UPDATE_BRANCHES_INFO;
   }
 
   public void setUpdateBranchInfo(boolean state) {
