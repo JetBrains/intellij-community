@@ -1922,9 +1922,9 @@ public class InferenceSession {
     return myContext;
   }
 
-  public void propagateVariables(Collection<InferenceVariable> variables, PsiSubstitutor restoreNamesSubstitution) {
-    myInferenceVariables.addAll(variables);
-    myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(restoreNamesSubstitution);
+  public final void propagateVariables(@NotNull InferenceSession from) {
+    myInferenceVariables.addAll(from.getInferenceVariables());
+    myRestoreNameSubstitution = myRestoreNameSubstitution.putAll(from.getRestoreNameSubstitution());
   }
 
   public PsiType substituteWithInferenceVariables(@Nullable PsiType type) {

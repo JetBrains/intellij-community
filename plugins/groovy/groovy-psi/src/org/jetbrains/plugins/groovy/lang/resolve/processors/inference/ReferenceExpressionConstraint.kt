@@ -20,7 +20,7 @@ class ReferenceExpressionConstraint(private val callRef: GrReferenceExpression, 
       val typeParameters = it.method.typeParameters
       val nestedSession = GroovyInferenceSession(typeParameters, it.siteSubstitutor, callRef, emptyList(), session.skipClosureBlock)
       session.myNestedSessions[callRef] = nestedSession
-      nestedSession.propagateVariables(session.inferenceVariables, session.restoreNameSubstitution)
+      nestedSession.propagateVariables(session)
 
       nestedSession.addConstraint(MethodCallConstraint(callRef, it))
       nestedSession.repeatInferencePhases()
@@ -31,7 +31,7 @@ class ReferenceExpressionConstraint(private val callRef: GrReferenceExpression, 
         nestedSession.repeatInferencePhases()
       }
 
-      session.propagateVariables(nestedSession.inferenceVariables, nestedSession.restoreNameSubstitution)
+      session.propagateVariables(nestedSession)
       for (pair in nestedSession.myIncorporationPhase.captures) {
         session.myIncorporationPhase.addCapture(pair.first, pair.second)
       }
