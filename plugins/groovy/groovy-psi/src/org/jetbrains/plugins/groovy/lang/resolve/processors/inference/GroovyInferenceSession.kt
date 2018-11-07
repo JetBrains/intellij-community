@@ -5,18 +5,20 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
-class GroovyInferenceSession(typeParams: Array<PsiTypeParameter>,
-                             val siteSubstitutor: PsiSubstitutor,
-                             context: PsiElement,
-                             val closureSkipList: List<GrMethodCall> = emptyList(),
-                             val skipClosureBlock: Boolean = true) : InferenceSession(typeParams, siteSubstitutor, context.manager, context) {
+class GroovyInferenceSession(
+  typeParams: Array<PsiTypeParameter>,
+  val siteSubstitutor: PsiSubstitutor,
+  context: PsiElement,
+  val closureSkipList: List<GrMethodCall> = emptyList(),
+  val skipClosureBlock: Boolean = true
+) : InferenceSession(typeParams, siteSubstitutor, context.manager, context) {
 
-  val myNestedSessions = mutableMapOf<GrReferenceExpression, GroovyInferenceSession>()
+  val nestedSessions = mutableMapOf<GroovyResolveResult, GroovyInferenceSession>()
 
-  fun result(): PsiSubstitutor {
+  private fun result(): PsiSubstitutor {
     resolveBounds(myInferenceVariables, siteSubstitutor)
     return prepareSubstitution()
   }
@@ -26,15 +28,23 @@ class GroovyInferenceSession(typeParams: Array<PsiTypeParameter>,
     return result()
   }
 
-  fun inferSubst(ref: GrReferenceExpression): PsiSubstitutor {
+  fun inferSubst(result: GroovyResolveResult): PsiSubstitutor {
     repeatInferencePhases()
-    findSession(ref)?.let { return it.result() }
+    findSession(result)?.let {
+      return it.result()
+    }
     return PsiSubstitutor.EMPTY
   }
 
-  private fun findSession(ref: GrReferenceExpression): GroovyInferenceSession? {
-    myNestedSessions[ref]?.let { return it }
-    myNestedSessions.values.forEach { nested -> nested.findSession(ref)?.let { return it }}
+  private fun findSession(result: GroovyResolveResult): GroovyInferenceSession? {
+    nestedSessions[result]?.let {
+      return it
+    }
+    for (nested in nestedSessions.values) {
+      nested.findSession(result)?.let {
+        return it
+      }
+    }
     return null
   }
 }

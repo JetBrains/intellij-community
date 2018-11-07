@@ -53,7 +53,7 @@ class MethodResolveResult(
         .addReturnConstraint()
         .resolveMode(false)
         .startFromTop(true)
-        .build().inferSubst(ref)
+        .build().inferSubst(this)
     }
   }
 
