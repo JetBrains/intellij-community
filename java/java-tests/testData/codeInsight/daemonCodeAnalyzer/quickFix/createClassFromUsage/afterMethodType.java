@@ -1,7 +1,7 @@
-// "Create class 'Abc'" "true"
+// "Create class 'abc'" "true"
 public class Test {
-  private Abc foo() {}
+  private abc foo() {}
 }
 
-public class <caret>Abc {
+public class <caret>abc {
 }
