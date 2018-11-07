@@ -7,7 +7,6 @@ import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -40,6 +39,7 @@ import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -169,7 +169,7 @@ public class SearchDialog extends DialogWrapper {
       try {
         final boolean valid = isValid();
         final boolean compiled = isCompiled();
-        ApplicationManager.getApplication().invokeLater(() -> {
+        EdtInvocationManager.getInstance().invokeLater(() -> {
           myEditVariablesButton.setEnabled(compiled);
           getOKAction().setEnabled(valid);
         });
