@@ -39,7 +39,7 @@ public class StructuralSearchTemplatesCompletionContributor extends CompletionCo
         .withCaseSensitivity(false)
         .withPresentableText(configurationName)
         .withInsertHandler((InsertionContext context, LookupElement item) -> context.setLaterRunnable(
-          () -> dialog.setSearchPattern((Configuration)item.getObject())
+          () -> dialog.loadConfiguration((Configuration)item.getObject())
         ));
       insensitive.addElement(element);
     }

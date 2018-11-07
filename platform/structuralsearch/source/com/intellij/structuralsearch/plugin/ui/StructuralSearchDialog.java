@@ -157,11 +157,6 @@ public class StructuralSearchDialog extends DialogWrapper {
     myUseLastConfiguration = useLastConfiguration;
   }
 
-  void setSearchPattern(Configuration config) {
-    loadConfiguration(config);
-    initiateValidation();
-  }
-
   private EditorTextField createEditor(String text) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
     assert profile != null;
@@ -448,7 +443,7 @@ public class StructuralSearchDialog extends DialogWrapper {
                           }
                         }
                       })
-                      .setItemChosenCallback(c -> setSearchPattern(c))
+                      .setItemChosenCallback(c -> loadConfiguration(c))
                       .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
                       .createPopup()
                       .showUnderneathOf((Component)source);
@@ -513,7 +508,7 @@ public class StructuralSearchDialog extends DialogWrapper {
           }
           final Configuration[] configurations = dialog.getSelectedConfigurations();
           if (configurations.length == 1) {
-            setSearchPattern(configurations[0]);
+            loadConfiguration(configurations[0]);
           }
         }
       },
