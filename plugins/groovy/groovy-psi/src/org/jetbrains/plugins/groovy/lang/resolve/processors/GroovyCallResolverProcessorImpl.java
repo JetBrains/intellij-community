@@ -16,8 +16,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolve
 
 class GroovyCallResolverProcessorImpl extends GroovyResolverProcessorImpl {
 
-  GroovyCallResolverProcessorImpl(@NotNull GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds, boolean forceRValue) {
-    super(ref, kinds, forceRValue);
+  GroovyCallResolverProcessorImpl(@NotNull GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
+    super(ref, kinds);
   }
 
   @Override

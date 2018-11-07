@@ -393,7 +393,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @NotNull
-  Collection<GroovyResolveResult> doPolyResolve(boolean incompleteCode, boolean forceRValue) {
+  Collection<GroovyResolveResult> doPolyResolve(boolean incompleteCode) {
     final PsiElement nameElement = getReferenceNameElement();
     final String name = getReferenceName();
     if (name == null || nameElement == null) return Collections.emptyList();
@@ -413,7 +413,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         GrExpression qualifier = getQualifier();
         if (qualifier == null || qualifier.getType() == null) return Collections.emptyList();
       }
-      return resolveReferenceExpression(this, forceRValue, incompleteCode);
+      return resolveReferenceExpression(this, incompleteCode);
     }
     finally {
       final long time = ResolveProfiler.finish();
@@ -605,7 +605,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Override
   @NotNull
   public GroovyResolveResult[] getSameNameVariants() {
-    return doPolyResolve(true, false).toArray(GroovyResolveResult.EMPTY_ARRAY);
+    return doPolyResolve(true).toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 
   @Override

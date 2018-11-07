@@ -18,7 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult;
@@ -43,8 +42,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   private final @NotNull String myName;
   protected final @NotNull EnumSet<GroovyResolveKind> myAcceptableKinds;
 
-  private final boolean myIsLValue;
-
   protected final @NotNull PsiType[] myTypeArguments;
   protected final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
 
@@ -55,16 +52,13 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   private boolean myStopExecutingMethods = false;
 
   GroovyResolverProcessor(@NotNull GrReferenceExpression ref,
-                          @NotNull EnumSet<GroovyResolveKind> kinds,
-                          boolean forceRValue) {
+                          @NotNull EnumSet<GroovyResolveKind> kinds) {
     myRef = ref;
     myAcceptableKinds = kinds;
     myName = getReferenceName(ref);
 
-    myIsLValue = !forceRValue && PsiUtil.isLValue(myRef);
-
     myTypeArguments = ref.getTypeArguments();
-    if (kinds.contains(GroovyResolveKind.METHOD) || myIsLValue) {
+    if (kinds.contains(GroovyResolveKind.METHOD)) {
       myArgumentTypes = NullableLazyValue.createValue(() -> buildTopLevelArgumentTypes(myRef));
     }
     else {
@@ -77,11 +71,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   private List<GrResolverProcessor<? extends GroovyResolveResult>> calcAccessorProcessors() {
     if (!isPropertyResolve() || !isPropertyName(myName)) {
       return Collections.emptyList();
-    }
-    if (myIsLValue) {
-      return singletonList(
-        new AccessorProcessor(myName, PropertyKind.SETTER, () -> myArgumentTypes.getValue(), myRef)
-      );
     }
     return ContainerUtil.newArrayList(
       new AccessorProcessor(myName, PropertyKind.GETTER, Collections.emptyList(), myRef),

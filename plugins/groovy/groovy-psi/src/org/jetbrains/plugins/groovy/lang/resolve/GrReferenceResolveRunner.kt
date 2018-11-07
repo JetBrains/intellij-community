@@ -87,9 +87,8 @@ fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<ou
   return processor.candidatesArray
 }
 
-fun GrReferenceExpression.resolveReferenceExpression(forceRValue: Boolean, incomplete: Boolean): Collection<GroovyResolveResult> {
+fun GrReferenceExpression.resolveReferenceExpression(incomplete: Boolean): Collection<GroovyResolveResult> {
   val processor = GroovyResolverProcessorBuilder.builder()
-    .setForceRValue(forceRValue)
     .setIncomplete(incomplete)
     .build(this)
   GrReferenceResolveRunner(this, processor).resolveReferenceExpression()

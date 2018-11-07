@@ -13,7 +13,7 @@ import java.util.List;
 class GroovyAllVariantsProcessor extends GroovyResolverProcessor {
 
   GroovyAllVariantsProcessor(@NotNull GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
-    super(ref, kinds, false);
+    super(ref, kinds);
   }
 
   @NotNull

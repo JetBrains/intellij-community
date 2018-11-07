@@ -13,7 +13,6 @@ public final class GroovyResolverProcessorBuilder {
 
   private boolean myIncomplete = false;
   private boolean myAllVariants = false;
-  private boolean myForceRValue = false;
 
   @NotNull
   public GroovyResolverProcessor build(GrReferenceExpression ref) {
@@ -21,11 +20,11 @@ public final class GroovyResolverProcessorBuilder {
     if (myAllVariants) {
       return new GroovyAllVariantsProcessor(ref, kinds);
     }
-    else if (kinds.contains(METHOD)) {
-      return new GroovyCallResolverProcessorImpl(ref, kinds, myForceRValue);
+    if (kinds.contains(METHOD)) {
+      return new GroovyCallResolverProcessorImpl(ref, kinds);
     }
     else {
-      return new GroovyResolverProcessorImpl(ref, kinds, myForceRValue);
+      return new GroovyResolverProcessorImpl(ref, kinds);
     }
   }
 
@@ -42,12 +41,6 @@ public final class GroovyResolverProcessorBuilder {
   @NotNull
   public GroovyResolverProcessorBuilder setAllVariants(boolean allVariants) {
     myAllVariants = allVariants;
-    return this;
-  }
-
-  @NotNull
-  public GroovyResolverProcessorBuilder setForceRValue(boolean forceRValue) {
-    myForceRValue = forceRValue;
     return this;
   }
 

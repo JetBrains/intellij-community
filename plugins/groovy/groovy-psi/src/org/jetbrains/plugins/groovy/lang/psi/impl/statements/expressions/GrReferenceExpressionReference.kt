@@ -46,7 +46,7 @@ class GrRValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceE
   override fun doResolveNonStatic(incomplete: Boolean): Collection<GroovyResolveResult> {
     val expression = element
     if (expression.parent is GrMethodCall || incomplete) {
-      return expression.doPolyResolve(incomplete, true)
+      return expression.doPolyResolve(incomplete)
     }
 
     expression.handleSpecialCases()?.let {
