@@ -105,9 +105,8 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
 
   @Override
   public String getName() {
-    String[] moduleGroup = myData.getIdeModuleGroup();
-    if (getExternalProjectsView().getGroupModules() && moduleGroup != null) {
-      return ArrayUtil.getLastElement(moduleGroup);
+    if (getExternalProjectsView().getGroupModules()) {
+      return myData.getExternalName();
     }
     return super.getName();
   }
