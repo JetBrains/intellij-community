@@ -201,6 +201,7 @@ public class JavaColorProvider implements ElementColorProvider {
               argumentList.add(factory.createExpressionFromText("true", null));
               replaceInt(expr[0], color.getRGB() | color.getAlpha() << 24, true, true);
             }
+            return;
           case INT_BOOL:
             if ("true".equals(expr[1].getText())) {
               replaceInt(expr[0], color.getRGB() | color.getAlpha() << 24, true, true);
