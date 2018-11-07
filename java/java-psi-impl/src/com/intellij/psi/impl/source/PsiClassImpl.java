@@ -419,6 +419,9 @@ public class PsiClassImpl extends JavaStubPsiElement<PsiClassStub<?>> implements
 
   @Override
   public PsiDocComment getDocComment(){
+    PsiClassStub<?> stub = getGreenStub();
+    if (stub != null && !stub.hasDocComment()) return null;
+
     return (PsiDocComment)getNode().findChildByRoleAsPsiElement(ChildRole.DOC_COMMENT);
   }
 

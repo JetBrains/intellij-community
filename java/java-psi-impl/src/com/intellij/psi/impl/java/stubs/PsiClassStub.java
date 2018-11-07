@@ -44,6 +44,10 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
 
   boolean isAnnotationType();
 
+  default boolean hasDocComment() {
+    return true;
+  }
+
   @Nullable
   String getSourceFileName();
 

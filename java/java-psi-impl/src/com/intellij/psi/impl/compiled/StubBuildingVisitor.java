@@ -99,7 +99,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     boolean isEnum = isSet(flags, Opcodes.ACC_ENUM);
     boolean isAnnotationType = isSet(flags, Opcodes.ACC_ANNOTATION);
     short stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false,
-                                                 isAnnotationType, false, false, myAnonymousInner, myLocalClassInner);
+                                                 isAnnotationType, false, false, myAnonymousInner, myLocalClassInner, false);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     myModList = new PsiModifierListStubImpl(myResult, packClassFlags(flags));
