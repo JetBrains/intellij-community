@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getArgumentTypes
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBase
 
@@ -22,5 +21,5 @@ class GrImplicitCallReference(element: GrMethodCall) : GroovyMethodCallReference
 
   override val methodName: String get() = "call"
 
-  override val arguments: Arguments? get() = getArgumentTypes(element.argumentList)?.toList()
+  override val arguments: Arguments? get() = element.getArguments()
 }

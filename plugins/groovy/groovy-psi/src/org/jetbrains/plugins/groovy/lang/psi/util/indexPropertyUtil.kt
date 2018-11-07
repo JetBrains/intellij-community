@@ -18,6 +18,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrImmediateTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.getClassReferenceFromExpression
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.LazyTypeArgument
 
 fun GrIndexProperty.isSimpleArrayAccess(): Boolean {
   return getSimpleArrayAccessType() != null
@@ -76,6 +78,8 @@ fun GrIndexProperty.getArgumentListType(): PsiType? {
   val types = argList.expressionArguments.map { it.type }
   return GrImmediateTupleType(types, JavaPsiFacade.getInstance(project), resolveScope)
 }
+
+fun GrIndexProperty.getArgumentListArgument(): Argument = LazyTypeArgument { getArgumentListType() }
 
 fun GrIndexProperty.getArgumentTypes(rhs: Boolean): Array<PsiType>? {
   val argumentListType = getArgumentListType() ?: return null

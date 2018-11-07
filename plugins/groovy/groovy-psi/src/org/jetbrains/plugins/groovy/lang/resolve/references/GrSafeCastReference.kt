@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCa
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.AS_TYPE
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBase
+import org.jetbrains.plugins.groovy.lang.resolve.api.LazyTypeArgument
 import org.jetbrains.plugins.groovy.lang.resolve.wrapClassType
 
 class GrSafeCastReference(element: GrSafeCastExpression) : GroovyMethodCallReferenceBase<GrSafeCastExpression>(element) {
@@ -17,5 +18,5 @@ class GrSafeCastReference(element: GrSafeCastExpression) : GroovyMethodCallRefer
 
   override val methodName: String get() = AS_TYPE
 
-  override val arguments: Arguments? get() = listOf(wrapClassType(element.castTypeElement?.type, element))
+  override val arguments: Arguments? get() = listOf(LazyTypeArgument { wrapClassType(element.castTypeElement?.type, element) })
 }

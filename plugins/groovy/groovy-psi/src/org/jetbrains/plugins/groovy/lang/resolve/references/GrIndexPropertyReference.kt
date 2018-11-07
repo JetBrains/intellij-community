@@ -3,9 +3,9 @@ package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiType
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty
-import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListType
+import org.jetbrains.plugins.groovy.lang.psi.util.getArgumentListArgument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReferenceBase
 
@@ -28,10 +28,10 @@ class GrGetAtReference(element: GrIndexProperty) : GrIndexPropertyReference(elem
 
   override val methodName: String get() = "getAt"
 
-  override val arguments: Arguments get() = listOf(element.getArgumentListType())
+  override val arguments: Arguments get() = listOf(element.getArgumentListArgument())
 }
 
-class GrPutAtReference(element: GrIndexProperty) : GrIndexPropertyReference(element) {
+class GrPutAtReference(element: GrIndexProperty, private val rValue: Argument?) : GrIndexPropertyReference(element) {
 
   override fun getRangeInElement(): TextRange {
     val argumentList = element.argumentList
@@ -40,10 +40,5 @@ class GrPutAtReference(element: GrIndexProperty) : GrIndexPropertyReference(elem
 
   override val methodName: String get() = "putAt"
 
-  override val arguments: Arguments
-    get() {
-      val listArgument = element.getArgumentListType()
-      val rValue = (element.parent as? GrAssignmentExpression)?.type
-      return listOf(listArgument, rValue)
-    }
+  override val arguments: Arguments get() = listOf(element.getArgumentListArgument(), rValue)
 }
