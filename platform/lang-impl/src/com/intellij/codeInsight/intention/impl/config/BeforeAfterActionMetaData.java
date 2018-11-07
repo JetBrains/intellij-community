@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -108,8 +109,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   }
 
   private static boolean checkUrl(URL url, List<TextDescriptor> urls) {
-    try {
-      url.openStream();
+    try (InputStream ignored = url.openStream()) {
       urls.add(new ResourceTextDescriptor(url));
       return true;
     }
