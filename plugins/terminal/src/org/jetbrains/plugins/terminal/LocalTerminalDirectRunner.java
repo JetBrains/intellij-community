@@ -134,6 +134,10 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
 
+    if (SystemInfo.isMac) {
+      EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
+    }
+
     PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
     for (Map.Entry<String, String> env : TerminalOptionsProvider.Companion.getInstance().getUserSpecifiedEnvs().entrySet()) {
       envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
@@ -149,10 +153,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   @Override
   protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
     Map<String, String> envs = getTerminalEnvironment();
-
-    if (SystemInfo.isMac) {
-      EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
-    }
 
     String[] command = getCommand(envs);
 
