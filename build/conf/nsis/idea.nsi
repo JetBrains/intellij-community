@@ -1313,7 +1313,10 @@ uac_elevate:
 uac_err:
   Abort
 uac_elevation_aborted:
-  IfSilent done set_install_dir
+  IfSilent 0 set_install_dir
+  ${LogText} ""
+  ${LogText} "  NOTE: UAC elevation has been aborted. Installation dir will be changed."
+  ${LogText} ""
 set_install_dir:
   StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
   goto done
