@@ -7,4 +7,10 @@ class GroovyStuff {
   private class Inner {
     Inner(String s1, @Deprecated String s2) { }
   }
+
+  GroovyStuff(long longConstructorParam, @Deprecated String stringConstructorParam) { }
+
+  def foo(long longMethodParam, @Deprecated int intMethodParam) { }
+
+  static def bar(GroovyStuff objectStaticParam, @Deprecated int intStaticParam) { }
 }

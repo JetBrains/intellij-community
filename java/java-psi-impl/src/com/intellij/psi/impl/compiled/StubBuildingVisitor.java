@@ -643,9 +643,9 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     @Override
     public void visitParameter(String name, int access) {
-      if (!isSet(access, Opcodes.ACC_SYNTHETIC) && myParamNameIndex < myParamCount) {
-        setParameterName(name, myParamNameIndex);
-        myParamNameIndex++;
+      int paramIndex = myParamNameIndex++ - myParamIgnoreCount;
+      if (!isSet(access, Opcodes.ACC_SYNTHETIC) && paramIndex >= 0 && paramIndex < myParamCount) {
+        setParameterName(name, paramIndex);
       }
     }
 
@@ -663,8 +663,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     private void setParameterName(String name, int paramIndex) {
       if (ClsParsingUtil.isJavaIdentifier(name, LanguageLevel.HIGHEST)) {
-        PsiParameterStubImpl stub = myParamStubs[paramIndex];
-        if (stub != null) stub.setName(name);
+        myParamStubs[paramIndex].setName(name);
       }
     }
 
