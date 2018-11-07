@@ -51,20 +51,13 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   private boolean myCheckValidMethods = false;
   private boolean myStopExecutingMethods = false;
 
-  GroovyResolverProcessor(@NotNull GrReferenceExpression ref,
-                          @NotNull EnumSet<GroovyResolveKind> kinds) {
+  GroovyResolverProcessor(@NotNull GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
     myRef = ref;
     myAcceptableKinds = kinds;
     myName = getReferenceName(ref);
 
     myTypeArguments = ref.getTypeArguments();
-    if (kinds.contains(GroovyResolveKind.METHOD)) {
-      myArgumentTypes = NullableLazyValue.createValue(() -> buildTopLevelArgumentTypes(myRef));
-    }
-    else {
-      myArgumentTypes = NullableLazyValue.createValue(() -> null);
-    }
-
+    myArgumentTypes = NullableLazyValue.createValue(() -> buildTopLevelArgumentTypes(myRef));
     myAccessorProcessors = calcAccessorProcessors();
   }
 
@@ -179,7 +172,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     return myStopExecutingMethods ? singletonList(this)
                                   : concat(singletonList(this), myAccessorProcessors);
   }
-  
+
   @NotNull
   public abstract List<GroovyResolveResult> getCandidates();
 

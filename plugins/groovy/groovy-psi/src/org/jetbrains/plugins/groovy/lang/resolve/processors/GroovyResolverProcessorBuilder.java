@@ -20,12 +20,7 @@ public final class GroovyResolverProcessorBuilder {
     if (myAllVariants) {
       return new GroovyAllVariantsProcessor(ref, kinds);
     }
-    if (kinds.contains(METHOD)) {
-      return new GroovyCallResolverProcessorImpl(ref, kinds);
-    }
-    else {
-      return new GroovyResolverProcessorImpl(ref, kinds);
-    }
+    return new GroovyResolverProcessorImpl(ref, kinds);
   }
 
   @NotNull
@@ -48,6 +43,7 @@ public final class GroovyResolverProcessorBuilder {
   private static EnumSet<GroovyResolveKind> computeKinds(@NotNull GrReferenceExpression ref) {
     assert !ref.hasAt();
     assert !ref.hasMemberPointer();
+    assert ref.getParent() instanceof GrMethodCall;
 
     final EnumSet<GroovyResolveKind> result = EnumSet.allOf(GroovyResolveKind.class);
     result.remove(CLASS);
@@ -55,7 +51,6 @@ public final class GroovyResolverProcessorBuilder {
     result.remove(TYPE_PARAMETER);
 
     if (ref.isQualified()) result.remove(BINDING);
-    if (!(ref.getParent() instanceof GrMethodCall)) result.remove(METHOD);
 
     return result;
   }
