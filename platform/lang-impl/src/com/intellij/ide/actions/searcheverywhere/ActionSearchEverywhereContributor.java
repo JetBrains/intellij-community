@@ -8,17 +8,25 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
+import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class ActionSearchEverywhereContributor implements SearchEverywhereContributor<Void> {
@@ -121,6 +129,11 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
   @Override
   public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String text) {
+    if (modifiers == InputEvent.ALT_MASK) {
+      doAssignShortcut((GotoActionModel.MatchedValue) selected);
+      return true;
+    }
+
     selected = ((GotoActionModel.MatchedValue) selected).value;
 
     if (selected instanceof BooleanOptionDescription) {
@@ -142,6 +155,27 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
       value = ((GotoActionModel.ActionWrapper)value).getAction();
     }
     return value instanceof AnAction ? (AnAction) value : null;
+  }
+
+  private void doAssignShortcut(@NotNull GotoActionModel.MatchedValue value) {
+    AnAction action = getAction(value);
+    if (action == null) return;
+
+    String id = ActionManager.getInstance().getId(action);
+
+    Keymap activeKeymap = Optional.ofNullable(KeymapManager.getInstance())
+      .map(KeymapManager::getActiveKeymap)
+      .orElse(null);
+    if (activeKeymap == null) return;
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Window window = myProject != null
+                      ? WindowManager.getInstance().suggestParentWindow(myProject)
+                      : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+      if (window == null) return;
+
+      KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), activeKeymap, window);
+    });
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<Void> {
