@@ -53,8 +53,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -103,6 +103,8 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
                                .filter(c -> ProjectSystemId.IDE.equals(c.getSystemId()) ||
                                             myExternalSystemId.equals(c.getSystemId()))
                                .collect(Collectors.toList());
+
+    setName(myExternalSystemId.getReadableName() + " tool window");
   }
 
   @Nullable
@@ -257,7 +259,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
   @Override
   public void handleDoubleClickOrEnter(@NotNull ExternalSystemNode node, @Nullable String actionId, InputEvent inputEvent) {
     if (actionId != null) {
-      ExternalSystemActionUtil.executeAction(actionId, inputEvent);
+      ExternalSystemActionUtil.executeAction(actionId, getName(), inputEvent);
     }
     for (Listener listener : listeners) {
       listener.onDoubleClickOrEnter(node, inputEvent);
@@ -315,7 +317,7 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
         if (id != null) {
           final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
           if (actionGroup != null) {
-            actionManager.createActionPopupMenu("", actionGroup).getComponent().show(comp, x, y);
+            actionManager.createActionPopupMenu(ExternalProjectsViewImpl.this.getName(), actionGroup).getComponent().show(comp, x, y);
           }
         }
       }

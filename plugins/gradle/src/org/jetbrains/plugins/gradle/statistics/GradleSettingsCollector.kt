@@ -27,7 +27,7 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
 
     // project settings
     for (setting in gradleSettings.linkedProjectsSettings) {
-      usages.add(getBooleanUsage("useCompositeBuilds", setting.compositeBuild != null))
+      usages.add(getYesNoUsage("isCompositeBuilds", setting.compositeBuild != null))
       usages.add(getEnumUsage("distributionType", setting.distributionType))
       usages.add(getEnumUsage("storeProjectFilesExternally", setting.storeProjectFilesExternally))
       usages.add(getBooleanUsage("disableWrapperSourceDistributionNotification", setting.isDisableWrapperSourceDistributionNotification))
@@ -41,5 +41,9 @@ class GradleSettingsCollector : ProjectUsagesCollector() {
     usages.add(getBooleanUsage("delegateBuildRun", runningSettings.isUseGradleAwareMake))
     usages.add(getEnumUsage("preferredTestRunner", runningSettings.preferredTestRunner))
     return usages
+  }
+
+  private fun getYesNoUsage(key: String, value: Boolean): UsageDescriptor {
+    return UsageDescriptor(key + if (value) ".yes" else ".no", 1)
   }
 }

@@ -8,22 +8,40 @@ import com.intellij.internal.statistic.service.fus.collectors.UsageDescriptorKey
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import com.intellij.util.text.nullize
 
 class MavenActionsUsagesCollector : ProjectUsageTriggerCollector() {
   override fun getGroupId() = "statistics.build.maven.actions"
 
   companion object {
+
     @JvmStatic
-    fun trigger(project: Project?, action: AnAction, event: AnActionEvent?) {
+    fun trigger(project: Project?,
+                featureId: String,
+                place: String?,
+                isFromContextMenu: Boolean,
+                vararg additionalContextData: String) {
       if (project == null) return
 
       // preserve context data ordering
       val context = FUSUsageContext.create(
-        "from.${event?.place ?: "undefined.place"}",
-        "fromContextMenu.${event?.isFromContextMenu?.toString() ?: "false"}"
+        place.nullize() ?: "undefined place",
+        "fromContextMenu.$isFromContextMenu",
+        *additionalContextData
       )
-      val actionClassName = UsageDescriptorKeyValidator.ensureProperKey(action.javaClass.simpleName)
-      FUSProjectUsageTrigger.getInstance(project).trigger(MavenActionsUsagesCollector::class.java, actionClassName, context)
+
+      FUSProjectUsageTrigger.getInstance(project).trigger(MavenActionsUsagesCollector::class.java,
+                                                          UsageDescriptorKeyValidator.ensureProperKey(featureId), context)
+    }
+
+    @JvmStatic
+    fun trigger(project: Project?, action: AnAction, event: AnActionEvent?, vararg additionalContextData: String) {
+      trigger(project, action.javaClass.simpleName, event?.place, event?.isFromContextMenu ?: false, *additionalContextData)
+    }
+
+    @JvmStatic
+    fun trigger(project: Project?, featureId: String, event: AnActionEvent?, vararg additionalContextData: String) {
+      trigger(project, featureId, event?.place, event?.isFromContextMenu ?: false, *additionalContextData)
     }
 
     @JvmStatic

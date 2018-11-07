@@ -602,9 +602,8 @@
       <reference id="EditSource"/>
     </group>
 
-    <group id="Maven.BuildMenu" popup="true">
-      <reference id="Maven.RunBuild"/>
-      <reference ref="RunContextGroup"/>
+    <group id="Maven.BuildMenu" popup="true"  class="org.jetbrains.idea.maven.navigator.actions.MavenBuildMenu">
+      <action id="Maven.CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
       <separator/>
       <reference ref="Maven.TasksGroup"/>
     </group>

@@ -53,6 +53,8 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 
+import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
+
 public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implements DataProvider {
   private final Project myProject;
   private final SimpleTree myTree;
@@ -103,7 +105,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
         if (id != null) {
           final ActionGroup actionGroup = (ActionGroup)actionManager.getAction(id);
           if (actionGroup != null) {
-            actionManager.createActionPopupMenu("", actionGroup).getComponent().show(comp, x, y);
+            actionManager.createActionPopupMenu(TOOL_WINDOW_PLACE_ID, actionGroup).getComponent().show(comp, x, y);
           }
         }
       }
