@@ -122,7 +122,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   @Override
   public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String text) {
     if (modifiers == InputEvent.ALT_MASK) {
-      doAssignShortcut((GotoActionModel.MatchedValue) selected);
+      showAssignShortcutDialog((GotoActionModel.MatchedValue) selected);
       return true;
     }
 
@@ -149,7 +149,7 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
     return value instanceof AnAction ? (AnAction) value : null;
   }
 
-  private void doAssignShortcut(@NotNull GotoActionModel.MatchedValue value) {
+  private void showAssignShortcutDialog(@NotNull GotoActionModel.MatchedValue value) {
     AnAction action = getAction(value);
     if (action == null) return;
 
