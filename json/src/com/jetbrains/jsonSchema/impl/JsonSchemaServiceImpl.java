@@ -313,7 +313,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   private static boolean isSchemaUrl(@Nullable String url) {
-    return url != null && url.startsWith("http://json-schema.org/") && url.endsWith("/schema");
+    return url != null && url.startsWith("http://json-schema.org/") && (url.endsWith("/schema") || url.endsWith("/schema#"));
   }
 
   @Override
