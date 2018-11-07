@@ -19,7 +19,6 @@ class ExternalSystemActionsCollector : ProjectUsageTriggerCollector() {
   companion object {
     @JvmStatic
     fun trigger(project: Project?,
-                fusClass: Class<out ProjectUsageTriggerCollector>,
                 systemId: ProjectSystemId?,
                 featureId: String,
                 place: String?,
@@ -35,17 +34,8 @@ class ExternalSystemActionsCollector : ProjectUsageTriggerCollector() {
         *additionalContextData
       )
 
-      FUSProjectUsageTrigger.getInstance(project).trigger(fusClass, UsageDescriptorKeyValidator.ensureProperKey(featureId), context)
-    }
-
-    @JvmStatic
-    fun trigger(project: Project?,
-                systemId: ProjectSystemId?,
-                featureId: String,
-                place: String?,
-                isFromContextMenu: Boolean,
-                vararg additionalContextData: String) {
-      trigger(project, ExternalSystemActionsCollector::class.java, systemId, featureId, place, isFromContextMenu, *additionalContextData)
+      FUSProjectUsageTrigger.getInstance(project).trigger(ExternalSystemActionsCollector::class.java,
+                                                          UsageDescriptorKeyValidator.ensureProperKey(featureId), context)
     }
 
 
