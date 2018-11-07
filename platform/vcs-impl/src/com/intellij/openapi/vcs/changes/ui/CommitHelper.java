@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.CalledInAwt;
@@ -156,6 +155,11 @@ public class CommitHelper {
           generalCommit();
         }, indicator);
       }
+      catch (ProcessCanceledException ignored) {
+      }
+      catch (Throwable e) {
+        LOG.error(e);
+      }
       finally {
         endSemaphore.up();
       }
@@ -189,7 +193,6 @@ public class CommitHelper {
     catch (Throwable e) {
       LOG.error(e);
       myCommitProcessor.myVcsExceptions.add(new VcsException(e));
-      ExceptionUtil.rethrow(e);
     }
     finally {
       commitCompleted(myCommitProcessor.getVcsExceptions());
