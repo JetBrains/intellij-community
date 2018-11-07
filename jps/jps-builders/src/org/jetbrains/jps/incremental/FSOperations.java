@@ -40,10 +40,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.Set;
@@ -348,6 +345,30 @@ public class FSOperations {
       LOG.warn(e);
     }
     return 0L;
+  }
+
+  public static void copy(File fromFile, File toFile) throws IOException {
+    final Path from = fromFile.toPath();
+    final Path to = toFile.toPath();
+    try {
+      try {
+        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
+      }
+      catch (NoSuchFileException e) {
+        final File parent = toFile.getParentFile();
+        if (parent != null && parent.mkdirs()) {
+          Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING); // repeat on successful target dir creation
+        }
+        else {
+          throw e;
+        }
+      }
+    }
+    catch (IOException e) {
+      // fallback: trying 'classic' copying via streams
+      LOG.info("Error copying "+ fromFile.getPath() + " to " + toFile.getPath() + " with NIO API", e);
+      FileUtil.copyContent(fromFile, toFile);
+    }
   }
 
   public static boolean isMarkedDirty(CompileContext context, BuildTarget<?> target) {
