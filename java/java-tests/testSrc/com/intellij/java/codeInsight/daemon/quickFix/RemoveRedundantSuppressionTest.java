@@ -22,6 +22,7 @@ import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.psi.impl.source.tree.injected.MyTestInjector;
+import com.siyeh.ig.controlflow.FallthruInSwitchStatementInspection;
 
 
 public class RemoveRedundantSuppressionTest extends LightQuickFixParameterizedTestCase {
@@ -33,6 +34,7 @@ public class RemoveRedundantSuppressionTest extends LightQuickFixParameterizedTe
     enableInspectionTools(new RedundantSuppressInspection(), 
                           new PossibleHeapPollutionVarargsInspection(),
                           new UncheckedWarningLocalInspection(),
+                          new FallthruInSwitchStatementInspection(),
                           new UnusedDeclarationInspection(true),
                           new RedundantLambdaCodeBlockInspection());
   }
