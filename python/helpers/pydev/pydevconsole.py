@@ -72,7 +72,7 @@ class InterpreterInterface(BaseInterpreterInterface):
         self._input_error_printed = False
 
     def save_main(self):
-        m = save_main_module('<input>')
+        m = save_main_module('<input>', 'pydevconsole')
         self.namespace = m.__dict__
         try:
             self.namespace['__builtins__'] = __builtins__
