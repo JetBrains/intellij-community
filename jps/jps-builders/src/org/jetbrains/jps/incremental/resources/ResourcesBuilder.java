@@ -125,13 +125,23 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
       final Path from = file.toPath();
       final Path to = targetFile.toPath();
       try {
-        Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
-      }
-      catch (NoSuchFileException e) {
-        final File parent = targetFile.getParentFile();
-        if (parent != null && parent.mkdirs()) {
-          Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING); // repeat on successful target dir creation
+        try {
+          Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
         }
+        catch (NoSuchFileException e) {
+          final File parent = targetFile.getParentFile();
+          if (parent != null && parent.mkdirs()) {
+            Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING); // repeat on successful target dir creation
+          }
+          else {
+            throw e;
+          }
+        }
+      }
+      catch (IOException e) {
+        // fallback: trying 'classic' copying via streams
+        LOG.info("Error copying resource "+ file.getPath() + " to " + targetFile.getPath() + " with NIO API", e);
+        FileUtil.copyContent(file, targetFile);
       }
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(file.getPath()));
     }
