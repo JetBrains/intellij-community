@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
 internal open class ClassProcessor(
   private val name: String,
-  private val place: PsiElement?,
+  private val place: PsiElement,
   private val typeArguments: Array<out PsiType> = PsiType.EMPTY_ARRAY,
   annotationResolve: Boolean = false
 ) : FindFirstProcessor<ClassResolveResult>() {
