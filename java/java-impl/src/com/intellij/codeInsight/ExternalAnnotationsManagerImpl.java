@@ -66,8 +66,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -372,8 +372,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         continue;
       }
 
-      int compare = annotationFQName.compareTo(curAnnotationName);
-      if (compare == 0) {
+      if (annotationFQName.equals(curAnnotationName)) {
         // found tag for same annotation, replacing
         itemAnnotation.delete();
         break;
