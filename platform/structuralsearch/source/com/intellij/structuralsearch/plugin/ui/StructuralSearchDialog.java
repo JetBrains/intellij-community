@@ -273,11 +273,28 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  private void setText(String text) {
-    text = text.trim();
-    setTextForEditor(text, mySearchCriteriaEdit);
-    if (myReplace) {
-      setTextForEditor(text, myReplaceCriteriaEdit);
+  private void setTextFromContext() {
+    final Editor editor = mySearchContext.getEditor();
+    if (editor != null) {
+      final SelectionModel selectionModel = editor.getSelectionModel();
+      final String selectedText = selectionModel.getSelectedText();
+      if (selectedText != null) {
+        if (loadConfiguration(selectedText)) {
+          return;
+        }
+        final String text = selectedText.trim();
+        setTextForEditor(text.trim(), mySearchCriteriaEdit);
+        if (myReplace) {
+          setTextForEditor(text, myReplaceCriteriaEdit);
+        }
+        myScopePanel.setScope(null);
+        return;
+      }
+    }
+
+    final Configuration configuration = ConfigurationManager.getInstance(getProject()).getMostRecentConfiguration();
+    if (configuration != null) {
+      loadConfiguration(configuration);
     }
   }
 
@@ -612,29 +629,9 @@ public class StructuralSearchDialog extends DialogWrapper {
   @Override
   public void show() {
     StructuralSearchPlugin.getInstance(getProject()).setDialogVisible(true);
-
     if (!myUseLastConfiguration) {
-      final Editor editor = mySearchContext.getEditor();
-      boolean setSomeText = false;
-
-      if (editor != null) {
-        final SelectionModel selectionModel = editor.getSelectionModel();
-        final String selectedText = selectionModel.getSelectedText();
-        if (selectedText != null && !loadConfiguration(selectedText)) {
-          setText(selectedText);
-          myScopePanel.setScope(null);
-        }
-        setSomeText = true;
-      }
-
-      if (!setSomeText) {
-        final Configuration configuration = ConfigurationManager.getInstance(getProject()).getMostRecentConfiguration();
-        if (configuration != null) {
-          loadConfiguration(configuration);
-        }
-      }
+      setTextFromContext();
     }
-
     super.show();
 
     // handle dimension service manually to store dimensions correctly when switching between search/replace in the same dialog
