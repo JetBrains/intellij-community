@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -120,7 +121,7 @@ internal class GithubPullRequestChangesComponent(project: Project,
 
   private data class CommitTag(val commit: GitCommit) : CustomChangesBrowserNode.Provider {
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-
+      renderer.icon = AllIcons.Vcs.CommitNode
       renderer.append(commit.subject, SimpleTextAttributes.REGULAR_ATTRIBUTES)
       renderer.append(" by ${commit.author.name} on ${DateFormatUtil.formatDate(commit.authorTime)}",
                       SimpleTextAttributes.GRAYED_ATTRIBUTES)
