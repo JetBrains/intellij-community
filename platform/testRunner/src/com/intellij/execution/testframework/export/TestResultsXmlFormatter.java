@@ -247,7 +247,7 @@ public class TestResultsXmlFormatter {
           }
           lastType.set(contentType);
         }
-        if (bufferSize < 0 || buffer.length() < bufferSize) {
+        if (bufferSize <= 0 || buffer.length() < bufferSize) {
           buffer.append(text);
         }
       }

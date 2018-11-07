@@ -41,6 +41,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   private Runnable myTestingStartedHandler;
   private boolean myFirstTestingStartedEvent = true;
   private static final String ELLIPSIS = "<...>";
+  private final int myCycleBufferSize = ConsoleBuffer.getCycleBufferSize();
 
   public OutputToGeneralTestEventsConverter(@NotNull String testFrameworkName, @NotNull TestConsoleProperties consoleProperties) {
     this(testFrameworkName, consoleProperties.isEditable());
@@ -92,10 +93,9 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
   }
 
   protected void processConsistentText(String text, final Key outputType, boolean tcLikeFakeOutput) {
-    final int cycleBufferSize = ConsoleBuffer.getCycleBufferSize();
-    if (USE_CYCLE_BUFFER && text.length() > cycleBufferSize) {
-      final StringBuilder builder = new StringBuilder(cycleBufferSize);
-      builder.append(text, 0, cycleBufferSize - OutputLineSplitter.SM_MESSAGE_PREFIX);
+    if (USE_CYCLE_BUFFER && text.length() > myCycleBufferSize && myCycleBufferSize > OutputLineSplitter.SM_MESSAGE_PREFIX) {
+      final StringBuilder builder = new StringBuilder(myCycleBufferSize);
+      builder.append(text, 0, myCycleBufferSize - OutputLineSplitter.SM_MESSAGE_PREFIX);
       builder.append(ELLIPSIS);
       builder.append(text, text.length() - OutputLineSplitter.SM_MESSAGE_PREFIX + ELLIPSIS.length(), text.length());
       text = builder.toString();
