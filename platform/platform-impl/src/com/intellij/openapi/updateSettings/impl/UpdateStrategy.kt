@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.graph.GraphAlgorithms
@@ -13,8 +14,6 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
   enum class State {
     LOADED, CONNECTION_ERROR, NOTHING_LOADED
   }
-
-  private val lineage = currentBuild.baselineVersion
 
   fun checkForUpdates(): CheckForUpdateResult {
     val product = updates[currentBuild.productCode]
@@ -43,10 +42,11 @@ class UpdateStrategy(private val currentBuild: BuildNumber, private val updates:
       candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
       candidate.target?.inRange(currentBuild) ?: true
 
-  private fun compareBuilds(n1: BuildNumber, n2: BuildNumber) =
-      if (n1.baselineVersion == lineage && n2.baselineVersion != lineage) 1
-      else if (n2.baselineVersion == lineage && n1.baselineVersion != lineage) -1
-      else n1.compareTo(n2)
+  private fun compareBuilds(n1: BuildNumber, n2: BuildNumber): Int {
+    val customization = UpdateStrategyCustomization.getInstance()
+    val preferSameMajorVersion = customization.haveSameMajorVersion(currentBuild, n1).compareTo(customization.haveSameMajorVersion(currentBuild, n2))
+    return if (preferSameMajorVersion != 0) preferSameMajorVersion else n1.compareTo(n2)
+  }
 
   private fun patches(newBuild: BuildInfo, product: Product, from: BuildNumber): UpdateChain? {
     val single = newBuild.patches.find { it.isAvailable && it.fromBuild.compareTo(from) == 0 }
