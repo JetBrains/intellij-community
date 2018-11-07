@@ -84,8 +84,8 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
       );
     }
     return ContainerUtil.newArrayList(
-      new AccessorProcessor(myName, PropertyKind.GETTER, () -> PsiType.EMPTY_ARRAY, myRef),
-      new AccessorProcessor(myName, PropertyKind.BOOLEAN_GETTER, () -> PsiType.EMPTY_ARRAY, myRef)
+      new AccessorProcessor(myName, PropertyKind.GETTER, Collections.emptyList(), myRef),
+      new AccessorProcessor(myName, PropertyKind.BOOLEAN_GETTER, Collections.emptyList(), myRef)
     );
   }
 

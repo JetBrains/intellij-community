@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isApplicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer
 
@@ -10,7 +11,7 @@ class AccessorResolveResult(
   element: PsiMethod,
   place: PsiElement,
   state: ResolveState,
-  argumentTypes: Array<PsiType?>?
+  arguments: List<Argument>?
 ) : BaseGroovyResolveResult<PsiMethod>(element, place, state) {
 
   private val receiverType = state[ClassHint.THIS_TYPE]
@@ -23,6 +24,7 @@ class AccessorResolveResult(
   override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor
 
   private val applicability by lazy {
+    val argumentTypes = arguments?.map { it.type }?.toTypedArray()
     isApplicable(argumentTypes, element, substitutor, place, true)
   }
 

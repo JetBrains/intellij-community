@@ -3,19 +3,19 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.util.isPropertyName
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 
 class GroovyLValueProcessor(
   name: String,
   place: PsiElement,
   kinds: Set<GroovyResolveKind>,
-  argumentTypes: () -> Array<PsiType?>?
+  arguments: List<Argument>?
 ) : AccessorAwareResolverProcessor(name, place, kinds) {
 
   override val accessorProcessors: Collection<GrResolverProcessor<*>> = if (name.isPropertyName()) {
-    listOf(AccessorProcessor(name, PropertyKind.SETTER, argumentTypes, place))
+    listOf(AccessorProcessor(name, PropertyKind.SETTER, arguments, place))
   }
   else {
     emptyList()
