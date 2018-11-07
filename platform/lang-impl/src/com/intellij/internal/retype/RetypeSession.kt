@@ -129,7 +129,7 @@ class RetypeSession(
     threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
     var expectedText = originalText.substring(0, pos) + originalText.substring(endPos)
-    if (document.text != expectedText) {
+    if (compareTexts(expectedText)) {
       if (document.textLength >= pos && document.text.substring(0, pos) == originalText.substring(0, pos)) {
         while (pos + 1 < document.textLength - tailLength && originalText[pos] == document.text[pos]) {
           pos++
@@ -138,7 +138,7 @@ class RetypeSession(
         expectedText = originalText.substring(0, pos) + originalText.substring(endPos)
       }
 
-      if (document.text != expectedText) {
+      if (compareTexts(expectedText)) {
         typedRightBefore = false
         scriptBuilder?.append(correctText(expectedText))
         WriteCommandAction.runWriteCommandAction(project) {
@@ -188,6 +188,10 @@ class RetypeSession(
     }
     queueNextOrStop()
   }
+
+  private fun compareTexts(expectedText: String) =
+    document.text.replace(" ","").replace(")","").replace("]","").replace("}", "") !=
+     expectedText.replace(" ","").replace(")","").replace("]","").replace("}", "")
 
   private fun queueNextOrStop() {
     if (pos < endPos) {
