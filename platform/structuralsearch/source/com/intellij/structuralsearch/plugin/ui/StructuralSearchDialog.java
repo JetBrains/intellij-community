@@ -13,6 +13,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -56,6 +57,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.textCompletion.TextCompletionUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.TextTransferable;
 import org.jdom.Element;
@@ -626,8 +628,8 @@ public class StructuralSearchDialog extends DialogWrapper {
         if (selectedText != null && !loadConfiguration(selectedText)) {
           setText(selectedText);
           myScopePanel.setScope(null);
-          setSomeText = true;
         }
+        setSomeText = true;
       }
 
       if (!setSomeText) {
@@ -638,7 +640,6 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     }
 
-    initiateValidation();
     super.show();
 
     // handle dimension service manually to store dimensions correctly when switching between search/replace in the same dialog
@@ -756,8 +757,9 @@ public class StructuralSearchDialog extends DialogWrapper {
 
       if (message == null) return;
       final Balloon balloon = JBPopupFactory.getInstance()
-                                            .createHtmlTextBalloonBuilder(message, error ? MessageType.ERROR : MessageType.WARNING, null)
-                                            .createBalloon();
+        .createHtmlTextBalloonBuilder(message, error ? MessageType.ERROR : MessageType.WARNING, null)
+        .setHideOnFrameResize(false)
+        .createBalloon();
       if (component != myScopePanel) {
         balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
       }
@@ -767,6 +769,32 @@ public class StructuralSearchDialog extends DialogWrapper {
       balloon.showInCenterOf(component);
       Disposer.register(myDisposable, balloon);
     });
+  }
+
+  void securityCheck() {
+    final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+    for (String name : matchOptions.getVariableConstraintNames()) {
+      final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
+      if (showSecurityMessage(constraint)) return;
+    }
+    final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+    if (replaceOptions != null) {
+      for (ReplacementVariableDefinition variableDefinition : replaceOptions.getVariableDefinitions()) {
+        if (showSecurityMessage(variableDefinition)) return;
+      }
+    }
+  }
+
+  private boolean showSecurityMessage(NamedScriptableDefinition constraint) {
+    if (constraint.getScriptCodeConstraint().length() <= 2) {
+      return false;
+    }
+    EdtInvocationManager.getInstance().invokeLater(
+      () -> reportMessage("Note that this template contains a Groovy Script filter " +
+                          "and the script has access to the complete " + ApplicationNamesInfo.getInstance().getFullProductName() +
+                          " internals. Please make sure that the script does not cause damage before using this template.",
+                          false, myOptionsToolbar));
+    return true;
   }
 
   public void showFilterPanel(String variableName) {
@@ -834,6 +862,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       final Element element = JDOMUtil.load(text);
       configuration.readExternal(element);
       loadConfiguration(configuration);
+      securityCheck();
       return true;
     }
     catch (IOException | JDOMException ignored) {
