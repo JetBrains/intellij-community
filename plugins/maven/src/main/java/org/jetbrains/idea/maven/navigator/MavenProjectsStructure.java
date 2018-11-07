@@ -44,6 +44,7 @@ import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
@@ -57,6 +58,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.*;
 
+import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 import static org.jetbrains.idea.maven.project.ProjectBundle.message;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
@@ -495,7 +497,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
       String actionId = getActionId();
       if (actionId != null) {
-        MavenUIUtil.executeAction(actionId, inputEvent);
+        MavenUIUtil.executeAction(actionId, TOOL_WINDOW_PLACE_ID, inputEvent);
       }
     }
   }
@@ -1524,6 +1526,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
+      MavenActionsUsagesCollector.trigger(myProject, "ExecuteMavenRunConfigurationAction", TOOL_WINDOW_PLACE_ID, false);
       ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
     }
   }
