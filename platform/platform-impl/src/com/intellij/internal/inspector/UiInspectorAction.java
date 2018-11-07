@@ -405,7 +405,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         componentNode.setText(toString());
-        setIcon(createColorIcon(component.getForeground(), component.getBackground()));
+        setIcon(createColorIcon(component.getBackground(), component.getForeground()));
       }
       if (value instanceof HierarchyTree.ClickInfoNode) {
         append(value.toString());
@@ -1006,7 +1006,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         Color insideColor = getBorderColor(((CompoundBorder)value).getInsideBorder());
         Color outsideColor = getBorderColor(((CompoundBorder)value).getOutsideBorder());
         if (insideColor != null && outsideColor != null) {
-          setIcon(createColorIcon(outsideColor, insideColor));
+          setIcon(createColorIcon(insideColor, outsideColor));
         }
         else if (insideColor != null) {
           setIcon(createColorIcon(insideColor));
@@ -1108,7 +1108,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
   }
 
   private static Icon createColorIcon(Color color1, Color color2) {
-    return JBUI.scale(new TwoColorsIcon(11, color1, color2));
+    return JBUI.scale(new ColorsIcon(11, color1, color2));
   }
 
 
