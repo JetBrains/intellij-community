@@ -1,9 +1,9 @@
 import org.intellij.lang.annotations.Pattern
 
 @SuppressWarnings("unused")
-enum TestGrEnum {
+enum GroovyEnumConstructor {
   G1("-", "0"),
   G2("-", "1");
 
-  TestGrEnum(String s1, @Pattern("\\d+") String s2) { }
+  GroovyEnumConstructor(String s1, @Pattern("\\d+") String s2) { }
 }
