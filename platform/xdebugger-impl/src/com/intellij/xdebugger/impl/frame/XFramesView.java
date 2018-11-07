@@ -110,7 +110,7 @@ public class XFramesView extends XDebugView {
             XDebugSession session = getSession(e);
             if (session != null) {
               myRefresh = false;
-              updateFrames((XExecutionStack)item, session, null);
+              updateFrames((XExecutionStack)item, session, null, false);
             }
           }
         }
@@ -307,7 +307,10 @@ public class XFramesView extends XDebugView {
         }
         myThreadsPanel.revalidate();
       }
-      updateFrames(activeExecutionStack, session, event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null);
+      updateFrames(activeExecutionStack,
+                   session,
+                   event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null,
+                   event == SessionEvent.SETTINGS_CHANGED);
     });
   }
 
@@ -336,7 +339,10 @@ public class XFramesView extends XDebugView {
     }
   }
 
-  private void updateFrames(XExecutionStack executionStack, @NotNull XDebugSession session, @Nullable XStackFrame frameToSelect) {
+  private void updateFrames(XExecutionStack executionStack,
+                            @NotNull XDebugSession session,
+                            @Nullable XStackFrame frameToSelect,
+                            boolean refresh) {
     if (mySelectedStack != null) {
       withCurrentBuilder(StackFramesListBuilder::stop);
     }
@@ -345,6 +351,7 @@ public class XFramesView extends XDebugView {
     if (executionStack != null) {
       mySelectedFrameIndex = myExecutionStacksWithSelection.get(executionStack);
       StackFramesListBuilder builder = getOrCreateBuilder(executionStack, session);
+      builder.setRefresh(refresh);
       builder.setToSelect(frameToSelect != null ? frameToSelect : mySelectedFrameIndex);
       myListenersEnabled = false;
       boolean selected = builder.initModel(myFramesList.getModel());
@@ -384,6 +391,7 @@ public class XFramesView extends XDebugView {
     private boolean myAllFramesLoaded;
     private final XDebugSession mySession;
     private Object myToSelect;
+    private boolean myRefresh;
 
     private StackFramesListBuilder(final XExecutionStack executionStack, XDebugSession session) {
       myExecutionStack = executionStack;
@@ -393,6 +401,10 @@ public class XFramesView extends XDebugView {
 
     void setToSelect(Object toSelect) {
       myToSelect = toSelect;
+    }
+
+    private void setRefresh(boolean refresh) {
+      myRefresh = refresh;
     }
 
     @Override
@@ -408,7 +420,7 @@ public class XFramesView extends XDebugView {
         myStackFrames.addAll(stackFrames);
         addFrameListElements(stackFrames, last);
 
-        if (toSelect != null) {
+        if (toSelect != null && !myRefresh) {
           setToSelect(toSelect);
         }
 
