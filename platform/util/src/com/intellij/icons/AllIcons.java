@@ -2601,6 +2601,7 @@ public class AllIcons {
     public static final Icon Branch = IconLoader.getIcon("/vcs/branch.svg"); // 16x16
     public static final Icon Changelist = IconLoader.getIcon("/vcs/changelist.svg"); // 16x16
     public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16
+    public static final Icon CommitNode = IconLoader.getIcon("/vcs/commitNode.svg"); // 16x16
     public static final Icon Equal = IconLoader.getIcon("/vcs/equal.png"); // 16x16
     public static final Icon History = IconLoader.getIcon("/vcs/history.svg"); // 16x16
     public static final Icon MapBase = IconLoader.getIcon("/vcs/mapBase.png"); // 16x16
