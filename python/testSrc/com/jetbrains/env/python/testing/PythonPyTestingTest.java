@@ -85,7 +85,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
           final String expectedConsoleText = "Expected :expected\n" +
                                              "Actual   :actual\n" +
-                                             " <Click to see difference>";
+                                             "<Click to see difference>";
           Assert.assertThat("No diff", runner.getAllConsoleText(), Matchers.containsString(expectedConsoleText));
         }
       });

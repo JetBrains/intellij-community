@@ -111,7 +111,7 @@ public final class PythonDocTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all, int exitCode) {
         final String text = runner.getConsole().getText();
-        Assert.assertThat("No diff link", text, Matchers.containsString(" <Click to see difference>"));
+        Assert.assertThat("No diff link", text, Matchers.containsString("<Click to see difference>"));
         Assert.assertThat("Wrong actual", text, Matchers.containsString("Got"));
         Assert.assertThat("Wrong actual", text, Matchers.containsString("2"));
         Assert.assertThat("Wrong expected", text, Matchers.containsString("Expected"));
