@@ -4,9 +4,10 @@ package com.siyeh.ig.psiutils;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue.BooleanReturnValue;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiLiteralUtil;
@@ -15,11 +16,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import one.util.streamex.StreamEx;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ReorderingUtils {
@@ -68,9 +72,21 @@ public class ReorderingUtils {
       }
     }
     if (parent instanceof PsiConditionalExpression) {
-      if (((PsiConditionalExpression)parent).getCondition() == expression) {
+      PsiConditionalExpression ternary = (PsiConditionalExpression)parent;
+      PsiExpression condition = ternary.getCondition();
+      if (condition == expression) {
         return canExtract(ancestor, parent);
       }
+      ThreeState result;
+      if (isSideEffectFree(condition, false) &&
+          isSideEffectFree(expression, false)) {
+        result = ThreeState.YES;
+      } else {
+        boolean isNecessary =
+          areConditionsNecessaryFor(new PsiExpression[]{condition}, expression, ternary.getElseExpression() == expression);
+        result = isNecessary ? ThreeState.NO : ThreeState.UNSURE;
+      }
+      return and(result, () -> canExtract(ancestor, parent));
     }
     if (parent instanceof PsiLambdaExpression) {
       return ThreeState.NO;
@@ -120,153 +136,272 @@ public class ReorderingUtils {
     if (operandIndex == 0) return ThreeState.YES;
     IElementType tokenType = polyadicExpression.getOperationTokenType();
     if (tokenType != JavaTokenType.ANDAND && tokenType != JavaTokenType.OROR) return ThreeState.UNSURE;
-    PsiExpression[] expressionOperands = polyadicExpression.getOperands();
-    if (operandIndex < 0 || operandIndex >= expressionOperands.length) {
+    PsiExpression[] operands = polyadicExpression.getOperands();
+    if (operandIndex < 0 || operandIndex >= operands.length) {
       throw new IndexOutOfBoundsException("operandIndex = "+operandIndex);
     }
-    PsiExpression[] operands = Arrays.copyOfRange(expressionOperands, 0, operandIndex + 1);
-    if (Arrays.stream(operands).allMatch(expression -> isSideEffectFree(expression, false))) {
+    if (Arrays.stream(operands, 0, operandIndex + 1).allMatch(expression -> isSideEffectFree(expression, false))) {
       return ThreeState.YES;
     }
-    if (lastOperandImpliesPrevious(polyadicExpression, operands)) {
+    boolean and = polyadicExpression.getOperationTokenType() == JavaTokenType.ANDAND;
+    PsiExpression lastOperand = operands[operandIndex];
+    if (areConditionsNecessaryFor(Arrays.copyOf(operands, operandIndex), lastOperand, !and)) {
       return ThreeState.NO;
     }
     return ThreeState.UNSURE;
   }
 
-  private enum ExceptionKind {
-    NullDereference {
-      @Override
-      boolean isNecessaryCheck(PsiExpression operand, PsiExpression condition, boolean negated) {
-        if (condition instanceof PsiBinaryExpression) {
-          IElementType tokenType = ((PsiBinaryExpression)condition).getOperationTokenType();
-          if (tokenType.equals(negated ? JavaTokenType.EQEQ : JavaTokenType.NE)) {
-            PsiExpression left = ((PsiBinaryExpression)condition).getLOperand();
-            PsiExpression right = ((PsiBinaryExpression)condition).getROperand();
-            if (ExpressionUtils.isNullLiteral(left)) {
-              return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(right, operand);
-            }
-            if (ExpressionUtils.isNullLiteral(right)) {
-              return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, operand);
-            }
-          }
-        }
-        return false;
-      }
-
-      @Override
-      PsiExpression extractOperand(PsiExpression expression) {
-        if (expression instanceof PsiLiteralExpression ||
-            expression instanceof PsiParenthesizedExpression ||
-            expression instanceof PsiTypeCastExpression ||
-            expression instanceof PsiConditionalExpression ||
-            NullabilityUtil.getExpressionNullability(expression) == Nullability.NOT_NULL) {
-          return null;
-        }
-        PsiExpression realExpression = expression;
-        while (realExpression.getParent() instanceof PsiParenthesizedExpression ||
-               realExpression.getParent() instanceof PsiTypeCastExpression ||
-               (realExpression.getParent() instanceof PsiConditionalExpression &&
-                realExpression != ((PsiConditionalExpression)realExpression.getParent()).getCondition())) {
-          realExpression = (PsiExpression)realExpression.getParent();
-        }
-        PsiElement parent = realExpression.getParent();
-        if (parent instanceof PsiReferenceExpression || parent instanceof PsiArrayAccessExpression) {
-          return expression;
-        }
-        if (parent instanceof PsiPolyadicExpression) {
-          IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
-          if (tokenType.equals(JavaTokenType.PLUS)) {
-            if (TypeUtils.isJavaLangString(((PsiPolyadicExpression)parent).getType())) {
-              return null;
+  private static boolean hasContract(PsiExpression expression, PsiExpression operand, ContractReturnValue value) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (value.equals(ContractReturnValue.returnNull()) &&
+        EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(operand, expression)) {
+      return true;
+    }
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      PsiExpressionList argumentList = call.getArgumentList();
+      if (argumentList.isEmpty()) return false;
+      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
+      for (MethodContract contract : contracts) {
+        if (contract.getReturnValue().equals(value)) {
+          List<ContractValue> conditions = contract.getConditions();
+          if (conditions.size() == 1) {
+            ContractValue condition = conditions.get(0);
+            int argIndex = condition.getNullCheckedArgument(true).orElse(-1);
+            if (argIndex >= 0) {
+              PsiExpression[] args = argumentList.getExpressions();
+              if (argIndex < args.length) {
+                PsiExpression arg = args[argIndex];
+                if (hasContract(arg, operand, ContractReturnValue.returnNull())) {
+                  return true;
+                }
+              }
             }
           }
-          return expression;
         }
-        PsiParameter parameter = MethodCallUtils.getParameterForArgument(realExpression);
-        if (parameter != null && NullableNotNullManager.isNotNull(parameter)) {
-          return expression;
-        }
-        return null;
       }
-    },
-    ClassCast {
-      @Override
-      boolean isNecessaryCheck(PsiExpression operand, PsiExpression condition, boolean negated) {
-        if (negated) return false;
-        if (condition instanceof PsiInstanceOfExpression) {
-          PsiExpression op = ((PsiInstanceOfExpression)condition).getOperand();
-          return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(op, operand);
-        }
-        return false;
-      }
-
-      @Override
-      PsiExpression extractOperand(PsiExpression expression) {
-        if (expression instanceof PsiTypeCastExpression) {
-          return ((PsiTypeCastExpression)expression).getOperand();
-        }
-        return null;
-      }
-    },
-    ArrayIndex {
-      @Override
-      boolean isNecessaryCheck(PsiExpression operand, PsiExpression condition, boolean negated) {
-        if (condition instanceof PsiBinaryExpression) {
-          IElementType token = ((PsiBinaryExpression)condition).getOperationTokenType();
-          if (ComparisonUtils.isComparisonOperation(token) && !token.equals(JavaTokenType.EQEQ) && !token.equals(JavaTokenType.NE)) {
-            PsiExpression left = ((PsiBinaryExpression)condition).getLOperand();
-            PsiExpression right = ((PsiBinaryExpression)condition).getROperand();
-            return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, operand) ||
-                   EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(right, operand);
-          }
-        }
-        return false;
-      }
-
-      @Override
-      PsiExpression extractOperand(PsiExpression expression) {
-        if (expression instanceof PsiArrayAccessExpression) {
-          return ((PsiArrayAccessExpression)expression).getIndexExpression();
-        }
-        return null;
-      }
-    };
-
-    abstract boolean isNecessaryCheck(PsiExpression operand, PsiExpression condition, boolean negated);
-
-    abstract PsiExpression extractOperand(PsiExpression expression);
+    }
+    return false;
   }
+  
+  private abstract static class ExceptionProblem {
+    final PsiExpression myOperand;
 
-  private static class Problem {
-    private final ExceptionKind myKind;
-    private final PsiExpression myOperand;
-
-    private Problem(ExceptionKind kind, PsiExpression operand) {
-      myKind = kind;
+    ExceptionProblem(PsiExpression operand) {
       myOperand = operand;
     }
 
-    @NotNull
-    static List<Problem> fromExpression(PsiExpression expression) {
-      List<Problem> problems = new ArrayList<>();
-      for (ExceptionKind kind : ExceptionKind.values()) {
-        PsiExpression operand = kind.extractOperand(expression);
-        if (operand != null) {
-          problems.add(new Problem(kind, operand));
+    abstract boolean isNecessaryCheck(PsiExpression condition, boolean negated);
+  }
+  
+  static final class NullDereferenceExceptionProblem extends ExceptionProblem {
+    private NullDereferenceExceptionProblem(PsiExpression operand) {
+      super(operand);
+    }
+
+    @Override
+    boolean isNecessaryCheck(PsiExpression condition, boolean negated) {
+      if (condition instanceof PsiBinaryExpression) {
+        IElementType tokenType = ((PsiBinaryExpression)condition).getOperationTokenType();
+        if (tokenType.equals(JavaTokenType.EQEQ) || tokenType.equals(JavaTokenType.NE)) {
+          boolean notNull = negated != tokenType.equals(JavaTokenType.EQEQ);
+          ContractReturnValue returnValue = notNull ? ContractReturnValue.returnNotNull() : ContractReturnValue.returnNull();
+          PsiExpression left = ((PsiBinaryExpression)condition).getLOperand();
+          PsiExpression right = ((PsiBinaryExpression)condition).getROperand();
+          if (ExpressionUtils.isNullLiteral(left)) {
+            return hasContract(right, myOperand, returnValue);
+          }
+          if (ExpressionUtils.isNullLiteral(right)) {
+            return hasContract(left, myOperand, returnValue);
+          }
         }
       }
-      return problems;
+      return hasContract(condition, myOperand, ContractReturnValue.returnBoolean(negated));
     }
     
+    static NullDereferenceExceptionProblem from(PsiExpression expression) {
+      if (expression instanceof PsiLiteralExpression ||
+          expression instanceof PsiParenthesizedExpression ||
+          expression instanceof PsiTypeCastExpression ||
+          expression instanceof PsiConditionalExpression ||
+          NullabilityUtil.getExpressionNullability(expression) == Nullability.NOT_NULL) {
+        return null;
+      }
+      PsiExpression realExpression = expression;
+      while (realExpression.getParent() instanceof PsiParenthesizedExpression ||
+             realExpression.getParent() instanceof PsiTypeCastExpression ||
+             (realExpression.getParent() instanceof PsiConditionalExpression &&
+              realExpression != ((PsiConditionalExpression)realExpression.getParent()).getCondition())) {
+        realExpression = (PsiExpression)realExpression.getParent();
+      }
+      PsiElement parent = realExpression.getParent();
+      if (parent instanceof PsiReferenceExpression || parent instanceof PsiArrayAccessExpression) {
+        return new NullDereferenceExceptionProblem(expression);
+      }
+      if (parent instanceof PsiPolyadicExpression) {
+        IElementType tokenType = ((PsiPolyadicExpression)parent).getOperationTokenType();
+        if (tokenType.equals(JavaTokenType.PLUS)) {
+          if (TypeUtils.isJavaLangString(((PsiPolyadicExpression)parent).getType())) {
+            return null;
+          }
+        }
+        return new NullDereferenceExceptionProblem(expression);
+      }
+      PsiParameter parameter = MethodCallUtils.getParameterForArgument(realExpression);
+      if (parameter != null && NullableNotNullManager.isNotNull(parameter)) {
+        return new NullDereferenceExceptionProblem(expression);
+      }
+      return null;
+    }
+  }
+  
+  static final class ClassCastExceptionProblem extends ExceptionProblem {
+    private ClassCastExceptionProblem(PsiExpression operand) {
+      super(operand);
+    }
+
+    @Override
     boolean isNecessaryCheck(PsiExpression condition, boolean negated) {
-      return myKind.isNecessaryCheck(myOperand, condition, negated);
+      if (negated) return false;
+      if (condition instanceof PsiInstanceOfExpression) {
+        PsiExpression op = ((PsiInstanceOfExpression)condition).getOperand();
+        return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(op, myOperand);
+      }
+      return false;
+    }
+    
+    static ClassCastExceptionProblem from(PsiExpression expression) {
+      if (expression instanceof PsiTypeCastExpression) {
+        return new ClassCastExceptionProblem(((PsiTypeCastExpression)expression).getOperand());
+      }
+      return null;
+    }
+  }
+  
+  static final class ArrayIndexExceptionProblem extends ExceptionProblem {
+    private ArrayIndexExceptionProblem(PsiExpression operand) {
+      super(operand);
+    }
+
+    @Override
+    boolean isNecessaryCheck(PsiExpression condition, boolean negated) {
+      if (condition instanceof PsiBinaryExpression) {
+        IElementType token = ((PsiBinaryExpression)condition).getOperationTokenType();
+        if (ComparisonUtils.isComparisonOperation(token) && !token.equals(JavaTokenType.EQEQ) && !token.equals(JavaTokenType.NE)) {
+          PsiExpression left = ((PsiBinaryExpression)condition).getLOperand();
+          PsiExpression right = ((PsiBinaryExpression)condition).getROperand();
+          return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left, myOperand) ||
+                 EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(right, myOperand);
+        }
+      }
+      return false;
+    }
+
+    static ArrayIndexExceptionProblem from(PsiExpression expression) {
+      if (expression instanceof PsiArrayAccessExpression) {
+        return new ArrayIndexExceptionProblem(((PsiArrayAccessExpression)expression).getIndexExpression());
+      }
+      return null;
+    }
+  }
+  
+  static final class ContractFailExceptionProblem extends ExceptionProblem {
+    private final DfaValueFactory myFactory;
+    private final List<DfaRelationValue> myConditions;
+
+    ContractFailExceptionProblem(DfaValueFactory factory, List<DfaRelationValue> conditions) {
+      super(null);
+      myFactory = factory;
+      myConditions = conditions;
+    }
+
+    @Override
+    boolean isNecessaryCheck(PsiExpression condition, boolean negated) {
+      if (condition instanceof PsiMethodCallExpression) {
+        PsiMethodCallExpression call = (PsiMethodCallExpression)condition;
+        List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
+        if (contracts.isEmpty()) return false;
+        for (MethodContract contract : contracts) {
+          if (!(contract.getReturnValue() instanceof BooleanReturnValue)) continue;
+          boolean retValue = ((BooleanReturnValue)contract.getReturnValue()).getValue();
+          List<ContractValue> conditions = contract.getConditions();
+          if (conditions.size() != 1) continue;
+          ContractValue cond = conditions.get(0);
+          DfaValue value = cond.fromCall(myFactory, call);
+          if (value instanceof DfaRelationValue) {
+            if (myConditions.contains(retValue == negated ? value : value.createNegated())) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+      if (condition instanceof PsiBinaryExpression) {
+        PsiBinaryExpression binOp = (PsiBinaryExpression)condition;
+        DfaRelationValue.RelationType relationType = DfaRelationValue.RelationType.fromElementType(binOp.getOperationTokenType());
+        if (relationType != null) {
+          PsiExpression left = binOp.getLOperand();
+          PsiExpression right = binOp.getROperand();
+          DfaValue leftVal = myFactory.createValue(left);
+          DfaValue rightVal = myFactory.createValue(right);
+          DfaValue value1 = myFactory.createCondition(leftVal, relationType, rightVal);
+          DfaValue value2 = myFactory.createCondition(rightVal, relationType.getFlipped(), leftVal);
+          if (value1 instanceof DfaRelationValue) {
+            if (myConditions.contains(negated ? value1 : value1.createNegated())) {
+              return true;
+            }
+          }
+          if (value2 instanceof DfaRelationValue) {
+            if (myConditions.contains(negated ? value2 : value2.createNegated())) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+    
+    static ContractFailExceptionProblem from(PsiExpression expression) {
+      if (expression instanceof PsiCallExpression) {
+        PsiCallExpression call = (PsiCallExpression)expression;
+        List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
+        contracts = ContainerUtil.filter(contracts, c -> c.getReturnValue().isFail() && c.getConditions().size() == 1);
+        if (contracts.isEmpty()) return null;
+        DfaValueFactory factory = new DfaValueFactory(null, false);
+        List<DfaRelationValue> conditions = new ArrayList<>();
+        for (MethodContract contract : contracts) {
+          ContractValue condition = contract.getConditions().get(0);
+          DfaValue conditionValue = condition.fromCall(factory, call);
+          if (conditionValue instanceof DfaRelationValue) {
+            conditions.add((DfaRelationValue)conditionValue);
+          }
+        }
+        return new ContractFailExceptionProblem(factory, conditions);
+      }
+      return null;
     }
   }
 
+  private static final List<Function<PsiExpression, ExceptionProblem>> PROBLEM_EXTRACTORS = Arrays.asList(
+    NullDereferenceExceptionProblem::from, ClassCastExceptionProblem::from, ArrayIndexExceptionProblem::from,
+    ContractFailExceptionProblem::from
+  );
+
+  @NotNull
+  static List<ExceptionProblem> fromExpression(PsiExpression expression) {
+    List<ExceptionProblem> problems = new ArrayList<>();
+    for (Function<PsiExpression, ExceptionProblem> extractor : PROBLEM_EXTRACTORS) {
+      ExceptionProblem exceptionProblem = extractor.apply(expression);
+      if (exceptionProblem != null) {
+        problems.add(exceptionProblem);
+      }
+    }
+    return problems;
+  }
+
   private static boolean areConditionsNecessaryFor(PsiExpression[] conditions, PsiExpression operand, boolean negated) {
-    List<Problem> problems = SyntaxTraverser.psiTraverser(operand)
-      .traverse().filter(PsiExpression.class).flatMap(Problem::fromExpression).filter(Objects::nonNull)
+    List<ExceptionProblem> problems = SyntaxTraverser.psiTraverser(operand)
+      .traverse().filter(PsiExpression.class).flatMap(ReorderingUtils::fromExpression).filter(Objects::nonNull)
       .toList();
     if (problems.isEmpty()) return false;
     for (PsiExpression condition : conditions) {
@@ -275,7 +410,7 @@ public class ReorderingUtils {
     return false;
   }
 
-  private static boolean isConditionNecessary(PsiExpression condition, List<Problem> problems, boolean negated) {
+  private static boolean isConditionNecessary(PsiExpression condition, List<ExceptionProblem> problems, boolean negated) {
     condition = PsiUtil.skipParenthesizedExprDown(condition);
     if (condition == null) return false;
     if (BoolUtils.isNegation(condition)) {
@@ -300,35 +435,12 @@ public class ReorderingUtils {
         return true;
       }
     }
-    for (Problem problem : problems) {
+    for (ExceptionProblem problem : problems) {
       if (problem.isNecessaryCheck(condition, negated)) {
         return true;
       }
     }
     return false;
-  }
-
-  private static boolean lastOperandImpliesPrevious(PsiPolyadicExpression expression, PsiExpression[] operands) {
-    assert operands.length > 1;
-    boolean and = expression.getOperationTokenType() == JavaTokenType.ANDAND;
-    if (Arrays.stream(operands).anyMatch(e -> !PsiTreeUtil.processElements(e, element -> !isErroneous(element)))) return false;
-    PsiExpression lastOperand = operands[operands.length - 1];
-    if (areConditionsNecessaryFor(Arrays.copyOf(operands, operands.length - 1), lastOperand, !and)) return true;
-    String expressionText = StreamEx.of(operands, 0, operands.length - 1).prepend(lastOperand)
-      .map(PsiExpression::getText).joining(and ? " && " : " || ");
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
-    PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)factory.createExpressionFromText(expressionText, expression);
-    PsiExpression[] newOperands = expressionToAnalyze.getOperands();
-    Map<PsiExpression, ThreeState> map = computeOperandValues(expressionToAnalyze, false);
-    ThreeState state = ThreeState.fromBoolean(and);
-    Set<PsiExpression> redundantOperands = StreamEx.of(newOperands).skip(1).filterBy(map::get, state).toSet();
-    if (redundantOperands.isEmpty()) return false;
-    if (operands.length == 2) {
-      return !Boolean.valueOf(and).equals(DfaUtil.computeValue(operands[0]));
-    }
-    expressionText = StreamEx.of(operands, 0, operands.length - 1).map(PsiExpression::getText).joining(and ? " && " : " || ");
-    expressionToAnalyze = (PsiPolyadicExpression)factory.createExpressionFromText(expressionText, expression);
-    return !computeOperandValues(expressionToAnalyze, false).values().contains(state);
   }
 
   private static boolean isErroneous(PsiElement element) {
@@ -378,40 +490,5 @@ public class ReorderingUtils {
       }
       return true;
     });
-  }
-
-  @NotNull
-  public static Map<PsiExpression, ThreeState> computeOperandValues(PsiPolyadicExpression expressionToAnalyze, boolean skipNullityUpdate) {
-    DataFlowRunner runner = new StandardDataFlowRunner(false, expressionToAnalyze);
-    Map<PsiExpression, ThreeState> values = new HashMap<>();
-    StandardInstructionVisitor visitor = new StandardInstructionVisitor() {
-      @Override
-      protected boolean checkNotNullable(DfaMemoryState state,
-                                         DfaValue value,
-                                         @Nullable NullabilityProblemKind.NullabilityProblem<?> problem) {
-        return skipNullityUpdate || super.checkNotNullable(state, value, problem);
-      }
-
-      @Override
-      protected void beforeExpressionPush(@NotNull DfaValue value,
-                                          @NotNull PsiExpression expression,
-                                          @Nullable TextRange range,
-                                          @NotNull DfaMemoryState state) {
-        super.beforeExpressionPush(value, expression, range, state);
-        if (PsiUtil.skipParenthesizedExprUp(expression.getParent()) != expressionToAnalyze) return;
-        ThreeState old = values.get(expression);
-        if (old == ThreeState.UNSURE) return;
-        ThreeState result = ThreeState.UNSURE;
-        if (value instanceof DfaConstValue) {
-          Object bool = ((DfaConstValue)value).getValue();
-          if (bool instanceof Boolean) {
-            result = ThreeState.fromBoolean((Boolean)bool);
-          }
-        }
-        values.put(expression, old == null || old == result ? result : ThreeState.UNSURE);
-      }
-    };
-    RunnerResult result = runner.analyzeMethod(expressionToAnalyze, visitor);
-    return result == RunnerResult.OK ? values : Collections.emptyMap();
   }
 }

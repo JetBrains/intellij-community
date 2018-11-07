@@ -36,10 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
-import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -51,7 +48,7 @@ import java.util.*;
 
 import static kotlin.LazyKt.lazy;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
-import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLValue;
+import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.getRValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
 import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveReferenceExpression;
 
@@ -72,9 +69,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     () -> isRValue(this) ? new GrRValueExpressionReference(this) : null
   );
 
-  private final Lazy<GroovyReference> myLValueReference = lazy(
-    () -> isLValue(this) ? new GrLValueExpressionReference(this) : null
-  );
+  private final Lazy<GroovyReference> myLValueReference = lazy(() -> {
+    RValue rValue = getRValue(this);
+    return rValue == null ? null : new GrLValueExpressionReference(this, rValue.getArgument());
+  });
 
   @Override
   public void accept(@NotNull GroovyElementVisitor visitor) {

@@ -1361,6 +1361,7 @@ public final class UiDefaultsHardcodedKeys {
     "TabbedPane.hoverColor",
     "TabbedPane.underlineColor",
     "TabbedPane.disabledUnderlineColor",
+    "Table.stripeColor",
     "TitlePane.background",
     "ToolTip.actions.background",
     "ToolWindow.Button.hoverBackground",

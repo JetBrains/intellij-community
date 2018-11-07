@@ -899,27 +899,17 @@ public class ControlFlowUtils {
   }
 
   /**
-   * @param expression expression to check
-   * @return true if given expression is always executed and can be converted to a statement
+   * @param expression    expression to check
+   * @return true if given expression can be extracted to a statement
    */
   public static boolean canExtractStatement(PsiExpression expression) {
-    return canExtractStatement(expression, true);
-  }
-
-  /**
-   * @param expression    expression to check
-   * @param checkExecuted if true, expression will be considered non-extractable if it is not always executed within its topmost expression
-   *                      (e.g. appears in then/else branches in ?: expression)
-   * @return true if given expression can be converted to a statement
-   */
-  public static boolean canExtractStatement(PsiExpression expression, boolean checkExecuted) {
     PsiElement cur = expression;
     PsiElement parent = cur.getParent();
     while(parent instanceof PsiExpression || parent instanceof PsiExpressionList) {
       if(parent instanceof PsiLambdaExpression) {
         return true;
       }
-      if (checkExecuted && parent instanceof PsiPolyadicExpression) {
+      if (parent instanceof PsiPolyadicExpression) {
         PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
         IElementType type = polyadicExpression.getOperationTokenType();
         if (type.equals(JavaTokenType.ANDAND) && polyadicExpression.getOperands()[0] != cur) {
@@ -937,7 +927,7 @@ public class ControlFlowUtils {
           return (polyParent instanceof PsiReturnStatement) || (polyParent instanceof PsiLambdaExpression);
         }
       }
-      if (checkExecuted && parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
+      if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
         return false;
       }
       if(parent instanceof PsiMethodCallExpression) {
@@ -951,7 +941,7 @@ public class ControlFlowUtils {
     }
     if (parent instanceof PsiStatement) {
       PsiElement grandParent = parent.getParent();
-      if (checkExecuted && grandParent instanceof PsiForStatement && ((PsiForStatement)grandParent).getUpdate() == parent) {
+      if (grandParent instanceof PsiForStatement && ((PsiForStatement)grandParent).getUpdate() == parent) {
         return false;
       }
     }

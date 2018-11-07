@@ -240,8 +240,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   @Override
   public void addJavacMessage(AntMessage message, String url) {
     final String builder = printMessage(message, url);
-    addJavacMessageImpl(new AntMessage(message.getType(), message.getPriority(), builder.toString() + message.getText(),
-                                       message.getFile(), message.getLine(), message.getColumn()));
+    addJavacMessageImpl(message.withText(builder + message.getText()));
   }
 
   @NotNull
@@ -287,9 +286,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     while (tokenizer.hasMoreElements()) {
       String line = (String)tokenizer.nextElement();
       if (exceptionRootNode == null) {
-        AntMessage newMessage = new AntMessage(exception.getType(), exception.getPriority(), line, exception.getFile(), exception.getLine(),
-                                               exception.getColumn());
-        exceptionRootNode = new MessageNode(newMessage, myProject, true);
+        exceptionRootNode = new MessageNode(exception.withText(line), myProject, true);
         myMessageItems.add(exceptionRootNode);
       }
       else if (showFullTrace) {

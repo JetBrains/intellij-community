@@ -16,9 +16,9 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.psi.PsiPrimitiveType;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.Function;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.OptionalInt;
@@ -30,6 +30,37 @@ public abstract class ContractValue {
   }
 
   abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
+  
+  public DfaValue fromCall(DfaValueFactory factory, PsiCallExpression call) {
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return DfaUnknownValue.getInstance();
+    PsiExpressionList argumentList = call.getArgumentList();
+    if (argumentList == null) return DfaUnknownValue.getInstance();
+    DfaValue qualifierValue = null;
+    if (call instanceof PsiMethodCallExpression) {
+      PsiExpression qualifier = ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
+      qualifierValue = factory.createValue(qualifier);
+    }
+    if (qualifierValue == null) {
+      qualifierValue = DfaUnknownValue.getInstance();
+    }
+    boolean varArgCall = MethodCallUtils.isVarArgCall(call);
+    PsiExpression[] args = argumentList.getExpressions();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    DfaValue[] argValues = new DfaValue[parameters.length];
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      DfaValue argValue = null;
+      if (i < args.length && (!varArgCall || i < parameters.length - 1)) {
+        argValue = factory.createValue(args[i]);
+      }
+      if (argValue == null) {
+        argValue = DfaUnknownValue.getInstance();
+      }
+      argValues[i] = argValue;
+    }
+    return makeDfaValue(factory, new DfaCallArguments(qualifierValue, argValues, JavaMethodContractUtil.isPure(method)));
+  }
 
   /**
    * @param other other contract condition

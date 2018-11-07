@@ -7,7 +7,6 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.TypeConversionUtil
-import com.intellij.util.ArrayUtil
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
@@ -34,8 +33,6 @@ class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, priv
 
   private var startFromTop = false
 
-  private var siteTypeParams: Array<PsiTypeParameter> = PsiTypeParameter.EMPTY_ARRAY
-
   fun resolveMode(skipClosureBlock: Boolean): GroovyInferenceSessionBuilder {
     this.skipClosureBlock = skipClosureBlock
     return this
@@ -51,32 +48,21 @@ class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, priv
     return this
   }
 
-  fun addReturnConstraint(returnType: PsiType?): GroovyInferenceSessionBuilder {
-    left = returnType
-    return this
-  }
-
   fun addReturnConstraint(): GroovyInferenceSessionBuilder {
     val methodCall = ref.parent as? GrMethodCall ?: return this
     left = getReturnConstraintType(getMostTopLevelCall(methodCall))
     return this
   }
 
-  fun addTypeParams(typeParams: Array<PsiTypeParameter>): GroovyInferenceSessionBuilder {
-    siteTypeParams = ArrayUtil.mergeArrays(siteTypeParams, typeParams)
-    return this
-  }
-
   fun build(): GroovyInferenceSession {
     if (startFromTop) {
-      val session = GroovyInferenceSession(siteTypeParams, PsiSubstitutor.EMPTY, ref, closureSkipList, skipClosureBlock)
+      val session = GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, ref, closureSkipList, skipClosureBlock)
       val methodCall = ref.parent as? GrMethodCall ?: return session
       session.addConstraint(ExpressionConstraint(getMostTopLevelCall(methodCall), left))
       return session
     }
     else {
-      val typeParameters = ArrayUtil.mergeArrays(siteTypeParams, candidate.method.typeParameters)
-      val session = GroovyInferenceSession(typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock)
+      val session = GroovyInferenceSession(candidate.method.typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock)
       session.addConstraint(MethodCallConstraint(ref, candidate))
       val left = left ?: return session
 
@@ -92,12 +78,12 @@ class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, priv
     var topLevel: GrMethodCall = call
     while (true) {
       val parent = topLevel.parent
-      val gparent = parent?.parent
+      val grandParent = parent?.parent
       topLevel = if (parent is GrMethodCall) {
         parent
       }
-      else if (parent is GrArgumentList && gparent is GrMethodCall) {
-        gparent
+      else if (parent is GrArgumentList && grandParent is GrMethodCall) {
+        grandParent
       }
       else {
         return topLevel
@@ -107,7 +93,7 @@ class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, priv
 
   private fun getReturnConstraintType(call: GrMethodCall): PsiType? {
     val parent = call.parent
-    val gparent = parent?.parent
+    val grandParent = parent?.parent
     val parentMethod = PsiTreeUtil.getParentOfType(parent, GrMethod::class.java, true, GrClosableBlock::class.java)
 
     if (parent is GrReturnStatement && parentMethod != null) {
@@ -122,8 +108,8 @@ class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, priv
       val lValue = PsiUtil.skipParentheses(parent.lValue, false)
       return if (lValue is GrExpression && lValue !is GrIndexProperty) lValue.nominalType else null
     }
-    else if (parent is GrArgumentList && gparent is GrNewExpression) { // TODO: fix with moving constructor resolve to new API
-      with(gparent) {
+    else if (parent is GrArgumentList && grandParent is GrNewExpression) { // TODO: fix with moving constructor resolve to new API
+      with(grandParent) {
         val resolveResult = advancedResolve()
         if (resolveResult is GroovyMethodResult) {
           val methodCandidate = MethodCandidate(resolveResult.element, resolveResult.partialSubstitutor,

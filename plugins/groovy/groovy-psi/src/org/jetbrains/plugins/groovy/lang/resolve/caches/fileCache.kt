@@ -11,6 +11,7 @@ import com.intellij.util.containers.MostlySingularMultiMap
 import org.jetbrains.plugins.groovy.lang.resolve.AnnotationHint
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
+import org.jetbrains.plugins.groovy.lang.resolve.sorryCannotKnowElementKind
 
 private data class ElementWithState(val element: PsiElement, val state: ResolveState)
 
@@ -46,10 +47,16 @@ class FileCacheBuilderProcessor(private val annotationResolve: Boolean) : PsiSco
 private class FileDeclarationsCache(private val declarations: MostlySingularMultiMap<String, ElementWithState>) : DeclarationHolder {
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+    val newState = state.put(sorryCannotKnowElementKind, true)
     val declarationProcessor = { (element, cachedState): ElementWithState ->
-      processor.execute(element, state.putAll(cachedState))
+      processor.execute(element, newState.putAll(cachedState))
     }
     val name = processor.getName(state)
-    return if (name == null) declarations.processAllValues(declarationProcessor) else declarations.processForKey(name, declarationProcessor)
+    return if (name == null) {
+      declarations.processAllValues(declarationProcessor)
+    }
+    else {
+      declarations.processForKey(name, declarationProcessor)
+    }
   }
 }

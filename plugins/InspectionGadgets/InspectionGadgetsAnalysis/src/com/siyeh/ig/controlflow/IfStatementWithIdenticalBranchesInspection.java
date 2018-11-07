@@ -61,7 +61,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
               if (!isOnTheFly) return;
               highlightType = ProblemHighlightType.INFORMATION;
             }
-            holder.registerProblem(result.myElementToHighlight, InspectionsBundle.message("inspection.common.if.parts.description"), highlightType, result.myFix);
+            holder.registerProblem(result.myElementToHighlight, result.myMessage, highlightType, result.myFix);
           }
         }
       }
@@ -455,7 +455,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
 
     @NotNull
     private String getMessage(boolean mayChangeSemantics) {
-      String mayChangeSemanticsText = mayChangeSemantics ? "(may change semantics)" : "";
+      String mayChangeSemanticsText = mayChangeSemantics ? " (may change semantics)" : "";
       return InspectionsBundle.message(myBundleKey, mayChangeSemanticsText);
     }
 

@@ -156,7 +156,7 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
             __umd__.run(verbose=verbose)
 
     if global_vars is None:
-        m = save_main_module(filename)
+        m = save_main_module(filename, 'pydev_umd')
         global_vars = m.__dict__
         try:
             global_vars['__builtins__'] = __builtins__
