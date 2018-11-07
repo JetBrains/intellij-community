@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -76,6 +77,14 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     TAG_HIGHLIGHTING_MAP.put("entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
     TAG_HIGHLIGHTING_MAP.put("reassigned_parameter", DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER);
     TAG_HIGHLIGHTING_MAP.put("reassigned_local", DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE);
+  }
+
+  @NonNls private static final Map<String, TextAttributesKey> INLINE_ELEMENTS = new HashMap<>();
+
+  static {
+    INLINE_ELEMENTS.put("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+    INLINE_ELEMENTS.put("parameter_hint_highlighted", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED);
+    INLINE_ELEMENTS.put("parameter_hint_current", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -242,6 +251,12 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
   @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return TAG_HIGHLIGHTING_MAP;
+  }
+
+  @Nullable
+  @Override
+  public Map<String, TextAttributesKey> getAdditionalInlineElementToDescriptorMap() {
+    return INLINE_ELEMENTS;
   }
 
   @NotNull

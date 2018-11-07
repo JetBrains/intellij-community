@@ -41,13 +41,6 @@ import java.util.List;
 import java.util.*;
 
 public class SimpleEditorPreview implements PreviewPanel {
-  private static final Map<String, TextAttributesKey> INLINE_ELEMENTS = new HashMap<>();
-  static {
-    INLINE_ELEMENTS.put("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
-    INLINE_ELEMENTS.put("parameter_hint_highlighted", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED);
-    INLINE_ELEMENTS.put("parameter_hint_current", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT);
-  }
-
   private final ColorSettingsPage myPage;
 
   private final EditorEx myEditor;
@@ -67,7 +60,8 @@ public class SimpleEditorPreview implements PreviewPanel {
     myOptions = options;
     myPage = page;
 
-    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(), INLINE_ELEMENTS,
+    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(),
+                                                    page.getAdditionalInlineElementToDescriptorMap(),
                                                     page.getAdditionalHighlightingTagToColorKeyMap());
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
       myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
