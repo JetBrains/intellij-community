@@ -6,6 +6,10 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -98,8 +102,17 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         Object value = DfaUtil.computeValue(operands.get(0));
         return Boolean.valueOf(and).equals(value) ? new int[]{0} : ArrayUtil.EMPTY_INT_ARRAY;
       }
-      PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)JavaPsiFacade.getElementFactory(context.getProject())
-        .createExpressionFromText(StreamEx.ofReversed(operands).map(PsiElement::getText).joining(and ? " && " : " || "), context);
+      String text = StreamEx.ofReversed(operands).map(PsiElement::getText).joining(and ? " && " : " || ");
+      PsiExpression expression = JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(text, context);
+      if (!(expression instanceof PsiPolyadicExpression)) {
+        Application application = ApplicationManager.getApplication();
+        if (application.isEAP() || application.isInternal()) {
+          throw new RuntimeExceptionWithAttachments("Unexpected expression type: " + expression.getClass().getName(),
+                                                    new Attachment("reversed.txt", text));
+        }
+        return ArrayUtil.EMPTY_INT_ARRAY;
+      }
+      PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)expression;
       List<PsiExpression> reversedOperands = Arrays.asList(expressionToAnalyze.getOperands());
       Map<PsiExpression, ThreeState> values = computeOperandValues(expressionToAnalyze);
       return StreamEx.ofKeys(values, ThreeState.fromBoolean(and)::equals)
