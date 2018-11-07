@@ -198,7 +198,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     XmlTag rootTag = extractRootTag(annotationsFile);
 
     TreeMap<String, List<ExternalAnnotation>> ownerToAnnotations = StreamEx.of(annotations)
-      .mapToEntry(annotation -> StringUtil.escapeXml(getExternalName(annotation.getOwner(), false)), Function.identity())
+      .mapToEntry(annotation -> StringUtil.escapeXml(getExternalName(annotation.getOwner())), Function.identity())
       .distinct()
       .grouping(() -> new TreeMap<>(Comparator.nullsFirst(Comparator.naturalOrder())));
 
