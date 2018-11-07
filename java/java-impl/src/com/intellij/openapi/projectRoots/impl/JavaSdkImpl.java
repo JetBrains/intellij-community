@@ -410,13 +410,12 @@ public class JavaSdkImpl extends JavaSdk {
   @NotNull
   private static List<String> findClasses(@NotNull File file, boolean isJre) {
     List<String> result = ContainerUtil.newArrayList();
-    VirtualFileManager fileManager = VirtualFileManager.getInstance();
 
     if (JdkUtil.isExplodedModularRuntime(file.getPath())) {
-      VirtualFile exploded = fileManager.findFileByUrl(StandardFileSystems.FILE_PROTOCOL_PREFIX + getPath(new File(file, "modules")));
+      File[] exploded = new File(file, "modules").listFiles();
       if (exploded != null) {
-        for (VirtualFile virtualFile : exploded.getChildren()) {
-          result.add(virtualFile.getUrl());
+        for (File root : exploded) {
+          result.add(VfsUtil.getUrlForLibraryRoot(root));
         }
       }
     }
@@ -429,7 +428,7 @@ public class JavaSdkImpl extends JavaSdk {
         }
       }
       else {
-        VirtualFile jrt = fileManager.findFileByUrl(jrtBaseUrl);
+        VirtualFile jrt = VirtualFileManager.getInstance().findFileByUrl(jrtBaseUrl);
         if (jrt != null) {
           for (VirtualFile virtualFile : jrt.getChildren()) {
             result.add(virtualFile.getUrl());
@@ -439,8 +438,7 @@ public class JavaSdkImpl extends JavaSdk {
     }
     else {
       for (File root : JavaSdkUtil.getJdkClassesRoots(file, isJre)) {
-        String url = VfsUtil.getUrlForLibraryRoot(root);
-        result.add(url);
+        result.add(VfsUtil.getUrlForLibraryRoot(root));
       }
     }
 
