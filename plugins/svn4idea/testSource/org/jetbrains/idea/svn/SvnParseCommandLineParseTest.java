@@ -93,7 +93,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
         }
       }
       try {
-        return createStubInfo(basePath + "1", "http://a.b.c");
+        return createStubInfo("http://a.b.c");
       }
       catch (SvnBindException e) {
         throw new RuntimeException(e);
@@ -113,8 +113,8 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     return StringUtil.replace(s, "C:/", LINUX_ROOT);
   }
 
-  private Info createStubInfo(final String basePath, final String baseUrl) throws SvnBindException {
-    return new Info(basePath, createUrl(baseUrl), Revision.HEAD, NodeKind.FILE, "",
+  private Info createStubInfo(final String baseUrl) throws SvnBindException {
+    return new Info(createUrl(baseUrl), Revision.HEAD, NodeKind.FILE, "",
                     createUrl("http://a.b.c"), 1, new Date(), "me", null, Depth.EMPTY);
   }
 
@@ -134,13 +134,13 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
         .equals(status1.getFile())) {
         assertEquals("http://external/src/com/slave/SomeOtherClass.java", status1.getURL().toString());
       }
-    }, baseFile, createStubInfo(basePath, "http://mainurl/"), () -> handler.get().getPending());
+    }, baseFile, createStubInfo("http://mainurl/"), () -> handler.get().getPending());
     handler.set(new SvnStatusHandler(callback, baseFile, o -> {
       try {
         if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave").equals(o)) {
-          return createStubInfo(o.getPath(), "http://external");
+          return createStubInfo("http://external");
         }
-        return createStubInfo(o.getPath(), "http://12345");
+        return createStubInfo("http://12345");
       }
       catch (SvnBindException e) {
         throw new RuntimeException(e);
@@ -186,7 +186,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
         }
       }
       try {
-        return createStubInfo(basePath + "1", "http://a.b.c");
+        return createStubInfo("http://a.b.c");
       }
       catch (SvnBindException e) {
         throw new RuntimeException(e);
@@ -255,7 +255,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
         }
       }
       try {
-        return createStubInfo(basePath + "1", "http://a.b.c");
+        return createStubInfo("http://a.b.c");
       }
       catch (SvnBindException e) {
         throw new RuntimeException(e);

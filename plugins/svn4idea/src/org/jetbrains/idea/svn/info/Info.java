@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.info;
 
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,6 @@ public class Info extends BaseNodeDescription {
   private static final Date DEFAULT_COMMITTED_DATE = Date.from(Instant.EPOCH);
 
   private final File myFile;
-  private final String myPath;
   private final Url myURL;
   @NotNull private final Revision myRevision;
   private final Url myRepositoryRootURL;
@@ -30,14 +29,12 @@ public class Info extends BaseNodeDescription {
   private final Date myCommittedDate;
   private final String myAuthor;
   @Nullable private final Lock myLock;
-  private final boolean myIsRemote;
   private final String mySchedule;
   private final Url myCopyFromURL;
   private final Revision myCopyFromRevision;
   @Nullable private final File myConflictOldFile;
   @Nullable private final File myConflictNewFile;
   @Nullable private final File myConflictWrkFile;
-  @Nullable private final File myPropConflictFile;
   private final Depth myDepth;
   @Nullable private final TreeConflictDescription myTreeConflict;
 
@@ -56,7 +53,6 @@ public class Info extends BaseNodeDescription {
               @Nullable String conflictOldFileName,
               @Nullable String conflictNewFileName,
               @Nullable String conflictWorkingFileName,
-              @Nullable String propRejectFileName,
               @Nullable Lock lock,
               Depth depth,
               @Nullable TreeConflictDescription treeConflict) {
@@ -82,16 +78,11 @@ public class Info extends BaseNodeDescription {
     myConflictOldFile = resolveConflictFile(file, conflictOldFileName);
     myConflictNewFile = resolveConflictFile(file, conflictNewFileName);
     myConflictWrkFile = resolveConflictFile(file, conflictWorkingFileName);
-    myPropConflictFile = resolveConflictFile(file, propRejectFileName);
 
-    myIsRemote = false;
     myDepth = depth;
-
-    myPath = null;
   }
 
-  public Info(String path,
-              Url url,
+  public Info(Url url,
               @NotNull Revision revision,
               @NotNull NodeKind kind,
               String uuid,
@@ -102,7 +93,6 @@ public class Info extends BaseNodeDescription {
               @Nullable Lock lock,
               Depth depth) {
     super(kind);
-    myIsRemote = true;
     myURL = url;
     myRevision = revision;
     myRepositoryRootURL = reposRootURL;
@@ -113,7 +103,6 @@ public class Info extends BaseNodeDescription {
     myAuthor = author;
 
     myLock = lock;
-    myPath = path;
     myDepth = depth;
 
     myFile = null;
@@ -123,7 +112,6 @@ public class Info extends BaseNodeDescription {
     myConflictOldFile = null;
     myConflictNewFile = null;
     myConflictWrkFile = null;
-    myPropConflictFile = null;
     myTreeConflict = null;
   }
 
@@ -171,10 +159,6 @@ public class Info extends BaseNodeDescription {
     return myFile;
   }
 
-  public boolean isRemote() {
-    return myIsRemote;
-  }
-
   @NotNull
   public NodeKind getKind() {
     return myKind;
@@ -183,15 +167,6 @@ public class Info extends BaseNodeDescription {
   @Nullable
   public Lock getLock() {
     return myLock;
-  }
-
-  public String getPath() {
-    return myPath;
-  }
-
-  @Nullable
-  public File getPropConflictFile() {
-    return myPropConflictFile;
   }
 
   public Url getRepositoryRootURL() {

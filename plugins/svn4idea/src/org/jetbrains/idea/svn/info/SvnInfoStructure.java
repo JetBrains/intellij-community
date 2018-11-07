@@ -51,8 +51,8 @@ public class SvnInfoStructure {
 
   public Info convert() throws SAXException, SvnBindException {
     return new Info(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, myCommittedRevision, myCommittedDate, myAuthor, mySchedule,
-                           myCopyFromURL, myCopyFromRevision, myConflictOld, myConflictNew, myConflictWorking,
-                           myPropRejectFile, getLock(), myDepth, createTreeConflict());
+                    myCopyFromURL, myCopyFromRevision, myConflictOld, myConflictNew, myConflictWorking,
+                    getLock(), myDepth, createTreeConflict());
   }
 
   @Nullable
