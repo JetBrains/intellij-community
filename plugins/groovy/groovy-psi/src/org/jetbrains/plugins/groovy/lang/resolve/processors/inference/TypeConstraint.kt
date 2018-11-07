@@ -3,9 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
@@ -13,10 +11,9 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 
-class TypeConstraint(private val leftType: PsiType, private val rightType: PsiType?, private val context: PsiElement) : ConstraintFormula {
+class TypeConstraint(private val leftType: PsiType, private val rightType: PsiType?, private val context: PsiElement) : GrConstraintFormula() {
 
-  override fun reduce(session: InferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
-    if (session !is GroovyInferenceSession) return true
+  override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     var argType = rightType ?: PsiType.NULL
     if (argType is GrTupleType) {
       val rawWildcardType = TypesUtil.rawWildcard(argType, context)
@@ -34,6 +31,4 @@ class TypeConstraint(private val leftType: PsiType, private val rightType: PsiTy
     constraints.add(TypeCompatibilityConstraint(t, s))
     return true
   }
-
-  override fun apply(substitutor: PsiSubstitutor, cache: Boolean) {}
 }
