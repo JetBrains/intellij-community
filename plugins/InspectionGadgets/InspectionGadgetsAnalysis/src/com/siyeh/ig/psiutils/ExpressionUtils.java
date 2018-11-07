@@ -1394,4 +1394,24 @@ public class ExpressionUtils {
   public static boolean isArrayCreationExpression(@NotNull PsiNewExpression expression) {
     return expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0;
   }
+
+  /**
+   * Returns ancestor expression for given subexpression which parent is not an expression anymore (except lambda)
+   * 
+   * @param expression an expression to find its ancestor
+   * @return a top-level expression for given expression (may return an expression itself)
+   */
+  @NotNull
+  public static PsiExpression getTopLevelExpression(@NotNull PsiExpression expression) {
+    while(true) {
+      PsiElement parent = expression.getParent();
+      if (parent instanceof PsiExpression && !(parent instanceof PsiLambdaExpression)) {
+        expression = (PsiExpression)parent;
+      } else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpression) {
+        expression = (PsiExpression)parent.getParent();
+      } else {
+        return expression;
+      }
+    }
+  }
 }
