@@ -26,11 +26,15 @@ abstract class GitAutoSquashCommitAction : GitCommitEditingAction() {
     val changes = changeList.changes.filter {
       gitRepositoryManager.getRepositoryForFile(ChangesUtil.getFilePath(it)) == repository
     }
+
+    val executors = if (getProhibitedStateMessage(e, "rebase") == null)
+      listOf(GitRebaseAfterCommitExecutor(project, repository, commit.id.asString() + "~"))
+    else listOf()
     CommitChangeListDialog.commitChanges(project,
                                          changes,
                                          changes,
                                          changeList,
-                                         listOf(GitRebaseAfterCommitExecutor(project, repository, commit.id.asString() + "~")),
+                                         executors,
                                          true,
                                          null,
                                          getCommitMessage(commit),

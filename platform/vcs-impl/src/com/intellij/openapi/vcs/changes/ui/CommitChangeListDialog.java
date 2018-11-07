@@ -472,6 +472,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   @NotNull
   private List<CommitExecutorAction> createExecutorActions(@NotNull List<CommitExecutor> executors) {
+    if(executors.isEmpty()) return emptyList();
     List<CommitExecutorAction> result = newArrayList();
 
     if (myShowVcsCommit && UISettings.getShadowInstance().getAllowMergeButtons()) {
