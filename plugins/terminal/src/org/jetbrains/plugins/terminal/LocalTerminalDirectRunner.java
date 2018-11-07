@@ -17,7 +17,6 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
 import com.intellij.execution.TaskExecutor;
-import com.intellij.execution.configurations.EncodingEnvironmentUtil;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -134,8 +133,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
       envs.put("TERM", "xterm-256color");
     }
     envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
-
-    EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(envs, myDefaultCharset);
 
     PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
     for (Map.Entry<String, String> env : TerminalOptionsProvider.Companion.getInstance().getUserSpecifiedEnvs().entrySet()) {
