@@ -176,6 +176,7 @@ public class CommitHelper {
   }
 
   private void generalCommit() throws RuntimeException {
+    boolean canceled = false;
     try {
       ReadAction.run(() -> markCommittingDocuments());
       try {
@@ -188,6 +189,7 @@ public class CommitHelper {
       myCommitProcessor.doBeforeRefresh();
     }
     catch (ProcessCanceledException pce) {
+      canceled = true;
       throw pce;
     }
     catch (Throwable e) {
@@ -195,7 +197,7 @@ public class CommitHelper {
       myCommitProcessor.myVcsExceptions.add(new VcsException(e));
     }
     finally {
-      commitCompleted(myCommitProcessor.getVcsExceptions());
+      commitCompleted(myCommitProcessor.getVcsExceptions(), canceled);
       myCommitProcessor.customRefresh();
       runOrInvokeLaterAboveProgress(() -> myCommitProcessor.doPostRefresh(), null, myProject);
     }
@@ -425,12 +427,16 @@ public class CommitHelper {
     committingDocs.forEach(document -> document.putUserData(DOCUMENT_BEING_COMMITTED_KEY, null));
   }
 
-  private void commitCompleted(@NotNull List<VcsException> allExceptions) {
+  private void commitCompleted(@NotNull List<VcsException> allExceptions, boolean canceled) {
     List<VcsException> errors = collectErrors(allExceptions);
     boolean noErrors = errors.isEmpty();
     boolean noWarnings = allExceptions.isEmpty();
 
-    if (noErrors) {
+    if (canceled) {
+      myHandlers.forEach(CheckinHandler::checkinCanceled);
+      myResultHandler.onCancel();
+    }
+    else if (noErrors) {
       myHandlers.forEach(CheckinHandler::checkinSuccessful);
       myCommitProcessor.afterSuccessfulCheckIn();
       myResultHandler.onSuccess(myCommitMessage);

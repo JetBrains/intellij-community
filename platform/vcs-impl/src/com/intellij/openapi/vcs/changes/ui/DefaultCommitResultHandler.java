@@ -48,6 +48,11 @@ public class DefaultCommitResultHandler implements CommitResultHandler {
     reportResult();
   }
 
+  @Override
+  public void onCancel() {
+    myNotifier.notifyMinorWarning("", "Commit canceled");
+  }
+
   private void reportResult() {
     List<VcsException> errors = collectErrors(myCommitProcessor.getVcsExceptions());
     int errorsSize = errors.size();

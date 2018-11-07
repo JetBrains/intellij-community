@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
+import static java.util.Collections.emptyList;
 
 /**
  * A callback which can be used to extend the user interface of the Checkin Project/Checkin File
@@ -114,6 +115,13 @@ public abstract class CheckinHandler {
    */
   public void checkinFailed(List<VcsException> exception) {
 
+  }
+
+  /**
+   * Performs processing of canceled check-in.
+   */
+  public void checkinCanceled() {
+    checkinFailed(emptyList());
   }
 
   /**

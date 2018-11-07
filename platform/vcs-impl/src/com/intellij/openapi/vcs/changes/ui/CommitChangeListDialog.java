@@ -657,6 +657,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       CheckinHandler.ReturnResult result = performBeforeCommitChecks(commitExecutor);
       if (result == CheckinHandler.ReturnResult.COMMIT) {
         boolean success = false;
+        boolean canceled = false;
         try {
           boolean completed = ProgressManager.getInstance()
             .runProcessWithProgressSynchronously(() -> session.execute(getIncludedChanges(), getCommitMessage()),
@@ -671,7 +672,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           }
           else {
             LOG.debug("Commit canceled");
+            myHandlers.forEach(CheckinHandler::checkinCanceled);
             session.executionCanceled();
+            canceled = true;
           }
         }
         catch (Throwable e) {
@@ -684,6 +687,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
           if (myResultHandler != null) {
             if (success) {
               myResultHandler.onSuccess(getCommitMessage());
+            }
+            else if (canceled) {
+              myResultHandler.onCancel();
             }
             else {
               myResultHandler.onFailure();
