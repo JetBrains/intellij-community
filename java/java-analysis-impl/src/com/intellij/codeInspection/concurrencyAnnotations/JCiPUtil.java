@@ -18,6 +18,7 @@ package com.intellij.codeInspection.concurrencyAnnotations;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,7 +44,7 @@ public class JCiPUtil {
     if (annotation != null) {
       return true;
     }
-    if (checkDocComment) {
+    if (checkDocComment && IdIndex.hasIdentifierInFile(aClass.getContainingFile(), "Immutable")) {
       final PsiDocComment comment = aClass.getDocComment();
       return comment != null && comment.findTagByName("@Immutable") != null;
     }
