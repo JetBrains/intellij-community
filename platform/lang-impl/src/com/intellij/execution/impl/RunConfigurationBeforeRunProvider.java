@@ -150,7 +150,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
   }
 
   @Override
-  public boolean executeTask(final DataContext dataContext,
+  public boolean executeTask(@NotNull final DataContext dataContext,
                              @NotNull RunConfiguration configuration,
                              @NotNull final ExecutionEnvironment env,
                              @NotNull RunConfigurableBeforeRunTask task) {

@@ -87,7 +87,7 @@ public abstract class ExternalSystemBeforeRunTaskProvider extends BeforeRunTaskP
   }
 
   @Override
-  public boolean executeTask(DataContext context,
+  public boolean executeTask(@NotNull DataContext context,
                              @NotNull RunConfiguration configuration,
                              @NotNull ExecutionEnvironment env,
                              @NotNull ExternalSystemBeforeRunTask beforeRunTask) {
