@@ -909,9 +909,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myCaretModel.updateVisualPosition();
 
     // make sure carets won't appear at invalid positions (e.g. on Tab width change)
-    for (Caret caret : getCaretModel().getAllCarets()) {
-      caret.moveToOffset(caret.getOffset());
-    }
+    getCaretModel().doWithCaretMerging(() -> myCaretModel.getAllCarets().forEach(caret -> caret.moveToOffset(caret.getOffset())));
 
     if (myVirtualFile != null && myProject != null) {
       final EditorNotifications editorNotifications = EditorNotifications.getInstance(myProject);
