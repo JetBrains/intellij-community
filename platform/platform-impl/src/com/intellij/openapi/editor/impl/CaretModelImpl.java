@@ -41,7 +41,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   final RangeMarkerTree<CaretImpl.PositionMarker> myPositionMarkerTree;
   final RangeMarkerTree<CaretImpl.SelectionMarker> mySelectionMarkerTree;
 
-  private final List<CaretImpl> myCarets = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final LinkedList<CaretImpl> myCarets = new LinkedList<>();
+  @NotNull
+  private volatile CaretImpl myPrimaryCaret;
   private CaretImpl myCurrentCaret; // active caret in the context of 'runForEachCaret' call
   private boolean myPerformCaretMergingAfterCurrentOperation;
 
@@ -59,7 +61,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
 
     myPositionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
     mySelectionMarkerTree = new RangeMarkerTree<>(myEditor.getDocument());
-    myCarets.add(new CaretImpl(myEditor, this));
+    myPrimaryCaret = new CaretImpl(myEditor, this);
+    myCarets.add(myPrimaryCaret);
   }
 
   void onBulkDocumentUpdateStarted() {
@@ -220,20 +223,23 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Override
   @NotNull
   public CaretImpl getPrimaryCaret() {
-    if (ApplicationManager.getApplication().isDispatchThread()) return myCarets.get(myCarets.size() - 1);
-    CaretImpl[] carets = myCarets.toArray(CaretImpl.EMPTY_ARRAY);
-    return carets[carets.length - 1];
+    return myPrimaryCaret;
   }
 
   @Override
   public int getCaretCount() {
-    return myCarets.size();
+    synchronized (myCarets) {
+      return myCarets.size();
+    }
   }
 
   @Override
   @NotNull
   public List<Caret> getAllCarets() {
-    List<Caret> carets = new ArrayList<>(myCarets);
+    List<Caret> carets;
+    synchronized (myCarets) {
+      carets = new ArrayList<>(myCarets);
+    }
     Collections.sort(carets, CARET_POSITION_COMPARATOR);
     return carets;
   }
@@ -241,7 +247,14 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @Nullable
   @Override
   public Caret getCaretAt(@NotNull VisualPosition pos) {
-    return ContainerUtil.find(myCarets, caret -> caret.getVisualPosition().equals(pos));
+    synchronized (myCarets) {
+      for (CaretImpl caret : myCarets) {
+        if (caret.getVisualPosition().equals(pos)) {
+          return caret;
+        }
+      }
+      return null;
+    }
   }
 
   @Nullable
@@ -270,8 +283,15 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
         return false;
       }
     }
-    int index = makePrimary ? myCarets.size() : 0;
-    myCarets.add(index, caretToAdd);
+    synchronized (myCarets) {
+      if (makePrimary) {
+        myCarets.addLast(caretToAdd);
+        myPrimaryCaret = caretToAdd;
+      }
+      else {
+        myCarets.addFirst(caretToAdd);
+      }
+    }
     fireCaretAdded(caretToAdd);
     return true;
   }
@@ -282,8 +302,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     if (myCarets.size() <= 1 || !(caret instanceof CaretImpl)) {
       return false;
     }
-    if (!myCarets.remove(caret)) {
-      return false;
+    synchronized (myCarets) {
+      if (!myCarets.remove(caret)) {
+        return false;
+      }
+      myPrimaryCaret = myCarets.getLast();
     }
     fireCaretRemoved(caret);
     Disposer.dispose(caret);
@@ -296,7 +319,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     ListIterator<CaretImpl> caretIterator = myCarets.listIterator(myCarets.size() - 1);
     while (caretIterator.hasPrevious()) {
       CaretImpl caret = caretIterator.previous();
-      caretIterator.remove();
+      synchronized (myCarets) {
+        caretIterator.remove();
+      }
       fireCaretRemoved(caret);
       Disposer.dispose(caret);
     }
@@ -380,8 +405,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
     }
     if (keepPrimary != getPrimaryCaret()) {
-      myCarets.remove(keepPrimary);
-      myCarets.add(keepPrimary);
+      synchronized (myCarets) {
+        myCarets.remove(keepPrimary);
+        myCarets.add(keepPrimary);
+        myPrimaryCaret = keepPrimary;
+      }
     }
   }
 
@@ -452,7 +480,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
           if (caretState != null && caretState.getCaretPosition() != null) {
             caret.moveToLogicalPosition(caretState.getCaretPosition(), false, null, false, false);
           }
-          myCarets.add(caret);
+          synchronized (myCarets) {
+            myCarets.add(caret);
+            myPrimaryCaret = caret;
+          }
           fireCaretAdded(caret);
         }
         if (caretState != null && caretState.getCaretPosition() != null && caretState.getVisualColumnAdjustment() != 0) {
@@ -480,7 +511,11 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       }
       int caretsToRemove = myCarets.size() - caretStates.size();
       for (int i = 0; i < caretsToRemove; i++) {
-        CaretImpl caret = myCarets.remove(myCarets.size()-1);
+        CaretImpl caret;
+        synchronized (myCarets) {
+          caret = myCarets.removeLast();
+          myPrimaryCaret = myCarets.getLast();
+        }
         fireCaretRemoved(caret);
         Disposer.dispose(caret);
       }
@@ -498,14 +533,16 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   @NotNull
   @Override
   public List<CaretState> getCaretsAndSelections() {
-    List<CaretState> states = new ArrayList<>(myCarets.size());
-    for (CaretImpl caret : myCarets) {
-      states.add(new CaretState(caret.getLogicalPosition(),
-                                caret.myVisualColumnAdjustment,
-                                caret.getSelectionStartLogicalPosition(),
-                                caret.getSelectionEndLogicalPosition()));
+    synchronized (myCarets) {
+      List<CaretState> states = new ArrayList<>(myCarets.size());
+      for (CaretImpl caret : myCarets) {
+        states.add(new CaretState(caret.getLogicalPosition(),
+                                  caret.myVisualColumnAdjustment,
+                                  caret.getSelectionStartLogicalPosition(),
+                                  caret.getSelectionEndLogicalPosition()));
+      }
+      return states;
     }
-    return states;
   }
 
   void updateSystemSelection() {
