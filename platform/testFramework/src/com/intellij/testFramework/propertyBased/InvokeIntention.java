@@ -107,7 +107,9 @@ public class InvokeIntention extends ActionOnFile {
     List<IntentionAction> intentions = getAvailableIntentions(editor, file);
     // Do not reuse originally passed offset here, sometimes it's adjusted by Editor
     PsiElement currentElement = file.findElementAt(editor.getCaretModel().getOffset());
-    intentions = wrapAndCheck(env, editor, currentElement, containsErrorElements, hasErrors, intentions);
+    if (!containsErrorElements) {
+      intentions = wrapAndCheck(env, editor, currentElement, hasErrors, intentions);
+    }
     IntentionAction intention = chooseIntention(env, intentions);
     if (intention == null) return;
 
@@ -195,7 +197,6 @@ public class InvokeIntention extends ActionOnFile {
   private List<IntentionAction> wrapAndCheck(Environment env,
                                              Editor editor,
                                              PsiElement currentElement,
-                                             boolean containsErrorElements,
                                              boolean hasErrors,
                                              List<IntentionAction> intentions) {
     if (currentElement == null) return intentions;
@@ -228,14 +229,13 @@ public class InvokeIntention extends ActionOnFile {
     List<String> messages = new ArrayList<>();
 
     boolean newContainsErrorElements = MadTestingUtil.containsErrorElements(getFile().getViewProvider());
-    if (newContainsErrorElements != containsErrorElements) {
-      messages.add(newContainsErrorElements ? "File contains parse errors after wrapping" : "File parse errors were fixed after wrapping");
+    if (newContainsErrorElements) {
+      messages.add("File contains parse errors after wrapping");
     }
     else {
-      boolean newHasErrors = !highlightErrors(project, editor).isEmpty() || containsErrorElements;
+      boolean newHasErrors = !highlightErrors(project, editor).isEmpty();
       if (newHasErrors != hasErrors) {
-        messages
-          .add(newHasErrors ? "File contains errors after wrapping" : "File errors were fixed after wrapping");
+        messages.add(newHasErrors ? "File contains errors after wrapping" : "File errors were fixed after wrapping");
       }
     }
     intentions = getAvailableIntentions(editor, file);
