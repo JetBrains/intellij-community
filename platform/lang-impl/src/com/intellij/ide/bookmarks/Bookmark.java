@@ -66,6 +66,8 @@ import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
+import static com.intellij.ide.ui.UISettings.setupAntialiasing;
+
 public class Bookmark implements Navigatable, Comparable<Bookmark> {
   static final Icon DEFAULT_ICON = new MyCheckedIcon();
 
@@ -377,6 +379,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       g.drawRect(x, y, width, height);
 
       g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground());
+      setupAntialiasing(g);
 
       float startingFontSize = 40f;  // large font for smaller rounding error
       Font font = getBookmarkFont().deriveFont(startingFontSize);
