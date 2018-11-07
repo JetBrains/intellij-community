@@ -70,7 +70,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     }
 
     private void onSpecifyUrlButtonClicked() {
-      String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(((SdkType)mySdk.getSdkType()).getDefaultDocumentationUrl(mySdk), "");
+      String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(((SdkType)mySdk.getSdkType()).getDefaultDocumentationUrl(mySdk));
       VirtualFile virtualFile = Util.showSpecifyJavadocUrlDialog(myPanel, defaultDocsUrl);
       if (virtualFile != null) {
         addElement(virtualFile);

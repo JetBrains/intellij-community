@@ -161,7 +161,7 @@ public class EditorSearchSession implements SearchSession,
           }
           if (myIsGlobal != myFindModel.isGlobal() || myIsReplace != myFindModel.isReplaceState()) {
             if (myFindModel.getStringToFind().isEmpty() && myFindModel.isGlobal()) {
-              myFindModel.setStringToFind(StringUtil.notNullize(myEditor.getSelectionModel().getSelectedText(), ""));
+              myFindModel.setStringToFind(StringUtil.notNullize(myEditor.getSelectionModel().getSelectedText()));
             }
             if (!myFindModel.isGlobal() && myFindModel.getStringToFind().equals(myEditor.getSelectionModel().getSelectedText())) {
               myFindModel.setStringToFind("");
