@@ -751,20 +751,47 @@ def ignored_os_errors(*errno):
             raise
 
 
-def copy(src, dst, content=False):
+def mkdir(path):
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno != errno.EEXIST or not os.path.isdir(path):
+            raise
+
+
+def copy(src, dst, merge=False, conflict_handler=None):
     if os.path.isdir(src):
-        if not content:
-            delete(dst)
+        if not merge:
             shutil.copytree(src, dst)
         else:
-            with ignored_os_errors(errno.EEXIST):
-                os.makedirs(dst)
+            mkdir(dst)
             for child in os.listdir(src):
-                copy(os.path.join(src, child), os.path.join(dst, child))
+                child_src = os.path.join(src, child)
+                child_dst = os.path.join(dst, child)
+                if not os.path.exists(child_dst) or (os.path.isdir(child_src) and os.path.isdir(child_dst)):
+                    copy(child_src, child_dst, merge=merge, conflict_handler=conflict_handler)
+                else:
+                    if not conflict_handler or not conflict_handler(child_src, child_dst):
+                        raise RuntimeError('Conflicting files: %r -> %r' % (child_src, child_dst))
     else:
-        with ignored_os_errors(errno.EEXIST):
-            os.makedirs(os.path.dirname(dst))
+        mkdir(os.path.dirname(dst))
         shutil.copy2(src, dst)
+
+
+def copy_merging_packages(src, dst):
+    def ignore_init_py(src_file, dst_file):
+        return (os.path.basename(src_file) == '__init__.py' and
+                os.path.basename(dst_file) == '__init__.py')
+
+    copy(src, dst, merge=True, conflict_handler=ignore_init_py)
+
+
+def copy_skeletons(src_dir, dst_dir, qname):
+    base_path = os.path.join(dst_dir, *qname.split('.'))
+    delete(base_path)
+    delete(base_path + '.py')
+
+    copy_merging_packages(src_dir, dst_dir)
 
 
 def delete(path, content=False):
