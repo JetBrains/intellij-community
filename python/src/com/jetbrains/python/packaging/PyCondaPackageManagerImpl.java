@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -180,25 +181,40 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   public static boolean isCondaVEnv(@NotNull final Sdk sdk) {
-    final String condaName = "conda-meta";
-    final VirtualFile homeDirectory = sdk.getHomeDirectory();
-    if (homeDirectory == null) return false;
-    final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
-                                                         : homeDirectory.getParent().getParent();
-    final VirtualFile condaMeta = condaParent.findChild(condaName);
-    final VirtualFile envs = condaParent.findChild("envs");
-    return condaMeta != null && envs == null;
+    return isCondaEnv(sdk.getHomePath());
+  }
+
+  public static boolean isCondaEnv(@Nullable String sdkPath) {
+    final VirtualFile condaMeta = findCondaMeta(sdkPath);
+    if (condaMeta == null) {
+      return false;
+    }
+    final VirtualFile envs = condaMeta.getParent().findChild("envs");
+    return envs == null;
   }
 
   // Conda virtual environment and system conda
   public static boolean isConda(@NotNull final Sdk sdk) {
-    final String condaName = "conda-meta";
-    final VirtualFile homeDirectory = sdk.getHomeDirectory();
-    if (homeDirectory == null) return false;
+    return isConda(sdk.getHomePath());
+  }
+
+  public static boolean isConda(@Nullable String sdkPath) {
+    final VirtualFile condaMeta = findCondaMeta(sdkPath);
+    return condaMeta != null;
+  }
+
+  @Nullable
+  private static VirtualFile findCondaMeta(@Nullable String sdkPath) {
+    if (sdkPath == null) {
+      return null;
+    }
+    final VirtualFile homeDirectory = StandardFileSystems.local().findFileByPath(sdkPath);
+    if (homeDirectory == null) {
+      return null;
+    }
     final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
                                                          : homeDirectory.getParent().getParent();
-    final VirtualFile condaMeta = condaParent.findChild(condaName);
-    return condaMeta != null;
+    return condaParent.findChild("conda-meta");
   }
 
   @NotNull
