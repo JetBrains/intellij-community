@@ -733,6 +733,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
 
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+      notification.hideBalloon();
       SuspendContextImpl suspendContext = SoftReference.dereference(myContextRef);
       if (suspendContext != null) {
         switchContext(suspendContext);
