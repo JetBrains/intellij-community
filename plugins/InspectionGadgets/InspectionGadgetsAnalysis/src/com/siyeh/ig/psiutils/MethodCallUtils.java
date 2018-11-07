@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -414,7 +414,7 @@ public class MethodCallUtils {
 
   public static boolean isUsedAsSuperConstructorCallArgument(@NotNull PsiParameter parameter, boolean superMustBeLibrary) {
     final PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiMethod)) {
+    if (!(scope instanceof PsiMethod) || !((PsiMethod)scope).isConstructor()) {
       return false;
     }
     PsiMethod method = (PsiMethod)scope;
@@ -445,7 +445,8 @@ public class MethodCallUtils {
       if (JavaPsiConstructorUtil.isSuperConstructorCall(call) && (!superMustBeLibrary || method instanceof PsiCompiledElement)) {
         return true;
       }
-      parameter = method.getParameterList().getParameters()[index];
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      parameter = parameters[Math.min(index, parameters.length - 1)];
     }
   }
 
