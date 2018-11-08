@@ -30,8 +30,6 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
   @Nullable
   String getBaseClassReferenceText();
 
-  boolean hasDeprecatedAnnotation();
-
   boolean isInterface();
 
   boolean isEnum();
@@ -43,10 +41,6 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
   boolean isAnonymousInQualifiedNew();
 
   boolean isAnnotationType();
-
-  default boolean hasDocComment() {
-    return true;
-  }
 
   @Nullable
   String getSourceFileName();

@@ -30,6 +30,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.infos.ClassCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.stub.JavaStubImplUtil;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -196,7 +197,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
 
   @Override
   public boolean isDeprecated() {
-    return PsiFieldImpl.isFieldDeprecated(this, getGreenStub());
+    return JavaStubImplUtil.isMemberDeprecated(this, getGreenStub());
   }
 
   @Override
