@@ -12,7 +12,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
@@ -26,7 +25,6 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +62,6 @@ public class ExistingTemplatesComponent {
     }
     root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
 
-    TreeUtil.expandAll(patternTree);
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
     panel = ToolbarDecorator.createDecorator(patternTree)
@@ -231,10 +228,7 @@ public class ExistingTemplatesComponent {
         if (!(node.getUserObject() instanceof Configuration)) {
           return null;
         }
-        final Configuration configuration = (Configuration)node.getUserObject();
-        final Element element = new Element(configuration instanceof SearchConfiguration ? "searchConfiguration" : "replaceConfiguration");
-        configuration.writeExternal(element);
-        return new TextTransferable(JDOMUtil.writeElement(element));
+        return new TextTransferable(ConfigurationUtil.toXml((Configuration)node.getUserObject()));
       }
 
       @Override
@@ -251,6 +245,7 @@ public class ExistingTemplatesComponent {
       }
     );
     tree.setCellRenderer(new ExistingTemplatesTreeCellRenderer(speedSearch));
+    TreeUtil.expandAll(tree);
 
     return tree;
   }

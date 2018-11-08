@@ -830,27 +830,13 @@ public class StructuralSearchDialog extends DialogWrapper {
     if (text == null) {
       return false;
     }
-    text = text.trim();
-    final Configuration configuration;
-    if (text.startsWith("<searchConfiguration ") && text.endsWith("</searchConfiguration>")) {
-      configuration = new SearchConfiguration();
-    }
-    else if (text.startsWith("<replaceConfiguration ") && text.endsWith("</replaceConfiguration>")) {
-      configuration = new ReplaceConfiguration();
-    }
-    else {
+    final Configuration configuration = ConfigurationUtil.fromXml(text);
+    if (configuration == null) {
       return false;
     }
-    try {
-      final Element element = JDOMUtil.load(text);
-      configuration.readExternal(element);
-      loadConfiguration(configuration);
-      securityCheck();
-      return true;
-    }
-    catch (IOException | JDOMException ignored) {
-      return false;
-    }
+    loadConfiguration(configuration);
+    securityCheck();
+    return true;
   }
 
   public void loadConfiguration(Configuration configuration) {
@@ -1027,10 +1013,7 @@ public class StructuralSearchDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      final Element element = new Element(myConfiguration instanceof SearchConfiguration ? "searchConfiguration" : "replaceConfiguration");
-      myConfiguration.writeExternal(element);
-      final TextTransferable transferable = new TextTransferable(JDOMUtil.writeElement(element));
-      CopyPasteManager.getInstance().setContents(transferable);
+      CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(myConfiguration)));
     }
   }
 
