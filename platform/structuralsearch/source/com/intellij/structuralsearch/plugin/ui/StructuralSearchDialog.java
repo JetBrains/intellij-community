@@ -344,7 +344,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       myScopePanel.setScopeConsumer(scope -> initiateValidation());
     }
     else {
-      myScopePanel.setEnabled(false);
+      myScopePanel.setVisible(false);
     }
 
     myFilterPanel = new FilterPanel(getProject(), StructuralSearchUtil.getProfileByFileType(myFileType), getDisposable());
