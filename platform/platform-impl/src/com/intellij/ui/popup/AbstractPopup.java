@@ -37,6 +37,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -51,7 +52,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static java.awt.AWTEvent.MOUSE_EVENT_MASK;
 import static java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK;
@@ -1912,7 +1912,7 @@ public class AbstractPopup implements JBPopup {
 
   @NotNull
   public static List<JBPopup> getChildPopups(@NotNull final Component component) {
-    return all.toStrongList().stream().filter(popup -> {
+    return ContainerUtil.filter(all.toStrongList(), popup -> {
       Component owner = popup.getOwner();
       while (owner != null) {
         if (owner.equals(component)) {
@@ -1921,7 +1921,7 @@ public class AbstractPopup implements JBPopup {
         owner = owner.getParent();
       }
       return false;
-    }).collect(Collectors.toList());
+    });
   }
 
   @Override

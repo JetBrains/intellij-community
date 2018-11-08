@@ -1308,7 +1308,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (psiVariable instanceof PsiField && qualifier != null) {
       // Flush method results on field write
       List<DfaVariableValue> toFlush =
-        qualifier.getDependentVariables().stream().filter(DfaVariableValue::containsCalls).collect(Collectors.toList());
+        ContainerUtil.filter(qualifier.getDependentVariables(), DfaVariableValue::containsCalls);
       toFlush.forEach(val -> doFlush(val, shouldMarkFlushed(val)));
     }
   }

@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private static final String JSON_SCHEMA_BAR = "JSON: ";
@@ -99,10 +99,10 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
 
     if (schemaFiles.size() != 1) {
-      List<VirtualFile> onlyUserSchemas = schemaFiles.stream().filter(s -> {
+      List<VirtualFile> onlyUserSchemas = ContainerUtil.filter(schemaFiles, s -> {
         JsonSchemaFileProvider provider = myService.getSchemaProvider(s);
         return provider != null && provider.getSchemaType() == SchemaType.userSchema;
-      }).collect(Collectors.toList());
+      });
       if (onlyUserSchemas.size() > 1) {
         MyWidgetState state = new MyWidgetState(JsonSchemaConflictNotificationProvider.createMessage(schemaFiles, myService,
                                                                                                      "<br/>", "Conflicting schemas:<br/>",

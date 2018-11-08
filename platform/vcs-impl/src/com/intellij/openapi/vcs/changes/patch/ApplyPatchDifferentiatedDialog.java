@@ -12,6 +12,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -410,12 +411,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
   private PatchReader loadPatches(@NotNull VirtualFile patchFile) {
     PatchReader reader;
     try {
-      reader = ApplicationManager.getApplication().runReadAction(new ThrowableComputable<PatchReader, IOException>() {
-        @Override
-        public PatchReader compute() throws IOException {
-          return PatchVirtualFileReader.create(patchFile);
-        }
-      });
+      reader = ReadAction.compute(() -> PatchVirtualFileReader.create(patchFile));
     }
     catch (IOException e) {
       addNotificationAndWarn("Can't read patchFile " + patchFile.getPresentableName() + ": " + e.getMessage());

@@ -18,7 +18,8 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 class ImmutableElement extends Element {
-  private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(new String[0], null, Namespace.NO_NAMESPACE);
+  private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtil.EMPTY_STRING_ARRAY, null,
+                                                                                       Namespace.NO_NAMESPACE);
   private final Content[] myContent;
   private static final Content[] EMPTY_CONTENT = new Content[0];
   private final List<Attribute> myAttributes;
