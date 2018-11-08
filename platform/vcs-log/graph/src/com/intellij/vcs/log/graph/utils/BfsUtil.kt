@@ -35,6 +35,12 @@ class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val vi
     }
     return emptyList()
   }
+
+  fun walk() {
+    while (!isFinished()) {
+      step()
+    }
+  }
 }
 
 object BfsUtil {
