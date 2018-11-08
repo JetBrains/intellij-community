@@ -12,6 +12,7 @@ import com.intellij.codeInspection.dataFlow.fix.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -635,7 +636,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           final PsiElement gParent = parent.getParent();
           if (gParent instanceof PsiCallExpression) {
             final PsiMethod psiMethod = ((PsiCallExpression)gParent).resolveMethod();
-            if (psiMethod != null && psiMethod.getManager().isInProject(psiMethod) && AnnotationUtil.isAnnotatingApplicable(psiMethod)) {
+            if (psiMethod != null && ScratchFileService.isInProjectOrScratch(psiMethod) && AnnotationUtil.isAnnotatingApplicable(psiMethod)) {
               final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
               if (idx < parameters.length) {
                 fixes.add(AddAnnotationPsiFix.createAddNullableFix(parameters[idx]));

@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -42,7 +43,7 @@ public class OptimizeImportsFix implements IntentionAction{
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return file.getManager().isInProject(file) && file instanceof PsiJavaFile;
+    return file instanceof PsiJavaFile && ScratchFileService.isInProjectOrScratch(file);
   }
 
   @Override

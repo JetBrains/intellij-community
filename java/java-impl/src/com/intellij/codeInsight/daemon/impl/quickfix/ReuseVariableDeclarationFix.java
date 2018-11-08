@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -58,7 +59,7 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     final PsiVariable previousVariable = findPreviousVariable(myVariable);
     return previousVariable != null &&
            Comparing.equal(previousVariable.getType(), myVariable.getType()) &&
-           myVariable.getManager().isInProject(myVariable);
+           ScratchFileService.isInProjectOrScratch(myVariable);
   }
 
   @NotNull

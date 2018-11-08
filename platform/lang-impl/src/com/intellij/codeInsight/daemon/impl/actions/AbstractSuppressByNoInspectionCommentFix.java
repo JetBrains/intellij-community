@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl.actions;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -80,7 +81,7 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
-    return context.isValid() && context.getManager().isInProject(context) && getContainer(context) != null;
+    return context.isValid() && ScratchFileService.isInProjectOrScratch(context) && getContainer(context) != null;
   }
 
   @Override

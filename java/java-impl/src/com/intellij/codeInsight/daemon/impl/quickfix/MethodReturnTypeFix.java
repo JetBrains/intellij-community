@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -77,7 +78,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiMethod myMethod = (PsiMethod)startElement;
 
     final PsiType myReturnType = myReturnTypePointer.getType();
-    if (myMethod.getManager().isInProject(myMethod) &&
+    if (ScratchFileService.isInProjectOrScratch(myMethod) &&
         myReturnType != null &&
         myReturnType.isValid() &&
         !TypeConversionUtil.isNullType(myReturnType)) {

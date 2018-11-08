@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -102,7 +103,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   @Override
   protected PsiElement getElement() {
     final PsiMethodCallExpression call = getMethodCall();
-    if (call == null || !call.getManager().isInProject(call)) return null;
+    if (call == null || !ScratchFileService.isInProjectOrScratch(call)) return null;
     return call;
   }
 

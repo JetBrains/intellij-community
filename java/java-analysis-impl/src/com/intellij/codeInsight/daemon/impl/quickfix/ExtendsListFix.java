@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -87,7 +88,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     final PsiClass myClass = (PsiClass)startElement;
     PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
     return
-      myClass.getManager().isInProject(myClass)
+      ScratchFileService.isInProjectOrScratch(myClass)
       && classToExtendFrom != null
       && classToExtendFrom.isValid()
       && !classToExtendFrom.hasModifierProperty(PsiModifier.FINAL)

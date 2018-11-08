@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -122,11 +123,10 @@ public class VariableTypeFromCallFix implements IntentionAction {
       return Collections.emptyList();
     }
     List<IntentionAction> result = new ArrayList<>();
-    final PsiManager manager = method.getManager();
-    if (manager.isInProject(method)) {
+    if (ScratchFileService.isInProjectOrScratch(method)) {
       final PsiMethod[] superMethods = method.findDeepestSuperMethods();
       for (PsiMethod superMethod : superMethods) {
-        if (!manager.isInProject(superMethod)) return Collections.emptyList();
+        if (!ScratchFileService.isInProjectOrScratch(superMethod)) return Collections.emptyList();
       }
       final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
       if (resolve instanceof PsiVariable) {

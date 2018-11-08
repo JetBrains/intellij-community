@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -92,7 +93,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myContext.isValid() &&
-           myContext.getManager().isInProject(myContext) &&
+           ScratchFileService.isInProjectOrScratch(myContext) &&
            myVariable.isValid() &&
            myFixType != -1 &&
            !getVariablesToFix().isEmpty() &&

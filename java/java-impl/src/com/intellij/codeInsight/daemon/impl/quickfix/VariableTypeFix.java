@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -78,12 +79,12 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                              @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
     return myVariable.getTypeElement() != null
-        && myVariable.getManager().isInProject(myVariable)
-        && getReturnType() != null
-        && !LambdaUtil.notInferredType(getReturnType())
-        && getReturnType().isValid()
-        && !TypeConversionUtil.isNullType(getReturnType())
-        && !TypeConversionUtil.isVoidType(getReturnType());
+           && ScratchFileService.isInProjectOrScratch(myVariable)
+           && getReturnType() != null
+           && !LambdaUtil.notInferredType(getReturnType())
+           && getReturnType().isValid()
+           && !TypeConversionUtil.isNullType(getReturnType())
+           && !TypeConversionUtil.isVoidType(getReturnType());
   }
 
   @Override
