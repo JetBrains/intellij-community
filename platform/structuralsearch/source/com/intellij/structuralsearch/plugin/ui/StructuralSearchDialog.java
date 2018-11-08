@@ -355,7 +355,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       });
     }
     else {
-      myScopePanel.setEnabled(false);
+      myScopePanel.setVisible(false);
     }
 
     myFilterPanel = new FilterPanel(getProject(), StructuralSearchUtil.getProfileByFileType(myFileType), getDisposable());
