@@ -17,7 +17,25 @@ package com.intellij.vcs.log.graph.utils
 
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
-import java.util.*
+
+class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val visited: Flags) {
+  private val queue = ContainerUtil.newLinkedList(start)
+
+  fun isFinished() = queue.isEmpty()
+
+  fun step(): List<Int> {
+    while (!queue.isEmpty()) {
+      val node = queue.poll()
+      if (!visited.get(node)) {
+        visited.set(node, true)
+        val next = graph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN)
+        queue.addAll(next)
+        return next
+      }
+    }
+    return emptyList()
+  }
+}
 
 object BfsUtil {
   fun getCorrespondingParent(graph: LiteLinearGraph, startNode: Int, endNode: Int, visited: Flags): Int {
@@ -25,43 +43,26 @@ object BfsUtil {
     if (candidates.size == 1) return candidates[0]
     if (candidates.contains(endNode)) return endNode
 
-    val queues = ArrayList<Queue<Int>>(candidates.size)
-    for (candidate in candidates) {
-      queues.add(ContainerUtil.newLinkedList(candidate))
-    }
+    val bfsWalks = candidates.map { BfsWalk(it, graph, visited) }
 
     var emptyCount: Int
     visited.setAll(false)
     do {
       emptyCount = 0
-      for (queue in queues) {
-        if (queue.isEmpty()) {
+      for (walk in bfsWalks) {
+        if (walk.isFinished()) {
           emptyCount++
         }
         else {
-          val found = runNextBfsStep(graph, queue, visited, endNode)
-          if (found) {
-            return candidates[queues.indexOf(queue)]
+          if (walk.step().contains(endNode)) {
+            return walk.start
           }
         }
       }
     }
-    while (emptyCount < queues.size)
+    while (emptyCount < bfsWalks.size)
 
     return candidates[0]
   }
 
-  private fun runNextBfsStep(graph: LiteLinearGraph, queue: Queue<Int>, visited: Flags, target: Int): Boolean {
-    while (!queue.isEmpty()) {
-      val node = queue.poll()
-      if (!visited.get(node!!)) {
-        visited.set(node, true)
-        val next = graph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN)
-        if (next.contains(target)) return true
-        queue.addAll(next)
-        return false
-      }
-    }
-    return false
-  }
 }
