@@ -6,10 +6,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -28,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(ConditionCoveredByFurtherConditionInspection.class);
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -105,11 +105,7 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
       String text = StreamEx.ofReversed(operands).map(PsiElement::getText).joining(and ? " && " : " || ");
       PsiExpression expression = JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(text, context);
       if (!(expression instanceof PsiPolyadicExpression)) {
-        Application application = ApplicationManager.getApplication();
-        if (application.isEAP() || application.isInternal()) {
-          throw new RuntimeExceptionWithAttachments("Unexpected expression type: " + expression.getClass().getName(),
-                                                    new Attachment("reversed.txt", text));
-        }
+        LOG.error("Unexpected expression type: " + expression.getClass().getName(), new Attachment("reversed.txt", text));
         return ArrayUtil.EMPTY_INT_ARRAY;
       }
       PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)expression;
