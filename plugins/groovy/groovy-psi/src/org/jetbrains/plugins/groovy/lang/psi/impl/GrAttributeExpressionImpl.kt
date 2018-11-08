@@ -22,7 +22,7 @@ class GrAttributeExpressionImpl(node: ASTNode) : GrReferenceExpressionImpl(node)
 
   override fun resolve(incomplete: Boolean): Collection<GroovyResolveResult> = attributeReference.resolve(incomplete)
 
-  override fun multiResolve(incomplete: Boolean, rValue: Boolean): Collection<GroovyResolveResult> = resolve(incomplete)
+  override fun lrResolve(rValue: Boolean): Collection<GroovyResolveResult> = resolve(false)
 
   override fun hasAt(): Boolean = true
 

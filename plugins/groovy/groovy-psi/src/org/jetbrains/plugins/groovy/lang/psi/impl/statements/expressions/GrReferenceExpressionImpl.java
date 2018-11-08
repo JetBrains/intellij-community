@@ -162,7 +162,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   private PsiType getNominalType(boolean rValue) {
-    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(multiResolve(false, rValue));
+    final GroovyResolveResult resolveResult = PsiImplUtil.extractUniqueResult(lrResolve(rValue));
     PsiElement resolved = resolveResult.getElement();
 
     for (GrReferenceTypeEnhancer enhancer : GrReferenceTypeEnhancer.EP_NAME.getExtensions()) {
@@ -313,7 +313,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   private static PsiType calculateType(@NotNull GrReferenceExpressionImpl refExpr) {
-    final Collection<? extends GroovyResolveResult> results = refExpr.multiResolve(false, true);
+    final Collection<? extends GroovyResolveResult> results = refExpr.lrResolve(true);
     final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);
     final PsiElement resolved = result.getElement();
 
@@ -605,9 +605,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @NotNull
-  public Collection<? extends GroovyResolveResult> multiResolve(boolean incomplete, boolean rValue) {
+  protected Collection<? extends GroovyResolveResult> lrResolve(boolean rValue) {
     GroovyReference ref = (rValue ? myRValueReference : myLValueReference).getValue();
-    return ref == null ? Collections.emptyList() : ref.resolve(incomplete);
+    return ref == null ? Collections.emptyList() : ref.resolve(false);
   }
 
   @Override
