@@ -229,7 +229,7 @@
                       <component id="4f8ad" class="com.intellij.ui.components.JBLabel">
                         <constraints border-constraint="West"/>
                         <properties>
-                          <text value="Refresh every "/>
+                          <text value=" Refresh every "/>
                         </properties>
                       </component>
                     </children>
