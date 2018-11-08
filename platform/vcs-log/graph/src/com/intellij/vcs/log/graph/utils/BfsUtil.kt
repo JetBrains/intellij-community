@@ -43,24 +43,18 @@ object BfsUtil {
     if (candidates.size == 1) return candidates[0]
     if (candidates.contains(endNode)) return endNode
 
-    val bfsWalks = candidates.map { BfsWalk(it, graph, visited) }
+    val bfsWalks = candidates.mapTo(mutableListOf()) { BfsWalk(it, graph, visited) }
 
-    var emptyCount: Int
     visited.setAll(false)
     do {
-      emptyCount = 0
       for (walk in bfsWalks) {
-        if (walk.isFinished()) {
-          emptyCount++
-        }
-        else {
-          if (walk.step().contains(endNode)) {
-            return walk.start
-          }
+        if (walk.step().contains(endNode)) {
+          return walk.start
         }
       }
+      bfsWalks.removeIf { it.isFinished() }
     }
-    while (emptyCount < bfsWalks.size)
+    while (bfsWalks.isNotEmpty())
 
     return candidates[0]
   }
