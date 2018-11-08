@@ -1308,8 +1308,11 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
-    if (myRole1 == ChildRole.CASE_KEYWORD || myRole2 == ChildRole.CASE_EXPRESSION) {
+    if (myType1 == JavaTokenType.CASE_KEYWORD) {
       createSpaceProperty(true, false, 0);
+    }
+    else if (myType2 == JavaTokenType.COLON) {
+      createSpaceProperty(false, false, 0);
     }
   }
 
