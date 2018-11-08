@@ -8,7 +8,6 @@
     <excludeFromCompile>
       <file url="file://$PROJECT_DIR$/jps/jps-builders-6/src/org/jetbrains/jps/javac/OptimizedFileManager.java" />
       <file url="file://$PROJECT_DIR$/jps/jps-builders-6/src/org/jetbrains/jps/javac/OptimizedFileManager17.java" />
-      <file url="file://$PROJECT_DIR$/java/java-tests/testSrc/com/intellij/index/IndexTestGenerator.scala" />
       <file url="file://$PROJECT_DIR$/java/execution/jshell-frontend/src/com/intellij/execution/jshell/frontend/Main.java" />
       <file url="file://$PROJECT_DIR$/android/tools-base/sdk-common/src/test/java/com/android/ide/common/blame/parser/SourceFragmentPositionRangeJsonTest.java" />
       <file url="file://$PROJECT_DIR$/android/uitest-framework/testSrc/com/android/tools/idea/tests/gui/framework/fixture/RecordingDialogFixture.java" />
@@ -28,10 +27,6 @@
       <entry name="!*.iml" />
       <entry name="!*.gant" />
     </wildcardResourcePatterns>
-    <bytecodeTargetLevel>
-      <module name="java-runtime" target="1.2" />
-      <module name="junit_rt" target="1.2" />
-    </bytecodeTargetLevel>
   </component>
   <component name="EclipseCompilerSettings">
     <option name="GENERATE_NO_WARNINGS" value="true" />
@@ -42,7 +37,7 @@
     <option name="DEPRECATION" value="false" />
   </component>
   <component name="JavacSettings">
-    <option name="PREFER_TARGET_JDK_COMPILER" value="false" />
+    <option name="DEPRECATION" value="false" />
     <option name="MAXIMUM_HEAP_SIZE" value="400" />
   </component>
 </project>

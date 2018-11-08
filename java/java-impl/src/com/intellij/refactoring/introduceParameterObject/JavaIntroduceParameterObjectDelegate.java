@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.introduceparameterobject;
+package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
@@ -32,10 +32,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.*;
-import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
-import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
-import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor;
-import com.intellij.refactoring.introduceparameterobject.usageInfo.*;
+import com.intellij.refactoring.introduceParameterObject.usageInfo.*;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.usageView.UsageInfo;
@@ -135,7 +132,9 @@ public class JavaIntroduceParameterObjectDelegate
       PsiNewExpression newClassExpression = (PsiNewExpression)JavaCodeStyleManager.getInstance(callExpression.getProject())
         .shortenClassReferences(facade.getElementFactory().createExpressionFromText(newExpression.toString(), expr));
       if (PsiDiamondTypeUtil.canChangeContextForDiamond(newClassExpression, newClassExpression.getType())) {
-        RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(newClassExpression.getClassOrAnonymousClassReference().getParameterList());
+        final PsiJavaCodeReferenceElement referenceElement = newClassExpression.getClassOrAnonymousClassReference();
+        if (referenceElement == null) return null;
+        RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(referenceElement.getParameterList());
       }
       return newClassExpression;
     }

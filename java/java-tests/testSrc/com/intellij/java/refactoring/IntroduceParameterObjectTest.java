@@ -28,7 +28,7 @@ import com.intellij.refactoring.MultiFileTestCase;
 import com.intellij.refactoring.changeSignature.JavaMethodDescriptor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor;
-import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor;
+import com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectClassDescriptor;
 import com.intellij.util.Function;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;

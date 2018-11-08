@@ -19,7 +19,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.refactoring.changeSignature.JavaMethodDescriptor
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectProcessor
-import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor
+import com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectClassDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.util.TestUtils

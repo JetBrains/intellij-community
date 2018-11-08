@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.introduceparameterobject.usageInfo;
+package com.intellij.refactoring.introduceParameterObject.usageInfo;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectClassDescriptor;
+import com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectClassDescriptor;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
 

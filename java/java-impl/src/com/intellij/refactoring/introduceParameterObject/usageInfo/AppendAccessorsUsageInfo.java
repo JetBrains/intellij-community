@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.intellij.refactoring.introduceparameterobject.usageInfo;
+package com.intellij.refactoring.introduceParameterObject.usageInfo;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.psi.PsiClass;

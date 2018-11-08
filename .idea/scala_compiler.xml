@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <option name="dynamics" value="true" />
+    <option name="postfixOps" value="true" />
+    <option name="reflectiveCalls" value="true" />
+    <option name="implicitConversions" value="true" />
+    <option name="higherKinds" value="true" />
+    <option name="existentials" value="true" />
+    <option name="macros" value="true" />
+    <option name="specialization" value="false" />
+  </component>
+</project>

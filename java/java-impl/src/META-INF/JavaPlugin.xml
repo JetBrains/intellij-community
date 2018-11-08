@@ -192,7 +192,7 @@
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.BlockingMethodAnnotationProvider"/>
     <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NonblockingMethodAnnotationProvider"/>
     <refactoring.pushDown language="JAVA" implementationClass="com.intellij.refactoring.memberPushDown.JavaPushDownDelegate" id="java"/>
-    <refactoring.introduceParameterObject language="JAVA" implementationClass="com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectDelegate"/>
+    <refactoring.introduceParameterObject language="JAVA" implementationClass="com.intellij.refactoring.introduceParameterObject.JavaIntroduceParameterObjectDelegate"/>
     <refactoring.invertBoolean implementation="com.intellij.refactoring.invertBoolean.JavaInvertBooleanDelegate"/>
     <refactoring.moveInnerClassUsagesHandler language="JAVA" implementationClass="com.intellij.refactoring.move.moveInner.MoveInnerClassJavaUsagesHandler" id="java"/>
     <refactoring.elementListenerProvider implementation="com.intellij.codeInsight.ExternalAnnotationsRefactoringListenerProvider"/>

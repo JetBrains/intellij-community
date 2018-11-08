@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.refactoring.introduceparameterobject;
+package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.ide.util.TreeJavaClassChooserDialog;
 import com.intellij.openapi.editor.Document;
@@ -12,9 +12,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.refactoring.introduceParameterObject.AbstractIntroduceParameterObjectDialog;
 import com.intellij.refactoring.move.moveClassesOrPackages.DestinationFolderComboBox;
 import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.ParameterTablePanel;
@@ -127,7 +127,10 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
 
   @Override
   protected String getSourceMethodPresentation() {
-    return PsiFormatUtil.formatMethod(mySourceMethod, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_CONTAINING_CLASS | PsiFormatUtil.SHOW_NAME, 0);
+    return PsiFormatUtil.formatMethod(mySourceMethod,
+                                      PsiSubstitutor.EMPTY,
+                                      PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME,
+                                      0);
   }
 
   @Override
@@ -191,8 +194,8 @@ public class IntroduceParameterObjectDialog extends AbstractIntroduceParameterOb
     }
     final ParameterInfoImpl[] infos = parameters.toArray(new ParameterInfoImpl[0]);
     return new JavaIntroduceParameterObjectClassDescriptor(className, packageName, moveDestination, useExistingClass, createInnerClass,
-                                                           newVisibility, infos, mySourceMethod,
-                                                           myGenerateAccessorsCheckBox.isSelected());
+                                                                                                             newVisibility, infos, mySourceMethod,
+                                                                                                             myGenerateAccessorsCheckBox.isSelected());
   }
 
   @Override
