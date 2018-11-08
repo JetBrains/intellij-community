@@ -928,7 +928,6 @@
         <reference id="Vcs.ShowTabbedFileHistory"/>
         <reference id="Annotate"/>
         <reference id="Compare.SameVersion"/>
-        <reference id="ChangesView.Move"/>
       </group>
       <separator/>
       <group id="Vcs.Operations.Popup.Vcs.Providers"
