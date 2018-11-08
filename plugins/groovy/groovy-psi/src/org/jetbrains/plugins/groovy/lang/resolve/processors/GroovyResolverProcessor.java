@@ -176,14 +176,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   @NotNull
   public abstract List<GroovyResolveResult> getCandidates();
 
-  public final GroovyResolveResult[] getCandidatesArray() {
-    final List<GroovyResolveResult> candidates = getCandidates();
-    final int size = candidates.size();
-    if (size == 0) return GroovyResolveResult.EMPTY_ARRAY;
-    if (size == 1) return new GroovyResolveResult[]{candidates.get(0)};
-    return candidates.toArray(new GroovyResolveResult[size]);
-  }
-
   private static GroovyResolveKind getResolveKind(PsiNamedElement element) {
     if (element instanceof PsiClass) {
       return GroovyResolveKind.CLASS;

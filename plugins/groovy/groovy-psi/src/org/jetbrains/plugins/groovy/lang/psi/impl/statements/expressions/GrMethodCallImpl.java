@@ -18,7 +18,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtilKt;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.impl.GrImplicitCallReference;
 
@@ -46,9 +45,7 @@ public abstract class GrMethodCallImpl extends GrCallExpressionImpl implements G
   public GroovyResolveResult[] getCallVariants(@Nullable GrExpression upToArgument) {
     final GrExpression invoked = getInvokedExpression();
     if (!(invoked instanceof GrReferenceExpression)) return GroovyResolveResult.EMPTY_ARRAY;
-    if (((GrReferenceExpression)invoked).hasMemberPointer()) return ((GrReferenceExpression)invoked).multiResolve(true);
-
-    return GrReferenceResolveRunnerKt.getCallVariants(((GrReferenceExpression)invoked), upToArgument);
+    return ((GrReferenceExpression)invoked).multiResolve(true);
   }
 
   @Override

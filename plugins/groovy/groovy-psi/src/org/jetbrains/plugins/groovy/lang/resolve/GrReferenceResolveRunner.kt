@@ -79,13 +79,6 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
   }
 }
 
-fun GrReferenceExpression.getCallVariants(upToArgument: GrExpression?): Array<out GroovyResolveResult> {
-  val processor = GroovyResolverProcessorBuilder.builder()
-    .setAllVariants(true)
-    .build(this)
-  GrReferenceResolveRunner(this, processor).resolveReferenceExpression()
-  return processor.candidatesArray
-}
 
 fun GrReferenceExpression.resolveReferenceExpression(incomplete: Boolean): Collection<GroovyResolveResult> {
   val processor = GroovyResolverProcessorBuilder.builder()

@@ -12,15 +12,15 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolve
 public final class GroovyResolverProcessorBuilder {
 
   private boolean myIncomplete = false;
-  private boolean myAllVariants = false;
 
   @NotNull
   public GroovyResolverProcessor build(GrReferenceExpression ref) {
-    final EnumSet<GroovyResolveKind> kinds = myIncomplete ? EnumSet.allOf(GroovyResolveKind.class) : computeKinds(ref);
-    if (myAllVariants) {
-      return new GroovyAllVariantsProcessor(ref, kinds);
+    if (myIncomplete) {
+      return new GroovyAllVariantsProcessor(ref, EnumSet.allOf(GroovyResolveKind.class));
     }
-    return new GroovyResolverProcessorImpl(ref, kinds);
+    else {
+      return new GroovyResolverProcessorImpl(ref, computeKinds(ref));
+    }
   }
 
   @NotNull
@@ -30,12 +30,6 @@ public final class GroovyResolverProcessorBuilder {
 
   public GroovyResolverProcessorBuilder setIncomplete(boolean incomplete) {
     myIncomplete = incomplete;
-    return this;
-  }
-
-  @NotNull
-  public GroovyResolverProcessorBuilder setAllVariants(boolean allVariants) {
-    myAllVariants = allVariants;
     return this;
   }
 
