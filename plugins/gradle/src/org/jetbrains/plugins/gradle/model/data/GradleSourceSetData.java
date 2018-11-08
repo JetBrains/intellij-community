@@ -45,6 +45,6 @@ public class GradleSourceSetData extends ModuleData {
   @Override
   @Nullable
   public String getIdeParentGrouping() {
-    return StringUtil.substringBeforeLast(getInternalName(), ".");
+    return StringUtil.substringBeforeLast(getExternalName(), ":");
   }
 }

@@ -226,7 +226,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   @Nullable
   public String getIdeGrouping() {
-    return StringUtil.nullize(getInternalName());
+    return StringUtil.isEmpty(myGroup) ? getExternalName() : getGroup() + '.' + getExternalName();
   }
 
   @Nullable
