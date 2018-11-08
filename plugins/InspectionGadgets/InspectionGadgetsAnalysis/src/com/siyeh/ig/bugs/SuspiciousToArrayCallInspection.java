@@ -140,7 +140,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
                                                        PsiType itemType) {
       itemType = GenericsUtil.getVariableTypeByExpressionType(itemType);
       final PsiType componentType = arrayType.getComponentType();
-      final PsiElement parent = expression.getParent();
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
       if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression castExpression = (PsiTypeCastExpression)parent;
         final PsiTypeElement castTypeElement = castExpression.getCastType();
