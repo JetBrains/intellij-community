@@ -86,7 +86,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void addRepository(String repositoryUrl) {
     if (useConda()) {
-      final String conda = PyCondaPackageService.getCondaExecutable(mySdk.getHomeDirectory());
+      final String conda = PyCondaPackageService.getCondaExecutable(mySdk.getHomePath());
       final ArrayList<String> parameters = Lists.newArrayList(conda, "config", "--add", "channels",  repositoryUrl, "--force");
       final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
 
@@ -113,7 +113,7 @@ public class PyCondaManagementService extends PyPackageManagementService {
   @Override
   public void removeRepository(String repositoryUrl) {
     if (useConda()) {
-      final String conda = PyCondaPackageService.getCondaExecutable(mySdk.getHomeDirectory());
+      final String conda = PyCondaPackageService.getCondaExecutable(mySdk.getHomePath());
       final ArrayList<String> parameters = Lists.newArrayList(conda, "config", "--remove", "channels", repositoryUrl, "--force");
       final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
 

@@ -39,14 +39,17 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         val shellName = File(shellPath).name
 
         if (shellName == "bash" || (SystemInfo.isMac && shellName == "sh") || (shellName == "zsh") ||
-            ((shellName == "fish") && PythonSdkType.isVirtualEnv(sdk))) { //fish shell works only for virtualenv and not for conda
+            ((shellName == "fish"))) { //fish shell works only for virtualenv and not for conda
           //for bash we pass activate script to jediterm shell integration (see jediterm-bash.in) to source it there
+          //TODO: fix conda for fish
+
           findActivateScript(path, shellPath)?.let { activate ->
             val pathEnv = EnvironmentUtil.getEnvironmentMap().get("PATH")
             if (pathEnv != null) {
               envs.put("PATH", pathEnv)
             }
-            envs.put("JEDITERM_SOURCE", if (activate.second != null) "${activate.first} ${activate.second}" else activate.first)
+            envs.put("JEDITERM_SOURCE",  activate.first)
+            envs.put("JEDITERM_SOURCE_ARGS", activate.second?:"")
           }
         }
         else {

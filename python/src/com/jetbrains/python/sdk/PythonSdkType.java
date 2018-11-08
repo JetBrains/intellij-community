@@ -68,6 +68,7 @@ import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,7 +259,8 @@ public final class PythonSdkType extends SdkType {
     return isVirtualEnv(path);
   }
 
-  public static boolean isVirtualEnv(String path) {
+  @Contract("null -> false")
+  public static boolean isVirtualEnv(@Nullable String path) {
     return path != null && getVirtualEnvRoot(path) != null;
   }
 
@@ -268,8 +270,12 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
-    final String path = sdk.getHomePath();
-    return path != null && PyCondaPackageManagerImpl.isCondaVEnv(sdk);
+    return isCondaEnv(sdk.getHomePath());
+  }
+
+  @Contract("null -> false")
+  public static boolean isCondaEnv(@Nullable String sdkPath) {
+    return sdkPath != null && PyCondaPackageManagerImpl.isCondaEnv(sdkPath);
   }
 
   @Nullable

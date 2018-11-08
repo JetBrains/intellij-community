@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,7 +88,7 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
         }
       }
     }
-    return getCondaExecutable(pythonName);
+    return getCondaExecutableByName(pythonName);
   }
 
   @Nullable
@@ -95,12 +96,32 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
     final File condaInPath = PathEnvironmentVariableUtil.findInPath(condaName);
     if (condaInPath != null) return condaInPath.getPath();
-    return getCondaExecutable(condaName);
+    return getCondaExecutableByName(condaName);
   }
 
   @Nullable
-  public static String getCondaExecutable(VirtualFile sdkPath) {
-    final VirtualFile bin = sdkPath.getParent();
+  public static String getCondaExecutable(@Nullable String sdkPath) {
+    if (sdkPath == null) {
+      return null;
+    }
+
+    String condaPath = findCondaExecutableRelativeToEnv(sdkPath);
+
+    if (condaPath != null) return condaPath;
+
+    if (StringUtil.isNotEmpty(getInstance().PREFERRED_CONDA_PATH)) {
+      return getInstance().PREFERRED_CONDA_PATH;
+    }
+
+    return getSystemCondaExecutable();
+  }
+
+  private static String findCondaExecutableRelativeToEnv(@NotNull String sdkPath) {
+    VirtualFile sdkHomeDir = StandardFileSystems.local().findFileByPath(sdkPath);
+    if (sdkHomeDir == null) {
+      return null;
+    }
+    final VirtualFile bin = sdkHomeDir.getParent();
     String condaName = "conda";
     if (SystemInfo.isWindows) {
       condaName = bin.findChild("envs") != null ? "conda.exe" : "conda.bat";
@@ -108,13 +129,12 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
     final VirtualFile conda = bin.findChild(condaName);
     if (conda != null) return conda.getPath();
     final VirtualFile condaFolder = bin.getParent();
-    final String condaPath = findExecutable(condaName, condaFolder);
-    if (condaPath != null) return condaPath;
-    return getSystemCondaExecutable();
+
+    return findExecutable(condaName, condaFolder);
   }
 
   @Nullable
-  public static String getCondaExecutable(@NotNull final String condaName) {
+  public static String getCondaExecutableByName(@NotNull final String condaName) {
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\', '/'));
     if (userHome != null) {
       for (String root : CondaEnvSdkFlavor.CONDA_DEFAULT_ROOTS) {

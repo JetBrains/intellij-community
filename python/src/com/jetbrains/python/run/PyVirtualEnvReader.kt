@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.containers.ContainerUtil
+import com.jetbrains.python.packaging.PyCondaPackageService
 import com.jetbrains.python.sdk.PythonSdkType
 import java.io.File
 
@@ -18,7 +19,7 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
 
   companion object {
     val virtualEnvVars: List<String> = listOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT", "_OLD_VIRTUAL_PYTHONHOME",
-                                              "_OLD_VIRTUAL_PATH")
+                                              "_OLD_VIRTUAL_PATH", "CONDA_SHLVL", "CONDA_PROMPT_MODIFIER", "CONDA_PREFIX", "CONDA_DEFAULT_ENV")
   }
 
   // in case of Conda we need to pass an argument to an activate script that tells which exactly environment to activate
@@ -74,18 +75,33 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
 
 }
 
-fun findActivateScript(path: String?, shellPath: String?): Pair<String, String?>? {
-  val shellName = if (shellPath != null) File(shellPath).name else null
-  val activate = if (SystemInfo.isWindows) findActivateOnWindows(path)
-  else if (shellName == "fish" || shellName == "csh") File(File(path).parentFile, "activate." + shellName)
-  else File(File(path).parentFile, "activate")
+fun findActivateScript(sdkPath: String?, shellPath: String?): Pair<String, String?>? {
+  if (PythonSdkType.isVirtualEnv(sdkPath)) {
+    val shellName = if (shellPath != null) File(shellPath).name else null
+    val activate = findActivateInPath(sdkPath!!, shellName)
 
-  return if (activate != null && activate.exists()) {
-    val sdk = PythonSdkType.findSdkByPath(path)
-    if (sdk != null && PythonSdkType.isCondaVirtualEnv(sdk)) Pair(activate.absolutePath, condaEnvFolder(path))
-    else Pair(activate.absolutePath, null)
+    return if (activate != null && activate.exists()) {
+        Pair(activate.absolutePath, null)
+    } else null
+  } else if (PythonSdkType.isCondaEnv(sdkPath)) {
+    val condaExecutable = PyCondaPackageService.getCondaExecutable(sdkPath!!)
+
+    if (condaExecutable != null) {
+      val activate = findActivateInPath(File(condaExecutable).path, null)
+
+      if (activate != null && activate.exists()) {
+        return Pair(activate.path, condaEnvFolder(sdkPath))
+      }
+    }
   }
-  else null
+
+  return null
+}
+
+private fun findActivateInPath(path: String, shellName: String?): File? {
+  return if (SystemInfo.isWindows) findActivateOnWindows(path)
+  else if (shellName == "fish" || shellName == "csh") File(File(path).parentFile, "activate.$shellName")
+  else File(File(path).parentFile, "activate")
 }
 
 private fun condaEnvFolder(path: String?) = if (SystemInfo.isWindows) File(path).parent else File(path).parentFile.parent
