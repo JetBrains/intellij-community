@@ -6,9 +6,14 @@ import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.ResolveState
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.*
+import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildQualifier
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.putAll
 import kotlin.reflect.jvm.isAccessible
 
 class MethodResolveResult(
@@ -22,16 +27,13 @@ class MethodResolveResult(
   }
 
   private val methodCandidate by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    val argumentConstraints = buildArguments(ref)
-    if (method is GrGdkMethod) {
-      val arguments = mutableListOf<Argument>().apply {
-        add(0, buildQualifier(ref, state))
-        addAll(argumentConstraints)
-      }
-      MethodCandidate(method.staticMethod, siteSubstitutor, arguments, ref)
+    val arguments = (ref.parent as? GrMethodCall)?.getArguments()
+    if (arguments != null && method is GrGdkMethod) {
+      val newArguments = listOf(buildQualifier(ref, state)) + arguments
+      MethodCandidate(method.staticMethod, siteSubstitutor, newArguments, ref)
     }
     else {
-      MethodCandidate(method, siteSubstitutor, argumentConstraints, ref)
+      MethodCandidate(method, siteSubstitutor, arguments, ref)
     }
   }
 

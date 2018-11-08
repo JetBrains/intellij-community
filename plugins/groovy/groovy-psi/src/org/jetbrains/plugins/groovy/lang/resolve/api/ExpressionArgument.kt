@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.api
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 
-class ExpressionArgument(val expression: GrExpression) : Argument {
+data class ExpressionArgument(val expression: GrExpression) : Argument {
 
   override val type: PsiType? get() = expression.type
 }

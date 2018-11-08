@@ -45,8 +45,10 @@ class GrConstructorReference(element: GrNewExpression) : GroovyCachingReference<
       }
     }
 
-    var types = buildTopLevelArgumentTypes(ref)
-    types = GrInnerClassConstructorUtil.addEnclosingArgIfNeeded(types, element, classCandidate.element as PsiClass)
+    var types = element.buildTopLevelArgumentTypes()
+    if (types != null) {
+      types = GrInnerClassConstructorUtil.addEnclosingArgIfNeeded(types, element, classCandidate.element as PsiClass)
+    }
     return getConstructorCandidates(ref, classCandidate, types).toList()
   }
 

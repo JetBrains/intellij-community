@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
 class MethodCallConstraint(private val callRef: GrReferenceExpression, private val candidate: MethodCandidate) : GrConstraintFormula() {
 
@@ -16,12 +17,14 @@ class MethodCallConstraint(private val callRef: GrReferenceExpression, private v
 
     argInfos.forEach { argument, pair ->
       val leftType = pair.second ?: return@forEach
-      if (argument.type != null) {
-        constraints.add(TypeConstraint(leftType, argument.type, callRef))
-      }
-
-      if (argument.expression != null) {
+      if (argument is ExpressionArgument) {
         constraints.add(ExpressionConstraint(argument.expression, leftType))
+      }
+      else {
+        val type = argument.type
+        if (type != null) {
+          constraints.add(TypeConstraint(leftType, type, callRef))
+        }
       }
     }
   }

@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -30,7 +31,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
   GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
     super(ref, kinds);
     myTypeArguments = ref.getTypeArguments();
-    myArgumentTypes = NullableLazyValue.createValue(() -> buildTopLevelArgumentTypes(ref));
+    myArgumentTypes = NullableLazyValue.createValue(() -> buildTopLevelArgumentTypes((GrCall)myRef.getParent()));
   }
 
   @Override
