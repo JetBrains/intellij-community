@@ -466,15 +466,21 @@ public class StatementParser {
     return statement;
   }
 
-  @Nullable
   private PsiBuilder.Marker parseSwitchLabelStatement(PsiBuilder builder) {
     PsiBuilder.Marker statement = builder.mark();
     boolean isCase = builder.getTokenType() == JavaTokenType.CASE_KEYWORD;
     builder.advanceLexer();
 
-    if (isCase && myParser.getExpressionParser().parseCaseLabel(builder) == null) {
-      statement.rollbackTo();
-      return null;
+    if (isCase) {
+      PsiBuilder.Marker expressionList = builder.mark();
+      do {
+        PsiBuilder.Marker nextExpression = myParser.getExpressionParser().parseCaseLabel(builder);
+        if (nextExpression == null) {
+          error(builder, JavaErrorMessages.message("expected.expression"));
+        }
+      }
+      while (expect(builder, JavaTokenType.COMMA));
+      done(expressionList, JavaElementType.EXPRESSION_LIST);
     }
 
     if (expect(builder, JavaTokenType.ARROW)) {

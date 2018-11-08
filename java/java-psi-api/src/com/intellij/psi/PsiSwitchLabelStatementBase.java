@@ -16,10 +16,23 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
   boolean isDefaultCase();
 
   /**
-   * Returns the constant associated with the {@code case} block,
+   * Returns the constants associated with the {@code case} block,
    * or {@code null} if the statement is incomplete or the element represents a {@code default} section.
    */
-  @Nullable PsiExpression getCaseValue();
+  @Nullable PsiExpressionList getCaseValues();
+
+  /** @deprecated doesn't support enhanced "switch" statement; use {@link #getCaseValues()} instead */
+  @Deprecated
+  default PsiExpression getCaseValue() {
+    PsiExpressionList expressionList = getCaseValues();
+    if (expressionList != null) {
+      PsiExpression[] expressions = expressionList.getExpressions();
+      if (expressions.length == 1) {
+        return expressions[0];
+      }
+    }
+    return null;
+  }
 
   /**
    * Returns the {@code switch} statement with which the section is associated,
