@@ -508,6 +508,7 @@
     <lang.braceMatcher language="JAVA" implementationClass="com.intellij.codeInsight.highlighting.JavaPairedBraceMatcher"/>
     <anonymousElementProvider implementation="com.intellij.lang.java.JavaAnonymousClassesProvider" />
     <usageToPsiElementProvider implementation="com.intellij.lang.java.JavaUsageToPsiElementProvider" />
+    <focusModeProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaFocusModeProvider" />
     <lang.findUsagesProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaFindUsagesProvider"/>
     <lang.unwrapDescriptor language="JAVA" implementationClass="com.intellij.codeInsight.unwrap.JavaUnwrapDescriptor"/>
     <codeInsight.surroundWithRangeAdjuster implementation="com.intellij.codeInsight.generation.surroundWith.JavaSurroundWithStatementRangeAdjuster"/>

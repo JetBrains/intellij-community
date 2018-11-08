@@ -539,6 +539,40 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
     CodeStyleSettingsManager.getInstance(myProject).addListener(this);
+
+    myScrollingModel.addVisibleAreaListener(e -> {
+      if (IdeEventQueue.getInstance().getTrueCurrentEvent() instanceof MouseEvent) {
+        clearFocusMode();
+      }
+    });
+  }
+
+  public static final Key<Segment> FOCUS_MODE_RANGE = Key.create("focus.mode.range");
+  public static final Key<List<RangeHighlighter>> FOCUS_MODE_HIGHLIGHTERS = Key.create("focus.mode.highlighters");
+  public static final Key<TextAttributes> FOCUS_MODE_ATTRIBUTES = Key.create("editor.focus.mode.attibutes");
+
+  private void clearFocusMode() {
+    List<RangeHighlighter> highlighters = getUserData(FOCUS_MODE_HIGHLIGHTERS);
+    if (highlighters != null) {
+      for (RangeHighlighter rangeHighlighter : highlighters) {
+        myMarkupModel.removeHighlighter(rangeHighlighter);
+      }
+      highlighters.clear();
+    }
+  }
+
+  public boolean isInFocusMode(FoldRegion region) {
+    List<RangeHighlighter> highlighters = getUserData(FOCUS_MODE_HIGHLIGHTERS);
+    if (highlighters != null) {
+      for (RangeHighlighter highlighter : highlighters) {
+        if (intersects(highlighter, region)) return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean intersects(RangeMarker a, RangeMarker b) {
+    return Math.max(a.getStartOffset(), b.getStartOffset()) < Math.min(a.getEndOffset(), b.getEndOffset());
   }
 
   private boolean canImpactGutterSize(@NotNull RangeHighlighterEx highlighter) {

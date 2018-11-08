@@ -635,6 +635,9 @@
       <with attribute="implementationClass" implements="com.intellij.lang.parameterInfo.ParameterInfoHandler"/>
     </extensionPoint>
     <extensionPoint name="codeInsight.parameterInfo.listener" interface="com.intellij.codeInsight.hint.ParameterInfoListener" />
+    <extensionPoint name="focusModeProvider" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider"/>
+    </extensionPoint>
     <extensionPoint name="codeInsight.parameterNameHints" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayParameterHintsProvider"/>
     </extensionPoint>

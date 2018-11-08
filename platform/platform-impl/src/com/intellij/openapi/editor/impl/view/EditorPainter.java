@@ -22,6 +22,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -1211,8 +1212,11 @@ public class EditorPainter implements TextDrawingCallback {
 
   private TextAttributes getFoldRegionAttributes(FoldRegion foldRegion) {
     TextAttributes selectionAttributes = isSelected(foldRegion) ? myEditor.getSelectionModel().getTextAttributes() : null;
-    TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
     TextAttributes defaultAttributes = getDefaultAttributes();
+    if (myEditor.isInFocusMode(foldRegion)) {
+      return ObjectUtils.notNull(myEditor.getUserData(EditorImpl.FOCUS_MODE_ATTRIBUTES), getDefaultAttributes());
+    }
+    TextAttributes foldAttributes = myEditor.getFoldingModel().getPlaceholderAttributes();
     return mergeAttributes(mergeAttributes(selectionAttributes, foldAttributes), defaultAttributes);
   }
 
