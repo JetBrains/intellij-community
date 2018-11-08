@@ -27,13 +27,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,8 +44,6 @@ import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -316,7 +312,7 @@ public class AppUIUtil {
 
       @Override
       protected JComponent createCenterPanel() {
-        JPanel centerPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
+        JPanel centerPanel = new JPanel(new BorderLayout(0, JBUI.scale(8)));
         myViewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
         myViewer.setFocusable(true);
         myViewer.addHyperlinkListener(new HyperlinkAdapter() {
@@ -343,20 +339,13 @@ public class AppUIUtil {
         styleSheet.addRule("h2 {margin-top:0;padding-top:"+JBUI.scaleFontSize(13)+"pt;}");
         myViewer.setCaretPosition(0);
         myViewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
-        centerPanel.add(new JLabel("Please read and accept these terms and conditions:"), BorderLayout.NORTH);
+        centerPanel.add(JBUI.Borders.emptyTop(8).wrap(
+          new JLabel("Please read and accept these terms and conditions. Scroll down for full text:")), BorderLayout.NORTH);
         JBScrollPane scrollPane = new JBScrollPane(myViewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
-        final JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
-        scrollBar.addAdjustmentListener(new AdjustmentListener() {
-          boolean wasScrolledToTheBottom = false;
-          @Override
-          public void adjustmentValueChanged(AdjustmentEvent e) {
-            if (!wasScrolledToTheBottom) {
-              wasScrolledToTheBottom = UIUtil.isScrolledToTheBottom(myViewer);
-            }
-            setOKActionEnabled(wasScrolledToTheBottom);
-          }
-        });
         centerPanel.add(scrollPane, BorderLayout.CENTER);
+        JCheckBox checkBox = new JCheckBox("I confirm that I have read and accept the terms of this User Agreement");
+        centerPanel.add(JBUI.Borders.empty(24, 0, 16, 0).wrap(checkBox), BorderLayout.SOUTH);
+        checkBox.addActionListener(e -> setOKActionEnabled(checkBox.isSelected()));
         return centerPanel;
       }
 
@@ -374,15 +363,6 @@ public class AppUIUtil {
         setOKActionEnabled(false);
         setCancelButtonText("Reject and Exit");
         setAutoAdjustable(false);
-      }
-
-      @Override
-      protected JPanel createSouthAdditionalPanel() {
-        JPanel panel = new NonOpaquePanel(new BorderLayout());
-        JLabel label = new JLabel("Scroll to the end to accept");
-        label.setForeground(new JBColor(0x808080, 0x8C8C8C));
-        panel.add(label);
-        return panel;
       }
 
       @Override
