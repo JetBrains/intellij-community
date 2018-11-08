@@ -220,7 +220,8 @@ public class ArtifactRepositoryManager {
                 Artifact newArtifact = artifact.setVersion(result.getHighestVersion().toString());
                 requests.add(new ArtifactRequest(newArtifact, Collections.unmodifiableList(myRemoteRepositories), null));
               }
-            } else {
+            }
+            else {
               requests.add(new ArtifactRequest(artifact, Collections.unmodifiableList(myRemoteRepositories), null));
             }
           }

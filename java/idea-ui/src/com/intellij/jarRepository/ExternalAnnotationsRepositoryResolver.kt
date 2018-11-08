@@ -59,35 +59,30 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     val mavenLibDescriptor = extractDescriptor(mavenId, library, false) ?: return Promise.resolve(library)
 
     return JarRepositoryManager.loadDependenciesAsync(project,
-                                               mavenLibDescriptor,
-                                               setOf(ArtifactKind.ANNOTATIONS),
-                                               null,
-                                               null)
+                                                      mavenLibDescriptor,
+                                                      setOf(ArtifactKind.ANNOTATIONS),
+                                                      null,
+                                                      null)
       .thenAsync { roots ->
-        if (roots == null || roots.isEmpty()) {
-          val patchedDescriptor = extractDescriptor(mavenId, library, true) ?: return@thenAsync Promise.resolve(library)
-          val promise2 = JarRepositoryManager.loadDependenciesAsync(project,
+        val resolvedRoots = Promise.resolve(roots)
+        if (roots?.isEmpty() == false) {
+          resolvedRoots
+        }
+        else {
+          val patchedDescriptor = extractDescriptor(mavenId, library, true) ?: return@thenAsync resolvedRoots
+          JarRepositoryManager.loadDependenciesAsync(project,
                                                      patchedDescriptor,
                                                      setOf(ArtifactKind.ANNOTATIONS),
                                                      null,
                                                      null)
-            .thenAsync { moreRoots ->
-              val morePromise = AsyncPromise<Library>()
-              ApplicationManager.getApplication().invokeLater {
-                updateLibrary(moreRoots, patchedDescriptor, library)
-                morePromise.setResult(library)
-              }
-              morePromise
-            }
-           promise2
-        } else {
+        }
+      }.thenAsync { roots ->
         val promise = AsyncPromise<Library>()
         ApplicationManager.getApplication().invokeLater {
           updateLibrary(roots, mavenLibDescriptor, library)
           promise.setResult(library)
         }
         promise
-        }
       }
   }
 
