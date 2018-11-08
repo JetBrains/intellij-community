@@ -197,6 +197,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     boolean branchInfoSupported = isBranchInfoSupported();
     myUpdateBranchInfoCheckBox.setSelected(branchInfoSupported && projectSettings.shouldUpdateBranchInfo());
     myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
+    mySupportedBranchUpLabel.setVisible(!branchInfoSupported);
     myBranchUpdateTimeField.setValue(projectSettings.getBranchInfoUpdateTime());
     myPreviewPushOnCommitAndPush.setSelected(projectSettings.shouldPreviewPushOnCommitAndPush());
     myPreviewPushProtectedOnly.setSelected(projectSettings.isPreviewPushProtectedOnly());
@@ -290,6 +291,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private void applyBranchUpdateInfo(@NotNull GitVcsSettings projectSettings) {
     boolean branchInfoSupported = isBranchInfoSupported();
     myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
+    mySupportedBranchUpLabel.setVisible(!branchInfoSupported);
     if (!branchInfoSupported) {
       myUpdateBranchInfoCheckBox.setSelected(false);
     }
