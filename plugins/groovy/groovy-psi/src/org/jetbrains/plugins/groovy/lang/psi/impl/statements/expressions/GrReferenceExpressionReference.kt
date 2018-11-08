@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrSuperReferenceResolver.resolveSuperExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrThisReferenceResolver.resolveThisExpression
@@ -44,15 +43,8 @@ abstract class GrReferenceExpressionReference(ref: GrReferenceExpressionImpl) : 
 class GrRValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceExpressionReference(ref) {
 
   override fun doResolveNonStatic(): Collection<GroovyResolveResult> {
-    val expression = element
-    if (expression.parent is GrMethodCall) {
-      return expression.doPolyResolve()
-    }
-
-    expression.handleSpecialCases()?.let {
-      return it
-    }
-    return super.doResolveNonStatic()
+    return element.handleSpecialCases()
+           ?: super.doResolveNonStatic()
   }
 
   override fun buildProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>): GrResolverProcessor<*> {

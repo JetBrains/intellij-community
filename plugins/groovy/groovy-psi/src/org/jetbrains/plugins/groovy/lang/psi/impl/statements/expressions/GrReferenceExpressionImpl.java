@@ -11,7 +11,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import com.intellij.util.profiling.ResolveProfiler;
 import gnu.trove.THashMap;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrExplicitMethodCallReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
@@ -65,6 +65,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   private final GroovyReference myStaticReference = new GrStaticExpressionReference(this);
+
+  private final Lazy<GroovyReference> myCallReference = lazy(
+    () -> getParent() instanceof GrMethodCall && !isImplicitCallReceiver() ? new GrExplicitMethodCallReference(this) : null
+  );
 
   private final Lazy<GroovyReference> myRValueReference = lazy(
     () -> isRValue(this) ? new GrRValueExpressionReference(this) : null
@@ -388,35 +392,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return PsiImplUtil.replaceExpression(this, newExpr, removeUnnecessaryParentheses);
   }
 
-  @NotNull
-  Collection<GroovyResolveResult> doPolyResolve() {
-    final PsiElement nameElement = getReferenceNameElement();
-    final String name = getReferenceName();
-    if (name == null || nameElement == null) return Collections.emptyList();
-
-    try {
-      ResolveProfiler.start();
-      final IElementType nameType = nameElement.getNode().getElementType();
-      if (nameType == GroovyTokenTypes.kTHIS) {
-        final Collection<GroovyResolveResult> results = GrThisReferenceResolver.resolveThisExpression(this);
-        if (results != null) return results;
-      }
-      else if (nameType == GroovyTokenTypes.kSUPER) {
-        final Collection<GroovyResolveResult> results = GrSuperReferenceResolver.resolveSuperExpression(this);
-        if (results != null) return results;
-      }
-      else if (nameType == GroovyTokenTypes.kCLASS && !PsiUtil.isCompileStatic(this)) {
-        GrExpression qualifier = getQualifier();
-        if (qualifier == null || qualifier.getType() == null) return Collections.emptyList();
-      }
-      return resolveReferenceExpression(this, false);
-    }
-    finally {
-      final long time = ResolveProfiler.finish();
-      ResolveProfiler.write("ref", this, time);
-    }
-  }
-
   @Override
   @NotNull
   public String getCanonicalText() {
@@ -437,6 +412,11 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Override
   public GroovyReference getStaticReference() {
     return myStaticReference;
+  }
+
+  @Nullable
+  private GroovyReference getCallReference() {
+    return myCallReference.getValue();
   }
 
   @Nullable
@@ -585,9 +565,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
   };
 
-  @NotNull
-  @Override
-  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+  @Nullable
+  private Collection<? extends GroovyResolveResult> resolveSpecial(boolean incomplete) {
     final PsiElement parent = getParent();
     if (parent instanceof GrConstructorInvocation) {
       // Archaeology notice.
@@ -600,15 +579,32 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       // but instead it returns this GrReferenceExpression as invoked one.
       return ((GrConstructorInvocation)parent).getConstructorReference().resolve(incomplete);
     }
+
     final Collection<? extends GroovyResolveResult> staticResults = getStaticReference().resolve(incomplete);
     if (!staticResults.isEmpty()) {
       return staticResults;
     }
+
+    final GroovyReference callReference = getCallReference();
+    if (callReference != null) {
+      return callReference.resolve(incomplete);
+    }
+
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+    final Collection<? extends GroovyResolveResult> specialResults = resolveSpecial(incomplete);
+    if (specialResults != null) return specialResults;
     return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, RESOLVER);
   }
 
   @NotNull
   protected Collection<? extends GroovyResolveResult> lrResolve(boolean rValue) {
+    final Collection<? extends GroovyResolveResult> specialResults = resolveSpecial(false);
+    if (specialResults != null) return specialResults;
     GroovyReference ref = (rValue ? myRValueReference : myLValueReference).getValue();
     return ref == null ? Collections.emptyList() : ref.resolve(false);
   }
