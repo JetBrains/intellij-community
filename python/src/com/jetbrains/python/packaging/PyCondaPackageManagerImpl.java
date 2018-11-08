@@ -91,13 +91,17 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final GeneralCommandLine commandLine = new GeneralCommandLine(parameters);
     final CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
     final ProcessOutput result = handler.runProcess();
+    checkExitCode(parameters, result);
+    return result;
+  }
+
+  private static void checkExitCode(ArrayList<String> parameters, ProcessOutput result) throws PyExecutionException {
     final int exitCode = result.getExitCode();
     if (exitCode != 0) {
       final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
                              "Permission denied" : "Non-zero exit code";
       throw new PyExecutionException(message, "Conda", parameters, result);
     }
-    return result;
   }
 
   @Nullable
@@ -232,12 +236,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     if (result.isCancelled()) {
       throw new RunCanceledByUserException();
     }
-    final int exitCode = result.getExitCode();
-    if (exitCode != 0) {
-      final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
-                             "Permission denied" : "Non-zero exit code";
-      throw new PyExecutionException(message, "Conda", parameters, result);
-    }
+    checkExitCode(parameters, result);
     final String binary = PythonSdkType.getPythonExecutable(destinationDir);
     final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
     return (binary != null) ? binary : binaryFallback;
