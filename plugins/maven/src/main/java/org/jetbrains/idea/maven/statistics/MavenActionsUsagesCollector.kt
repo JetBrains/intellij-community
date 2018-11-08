@@ -25,7 +25,7 @@ class MavenActionsUsagesCollector : ProjectUsageTriggerCollector() {
 
       // preserve context data ordering
       val context = FUSUsageContext.create(
-        place.nullize() ?: "undefined place",
+        place.nullize(true) ?: "undefined place",
         "fromContextMenu.$isFromContextMenu",
         *additionalContextData
       )

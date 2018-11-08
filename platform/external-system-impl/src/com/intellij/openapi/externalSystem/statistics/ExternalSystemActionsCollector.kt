@@ -28,7 +28,7 @@ class ExternalSystemActionsCollector : ProjectUsageTriggerCollector() {
 
       // preserve context data ordering
       val context = FUSUsageContext.create(
-        place.nullize() ?: "undefined place",
+        place.nullize(true) ?: "undefined place",
         "fromContextMenu.$isFromContextMenu",
         systemId?.let { escapeSystemId(it) } ?: "undefined.system",
         *additionalContextData
