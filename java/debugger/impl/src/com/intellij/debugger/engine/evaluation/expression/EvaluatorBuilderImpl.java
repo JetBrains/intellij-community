@@ -18,8 +18,11 @@ import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.*;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.tree.IElementType;
@@ -1206,7 +1209,60 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-      throw new EvaluateRuntimeException(new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported")));
+      PsiElement qualifier = expression.getQualifier();
+      PsiType interfaceType = expression.getFunctionalInterfaceType();
+      if (!Registry.is("debugger.compiling.evaluator.method.refs") && interfaceType != null && qualifier != null) {
+        PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiMethod) {
+          try {
+            PsiMethod method = (PsiMethod)resolved;
+            PsiClass containingClass = method.getContainingClass();
+            if (containingClass != null) {
+              String methodName = "";
+              String findMethodName;
+              String bind = "";
+              if (method.isConstructor()) {
+                findMethodName = "findConstructor";
+              }
+              else {
+                methodName = ", \"" + method.getName() + "\"";
+                if (method.hasModifier(JvmModifier.STATIC)) {
+                  findMethodName = "findStatic";
+                }
+                else {
+                  findMethodName = "findVirtual";
+                  bind = "mh = mh.bindTo(" + qualifier.getText() + ")\n";
+                }
+              }
+              String code =
+                "MethodType mt = MethodType.fromMethodDescriptorString(\"" + JVMNameUtil.getJVMSignature(method) + "\", null);\n" +
+                "MethodHandle mh = MethodHandles.publicLookup()." + findMethodName + "(" +
+                containingClass.getQualifiedName() + ".class " + methodName + ", mt);\n" +
+                bind +
+                "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
+              myResult = buildFromJavaCode(code,
+                                           "java.lang.invoke.MethodHandle," +
+                                           "java.lang.invoke.MethodHandleProxies," +
+                                           "java.lang.invoke.MethodHandles," +
+                                           "java.lang.invoke.MethodType",
+                                           expression);
+              return;
+            }
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+        }
+      }
+      throw new EvaluateRuntimeException(
+        new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported")));
+    }
+
+    private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) throws EvaluateException {
+      TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, code, imports, StdFileTypes.JAVA);
+      JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(text, context, context.getProject());
+      ExpressionEvaluator evaluator = new Builder(myPosition).buildElement(codeFragment);
+      return evaluationContext -> evaluator.evaluate(evaluationContext);
     }
 
     @Override
