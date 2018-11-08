@@ -43,7 +43,7 @@ class ExternalSystemActionsCollector : ProjectUsageTriggerCollector() {
     fun trigger(project: Project?,
                 systemId: ProjectSystemId?,
                 action: AnAction,
-                event: AnActionEvent?,
+                event: AnActionEvent,
                 vararg additionalContextData: String) {
       trigger(project, systemId, action.javaClass.simpleName, event, *additionalContextData)
     }
@@ -52,9 +52,9 @@ class ExternalSystemActionsCollector : ProjectUsageTriggerCollector() {
     fun trigger(project: Project?,
                 systemId: ProjectSystemId?,
                 featureId: String,
-                event: AnActionEvent?,
+                event: AnActionEvent,
                 vararg additionalContextData: String) {
-      trigger(project, systemId, featureId, event?.place, event?.isFromContextMenu ?: false, *additionalContextData)
+      trigger(project, systemId, featureId, event.place, event.isFromContextMenu, *additionalContextData)
     }
   }
 }
