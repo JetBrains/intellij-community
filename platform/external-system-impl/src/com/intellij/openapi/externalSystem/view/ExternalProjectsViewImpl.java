@@ -306,8 +306,8 @@ public class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements D
     ActionToolbar actionToolbar = actionManager.createActionToolbar(myExternalSystemId.getReadableName() + " View Toolbar",
                                                                     (DefaultActionGroup)actionManager
                                                                       .getAction("ExternalSystemView.ActionsToolbar"), true);
-
-    actionToolbar.setTargetComponent(myTree);
+    // make the view data context available for the toolbar actions
+    actionToolbar.setTargetComponent(this);
     setToolbar(actionToolbar.getComponent());
     setContent(ScrollPaneFactory.createScrollPane(myTree));
 

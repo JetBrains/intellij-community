@@ -79,7 +79,6 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
       e.getPresentation().setEnabled(false);
       return;
     }
-    ExternalSystemActionsCollector.trigger(project, null, this, e);
 
     final List<ProjectSystemId> systemIds = getSystemIds(e);
     if (systemIds.isEmpty()) {
@@ -91,6 +90,7 @@ public class RefreshAllExternalProjectsAction extends AnAction implements AnActi
     FileDocumentManager.getInstance().saveAllDocuments();
 
     for (ProjectSystemId externalSystemId : systemIds) {
+      ExternalSystemActionsCollector.trigger(project, externalSystemId, this, e);
       ExternalSystemUtil.refreshProjects(
         new ImportSpecBuilder(project, externalSystemId)
           .forceWhenUptodate(true)
