@@ -508,7 +508,7 @@ public class TreeModelBuilder {
 
   @NotNull
   private static ChangesBrowserNode createPathNode(@NotNull StaticFilePath path) {
-    FilePath filePath = path.getVf() == null ? VcsUtil.getFilePath(path.getPath(), true) : VcsUtil.getFilePath(path.getVf());
+    FilePath filePath = VcsUtil.getFilePath(path.getPath(), true);
     return ChangesBrowserNode.createFilePath(filePath);
   }
 
