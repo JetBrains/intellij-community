@@ -6,8 +6,9 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI;
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.util.gotoByName.*;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,6 +39,7 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Author: msk
@@ -324,20 +326,23 @@ public abstract class GotoActionBase extends AnAction {
 
   protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt, boolean useEditorSelection) {
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(evnt.getProject());
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
+
     if (seManager.isShown()) {
       if (searchProviderID.equals(seManager.getShownContributorID())) {
         seManager.setShowNonProjectItems(!seManager.isShowNonProjectItems());
       }
       else {
         seManager.setShownContributor(searchProviderID);
-        FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE
-                                                             + "." + SearchEverywhereUI.TAB_SWITCHED
-                                                             + "." + searchProviderID);
+        FUSUsageContext context = Optional.ofNullable(KeymapUtil.getEventShortcut(evnt))
+          .map(shortcut -> FUSUsageContext.create(searchProviderID, shortcut))
+          .orElseGet(() -> FUSUsageContext.create(searchProviderID));
+        SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);
       }
       return;
     }
 
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
+    SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.DIALOG_OPEN, FUSUsageContext.create(searchProviderID));
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     String searchText = StringUtil.nullize(getInitialText(useEditorSelection, evnt).first);
     seManager.show(searchProviderID, searchText, evnt);
