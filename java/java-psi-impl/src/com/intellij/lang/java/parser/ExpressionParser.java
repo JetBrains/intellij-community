@@ -11,10 +11,11 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+
+import java.util.function.Function;
 
 import static com.intellij.codeInsight.daemon.JavaErrorMessages.BUNDLE;
 import static com.intellij.lang.PsiBuilderUtil.*;
@@ -617,15 +618,15 @@ public class ExpressionParser {
 
   @NotNull
   private PsiBuilder.Marker parseArrayInitializer(PsiBuilder builder) {
-    return parseArrayInitializer(builder, JavaElementType.ARRAY_INITIALIZER_EXPRESSION, builder1 -> parse(builder1) != null, "expected.expression");
+    return parseArrayInitializer(builder, JavaElementType.ARRAY_INITIALIZER_EXPRESSION, this::parse, "expected.expression");
   }
 
   @NotNull
   public PsiBuilder.Marker parseArrayInitializer(@NotNull PsiBuilder builder,
                                                  @NotNull IElementType type,
-                                                 @NotNull Function<? super PsiBuilder, Boolean> elementParser,
+                                                 @NotNull Function<? super PsiBuilder, PsiBuilder.Marker> elementParser,
                                                  @NotNull @PropertyKey(resourceBundle = BUNDLE) String missingElementKey) {
-    final PsiBuilder.Marker arrayInit = builder.mark();
+    PsiBuilder.Marker arrayInit = builder.mark();
     builder.advanceLexer();
 
     boolean first = true;
@@ -640,7 +641,7 @@ public class ExpressionParser {
         break;
       }
 
-      if (!elementParser.fun(builder)) {
+      if (elementParser.apply(builder) == null) {
         if (builder.getTokenType() == JavaTokenType.COMMA) {
           if (first && builder.lookAhead(1) == JavaTokenType.RBRACE) {
             advance(builder, 2);
