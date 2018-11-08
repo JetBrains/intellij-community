@@ -4,7 +4,6 @@ package com.intellij.openapi.application;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsageTriggerCollector;
 import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -22,7 +21,7 @@ public class ImportOldConfigsUsagesCollector extends ApplicationUsageTriggerColl
       final ImportOldConfigsState state = ImportOldConfigsState.getInstance();
       if (state.isOldConfigPanelWasOpened()) {
         FUSApplicationUsageTrigger.getInstance().trigger(
-          ImportOldConfigsUsagesCollector.class, "import.type.selected", FUSUsageContext.create(state.getType().name())
+          ImportOldConfigsUsagesCollector.class, state.getType().name()
         );
       }
     }
