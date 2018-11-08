@@ -127,7 +127,7 @@ public class ExternalAnnotationsManagerTest extends IdeaTestCase {
   }
 
   @Contract("_,_,_-> fail")
-  private static void fail(String error, PsiFile psiFile, String externalName) {
+  private static void fail(String error, PsiFile psiFile, @NotNull String externalName) {
     int offset = psiFile.getText().indexOf(XmlUtil.escape(externalName));
     int line = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile).getLineNumber(offset);
     fail(error + "\nFile: " + psiFile.getVirtualFile().getPath() + ":" + (line+1) + " (offset: "+offset+")");
@@ -135,7 +135,7 @@ public class ExternalAnnotationsManagerTest extends IdeaTestCase {
 
   private void checkExternalName(@NotNull PsiFile psiFile, @NotNull String externalName, @NotNull String assumedPackage) {
     // 'item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String) 0"' should have all FQNs
-    String unescaped = StringUtil.unescapeXml(externalName);
+    String unescaped = StringUtil.unescapeXmlEntities(externalName);
     List<String> words = StringUtil.split(unescaped, " ");
     String className = words.get(0);
     PsiClass aClass = assertClassFqn(className, psiFile, externalName, assumedPackage);

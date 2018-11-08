@@ -62,6 +62,7 @@ public class DomFileDescription<T> {
     myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : allPossibleRootTagNamespaces;
   }
 
+  @NotNull
   public String[] getAllPossibleRootTagNamespaces() {
     return myAllPossibleRootTagNamespaces;
   }

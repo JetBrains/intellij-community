@@ -59,7 +59,7 @@ import java.util.List;
 import java.util.*;
 
 import static com.intellij.openapi.diagnostic.Logger.getInstance;
-import static com.intellij.openapi.util.text.StringUtil.escapeXml;
+import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.vcs.VcsBundle.message;
 import static com.intellij.ui.components.JBBox.createHorizontalBox;
 import static com.intellij.util.ArrayUtil.isEmpty;
@@ -534,7 +534,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         String[] messages = updateException.getMessages();
         if (!isEmpty(messages)) {
           String message = "Warning: not all local changes may be shown due to an error: " + messages[0];
-          String htmlMessage = buildHtml(getCssFontDeclaration(getLabelFont()), getHtmlBody(escapeXml(message)));
+          String htmlMessage = buildHtml(getCssFontDeclaration(getLabelFont()), getHtmlBody(escapeXmlEntities(message)));
 
           myWarningLabel.setText(htmlMessage);
           myWarningLabel.setVisible(true);

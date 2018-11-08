@@ -909,9 +909,10 @@ public class JavaCompletionUtil {
     };
   }
 
-  public static String escapeXmlIfNeeded(InsertionContext context, String generics) {
+  @NotNull
+  public static String escapeXmlIfNeeded(InsertionContext context, @NotNull String generics) {
     if (context.getFile().getViewProvider().getBaseLanguage() == StdLanguages.JSPX) {
-      return StringUtil.escapeXml(generics);
+      return StringUtil.escapeXmlEntities(generics);
     }
     return generics;
   }

@@ -73,7 +73,7 @@ public class HoverHyperlinkLabel extends JLabel {
   }
 
   @NonNls private static String underlineTextInHtml(final String text) {
-    return "<html><u>" + StringUtil.escapeXml(text) + "</u></html>";
+    return "<html><u>" + StringUtil.escapeXmlEntities(text) + "</u></html>";
   }
 
   public String getOriginalText() {

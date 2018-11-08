@@ -58,7 +58,8 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
       else if (stopCount == 1) {
           presentation.setText(ExecutionBundle.message("stop.configuration.action.name",
-                                                       StringUtil.escapeMnemonics(stoppableDescriptors.get(0).getDisplayName())));
+                                                       StringUtil.escapeMnemonics(
+                                                         StringUtil.notNullize(stoppableDescriptors.get(0).getDisplayName()))));
       }
     }
     else {
@@ -81,7 +82,9 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
       }
       else {
         presentation.setText(ExecutionBundle.message("stop.configuration.action.name",
-                                                     StringUtil.escapeMnemonics(runProfile == null ? contentDescriptor.getDisplayName() : runProfile.getName())));
+                                                     StringUtil.escapeMnemonics(runProfile == null
+                                                                                ? StringUtil.notNullize(contentDescriptor.getDisplayName())
+                                                                                : runProfile.getName())));
       }
     }
 

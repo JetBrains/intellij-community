@@ -815,7 +815,7 @@ public class JavaDocInfoGenerator {
     boolean trunc = index < text.length();
     text = text.substring(0, index);
     buffer.append(" = ");
-    buffer.append(StringUtil.escapeXml(text));
+    buffer.append(StringUtil.escapeXmlEntities(text));
     if (trunc) {
       buffer.append("...");
     }
@@ -836,7 +836,7 @@ public class JavaDocInfoGenerator {
       boolean trunc = index < text.length();
       if (trunc) {
         text = text.substring(0, index);
-        buffer.append(StringUtil.escapeXml(text));
+        buffer.append(StringUtil.escapeXmlEntities(text));
         buffer.append("...");
       }
       else {
@@ -1069,7 +1069,7 @@ public class JavaDocInfoGenerator {
     }
 
     final String typeParamsString = generateTypeParameters(method, useShortNames);
-    indent += StringUtil.unescapeXml(StringUtil.stripHtml(typeParamsString, true)).length();
+    indent += StringUtil.unescapeXmlEntities(StringUtil.stripHtml(typeParamsString, true)).length();
     if (!typeParamsString.isEmpty()) {
       buffer.append(typeParamsString);
       buffer.append(NBSP);
@@ -1282,7 +1282,7 @@ public class JavaDocInfoGenerator {
         int pos = elementText.lastIndexOf('\n');
         if (pos >= 0) elementText = elementText.substring(0, pos + 1); // skip whitespace before leading asterisk
       }
-      appendPlainText(StringUtil.escapeXml(elementText), tmpBuffer);
+      appendPlainText(StringUtil.escapeXmlEntities(elementText), tmpBuffer);
     }
     if ((mySdkVersion == null || mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) && isInPre(tag)) {
       buffer.append(tmpBuffer);
@@ -1357,7 +1357,7 @@ public class JavaDocInfoGenerator {
     }
 
     if (value != null) {
-      String valueText = StringUtil.escapeXml(value.toString());
+      String valueText = StringUtil.escapeXmlEntities(value.toString());
       if (value instanceof String) valueText = '"' + valueText + '"';
       if (valueField.equals(myElement)) buffer.append(valueText); // don't generate link to itself
       else generateLink(buffer, valueField, valueText, true);
@@ -1524,7 +1524,7 @@ public class JavaDocInfoGenerator {
     if (spaceIndex < 0) {
       spaceIndex = text.length();
     }
-    buffer.append(StringUtil.escapeXml(tag.name));
+    buffer.append(StringUtil.escapeXmlEntities(tag.name));
     buffer.append(" &ndash; ");
     buffer.append(text.substring(spaceIndex));
     generateValue(buffer, elements, 1, mapProvider(tag.inheritDocTagProvider, true));
@@ -1778,7 +1778,7 @@ public class JavaDocInfoGenerator {
    */
   public static int generateType(StringBuilder buffer, PsiType type, PsiElement context, boolean generateLink, boolean useShortNames) {
     if (type instanceof PsiPrimitiveType) {
-      String text = StringUtil.escapeXml(type.getCanonicalText());
+      String text = StringUtil.escapeXmlEntities(type.getCanonicalText());
       buffer.append(text);
       return text.length();
     }
@@ -1821,7 +1821,7 @@ public class JavaDocInfoGenerator {
       catch (IndexNotReadyException e) {
         LOG.debug(e);
         String text = ((PsiClassType)type).getClassName();
-        buffer.append(StringUtil.escapeXml(text));
+        buffer.append(StringUtil.escapeXmlEntities(text));
         return text.length();
       }
       PsiClass psiClass = result.getElement();
@@ -1829,7 +1829,7 @@ public class JavaDocInfoGenerator {
 
       if (psiClass == null) {
         String canonicalText = type.getCanonicalText();
-        String text = "<font color=red>" + StringUtil.escapeXml(canonicalText) + "</font>";
+        String text = "<font color=red>" + StringUtil.escapeXmlEntities(canonicalText) + "</font>";
         buffer.append(text);
         return canonicalText.length();
       }
@@ -1837,7 +1837,7 @@ public class JavaDocInfoGenerator {
       String qName = psiClass.getQualifiedName();
 
       if (qName == null || psiClass instanceof PsiTypeParameter) {
-        String text = StringUtil.escapeXml(useShortNames ? type.getPresentableText() : type.getCanonicalText());
+        String text = StringUtil.escapeXmlEntities(useShortNames ? type.getPresentableText() : type.getCanonicalText());
         buffer.append(text);
         return text.length();
       }
@@ -1891,7 +1891,7 @@ public class JavaDocInfoGenerator {
     if (type instanceof PsiDisjunctionType || type instanceof PsiIntersectionType) {
       if (!generateLink) {
         String canonicalText = useShortNames ? type.getPresentableText() : type.getCanonicalText();
-        final String text = StringUtil.escapeXml(canonicalText);
+        final String text = StringUtil.escapeXmlEntities(canonicalText);
         buffer.append(text);
         return canonicalText.length();
       }
@@ -2155,18 +2155,18 @@ public class JavaDocInfoGenerator {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      myBuffer.append(StringUtil.escapeXml(expression.getMethodExpression().getText()));
+      myBuffer.append(StringUtil.escapeXmlEntities(expression.getMethodExpression().getText()));
       expression.getArgumentList().accept(this);
     }
 
     @Override
     public void visitExpression(PsiExpression expression) {
-      myBuffer.append(StringUtil.escapeXml(expression.getText()));
+      myBuffer.append(StringUtil.escapeXmlEntities(expression.getText()));
     }
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
-      myBuffer.append(StringUtil.escapeXml(expression.getText()));
+      myBuffer.append(StringUtil.escapeXmlEntities(expression.getText()));
     }
   }
 

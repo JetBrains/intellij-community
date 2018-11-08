@@ -74,6 +74,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   protected final MyExtractMethodProcessor myExtractProcessor;
   private boolean myCreateInnerClass = true;
+  @NotNull
   private String myInnerClassName;
 
   private boolean myMultipleExitPoints;
@@ -91,7 +92,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
   private static final Key<Boolean> GENERATED_RETURN = new Key<>("GENERATED_RETURN");
 
-  public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, final String innerClassName) {
+  public ExtractMethodObjectProcessor(Project project, Editor editor, PsiElement[] elements, @NotNull String innerClassName) {
     super(project);
     myInnerClassName = innerClassName;
     myExtractProcessor = new MyExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, innerClassName, HelpID.EXTRACT_METHOD_OBJECT);
@@ -695,6 +696,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return myExtractProcessor.getExtractedMethod();
   }
 
+  @NotNull
   public String getInnerClassName() {
     return myInnerClassName;
   }

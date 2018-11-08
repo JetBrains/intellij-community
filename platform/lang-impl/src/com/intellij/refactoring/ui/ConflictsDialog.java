@@ -224,8 +224,8 @@ public class ConflictsDialog extends DialogWrapper{
     private class DescriptionOnlyUsage implements Usage {
       private final String myConflictDescription;
 
-      DescriptionOnlyUsage(String conflictDescription) {
-        myConflictDescription = StringUtil.unescapeXml(conflictDescription)
+      DescriptionOnlyUsage(@NotNull String conflictDescription) {
+        myConflictDescription = StringUtil.unescapeXmlEntities(conflictDescription)
           .replaceAll("<code>", "")
           .replaceAll("</code>", "")
           .replaceAll("<b>", "")

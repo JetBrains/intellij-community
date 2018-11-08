@@ -103,6 +103,7 @@ public class StringScanner {
    * @param boundaryChar a boundary character
    * @return a token
    */
+  @NotNull
   public String boundedToken(final char boundaryChar) {
     return boundedToken(boundaryChar, false);
   }
@@ -115,6 +116,7 @@ public class StringScanner {
    * @param ignoreEol    if true, the end of line is considered as normal character and consumed
    * @return a token
    */
+  @NotNull
   public String boundedToken(char boundaryChar, boolean ignoreEol) {
     int start = myPosition;
     for (; myPosition < myText.length(); myPosition++) {

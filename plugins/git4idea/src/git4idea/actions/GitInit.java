@@ -50,7 +50,7 @@ public class GitInit extends DumbAwareAction {
     FileChooser.chooseFile(fcd, project, baseDir, root -> {
       if (GitUtil.isUnderGit(root) && Messages.showYesNoDialog(project,
                                                                GitBundle.message("init.warning.already.under.git",
-                                                                                 StringUtil.escapeXml(root.getPresentableUrl())),
+                                                                                 StringUtil.escapeXmlEntities(root.getPresentableUrl())),
                                                                GitBundle.getString("init.warning.title"),
                                                                Messages.getWarningIcon()) != Messages.YES) {
         return;

@@ -1140,12 +1140,14 @@ public class XmlUtil {
     return (XmlFile)element;
   }
 
-  public static String unescape(String text) {
-    return StringUtil.unescapeXml(text);
+  @NotNull
+  public static String unescape(@NotNull String text) {
+    return StringUtil.unescapeXmlEntities(text);
   }
 
-  public static String escape(String text) {
-    return StringUtil.escapeXml(text);
+  @NotNull
+  public static String escape(@NotNull String text) {
+    return StringUtil.escapeXmlEntities(text);
   }
 
   public static boolean isValidTagNameChar(char c) {

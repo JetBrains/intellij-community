@@ -54,7 +54,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
    * @return created elements. Never null.
    */
   @NotNull
-  protected abstract PsiElement[] create(String newName, PsiDirectory directory) throws Exception;
+  protected abstract PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception;
 
   protected abstract String getErrorTitle();
 
@@ -106,7 +106,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     }
 
     @Override
-    public PsiElement[] create(String newName) throws Exception {
+    public PsiElement[] create(@NotNull String newName) throws Exception {
       return CreateElementActionBase.this.create(newName, myDirectory);
     }
 

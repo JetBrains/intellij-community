@@ -364,7 +364,7 @@ class SearchForUsagesRunnable implements Runnable {
     Alarm findUsagesStartedBalloon = new Alarm();
     findUsagesStartedBalloon.addRequest(() -> {
       notifyByFindBalloon(null, MessageType.WARNING,
-                          Collections.singletonList(StringUtil.escapeXml(UsageViewManagerImpl.getProgressTitle(myPresentation))));
+                          Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
       findStartedBalloonShown.set(true);
     }, 300, ModalityState.NON_MODAL);
     UsageSearcher usageSearcher = mySearcherFactory.create();
@@ -427,13 +427,12 @@ class SearchForUsagesRunnable implements Runnable {
           }
 
           final String message = UsageViewBundle.message("dialog.no.usages.found.in",
-                                                         StringUtil.decapitalize(myPresentation.getUsagesString()),
+                                                         StringUtil.decapitalize(StringUtil.notNullize(myPresentation.getUsagesString())),
                                                          myPresentation.getScopeText(),
-                                                         myPresentation.getContextText()
-          );
+                                                         myPresentation.getContextText());
 
           List<String> lines = new ArrayList<>();
-          lines.add(StringUtil.escapeXml(message));
+          lines.add(StringUtil.escapeXmlEntities(message));
           if (myOutOfScopeUsages.get() != 0) {
             lines.add(UsageViewManagerImpl.outOfScopeMessage(myOutOfScopeUsages.get(), mySearchScopeToWarnOfFallingOutOf));
           }

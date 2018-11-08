@@ -59,6 +59,7 @@ public class MoveMultipleElementsViewDescriptor implements UsageViewDescriptor {
     return myProcessedElementsHeader;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);

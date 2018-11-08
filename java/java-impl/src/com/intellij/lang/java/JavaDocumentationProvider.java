@@ -162,7 +162,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       if (index.isInLibrarySource(file) || index.isInLibraryClasses(file)) {
         index.getOrderEntriesForFile(file).stream()
           .filter(LibraryOrSdkOrderEntry.class::isInstance).findFirst()
-          .ifPresent(entry -> buffer.append('[').append(StringUtil.escapeXml(entry.getPresentableName())).append("] "));
+          .ifPresent(entry -> buffer.append('[').append(StringUtil.escapeXmlEntities(entry.getPresentableName())).append("] "));
       }
       else {
         Module module = index.getModuleForFile(file);
@@ -551,7 +551,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
                                                           PsiFormatUtilBase.SHOW_TYPE |
                                                           PsiFormatUtilBase.SHOW_PARAMETERS,
                                                           PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.SHOW_NAME);
-            createElementLink(sb, constructor, StringUtil.escapeXml(str));
+            createElementLink(sb, constructor, StringUtil.escapeXmlEntities(str));
           }
 
           return CodeInsightBundle.message("javadoc.constructor.candidates", targetClass.getName(), sb);
@@ -624,7 +624,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
                                                       PsiFormatUtilBase.SHOW_TYPE |
                                                       PsiFormatUtilBase.SHOW_PARAMETERS,
                                                       PsiFormatUtilBase.SHOW_TYPE);
-        createElementLink(sb, element, StringUtil.escapeXml(str));
+        createElementLink(sb, element, StringUtil.escapeXmlEntities(str));
       }
 
       return CodeInsightBundle.message("javadoc.candidates", text, sb);

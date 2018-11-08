@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
@@ -68,6 +69,7 @@ public class TestData implements Cloneable
     return GROUP_NAME == null ? "" : GROUP_NAME;
   }
 
+  @NotNull
   public String getMethodName() {
     return METHOD_NAME == null ? "" : METHOD_NAME;
   }

@@ -77,6 +77,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   private final Project myProject;
   private Reference<RangeHighlighterEx> myHighlighterRef;
 
+  @NotNull
   private String myDescription;
   private char myMnemonic;
   int index; // index in the list of bookmarks in the Navigate|Bookmarks|show
@@ -207,6 +208,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return myMnemonic == 0 ? DEFAULT_ICON : MnemonicIcon.getIcon(myMnemonic);
   }
 
+  @NotNull
   public String getDescription() {
     return myDescription;
   }
@@ -288,7 +290,8 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder(getQualifiedName());
-    String description = StringUtil.escapeXml(nullizeEmptyDescription());
+    String text = nullizeEmptyDescription();
+    String description = text == null ? null : StringUtil.escapeXmlEntities(text);
     if (description != null) {
       result.append(": ").append(description);
     }
@@ -331,7 +334,8 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     if (myMnemonic != 0) {
       result.append(" ").append(myMnemonic);
     }
-    String description = StringUtil.escapeXml(nullizeEmptyDescription());
+    String text = nullizeEmptyDescription();
+    String description = text == null ? null : StringUtil.escapeXmlEntities(text);
     if (description != null) {
       result.append(": ").append(description);
     }

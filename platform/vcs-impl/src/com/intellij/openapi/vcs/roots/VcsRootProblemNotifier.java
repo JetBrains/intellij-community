@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
-import static com.intellij.openapi.util.text.StringUtil.escapeXml;
+import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.VcsDirectoryMapping.PROJECT_CONSTANT;
 import static com.intellij.openapi.vcs.VcsRootError.Type.UNREGISTERED_ROOT;
@@ -57,7 +57,7 @@ public class VcsRootProblemNotifier {
   @NotNull private final Object NOTIFICATION_LOCK = new Object();
 
   @NotNull private final Function<VcsRootError, String> ROOT_TO_PRESENTABLE = rootError -> {
-    if (rootError.getMapping().equals(PROJECT_CONSTANT)) return escapeXml(rootError.getMapping());
+    if (rootError.getMapping().equals(PROJECT_CONSTANT)) return escapeXmlEntities(rootError.getMapping());
     return getPresentableMapping(rootError.getMapping());
   };
 
@@ -301,6 +301,6 @@ public class VcsRootProblemNotifier {
     if (relativePath == null) {
       relativePath = FileUtil.getLocationRelativeToUserHome(toSystemDependentName(mapping));
     }
-    return StringUtil.shortenPathWithEllipsis(escapeXml(relativePath), 30, true);
+    return StringUtil.shortenPathWithEllipsis(escapeXmlEntities(relativePath), 30, true);
   }
 }

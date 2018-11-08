@@ -53,6 +53,7 @@ class InlineViewDescriptor implements UsageViewDescriptor{
     return "Unknown element";
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("invocations.to.be.inlined", UsageViewBundle.getReferencesString(usagesCount, filesCount));

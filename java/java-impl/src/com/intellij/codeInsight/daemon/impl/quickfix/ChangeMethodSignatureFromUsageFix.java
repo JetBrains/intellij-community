@@ -370,8 +370,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     return result.toArray(new ParameterInfoImpl[0]);
   }
 
-  protected static String escapePresentableType(PsiType exprType) {
-    return StringUtil.escapeXml(exprType.getPresentableText());
+  @NotNull
+  protected static String escapePresentableType(@NotNull PsiType exprType) {
+    return StringUtil.escapeXmlEntities(exprType.getPresentableText());
   }
 
   protected boolean findNewParamsPlace(PsiExpression[] expressions,

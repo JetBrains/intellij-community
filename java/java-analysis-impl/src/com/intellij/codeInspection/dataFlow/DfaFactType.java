@@ -252,15 +252,17 @@ public abstract class DfaFactType<T> extends Key<T> {
     }
   };
 
+  @NotNull
   private final String myName;
 
-  private DfaFactType(String name) {
+  private DfaFactType(@NotNull String name) {
     super("DfaFactType: " + name);
     myName = name;
     // Thread-safe as all DfaFactType instances are created only from DfaFactType class static initializer
     ourFactTypes.add(this);
   }
 
+  @NotNull
   public String getName() {
     return myName;
   }

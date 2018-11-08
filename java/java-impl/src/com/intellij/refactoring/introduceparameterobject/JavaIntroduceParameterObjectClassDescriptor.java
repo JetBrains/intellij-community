@@ -49,7 +49,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
   private final Map<ParameterInfoImpl, ParameterBean> myExistingClassProperties = new HashMap<>();
   private final MoveDestination myMoveDestination;
 
-  public JavaIntroduceParameterObjectClassDescriptor(String className,
+  public JavaIntroduceParameterObjectClassDescriptor(@NotNull String className,
                                                      String packageName,
                                                      MoveDestination moveDestination,
                                                      boolean useExistingClass,

@@ -1240,7 +1240,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 String s = tooltip instanceof HighlightInfo ? ((HighlightInfo)tooltip).getDescription() : String.valueOf(tooltip);
                 if (StringUtil.isEmpty(s)) continue;
                 s = s.replaceAll("&nbsp;", " ").replaceAll("\\s+", " ");
-                s = StringUtil.unescapeXml(s);
+                s = StringUtil.unescapeXmlEntities(s);
 
                 LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(hEndOffset);
                 int endOfLineOffset = myEditor.getDocument().getLineEndOffset(logicalPosition.line);

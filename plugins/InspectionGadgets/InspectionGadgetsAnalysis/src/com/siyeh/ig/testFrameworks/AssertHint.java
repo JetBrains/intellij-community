@@ -201,8 +201,8 @@ public class AssertHint {
     final String comparedTypeText = type1.getPresentableText();
     final String comparisonTypeText = type2.getPresentableText();
     return InspectionGadgetsBundle.message("assertequals.between.inconvertible.types.problem.descriptor",
-                                           StringUtil.escapeXml(comparedTypeText),
-                                           StringUtil.escapeXml(comparisonTypeText));
+                                           StringUtil.escapeXmlEntities(comparedTypeText),
+                                           StringUtil.escapeXmlEntities(comparisonTypeText));
   }
 
   public static class JUnitCommonAssertNames {

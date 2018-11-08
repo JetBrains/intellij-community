@@ -9,13 +9,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.content.BaseLabel;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -64,7 +62,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     String dialogTitle = getElementDescription((dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID) + " ", element, null);
 
     dialogTitle = Pattern.compile("(<style>.*</style>)|<[^<>]*>", Pattern.DOTALL).matcher(dialogTitle).replaceAll("");
-    SliceAnalysisParams params = handler.askForParams(element, dataFlowToThis, myStoredSettings, StringUtil.unescapeXml(dialogTitle));
+    SliceAnalysisParams params = handler.askForParams(element, dataFlowToThis, myStoredSettings, StringUtil.unescapeXmlEntities(dialogTitle));
     if (params == null) return;
 
     SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(),

@@ -772,7 +772,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         if (hit == null) {
           hit = ((OptionDescription)value).getOption();
         }
-        hit = StringUtil.unescapeXml(hit);
+        hit = StringUtil.unescapeXmlEntities(hit);
         hit = hit.replace("  ", " "); // avoid extra spaces from mnemonics and xml conversion
         String fullHit = hit;
         Color fg = UIUtil.getListForeground(isSelected);

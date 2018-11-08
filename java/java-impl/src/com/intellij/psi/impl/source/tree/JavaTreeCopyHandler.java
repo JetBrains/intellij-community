@@ -118,7 +118,7 @@ public class JavaTreeCopyHandler implements TreeCopyHandler {
     else if (shallDecodeEscapedTexts && element instanceof LeafElement && !(element instanceof OuterLanguageElement)) {
       if (!isInCData(element)) {
         String original = element.getText();
-        String escaped = StringUtil.escapeXml(original);
+        String escaped = StringUtil.escapeXmlEntities(original);
         if (!Comparing.equal(original, escaped) && element.getCopyableUserData(ALREADY_ESCAPED) == null) {
           LeafElement copy = ((LeafElement)element).replaceWithText(escaped);
           copy.putCopyableUserData(ALREADY_ESCAPED, Boolean.TRUE);
@@ -168,7 +168,7 @@ public class JavaTreeCopyHandler implements TreeCopyHandler {
              !(original instanceof OuterLanguageElement) &&
              !isInCData(original)) {
       String originalText = element.getText();
-      String unescapedText = StringUtil.unescapeXml(originalText);
+      String unescapedText = StringUtil.unescapeXmlEntities(originalText);
       if (!Comparing.equal(originalText, unescapedText)) {
         LeafElement replaced = ((LeafElement)element).rawReplaceWithText(unescapedText);
         element.putCopyableUserData(ALREADY_ESCAPED, null);

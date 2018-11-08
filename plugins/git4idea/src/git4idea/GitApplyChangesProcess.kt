@@ -351,7 +351,7 @@ class GitApplyChangesProcess(private val project: Project,
   }
 
   private fun commitDetails(commit: VcsFullCommitDetails): String {
-    return commit.id.toShortString() + " " + StringUtil.escapeXml(commit.subject)
+    return commit.id.toShortString() + " " + StringUtil.escapeXmlEntities(commit.subject)
   }
 
   private fun toString(commitsInRoots: Map<GitRepository, List<VcsFullCommitDetails>>): String {
