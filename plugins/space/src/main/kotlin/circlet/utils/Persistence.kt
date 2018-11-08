@@ -3,6 +3,7 @@ package circlet.utils
 import com.intellij.credentialStore.*
 import com.intellij.ide.passwordSafe.*
 import runtime.*
+import runtime.reactive.*
 
 object IdeaPersistence : Persistence {
     override suspend fun put(key: String, value: String) {
@@ -28,8 +29,8 @@ object IdeaPersistence : Persistence {
         TODO("not implemented")
     }
 
-    override fun on(key: String, callback: (String?) -> Unit) {
-        TODO("not implemented")
+    override fun forEach(lifetime: Lifetime, key: String, callback: (String?) -> Unit) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 
     override suspend fun getAllKeys(): List<String> {
