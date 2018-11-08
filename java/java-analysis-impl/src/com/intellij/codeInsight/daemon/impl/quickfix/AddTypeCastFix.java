@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -72,7 +73,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
            !PsiType.VOID.equals(myType) &&
            PsiTypesUtil.isDenotableType(myType, startElement) &&
            PsiTypesUtil.allTypeParametersResolved(startElement, myType) &&
-           startElement.getManager().isInProject(startElement);
+           ScratchFileService.isInProjectOrScratch(startElement);
   }
 
   @Override

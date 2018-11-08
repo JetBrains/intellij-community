@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -90,7 +91,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
                                  @NotNull PsiFile file,
                                  @NotNull PsiElement startElement,
                                  @NotNull PsiElement endElement) {
-        return startElement.getManager().isInProject(startElement) &&
+        return ScratchFileService.isInProjectOrScratch(startElement) &&
                PsiUtil.isLanguageLevel8OrHigher(startElement) && areConvertible(((PsiExpression) startElement).getType(), type);
       }
 

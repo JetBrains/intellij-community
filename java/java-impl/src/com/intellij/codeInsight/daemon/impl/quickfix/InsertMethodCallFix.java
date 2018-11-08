@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -50,7 +51,7 @@ public class InsertMethodCallFix implements IntentionAction, LowPriorityAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myCall.isValid() && PsiManager.getInstance(project).isInProject(myCall);
+    return myCall.isValid() && ScratchFileService.isInProjectOrScratch(myCall);
   }
 
   @Override

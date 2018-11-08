@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -230,7 +231,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
 
     Set<PsiClassType> result = new HashSet<>();
 
-    if (targetMethod.getManager().isInProject(targetMethod)) {
+    if (ScratchFileService.isInProjectOrScratch(targetMethod)) {
       PsiMethod[] superMethods = targetMethod.findSuperMethods();
       for (PsiMethod superMethod : superMethods) {
         Set<PsiClassType> classTypes = filterInProjectExceptions(superMethod, unhandledExceptions);

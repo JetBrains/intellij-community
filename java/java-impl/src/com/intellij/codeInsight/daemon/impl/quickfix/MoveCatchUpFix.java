@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCatchSection;
@@ -53,15 +54,15 @@ public class MoveCatchUpFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myCatchSection.isValid()
-           && myCatchSection.getManager().isInProject(myCatchSection)
+           && ScratchFileService.isInProjectOrScratch(myCatchSection)
            && myMoveBeforeSection.isValid()
            && myCatchSection.getCatchType() != null
            && PsiUtil.resolveClassInType(myCatchSection.getCatchType()) != null
            && myMoveBeforeSection.getCatchType() != null
            && PsiUtil.resolveClassInType(myMoveBeforeSection.getCatchType()) != null
            && !myCatchSection.getManager().areElementsEquivalent(
-                  PsiUtil.resolveClassInType(myCatchSection.getCatchType()),
-                  PsiUtil.resolveClassInType(myMoveBeforeSection.getCatchType()));
+      PsiUtil.resolveClassInType(myCatchSection.getCatchType()),
+      PsiUtil.resolveClassInType(myMoveBeforeSection.getCatchType()));
   }
 
   @NotNull

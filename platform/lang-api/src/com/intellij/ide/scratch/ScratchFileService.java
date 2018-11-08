@@ -5,6 +5,8 @@ import com.intellij.lang.Language;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,5 +40,9 @@ public abstract class ScratchFileService {
       return false;
     }
     return getInstance().getRootType(file) != null;
+  }
+
+  public static boolean isInProjectOrScratch(@NotNull PsiElement element) {
+    return element.getManager().isInProject(element) || isInScratchRoot(PsiUtilCore.getVirtualFile(element));
   }
 }

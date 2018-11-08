@@ -23,8 +23,8 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.MemberChooser;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -62,7 +62,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return startElement.getManager().isInProject(startElement);
+    return ScratchFileService.isInProjectOrScratch(startElement);
   }
 
   @Override

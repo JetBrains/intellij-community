@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -96,7 +97,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
     PsiExpression expression = getSubExpression();
     if (!super.isAvailable() ||
         expression == null ||
-        !expression.getManager().isInProject(expression) ||
+        !ScratchFileService.isInProjectOrScratch(expression) ||
         PsiUtil.isAccessedForWriting(expression)) {
       return false;
     }

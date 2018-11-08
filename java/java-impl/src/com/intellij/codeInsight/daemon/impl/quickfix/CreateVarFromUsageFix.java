@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -42,7 +43,7 @@ public abstract class CreateVarFromUsageFix extends CreateFromUsageBaseFix {
 
   @Override
   protected PsiElement getElement() {
-    if (!myReferenceExpression.isValid() || !myReferenceExpression.getManager().isInProject(myReferenceExpression)) return null;
+    if (!myReferenceExpression.isValid() || !ScratchFileService.isInProjectOrScratch(myReferenceExpression)) return null;
 
     PsiElement parent = myReferenceExpression.getParent();
 

@@ -10,7 +10,6 @@ import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,10 +24,6 @@ public class ShowAutoImportPassFactory implements TextEditorHighlightingPassFact
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
-    PsiManager manager = file.getManager();
-    if (manager != null && manager.isInProject(file) || ScratchFileService.isInScratchRoot(file.getVirtualFile())) {
-      return new ShowAutoImportPass(myProject, file, editor);
-    }
-    return null;
+    return ScratchFileService.isInProjectOrScratch(file) ? new ShowAutoImportPass(myProject, file, editor) : null;
   }
 }

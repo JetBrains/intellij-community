@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -355,13 +356,13 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       PsiClass[] supers = psiClass.getSupers();
       List<PsiClass> filtered = new ArrayList<>();
       for (PsiClass aSuper : supers) {
-        if (!aSuper.getManager().isInProject(aSuper)) continue;
+        if (!ScratchFileService.isInProjectOrScratch(aSuper)) continue;
         if (!(aSuper instanceof PsiTypeParameter)) filtered.add(aSuper);
       }
       return filtered;
     }
     else {
-      if (psiClass == null || !psiClass.getManager().isInProject(psiClass)) {
+      if (psiClass == null || !ScratchFileService.isInProjectOrScratch(psiClass)) {
         return Collections.emptyList();
       }
 
@@ -395,7 +396,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   protected boolean canBeTargetClass(PsiClass psiClass) {
-    return psiClass.getManager().isInProject(psiClass);
+    return ScratchFileService.isInProjectOrScratch(psiClass);
   }
 
   public static void startTemplate (@NotNull Editor editor, final Template template, @NotNull final Project project) {

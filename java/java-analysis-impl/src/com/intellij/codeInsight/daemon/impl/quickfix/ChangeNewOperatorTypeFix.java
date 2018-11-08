@@ -6,6 +6,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -48,7 +49,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myType.isValid()
            && myExpression.isValid()
-           && myExpression.getManager().isInProject(myExpression)
+           && ScratchFileService.isInProjectOrScratch(myExpression)
            && !TypeConversionUtil.isPrimitiveAndNotNull(myType)
            && (myType instanceof PsiArrayType || myExpression.getArgumentList() != null)
       ;

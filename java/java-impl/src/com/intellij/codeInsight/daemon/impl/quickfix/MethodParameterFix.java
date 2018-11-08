@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -74,11 +75,11 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
-    return myMethod.getManager().isInProject(myMethod)
-        && myParameterType != null
-        && !TypeConversionUtil.isNullType(myParameterType)
-        && myMethod.getReturnType() != null
-        && !Comparing.equal(myParameterType, myMethod.getReturnType());
+    return ScratchFileService.isInProjectOrScratch(myMethod)
+           && myParameterType != null
+           && !TypeConversionUtil.isNullType(myParameterType)
+           && myMethod.getReturnType() != null
+           && !Comparing.equal(myParameterType, myMethod.getReturnType());
   }
 
   @Override
