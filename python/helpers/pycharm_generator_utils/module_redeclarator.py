@@ -125,14 +125,14 @@ class ModuleRedeclarator(object):
     def flush(self):
         qname_parts = self.qname.split('.')
         if self.split_modules:
-            last_pkg_dir = build_pkg_structure(self.cache_dir, self.module)
+            last_pkg_dir = build_pkg_structure(self.cache_dir, self.qname)
             with fopen(os.path.join(last_pkg_dir, "__init__.py"), "w") as init:
                 for buf in (self.header_buf, self.imports_buf, self.functions_buf, self.classes_buf):
                     buf.flush(init)
 
                 data = ""
                 for buf in self.classes_buffs:
-                    with fopen(os.path.join(last_pkg_dir, buf.name), "w") as dummy:
+                    with fopen(os.path.join(last_pkg_dir, buf.name) + '.py', "w") as dummy:
                         self.header_buf.flush(dummy)
                         self.imports_buf.flush(dummy)
                         buf.flush(dummy)
