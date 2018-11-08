@@ -31,7 +31,7 @@ class GrGetAtReference(element: GrIndexProperty) : GrIndexPropertyReference(elem
   override val arguments: Arguments get() = listOf(element.getArgumentListArgument())
 }
 
-class GrPutAtReference(element: GrIndexProperty, private val rValue: Argument?) : GrIndexPropertyReference(element) {
+class GrPutAtReference(element: GrIndexProperty, private val rValue: Argument) : GrIndexPropertyReference(element) {
 
   override fun getRangeInElement(): TextRange {
     val argumentList = element.argumentList

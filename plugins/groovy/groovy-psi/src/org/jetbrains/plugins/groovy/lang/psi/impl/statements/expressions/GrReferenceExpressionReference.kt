@@ -52,10 +52,10 @@ class GrRValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceE
   }
 }
 
-class GrLValueExpressionReference(ref: GrReferenceExpressionImpl, private val argument: Argument?) : GrReferenceExpressionReference(ref) {
+class GrLValueExpressionReference(ref: GrReferenceExpressionImpl, private val argument: Argument) : GrReferenceExpressionReference(ref) {
 
   override fun buildProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>): GrResolverProcessor<*> {
-    return GroovyLValueProcessor(name, place, kinds, if (argument == null) null else listOf(argument))
+    return GroovyLValueProcessor(name, place, kinds, listOf(argument))
   }
 }
 
