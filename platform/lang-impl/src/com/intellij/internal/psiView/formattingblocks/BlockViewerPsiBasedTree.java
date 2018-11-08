@@ -257,7 +257,10 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
       return null;
     }
 
-    BlockTreeNode node = (BlockTreeNode)getRoot().getUserObject();
+    DefaultMutableTreeNode root = getRoot();
+    if (root == null) return null;
+    
+    BlockTreeNode node = (BlockTreeNode)root.getUserObject();
     main_loop:
     while (true) {
       if (node.getBlock().getTextRange().equals(range)) {
@@ -316,6 +319,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     }
   }
 
+  @Nullable
   private DefaultMutableTreeNode getRoot() {
     return (DefaultMutableTreeNode)myBlockTree.getModel().getRoot();
   }
