@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.lock.Lock;
 import org.xml.sax.Attributes;
@@ -329,7 +330,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) {
-      structure.myCommittedDate = s;
+      structure.myCommitInfoBuilder.setDate(SvnUtil.parseDate(s));
     }
   }
 
@@ -344,7 +345,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) {
-      structure.myAuthor = s;
+      structure.myCommitInfoBuilder.setAuthor(s);
     }
   }
 
@@ -355,9 +356,10 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
+      structure.myCommitInfoBuilder = new CommitInfo.Builder();
       final String revision = attributes.getValue("revision");
       try {
-        structure.myCommittedRevision = Long.parseLong(revision);
+        structure.myCommitInfoBuilder.setRevisionNumber(Long.parseLong(revision));
       } catch (NumberFormatException e) {
         throw new SAXException(e);
       }

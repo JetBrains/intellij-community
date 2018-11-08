@@ -3,14 +3,12 @@ package org.jetbrains.idea.svn.info;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.lock.Lock;
 
 import java.io.File;
-import java.time.Instant;
-import java.util.Date;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -18,16 +16,12 @@ public class Info extends BaseNodeDescription {
 
   public static final String SCHEDULE_ADD = "add";
 
-  private static final Date DEFAULT_COMMITTED_DATE = Date.from(Instant.EPOCH);
-
   private final File myFile;
   private final Url myURL;
   @NotNull private final Revision myRevision;
   private final Url myRepositoryRootURL;
   private final String myRepositoryUUID;
-  private final Revision myCommittedRevision;
-  private final Date myCommittedDate;
-  private final String myAuthor;
+  @NotNull private final CommitInfo myCommitInfo;
   @Nullable private final Lock myLock;
   private final String mySchedule;
   private final Url myCopyFromURL;
@@ -44,9 +38,7 @@ public class Info extends BaseNodeDescription {
               long revision,
               @NotNull NodeKind kind,
               String uuid,
-              long committedRevision,
-              String committedDate,
-              String author,
+              @Nullable CommitInfo commitInfo,
               String schedule,
               Url copyFromURL,
               long copyFromRevision,
@@ -63,10 +55,7 @@ public class Info extends BaseNodeDescription {
     myRepositoryUUID = uuid;
     myRepositoryRootURL = rootURL;
 
-    myCommittedRevision = Revision.of(committedRevision);
-    myCommittedDate = committedDate != null ? notNull(SvnUtil.parseDate(committedDate), DEFAULT_COMMITTED_DATE) : null;
-    myAuthor = author;
-
+    myCommitInfo = notNull(commitInfo, CommitInfo.EMPTY);
     mySchedule = schedule;
 
     myCopyFromURL = copyFromURL;
@@ -87,9 +76,7 @@ public class Info extends BaseNodeDescription {
               @NotNull NodeKind kind,
               String uuid,
               Url reposRootURL,
-              long committedRevision,
-              Date date,
-              String author,
+              @Nullable CommitInfo commitInfo,
               @Nullable Lock lock,
               Depth depth) {
     super(kind);
@@ -98,10 +85,7 @@ public class Info extends BaseNodeDescription {
     myRepositoryRootURL = reposRootURL;
     myRepositoryUUID = uuid;
 
-    myCommittedDate = date;
-    myCommittedRevision = Revision.of(committedRevision);
-    myAuthor = author;
-
+    myCommitInfo = notNull(commitInfo, CommitInfo.EMPTY);
     myLock = lock;
     myDepth = depth;
 
@@ -115,16 +99,9 @@ public class Info extends BaseNodeDescription {
     myTreeConflict = null;
   }
 
-  public String getAuthor() {
-    return myAuthor;
-  }
-
-  public Date getCommittedDate() {
-    return myCommittedDate;
-  }
-
-  public Revision getCommittedRevision() {
-    return myCommittedRevision;
+  @NotNull
+  public CommitInfo getCommitInfo() {
+    return myCommitInfo;
   }
 
   @Nullable

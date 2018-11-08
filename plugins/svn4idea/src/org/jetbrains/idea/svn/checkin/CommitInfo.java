@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn.checkin;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.api.Revision;
 
 import javax.xml.bind.annotation.*;
 import java.util.Date;
@@ -11,17 +12,24 @@ public class CommitInfo {
   public static final CommitInfo EMPTY = new CommitInfo.Builder().setRevisionNumber(-1).build();
 
   private final long myRevisionNumber;
+  @NotNull private final Revision myRevision;
   private final Date myDate;
   private final String myAuthor;
 
   private CommitInfo(@NotNull CommitInfo.Builder builder) {
     myRevisionNumber = builder.revisionNumber;
+    myRevision = Revision.of(myRevisionNumber);
     myAuthor = builder.author;
     myDate = builder.date;
   }
 
   public long getRevisionNumber() {
     return myRevisionNumber;
+  }
+
+  @NotNull
+  public Revision getRevision() {
+    return myRevision;
   }
 
   public String getAuthor() {

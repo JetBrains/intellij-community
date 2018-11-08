@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictOperation;
@@ -16,6 +17,7 @@ import java.io.File;
 import java.util.Date;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.util.ObjectUtils.doIfNotNull;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnInfoStructure {
@@ -27,9 +29,7 @@ public class SvnInfoStructure {
   public long myRevision;
   public NodeKind myKind;
   public String myUuid;
-  public long myCommittedRevision;
-  public String myCommittedDate;
-  public String myAuthor;
+  public CommitInfo.Builder myCommitInfoBuilder;
   public String mySchedule;
   public Url myCopyFromURL;
   public long myCopyFromRevision;
@@ -50,7 +50,7 @@ public class SvnInfoStructure {
   public TreeConflictDescription myTreeConflict;
 
   public Info convert() throws SAXException, SvnBindException {
-    return new Info(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, myCommittedRevision, myCommittedDate, myAuthor, mySchedule,
+    return new Info(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, getCommitInfo(), mySchedule,
                     myCopyFromURL, myCopyFromRevision, myConflictOld, myConflictNew, myConflictWorking,
                     getLock(), myDepth, createTreeConflict());
   }
@@ -58,6 +58,11 @@ public class SvnInfoStructure {
   @Nullable
   private Lock getLock() {
     return myLockBuilder != null ? myLockBuilder.build() : null;
+  }
+
+  @Nullable
+  private CommitInfo getCommitInfo() {
+    return doIfNotNull(myCommitInfoBuilder, CommitInfo.Builder::build);
   }
 
   private org.jetbrains.idea.svn.conflict.TreeConflictDescription createTreeConflict() throws SAXException, SvnBindException {
