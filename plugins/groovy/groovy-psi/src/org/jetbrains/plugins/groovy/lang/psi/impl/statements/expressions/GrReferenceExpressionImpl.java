@@ -389,7 +389,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @NotNull
-  Collection<GroovyResolveResult> doPolyResolve(boolean incompleteCode) {
+  Collection<GroovyResolveResult> doPolyResolve() {
     final PsiElement nameElement = getReferenceNameElement();
     final String name = getReferenceName();
     if (name == null || nameElement == null) return Collections.emptyList();
@@ -409,7 +409,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         GrExpression qualifier = getQualifier();
         if (qualifier == null || qualifier.getType() == null) return Collections.emptyList();
       }
-      return resolveReferenceExpression(this, incompleteCode);
+      return resolveReferenceExpression(this, false);
     }
     finally {
       final long time = ResolveProfiler.finish();
@@ -554,26 +554,29 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     @NotNull
     @Override
     public Collection<GroovyResolveResult> doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
+      if (incomplete) {
+        return resolveReferenceExpression(ref, true);
+      }
       final GroovyReference rValueRef = ref.myRValueReference.getValue();
       final GroovyReference lValueRef = ref.myLValueReference.getValue();
       if (rValueRef != null && lValueRef != null) {
         // merge results from both references
         final Map<PsiElement, GroovyResolveResult> results = new THashMap<>();
-        for (GroovyResolveResult result : rValueRef.resolve(incomplete)) {
+        for (GroovyResolveResult result : rValueRef.resolve(false)) {
           results.putIfAbsent(result.getElement(), result);
         }
-        for (GroovyResolveResult result : lValueRef.resolve(incomplete)) {
+        for (GroovyResolveResult result : lValueRef.resolve(false)) {
           results.putIfAbsent(result.getElement(), result);
         }
         return new SmartList<>(results.values());
       }
       else if (rValueRef != null) {
         // r-value only
-        return new SmartList<>(rValueRef.resolve(incomplete));
+        return new SmartList<>(rValueRef.resolve(false));
       }
       else if (lValueRef != null) {
         // l-value only
-        return new SmartList<>(lValueRef.resolve(incomplete));
+        return new SmartList<>(lValueRef.resolve(false));
       }
       else {
         LOG.error("Reference expression has no references");

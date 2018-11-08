@@ -26,10 +26,10 @@ abstract class GrReferenceExpressionReference(ref: GrReferenceExpressionImpl) : 
     if (staticResults.isNotEmpty()) {
       return staticResults
     }
-    return doResolveNonStatic(incomplete)
+    return doResolveNonStatic()
   }
 
-  protected open fun doResolveNonStatic(incomplete: Boolean): Collection<GroovyResolveResult> {
+  protected open fun doResolveNonStatic(): Collection<GroovyResolveResult> {
     val expression = element
     val name = expression.referenceName ?: return emptyList()
     val kinds = expression.resolveKinds()
@@ -43,16 +43,16 @@ abstract class GrReferenceExpressionReference(ref: GrReferenceExpressionImpl) : 
 
 class GrRValueExpressionReference(ref: GrReferenceExpressionImpl) : GrReferenceExpressionReference(ref) {
 
-  override fun doResolveNonStatic(incomplete: Boolean): Collection<GroovyResolveResult> {
+  override fun doResolveNonStatic(): Collection<GroovyResolveResult> {
     val expression = element
-    if (expression.parent is GrMethodCall || incomplete) {
-      return expression.doPolyResolve(incomplete)
+    if (expression.parent is GrMethodCall) {
+      return expression.doPolyResolve()
     }
 
     expression.handleSpecialCases()?.let {
       return it
     }
-    return super.doResolveNonStatic(incomplete)
+    return super.doResolveNonStatic()
   }
 
   override fun buildProcessor(name: String, place: PsiElement, kinds: Set<GroovyResolveKind>): GrResolverProcessor<*> {
