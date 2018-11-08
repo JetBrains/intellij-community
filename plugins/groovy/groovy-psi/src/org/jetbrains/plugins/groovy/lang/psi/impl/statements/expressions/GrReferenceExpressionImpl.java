@@ -603,12 +603,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Override
-  @NotNull
-  public GroovyResolveResult[] getSameNameVariants() {
-    return doPolyResolve(true).toArray(GroovyResolveResult.EMPTY_ARRAY);
-  }
-
-  @Override
   public GrReferenceExpression bindToElementViaStaticImport(@NotNull PsiMember member) {
     if (getQualifier() != null) {
       throw new IncorrectOperationException("Reference has qualifier");
