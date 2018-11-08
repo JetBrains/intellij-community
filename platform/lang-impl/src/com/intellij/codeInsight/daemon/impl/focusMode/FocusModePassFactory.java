@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -39,7 +40,7 @@ public class FocusModePassFactory implements TextEditorHighlightingPassFactory {
   @Override
   @Nullable
   public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    return Registry.is("editor.focus.mode") ? new FocusModePass(editor, file) : null;
+    return Registry.is("editor.focus.mode") && EditorUtil.isRealFileEditor(editor) ? new FocusModePass(editor, file) : null;
   }
 
   private static class FocusModePass extends EditorBoundHighlightingPass {
