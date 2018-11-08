@@ -18,7 +18,6 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
@@ -311,15 +310,13 @@ public class SimpleDiffChange {
   @Nullable
   private GutterIconRenderer createApplyRenderer(@NotNull final Side side) {
     String text;
-    Icon icon;
+    Icon icon = DiffUtil.getArrowIcon(side);
 
     if (side == Side.LEFT && myViewer.isDiffForLocalChanges()) {
       text = "Revert";
-      icon = AllIcons.Diff.Revert;
     }
     else {
       text = "Accept";
-      icon = DiffUtil.getArrowIcon(side);
     }
 
     return createIconRenderer(side, text, icon, () -> {
