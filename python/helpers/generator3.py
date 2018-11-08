@@ -446,7 +446,7 @@ def process_one(name, mod_file_name, doing_builtins, sdk_skeletons_dir):
                             action("closing %r", mod_cache_dir)
         elif should_update_skeleton(sdk_skeletons_dir, name):
             note('Copying cached skeletons for %s from %r to %r', name, mod_cache_dir, sdk_skeletons_dir)
-            copy_skeletons(mod_cache_dir, sdk_skeletons_dir, qname=name)
+            copy_skeletons(mod_cache_dir, sdk_skeletons_dir)
 
     except:
         exctype, value = sys.exc_info()[:2]

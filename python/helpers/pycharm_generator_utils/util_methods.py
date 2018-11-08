@@ -759,23 +759,38 @@ def mkdir(path):
             raise
 
 
-def copy(src, dst, merge=False, conflict_handler=None):
+def copy(src, dst, merge=False, conflict_handler=None, post_copy_hook=None):
+    if post_copy_hook is None:
+        def post_copy_hook(p1, p2):
+            pass
+
+    if conflict_handler is None:
+        def conflict_handler(p1, p2):
+            return False
+
     if os.path.isdir(src):
         if not merge:
             shutil.copytree(src, dst)
+            post_copy_hook(src, dst)
         else:
             mkdir(dst)
             for child in os.listdir(src):
                 child_src = os.path.join(src, child)
                 child_dst = os.path.join(dst, child)
-                if not os.path.exists(child_dst) or (os.path.isdir(child_src) and os.path.isdir(child_dst)):
-                    copy(child_src, child_dst, merge=merge, conflict_handler=conflict_handler)
-                else:
-                    if not conflict_handler or not conflict_handler(child_src, child_dst):
-                        raise RuntimeError('Conflicting files: %r -> %r' % (child_src, child_dst))
+                try:
+                    copy(child_src, child_dst, merge=merge,
+                         conflict_handler=conflict_handler,
+                         post_copy_hook=post_copy_hook)
+                    post_copy_hook(child_src, child_dst)
+                except OSError as e:
+                    if e.errno == errno.EEXIST and not (os.path.isdir(child_src) and os.path.isdir(child_dst)):
+                        if conflict_handler(child_src, child_dst):
+                            continue
+                    raise
     else:
         mkdir(os.path.dirname(dst))
         shutil.copy2(src, dst)
+        post_copy_hook(src, dst)
 
 
 def copy_merging_packages(src, dst):
@@ -786,12 +801,22 @@ def copy_merging_packages(src, dst):
     copy(src, dst, merge=True, conflict_handler=ignore_init_py)
 
 
-def copy_skeletons(src_dir, dst_dir, qname):
-    base_path = os.path.join(dst_dir, *qname.split('.'))
-    delete(base_path)
-    delete(base_path + '.py')
+def copy_skeletons(src_dir, dst_dir):
+    def overwrite(src, dst):
+        delete(dst)
+        copy(src, dst)
+        return True
 
-    copy_merging_packages(src_dir, dst_dir)
+    # Remove packages/modules with the same import name
+    def mod_pkg_cleanup(src, dst):
+        dst_dir = os.path.dirname(dst)
+        name, ext = os.path.splitext(os.path.basename(src))
+        if ext == '.py':
+            delete(os.path.join(dst_dir, name))
+        elif not ext:
+            delete(dst + '.py')
+
+    copy(src_dir, dst_dir, merge=True, conflict_handler=overwrite, post_copy_hook=mod_pkg_cleanup)
 
 
 def delete(path, content=False):

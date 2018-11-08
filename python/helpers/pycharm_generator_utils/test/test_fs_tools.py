@@ -39,10 +39,10 @@ class TestFilesystemUtils(TestCase):
             dst_dir = os.path.join(self.temp_dir, 'dst')
             copy_merging_packages(src_dir, dst_dir)
 
-    def check_copy(self, src, dst):
+    def check_copy(self, src, dst, **kwargs):
         with self.comparing_dirs():
             copy(os.path.join(self.temp_dir, src),
-                 os.path.join(self.temp_dir, dst))
+                 os.path.join(self.temp_dir, dst), **kwargs)
 
     def check_delete(self, rel_name):
         with self.comparing_dirs():
@@ -52,11 +52,11 @@ class TestFilesystemUtils(TestCase):
         with self.comparing_dirs():
             mkdir(os.path.join(self.temp_dir, rel_name))
 
-    def check_copy_skeletons(self, qname):
+    def check_copy_skeletons(self):
         with self.comparing_dirs():
             src_dir = os.path.join(self.temp_dir, 'src')
             dst_dir = os.path.join(self.temp_dir, 'dst')
-            copy_skeletons(src_dir, dst_dir, qname)
+            copy_skeletons(src_dir, dst_dir)
 
     def assertDirsEqual(self, actual_dir, expected_dir):
         actual_dir_children = sorted(os.listdir(actual_dir))
@@ -95,13 +95,16 @@ class TestFilesystemUtils(TestCase):
         self.check_copy('baz.txt', os.path.join('foo', 'bar', 'baz.txt'))
 
     def test_copy_skeleton_module_replaced_with_package(self):
-        self.check_copy_skeletons('foo.bar.baz')
+        self.check_copy_skeletons()
 
     def test_copy_skeleton_package_replaced_with_module(self):
-        self.check_copy_skeletons('foo.bar.baz')
+        self.check_copy_skeletons()
 
     def test_copy_skeleton_module_replaced(self):
-        self.check_copy_skeletons('foo.bar.baz')
+        self.check_copy_skeletons()
 
     def test_copy_skeleton_package_replaced(self):
-        self.check_copy_skeletons('foo.bar.baz')
+        self.check_copy_skeletons()
+
+    def test_copy_several_skeletons(self):
+        self.check_copy_skeletons()
