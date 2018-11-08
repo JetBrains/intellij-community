@@ -148,7 +148,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
     actions.add(new TerminalAction("New Session", mySettingsProvider.getNewSessionKeyStrokes(), input -> {
       myListener.onNewSession();
       return true;
-    }).withMnemonicKey(KeyEvent.VK_T));
+    }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
     if (!mySettingsProvider.overrideIdeShortcuts()) {
       actions
         .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {
