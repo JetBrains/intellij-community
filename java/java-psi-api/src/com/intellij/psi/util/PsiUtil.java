@@ -1353,4 +1353,9 @@ public final class PsiUtil extends PsiUtilCore {
 
     return module.addAfter(statement, anchor);
   }
+
+  public static boolean isArrayClass(@Nullable PsiElement psiClass) {
+    return psiClass != null && psiClass.getManager().areElementsEquivalent(
+      psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()).getArrayClass(getLanguageLevel(psiClass)));
+  }
 }
