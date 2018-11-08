@@ -247,14 +247,20 @@ public class DebuggerUIUtil {
     editor.setShowMoreOptionsLink(true);
 
     final JPanel panel = editor.getMainPanel();
-    final Balloon balloon = JBPopupFactory.getInstance()
+
+    BalloonBuilder builder = JBPopupFactory.getInstance()
       .createDialogBalloonBuilder(panel, null)
       .setHideOnClickOutside(true)
       .setCloseButtonEnabled(false)
       .setAnimationCycle(0)
-      .setBlockClicksThroughBalloon(true)
-      .createBalloon();
+      .setBlockClicksThroughBalloon(true);
 
+    Color borderColor = UIManager.getColor("DebuggerPopup.borderColor");
+    if (borderColor != null ) {
+      builder.setBorderColor(borderColor);
+    }
+
+    Balloon balloon = builder.createBalloon();
 
     editor.setDelegate(new BreakpointEditor.Delegate() {
       @Override
