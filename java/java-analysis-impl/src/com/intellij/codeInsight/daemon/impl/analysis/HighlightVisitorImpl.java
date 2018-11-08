@@ -1595,7 +1595,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitSwitchStatement(statement);
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSwitchBlockStatements(statement, myLanguageLevel, myFile));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSwitchSelectorType(statement, myLanguageLevel));
-    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkSwitchLabelValues(statement));
   }
 
   @Override

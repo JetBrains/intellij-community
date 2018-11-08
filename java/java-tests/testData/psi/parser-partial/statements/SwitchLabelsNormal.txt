@@ -2,9 +2,8 @@ PsiJavaFile:SwitchLabelsNormal.java
   PsiSwitchLabelStatement
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
-    PsiExpressionList
-      PsiLiteralExpression:1
-        PsiJavaToken:INTEGER_LITERAL('1')
+    PsiLiteralExpression:1
+      PsiJavaToken:INTEGER_LITERAL('1')
     PsiJavaToken:COLON(':')
   PsiWhiteSpace(' ')
   PsiBreakStatement

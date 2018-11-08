@@ -3,7 +3,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.processor.FilterScopeProcessor;
@@ -21,8 +21,8 @@ public abstract class PsiSwitchLabelStatementBaseImpl extends CompositePsiElemen
   }
 
   @Override
-  public PsiExpressionList getCaseValues() {
-    return (PsiExpressionList)findPsiChildByType(JavaElementType.EXPRESSION_LIST);
+  public PsiExpression getCaseValue() {
+    return (PsiExpression)findPsiChildByType(ElementType.EXPRESSION_BIT_SET);
   }
 
   @Override
