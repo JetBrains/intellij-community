@@ -96,8 +96,8 @@ public class SSBasedInspection extends LocalInspectionTool {
 
       @Override
       public void visitElement(PsiElement element) {
+        if (LexicalNodesFilter.getInstance().accepts(element)) return;
         synchronized (LOCK) {
-          if (LexicalNodesFilter.getInstance().accepts(element)) return;
           final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
           for (Map.Entry<Configuration, MatchContext> entry : compiledOptions.entrySet()) {
             final Configuration configuration = entry.getKey();
