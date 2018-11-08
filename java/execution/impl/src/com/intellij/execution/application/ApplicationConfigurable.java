@@ -113,6 +113,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
 
   @NotNull
   public JComponent createEditor() {
+    UIUtil.tagComponentAs(myWholePanel, "ApplicationConfigurable.Editor");
     return myWholePanel;
   }
 

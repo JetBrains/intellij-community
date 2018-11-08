@@ -13,6 +13,9 @@
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <onair.jcomponent.tag class="java.lang.String" value="ApplicationConfigurable.CommonJavaParametersPanel"/>
+        </clientProperties>
       </component>
       <component id="50d08" class="com.intellij.openapi.ui.LabeledComponent" binding="myMainClass" custom-create="true">
         <constraints>
@@ -24,6 +27,9 @@
           <labelLocation value="West"/>
           <text resource-bundle="messages/ExecutionBundle" key="application.configuration.main.class.label"/>
         </properties>
+        <clientProperties>
+          <onair.jcomponent.tag class="java.lang.String" value="ApplicationConfigurable.MainClass"/>
+        </clientProperties>
       </component>
       <component id="c45d2" class="com.intellij.openapi.ui.LabeledComponent" binding="myModule">
         <constraints>
@@ -34,12 +40,18 @@
           <labelLocation value="West"/>
           <text resource-bundle="messages/ExecutionBundle" key="application.configuration.use.classpath.and.jdk.of.module.label"/>
         </properties>
+        <clientProperties>
+          <onair.jcomponent.tag class="java.lang.String" value="ApplicationConfigurable.Module"/>
+        </clientProperties>
       </component>
       <component id="e88bd" class="com.intellij.execution.ui.JrePathEditor" binding="myJrePathEditor">
         <constraints>
           <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
+        <clientProperties>
+          <onair.jcomponent.tag class="java.lang.String" value="ApplicationConfigurable.JrePathEditor"/>
+        </clientProperties>
       </component>
       <component id="b45cf" class="javax.swing.JCheckBox" binding="myShowSwingInspectorCheckbox">
         <constraints>
@@ -48,6 +60,10 @@
         <properties>
           <text resource-bundle="messages/ExecutionBundle" key="show.swing.inspector"/>
         </properties>
+        <clientProperties>
+          <html.disable class="java.lang.Boolean" value="false"/>
+          <onair.jcomponent.tag class="java.lang.String" value="ApplicationConfigurable.ShowSwingInspectorCheckbox"/>
+        </clientProperties>
       </component>
       <vspacer id="f4215">
         <constraints>
@@ -71,6 +87,9 @@
           <labelLocation value="West"/>
           <text resource-bundle="messages/ExecutionBundle" key="application.configuration.shorten.command.line.label"/>
         </properties>
+        <clientProperties>
+          <onair.jcomponent.tag class="java.lang.String" value="ApplicationConfigurable.ShortenClasspathModeCombo"/>
+        </clientProperties>
       </component>
       <component id="241cb" class="com.intellij.openapi.ui.LabeledComponent" binding="myIncludeProvidedDeps">
         <constraints>
@@ -80,6 +99,10 @@
           <labelLocation value="West"/>
           <text value=""/>
         </properties>
+        <clientProperties>
+          <BorderFactoryClass class="java.lang.String" value=""/>
+          <onair.jcomponent.tag class="java.lang.String" value="ApplicationConfigurable.IncludeProvidedDeps"/>
+        </clientProperties>
       </component>
     </children>
   </grid>

@@ -553,6 +553,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
     wholePanel = JPanel(BorderLayout())
+    UIUtil.tagComponentAs(wholePanel!!, "RunConfigurable.Component")
     DataManager.registerDataProvider(wholePanel!!) { dataId ->
       when (dataId) {
         RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
@@ -561,8 +562,10 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
     splitter.firstComponent = createLeftPanel()
+    UIUtil.tagComponentAs(splitter.firstComponent, "RunConfigurable.Master")
     splitter.setHonorComponentsMinimumSize(true)
     splitter.secondComponent = rightPanel
+    UIUtil.tagComponentAs(splitter.secondComponent, "RunConfigurable.Detail")
     wholePanel!!.add(splitter, BorderLayout.CENTER)
 
     updateDialog()
