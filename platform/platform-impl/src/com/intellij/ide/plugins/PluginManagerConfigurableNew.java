@@ -92,6 +92,9 @@ public class PluginManagerConfigurableNew
   private static final Color SEARCH_FIELD_BORDER_COLOR =
     JBColor.namedColor("Plugins.SearchField.borderColor", new JBColor(0xC5C5C5, 0x515151));
 
+  private static final SimpleTextAttributes GRAY_ATTRIBUTES =
+    new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, ListPluginComponent.DisabledColor);
+
   private final TagBuilder myTagBuilder;
 
   private LinkListener<IdeaPluginDescriptor> myNameListener;
@@ -998,12 +1001,12 @@ public class PluginManagerConfigurableNew
             }
 
             if (isJBPlugin(descriptor)) {
-              append(" by JetBrains", SimpleTextAttributes.GRAY_ATTRIBUTES);
+              append(" by JetBrains", GRAY_ATTRIBUTES);
             }
             else {
               String vendor = descriptor.getVendor();
               if (!StringUtil.isEmptyOrSpaces(vendor)) {
-                append(" by " + StringUtil.shortenPathWithEllipsis(vendor, 50), SimpleTextAttributes.GRAY_ATTRIBUTES);
+                append(" by " + StringUtil.shortenPathWithEllipsis(vendor, 50), GRAY_ATTRIBUTES);
               }
             }
           }

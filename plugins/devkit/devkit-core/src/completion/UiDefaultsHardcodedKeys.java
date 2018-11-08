@@ -1314,7 +1314,7 @@ public final class UiDefaultsHardcodedKeys {
     "Plugins.SectionHeader.foreground",
     "Plugins.Tab.active.background",
     "Plugins.Tab.active.foreground",
-    "Plugins.Tab.hover.background",
+    "Plugins.Tab.hoverBackground",
     "Plugins.background",
     "Plugins.disabledForeground",
     "Plugins.selectionBackground",

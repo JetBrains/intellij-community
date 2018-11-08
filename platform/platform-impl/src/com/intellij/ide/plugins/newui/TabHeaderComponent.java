@@ -217,7 +217,7 @@ public class TabHeaderComponent extends JComponent {
     JBColor.namedColor("Plugins.Tab.active.background", JBUI.CurrentTheme.ToolWindow.tabSelectedBackground());
 
   private static final Color HOVER_BG_COLOR =
-    JBColor.namedColor("Plugins.Tab.hover.background", JBUI.CurrentTheme.ToolWindow.tabHoveredBackground());
+    JBColor.namedColor("Plugins.Tab.hoverBackground", JBUI.CurrentTheme.ToolWindow.tabHoveredBackground());
 
   @Override
   protected void paintComponent(Graphics g) {
