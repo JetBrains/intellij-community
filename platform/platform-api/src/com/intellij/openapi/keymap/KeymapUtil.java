@@ -603,4 +603,14 @@ public class KeymapUtil {
     }
     return filtered.isEmpty() ? null : new CustomShortcutSet(filtered.toArray(Shortcut.EMPTY_ARRAY));
   }
+
+  @Nullable
+  public static String getEventShortcut(@NotNull AnActionEvent event) {
+    if (event.getInputEvent() instanceof KeyEvent) {
+      KeyEvent ke = (KeyEvent)event.getInputEvent();
+      return getKeystrokeText(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));
+    }
+
+    return null;
+  }
 }
