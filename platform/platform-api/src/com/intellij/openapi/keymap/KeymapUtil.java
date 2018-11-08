@@ -604,8 +604,14 @@ public class KeymapUtil {
     return filtered.isEmpty() ? null : new CustomShortcutSet(filtered.toArray(Shortcut.EMPTY_ARRAY));
   }
 
+  /**
+   * Check if {@link AnActionEvent} was called with keyboard shortcut
+   * and if so return string presentation for this shortcut
+   * @param event called event
+   * @return string presentation of shortcut if {@code event} was called with shortcut. In other cases null is returned
+   */
   @Nullable
-  public static String getEventShortcut(@NotNull AnActionEvent event) {
+  public static String getEventCallerShortcut(@NotNull AnActionEvent event) {
     if (event.getInputEvent() instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)event.getInputEvent();
       return getKeystrokeText(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));
