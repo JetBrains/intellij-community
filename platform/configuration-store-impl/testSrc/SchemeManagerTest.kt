@@ -4,6 +4,7 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.SchemeFileTracker
 import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.options.ExternalizableScheme
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.io.FileUtil
@@ -13,10 +14,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.readText
-import com.intellij.util.io.write
+import com.intellij.util.io.*
 import com.intellij.util.loadElement
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Tag
@@ -27,6 +25,7 @@ import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.io.InputStream
 import java.nio.file.Path
 import java.util.function.Function
 
@@ -137,7 +136,15 @@ internal class SchemeManagerTest {
     file.write(serialize()!!.toByteArray())
   }
 
-  @Test fun `different extensions`() {
+  @Test fun `different extensions - old, new`() {
+    doDifferentExtensionTest(listOf("1.xml", "1.icls"))
+  }
+
+  @Test fun `different extensions - new, old`() {
+    doDifferentExtensionTest(listOf("1.icls", "1.xml"))
+  }
+
+  private fun doDifferentExtensionTest(fileNames: List<String>) {
     val dir = tempDirManager.newPath()
 
     val scheme = TestScheme("local", "true")
@@ -148,15 +155,44 @@ internal class SchemeManagerTest {
       override val schemeExtension = ".icls"
     }
 
-    val schemesManager = SchemeManagerImpl(FILE_SPEC, ATestSchemesProcessor(), null, dir)
-    schemesManager.loadSchemes()
-    assertThat(schemesManager.allSchemes).containsOnly(scheme)
+    // use provider to specify exact order of files (it is critical to test both variants - old, new or new, old)
+    val schemeManager = SchemeManagerImpl(FILE_SPEC, ATestSchemesProcessor(), object : StreamProvider {
+      override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
+        getFile(fileSpec).write(content, 0, size)
+      }
+
+      override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+        getFile(fileSpec).inputStream().use(consumer)
+        return true
+      }
+
+      override fun processChildren(path: String,
+                                   roamingType: RoamingType,
+                                   filter: (name: String) -> Boolean,
+                                   processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
+        for (name in fileNames) {
+          dir.resolve(name).inputStream().use {
+            processor(name, it, false)
+          }
+        }
+        return true
+      }
+
+      override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
+        getFile(fileSpec).delete()
+        return true
+      }
+
+      private fun getFile(fileSpec: String) = dir.resolve(fileSpec.substring(FILE_SPEC.length + 1))
+    }, dir)
+    schemeManager.loadSchemes()
+    assertThat(schemeManager.allSchemes).containsOnly(scheme)
 
     assertThat(dir.resolve("1.icls")).isRegularFile()
     assertThat(dir.resolve("1.xml")).isRegularFile()
 
     scheme.data = "newTrue"
-    schemesManager.save()
+    schemeManager.save()
 
     assertThat(dir.resolve("1.icls")).isRegularFile()
     assertThat(dir.resolve("1.xml")).doesNotExist()

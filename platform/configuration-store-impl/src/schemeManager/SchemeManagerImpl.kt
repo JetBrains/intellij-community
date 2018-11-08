@@ -181,7 +181,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       // isDuringLoad is true even if loadSchemes called not first time, but on reload,
       // because scheme processor should use cumulative event `reloaded` to update runtime state/caches
       val schemeLoader = createSchemeLoader(isDuringLoad = true)
-      if (provider != null && provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
+      val isLoadOnlyFromProvider = provider != null && provider.processChildren(fileSpec, roamingType, { canRead(it) }) { name, input, readOnly ->
         catchAndLog(name) {
           val scheme = schemeLoader.loadScheme(name, input)
           if (readOnly && scheme != null) {
@@ -189,9 +189,9 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
           }
         }
         true
-      }) {
       }
-      else {
+
+      if (!isLoadOnlyFromProvider) {
         ioDirectory.directoryStreamIfExists({ canRead(it.fileName.toString()) }) { directoryStream ->
           for (file in directoryStream) {
             if (file.isDirectory()) {
@@ -282,17 +282,24 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
     }
 
+    val filesToDelete = THashSet(filesToDelete)
     for (scheme in changedSchemes) {
       try {
-        saveScheme(scheme, nameGenerator)
+        saveScheme(scheme, nameGenerator, filesToDelete)
       }
       catch (e: Throwable) {
         errors.add(RuntimeException("Cannot save scheme $fileSpec/$scheme", e))
       }
     }
 
-    val filesToDelete = THashSet(filesToDelete)
     if (!filesToDelete.isEmpty) {
+      val iterator = schemeToInfo.values.iterator()
+      for (info in iterator) {
+        if (filesToDelete.contains(info.fileName)) {
+          iterator.remove()
+        }
+      }
+
       this.filesToDelete.removeAll(filesToDelete)
       deleteFiles(errors, filesToDelete)
       // remove empty directory only if some file was deleted - avoid check on each save
@@ -335,12 +342,12 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     }
   }
 
-  private fun saveScheme(scheme: MUTABLE_SCHEME, nameGenerator: UniqueNameGenerator) {
+  private fun saveScheme(scheme: MUTABLE_SCHEME, nameGenerator: UniqueNameGenerator, filesToDelete: MutableSet<String>) {
     var externalInfo: ExternalInfo? = schemeToInfo.get(scheme)
     val currentFileNameWithoutExtension = externalInfo?.fileNameWithoutExtension
     val element = processor.writeScheme(scheme)?.let { it as? Element ?: (it as Document).detachRootElement() }
     if (element.isEmpty()) {
-      externalInfo?.scheduleDelete()
+      externalInfo?.scheduleDelete(filesToDelete)
       return
     }
 
@@ -352,11 +359,13 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     val newDigest = element!!.digest()
     when {
       externalInfo != null && currentFileNameWithoutExtension === fileNameWithoutExtension && externalInfo.isDigestEquals(newDigest) -> return
-      isEqualToBundledScheme(externalInfo, newDigest, scheme) -> return
+      isEqualToBundledScheme(externalInfo, newDigest, scheme, filesToDelete) -> return
 
       // we must check it only here to avoid delete old scheme just because it is empty (old idea save -> new idea delete on open)
       processor is LazySchemeProcessor && processor.isSchemeDefault(scheme, newDigest) -> {
-        externalInfo?.scheduleDelete()
+        if (externalInfo != null) {
+          filesToDelete.add(externalInfo.fileName)
+        }
         return
       }
     }
@@ -400,7 +409,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
               file = oldFile
             }
             else {
-              externalInfo.scheduleDelete()
+              externalInfo.scheduleDelete(filesToDelete)
             }
           }
         }
@@ -415,14 +424,14 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
       else {
         if (renamed) {
-          externalInfo!!.scheduleDelete()
+          filesToDelete.add(externalInfo!!.fileName)
         }
         ioDirectory.resolve(fileName).write(byteOut.internalBuffer, 0, byteOut.size())
       }
     }
     else {
       if (renamed) {
-        externalInfo!!.scheduleDelete()
+        externalInfo!!.scheduleDelete(filesToDelete)
       }
       provider!!.write(providerPath, byteOut.internalBuffer, byteOut.size(), roamingType)
     }
@@ -438,7 +447,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     externalInfo.schemeKey = processor.getSchemeKey(scheme)
   }
 
-  private fun isEqualToBundledScheme(externalInfo: ExternalInfo?, newDigest: ByteArray, scheme: MUTABLE_SCHEME): Boolean {
+  private fun isEqualToBundledScheme(externalInfo: ExternalInfo?, newDigest: ByteArray, scheme: MUTABLE_SCHEME, filesToDelete: MutableSet<String>): Boolean {
     fun serializeIfPossible(scheme: T): Element? {
       LOG.runAndLogException {
         @Suppress("UNCHECKED_CAST")
@@ -451,7 +460,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
     val bundledScheme = schemeListManager.readOnlyExternalizableSchemes.get(processor.getSchemeKey(scheme))
     if (bundledScheme == null) {
       if ((processor as? LazySchemeProcessor)?.isSchemeEqualToBundled(scheme) == true) {
-        externalInfo?.scheduleDelete()
+        externalInfo?.scheduleDelete(filesToDelete)
         return true
       }
       return false
@@ -464,18 +473,10 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       } ?: return false
     }
     if (bundledExternalInfo.isDigestEquals(newDigest)) {
-      externalInfo?.scheduleDelete()
+      externalInfo?.scheduleDelete(filesToDelete)
       return true
     }
     return false
-  }
-
-  private fun ExternalInfo.scheduleDelete() {
-    filesToDelete.add(fileName)
-  }
-
-  internal fun scheduleDelete(info: ExternalInfo) {
-    info.scheduleDelete()
   }
 
   private fun isRenamed(scheme: T): Boolean {
@@ -550,7 +551,7 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
       }
 
       iterator.remove()
-      info.scheduleDelete()
+      info.scheduleDelete(filesToDelete)
     }
   }
 
@@ -558,36 +559,35 @@ class SchemeManagerImpl<T : Any, MUTABLE_SCHEME : T>(val fileSpec: String,
 
   override fun findSchemeByName(schemeName: String) = schemes.firstOrNull { processor.getSchemeKey(it) == schemeName }
 
-  override fun removeScheme(name: String) = removeFirstScheme(schemes, this) {processor.getSchemeKey(it) == name }
+  override fun removeScheme(name: String) = removeFirstScheme {processor.getSchemeKey(it) == name }
 
-  override fun removeScheme(scheme: T) = removeFirstScheme(schemes, this) { it == scheme } != null
+  override fun removeScheme(scheme: T) = removeFirstScheme { it == scheme } != null
 
   override fun isMetadataEditable(scheme: T) = !schemeListManager.readOnlyExternalizableSchemes.containsKey(processor.getSchemeKey(scheme))
 
   override fun toString() = fileSpec
-}
 
-// static method to ensure that receiver state is not used
-private fun <T : Any> removeFirstScheme(schemes: MutableList<T>, schemeManager: SchemeManagerImpl<T, *>, condition: (T) -> Boolean): T? {
-  val iterator = schemes.iterator()
-  for (scheme in iterator) {
-    if (!condition(scheme)) {
-      continue
+  private fun removeFirstScheme(condition: (T) -> Boolean): T? {
+    val iterator = schemes.iterator()
+    for (scheme in iterator) {
+      if (!condition(scheme)) {
+        continue
+      }
+
+      if (activeScheme === scheme) {
+        activeScheme = null
+      }
+
+      iterator.remove()
+
+      if (processor.isExternalizable(scheme)) {
+        schemeToInfo.remove(scheme)?.scheduleDelete(filesToDelete)
+      }
+      return scheme
     }
 
-    if (schemeManager.activeScheme === scheme) {
-      schemeManager.activeScheme = null
-    }
-
-    iterator.remove()
-
-    if (schemeManager.processor.isExternalizable(scheme)) {
-      schemeManager.schemeToInfo.remove(scheme)?.let(schemeManager::scheduleDelete)
-    }
-    return scheme
+    return null
   }
-
-  return null
 }
 
 internal fun nameIsMissed(bytes: ByteArray): RuntimeException {
