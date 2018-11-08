@@ -363,6 +363,16 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
           if (ideGrouping != null) {
             ideGroupingMap.put(ideGrouping, node);
           }
+        } else {
+          // add elements under module node like web/enterprise artifacts
+          DataNode<ModuleData> parentModule = node.getParent(ModuleData.class);
+          if(parentModule != null) {
+            DataNodeCheckedTreeNode moduleTreeNode = treeNodeMap.get(parentModule);
+            if(moduleTreeNode != null) {
+              moduleTreeNode.add(treeNode);
+              treeNode.setParent(moduleTreeNode);
+            }
+          }
         }
         treeNode.setEnabled(myIgnorableKeys.contains(key));
         treeNodeMap.put(node, treeNode);
