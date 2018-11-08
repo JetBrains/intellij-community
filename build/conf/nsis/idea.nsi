@@ -725,11 +725,11 @@ Function uninstallOldVersion
 uninstall:
   ;previous installation has been removed
   ;customer has decided to keep properties?
-  IfFileExists $3\bin\idea.properties saveProperties fullRemove
-saveProperties:
   Delete "$3\bin\Uninstall.exe"
-  Goto complete
-fullRemove:
+  IfFileExists $3\bin\idea.properties complete delete_install_dir
+delete_install_dir:
+  StrCpy $0 "$3\bin"
+  Call deleteDirIfEmpty
   StrCpy $0 $3
   Call deleteDirIfEmpty
 complete:
@@ -1456,17 +1456,17 @@ Function un.onInit
 get_reg_key:
   SetRegView 32
   Call un.getRegKey
-  StrCmp $baseRegKey "HKLM" required_admin_perm UAC_Done
+  StrCmp $baseRegKey "HKLM" uninstall_location UAC_Done
+
+uninstall_location:
+  ;check if the uninstallation is running from the product location
+  IfFileExists $LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate required_admin_perm
 
 required_admin_perm:
   ;the user has admin rights?
   UserInfo::GetAccountType
   Pop $R2
-  StrCmp $R2 "Admin" UAC_Admin uninstall_location
-
-uninstall_location:
-  ;check if the uninstallation is running from the product location
-  IfFileExists $LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe UAC_Elevate copy_uninstall
+  StrCmp $R2 "Admin" UAC_Admin copy_uninstall
 
 copy_uninstall:
   ;do copy for unistall.exe
