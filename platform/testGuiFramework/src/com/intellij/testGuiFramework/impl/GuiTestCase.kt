@@ -36,6 +36,7 @@ import java.util.*
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.text.JTextComponent
 
 /**
  * The main base class that should be extended for writing GUI tests.
@@ -122,6 +123,15 @@ open class GuiTestCase {
     )
     func(dialog)
     if (!needToKeepDialog) dialog.waitTillGone()
+  }
+
+  fun dialogWithTextComponent(timeout: Timeout, predicate: (JTextComponent) -> Boolean, func: JDialogFixture.() -> Unit) {
+    val dialog: JDialog = waitUntilFound(null, JDialog::class.java, timeout) {
+      JDialogFixture(robot(), it).containsChildComponent(predicate)
+    }
+    val dialogFixture = JDialogFixture(robot(), dialog)
+    func(dialogFixture)
+    dialogFixture.waitTillGone()
   }
 
   fun settingsDialog(timeout: Timeout = Timeouts.defaultTimeout,
