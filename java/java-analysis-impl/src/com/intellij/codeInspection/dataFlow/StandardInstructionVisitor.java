@@ -685,8 +685,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
                                                     RelationType relationType) {
     DfaValueFactory factory = runner.getFactory();
     if((relationType == RelationType.EQ || relationType == RelationType.NE) &&
-       (dfaLeft != dfaRight || dfaLeft instanceof DfaBoxedValue) && isComparedByEquals(instruction.getExpression()) &&
-       !memState.isNull(dfaLeft) && !memState.isNull(dfaRight)) {
+       (dfaLeft != dfaRight || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaConstValue) && 
+       isComparedByEquals(instruction.getExpression()) && !memState.isNull(dfaLeft) && !memState.isNull(dfaRight)) {
       ArrayList<DfaInstructionState> states = new ArrayList<>(2);
       DfaMemoryState equality = memState.createCopy();
       if (equality.applyCondition(factory.createCondition(dfaLeft, RelationType.EQ, dfaRight))) {
@@ -841,7 +841,8 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return null;
     }
 
-    if (dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue ||
+    if (dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue && 
+        !(TypeUtils.isJavaLangString(dfaLeft.getType()) && !(TypeUtils.isJavaLangString(dfaRight.getType()))) ||
         DfaConstValue.isContractFail(dfaLeft) || DfaConstValue.isContractFail(dfaRight)) {
       boolean negated = (relationType == RelationType.NE) ^ (DfaMemoryStateImpl.isNaN(dfaLeft) || DfaMemoryStateImpl.isNaN(dfaRight));
       boolean result = dfaLeft == dfaRight ^ negated;
