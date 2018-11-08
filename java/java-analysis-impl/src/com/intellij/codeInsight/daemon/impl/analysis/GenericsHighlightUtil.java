@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -807,7 +807,9 @@ public class GenericsHighlightUtil {
 
     if (!(resolved instanceof PsiField)) return null;
     if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) return null;
-    if (expr.getParent() instanceof PsiSwitchLabelStatement) return null;
+    if (expr.getParent() instanceof PsiExpressionList && expr.getParent().getParent() instanceof PsiSwitchLabelStatementBase) {
+      return null;
+    }
     final PsiMember constructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
     if (constructorOrInitializer == null) return null;
     if (constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
