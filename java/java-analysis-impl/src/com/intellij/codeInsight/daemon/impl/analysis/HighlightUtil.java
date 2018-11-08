@@ -46,6 +46,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -1850,63 +1851,78 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();
     }
 
+    return null;
+  }
+
+  @Nullable
+  static Collection<HighlightInfo> checkSwitchLabelValues(@NotNull PsiSwitchStatement switchStatement) {
     PsiCodeBlock body = switchStatement.getBody();
     if (body == null) return null;
 
     PsiExpression switchExpression = switchStatement.getExpression();
     PsiType switchType = switchExpression == null ? PsiType.INT : switchExpression.getType();
-    boolean defaultCase = statement.isDefaultCase();
-    PsiExpression caseValue = statement.getCaseValue();
+    MultiMap<Object, PsiElement> values = new MultiMap<>();
+    Object defaultValue = new Object();
+    Collection<HighlightInfo> results = new ArrayList<>();
 
-    // Every case constant expression associated with a switch statement must be assignable ($5.2) to the type of the switch Expression.
-    if (caseValue != null && switchExpression != null) {
-      HighlightInfo highlightInfo = checkAssignability(switchType, caseValue.getType(), caseValue, caseValue);
-      if (highlightInfo != null) return highlightInfo;
-    }
-    Object value = null;
-    boolean isEnumSwitch = false;
-    if (!defaultCase && caseValue != null) {
-      if (caseValue instanceof PsiReferenceExpression) {
-        PsiElement element = ((PsiReferenceExpression)caseValue).resolve();
-        if (element instanceof PsiEnumConstant) {
-          isEnumSwitch = true;
-          value = ((PsiEnumConstant)element).getName();
-          if (((PsiReferenceExpression)caseValue).getQualifier() != null) {
-            String message = JavaErrorMessages.message("qualified.enum.constant.in.switch");
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(caseValue).descriptionAndTooltip(message).create();
+    for (PsiStatement st : body.getStatements()) {
+      if (!(st instanceof PsiSwitchLabelStatementBase)) continue;
+      PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
+      boolean defaultCase = labelStatement.isDefaultCase();
+
+      if (defaultCase) {
+        values.putValue(defaultValue, ObjectUtils.notNull(labelStatement.getFirstChild(), labelStatement));
+      }
+      else {
+        PsiExpressionList expressionList = labelStatement.getCaseValues();
+        if (expressionList != null) {
+          for (PsiExpression expr : expressionList.getExpressions()) {
+            if (switchExpression != null) {
+              HighlightInfo result = checkAssignability(switchType, expr.getType(), expr, expr);
+              if (result != null) {
+                results.add(result);
+                continue;
+              }
+            }
+
+            Object value = null;
+            if (expr instanceof PsiReferenceExpression) {
+              PsiElement element = ((PsiReferenceExpression)expr).resolve();
+              if (element instanceof PsiEnumConstant) {
+                value = ((PsiEnumConstant)element).getName();
+                if (((PsiReferenceExpression)expr).getQualifier() != null) {
+                  String message = JavaErrorMessages.message("qualified.enum.constant.in.switch");
+                  results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(message).create());
+                  continue;
+                }
+              }
+            }
+            if (value == null) {
+              value = ConstantExpressionUtil.computeCastTo(expr, switchType);
+            }
+            if (value == null) {
+              String description = JavaErrorMessages.message("constant.expression.required");
+              results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expr).descriptionAndTooltip(description).create());
+              continue;
+            }
+
+            values.putValue(value, expr);
           }
         }
       }
-      if (!isEnumSwitch) {
-        value = ConstantExpressionUtil.computeCastTo(caseValue, switchType);
-      }
-      if (value == null) {
-        String description = JavaErrorMessages.message("constant.expression.required");
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(caseValue).descriptionAndTooltip(description).create();
+    }
+
+    for (Map.Entry<Object, Collection<PsiElement>> entry : values.entrySet()) {
+      if (entry.getValue().size() > 1) {
+        Object value = entry.getKey();
+        String description = value == defaultValue ? JavaErrorMessages.message("duplicate.default.switch.label") : JavaErrorMessages.message("duplicate.switch.label", value);
+        for (PsiElement element : entry.getValue()) {
+          results.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create());
+        }
       }
     }
 
-    // check duplicate
-    for (PsiStatement st : body.getStatements()) {
-      if (st == statement || !(st instanceof PsiSwitchLabelStatementBase)) continue;
-      PsiSwitchLabelStatementBase labelStatement = (PsiSwitchLabelStatementBase)st;
-      if (labelStatement.isDefaultCase() != defaultCase) continue;
-      PsiExpression caseExpr = labelStatement.getCaseValue();
-      if (isEnumSwitch && caseExpr instanceof PsiReferenceExpression) {
-        PsiElement element = ((PsiReferenceExpression)caseExpr).resolve();
-        if (!(element instanceof PsiEnumConstant && Comparing.equal(((PsiEnumConstant)element).getName(), value))) continue;
-      }
-      else {
-        // not assignable error already caught
-        if (!TypeConversionUtil.areTypesAssignmentCompatible(switchType, caseExpr)) continue;
-        if (!Comparing.equal(ConstantExpressionUtil.computeCastTo(caseExpr, switchType), value)) continue;
-      }
-      String description = defaultCase ? JavaErrorMessages.message("duplicate.default.switch.label") : JavaErrorMessages.message("duplicate.switch.label", value);
-      PsiElement element = caseValue != null ? caseValue : ObjectUtils.notNull(statement.getFirstChild(), statement);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description).create();
-    }
-
-    return null;
+    return results;
   }
 
 
@@ -2433,6 +2449,16 @@ public class HighlightUtil extends HighlightUtilBase {
           }
           classicLabels = true;
         }
+
+        if (!levelChecked && element instanceof PsiSwitchLabelStatementBase) {
+          PsiExpressionList values = ((PsiSwitchLabelStatementBase)element).getCaseValues();
+          if (values != null && values.getExpressionCount() > 1) {
+            HighlightInfo info = checkFeature(values, Feature.ENHANCED_SWITCH, languageLevel, file);
+            if (info != null) return info;
+            levelChecked = true;
+          }
+        }
+
         element = PsiTreeUtil.skipWhitespacesAndCommentsForward(element);
       }
       if (alien != null) {
