@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.tree.IElementType;
@@ -1212,9 +1213,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiElement qualifier = expression.getQualifier();
       PsiType interfaceType = expression.getFunctionalInterfaceType();
       if (!Registry.is("debugger.compiling.evaluator.method.refs") && interfaceType != null && qualifier != null) {
-        PsiElement resolved = expression.resolve();
-        if (resolved instanceof PsiMethod) {
-          try {
+        String code = null;
+        try {
+          PsiElement resolved = expression.resolve();
+          if (resolved instanceof PsiMethod) {
             PsiMethod method = (PsiMethod)resolved;
             PsiClass containingClass = method.getContainingClass();
             if (containingClass != null) {
@@ -1234,24 +1236,34 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                   bind = "mh = mh.bindTo(" + qualifier.getText() + ")\n";
                 }
               }
-              String code =
+              code =
                 "MethodType mt = MethodType.fromMethodDescriptorString(\"" + JVMNameUtil.getJVMSignature(method) + "\", null);\n" +
                 "MethodHandle mh = MethodHandles.publicLookup()." + findMethodName + "(" +
                 containingClass.getQualifiedName() + ".class " + methodName + ", mt);\n" +
                 bind +
                 "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
-              myResult = buildFromJavaCode(code,
-                                           "java.lang.invoke.MethodHandle," +
-                                           "java.lang.invoke.MethodHandleProxies," +
-                                           "java.lang.invoke.MethodHandles," +
-                                           "java.lang.invoke.MethodType",
-                                           expression);
-              return;
             }
+          } else if (PsiUtil.isArrayClass(resolved)) {
+            // TODO: may use MethodHandles#arrayConstructor when we move to Java 9
+            code =
+              "MethodType mt = MethodType.methodType(Object.class, Class.class, int.class);\n" +
+              "MethodHandle mh = MethodHandles.publicLookup().findStatic(Array.class, \"newInstance\", mt);\n" +
+              "mh = mh.bindTo(" + StringUtil.substringBeforeLast(qualifier.getText(), "[]") + ".class)\n" +
+              "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
           }
-          catch (Exception e) {
-            LOG.error(e);
+          if (code != null) {
+            myResult = buildFromJavaCode(code,
+                                         "java.lang.invoke.MethodHandle," +
+                                         "java.lang.invoke.MethodHandleProxies," +
+                                         "java.lang.invoke.MethodHandles," +
+                                         "java.lang.invoke.MethodType," +
+                                         "java.lang.reflect.Array",
+                                         expression);
+            return;
           }
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
       throw new EvaluateRuntimeException(
