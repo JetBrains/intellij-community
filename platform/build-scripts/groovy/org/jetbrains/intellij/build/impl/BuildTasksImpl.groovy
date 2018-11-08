@@ -303,7 +303,7 @@ idea.fatal.error.notification=disabled
           pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>()
           for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
             def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
-            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec())
+            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec(includeIntoDirectoryForAutomaticUploading: true))
           }
         }
         else {

@@ -385,7 +385,8 @@ class DistributionJARsBuilder {
 
         def directory = getActualPluginDirectoryName(plugin, buildContext)
         String suffix = includeInCustomRepository ? "" : "-${getPluginVersion(plugin)}"
-        def destFile = "$nonBundledPluginsArtifacts/$directory${suffix}.zip"
+        def targetDirectory = publishingSpec.includeIntoDirectoryForAutomaticUploading ? "$nonBundledPluginsArtifacts/auto-uploading" : nonBundledPluginsArtifacts
+        def destFile = "$targetDirectory/$directory${suffix}.zip"
 
         if (includeInCustomRepository) {
           pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(),
