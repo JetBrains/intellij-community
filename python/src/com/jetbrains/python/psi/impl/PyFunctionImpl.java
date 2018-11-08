@@ -811,7 +811,8 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       .skipWhile(siblingStub -> !stub.equals(siblingStub))
       .transform(nextSiblingStub -> as(nextSiblingStub, PyTargetExpressionStub.class))
       .filter(Objects::nonNull)
-      .filter(nextSiblingStub -> nextSiblingStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression)
+      .filter(nextSiblingStub -> nextSiblingStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression &&
+                                 Objects.equals(stub.getName(), nextSiblingStub.getName()))
       .transform(PyTargetExpressionStub::getInitializer)
       .transform(
         initializerName -> {

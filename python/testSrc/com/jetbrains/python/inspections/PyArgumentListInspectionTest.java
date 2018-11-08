@@ -366,4 +366,9 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   public void testInitializingTypeVar() {
     doTest();
   }
+
+  // PY-30182
+  public void testAnotherMethodIsWrappedIntoStatic() {
+    doMultiFileTest();
+  }
 }
