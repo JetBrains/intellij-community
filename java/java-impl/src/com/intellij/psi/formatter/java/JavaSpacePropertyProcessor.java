@@ -157,7 +157,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private void init(ASTNode child) {
     if (child == null) return;
     ASTNode treePrev = child.getTreePrev();
-    while (treePrev != null && isWhiteSpace(treePrev)) {
+    while (treePrev != null && (treePrev.getElementType() == TokenType.WHITE_SPACE || treePrev.getTextLength() == 0)) {
       treePrev = treePrev.getTreePrev();
     }
     if (treePrev == null) {
@@ -173,10 +173,6 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       myRole2 = parent.getChildRole(child);
       myType2 = child.getElementType();
     }
-  }
-
-  private static boolean isWhiteSpace(ASTNode treePrev) {
-    return treePrev != null && (treePrev.getElementType() == TokenType.WHITE_SPACE || treePrev.getTextLength() == 0);
   }
 
   @Override
@@ -1457,9 +1453,8 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Nullable
   private static ASTNode findFrom(ASTNode current, IElementType expected, boolean forward) {
-    while (current != null) {
-      if (current.getElementType() == expected) return current;
-      current = forward ? current.getTreeNext() : current.getTreePrev();
+    for (ASTNode node = current; node != null; node = forward ? node.getTreeNext() : node.getTreePrev()) {
+      if (node.getElementType() == expected) return node;
     }
     return null;
   }
