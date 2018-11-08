@@ -19,6 +19,13 @@ import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import org.cef.CefApp;
+import org.cef.CefClient;
+import org.cef.CefSettings;
+import org.cef.browser.CefBrowser;
+import org.cef.browser.CefFrame;
+import org.cef.handler.CefLifeSpanHandlerAdapter;
+import org.cef.handler.CefLoadHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +33,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JavaFxHtmlPanel implements Disposable {
   @NotNull
@@ -38,47 +47,77 @@ public class JavaFxHtmlPanel implements Disposable {
   @Nullable protected WebView myWebView;
   private Color background;
 
+  private static final CefApp ourCefApp;
+  private static final CefClient ourCefClient;
+  private static final Map<CefBrowser, JavaFxHtmlPanel> ourBrowser2Panel = new HashMap<>();
+
+  private final CefBrowser myCefBrowser;
+  private boolean myIsCefBrowserCreated;
+  private @Nullable String myHtml;
+
+  static {
+    CefSettings settings = new CefSettings();
+    settings.windowless_rendering_enabled = false;
+    settings.log_severity = CefSettings.LogSeverity.LOGSEVERITY_ERROR;
+    ourCefApp = CefApp.getInstance(settings);
+    ourCefClient = ourCefApp.createClient();
+    ourCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
+      @Override
+      public void onAfterCreated(CefBrowser browser) {
+        JavaFxHtmlPanel panel = ourBrowser2Panel.get(browser);
+        if (panel != null) {
+          panel.myIsCefBrowserCreated = true;
+          if (panel.myHtml != null) {
+            browser.loadString(panel.myHtml, "file:\\C:\\");
+            ourBrowser2Panel.remove(browser);
+          }
+        }
+      }
+    });
+    //ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
+    //  @Override
+    //  public void onLoadEnd(CefBrowser browser, CefFrame frame, int i) {
+    //  }
+    //});
+  }
+
   public JavaFxHtmlPanel() {
     background = JBColor.background();
     myPanelWrapper = new JPanel(new BorderLayout());
     myPanelWrapper.setBackground(background);
 
-    ApplicationManager.getApplication().invokeLater(() -> runFX(() -> PlatformImpl.startup(() -> {
-      myWebView = new WebView();
-      myWebView.setContextMenuEnabled(false);
-      myWebView.setZoom(JBUI.scale(1.f));
+    myCefBrowser = ourCefClient.createBrowser("about:blank", false, false);
+    myPanelWrapper.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
 
-      final WebEngine engine = myWebView.getEngine();
-      registerListeners(engine);
-      engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
-        if (newValue == Worker.State.RUNNING) {
-            WebPage page = Accessor.getPageFor(engine);
-            page.setBackgroundColor(background.getRGB());
-          }
-        }
-      );
+    //engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
+    //  if (newValue == Worker.State.RUNNING) {
+    //      WebPage page = Accessor.getPageFor(engine);
+    //      page.setBackgroundColor(background.getRGB());
+    //    }
+    //  }
+    //);
 
-      javafx.scene.paint.Color fxColor = toFxColor(background);
-      final Scene scene = new Scene(myWebView, fxColor);
-
-      ApplicationManager.getApplication().invokeLater(() -> runFX(() -> {
-        myPanel = new JFXPanelWrapper();
-
-        Platform.runLater(() -> myPanel.setScene(scene));
-
-        setHtml("");
-        for (Runnable action : myInitActions) {
-          Platform.runLater(action);
-        }
-        myInitActions.clear();
-
-        myPanelWrapper.add(myPanel, BorderLayout.CENTER);
-        myPanelWrapper.repaint();
-      }));
-    })));
-
-    LafManager.getInstance().addLafManagerListener(new JavaFXLafManagerListener());
-    runInPlatformWhenAvailable(() -> updateLaf(UIUtil.isUnderDarcula()));
+    //  javafx.scene.paint.Color fxColor = toFxColor(background);
+    //  final Scene scene = new Scene(myWebView, fxColor);
+    //
+    //  ApplicationManager.getApplication().invokeLater(() -> runFX(() -> {
+    //    myPanel = new JFXPanelWrapper();
+    //
+    //    Platform.runLater(() -> myPanel.setScene(scene));
+    //
+    //    setHtml("");
+    //    for (Runnable action : myInitActions) {
+    //      Platform.runLater(action);
+    //    }
+    //    myInitActions.clear();
+    //
+    //    myPanelWrapper.add(myPanel, BorderLayout.CENTER);
+    //    myPanelWrapper.repaint();
+    //  }));
+    //})));
+    //
+    //LafManager.getInstance().addLafManagerListener(new JavaFXLafManagerListener());
+    //runInPlatformWhenAvailable(() -> updateLaf(UIUtil.isUnderDarcula()));
   }
 
   @NotNull
@@ -108,13 +147,13 @@ public class JavaFxHtmlPanel implements Disposable {
   }
 
   protected void runInPlatformWhenAvailable(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (myPanel == null) {
-      myInitActions.add(runnable);
-    }
-    else {
-      Platform.runLater(runnable);
-    }
+    //ApplicationManager.getApplication().assertIsDispatchThread();
+    //if (myPanel == null) {
+    //  myInitActions.add(runnable);
+    //}
+    //else {
+    //  Platform.runLater(runnable);
+    //}
   }
 
   @NotNull
@@ -124,7 +163,14 @@ public class JavaFxHtmlPanel implements Disposable {
 
   public void setHtml(@NotNull String html) {
     final String htmlToRender = prepareHtml(html);
-    runInPlatformWhenAvailable(() -> getWebViewGuaranteed().getEngine().loadContent(htmlToRender));
+    //runInPlatformWhenAvailable(() -> getWebViewGuaranteed().getEngine().loadContent(htmlToRender));
+    if (!myIsCefBrowserCreated) {
+      myHtml = htmlToRender;
+      ourBrowser2Panel.put(myCefBrowser, this);
+    }
+    else {
+      myCefBrowser.loadString(htmlToRender, "file:\\C:\\");
+    }
   }
 
   @NotNull
@@ -167,10 +213,15 @@ public class JavaFxHtmlPanel implements Disposable {
 
   @Override
   public void dispose() {
-    runInPlatformWhenAvailable(
-      () -> getWebViewGuaranteed().getEngine().load(null)
-    );
+    myCefBrowser.close(true);
+    //runInPlatformWhenAvailable(
+    //  () -> getWebViewGuaranteed().getEngine().load(null)
+    //);
   }
+
+  //public void addKeyListener(KeyListener l) {
+  //  runInPlatformWhenAvailable(() -> myPanel.addKeyListener(l));
+  //}
 
 
   @NotNull
