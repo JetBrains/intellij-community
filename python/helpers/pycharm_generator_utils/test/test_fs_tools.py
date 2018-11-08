@@ -5,7 +5,7 @@ import tempfile
 from contextlib import contextmanager
 from unittest import TestCase
 
-from pycharm_generator_utils.util_methods import copy_merging_packages, delete, mkdir, copy_skeletons
+from pycharm_generator_utils.util_methods import copy_merging_packages, delete, mkdir, copy_skeletons, copy
 
 _test_dir = os.path.dirname(__file__)
 _test_data_dir = os.path.join(_test_dir, 'fs_utils')
@@ -38,6 +38,11 @@ class TestFilesystemUtils(TestCase):
             src_dir = os.path.join(self.temp_dir, 'src')
             dst_dir = os.path.join(self.temp_dir, 'dst')
             copy_merging_packages(src_dir, dst_dir)
+
+    def check_copy(self, src, dst):
+        with self.comparing_dirs():
+            copy(os.path.join(self.temp_dir, src),
+                 os.path.join(self.temp_dir, dst))
 
     def check_delete(self, rel_name):
         with self.comparing_dirs():
@@ -85,6 +90,9 @@ class TestFilesystemUtils(TestCase):
 
     def test_delete_with_absent_file(self):
         self.check_delete('absent')
+
+    def test_copy_file_creating_dir_structure(self):
+        self.check_copy('baz.txt', os.path.join('foo', 'bar', 'baz.txt'))
 
     def test_copy_skeleton_module_replaced_with_package(self):
         self.check_copy_skeletons('foo.bar.baz')
