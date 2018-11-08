@@ -24,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -589,6 +590,18 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @NotNull
   @Override
   public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+    final PsiElement parent = getParent();
+    if (parent instanceof GrConstructorInvocation) {
+      // Archaeology notice.
+      //
+      // GrConstructorInvocation only consists of 'this'/'super' keyword and argument list.
+      // It has own fake reference, while this GrReferenceExpression exists so user may click on something,
+      // i.e. this GrReferenceExpression provides text range for GrConstructorInvocation.
+      //
+      // GrConstructorInvocation might have had its own real reference with proper range,
+      // but instead it returns this GrReferenceExpression as invoked one.
+      return ((GrConstructorInvocation)parent).getConstructorReference().resolve(incomplete);
+    }
     final Collection<? extends GroovyResolveResult> staticResults = getStaticReference().resolve(incomplete);
     if (!staticResults.isEmpty()) {
       return staticResults;
