@@ -11,7 +11,6 @@ import circlet.utils.*
 import com.intellij.openapi.project.*
 import com.intellij.uiDesigner.core.*
 import klogging.*
-import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import runtime.async.*
 import runtime.reactive.*
@@ -71,7 +70,7 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
 private fun <T> Lifetimed.updater(name: String, update: suspend (T) -> Unit): Channel<T> {
     val channel = Channel<T>(0)
 
-    channel.launchForEach(ApplicationUiDispatch.contextWithExplicitLog, CoroutineStart.UNDISPATCHED) {
+    channel.launchForEach(ApplicationUiDispatch.contextWithExplicitLog) {
         try {
             update(it)
         }
