@@ -3305,6 +3305,16 @@ public class PyTypeTest extends PyTestCase {
            "   expr = a");
   }
 
+  // PY-31956
+  public void testInAndNotBoolContains() {
+    doTest("bool",
+                   "class MyClass:\n" +
+                   "    def __contains__(self):\n" +
+                   "        return 42\n" +
+                   "\n" +
+                   "expr = 1 in MyClass()");
+  }
+
   // PY-32533
   public void testSuperWithAnotherType() {
     runWithLanguageLevel(
