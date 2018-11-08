@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -32,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
@@ -134,15 +134,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return super.handleElementRename(newElementName);
   }
 
+  @NotNull
   @Override
-  protected GrReferenceExpression bindWithQualifiedRef(@NotNull String qName) {
-    GrReferenceExpression qualifiedRef = GroovyPsiElementFactory.getInstance(getProject()).createReferenceExpressionFromText(qName);
-    final GrTypeArgumentList list = getTypeArgumentList();
-    if (list != null) {
-      qualifiedRef.getNode().addChild(list.copy().getNode());
-    }
-    getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
-    return qualifiedRef;
+  protected GrReferenceElement<GrExpression> createQualifiedRef(@NotNull String qName) {
+    return GroovyPsiElementFactory.getInstance(getProject()).createReferenceExpressionFromText(qName);
   }
 
   @Override
