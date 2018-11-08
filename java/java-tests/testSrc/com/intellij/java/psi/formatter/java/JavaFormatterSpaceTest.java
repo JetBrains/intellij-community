@@ -709,4 +709,13 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "    default:\n        break;\n" +
                  "}");
   }
+
+  public void testSwitchLabeledRuleSpacing() {
+    doMethodTest("switch (i) { case\n1\n->\nfoo();\ncase\n2->{bar()};\ndefault->throw new Exception();}",
+                 "switch (i) {\n" +
+                 "    case 1 -> foo();\n" +
+                 "    case 2 -> {\n        bar()\n    };\n" +
+                 "    default -> throw new Exception();\n" +
+                 "}");
+  }
 }

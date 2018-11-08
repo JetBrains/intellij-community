@@ -1317,6 +1317,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   @Override
+  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+    if (myType1 == JavaTokenType.CASE_KEYWORD || myType1 == JavaTokenType.ARROW || myType2 == JavaTokenType.ARROW) {
+      createSpaceProperty(true, false, 0);
+    }
+  }
+
+  @Override
   public void visitSwitchStatement(PsiSwitchStatement statement) {
     if (myRole1 == ChildRole.SWITCH_KEYWORD && myRole2 == ChildRole.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_SWITCH_PARENTHESES);
