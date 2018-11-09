@@ -55,7 +55,7 @@ public class SvnRevisionsNavigationMediator implements CommittedChangesNavigatio
     underProgress(exception, process);
 
     Info info = infoRef.get();
-    if (info == null || info.getRevision() == null || info.getRepositoryRootURL() == null) {
+    if (info == null || !info.getRevision().isValid() || info.getRepositoryRootURL() == null) {
       throw new VcsException("Could not get head info for " + location);
     }
 

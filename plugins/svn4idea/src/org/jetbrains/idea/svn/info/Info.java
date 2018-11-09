@@ -25,7 +25,7 @@ public class Info extends BaseNodeDescription {
   @Nullable private final Lock myLock;
   private final String mySchedule;
   private final Url myCopyFromURL;
-  private final Revision myCopyFromRevision;
+  @NotNull private final Revision myCopyFromRevision;
   @Nullable private final File myConflictOldFile;
   @Nullable private final File myConflictNewFile;
   @Nullable private final File myConflictWrkFile;
@@ -92,7 +92,7 @@ public class Info extends BaseNodeDescription {
     myFile = null;
     mySchedule = null;
     myCopyFromURL = null;
-    myCopyFromRevision = null;
+    myCopyFromRevision = Revision.UNDEFINED;
     myConflictOldFile = null;
     myConflictNewFile = null;
     myConflictWrkFile = null;
@@ -124,6 +124,7 @@ public class Info extends BaseNodeDescription {
     return myTreeConflict;
   }
 
+  @NotNull
   public Revision getCopyFromRevision() {
     return myCopyFromRevision;
   }

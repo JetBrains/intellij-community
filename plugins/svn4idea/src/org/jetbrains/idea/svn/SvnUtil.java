@@ -635,7 +635,7 @@ public class SvnUtil {
     if (info == null) {
       throw new SvnBindException("Could not get info for " + url);
     }
-    if (info.getRevision() == null) {
+    if (!info.getRevision().isValid()) {
       throw new SvnBindException("Could not get revision for " + url);
     }
 

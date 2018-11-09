@@ -60,9 +60,9 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     VcsRevisionNumber result = null;
 
     if (info != null) {
-      Revision revision = Revision.UNDEFINED.equals(info.getCommitInfo().getRevision()) && info.getCopyFromRevision() != null
-                             ? info.getCopyFromRevision()
-                             : info.getRevision();
+      Revision revision = !info.getCommitInfo().getRevision().isValid() && info.getCopyFromRevision().isValid()
+                          ? info.getCopyFromRevision()
+                          : info.getRevision();
 
       result = new SvnRevisionNumber(revision);
     }
@@ -131,9 +131,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
       return null;
     }
 
-    if (svnInfo.getCommitInfo().getRevision().equals(Revision.UNDEFINED) &&
-        !svnInfo.getCopyFromRevision().equals(Revision.UNDEFINED) &&
-        svnInfo.getCopyFromURL() != null) {
+    if (!svnInfo.getCommitInfo().getRevision().isValid() && svnInfo.getCopyFromRevision().isValid() && svnInfo.getCopyFromURL() != null) {
       File localPath = myVcs.getSvnFileUrlMapping().getLocalPath(svnInfo.getCopyFromURL());
 
       if (localPath != null) {
