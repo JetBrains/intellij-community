@@ -550,7 +550,7 @@ object UpdateChecker {
     }
     else {
       val updateInfo = UpdatesInfo(loadElement(updateInfoText))
-      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, UpdateSettings.getInstance())
+      val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo)
       val checkForUpdateResult = strategy.checkForUpdates()
       channel = checkForUpdateResult.updatedChannel
       newBuild = checkForUpdateResult.newBuild

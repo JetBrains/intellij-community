@@ -11,6 +11,9 @@ import java.util.*
 private val NUMBER = Regex("\\d+")
 
 class UpdateStrategy(private val currentBuild: BuildNumber, private val updates: UpdatesInfo, private val settings: UserUpdateSettings) {
+  constructor(currentBuild: BuildNumber, updates: UpdatesInfo) :
+    this(currentBuild, updates, UpdateSettings.getInstance())
+
   enum class State {
     LOADED, CONNECTION_ERROR, NOTHING_LOADED
   }
