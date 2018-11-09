@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.avatars
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.IconUtil
@@ -37,7 +38,7 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
   }
 
   private fun createDefaultIcon(size: Int): Icon {
-    val standardDefaultAvatar = GithubIcons.DefaultAvatar_40
+    val standardDefaultAvatar = GithubIcons.DefaultAvatar
     val scale = size.toFloat() / standardDefaultAvatar.iconWidth.toFloat()
     return IconUtil.scale(standardDefaultAvatar, null, scale)
   }
@@ -52,6 +53,7 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
       icons.clear()
     }
 
+    val modality = ModalityState.stateForComponent(component)
     return icons.getOrPut(user) {
       val icon = DelegatingIcon(defaultIcon)
       avatarsLoader
@@ -61,7 +63,7 @@ internal class CachingGithubAvatarIconsProvider(private val avatarsLoader: Cachi
           else CompletableFuture.completedFuture(null)
         }
         .thenAccept {
-          if (it != null) runInEdt {
+          if (it != null) runInEdt(modality) {
             icon.delegate = IconUtil.createImageIcon(it)
             component.repaint()
           }
