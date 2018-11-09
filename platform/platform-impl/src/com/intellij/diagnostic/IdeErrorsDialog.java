@@ -963,8 +963,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   }
 
   @Nullable
-  static ErrorReportSubmitter getSubmitter(@NotNull Throwable t) {
-    PluginId pluginId = findPluginId(t);
+  static ErrorReportSubmitter getSubmitter(@NotNull Throwable t, PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
     return getSubmitter(t, pluginId, plugin);
   }
