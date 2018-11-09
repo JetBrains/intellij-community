@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,8 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
 public final class ColorKey implements Comparable<ColorKey> {
+  public static final Key<Function<ColorKey, Color>> FUNCTION_KEY = Key.create("COLOR_KEY_FUNCTION");
   private static final ConcurrentMap<String, ColorKey> ourRegistry = new ConcurrentHashMap<>();
 
   @NotNull
