@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
@@ -23,7 +24,6 @@ import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -214,7 +214,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   @Override
   public List<JsonSchemaInfo> getAllUserVisibleSchemas() {
     List<String> schemas = myCatalogManager.getAllCatalogSchemas();
-    Collection<JsonSchemaFileProvider> providers = myState.getProviders();
+    Collection<? extends JsonSchemaFileProvider> providers = myState.getProviders();
     List<JsonSchemaInfo> results = ContainerUtil.newArrayListWithCapacity(schemas.size() + providers.size());
     Set<String> processedRemotes = ContainerUtil.newHashSet();
     for (JsonSchemaFileProvider provider: providers) {
@@ -407,23 +407,23 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   private static class MyState {
     @NotNull private final Factory<List<JsonSchemaFileProvider>> myFactory;
     @NotNull private final Project myProject;
-    @NotNull private final ClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>> myData;
+    @NotNull private final ClearableLazyValue<MultiMap<VirtualFile, JsonSchemaFileProvider>> myData;
     private final AtomicBoolean myIsComputed = new AtomicBoolean(false);
 
     private MyState(@NotNull final Factory<List<JsonSchemaFileProvider>> factory, @NotNull Project project) {
       myFactory = factory;
       myProject = project;
-      myData = new ClearableLazyValue<Map<VirtualFile, JsonSchemaFileProvider>>() {
+      myData = new ClearableLazyValue<MultiMap<VirtualFile, JsonSchemaFileProvider>>() {
         @NotNull
         @Override
-        public Map<VirtualFile, JsonSchemaFileProvider> compute() {
+        public MultiMap<VirtualFile, JsonSchemaFileProvider> compute() {
           myIsComputed.set(true);
-          return Collections.unmodifiableMap(createFileProviderMap(myFactory.create(), myProject));
+          return createFileProviderMap(myFactory.create(), myProject);
         }
 
         @NotNull
         @Override
-        public final synchronized Map<VirtualFile, JsonSchemaFileProvider> getValue() {
+        public final synchronized MultiMap<VirtualFile, JsonSchemaFileProvider> getValue() {
           return super.getValue();
         }
 
@@ -440,7 +440,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     }
 
     @NotNull
-    public Collection<JsonSchemaFileProvider> getProviders() {
+    public Collection<? extends JsonSchemaFileProvider> getProviders() {
       return myData.getValue().values();
     }
 
@@ -451,7 +451,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
     @Nullable
     public JsonSchemaFileProvider getProvider(@NotNull final VirtualFile file) {
-      return myData.getValue().get(file);
+      final Collection<JsonSchemaFileProvider> providers = myData.getValue().get(file);
+      return providers.stream().filter(p -> p.getSchemaType() == SchemaType.userSchema).findFirst().orElse(providers.stream().findFirst().orElse(null));
     }
 
     public boolean isComputed() {
@@ -459,15 +460,15 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     }
 
     @NotNull
-    private static Map<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull final List<JsonSchemaFileProvider> list,
+    private static MultiMap<VirtualFile, JsonSchemaFileProvider> createFileProviderMap(@NotNull final List<JsonSchemaFileProvider> list,
                                                                                   @NotNull Project project) {
       // if there are different providers with the same schema files,
       // stream API does not allow to collect same keys with Collectors.toMap(): throws duplicate key
-      final Map<VirtualFile, JsonSchemaFileProvider> map = new THashMap<>();
+      final MultiMap<VirtualFile, JsonSchemaFileProvider> map = MultiMap.create();
       for (JsonSchemaFileProvider provider : list) {
         VirtualFile schemaFile = getSchemaForProvider(project, provider);
         if (schemaFile != null) {
-          map.put(schemaFile, provider);
+          map.putValue(schemaFile, provider);
         }
       }
       return map;

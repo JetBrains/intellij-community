@@ -6,6 +6,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -322,8 +323,6 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt, boolean useEditorSelection) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
-
     SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(evnt.getProject());
     if (seManager.isShown()) {
       if (searchProviderID.equals(seManager.getShownContributorID())) {
@@ -331,10 +330,14 @@ public abstract class GotoActionBase extends AnAction {
       }
       else {
         seManager.setShownContributor(searchProviderID);
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE
+                                                             + "." + SearchEverywhereUI.TAB_SWITCHED
+                                                             + "." + searchProviderID);
       }
       return;
     }
 
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
     IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
     String searchText = StringUtil.nullize(getInitialText(useEditorSelection, evnt).first);
     seManager.show(searchProviderID, searchText, evnt);

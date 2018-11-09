@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.util.Collections;
+import java.util.ListIterator;
 
 class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
 
@@ -51,6 +52,44 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
         return index >= 0 ? Collections.singleton(TextRange.from(index, pattern.length())) : null;
       }
     });
+  }
+
+  @Nullable
+  @Override
+  protected Object findElement(String s) {
+    int selectedIndex = getSelectedIndex();
+    if (selectedIndex < 0) {
+      selectedIndex = 0;
+    }
+    final ListIterator<Object> it = getElementIterator(selectedIndex);
+    final String _s = s.trim();
+
+    // search visible nodes at first
+    while (it.hasNext()) {
+      final TreePath element = (TreePath) it.next();
+      if (myComponent.isVisible(element) && isMatchingElement(element, _s)) return element;
+    }
+    if (selectedIndex > 0) {
+      while (it.hasPrevious()) it.previous();
+      while (it.hasNext() && it.nextIndex() != selectedIndex) {
+        final TreePath element = (TreePath) it.next();
+        if (myComponent.isVisible(element) && isMatchingElement(element, _s)) return element;
+      }
+    }
+
+    while (it.hasNext()) {
+      final TreePath element = (TreePath) it.next();
+      if (isMatchingElement(element, _s)) return element;
+    }
+    if (selectedIndex > 0) {
+      while (it.hasPrevious()) it.previous();
+      while (it.hasNext() && it.nextIndex() != selectedIndex) {
+        final TreePath element = (TreePath) it.next();
+        if (isMatchingElement(element, _s)) return element;
+      }
+    }
+
+    return null;
   }
 
   @NotNull

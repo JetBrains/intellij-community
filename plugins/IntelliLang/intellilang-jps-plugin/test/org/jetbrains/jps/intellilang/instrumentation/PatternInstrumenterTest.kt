@@ -136,10 +136,10 @@ class PatternInstrumenterTest {
   private fun loadClass(name: String = "TestClass", type: InstrumentationType = InstrumentationType.EXCEPTION): Class<*> {
     val testDir = File(PluginPathManager.getPluginHomePath("IntelliLang") + "/intellilang-jps-plugin/testData/patternInstrumenter")
 
-    val roots = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations")
-    val paths = listOf(testDir.path) + roots + listOf(PlatformTestUtil.getRtJarPath())
-    val urls = paths.map { p -> File(p).toURI().toURL() }.toTypedArray()
-    val finder = InstrumentationClassFinder(urls)
+    val classes = listOf(File(testDir.path).toURI().toURL())
+    val lib = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations").map { p -> File(p).toURI().toURL() }
+    val jdk = listOf(PlatformTestUtil.getRtJarURL())
+    val finder = InstrumentationClassFinder((classes + lib + jdk).toTypedArray())
 
     val loader = MyClassLoader()
     testDir.listFiles().filter { it.name.startsWith(name) && it.name.endsWith(".class") }.sorted().forEach {

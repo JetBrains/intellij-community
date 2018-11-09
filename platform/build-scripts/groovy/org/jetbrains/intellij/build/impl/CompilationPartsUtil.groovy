@@ -31,7 +31,6 @@ import java.security.MessageDigest
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
-import java.util.zip.ZipOutputStream
 
 @CompileStatic
 class CompilationPartsUtil {
@@ -454,10 +453,7 @@ class CompilationPartsUtil {
         task.execute()
       }
       else {
-        def file = new File(ctx.archive)
-        def zos = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(file)))
-        zos.setLevel(1)
-        def zip = new Compressor.Zip(zos)
+        def zip = new Compressor.Zip(new File(ctx.archive)).withLevel(1)
         zip.addDirectory(new File(ctx.output.absolutePath))
         zip.close()
       }

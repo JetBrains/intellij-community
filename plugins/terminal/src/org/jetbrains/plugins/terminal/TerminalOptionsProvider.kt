@@ -7,6 +7,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
+import java.util.HashMap
 
 /**
  * @author traff
@@ -80,6 +81,8 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myOverrideIdeShortcuts: Boolean = true
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
+    var myUserSpecifiedEnvs: Map<String, String> = hashMapOf("PROJECT_DIR" to "\$PROJECT_DIR$")
+    var myPassParentEnvs = true
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {
@@ -116,6 +119,22 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
   fun setHighlightHyperlinks(highlight: Boolean) {
     myState.myHighlightHyperlinks = highlight
+  }
+
+  fun getUserSpecifiedEnvs(): Map<String, String> {
+    return myState.myUserSpecifiedEnvs
+  }
+
+  fun setUserSpecifiedEnvs(userSpecifiedEnvs: Map<String, String>) {
+    myState.myUserSpecifiedEnvs = userSpecifiedEnvs
+  }
+
+  fun setPassParentEnvs(passParentEnvs: Boolean) {
+    myState.myPassParentEnvs = passParentEnvs
+  }
+
+  fun passParentEnvs(): Boolean {
+    return myState.myPassParentEnvs
   }
 
   val defaultShellPath: String

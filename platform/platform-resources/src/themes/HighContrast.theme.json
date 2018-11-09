@@ -12,13 +12,16 @@
       "selectionBackground": "#3333FF",
       "selectionForeground": "#FFFFFF",
       "selectionInactiveBackground": "#383838",
+      "selectionBackgroundInactive": "#383838",
 
       "disabledBackground": "#33210C",
       "inactiveBackground": "#33210C",
 
       "disabledForeground": "#E0861F",
       "disabledText": "#E0861F",
-      "inactiveForeground": "#E0861F"
+      "inactiveForeground": "#E0861F",
+
+      "errorForeground": "#FA3232"
     },
 
     "ActionButton": {
@@ -64,6 +67,13 @@
 
     "ComboPopup.border": "1,1,1,1,E6E6E6",
 
+    "CompletionPopup":  {
+      "matchForeground": "#ED94FF",
+      "matchSelectionForeground": "#ED94FF"
+    },
+
+    "Component.grayForeground": "#E0861F",
+
     "DebuggerTabs.active.background": "#000080",
 
     "Editor": {
@@ -91,6 +101,30 @@
       "Violet": "#471747",
       "Orange": "#733000",
       "Rose": "#4D0F22"
+    },
+
+    "FlameGraph": {
+      "JVMBackground": "#FFD333",
+      "JVMSearchNotMatchedBackground": "#806919",
+      "nativeBackground": "#1AEBFF",
+      "nativeSearchNotMatchedBackground":"#00838F",
+      "parentBackground":"#FFFFFF",
+      "parentSearchNotMatchedBackground": "#757575",
+
+      "JVMFocusBackground":"#3333FF",
+      "JVMFocusSearchNotMatchedBackground": "#3333FF",
+      "nativeFocusBackground": "#3333FF",
+      "nativeFocusSearchNotMatchedBackground":"#3333FF",
+      "parentFocusBackground":"#3333FF",
+      "parentFocusSearchNotMatchedBackground": "#3333FF",
+
+      "JVMFrameForeground":"#000000",
+      "nativeFrameForeground":"#000000",
+      "parentFrameForeground":"#000000",
+
+      "JVMFocusedFrameForeground": "#FFFFFF",
+      "nativeFocusedFrameForeground": "#FFFFFF",
+      "parentFocusedFrameForeground": "#FFFFFF"
     },
 
     "Focus": {
@@ -122,10 +156,11 @@
     "Notification": {
       "background": "#000080",
       "borderColor": "#e6e6e6",
+      "Link.foreground": "#D2F53C",
 
       "Error": {
         "background": "#800002",
-        "borderColor": "#73454B"
+        "borderColor": "#E6194B"
       },
 
       "MoreButton": {
@@ -145,7 +180,7 @@
       },
 
       "ToolWindowInfo": {
-        "background": "#000080",
+        "background": "#450073",
         "borderColor": "#e6e6e6"
       }
     },
@@ -154,6 +189,29 @@
       "color": "#e6e6e6",
       "disabledColor": "#AA6E28",
       "focusedColor": "#1AEBFF"
+    },
+
+    "Plugins": {
+      "Tab": {
+        "active.background": "#3333FF",
+        "hover.background": "#3333FF"
+      },
+
+      "SearchField.borderColor": "#B3B3B3",
+      "SectionHeader.background": "#000080",
+      "tagBackground": "#000080",
+      "tagForeground": "#FFFFFF",
+
+      "Button": {
+        "installForeground": "#1AEBFF",
+        "installBorderColor":"#1AEBFF",
+        "installFillForeground": "#000000",
+        "installFillBackground": "#1AEBFF",
+        "updateForeground":"#000000",
+        "updateBackground": "#1AEBFF"
+      },
+
+      "selectionBackground": "#000066"
     },
 
     "Popup": {
@@ -198,14 +256,18 @@
         "borderColor": "#b3b3b3",
         "grayForeground": "#E0861F"
       },
-      "Advertiser.background": "000080"
+      "Advertiser.background": "#000080"
     },
 
     "Separator.foreground": "#b3b3b3",
 
     "SidePanel.background": "#000000",
 
-    "Spinner.darcula.disabledButtonColor": "#FF0000",
+    "SpeedSearch": {
+      "foreground": "#000000",
+      "borderColor": "#000000",
+      "background": "#1AEBFF"
+    },
 
     "StatusBar.borderColor": "#b3b3b3",
 
@@ -217,6 +279,8 @@
 
     "TableHeader.cellBorder": "8,0,8,0",
 
+    "Table.stripeColor": "#000033",
+
     "ToggleButton": {
       "on.background":  "#000080",
       "off.background": "#000000",
@@ -226,7 +290,13 @@
       "borderColor": "#FFFFFF"
     },
 
-    "ToolTip.background": "#450073",
+    "ToolTip": {
+      "background": "#450073",
+      "Actions": {
+        "background": "#281A33",
+        "grayForeground": "#E0861F"
+      }
+    },
 
     "ToolWindow": {
       "header": {
@@ -247,6 +317,12 @@
         "selectedBackground": "#3333FF",
         "selectedForeground": "#FFFFFF"
       }
+    },
+
+    "VersionControl": {
+      "Log.Commit.currentBranchBackground": "#0D0D40",
+      "Log.Commit.unmatchedForeground": "#E0861F",
+      "FileHistory.Commit.selectedBranchBackground": "#0D0D40"
     },
 
     "WelcomeScreen": {

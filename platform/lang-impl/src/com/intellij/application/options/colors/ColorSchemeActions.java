@@ -54,8 +54,11 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
     }
     final SchemeImporter<EditorColorsScheme> importer = SchemeImporterEP.getImporter(importerName, EditorColorsScheme.class);
     if (importer != null) {
-      VirtualFile importSource =
-        SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), null, "Choose " + importerName);
+      VirtualFile importSource = importer.getImportFile();
+      if (importSource == null) {
+        importSource =
+          SchemeImportUtil.selectImportSource(importer.getSourceExtensions(), getSchemesPanel(), null, "Choose " + importerName);
+      }
       if (importSource != null) {
         if ("jar".equals(importSource.getExtension())) {
           importFromJar(getSchemesPanel().getToolbar(), importer, importSource);
@@ -82,10 +85,12 @@ public abstract class ColorSchemeActions extends AbstractSchemeActions<EditorCol
                               });
       if (imported != null) {
         getOptions().addImportedScheme(imported);
-        getSchemesPanel()
-          .showStatus(
-            ApplicationBundle.message("settings.editor.scheme.import.success", importSource.getPresentableUrl(), imported.getName()),
-            MessageType.INFO);
+        String message = importer.getAdditionalImportInfo(imported);
+        if (message == null) {
+          message =
+            ApplicationBundle.message("settings.editor.scheme.import.success", importSource.getPresentableUrl(), imported.getName());
+        }
+        getSchemesPanel().showStatus(message, MessageType.INFO);
       }
     }
     catch (SchemeImportException e) {

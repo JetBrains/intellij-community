@@ -32,12 +32,15 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -143,7 +146,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     final VirtualFile virtualFile = file.getVirtualFile();
     final Project project = file.getProject();
     final IndentOptions projectOptions = CodeStyle.getSettings(project).getIndentOptions(file.getFileType());
-    final String projectOptionsTip = FileIndentOptionsProvider.getTooltip(projectOptions, null);
+    final String projectOptionsTip = StringUtil.capitalizeWords(FileIndentOptionsProvider.getTooltip(projectOptions, null), true);
     if (indentOptions instanceof TimeStampedIndentOptions) {
       if (((TimeStampedIndentOptions)indentOptions).isDetected()) {
         actions.add(
@@ -165,14 +168,6 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
               myDiscardedOptions.remove(virtualFile);
             }));
         actions.add(Separator.getInstance());
-        actions.add(
-          DumbAwareAction.create(
-            ApplicationBundle.message("code.style.indent.detector.disable"),
-            e -> {
-              CodeStyle.getSettings(project).AUTODETECT_INDENTS = false;
-              notifyIndentOptionsChanged(project, null);
-              showDisabledDetectionNotification(project);
-            }));
       }
     }
     else if (myDiscardedOptions.containsKey(virtualFile)) {
@@ -181,15 +176,30 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       if (document != null) {
         actions.add(
           DumbAwareAction.create(
-            ApplicationBundle.message("code.style.indent.detector.apply", getTooltip(discardedOptions)),
+            ApplicationBundle
+              .message("code.style.indent.detector.apply", getTooltip(discardedOptions, null), ColorUtil.toHex(JBColor.GRAY)),
             e -> {
               myDiscardedOptions.remove(virtualFile);
               discardedOptions.associateWithDocument(document);
               notifyIndentOptionsChanged(project, file);
             }));
+        actions.add(Separator.getInstance());
       }
     }
     return actions.toArray(AnAction.EMPTY_ARRAY);
+  }
+
+  @Nullable
+  @Override
+  public AnAction createDisableAction(@NotNull Project project) {
+    return DumbAwareAction.create(
+      ApplicationBundle.message("code.style.indent.detector.disable"),
+      e -> {
+        CodeStyle.getSettings(project).AUTODETECT_INDENTS = false;
+        myDiscardedOptions.clear();
+        notifyIndentOptionsChanged(project, null);
+        showDisabledDetectionNotification(project);
+      });
   }
 
   private void disableForFile(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
@@ -215,8 +225,8 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   private static class DetectionDisabledNotification extends Notification {
     private DetectionDisabledNotification(Project project) {
-      super(NOTIFICATION_GROUP.getDisplayId(), "",
-            ApplicationBundle.message("code.style.indent.detector.notification.content"),
+      super(NOTIFICATION_GROUP.getDisplayId(),
+            ApplicationBundle.message("code.style.indent.detector.notification.content"), "",
             NotificationType.INFORMATION);
       addAction(new ReEnableDetection(project, this));
       addAction(new ShowIndentDetectionOptionAction(ApplicationBundle.message("code.style.indent.provider.notification.settings")));
@@ -282,5 +292,19 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   private static boolean areDetected(@NotNull IndentOptions indentOptions) {
     return indentOptions instanceof TimeStampedIndentOptions && ((TimeStampedIndentOptions)indentOptions).isDetected();
+  }
+
+  @Nullable
+  @Override
+  public AnAction createDefaultAction(@NotNull Project project) {
+    return
+      !CodeStyle.getSettings(project).AUTODETECT_INDENTS
+      ? DumbAwareAction.create(
+        ApplicationBundle.message("code.style.indent.detector.enable"),
+        e -> {
+          CodeStyle.getSettings(project).AUTODETECT_INDENTS = true;
+          notifyIndentOptionsChanged(project, null);
+        })
+      : null;
   }
 }

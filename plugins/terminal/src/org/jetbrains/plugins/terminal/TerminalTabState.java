@@ -9,4 +9,7 @@ public class TerminalTabState {
 
   @Attribute("currentWorkingDirectory")
   public String myWorkingDirectory;
+
+  @Attribute("commandHistoryFileName")
+  public String myCommandHistoryFileName;
 }

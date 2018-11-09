@@ -144,7 +144,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
       "intellij.cidr.externalSystem",
       "intellij.chronon",
       "intellij.flex.uiDesigner.tests",
-      "intellij.griffon",
       "intellij.php.workshop",
       "intellij.html.quirksmode",
       "intellij.shortcutPromoter",

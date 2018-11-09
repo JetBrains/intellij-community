@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -32,12 +33,16 @@ public class TerminalSettingsPanel {
   private JBCheckBox myPasteOnMiddleButtonCheckBox;
   private JBCheckBox myCopyOnSelectionCheckBox;
   private JBCheckBox myOverrideIdeShortcuts;
+
   private JBCheckBox myShellIntegration;
   private TextFieldWithBrowseButton myStartDirectoryField;
   private JPanel myProjectSettingsPanel;
   private JPanel myGlobalSettingsPanel;
   private JPanel myConfigurablesPanel;
   private JBCheckBox myHighlightHyperlinks;
+
+  private EnvironmentVariablesTextFieldWithBrowseButton myEnvVarField;
+
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
 
@@ -113,7 +118,9 @@ public class TerminalSettingsPanel {
            || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.overrideIdeShortcuts())
            || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration())
            || (myHighlightHyperlinks.isSelected() != myOptionsProvider.highlightHyperlinks()) ||
-           myConfigurables.stream().anyMatch(c -> c.isModified());
+           myConfigurables.stream().anyMatch(c -> c.isModified())
+           || !Comparing.equal(myEnvVarField.getEnvs(), myOptionsProvider.getUserSpecifiedEnvs())
+           || (myEnvVarField.isPassParentEnvs() != myOptionsProvider.passParentEnvs());
   }
 
   public void apply() {
@@ -136,6 +143,8 @@ public class TerminalSettingsPanel {
         //pass
       }
     });
+    myOptionsProvider.setUserSpecifiedEnvs(myEnvVarField.getEnvs());
+    myOptionsProvider.setPassParentEnvs(myEnvVarField.isPassParentEnvs());
   }
 
   public void reset() {
@@ -151,6 +160,8 @@ public class TerminalSettingsPanel {
     myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
     myHighlightHyperlinks.setSelected(myOptionsProvider.highlightHyperlinks());
     myConfigurables.forEach(c -> c.reset());
+    myEnvVarField.setEnvs(myOptionsProvider.getUserSpecifiedEnvs());
+    myEnvVarField.setPassParentEnvs(myOptionsProvider.passParentEnvs());
   }
 
   public Color getDefaultValueColor() {

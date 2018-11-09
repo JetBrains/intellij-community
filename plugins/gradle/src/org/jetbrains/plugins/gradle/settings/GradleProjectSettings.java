@@ -123,6 +123,11 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     return Optional.ofNullable(version).orElseGet(GradleVersion::current);
   }
 
+  public GradleProjectSettings withQualifiedModuleNames() {
+    setUseQualifiedModuleNames(true);
+    return this;
+  }
+
   @Tag("compositeBuild")
   public static class CompositeBuild {
     @Nullable private CompositeDefinitionSource myCompositeDefinitionSource;

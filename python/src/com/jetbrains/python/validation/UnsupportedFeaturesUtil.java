@@ -74,7 +74,7 @@ public class UnsupportedFeaturesUtil {
   public static boolean raiseHasNoArgsUnderFinally(@NotNull PyRaiseStatement node, @NotNull LanguageLevel versionToProcess) {
     return node.getExpressions().length == 0 &&
            versionToProcess.isPython2() &&
-           PsiTreeUtil.getParentOfType(node, PyFinallyPart.class) != null;
+           PsiTreeUtil.getParentOfType(node, PyFinallyPart.class, true, PyExceptPart.class) != null;
   }
 
   public static boolean raiseHasMoreThenOneArg(PyRaiseStatement node, LanguageLevel versionToProcess) {

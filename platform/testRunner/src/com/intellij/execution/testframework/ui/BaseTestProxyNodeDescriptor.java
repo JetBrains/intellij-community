@@ -51,7 +51,7 @@ public class BaseTestProxyNodeDescriptor<T extends AbstractTestProxy> extends No
 
   @Override
   public boolean update() {
-    return false;
+    return true;
   }
 
   @Override

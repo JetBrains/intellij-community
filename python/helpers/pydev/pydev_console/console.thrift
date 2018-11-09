@@ -172,10 +172,13 @@ service PythonConsoleBackendService {
   void loadFullValue(1: LoadFullValueRequestSeq seq, 2: list<string> variables),
 }
 
+exception KeyboardInterruptException {
+}
+
 service PythonConsoleFrontendService {
   void notifyFinished(1: bool needsMoreInput),
 
-  string requestInput(1: string path),
+  string requestInput(1: string path) throws (1: KeyboardInterruptException interrupted),
 
   void notifyAboutMagic(1: list<string> commands, 2: bool isAutoMagic),
 

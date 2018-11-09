@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.*;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
@@ -873,6 +874,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   public static PluginId findPluginId(@NotNull Throwable t) {
     if (t instanceof PluginException) {
       return ((PluginException)t).getPluginId();
+    }
+    if (t instanceof PicoPluginExtensionInitializationException) {
+      return ((PicoPluginExtensionInitializationException)t).getPluginId();
     }
 
     Set<String> visitedClassNames = ContainerUtil.newHashSet();

@@ -198,6 +198,21 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
     return null;
   }
 
+  /**
+   * Searches a provider for a specific language or its base language.
+   *
+   * @param language The original language.
+   * @return Found provider or {@code null} if it doesn't exist neither for the language itself nor for any of its base languages.
+   */
+  @Nullable
+  public static LanguageCodeStyleSettingsProvider findUsingBaseLanguage(@NotNull final Language language) {
+    for (Language currLang = language; currLang != null;  currLang = currLang.getBaseLanguage()) {
+      LanguageCodeStyleSettingsProvider curr = forLanguage(currLang);
+      if (curr != null) return curr;
+    }
+    return null;
+  }
+
   @SuppressWarnings("unused")
   public static DisplayPriority getDisplayPriority(Language language) {
     LanguageCodeStyleSettingsProvider langProvider = forLanguage(language);

@@ -181,22 +181,25 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
   @Nullable
   @Override
   public AnAction[] getActions(@NotNull PsiFile file, @NotNull IndentOptions indentOptions) {
-    final Project project = file.getProject();
     if (isEditorConfigOptions(indentOptions)) {
       List<AnAction> actions = ContainerUtil.newArrayList();
       actions.addAll(EditorConfigNavigationActionsFactory.getNavigationActions(file));
-      actions.add(
-        DumbAwareAction.create(
-          EditorConfigBundle.message("action.disable"),
-          e -> {
-            EditorConfigSettings settings = CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings.class);
-            settings.ENABLED = false;
-            notifyIndentOptionsChanged(project, null);
-            showDisabledDetectionNotification(project);
-          }));
       return actions.toArray(AnAction.EMPTY_ARRAY);
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public AnAction createDisableAction(@NotNull Project project) {
+    return DumbAwareAction.create(
+      EditorConfigBundle.message("action.disable"),
+      e -> {
+        EditorConfigSettings settings = CodeStyle.getSettings(project).getCustomSettings(EditorConfigSettings.class);
+        settings.ENABLED = false;
+        notifyIndentOptionsChanged(project, null);
+        showDisabledDetectionNotification(project);
+      });
   }
 
   @Nullable
@@ -227,8 +230,8 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
 
   private static class EditorConfigDisabledNotification extends Notification {
     private EditorConfigDisabledNotification(Project project) {
-      super(NOTIFICATION_GROUP.getDisplayId(), "",
-            EditorConfigBundle.message("disabled.notification"),
+      super(NOTIFICATION_GROUP.getDisplayId(),
+            EditorConfigBundle.message("disabled.notification"), "",
             NotificationType.INFORMATION);
       addAction(new ReEnableAction(project, this));
       addAction(new ShowEditorConfigOption(ApplicationBundle.message("code.style.indent.provider.notification.settings")));
@@ -263,5 +266,10 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
       notifyIndentOptionsChanged(myProject, null);
       myNotification.expire();
     }
+  }
+
+  @Override
+  public boolean isShowFileIndentOptionsEnabled() {
+    return false;
   }
 }

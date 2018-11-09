@@ -327,11 +327,7 @@ public class PerformanceWatcher implements Disposable, BaseComponent {
     public void run() {
       myEdtRequestsQueued.decrementAndGet();
       myLastEdtAlive = System.currentTimeMillis();
-      final long latency = System.currentTimeMillis() - myCreationMillis;
-      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latency);
-/* TODO(b/118852103): get this fixed upstream
-      myPublisher.uiResponded(latency);
-TODO(b/118852103): get this fixed upstream */
+      mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, System.currentTimeMillis() - myCreationMillis);
     }
   }
 
@@ -347,6 +343,7 @@ TODO(b/118852103): get this fixed upstream */
                "; general responsiveness: " + myGeneralApdex.summarizePerformanceSince(myStartGeneralSnapshot) +
                "; EDT responsiveness: " + mySwingApdex.summarizePerformanceSince(myStartSwingSnapshot));
     }
+
   }
 
   @NotNull

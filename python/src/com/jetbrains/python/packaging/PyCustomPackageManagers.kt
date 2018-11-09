@@ -30,9 +30,24 @@ private val LOG: Logger = Logger.getInstance("#com.jetbrains.python.packaging.Py
  */
 @ApiStatus.Experimental
 fun tryCreateCustomPackageManager(sdk: Sdk): PyPackageManager? {
-  val managers = EP_NAME.extensionList.mapNotNull { it.tryCreateForSdk(sdk) }
+  val managers: List<PyPackageManager> = EP_NAME.extensionList.mapNotNull { it.safeTryCreateForSdk(sdk) }
   if (managers.size > 1) {
     LOG.warn("Ambiguous Python package managers found: $managers")
   }
   return managers.firstOrNull()
+}
+
+/**
+ * Fixes the problem when [PyPackageManagerProvider.tryCreateForSdk] for Docker
+ * and Docker Compose types throws [NoClassDefFoundError] exception when
+ * `org.jetbrains.plugins.remote-run` plugin is disabled.
+ */
+private fun PyPackageManagerProvider.safeTryCreateForSdk(sdk: Sdk): PyPackageManager? {
+  try {
+    return tryCreateForSdk(sdk)
+  }
+  catch (e: NoClassDefFoundError) {
+    LOG.info(e)
+    return null
+  }
 }

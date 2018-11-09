@@ -40,7 +40,7 @@ abstract class PyTestsFunctionBasedRunner<T extends PyScriptTestProcessRunner<?>
   protected final void checkTestResults(@NotNull final T runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
     for (final String functionName : myFunctionsToCheck) {
       ReadAction.run((ThrowableRunnable<AssertionError>)() -> {
         final AbstractTestProxy method = runner.findTestByName(functionName);

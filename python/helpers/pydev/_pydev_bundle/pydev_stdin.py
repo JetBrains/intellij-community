@@ -1,5 +1,7 @@
 import sys
 
+from pydev_console.protocol import KeyboardInterruptException
+
 
 # =======================================================================================================================
 # BaseStdIn
@@ -65,6 +67,10 @@ class StdIn(BaseStdIn):
             return requested_input
         except KeyboardInterrupt:
             raise  # Let KeyboardInterrupt go through -- #PyDev-816: Interrupting infinite loop in the Interactive Console
+        except KeyboardInterruptException:
+            # this exception is explicitly declared in `requestInput()` method of `PythonConsoleFrontendService` Thrift service
+            # it is thrown on the IDE side and transferred by Thrift library as the response to `requestInput()` method
+            raise
         except:
             return '\n'
 

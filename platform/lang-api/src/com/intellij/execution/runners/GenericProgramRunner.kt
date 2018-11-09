@@ -50,6 +50,6 @@ internal fun startRunProfile(environment: ExecutionEnvironment, state: RunProfil
   ExecutionManager.getInstance(environment.project).startRunProfile(runProfileStarter {
     (starter?.executeAsync(state, environment) ?: resolvedPromise())
       .then { BaseProgramRunner.postProcess(environment, it, callback) }
-      .onError { ExecutionUtil.LOG.error(it) }
+      // errors are handled by com.intellij.execution.ExecutionManager.startRunProfile
   }, state, environment)
 }

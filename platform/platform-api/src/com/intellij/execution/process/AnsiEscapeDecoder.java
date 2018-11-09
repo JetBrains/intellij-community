@@ -35,7 +35,6 @@ public class AnsiEscapeDecoder {
   private static final char ESC_CHAR = '\u001B'; // Escape sequence start character
   private static final String CSI = ESC_CHAR + "["; // "Control Sequence Initiator"
   private static final String M_CSI = "m" + CSI;
-  private static final char BACKSPACE = '\b';
 
   private final ColoredOutputTypeRegistry myColoredOutputTypeRegistry = ColoredOutputTypeRegistry.getInstance();
   private String myUnhandledStdout;
@@ -53,7 +52,6 @@ public class AnsiEscapeDecoder {
    */
   public void escapeText(@NotNull String text, @NotNull Key outputType, @NotNull ColoredTextAcceptor textAcceptor) {
     text = prependUnhandledText(text, outputType);
-    text = normalizeAsciiControlCharacters(text);
     int pos = 0, findEscSeqFromIndex = 0;
     List<Pair<String, Key>> chunks = null;
     int unhandledSuffixLength = 0;
@@ -129,48 +127,6 @@ public class AnsiEscapeDecoder {
       myUnhandledStderr = null;
     }
     return prevUnhandledText != null ? prevUnhandledText + text : text;
-  }
-
-  @NotNull
-  private static String normalizeAsciiControlCharacters(@NotNull String text) {
-    int ind = text.indexOf(BACKSPACE);
-    if (ind == -1) {
-      return text;
-    }
-    StringBuilder result = new StringBuilder();
-    int i = 0;
-    int guardIndex = 0;
-    boolean removalFromPrevTextAttempted = false;
-    while (i < text.length()) {
-      LineSeparator lineSeparator = StringUtil.getLineSeparatorAt(text, i);
-      if (lineSeparator != null) {
-        i += lineSeparator.getSeparatorString().length();
-        result.append(lineSeparator.getSeparatorString());
-        guardIndex = result.length();
-      }
-      else {
-        if (text.charAt(i) == BACKSPACE) {
-          if (result.length() > guardIndex) {
-            result.setLength(result.length() - 1);
-          }
-          else if (guardIndex == 0) {
-            removalFromPrevTextAttempted = true;
-          }
-        }
-        else {
-          result.append(text.charAt(i));
-        }
-        i++;
-      }
-    }
-    if (removalFromPrevTextAttempted) {
-      // This workaround allows to pretty print progress splitting it into several lines:
-      //  25% 1/4 build modules
-      //  40% 2/4 build modules
-      // instead of one single line "25% 1/4 build modules 40% 2/4 build modules"
-      result.insert(0, LineSeparator.LF.getSeparatorString());
-    }
-    return result.toString();
   }
 
   /**

@@ -16,7 +16,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
@@ -68,7 +67,6 @@ public class VcsLogManager implements Disposable {
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
     myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
-    myLogData.getUserRegistry().addRebuildListener(t -> fatalErrorsHandler.consume(myLogData.getUserRegistry(), t), this);
 
     if (scheduleRefreshImmediately) {
       scheduleInitialization();
@@ -210,7 +208,7 @@ public class VcsLogManager implements Disposable {
         LOG.error(e);
       }
 
-      if (source instanceof VcsLogStorage || source instanceof VcsUserRegistry) {
+      if (source instanceof VcsLogStorage) {
         ((VcsLogModifiableIndex)myLogData.getIndex()).markCorrupted();
       }
     }

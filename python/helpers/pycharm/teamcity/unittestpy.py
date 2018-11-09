@@ -274,7 +274,10 @@ class TeamcityTestResult(TestResult):
             if subtest_failures:
                 self.report_fail(test, "One or more subtests failed", "")
 
-        time_diff = datetime.datetime.now() - self.test_started_datetime_map[test_id]
+        try:
+            time_diff = datetime.datetime.now() - self.test_started_datetime_map[test_id]
+        except KeyError:
+            time_diff = None
         self.messages.testFinished(test_id, testDuration=time_diff, flowId=test_id)
 
     def printErrors(self):

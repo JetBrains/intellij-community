@@ -49,7 +49,7 @@ public class LibraryScope extends LibraryScopeBase {
   }
 
   @Override
-  public int hashCode() {
-    return 31 * super.hashCode() + myLibrary.hashCode();
+  public int calcHashCode() {
+    return 31 * super.calcHashCode() + myLibrary.hashCode();
   }
 }

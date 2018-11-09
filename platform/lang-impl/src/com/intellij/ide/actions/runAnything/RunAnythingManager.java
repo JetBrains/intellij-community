@@ -98,6 +98,7 @@ public class RunAnythingManager {
     return myRunAnythingUI != null && myBalloon != null && !myBalloon.isDisposed();
   }
 
+  @SuppressWarnings("Duplicates")
   @NotNull
   private RunAnythingPopupUI createView(@NotNull AnActionEvent event) {
     RunAnythingPopupUI view = new RunAnythingPopupUI(event);
@@ -113,6 +114,10 @@ public class RunAnythingManager {
         return;
       }
 
+      Dimension minSize = myRunAnythingUI.getMinimumSize();
+      JBInsets.addTo(minSize, myBalloon.getContent().getInsets());
+      myBalloon.setMinimumSize(minSize);
+
       if (viewType == BigPopupUI.ViewType.SHORT) {
         myBalloonFullSize = myBalloon.getSize();
         JBInsets.removeFrom(myBalloonFullSize, myBalloon.getContent().getInsets());
@@ -123,6 +128,9 @@ public class RunAnythingManager {
           myBalloonFullSize = myRunAnythingUI.getPreferredSize();
           JBInsets.addTo(myBalloonFullSize, myBalloon.getContent().getInsets());
         }
+        myBalloonFullSize.height = Integer.max(myBalloonFullSize.height, minSize.height);
+        myBalloonFullSize.width = Integer.max(myBalloonFullSize.width, minSize.width);
+
         myBalloon.setSize(myBalloonFullSize);
       }
     });

@@ -18,8 +18,11 @@ package com.intellij.extapi.psi;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
 public abstract class MetadataPsiElementBase extends PsiElementBase {
 
   private final PsiElement mySourceElement;

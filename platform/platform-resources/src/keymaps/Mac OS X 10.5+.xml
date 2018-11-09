@@ -545,9 +545,11 @@
   </action>
   <action id="EditorDown">
     <keyboard-shortcut first-keystroke="DOWN"/>
+    <keyboard-shortcut first-keystroke="control N"/>
   </action>
   <action id="EditorLeft">
     <keyboard-shortcut first-keystroke="LEFT"/>
+    <keyboard-shortcut first-keystroke="control B"/>
   </action>
   <action id="EditorLineEnd">
     <keyboard-shortcut first-keystroke="END"/>
@@ -561,12 +563,14 @@
   </action>
   <action id="EditorRight">
     <keyboard-shortcut first-keystroke="RIGHT"/>
+    <keyboard-shortcut first-keystroke="control F"/>
   </action>
   <action id="EditorToggleColumnMode">
     <keyboard-shortcut first-keystroke="shift meta 8"/>
   </action>
   <action id="EditorUp">
     <keyboard-shortcut first-keystroke="UP"/>
+    <keyboard-shortcut first-keystroke="control P"/>
   </action>
 
   <action id="UsageView.Include">

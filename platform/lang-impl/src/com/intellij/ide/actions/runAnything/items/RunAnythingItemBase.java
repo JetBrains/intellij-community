@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.runAnything.items;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
@@ -65,7 +66,11 @@ public class RunAnythingItemBase extends RunAnythingItem {
 
   protected static void appendDescription(@NotNull SimpleColoredComponent component, @Nullable String description, boolean isSelected) {
     if (description != null) {
-      SimpleTextAttributes smallAttributes = new SimpleTextAttributes(STYLE_SMALLER, UIUtil.getListForeground(isSelected));
+      Color foreground = JBColor.GRAY;
+      if (isSelected) {
+        foreground = UIUtil.getListForeground(true);
+      }
+      SimpleTextAttributes smallAttributes = new SimpleTextAttributes(STYLE_SMALLER, foreground);
       component.append(StringUtil.shortenTextWithEllipsis(description, 40, 0), smallAttributes);
       component.appendTextPadding(660, SwingConstants.RIGHT);
     }

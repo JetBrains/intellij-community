@@ -125,4 +125,35 @@ public abstract class FileIndentOptionsProvider {
   protected static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
   }
+
+  /**
+   * @return True if "Configure indents for [Language]" action should be available when the provider is active (returns its own indent
+   *          options), false otherwise.
+   */
+  public boolean isShowFileIndentOptionsEnabled() {
+    return true;
+  }
+
+  /**
+   * Creates an action which can be used to disable the provider.
+   *
+   * @param project The project to disable the provider in.
+   * @return The disable action.
+   */
+  @Nullable
+  public AnAction createDisableAction(@NotNull Project project) {
+    return null;
+  }
+
+  /**
+   * Creates a default action when the provider is inactive (disabled). Default actions are collected from multiple providers if none
+   * of them is returning any indent options. The action may suggest to enable the provider if it's currently disabled.
+   *
+   * @param project The project to run the default action for.
+   * @return The default action.
+   */
+  @Nullable
+  public AnAction createDefaultAction(@NotNull Project project) {
+    return null;
+  }
 }

@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.intellij.util.ui.JBUI.ScaleType.*;
 
@@ -45,7 +46,7 @@ public final class IconLoader {
    * This cache contains mapping between icons and disabled icons.
    */
   private static final Map<Icon, Icon> ourIcon2DisabledIcon = ContainerUtil.createWeakMap(200);
-  @NonNls private static final List<IconPathPatcher> ourPatchers = new ArrayList<IconPathPatcher>(2);
+  @NonNls private static final List<IconPathPatcher> ourPatchers = new CopyOnWriteArrayList<IconPathPatcher>();
   public static boolean STRICT;
 
   private static boolean USE_DARK_ICONS = UIUtil.isUnderDarcula();

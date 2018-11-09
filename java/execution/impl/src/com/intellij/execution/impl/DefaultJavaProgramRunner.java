@@ -34,6 +34,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerManagerListener;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,7 @@ import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author spleaner
@@ -214,7 +216,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
   protected static class AttachDebuggerAction extends DumbAwareAction {
     private final AtomicBoolean myEnabled = new AtomicBoolean();
-    private final AtomicBoolean myAttached = new AtomicBoolean();
+    private final AtomicReference<XDebugSession> myAttachedSession = new AtomicReference<>();
     private final BaseProcessHandler myProcessHandler;
     private MessageBusConnection myConnection = null;
 
@@ -236,6 +238,10 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
             myConnection.disconnect();
           }
           myProcessHandler.removeProcessListener(this);
+          XDebugSession attachedSession = myAttachedSession.getAndSet(null);
+          if (attachedSession != null) {
+            attachedSession.stop();
+          }
         }
       });
     }
@@ -262,14 +268,14 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
               if (connection instanceof PidRemoteConnection) {
                 if (((PidRemoteConnection)connection).getPid()
                   .equals(String.valueOf(OSProcessUtil.getProcessID(myProcessHandler.getProcess())))) {
-                  myAttached.set(started);
+                  myAttachedSession.set(started ? debugProcess.getSession() : null);
                 }
               }
             }
           }
         });
       }
-      if (myAttached.get() || myProcessHandler.isProcessTerminated()) {
+      if (myAttachedSession.get() != null || myProcessHandler.isProcessTerminated()) {
         e.getPresentation().setEnabled(false);
         return;
       }
@@ -278,7 +284,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myAttached.set(JavaDebuggerAttachUtil.attach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()), e.getProject()));
+      JavaDebuggerAttachUtil.attach(OSProcessUtil.getProcessID(myProcessHandler.getProcess()), e.getProject());
     }
 
     public static void add(RunContentBuilder contentBuilder, ProcessHandler processHandler) {

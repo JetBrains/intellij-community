@@ -40,10 +40,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.fs.FilesDelta;
 import org.jetbrains.jps.incremental.messages.*;
-import org.jetbrains.jps.incremental.storage.BuildTargetConfiguration;
-import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
-import org.jetbrains.jps.incremental.storage.OutputToTargetRegistry;
-import org.jetbrains.jps.incremental.storage.SourceToOutputMappingImpl;
+import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.JavacMain;
@@ -520,6 +517,14 @@ public class IncProjectBuilder {
           }
         }
       }
+      else {
+        final BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+        for (BuildTarget<?> target : getTargetsWithClearedOutput(context)) {
+          // This will ensure the target will be fully rebuilt either in this or in the future build session.
+          // if this build fails or is cancelled, all such targets will still be marked as needing recompilation
+          targetsState.getTargetConfiguration(target).invalidate();
+        }
+      }
     }
   }
 
@@ -598,6 +603,13 @@ public class IncProjectBuilder {
     synchronized (TARGET_WITH_CLEARED_OUTPUT) {
       Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
       return data != null && data.contains(target);
+    }
+  }
+
+  private static Set<BuildTarget<?>> getTargetsWithClearedOutput(CompileContext context) {
+    synchronized (TARGET_WITH_CLEARED_OUTPUT) {
+      Set<BuildTarget<?>> data = context.getUserData(TARGET_WITH_CLEARED_OUTPUT);
+      return data != null? Collections.unmodifiableSet(new HashSet<>(data)) : Collections.emptySet();
     }
   }
 

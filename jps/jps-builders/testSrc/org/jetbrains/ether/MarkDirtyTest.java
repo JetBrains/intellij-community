@@ -15,6 +15,8 @@
  */
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.builders.CompileScopeTestBuilder;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
@@ -65,6 +67,22 @@ public class MarkDirtyTest extends IncrementalTestCase {
     else {
       super.modify(stage);
     }
+  }
+
+  @Override
+  protected CompileScopeTestBuilder createCompileScope(int stage) {
+    if ("cleanTimestampsWithOutputOnModuleRebuild".equals(getTestName(true))) {
+      if (stage == 0) {
+        return CompileScopeTestBuilder.recompile().targetTypes(JavaModuleBuildTargetType.PRODUCTION);
+      }
+    }
+    return super.createCompileScope(stage);
+  }
+
+  public void testCleanTimestampsWithOutputOnModuleRebuild() {
+    setupInitialProject();
+    setupModules();
+    doTestBuild(2).assertSuccessful();
   }
 
   public void testRecompileTargetOnExportedLibraryChange() {

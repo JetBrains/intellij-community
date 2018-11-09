@@ -264,8 +264,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.raiseHasNoArgsUnderFinally(node, level),
                                    " not support this syntax. Raise with no arguments can only be used in an except block",
                                    node,
-                                   null,
-                                   false);
+                                   null);
 
     // raise 1, 2, 3
     registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.raiseHasMoreThenOneArg(node, level),

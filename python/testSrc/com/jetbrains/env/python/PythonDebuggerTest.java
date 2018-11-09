@@ -124,7 +124,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         if (isSkipAllowed) {
           runner.assertNoFailures();
         }
