@@ -296,6 +296,23 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
     assertEquals(66, highlighter.getEndOffset());
   }
 
+  public void testOverrideClassLoaderMethodSince7() {
+    ModuleRootModificationUtil.addDependency(myJava8Module, myJava3Module);
+    myFixture.addFileToProject("java3/MyLoader.java",
+                               "public class MyLoader extends ClassLoader { protected Object getClassLoadingLock(String className) {} }");
+    PsiFile file = myFixture.addFileToProject("java8/Usage.java",
+                                              "class My extends MyLoader {{ " +
+                                              "  <caret>getClassLoadingLock(\"\"); " +
+                                              "}}\n" +
+                                              "" +
+                                              "class Standard extends ClassLoader {{ " +
+                                              "  getClassLoadingLock(\"\"); " +
+                                              "}}" +
+                                              "");
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    myFixture.checkHighlighting();
+  }
+
   private void doTestWithoutLibrary() {
     final String name = getTestName(false);
     myFixture.configureByFiles("java7/p/" + name + ".java", "java8/p/" + name + ".java");
