@@ -561,15 +561,19 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     protected boolean isRelevant(String path) {
       if (!myKnownFiles.get(path).isEmpty()) return true;
 
-      String canonicalPath = FileUtil.toCanonicalPath(path);
       for (VirtualFilePointer pointer : myFilesPointers.keySet()) {
         String filePath = VfsUtilCore.urlToPath(pointer.getUrl());
-        if (StringUtil.isNotEmpty(filePath) && FileUtil.namesEqual(canonicalPath, FileUtil.toCanonicalPath(filePath))) {
+        if (StringUtil.isNotEmpty(filePath) && FileUtil.namesEqual(path, filePath)) {
           for (String projectPath : myFilesPointers.get(pointer)) {
             myKnownFiles.putValue(path, projectPath);
             myKnownAffectedFiles.putValue(projectPath, path);
           }
           return true;
+        }
+        else if (LOG.isDebugEnabled()) {
+          if (StringUtil.isNotEmpty(filePath) && FileUtil.namesEqual(FileUtil.toCanonicalPath(path), FileUtil.toCanonicalPath(filePath))) {
+            LOG.debug("Changes were ignored: " + path + ". Related FW: " + filePath);
+          }
         }
       }
       String affectedProjectPath = getRelatedExternalProjectPath(path);
