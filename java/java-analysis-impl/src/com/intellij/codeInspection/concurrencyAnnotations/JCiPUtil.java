@@ -21,6 +21,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,11 +46,16 @@ public class JCiPUtil {
     if (annotation != null) {
       return true;
     }
-    if (checkDocComment && IdIndex.hasIdentifierInFile(aClass.getContainingFile(), "Immutable")) {
+    if (checkDocComment && containsImmutableWord(aClass.getContainingFile())) {
       final PsiDocComment comment = aClass.getDocComment();
       return comment != null && comment.findTagByName("@Immutable") != null;
     }
     return false;
+  }
+
+  private static boolean containsImmutableWord(PsiFile file) {
+    return CachedValuesManager.getCachedValue(file, () ->
+      CachedValueProvider.Result.create(IdIndex.hasIdentifierInFile(file, "Immutable"), file));
   }
 
   @Nullable
