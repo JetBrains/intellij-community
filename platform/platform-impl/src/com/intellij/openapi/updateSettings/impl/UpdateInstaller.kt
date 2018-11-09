@@ -43,7 +43,7 @@ object UpdateInstaller {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
       val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
-      val patchFile = File(getTempDir(), "patch${i}.jar")
+      val patchFile = File(getTempDir(), "${product}-patch${i}-${from}-${to}.jar")
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
         override fun setFraction(fraction: Double) {
