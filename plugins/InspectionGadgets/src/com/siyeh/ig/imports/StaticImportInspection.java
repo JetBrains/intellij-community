@@ -19,6 +19,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -149,7 +150,8 @@ public class StaticImportInspection extends BaseInspection {
       final Map<PsiJavaCodeReferenceElement, PsiMember> referenceTargetMap = new HashMap<>();
       for (PsiJavaCodeReferenceElement reference : references) {
         final PsiElement target = reference.resolve();
-        if (target instanceof PsiEnumConstant && reference.getParent() instanceof PsiSwitchLabelStatement) continue;
+        if (target instanceof PsiEnumConstant &&
+            reference instanceof PsiExpression && PsiImplUtil.getSwitchLabel((PsiExpression)reference) != null) continue;
         if (target instanceof PsiMember) {
           final PsiMember member = (PsiMember)target;
           referenceTargetMap.put(reference, member);

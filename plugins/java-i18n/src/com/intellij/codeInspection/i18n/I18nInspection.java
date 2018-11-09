@@ -684,13 +684,17 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       PsiElement parent = toplevel.getParent();
       if (parent instanceof PsiVariable && toplevel.equals(((PsiVariable)parent).getInitializer())) {
         var = (PsiVariable)parent;
-      } else if (parent instanceof PsiSwitchLabelStatement) {
-        final PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatement)parent).getEnclosingSwitchStatement();
-        if (switchStatement != null) {
-          final PsiExpression switchStatementExpression = switchStatement.getExpression();
-          if (switchStatementExpression instanceof PsiReferenceExpression) {
-            final PsiElement resolved = ((PsiReferenceExpression)switchStatementExpression).resolve();
-            if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
+      }
+      else if (parent instanceof PsiExpressionList) {
+        parent = parent.getParent();
+        if (parent instanceof PsiSwitchLabelStatementBase) {
+          PsiSwitchStatement switchStatement = ((PsiSwitchLabelStatementBase)parent).getEnclosingSwitchStatement();
+          if (switchStatement != null) {
+            PsiExpression switchStatementExpression = switchStatement.getExpression();
+            if (switchStatementExpression instanceof PsiReferenceExpression) {
+              PsiElement resolved = ((PsiReferenceExpression)switchStatementExpression).resolve();
+              if (resolved instanceof PsiVariable) var = (PsiVariable)resolved;
+            }
           }
         }
       }
