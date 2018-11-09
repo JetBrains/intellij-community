@@ -18,6 +18,7 @@ package com.intellij.vcs.log.graph.utils
 
 import com.intellij.openapi.util.Ref
 import com.intellij.util.containers.IntStack
+import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 
@@ -30,6 +31,54 @@ object Dfs {
   object NextNode {
     const val NODE_NOT_FOUND = -1
     const val EXIT = -10
+  }
+}
+
+private fun walk(start: Int, stack: IntStack, nextNodeFun: (Int) -> Int) {
+  stack.push(start)
+
+  while (!stack.empty()) {
+    val nextNode = nextNodeFun(stack.peek())
+    if (nextNode == Dfs.NextNode.EXIT) return
+    if (nextNode != Dfs.NextNode.NODE_NOT_FOUND) {
+      stack.push(nextNode)
+    }
+    else {
+      stack.pop()
+    }
+  }
+  stack.clear()
+}
+
+fun walk(start: Int, nextNodeFun: (Int) -> Int) {
+  walk(start, IntStack(), nextNodeFun)
+}
+
+class DfsWalk(private val startNodes: Collection<Int>, private val graph: LiteLinearGraph, private val visited: Flags) {
+  private val stack = IntStack()
+
+  constructor(startNodes: Collection<Int>, linearGraph: LinearGraph) :
+    this(startNodes, LinearGraphUtils.asLiteLinearGraph(linearGraph), BitSetFlags(linearGraph.nodesCount()))
+
+  fun walk(goDown: Boolean, consumer: (Int) -> Boolean) {
+    for (start in startNodes) {
+      if (start < 0) continue
+      if (visited.get(start)) continue
+      visited.set(start, true)
+      if (!consumer(start)) return
+
+      walk(start, stack) nextNode@{ currentNode ->
+        for (downNode in graph.getNodes(currentNode, if (goDown) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
+          if (!visited.get(downNode)) {
+            visited.set(downNode, true)
+            if (!consumer(downNode)) return@nextNode Dfs.NextNode.EXIT
+            return@nextNode downNode
+          }
+        }
+
+        Dfs.NextNode.NODE_NOT_FOUND
+      }
+    }
   }
 }
 
@@ -112,21 +161,4 @@ fun LiteLinearGraph.isAncestor(lowerNode: Int, upperNode: Int): Boolean {
   }
 
   return result.get()
-}
-
-fun walk(startRowIndex: Int, nextNodeFun: (Int) -> Int) {
-  val stack = IntStack()
-  stack.push(startRowIndex)
-
-  while (!stack.empty()) {
-    val nextNode = nextNodeFun(stack.peek())
-    if (nextNode == Dfs.NextNode.EXIT) return
-    if (nextNode != Dfs.NextNode.NODE_NOT_FOUND) {
-      stack.push(nextNode)
-    }
-    else {
-      stack.pop()
-    }
-  }
-  stack.clear()
 }

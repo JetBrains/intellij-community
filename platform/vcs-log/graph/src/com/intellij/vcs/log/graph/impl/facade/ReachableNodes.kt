@@ -19,12 +19,14 @@ package com.intellij.vcs.log.graph.impl.facade
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
-import com.intellij.vcs.log.graph.utils.*
+import com.intellij.vcs.log.graph.utils.DfsWalk
+import com.intellij.vcs.log.graph.utils.Flags
+import com.intellij.vcs.log.graph.utils.UnsignedBitSet
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import java.util.*
 
 class ReachableNodes(private val graph: LiteLinearGraph) {
-  private val flags: Flags = BitSetFlags(graph.nodesCount())
+  private val visited: Flags = BitSetFlags(graph.nodesCount())
 
   fun getContainingBranches(nodeIndex: Int, branchNodeIndexes: Collection<Int>): Set<Int> {
     val result = HashSet<Int>()
@@ -45,27 +47,9 @@ class ReachableNodes(private val graph: LiteLinearGraph) {
   }
 
   fun walk(startNodes: Collection<Int>, goDown: Boolean, consumer: (Int) -> Boolean) {
-    synchronized(flags) {
-
-      flags.setAll(false)
-      for (start in startNodes) {
-        if (start < 0) continue
-        if (flags.get(start)) continue
-        flags.set(start, true)
-        if (!consumer(start)) return
-
-        walk(start) nextNode@{ currentNode ->
-          for (downNode in graph.getNodes(currentNode, if (goDown) LiteLinearGraph.NodeFilter.DOWN else LiteLinearGraph.NodeFilter.UP)) {
-            if (!flags.get(downNode)) {
-              flags.set(downNode, true)
-              if (!consumer(downNode)) return@nextNode Dfs.NextNode.EXIT
-              return@nextNode downNode
-            }
-          }
-
-          Dfs.NextNode.NODE_NOT_FOUND
-        }
-      }
+    synchronized(visited) {
+      visited.setAll(false)
+      DfsWalk(startNodes, graph, visited).walk(goDown, consumer)
     }
   }
 
@@ -79,8 +63,7 @@ class ReachableNodes(private val graph: LiteLinearGraph) {
       }
 
       val result = UnsignedBitSet()
-      val reachableNodes = ReachableNodes(LinearGraphUtils.asLiteLinearGraph(graph))
-      reachableNodes.walk(headNodeIndexes, true) { node: Int ->
+      DfsWalk(headNodeIndexes, graph).walk(true) { node: Int ->
         result.set(node, true)
         true
       }
