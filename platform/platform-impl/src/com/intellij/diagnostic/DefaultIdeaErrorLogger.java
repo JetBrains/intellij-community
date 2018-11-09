@@ -3,6 +3,8 @@ package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -12,6 +14,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.io.MappingFailedException;
@@ -46,7 +49,13 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
       boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
 
-      ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
+      Throwable t = event.getThrowable();
+      PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+      if (pluginId != null && !pluginId.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID)) {
+        FUSApplicationUsageTrigger.getInstance().trigger(PluginExceptionStatisticCollector.class, pluginId.getIdString(), null);
+      }
+
+      ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
 
       boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
