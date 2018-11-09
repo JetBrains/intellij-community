@@ -563,7 +563,8 @@ public class UsageViewImpl implements UsageViewEx {
       JBPanelWithEmptyText panel = new JBPanelWithEmptyText(new BorderLayout());
       if (components.size() == 1) {
         panel.add(components.values().iterator().next(), BorderLayout.CENTER);
-      } else {
+      }
+      else {
         for (Map.Entry<String, JComponent> entry : components.entrySet()) {
           tabbedPane.addTab(entry.getKey(), entry.getValue());
         }
@@ -609,7 +610,8 @@ public class UsageViewImpl implements UsageViewEx {
   public void setPreviewUsages(boolean state) {
     if (myPresentation.isReplaceMode()) {
       getUsageViewSettings().setReplacePreviewUsages(state);
-    } else {
+    }
+    else {
       getUsageViewSettings().setPreviewUsages(state);
     }
   }
@@ -2011,7 +2013,8 @@ public class UsageViewImpl implements UsageViewEx {
             if (name instanceof String) {
               DialogUtil.setTextWithMnemonic(button, (String)name);
             }
-          } else {
+          }
+          else {
             button.setEnabled(globallyEnabled);
           }
         }
