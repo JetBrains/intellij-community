@@ -11,6 +11,8 @@ import com.intellij.psi.impl.source.tree.JavaElementType.*
 import com.intellij.psi.impl.source.tree.LightTreeUtil
 import com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
 import com.intellij.psi.stub.JavaStubImplUtil
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.gist.GistManager
 import java.util.*
 
@@ -95,4 +97,10 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
   }
 }
 
-fun getIndexedData(method: PsiMethodImpl): MethodData? = gist.getFileData(method.containingFile)?.get(JavaStubImplUtil.getMethodStubIndex(method))
+fun getIndexedData(method: PsiMethodImpl): MethodData? {
+  val fileData = CachedValuesManager.getCachedValue(method) {
+    val file = method.containingFile
+    CachedValueProvider.Result.create(gist.getFileData(file), file)
+  }
+  return fileData?.get(JavaStubImplUtil.getMethodStubIndex(method))
+}
