@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.StatusText;
 import gnu.trove.TIntArrayList;
@@ -179,13 +180,10 @@ public class JdkChooserPanel extends JPanel {
       myList.getEmptyText().setText("");
       myLoadingDecorator.startLoading(false);
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        List<String> homePaths = JavaHomeFinder.suggestHomePaths();
+        List<String> suggestedPaths = JavaHomeFinder.suggestHomePaths();
+        suggestedPaths.removeAll(ContainerUtil.map(knownJdks, sdk -> sdk.getHomePath()));//remove all known path to avoid duplicates
         ApplicationManager.getApplication().invokeLater(() -> {
-          outer:
-          for (String homePath : homePaths) {
-            for (Sdk jdk : knownJdks) {
-              if (Comparing.equal(jdk.getHomePath(), homePath)) continue outer;
-            }
+          for (String homePath : suggestedPaths) {
             VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(homePath);
             if (virtualFile != null) {
               JavaSdk sdkType = JavaSdk.getInstance();
@@ -305,13 +303,15 @@ public class JdkChooserPanel extends JPanel {
   public static Sdk chooseAndSetJDK(final Project project) {
     final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     final Sdk jdk = showDialog(project, ProjectBundle.message("module.libraries.target.jdk.select.title"), WindowManagerEx.getInstanceEx().getFrame(project), projectJdk);
-    if (jdk == null) {
+    String path = jdk != null ? jdk.getHomePath() : null;
+    if (path == null) {
       return null;
     }
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectJdkTable table = ProjectJdkTable.getInstance();
-      if (!table.getSdksOfType(jdk.getSdkType()).contains(jdk)) {
-        table.addJdk(jdk);
+      List<Sdk> sdks = table.getSdksOfType(jdk.getSdkType());
+      if (ContainerUtil.find(sdks, sdk -> path.equals(sdk.getHomePath())) == null) {
+        table.addJdk(jdk);//this jdk is unknown yet and so it has to be added to Platform-level table now
       }
       ProjectRootManager.getInstance(project).setProjectSdk(jdk);
     });
