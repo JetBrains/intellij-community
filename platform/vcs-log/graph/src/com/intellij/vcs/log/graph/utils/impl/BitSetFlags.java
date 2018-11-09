@@ -20,6 +20,7 @@ import com.intellij.vcs.log.graph.utils.Flags;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
+import java.util.Objects;
 
 public class BitSetFlags implements Flags {
 
@@ -64,5 +65,24 @@ public class BitSetFlags implements Flags {
   private void checkRange(int index) {
     if (index < 0) throw new IndexOutOfBoundsException("index is " + index + " which is less then zero");
     if (index >= mySize) throw new IndexOutOfBoundsException("index is " + index + " and set size is " + mySize);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    BitSetFlags flags = (BitSetFlags)o;
+    return mySize == flags.mySize &&
+           myBitSet.equals(flags.myBitSet);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(mySize, myBitSet);
+  }
+
+  @Override
+  public String toString() {
+    return myBitSet + ", size = " + mySize;
   }
 }
