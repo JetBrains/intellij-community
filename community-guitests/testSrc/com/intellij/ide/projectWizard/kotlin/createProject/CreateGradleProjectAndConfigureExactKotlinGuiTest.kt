@@ -2,63 +2,70 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import java.io.Serializable
 
-class CreateGradleProjectAndConfigureExactKotlinGuiTest : KotlinGuiTestCase() {
+@RunWith(GuiTestSuiteParam::class)
+class CreateGradleProjectAndConfigureExactKotlinGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
+
+  data class TestParameters(
+    val projectName: String,
+    val kotlinVersion: String,
+    val project: ProjectProperties = kotlinProjects.getValue(Projects.GradleGProjectJvm),
+    val expectedFacet: FacetStructure) : Serializable {
+    override fun toString() = projectName
+  }
 
   @Test
-  @JvmName("gradle_cfg_jvm_old1271")
-  fun createGradleAndConfigureKotlinJvmExactVersion1271() {
-    KotlinTestProperties.kotlin_artifact_version = "1.2.71"
+  fun createGradleAndConfigureKotlinJvmExactVersion() {
+    KotlinTestProperties.kotlin_artifact_version = testParameters.kotlinVersion
     testCreateGradleAndConfigureKotlin(
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
-      expectedFacet = FacetStructure(
-        targetPlatform = TargetPlatform.JVM18,
-        languageVersion = LanguageVersion.L12,
-        apiVersion = LanguageVersion.L12,
-        jvmOptions = FacetStructureJVM()
-      ),
+      project = testParameters.project,
+      expectedFacet = testParameters.expectedFacet,
       gradleOptions = NewProjectDialogModel.GradleProjectOptions(
         artifact = testMethod.methodName
       )
     )
   }
 
-  fun createGradleAndConfigureKotlinJvmExactVersion130() {
-    KotlinTestProperties.kotlin_artifact_version = "1.3.0"
-    testCreateGradleAndConfigureKotlin(
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
-      expectedFacet = FacetStructure(
-        targetPlatform = TargetPlatform.JVM18,
-        languageVersion = LanguageVersion.L13,
-        apiVersion = LanguageVersion.L13,
-        jvmOptions = FacetStructureJVM()
-      ),
-      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
-        artifact = testMethod.methodName
-      )
+  companion object {
+    private val expectedFacet11 = FacetStructure(
+      targetPlatform = TargetPlatform.JVM18,
+      languageVersion = LanguageVersion.L11,
+      apiVersion = LanguageVersion.L11,
+      jvmOptions = FacetStructureJVM()
     )
-  }
 
-  @Test
-  @JvmName("gradle_cfg_jvm_old1161")
-  fun createGradleAndConfigureKotlinJvmExactVersion1161() {
-    KotlinTestProperties.kotlin_artifact_version = "1.1.61"
-    testCreateGradleAndConfigureKotlin(
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
-      expectedFacet = FacetStructure(
-        targetPlatform = TargetPlatform.JVM18,
-        languageVersion = LanguageVersion.L11,
-        apiVersion = LanguageVersion.L11,
-        jvmOptions = FacetStructureJVM()
-      ),
-      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
-        artifact = testMethod.methodName
+    private val expectedFacet12 =
+      expectedFacet11.copy(apiVersion = LanguageVersion.L12, languageVersion = LanguageVersion.L12)
+    private val expectedFacet13 =
+      expectedFacet11.copy(apiVersion = LanguageVersion.L13, languageVersion = LanguageVersion.L13)
+
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun data(): Collection<TestParameters> {
+      return listOf(
+        TestParameters(
+          projectName = "gradle_cfg_jvm_1161",
+          expectedFacet = expectedFacet11,
+          kotlinVersion = "1.1.61"
+        ),
+        TestParameters(
+          projectName = "gradle_cfg_jvm_1271",
+          expectedFacet = expectedFacet12,
+          kotlinVersion = "1.2.71"
+        ),
+        TestParameters(
+          projectName = "gradle_cfg_jvm_130",
+          expectedFacet = expectedFacet13,
+          kotlinVersion = "1.3.0"
+        )
       )
-    )
+    }
   }
 }
