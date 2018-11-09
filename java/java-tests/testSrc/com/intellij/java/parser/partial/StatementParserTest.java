@@ -99,10 +99,13 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchIncomplete5() { doParserTest("switch(\n foo();"); }
 
   public void testSwitchLabelsNormal() { doParserTest("case 1: break; default: break;"); }
+  public void testSwitchLabelsMultiple() { doParserTest("case 1, 2: break;"); }
   public void testSwitchLabelsIncomplete0() { doParserTest("case"); }
   public void testSwitchLabelsIncomplete1() { doParserTest("case 2"); }
   public void testSwitchLabelsIncomplete2() { doParserTest("default"); }
   public void testSwitchLabelsIncomplete3() { doParserTest("default 3:"); }
+  public void testSwitchLabelsIncomplete4() { doParserTest("case :"); }
+  public void testSwitchLabelsIncomplete5() { doParserTest("case 1, : break;"); }
 
   public void testSwitchRules0() { doParserTest("default ->"); }
   public void testSwitchRules1() { doParserTest("default -> return;"); }
@@ -115,6 +118,8 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchRules8() { doParserTest("case 1 -> ;"); }
   public void testSwitchRules9() { doParserTest("case b -> f(b);"); }
   public void testSwitchRules10() { doParserTest("case (b) -> f(b);"); }
+  public void testSwitchRules11() { doParserTest("case 1, 2 -> { }"); }
+  public void testSwitchRules12() { doParserTest("case 1, -> { }"); }
 
   public void testSyncNormal() { doParserTest("synchronized(o){}"); }
   public void testSyncIncomplete0() { doParserTest("synchronized"); }
