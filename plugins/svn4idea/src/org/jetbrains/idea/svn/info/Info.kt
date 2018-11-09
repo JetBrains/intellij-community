@@ -1,179 +1,101 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn.info;
+package org.jetbrains.idea.svn.info
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.*;
-import org.jetbrains.idea.svn.checkin.CommitInfo;
-import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
-import org.jetbrains.idea.svn.lock.Lock;
+import com.intellij.util.ObjectUtils.notNull
+import org.jetbrains.idea.svn.api.*
+import org.jetbrains.idea.svn.checkin.CommitInfo
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription
+import org.jetbrains.idea.svn.lock.Lock
+import java.io.File
 
-import java.io.File;
+private fun resolveConflictFile(file: File?, path: String?) = if (file != null && path != null) File(file.parentFile, path) else null
 
-import static com.intellij.util.ObjectUtils.notNull;
+class Info : BaseNodeDescription {
+  val file: File?
+  val url: Url?
+  val revision: Revision
+  val repositoryRootURL: Url?
+  val repositoryUUID: String?
+  val commitInfo: CommitInfo
+  val lock: Lock?
+  val schedule: String?
+  val copyFromURL: Url?
+  val copyFromRevision: Revision
+  val conflictOldFile: File?
+  val conflictNewFile: File?
+  val conflictWrkFile: File?
+  val depth: Depth?
+  val treeConflict: TreeConflictDescription?
+  val kind get() = myKind
 
-public class Info extends BaseNodeDescription {
+  fun getURL() = url
 
-  public static final String SCHEDULE_ADD = "add";
+  constructor(file: File?,
+              url: Url?,
+              rootURL: Url?,
+              revision: Long,
+              kind: NodeKind,
+              uuid: String?,
+              commitInfo: CommitInfo?,
+              schedule: String?,
+              copyFromURL: Url?,
+              copyFromRevision: Long,
+              conflictOldFileName: String?,
+              conflictNewFileName: String?,
+              conflictWorkingFileName: String?,
+              lock: Lock?,
+              depth: Depth?,
+              treeConflict: TreeConflictDescription?) : super(kind) {
+    this.file = file
+    this.url = url
+    this.revision = Revision.of(revision)
+    repositoryUUID = uuid
+    repositoryRootURL = rootURL
 
-  private final File myFile;
-  private final Url myURL;
-  @NotNull private final Revision myRevision;
-  private final Url myRepositoryRootURL;
-  private final String myRepositoryUUID;
-  @NotNull private final CommitInfo myCommitInfo;
-  @Nullable private final Lock myLock;
-  private final String mySchedule;
-  private final Url myCopyFromURL;
-  @NotNull private final Revision myCopyFromRevision;
-  @Nullable private final File myConflictOldFile;
-  @Nullable private final File myConflictNewFile;
-  @Nullable private final File myConflictWrkFile;
-  private final Depth myDepth;
-  @Nullable private final TreeConflictDescription myTreeConflict;
+    this.commitInfo = notNull(commitInfo, CommitInfo.EMPTY)
+    this.schedule = schedule
 
-  public Info(File file,
-              Url url,
-              Url rootURL,
-              long revision,
-              @NotNull NodeKind kind,
-              String uuid,
-              @Nullable CommitInfo commitInfo,
-              String schedule,
-              Url copyFromURL,
-              long copyFromRevision,
-              @Nullable String conflictOldFileName,
-              @Nullable String conflictNewFileName,
-              @Nullable String conflictWorkingFileName,
-              @Nullable Lock lock,
-              Depth depth,
-              @Nullable TreeConflictDescription treeConflict) {
-    super(kind);
-    myFile = file;
-    myURL = url;
-    myRevision = Revision.of(revision);
-    myRepositoryUUID = uuid;
-    myRepositoryRootURL = rootURL;
+    this.copyFromURL = copyFromURL
+    this.copyFromRevision = Revision.of(copyFromRevision)
 
-    myCommitInfo = notNull(commitInfo, CommitInfo.EMPTY);
-    mySchedule = schedule;
+    this.lock = lock
+    this.treeConflict = treeConflict
 
-    myCopyFromURL = copyFromURL;
-    myCopyFromRevision = Revision.of(copyFromRevision);
+    conflictOldFile = resolveConflictFile(file, conflictOldFileName)
+    conflictNewFile = resolveConflictFile(file, conflictNewFileName)
+    conflictWrkFile = resolveConflictFile(file, conflictWorkingFileName)
 
-    myLock = lock;
-    myTreeConflict = treeConflict;
-
-    myConflictOldFile = resolveConflictFile(file, conflictOldFileName);
-    myConflictNewFile = resolveConflictFile(file, conflictNewFileName);
-    myConflictWrkFile = resolveConflictFile(file, conflictWorkingFileName);
-
-    myDepth = depth;
+    this.depth = depth
   }
 
-  public Info(Url url,
-              @NotNull Revision revision,
-              @NotNull NodeKind kind,
-              String uuid,
-              Url reposRootURL,
-              @Nullable CommitInfo commitInfo,
-              @Nullable Lock lock,
-              Depth depth) {
-    super(kind);
-    myURL = url;
-    myRevision = revision;
-    myRepositoryRootURL = reposRootURL;
-    myRepositoryUUID = uuid;
+  constructor(url: Url,
+              revision: Revision,
+              kind: NodeKind,
+              uuid: String,
+              reposRootURL: Url,
+              commitInfo: CommitInfo?,
+              lock: Lock?,
+              depth: Depth) : super(kind) {
+    this.url = url
+    this.revision = revision
+    repositoryRootURL = reposRootURL
+    repositoryUUID = uuid
 
-    myCommitInfo = notNull(commitInfo, CommitInfo.EMPTY);
-    myLock = lock;
-    myDepth = depth;
+    this.commitInfo = notNull(commitInfo, CommitInfo.EMPTY)
+    this.lock = lock
+    this.depth = depth
 
-    myFile = null;
-    mySchedule = null;
-    myCopyFromURL = null;
-    myCopyFromRevision = Revision.UNDEFINED;
-    myConflictOldFile = null;
-    myConflictNewFile = null;
-    myConflictWrkFile = null;
-    myTreeConflict = null;
+    file = null
+    schedule = null
+    copyFromURL = null
+    copyFromRevision = Revision.UNDEFINED
+    conflictOldFile = null
+    conflictNewFile = null
+    conflictWrkFile = null
+    treeConflict = null
   }
 
-  @NotNull
-  public CommitInfo getCommitInfo() {
-    return myCommitInfo;
-  }
-
-  @Nullable
-  public File getConflictNewFile() {
-    return myConflictNewFile;
-  }
-
-  @Nullable
-  public File getConflictOldFile() {
-    return myConflictOldFile;
-  }
-
-  @Nullable
-  public File getConflictWrkFile() {
-    return myConflictWrkFile;
-  }
-
-  @Nullable
-  public TreeConflictDescription getTreeConflict() {
-    return myTreeConflict;
-  }
-
-  @NotNull
-  public Revision getCopyFromRevision() {
-    return myCopyFromRevision;
-  }
-
-  public Url getCopyFromURL() {
-    return myCopyFromURL;
-  }
-
-  public File getFile() {
-    return myFile;
-  }
-
-  @NotNull
-  public NodeKind getKind() {
-    return myKind;
-  }
-
-  @Nullable
-  public Lock getLock() {
-    return myLock;
-  }
-
-  public Url getRepositoryRootURL() {
-    return myRepositoryRootURL;
-  }
-
-  public String getRepositoryUUID() {
-    return myRepositoryUUID;
-  }
-
-  @NotNull
-  public Revision getRevision() {
-    return myRevision;
-  }
-
-  public String getSchedule() {
-    return mySchedule;
-  }
-
-  public Url getURL() {
-    return myURL;
-  }
-
-  public Depth getDepth() {
-    return myDepth;
-  }
-
-  @Nullable
-  private static File resolveConflictFile(@Nullable File file, @Nullable String path) {
-    return file != null && path != null ? new File(file.getParentFile(), path) : null;
+  companion object {
+    const val SCHEDULE_ADD = "add"
   }
 }
