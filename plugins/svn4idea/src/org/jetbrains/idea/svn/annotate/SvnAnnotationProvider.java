@@ -109,7 +109,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
           exception[0] = new SvnBindException("File '" + ioFile + "' is not under version control");
           return;
         }
-        Url url = info.getURL();
+        Url url = info.getUrl();
         Revision endRevision = revisionNumber.getRevision();
         if (Revision.WORKING.equals(endRevision)) {
           endRevision = info.getRevision();
@@ -239,10 +239,10 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     }
 
     Info wcRootInfo = myVcs.getInfo(root);
-    if (wcRootInfo == null || wcRootInfo.getURL() == null) {
+    if (wcRootInfo == null || wcRootInfo.getUrl() == null) {
       throw new VcsException("Can not find relative path for " + wasFile.getPath() + "@" + revisionNumber.asString());
     }
-    Url wasUrl = wcRootInfo.getURL();
+    Url wasUrl = wcRootInfo.getUrl();
     final String[] strings = relativePath.replace('\\', '/').split("/");
     for (String string : strings) {
       wasUrl = append(wasUrl, string, true);

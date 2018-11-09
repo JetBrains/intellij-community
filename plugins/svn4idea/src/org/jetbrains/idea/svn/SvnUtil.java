@@ -525,7 +525,7 @@ public class SvnUtil {
     // todo for moved items?
     final Info info = vcs.getInfo(file);
 
-    return info == null ? null : info.getURL();
+    return info == null ? null : info.getUrl();
   }
 
   public static boolean remoteFolderIsEmpty(@NotNull SvnVcs vcs, @NotNull String url) throws VcsException {

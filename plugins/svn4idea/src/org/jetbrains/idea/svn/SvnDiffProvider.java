@@ -230,7 +230,7 @@ public class SvnDiffProvider extends DiffProviderEx implements DiffProvider, Dif
     if (svnStatus == null || itemExists(svnStatus) && Revision.UNDEFINED.equals(svnStatus.getRemoteRevision())) {
       // IDEADEV-21785 (no idea why this can happen)
       final Info info = myVcs.getInfo(file, Revision.HEAD);
-      if (info == null || info.getURL() == null) {
+      if (info == null || info.getUrl() == null) {
         LOG.info("No SVN status returned for " + file.getPath());
         return defaultResult();
       }

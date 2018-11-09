@@ -107,7 +107,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
   @Nullable
   private static Url getSourceUrl(final SvnVcs vcs, final File root) {
     final Info svnInfo = vcs.getInfo(root);
-    return svnInfo != null ? svnInfo.getURL() : null;
+    return svnInfo != null ? svnInfo.getUrl() : null;
   }
 
   @Override
@@ -164,7 +164,7 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
     final Url copyFromSource = sourceSvnInfo.getCopyFromURL();
 
     if ((copyFromSource != null) || (copyFromTarget != null)) {
-      if (sourceSvnInfo.getURL().equals(copyFromTarget) || targetUrl.equals(copyFromSource)) {
+      if (sourceSvnInfo.getUrl().equals(copyFromTarget) || targetUrl.equals(copyFromSource)) {
         return true;
       }
     }

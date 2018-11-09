@@ -28,6 +28,7 @@ class Info : BaseNodeDescription {
   val treeConflict: TreeConflictDescription?
   val kind get() = myKind
 
+  @Deprecated("Use url property", ReplaceWith("url"))
   fun getURL() = url
 
   constructor(file: File?,

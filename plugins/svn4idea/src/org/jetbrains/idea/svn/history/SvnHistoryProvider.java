@@ -301,11 +301,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
         myException = new VcsException("File " + myFile.getPath() + " is not under version control");
         return;
       }
-      if (myInfo.getURL() == null) {
+      if (myInfo.getUrl() == null) {
         myException = new VcsException("File " + myFile.getPath() + " is not under Subversion control");
         return;
       }
-      myUrl = myInfo.getURL();
+      myUrl = myInfo.getUrl();
     }
 
     @Override
@@ -415,7 +415,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       catch (SvnBindException e) {
         return false;
       }
-      return info != null && info.getURL() != null && info.getRevision().isValid();
+      return info != null && info.getUrl() != null && info.getRevision().isValid();
     }
   }
 
