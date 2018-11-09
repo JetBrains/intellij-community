@@ -778,6 +778,7 @@ public class StringUtil extends StringUtilRt {
           case '2':
           case '3':
             octalEscapeMaxLength = 3;
+            //noinspection fallthrough
           case '4':
           case '5':
           case '6':
