@@ -498,9 +498,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
                                      .collect(Collectors.toSet()));
           }
           else {
-            List<SESearcher.ElementInfo> lst = commands.stream()
-              .map(command -> new SESearcher.ElementInfo(command, 0, stubCommandContributor))
-              .collect(Collectors.toList());
+            List<SESearcher.ElementInfo> lst =
+              ContainerUtil.map(commands, command -> new SESearcher.ElementInfo(command, 0, stubCommandContributor));
             myListModel.addElements(lst, stubCommandContributor);
             ScrollingUtil.ensureSelectionExists(myResultsList);
           }

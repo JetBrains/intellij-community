@@ -20,6 +20,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -40,7 +41,6 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Kirill Kalishev
@@ -216,9 +216,7 @@ public class RegistryUi implements Disposable {
 
     private MyTableModel() {
       myAll = Registry.getAll();
-      myAll.addAll(Experiments.EP_NAME.getExtensionList().stream()
-                     .map(ExperimentalFeatureRegistryValueWrapper::new)
-                     .collect(Collectors.toList()));
+      myAll.addAll(ContainerUtil.map(Experiments.EP_NAME.getExtensionList(), ExperimentalFeatureRegistryValueWrapper::new));
       final List<String> recent = getRecent();
 
       Collections.sort(myAll, (o1, o2) -> {

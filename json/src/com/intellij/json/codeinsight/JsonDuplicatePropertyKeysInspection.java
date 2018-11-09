@@ -35,6 +35,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiEditorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -89,7 +90,7 @@ public class JsonDuplicatePropertyKeysInspection extends LocalInspectionTool {
 
     private NavigateToDuplicatesFix(@NotNull Collection<PsiElement> sameNamedKeys, @NotNull PsiElement element, @NotNull String entryKey) {
       super("Navigate to duplicates");
-      mySameNamedKeys = sameNamedKeys.stream().map(k -> SmartPointerManager.createPointer(k)).collect(Collectors.toList());
+      mySameNamedKeys = ContainerUtil.map(sameNamedKeys, k -> SmartPointerManager.createPointer(k));
       myElement = SmartPointerManager.createPointer(element);
       myEntryKey = entryKey;
     }

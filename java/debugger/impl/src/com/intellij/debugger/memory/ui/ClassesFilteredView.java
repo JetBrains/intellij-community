@@ -17,6 +17,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.DoubleClickListener;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -46,7 +47,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 import static com.intellij.xdebugger.memory.ui.ClassesTable.DiffViewTableModel.CLASSNAME_COLUMN_INDEX;
 import static com.intellij.xdebugger.memory.ui.ClassesTable.DiffViewTableModel.DIFF_COLUMN_INDEX;
@@ -244,7 +244,7 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         TrackerForNewInstances strategy = getStrategy(selectedClass);
         if (strategy != null && strategy.isReady()) {
           List<ObjectReference> newInstances = strategy.getNewInstances();
-          return (InstancesProvider) limit -> newInstances.stream().map(JavaReferenceInfo::new).collect(Collectors.toList());
+          return (InstancesProvider)limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new);
         }
       }
     }
@@ -315,7 +315,8 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         if (data != null) {
           final List<ObjectReference> newInstances = strategy.getNewInstances();
           data.getTrackedStacks().pinStacks(ref);
-          final InstancesWindow instancesWindow = new InstancesWindow(debugSession, limit -> newInstances.stream().map(JavaReferenceInfo::new).collect(Collectors.toList()), ref.name());
+          final InstancesWindow instancesWindow = new InstancesWindow(debugSession,
+                                                                      limit -> ContainerUtil.map(newInstances, JavaReferenceInfo::new), ref.name());
           Disposer.register(instancesWindow.getDisposable(), () -> data.getTrackedStacks().unpinStacks(ref));
           instancesWindow.show();
         }

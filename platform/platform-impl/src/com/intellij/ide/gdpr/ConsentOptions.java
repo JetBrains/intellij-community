@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -176,9 +177,7 @@ public final class ConsentOptions {
 
   public void setConsents(Collection<Consent> confirmedByUser) {
     saveConfirmedConsents(
-      confirmedByUser.stream().map(
-        c -> new ConfirmedConsent(c.getId(), c.getVersion(), c.isAccepted(), 0L)
-      ).collect(Collectors.toList())
+      ContainerUtil.map(confirmedByUser, c -> new ConfirmedConsent(c.getId(), c.getVersion(), c.isAccepted(), 0L))
     );
   }
 

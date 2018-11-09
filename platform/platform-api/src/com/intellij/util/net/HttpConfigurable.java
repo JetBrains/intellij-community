@@ -463,7 +463,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   @SuppressWarnings({"unused"})
   public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
     List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
-    return properties.stream().map(p -> KeyValue.create(p.first, p.second)).collect(Collectors.toList());
+    return ContainerUtil.map(properties, p -> KeyValue.create(p.first, p.second));
   }
 
   @NotNull

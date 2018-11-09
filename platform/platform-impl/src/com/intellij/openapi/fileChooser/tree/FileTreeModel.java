@@ -316,7 +316,7 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
       List<VirtualFile> files = roots;
       if (files == null) files = getSystemRoots();
       if (files == null || files.isEmpty()) return emptyList();
-      return files.stream().map(file -> new Root(this, file)).collect(toList());
+      return ContainerUtil.map(files, file -> new Root(this, file));
     }
 
     private static List<VirtualFile> getRoots(FileChooserDescriptor descriptor) {

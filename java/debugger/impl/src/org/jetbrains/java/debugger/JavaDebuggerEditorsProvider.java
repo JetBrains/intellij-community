@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.stream.Collectors;
 
 public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
   @NotNull
@@ -44,9 +44,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
   @NotNull
   @Override
   public Collection<Language> getSupportedLanguages(@Nullable PsiElement context) {
-    return DebuggerUtilsEx.getCodeFragmentFactories(context).stream()
-      .map(factory -> factory.getFileType().getLanguage())
-      .collect(Collectors.toList());
+    return ContainerUtil.map(DebuggerUtilsEx.getCodeFragmentFactories(context), factory -> factory.getFileType().getLanguage());
   }
 
   @NotNull

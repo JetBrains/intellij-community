@@ -33,6 +33,7 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -92,12 +93,12 @@ class ReplaceUsageViewContext extends UsageViewContext {
     final Set<Usage> excluded = myUsageView.getExcludedUsages();
     usages = usages.stream().filter(u -> !excluded.contains(u)).filter(u -> isValid((UsageInfo2UsageAdapter)u)).collect(Collectors.toList());
 
-    final List<VirtualFile> files = usages.stream().map(i -> ((UsageInFile)i).getFile()).collect(Collectors.toList());
+    final List<VirtualFile> files = ContainerUtil.map(usages, i -> ((UsageInFile)i).getFile());
     if (ReadonlyStatusHandler.getInstance(mySearchContext.getProject()).ensureFilesWritable(files).hasReadonlyFiles()) {
       return;
     }
     removeUsagesAndSelectNext(usages, excluded);
-    final List<ReplacementInfo> replacementInfos = usages.stream().map(usage2ReplacementInfo::get).collect(Collectors.toList());
+    final List<ReplacementInfo> replacementInfos = ContainerUtil.map(usages, usage2ReplacementInfo::get);
     final LocalHistoryAction action = LocalHistory.getInstance().startAction(SSRBundle.message("structural.replace.title"));
     try {
       CommandProcessor.getInstance().executeCommand(

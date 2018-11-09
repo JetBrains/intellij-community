@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -37,8 +38,8 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -135,7 +136,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
 
   CollectionTree(@NotNull List<TraceElement> traceElements,
                  @NotNull EvaluationContextImpl evaluationContext) {
-    this(traceElements.stream().map(TraceElement::getValue).collect(Collectors.toList()), traceElements, evaluationContext);
+    this(ContainerUtil.map(traceElements, TraceElement::getValue), traceElements, evaluationContext);
   }
 
   @Override

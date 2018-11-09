@@ -60,7 +60,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
@@ -311,11 +310,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           }
         })
         .whenExpired(() -> {
-          List<File> filesToRemove = orphanModules.stream().map(Path::toFile).collect(Collectors.toList());
-          filesToRemove.addAll(orphanModules.stream()
-                                 .map(path -> path.resolveSibling(path.getFileName() + ".path").toFile())
-                                 .collect(Collectors.toList()));
-          FileUtil.asyncDelete(filesToRemove);
+          List<File> filesToRemove = ContainerUtil.map(orphanModules, Path::toFile);
+          List<File> toRemove2 = ContainerUtil.map(orphanModules, path -> path.resolveSibling(path.getFileName() + ".path").toFile());
+
+          FileUtil.asyncDelete(ContainerUtil.concat(filesToRemove, toRemove2));
         });
 
       Disposer.register(project, cleanUpNotification::expire);

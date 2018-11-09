@@ -65,12 +65,12 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   @Override
   public void compile(@NotNull VirtualFile[] files, @Nullable ProjectTaskNotification callback) {
-    List<ModuleFilesBuildTask> buildTasks = stream(files)
-      .collect(groupingBy(
-        file -> ProjectFileIndex.SERVICE.getInstance(myProject).getModuleForFile(file, false)))
-      .entrySet().stream()
-      .map(entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false, entry.getValue()))
-      .collect(Collectors.toList());
+    List<ModuleFilesBuildTask> buildTasks = map(stream(files)
+                                                  .collect(groupingBy(
+                                                    file -> ProjectFileIndex.SERVICE.getInstance(myProject)
+                                                      .getModuleForFile(file, false)))
+                                                  .entrySet(), entry -> new ModuleFilesBuildTaskImpl(entry.getKey(), false,
+                                                                                                     entry.getValue()));
 
     run(new ProjectTaskList(buildTasks), callback);
   }

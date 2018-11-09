@@ -45,6 +45,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.DockableContent;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -61,7 +62,6 @@ import java.awt.event.MouseListener;
 import java.io.File;
 import java.util.List;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author anna
@@ -380,8 +380,8 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       List<String> listNames = getSelectedElements(String.class);
       final List<Navigatable> selectedElements = new SmartList<>();
       for (String listname : listNames) {
-        selectedElements.addAll(myFavoritesManager.getVirtualFiles(listname, false)
-                                  .stream().map(file -> new OpenFileDescriptor(myProject, file)).collect(Collectors.toList()));
+        selectedElements.addAll(
+          ContainerUtil.map(myFavoritesManager.getVirtualFiles(listname, false), file -> new OpenFileDescriptor(myProject, file)));
       }
       selectedElements.addAll(getSelectedElements(Navigatable.class));
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[0]);

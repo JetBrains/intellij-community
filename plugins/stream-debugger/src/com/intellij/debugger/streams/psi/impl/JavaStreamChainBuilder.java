@@ -7,12 +7,12 @@ import com.intellij.debugger.streams.psi.PsiUtil;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
@@ -87,7 +87,7 @@ public class JavaStreamChainBuilder implements StreamChainBuilder {
 
   @NotNull
   private List<StreamChain> buildChains(@NotNull List<List<PsiMethodCallExpression>> chains, @NotNull PsiElement context) {
-    return chains.stream().map(x -> myChainTransformer.transform(x, context)).collect(Collectors.toList());
+    return ContainerUtil.map(chains, x -> myChainTransformer.transform(x, context));
   }
 
   private class MyStreamChainExistenceChecker extends MyVisitorBase {
