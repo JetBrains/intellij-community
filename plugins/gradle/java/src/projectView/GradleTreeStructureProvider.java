@@ -235,6 +235,7 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
   private static class GradleModuleDirectoryNode extends PsiDirectoryNode {
     private final String myModuleShortName;
     private final Module myModule;
+    private final boolean appendModuleName;
 
     GradleModuleDirectoryNode(Project project,
                               @NotNull PsiDirectory psiDirectory,
@@ -245,21 +246,20 @@ public class GradleTreeStructureProvider implements TreeStructureProvider, DumbA
       super(project, psiDirectory, settings, filter);
       myModuleShortName = moduleShortName;
       myModule = module;
+      VirtualFile directoryFile = psiDirectory.getVirtualFile();
+      appendModuleName = StringUtil.isNotEmpty(myModuleShortName) &&
+                         !StringUtil.equalsIgnoreCase(myModuleShortName.replace("-", ""), directoryFile.getName().replace("-", ""));
     }
 
     @Override
     protected boolean shouldShowModuleName() {
-      return false;
+      return !appendModuleName;
     }
 
     @Override
     protected void updateImpl(@NotNull PresentationData data) {
       super.updateImpl(data);
-      PsiDirectory psiDirectory = getValue();
-      assert psiDirectory != null;
-      VirtualFile directoryFile = psiDirectory.getVirtualFile();
-      if (StringUtil.isNotEmpty(myModuleShortName) &&
-          !StringUtil.equalsIgnoreCase(myModuleShortName.replace("-", ""), directoryFile.getName().replace("-", ""))) {
+      if (appendModuleName) {
         data.addText("[" + myModuleShortName + "]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
     }
