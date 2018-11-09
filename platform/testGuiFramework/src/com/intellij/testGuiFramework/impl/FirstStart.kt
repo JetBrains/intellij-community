@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.Timeouts
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
@@ -134,28 +133,19 @@ abstract class FirstStart(val ideType: IdeType) {
 
   open fun acceptAgreement() {
     if (!needToShowAgreement()) return
-    with(myRobot) {
-      try {
-        LOG.info("Waiting for License Agreement/Privacy Policy dialog")
-        findPrivacyPolicyDialogOrLicenseAgreement()
-        with(JDialogFixture(myRobot, findPrivacyPolicyDialogOrLicenseAgreement())) {
-          click()
-          while (!button("Accept").isEnabled) {
-            scrollDown()
-          }
-          LOG.info("Accept License Agreement/Privacy Policy dialog")
-          button("Accept").click()
-        }
-      }
-      catch (e: WaitTimedOutError) {
-        LOG.warn("'License Agreement/Privacy Policy dialog hasn't been shown. Check registry...")
+    try {
+      LOG.info("Waiting for License Agreement/Privacy Policy dialog")
+      findPrivacyPolicyDialogOrLicenseAgreement()
+      with(JDialogFixture(myRobot, findPrivacyPolicyDialogOrLicenseAgreement())) {
+        click()
+        checkboxContainingText("i confirm", true, Timeouts.noTimeout).select()
+        LOG.info("Accept License Agreement/Privacy Policy dialog")
+        button("Accept", Timeouts.seconds05).click()
       }
     }
-  }
-
-  private fun scrollDown() {
-    val amount: Int = if (SystemInfo.isMac) -100 else 100
-    myRobot.rotateMouseWheel(amount)
+    catch (e: WaitTimedOutError) {
+      LOG.warn("'License Agreement/Privacy Policy dialog hasn't been shown. Check registry...")
+    }
   }
 
   open fun completeInstallation() {

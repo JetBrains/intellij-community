@@ -143,6 +143,13 @@ fun <C : Container> ContainerFixture<C>.checkbox(labelText: String, timeout: Tim
   return CheckBoxFixture(robot(), jCheckBox)
 }
 
+fun <C : Container> ContainerFixture<C>.checkboxContainingText(labelText: String,
+                                                               ignoreCase: Boolean = false,
+                                                               timeout: Timeout = defaultTimeout): CheckBoxFixture {
+  val jCheckBox: JCheckBox = findComponentWithTimeout(timeout) { it.isShowing && it.isVisible && it.text.contains(labelText, ignoreCase) }
+  return CheckBoxFixture(robot(), jCheckBox)
+}
+
 /**
  * Finds a ActionLink component in hierarchy of context component by name and returns ActionLinkFixture.
  *
