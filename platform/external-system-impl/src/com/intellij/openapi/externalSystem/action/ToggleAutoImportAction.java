@@ -17,16 +17,19 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/20/2014
  */
 public class ToggleAutoImportAction extends ExternalSystemToggleAction {
 
@@ -36,7 +39,7 @@ public class ToggleAutoImportAction extends ExternalSystemToggleAction {
   }
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     if (getSystemId(e) == null) return false;
 
@@ -44,7 +47,7 @@ public class ToggleAutoImportAction extends ExternalSystemToggleAction {
   }
 
   @Override
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     if (!super.isVisible(e)) return false;
     if (getSystemId(e) == null) return false;
 
@@ -52,26 +55,30 @@ public class ToggleAutoImportAction extends ExternalSystemToggleAction {
   }
 
   @Override
-  protected boolean doIsSelected(AnActionEvent e) {
+  protected boolean doIsSelected(@NotNull AnActionEvent e) {
     final ExternalProjectSettings projectSettings = getProjectSettings(e);
 
     return projectSettings != null && projectSettings.isUseAutoImport();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final ExternalProjectSettings projectSettings = getProjectSettings(e);
     if (projectSettings != null) {
       if (state != projectSettings.isUseAutoImport()) {
+        Project project = getProject(e);
+        ProjectSystemId systemId = getSystemId(e);
+        ExternalSystemActionsCollector.trigger(project, systemId, this, e);
+
         projectSettings.setUseAutoImport(state);
-        ExternalSystemApiUtil.getSettings(getProject(e), getSystemId(e)).getPublisher()
+        ExternalSystemApiUtil.getSettings(project, systemId).getPublisher()
           .onUseAutoImportChange(state, projectSettings.getExternalProjectPath());
       }
     }
   }
 
   @Nullable
-  private ExternalProjectSettings getProjectSettings(AnActionEvent e) {
+  private ExternalProjectSettings getProjectSettings(@NotNull AnActionEvent e) {
     final ProjectNode projectNode = ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext());
     if (projectNode == null || projectNode.getData() == null) return null;
     final AbstractExternalSystemSettings externalSystemSettings = ExternalSystemApiUtil.getSettings(getProject(e), getSystemId(e));

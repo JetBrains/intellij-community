@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -130,7 +128,7 @@ def m1(Double o, @ClosureParams(value=SimpleType.class, options="java.lang.Doubl
 def m() {
     def a;
     m1<warning descr="Method call is ambiguous">(a)</warning> {
-        <error descr="No applicable signature found">long l</error> -> println(l)
+        long l -> println(l)
     }
 }
 '''

@@ -98,6 +98,7 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
     }
   }
 
+  @Override
   public String toString() {
     return "PsiPackageStatement:" + getPackageName();
   }

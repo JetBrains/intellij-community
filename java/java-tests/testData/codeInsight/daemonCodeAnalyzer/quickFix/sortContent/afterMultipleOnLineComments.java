@@ -7,8 +7,8 @@ public class Main {
     new String[]{
             "aaa", // a
             "bbb",
-            "ccc"/* c */, "dd", // d
-            "ff"// f
+            "ccc" /* c */, "dd", // d
+            "ff" // f
     };
   }
 }

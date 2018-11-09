@@ -30,7 +30,6 @@ import static com.intellij.openapi.util.text.StringUtil.splitByLines;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/2/2017
  */
 public class GradleExecutionErrorHandler {
   public static final Pattern UNSUPPORTED_GRADLE_VERSION_ERROR_PATTERN;
@@ -112,7 +111,6 @@ public class GradleExecutionErrorHandler {
       }
       rootCause = cause;
     }
-    //noinspection ConstantConditions
     return Pair.create(rootCause, location);
   }
 

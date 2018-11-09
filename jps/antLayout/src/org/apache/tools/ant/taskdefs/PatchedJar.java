@@ -42,9 +42,9 @@ public class PatchedJar extends Jar {
         // checks here defering them for the second run
         Resource[][] manifests = grabManifests(rcs);
         int count = 0;
-        for (int i = 0; i < manifests.length; i++) {
-            count += manifests[i].length;
-        }
+      for (Resource[] manifest : manifests) {
+        count += manifest.length;
+      }
         log("found a total of " + count + " manifests in "
             + manifests.length + " resource collections",
             Project.MSG_VERBOSE);

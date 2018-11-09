@@ -27,7 +27,7 @@ import java.util.List;
 class RemoteVariableImpl extends PortableRemoteObject implements RemoteDebugger.Variable {
   private final Debugger.Variable myVariable;
 
-  public RemoteVariableImpl(Debugger.Variable variable) throws RemoteException {
+  RemoteVariableImpl(Debugger.Variable variable) throws RemoteException {
     myVariable = variable;
   }
 
@@ -56,7 +56,7 @@ class RemoteVariableImpl extends PortableRemoteObject implements RemoteDebugger.
     return new ValueImpl(value.getValue(), value.getType());
   }
 
-  static List<RemoteDebugger.Variable> convert(List<Debugger.Variable> list) throws RemoteException {
+  static List<RemoteDebugger.Variable> convert(List<? extends Debugger.Variable> list) throws RemoteException {
     final ArrayList<RemoteDebugger.Variable> variables = new ArrayList<RemoteDebugger.Variable>(list.size());
     for (final Debugger.Variable variable : list) {
       variables.add(new RemoteVariableImpl(variable));

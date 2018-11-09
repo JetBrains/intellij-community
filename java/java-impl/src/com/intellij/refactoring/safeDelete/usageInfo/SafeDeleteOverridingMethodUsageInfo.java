@@ -35,6 +35,7 @@ public class SafeDeleteOverridingMethodUsageInfo extends SafeDeleteUsageInfo imp
     return (PsiMethod) getReferencedElement();
   }
 
+  @Override
   public void performRefactoring() throws IncorrectOperationException {
     getOverridingMethod().delete();
   }

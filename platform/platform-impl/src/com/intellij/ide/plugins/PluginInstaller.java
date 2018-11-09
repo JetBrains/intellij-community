@@ -35,7 +35,6 @@ import java.util.zip.ZipFile;
 
 /**
  * @author stathik
- * @since Nov 29, 2003
  */
 public class PluginInstaller {
   private static final Logger LOG = Logger.getInstance(PluginInstaller.class);
@@ -46,7 +45,7 @@ public class PluginInstaller {
   private PluginInstaller() { }
 
   public static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
-                                         List<IdeaPluginDescriptor> allPlugins,
+                                         List<? extends IdeaPluginDescriptor> allPlugins,
                                          PluginManagerMain.PluginEnabler pluginEnabler,
                                          @NotNull ProgressIndicator indicator) {
     updateUrls(pluginsToInstall, indicator);
@@ -60,7 +59,7 @@ public class PluginInstaller {
     return install;
   }
 
-  private static void updateUrls(List<PluginNode> pluginsToInstall, @NotNull ProgressIndicator indicator) {
+  private static void updateUrls(List<? extends PluginNode> pluginsToInstall, @NotNull ProgressIndicator indicator) {
     boolean unknownNodes = false;
     for (PluginNode node : pluginsToInstall) {
       if (node.getRepositoryName() == UNKNOWN_HOST_MARKER) {
@@ -98,8 +97,8 @@ public class PluginInstaller {
     }
   }
 
-  private static boolean prepareToInstall(List<PluginNode> pluginsToInstall,
-                                          List<IdeaPluginDescriptor> allPlugins,
+  private static boolean prepareToInstall(List<? extends PluginNode> pluginsToInstall,
+                                          List<? extends IdeaPluginDescriptor> allPlugins,
                                           Set<PluginNode> installedDependant,
                                           PluginManagerMain.PluginEnabler pluginEnabler,
                                           @NotNull ProgressIndicator indicator) {
@@ -125,8 +124,8 @@ public class PluginInstaller {
   }
 
   private static boolean prepareToInstall(PluginNode pluginNode,
-                                          List<PluginId> pluginIds,
-                                          List<IdeaPluginDescriptor> allPlugins,
+                                          List<? extends PluginId> pluginIds,
+                                          List<? extends IdeaPluginDescriptor> allPlugins,
                                           Set<PluginNode> installedDependant,
                                           PluginManagerMain.PluginEnabler pluginEnabler,
                                           @NotNull ProgressIndicator indicator) throws IOException {
@@ -241,7 +240,7 @@ public class PluginInstaller {
   }
 
   @Nullable
-  private static IdeaPluginDescriptor findPluginInRepo(PluginId depPluginId, List<IdeaPluginDescriptor> allPlugins) {
+  private static IdeaPluginDescriptor findPluginInRepo(PluginId depPluginId, List<? extends IdeaPluginDescriptor> allPlugins) {
     return allPlugins.stream().parallel().filter(p -> p.getPluginId().equals(depPluginId)).findAny().orElse(null);
   }
 
@@ -309,30 +308,26 @@ public class PluginInstaller {
     throw new IOException("Corrupted archive (no file entries): " + zip);
   }
 
-  private static List<PluginStateListener> myStateListeners;
+  private static final List<PluginStateListener> myStateListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static void addStateListener(@NotNull PluginStateListener listener) {
-    (myStateListeners != null ? myStateListeners : (myStateListeners = new ArrayList<>())).add(listener);
+    myStateListeners.add(listener);
   }
 
   public static void removeStateListener(@NotNull PluginStateListener listener) {
-    if (myStateListeners != null) {
-      myStateListeners.remove(listener);
-    }
+    myStateListeners.remove(listener);
   }
 
   private static void fireState(@NotNull IdeaPluginDescriptor descriptor, boolean install) {
-    if (myStateListeners != null) {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        for (PluginStateListener listener : myStateListeners) {
-          if (install) {
-            listener.install(descriptor);
-          }
-          else {
-            listener.uninstall(descriptor);
-          }
+    UIUtil.invokeLaterIfNeeded(() -> {
+      for (PluginStateListener listener : myStateListeners) {
+        if (install) {
+          listener.install(descriptor);
         }
-      });
-    }
+        else {
+          listener.uninstall(descriptor);
+        }
+      }
+    });
   }
 }

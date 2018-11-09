@@ -1,7 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
-import org.jetbrains.java.decompiler.code.*;
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.code.Instruction;
+import org.jetbrains.java.decompiler.code.InstructionSequence;
+import org.jetbrains.java.decompiler.code.SimpleInstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
 import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
 import org.jetbrains.java.decompiler.code.cfg.ExceptionRangeCFG;
@@ -321,7 +324,7 @@ public class FinallyProcessor {
 
       for (BasicBlock dest : lstSucc) {
         // break out
-        if (!setCopy.contains(dest) && dest != graph.getLast()) {
+        if (dest != graph.getLast() && !setCopy.contains(dest)) {
           // disable semaphore
           SimpleInstructionSequence seq = new SimpleInstructionSequence();
           seq.addInstruction(Instruction.create(CodeConstants.opc_bipush, false, CodeConstants.GROUP_GENERAL, bytecode_version, new int[]{0}), -1);
@@ -550,7 +553,7 @@ public class FinallyProcessor {
       // TODO: correct handling (merging) of multiple paths
       public List<int[]> lstStoreVars;
 
-      public BlockStackEntry(BasicBlock blockCatch, BasicBlock blockSample, List<int[]> lstStoreVars) {
+      BlockStackEntry(BasicBlock blockCatch, BasicBlock blockSample, List<int[]> lstStoreVars) {
         this.blockCatch = blockCatch;
         this.blockSample = blockSample;
         this.lstStoreVars = new ArrayList<>(lstStoreVars);

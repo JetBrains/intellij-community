@@ -88,7 +88,7 @@ public class PyConsoleDebugProcessHandler extends ProcessHandler implements Posi
 
   @Nullable
   @Override
-  public PyPositionConverter createPositionConverter(PyDebugProcess debugProcess) {
+  public PyPositionConverter createPositionConverter(@NotNull PyDebugProcess debugProcess) {
     if (myConsoleProcessHandler instanceof PositionConverterProvider) {
       return ((PositionConverterProvider)myConsoleProcessHandler).createPositionConverter(debugProcess);
     }

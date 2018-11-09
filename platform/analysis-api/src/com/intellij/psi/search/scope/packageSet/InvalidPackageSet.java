@@ -25,7 +25,7 @@ public class InvalidPackageSet extends AbstractPackageSet {
   }
 
   @Override
-  public boolean contains(VirtualFile file, NamedScopesHolder holder) {
+  public boolean contains(@NotNull VirtualFile file, NamedScopesHolder holder) {
     return false;
   }
 }

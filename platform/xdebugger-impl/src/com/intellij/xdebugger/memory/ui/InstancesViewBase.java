@@ -1,8 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.memory.ui;
 
+import com.intellij.application.Topics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.JBColor;
@@ -24,23 +28,19 @@ import javax.swing.tree.TreeNode;
 import java.awt.*;
 
 public abstract class InstancesViewBase extends JBPanel implements Disposable {
-
   private final InstancesProvider myInstancesProvider;
 
-
-  public InstancesViewBase(LayoutManager layout, @NotNull XDebugSession session, InstancesProvider instancesProvider) {
+  public InstancesViewBase(@NotNull LayoutManager layout, @NotNull XDebugSession session, InstancesProvider instancesProvider) {
     super(layout);
+
     myInstancesProvider = instancesProvider;
     XDebugSessionListener debugSessionListener = new MySessionListener();
     session.addSessionListener(debugSessionListener, this);
     final XValueMarkers<?, ?> markers = getValueMarkers(session);
-
     if (markers != null) {
-      final MyActionListener listener = new MyActionListener(markers);
-      ActionManager.getInstance().addAnActionListener(listener, this);
+      Topics.subscribe(AnActionListener.TOPIC, this, new MyActionListener(markers));
     }
   }
-
 
   protected XValueMarkers<?, ?> getValueMarkers(@NotNull XDebugSession session) {
     return session instanceof XDebugSessionImpl
@@ -77,7 +77,7 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
     }
   }
 
-  private class MyActionListener extends AnActionListener.Adapter {
+  private class MyActionListener implements AnActionListener {
     private final XValueMarkers<?, ?> myValueMarkers;
 
     private MyActionListener(@NotNull XValueMarkers<?, ?> markers) {
@@ -85,7 +85,7 @@ public abstract class InstancesViewBase extends JBPanel implements Disposable {
     }
 
     @Override
-    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
       if (dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT) == getInstancesTree() &&
         (isAddToWatchesAction(action) || isEvaluateExpressionAction(action))) {
         XValueNodeImpl selectedNode = XDebuggerTreeActionBase.getSelectedNode(dataContext);

@@ -26,7 +26,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
  * {@link GradleMavenProjectImportNotificationListener} listens for Gradle project import events.
  *
  * @author Vladislav.Soroka
- * @since 10/28/13
  */
 public class GradleMavenProjectImportNotificationListener extends ExternalSystemTaskNotificationListenerAdapter {
 

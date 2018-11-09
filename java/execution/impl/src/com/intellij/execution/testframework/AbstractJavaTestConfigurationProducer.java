@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -56,7 +42,6 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     super(configurationType);
   }
 
-
   @Contract("null->false")
   protected boolean isTestClass(PsiClass psiClass) {
     if (psiClass != null) {
@@ -86,7 +71,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   protected boolean isApplicableTestType(String type, ConfigurationContext context) {
     return true;
   }
-  
+
   @Override
   public boolean isConfigurationFromContext(T configuration, ConfigurationContext context) {
     if (isMultipleElementsSelected(context)) {
@@ -102,23 +87,31 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       return false;
     }
     final PsiElement element = location.getPsiElement();
-
-    RunnerAndConfigurationSettings template =
-      RunManager.getInstance(location.getProject()).getConfigurationTemplate(getConfigurationFactory());
-    final Module predefinedModule = ((T)template.getConfiguration()).getConfigurationModule().getModule();
-    final String vmParameters =
-      predefinedConfiguration instanceof CommonJavaRunConfigurationParameters
-      ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters()
-      : null;
-    if (vmParameters != null && !Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
+    RunnerAndConfigurationSettings template = context.getRunManager().getConfigurationTemplate(getConfigurationFactory());
+    T templateConfiguration = (T)template.getConfiguration();
+    final Module predefinedModule = templateConfiguration.getConfigurationModule().getModule();
+    final String vmParameters;
+    if (predefinedConfiguration != null) {
+      vmParameters = predefinedConfiguration instanceof CommonJavaRunConfigurationParameters 
+                     ? ((CommonJavaRunConfigurationParameters)predefinedConfiguration).getVMParameters() 
+                     : null;
+    }
+    else {
+      vmParameters = templateConfiguration.getVMParameters();
+    }
+    if (!Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
     if (differentParamSet(configuration, contextLocation)) return false;
 
     if (!isApplicableTestType(configuration.getTestType(), context)) return false;
 
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (psiClass != null && getCurrentFramework(psiClass) == null) return false;
+
     if (configuration.isConfiguredByElement(element)) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();
-      if (Comparing.equal(location.getModule(), configurationModule)) return true;
-      if (Comparing.equal(predefinedModule, configurationModule)) return true;
+      final Module locationModule = location.getModule();
+      if (Comparing.equal(locationModule, configurationModule)) return true;
+      if ((predefinedModule != null || locationModule == null) && Comparing.equal(predefinedModule, configurationModule)) return true;
     }
 
     return false;
@@ -127,8 +120,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   protected boolean differentParamSet(T configuration, Location contextLocation) {
     String paramSetName = contextLocation instanceof PsiMemberParameterizedLocation
                           ? configuration.prepareParameterizedParameter(((PsiMemberParameterizedLocation)contextLocation).getParamSetName()) : null;
-    if (paramSetName != null && !Comparing.strEqual(paramSetName, configuration.getProgramParameters())) return true;
-    return false;
+    return !Comparing.strEqual(paramSetName, configuration.getProgramParameters());
   }
 
 
@@ -141,17 +133,18 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
                                  boolean checkIsTest,
                                  PsiElementProcessor.CollectElements<PsiElement> collectingProcessor) {
     for (PsiElement psiElement : psiElements) {
+      psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class, false);
       if (psiElement instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
         for (PsiClass aClass : classes) {
-          if ((!checkIsTest && aClass.hasModifierProperty(PsiModifier.PUBLIC) || checkIsTest && isTestClass(aClass)) &&
+          if ((!checkIsTest && isRequiredVisibility(aClass) || checkIsTest && isTestClass(aClass)) &&
               !collectingProcessor.execute(aClass)) {
             return;
           }
         }
       }
       else if (psiElement instanceof PsiClass) {
-        if ((!checkIsTest && ((PsiClass)psiElement).hasModifierProperty(PsiModifier.PUBLIC) ||
+        if ((!checkIsTest && isRequiredVisibility((PsiClass)psiElement) ||
              checkIsTest && isTestClass((PsiClass)psiElement)) &&
             !collectingProcessor.execute(psiElement)) {
           return;
@@ -164,7 +157,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
         if (!checkIsTest) {
           final PsiClass containingClass = ((PsiMethod)psiElement).getContainingClass();
           if (containingClass != null &&
-              containingClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+              isRequiredVisibility(containingClass) &&
               !collectingProcessor.execute(psiElement)) {
             return;
           }
@@ -177,6 +170,10 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
         }
       }
     }
+  }
+
+  protected boolean isRequiredVisibility(PsiMember psiElement) {
+    return psiElement.hasModifierProperty(PsiModifier.PUBLIC);
   }
 
   protected boolean collectContextElements(DataContext dataContext,

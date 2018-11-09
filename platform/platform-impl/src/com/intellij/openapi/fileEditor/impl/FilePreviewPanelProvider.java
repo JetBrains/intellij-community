@@ -122,7 +122,7 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
     }
 
     @Override
-    protected void afterFileClosed(VirtualFile file) {
+    protected void afterFileClosed(@NotNull VirtualFile file) {
       PreviewManager.SERVICE.close(myProject, getId(), file);
     }
 

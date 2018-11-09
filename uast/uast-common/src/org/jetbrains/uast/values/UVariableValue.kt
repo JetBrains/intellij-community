@@ -33,7 +33,7 @@ class UVariableValue private constructor(
       else -> UUndeterminedValue
     }
 
-  override fun merge(other: UValue) = when (other) {
+  override fun merge(other: UValue): UValue = when (other) {
     this -> this
     value -> this
     is UDependentValue -> {
@@ -54,7 +54,7 @@ class UVariableValue private constructor(
     if (constant == toConstant()) this
     else create(variable, value.coerceConstant(constant), dependencies)
 
-  override fun equals(other: Any?) =
+  override fun equals(other: Any?): Boolean =
     other is UVariableValue
     && variable == other.variable
     && value == other.value
@@ -68,7 +68,7 @@ class UVariableValue private constructor(
     return result
   }
 
-  override fun toString() = "(var ${variable.name ?: "<unnamed>"} = ${super.toString()})"
+  override fun toString(): String = "(var ${variable.name ?: "<unnamed>"} = ${super.toString()})"
 
   companion object {
 

@@ -255,7 +255,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
 
   private static boolean collectExtendsImplements(final PsiClass targetClass,
                                                   final PsiReferenceList referenceList,
-                                                  final Set<PsiJavaCodeReferenceElement> refs) {
+                                                  final Set<? super PsiJavaCodeReferenceElement> refs) {
     if (referenceList != null) {
       for (PsiJavaCodeReferenceElement referenceElement : referenceList.getReferenceElements()) {
         if (referenceElement.resolve() == targetClass) {

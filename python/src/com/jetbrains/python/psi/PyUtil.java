@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -21,7 +22,6 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -31,6 +31,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -42,14 +43,15 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.NotNullPredicate;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
@@ -74,8 +76,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.jetbrains.python.psi.PyFunction.Modifier.CLASSMETHOD;
 import static com.jetbrains.python.psi.PyFunction.Modifier.STATICMETHOD;
@@ -511,7 +513,7 @@ public class PyUtil {
       return ((PsiDirectory)element).getName();
     }
     // Magic literals are always represented by their string values
-    if ((element instanceof PyStringLiteralExpression) && PyMagicLiteralTools.isMagicLiteral(element)) {
+    if ((element instanceof PyStringLiteralExpression) && PyMagicLiteralTools.couldBeMagicLiteral(element)) {
       return ((StringLiteralExpression)element).getStringValue();
     }
     if (element instanceof PyElement) {
@@ -593,7 +595,7 @@ public class PyUtil {
   }
 
   @NotNull
-  public static <E extends ResolveResult> List<E> filterTopPriorityResults(@NotNull List<E> resolveResults) {
+  public static <E extends ResolveResult> List<E> filterTopPriorityResults(@NotNull List<? extends E> resolveResults) {
     if (resolveResults.isEmpty()) return Collections.emptyList();
 
     final int maxRate = getMaxRate(resolveResults);
@@ -626,7 +628,7 @@ public class PyUtil {
   /**
    * Returns Python language level for a virtual file.
    *
-   * @see {@link LanguageLevel#forElement}
+   * @see LanguageLevel#forElement
    */
   @NotNull
   public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project,
@@ -661,6 +663,11 @@ public class PyUtil {
       }
     }
     return guessLanguageLevelWithCaching(project);
+  }
+
+  @NotNull
+  public static LanguageLevel getLanguageLevelForModule(@NotNull Module module) {
+    return FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).getImmediateValue(module);
   }
 
   public static void invalidateLanguageLevelCache(@NotNull Project project) {
@@ -710,7 +717,6 @@ public class PyUtil {
    * @return expression casted to appropriate type (if could be casted). Null otherwise.
    */
   @Nullable
-  @SuppressWarnings("unchecked")
   public static <T> T as(@Nullable final Object expression, @NotNull final Class<T> clazz) {
     return ObjectUtils.tryCast(expression, clazz);
   }
@@ -746,7 +752,7 @@ public class PyUtil {
    * @return list of elements of expected element type
    */
   @NotNull
-  public static <T> List<T> asList(@Nullable final Collection<?> expression, @NotNull final Class<T> elementClass) {
+  public static <T> List<T> asList(@Nullable final Collection<?> expression, @NotNull final Class<? extends T> elementClass) {
     if ((expression == null) || expression.isEmpty()) {
       return Collections.emptyList();
     }
@@ -830,7 +836,7 @@ public class PyUtil {
    * @see ApplicationImpl#runProcessWithProgressSynchronously(Runnable, String, boolean, Project, JComponent, String)
    */
   public static void runWithProgress(@Nullable Project project, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String title,
-                                     boolean modal, boolean canBeCancelled, @NotNull final Consumer<ProgressIndicator> function) {
+                                     boolean modal, boolean canBeCancelled, @NotNull final Consumer<? super ProgressIndicator> function) {
     if (modal) {
       ProgressManager.getInstance().run(new Task.Modal(project, title, canBeCancelled) {
         @Override
@@ -898,7 +904,7 @@ public class PyUtil {
    * @see PsiDocumentManager#commitDocument(Document)
    * @see #updateDocumentUnblockedAndCommitted(PsiElement, Function)
    */
-  public static void updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Consumer<Document> consumer) {
+  public static void updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Consumer<? super Document> consumer) {
     updateDocumentUnblockedAndCommitted(anchor, document -> {
       consumer.consume(document);
       return null;
@@ -906,7 +912,7 @@ public class PyUtil {
   }
 
   @Nullable
-  public static <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<Document, T> func) {
+  public static <T> T updateDocumentUnblockedAndCommitted(@NotNull PsiElement anchor, @NotNull Function<? super Document, ? extends T> func) {
     final PsiDocumentManager manager = PsiDocumentManager.getInstance(anchor.getProject());
     final Document document = manager.getDocument(anchor.getContainingFile());
     if (document != null) {
@@ -926,7 +932,7 @@ public class PyUtil {
     if (isInit(function)) {
       final PyClass cls = function.getContainingClass();
       if (cls != null) {
-        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+        for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
           final PyType providedClassType = provider.getGenericType(cls, context);
           if (providedClassType != null) {
             return providedClassType;
@@ -962,7 +968,7 @@ public class PyUtil {
   }
 
   public static class KnownDecoratorProviderHolder {
-    public static final PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
+    public static final List<PyKnownDecoratorProvider> KNOWN_DECORATOR_PROVIDERS = PyKnownDecoratorProvider.EP_NAME.getExtensionList();
 
     private KnownDecoratorProviderHolder() {
     }
@@ -1124,14 +1130,14 @@ public class PyUtil {
   /**
    * Constructs new lookup element for completion of keyword argument with equals sign appended.
    *
-   * @param name    name of the parameter
-   * @param project project instance to check code style settings and surround equals sign with spaces if necessary
+   * @param name name of the parameter
+   * @param settingsAnchor file to check code style settings and surround equals sign with spaces if necessary
    * @return lookup element
    */
   @NotNull
-  public static LookupElement createNamedParameterLookup(@NotNull String name, @Nullable Project project) {
+  public static LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor) {
     final String suffix;
-    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
+    if (CodeStyle.getCustomSettings(settingsAnchor, PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
       suffix = " = ";
     }
     else {
@@ -1204,15 +1210,6 @@ public class PyUtil {
       }
     }
     return null;
-  }
-
-  /**
-   * @deprecated This method will be removed in 2018.3.
-   */
-  @Nullable
-  @Deprecated
-  public static List<String> getStringListFromTargetExpression(PyTargetExpression attr) {
-    return strListValue(attr.findAssignedValue());
   }
 
   @Nullable
@@ -1895,7 +1892,7 @@ public class PyUtil {
     }
 
     final PyElementGenerator generator = PyElementGenerator.getInstance(function.getProject());
-    final PyDecoratorList newDecorators = generator.createDecoratorList(decoTexts.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+    final PyDecoratorList newDecorators = generator.createDecoratorList(ArrayUtil.toStringArray(decoTexts));
 
     if (currentDecorators != null) {
       currentDecorators.replace(newDecorators);
@@ -1915,14 +1912,16 @@ public class PyUtil {
     private final TextRange myContentRange;
 
     public StringNodeInfo(@NotNull ASTNode node) {
-      if (!PyTokenTypes.STRING_NODES.contains(node.getElementType())) {
-        throw new IllegalArgumentException("Node must be valid Python string literal token, but " + node.getElementType() + " was given");
+      final IElementType nodeType = node.getElementType();
+      // TODO Migrate to newer PyStringElement API
+      if (!PyTokenTypes.STRING_NODES.contains(nodeType) && nodeType != PyElementTypes.FSTRING_NODE) {
+        throw new IllegalArgumentException("Node must be valid Python string literal token, but " + nodeType + " was given");
       }
       myNode = node;
       final String nodeText = node.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(nodeText);
       myPrefix = nodeText.substring(0, prefixLength);
-      myContentRange = PyStringLiteralExpressionImpl.getNodeTextRange(nodeText);
+      myContentRange = PyStringLiteralUtil.getContentRange(nodeText);
       myQuote = nodeText.substring(prefixLength, myContentRange.getStartOffset());
     }
 
@@ -2041,7 +2040,7 @@ public class PyUtil {
     private IterHelper() {}
 
     @Nullable
-    public static PsiNamedElement findName(Iterable<PsiNamedElement> it, String name) {
+    public static PsiNamedElement findName(Iterable<? extends PsiNamedElement> it, String name) {
       PsiNamedElement ret = null;
       for (PsiNamedElement elt : it) {
         if (elt != null) {

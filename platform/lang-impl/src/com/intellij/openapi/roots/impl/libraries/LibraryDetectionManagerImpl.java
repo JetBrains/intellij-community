@@ -37,7 +37,6 @@ public class LibraryDetectionManagerImpl extends LibraryDetectionManager {
   @Override
   public boolean processProperties(@NotNull List<VirtualFile> files, @NotNull LibraryPropertiesProcessor processor) {
     for (Pair<LibraryKind, LibraryProperties> pair : getOrComputeKinds(files)) {
-      //noinspection unchecked
       if (!processor.processProperties(pair.getFirst(), pair.getSecond())) {
         return false;
       }

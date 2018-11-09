@@ -29,7 +29,6 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.PROJECT;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/28/2014
  */
 public class TaskNode extends ExternalSystemNode<TaskData> {
   private final TaskData myTaskData;
@@ -49,7 +48,7 @@ public class TaskNode extends ExternalSystemNode<TaskData> {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     super.update(presentation);
     presentation.setIcon(getUiAware().getTaskIcon());
 
@@ -75,11 +74,6 @@ public class TaskNode extends ExternalSystemNode<TaskData> {
   public boolean isVisible() {
     if (!super.isVisible()) return false;
     return !myTaskData.isInherited() || getExternalProjectsView().showInheritedTasks();
-  }
-
-  @Override
-  public String getName() {
-    return myTaskData.getName();
   }
 
   public String getModuleOwnerName() {

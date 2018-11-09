@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * @since 20-Aug-2008
  */
 public class InlineSuperClassTest extends MultiFileTestCase {
   @NotNull
@@ -53,6 +52,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testConflictMultipleConstructors() { doTest(true, false); }
   public void testMultipleConstructors() { doTest(); }
   public void testImplicitChildConstructor() { doTest(); }
+  public void testClassInitializers() { doTest(); }
   public void testStaticMembers() { doTest(); }
   public void testSuperReference() { doTest(); }
   public void testInnerClassReference() { doTest(); }
@@ -60,6 +60,7 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testNewArrayInitializerExpr() { doTest(); }
   public void testNewArrayDimensionsExpr() { doTest(); }
   public void testNewArrayComplexDimensionsExpr() { doTest(); }
+  public void testChainedConstructors() { doTest(); }
   public void testSuperConstructorWithReturnInside() { doTest(true, false); }
   public void testSuperConstructorWithFieldInitialization() { doTest(); }
   public void testSuperConstructorWithParam() { doTest(); }
@@ -75,9 +76,13 @@ public class InlineSuperClassTest extends MultiFileTestCase {
   public void testTypeParameterBound() { doTest();}
   public void testInlineInterfaceDoNotChangeConstructor() { doTest(); }
   public void testArrayTypeElements() { doTest(); }
+  public void testReferencesOnInnerClasses() { doTest(); }
+  public void testConflictOnMemberNotAccessibleThroughInheritor() { doTest(true, false); }
   public void testOneAndKeepReferencesInAnotherInheritor() {
     doTest(false, true);
   }
+  public void testThisQualificationInsideAnonymous() { doTest(); }
+  public void testOrderOfInnerClasses() { doTest(); }
 
   private void doTest() {
     doTest(false, false);

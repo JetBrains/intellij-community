@@ -6,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -14,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -48,7 +50,7 @@ public class AddVariableInitializerFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myVariable.isValid() &&
-           myVariable.getManager().isInProject(myVariable) &&
+           ScratchFileService.isInProjectOrScratch(myVariable) &&
            !myVariable.hasInitializer() &&
            !(myVariable instanceof PsiParameter);
   }
@@ -71,9 +73,9 @@ public class AddVariableInitializerFix implements IntentionAction {
     runAssignmentTemplate(Collections.singletonList(myVariable.getInitializer()), suggestedInitializers, editor);
   }
 
-  public static void runAssignmentTemplate(@NotNull final List<PsiExpression> initializers,
-                                           @NotNull final LookupElement[] suggestedInitializers,
-                                           @Nullable Editor editor) {
+  static void runAssignmentTemplate(@NotNull final List<? extends PsiExpression> initializers,
+                                    @NotNull final LookupElement[] suggestedInitializers,
+                                    @Nullable Editor editor) {
     if (editor == null) return;
     LOG.assertTrue(!initializers.isEmpty());
     final PsiExpression initializer = ObjectUtils.notNull(ContainerUtil.getFirstItem(initializers));
@@ -104,7 +106,7 @@ public class AddVariableInitializerFix implements IntentionAction {
   }
 
   @NotNull
-  public static LookupElement[] suggestInitializer(final PsiVariable variable) {
+  static LookupElement[] suggestInitializer(final PsiVariable variable) {
     PsiType type = variable.getType();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
 
@@ -113,10 +115,23 @@ public class AddVariableInitializerFix implements IntentionAction {
     final ExpressionLookupItem defaultExpression = new ExpressionLookupItem(elementFactory.createExpressionFromText(defaultValue, variable));
     result.add(defaultExpression);
     if (type instanceof PsiClassType) {
+      if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        result.add(new ExpressionLookupItem(elementFactory.createExpressionFromText("\"\"", variable)));
+      }
       final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
-      if (aClass != null && PsiUtil.hasDefaultConstructor(aClass)) {
-        final String expressionText = PsiKeyword.NEW + " " + type.getCanonicalText(false) + "()";
-        ExpressionLookupItem newExpression = new ExpressionLookupItem(elementFactory.createExpressionFromText(expressionText, variable));
+      if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT) && PsiUtil.hasDefaultConstructor(aClass)) {
+        String typeText = type.getCanonicalText(false);
+        if (aClass.getTypeParameters().length > 0 && PsiUtil.isLanguageLevel7OrHigher(variable)) {
+          if (!PsiDiamondTypeImpl.haveConstructorsGenericsParameters(aClass)) {
+            typeText = TypeConversionUtil.erasure(type).getCanonicalText(false) + "<>";
+          }
+        }
+        final String expressionText = PsiKeyword.NEW + " " + typeText + "()";
+        PsiExpression initializer = elementFactory.createExpressionFromText(expressionText, variable);
+        String variableName = variable.getName();
+        LOG.assertTrue(variableName != null);
+        PsiDeclarationStatement statement = elementFactory.createVariableDeclarationStatement(variableName, variable.getType(), initializer, variable);
+        ExpressionLookupItem newExpression = new ExpressionLookupItem(((PsiLocalVariable)statement.getDeclaredElements()[0]).getInitializer());
         result.add(newExpression);
       }
     }

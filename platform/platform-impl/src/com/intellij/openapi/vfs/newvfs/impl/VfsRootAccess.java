@@ -25,9 +25,11 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -111,34 +113,52 @@ public class VfsRootAccess {
     }
     catch (URISyntaxException ignored) { }
 
-    String javaHome = SystemProperties.getJavaHome();
-    allowed.add(FileUtil.toSystemIndependentName(javaHome));
-    allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
-    allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
-    allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
+    try {
+      String javaHome = SystemProperties.getJavaHome();
+      allowed.add(FileUtil.toSystemIndependentName(javaHome));
+      allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
+      allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
+      allowed.add(FileUtil.toSystemIndependentName(SystemProperties.getUserHome()));
+      ContainerUtil.addAllNotNull(allowed, findInUserHome(".m2"));
+      ContainerUtil.addAllNotNull(allowed, findInUserHome(".gradle"));
 
-    // see IDEA-167037 The assertion "File accessed outside allowed root" is triggered by files symlinked from the the JDK installation folder
-    allowed.add("/etc"); // After recent update of Oracle JDK 1.8 under Ubuntu Certain files in the JDK installation are symlinked to /etc
-    allowed.add("/private/etc");
+      // see IDEA-167037 The assertion "File accessed outside allowed root" is triggered by files symlinked from the the JDK installation folder
+      allowed.add("/etc"); // After recent update of Oracle JDK 1.8 under Ubuntu Certain files in the JDK installation are symlinked to /etc
+      allowed.add("/private/etc");
 
-    for (final Project project : openProjects) {
-      if (!project.isInitialized()) {
-        return null; // all is allowed
+      for (final Project project : openProjects) {
+        if (!project.isInitialized()) {
+          return null; // all is allowed
+        }
+        for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
+          allowed.add(root.getPath());
+        }
+        for (VirtualFile root : getAllRoots(project)) {
+          allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
+        }
+        String location = project.getBasePath();
+        assert location != null : project;
+        allowed.add(FileUtil.toSystemIndependentName(location));
       }
-      for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
-        allowed.add(root.getPath());
-      }
-      for (VirtualFile root : getAllRoots(project)) {
-        allowed.add(StringUtil.trimEnd(root.getPath(), JarFileSystem.JAR_SEPARATOR));
-      }
-      String location = project.getBasePath();
-      assert location != null : project;
-      allowed.add(FileUtil.toSystemIndependentName(location));
+
+      allowed.addAll(ourAdditionalRoots);
+    }
+    catch (Error ignored) {
+      // sometimes library.getRoots() may crash if called from inside library modification
     }
 
-    allowed.addAll(ourAdditionalRoots);
-
     return allowed;
+  }
+
+  @Nullable
+  private static String findInUserHome(@NotNull String path) {
+    try {
+      // in case if we have a symlink like ~/.m2 -> /opt/.m2
+      return FileUtil.toSystemIndependentName(new File(SystemProperties.getUserHome(), path).getCanonicalPath());
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   @NotNull

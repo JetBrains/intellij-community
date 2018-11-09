@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -29,12 +15,15 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
+
+import java.util.Locale;
 
 /**
  * @author Maxim.Medvedev
@@ -202,17 +191,16 @@ public class GrStringUtil {
     final int length = str.length();
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
-      switch (ch) {
-        case '/':
-          buffer.append("\\/");
-          break;
-        default:
-          if (Character.isISOControl(ch) || ch == '$') {
-            appendUnicode(buffer, ch);
-          }
-          else {
-            buffer.append(ch);
-          }
+      if (ch == '/') {
+        buffer.append("\\/");
+      }
+      else {
+        if (Character.isISOControl(ch) || ch == '$') {
+          appendUnicode(buffer, ch);
+        }
+        else {
+          buffer.append(ch);
+        }
       }
     }
   }
@@ -227,26 +215,24 @@ public class GrStringUtil {
     final int length = str.length();
     for (int idx = 0; idx < length; idx++) {
       char ch = str.charAt(idx);
-      switch (ch) {
-        case '/':
-          if (idx + 1 < length && str.charAt(idx + 1) == '$') {
-            appendUnicode(buffer, '/');
-            appendUnicode(buffer, '$');
-            break;
-          }
-        default:
-          if (Character.isISOControl(ch)) {
-            appendUnicode(buffer, ch);
-          }
-          else {
-            buffer.append(ch);
-          }
+      if (ch == '/') {
+        if (idx + 1 < length && str.charAt(idx + 1) == '$') {
+          appendUnicode(buffer, '/');
+          appendUnicode(buffer, '$');
+          continue;
+        }
+      }
+      if (Character.isISOControl(ch)) {
+        appendUnicode(buffer, ch);
+      }
+      else {
+        buffer.append(ch);
       }
     }
   }
 
   private static void appendUnicode(StringBuilder buffer, char ch) {
-    String hexCode = Integer.toHexString(ch).toUpperCase();
+    String hexCode = Integer.toHexString(ch).toUpperCase(Locale.ENGLISH);
     buffer.append("\\u");
     int paddingCount = 4 - hexCode.length();
     while (paddingCount-- > 0) {
@@ -488,7 +474,6 @@ public class GrStringUtil {
     final GrExpression expression = factory.createExpressionFromText("\"\"\"${}" + literalText + "\"\"\"");
 
     expression.getFirstChild().delete();//quote
-    expression.getFirstChild().delete();//empty gstring content
     expression.getFirstChild().delete();//empty injection
 
     final ASTNode node = grString.getNode();
@@ -565,9 +550,6 @@ public class GrStringUtil {
     if (!(child.getNode().getElementType() == GroovyTokenTypes.mGSTRING_BEGIN)) return false;
 
     child = child.getNextSibling();
-    if (!(child instanceof GrStringContent)) return false;
-
-    child = child.getNextSibling();
     if (!(child instanceof GrStringInjection)) return false;
 
     final PsiElement refExprCopy = ((GrStringInjection)child).getExpression();
@@ -614,7 +596,7 @@ public class GrStringUtil {
   public static TextRange getStringContentRange(@Nullable PsiElement element) {
     if (element == null) return null;
     IElementType elementType = element.getNode().getElementType();
-    if (elementType != GroovyTokenTypes.mSTRING_LITERAL && elementType != GroovyTokenTypes.mGSTRING_LITERAL) return null;
+    if (!GroovyTokenSets.STRING_LITERALS.contains(elementType)) return null;
 
     String text = element.getText();
     String startQuote = getStartQuote(text);

@@ -59,7 +59,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     return myTag != null && myXmlFormattingPolicy.keepWhiteSpacesInsideTag(myTag);
   }
 
-  private ASTNode getFirstNode(final List<Block> subBlocks) {
+  private ASTNode getFirstNode(final List<? extends Block> subBlocks) {
     LOG.assertTrue(!subBlocks.isEmpty());
     final Block firstBlock = subBlocks.get(0);
     if (firstBlock instanceof AbstractBlock) {
@@ -70,7 +70,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     }
   }
 
-  private ASTNode getLastNode(final List<Block> subBlocks) {
+  private ASTNode getLastNode(final List<? extends Block> subBlocks) {
     LOG.assertTrue(!subBlocks.isEmpty());
     final Block lastBlock = subBlocks.get(subBlocks.size() - 1);
     if (lastBlock instanceof AbstractBlock) {
@@ -100,13 +100,13 @@ public abstract class AbstractSyntheticBlock implements Block {
     return null;
   }
 
-  protected static boolean isXmlTagName(final IElementType type1, final IElementType type2) {
+  protected boolean isXmlTagName(final IElementType type1, final IElementType type2) {
     if ((type1 == XmlTokenType.XML_NAME || type1 == XmlTokenType.XML_TAG_NAME) && (type2 == XmlTokenType.XML_TAG_END)) return true;
     if ((type1 == XmlTokenType.XML_NAME || type1 == XmlTokenType.XML_TAG_NAME) && (type2 == XmlTokenType.XML_EMPTY_ELEMENT_END)) {
       return true;
     }
-    if (type1 == XmlElementType.XML_ATTRIBUTE && type2 == XmlTokenType.XML_EMPTY_ELEMENT_END) return true;
-    return type1 == XmlElementType.XML_ATTRIBUTE && type2 == XmlTokenType.XML_TAG_END;
+    if (isAttributeElementType(type1) && type2 == XmlTokenType.XML_EMPTY_ELEMENT_END) return true;
+    return isAttributeElementType(type1) && type2 == XmlTokenType.XML_TAG_END;
   }
 
   public boolean endsWithText() {
@@ -118,8 +118,7 @@ public abstract class AbstractSyntheticBlock implements Block {
   }
 
   public boolean isTagDescription() {
-    final ASTNode startTreeNode = myStartTreeNode;
-    return isTagDescription(startTreeNode);
+    return isTagDescription(myStartTreeNode);
   }
 
   private static boolean isTagDescription(final ASTNode startTreeNode) {
@@ -162,7 +161,7 @@ public abstract class AbstractSyntheticBlock implements Block {
     return isTagDescription(myStartTreeNode);
   }
 
-  protected static TextRange calculateTextRange(final List<Block> subBlocks) {
+  protected static TextRange calculateTextRange(final List<? extends Block> subBlocks) {
     return new TextRange(subBlocks.get(0).getTextRange().getStartOffset(),
                          subBlocks.get(subBlocks.size() - 1).getTextRange().getEndOffset());
   }
@@ -238,6 +237,10 @@ public abstract class AbstractSyntheticBlock implements Block {
 
   protected boolean insertLineFeedAfter(final XmlTag tag) {
     return myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag) == WrapType.ALWAYS;
+  }
+
+  protected boolean isAttributeElementType(final IElementType elementType) {
+    return elementType == XmlElementType.XML_ATTRIBUTE;
   }
 
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.webcore.packaging;
 
 import com.intellij.icons.AllIcons;
@@ -49,8 +35,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * User: catherine
@@ -100,7 +86,7 @@ public class ManagePackagesDialog extends DialogWrapper {
 
     final AnActionButton reloadButton = new AnActionButton("Reload List of Packages", AllIcons.Actions.Refresh) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         myPackages.setPaintBusy(true);
         final Application application = ApplicationManager.getApplication();
         application.executeOnPooledThread(() -> {
@@ -111,7 +97,6 @@ public class ManagePackagesDialog extends DialogWrapper {
           }
           catch (final IOException e1) {
             application.invokeLater(() -> {
-              //noinspection DialogTitleCapitalization
               Messages.showErrorDialog(myMainPanel, "Error updating package list: " + e1.getMessage(), "Reload List of Packages");
               LOG.info("Error updating list of repository packages", e1);
               myPackages.setPaintBusy(false);
@@ -154,7 +139,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       }
     });
 
-    UiNotifyConnector.doWhenFirstShown(myPackages, () -> initModel());
+    UiNotifyConnector.doWhenFirstShown(myPackages, this::initModel);
     myOptionsCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
@@ -347,9 +332,10 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private class MyPackageFilter extends FilterComponent {
-    public MyPackageFilter() {
+    MyPackageFilter() {
       super("PACKAGE_FILTER", 5);
       getTextEditor().addKeyListener(new KeyAdapter() {
+        @Override
         public void keyPressed(final KeyEvent e) {
           if (e.getKeyCode() == KeyEvent.VK_ENTER) {
             e.consume();
@@ -364,6 +350,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       });
     }
 
+    @Override
     public void filter() {
       if (myPackagesModel != null)
         myPackagesModel.filter(getFilter());
@@ -374,7 +361,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     protected final List<RepoPackage> myFilteredOut = new ArrayList<>();
     protected List<RepoPackage> myView = new ArrayList<>();
 
-    public PackagesModel(List<RepoPackage> packages) {
+    PackagesModel(List<RepoPackage> packages) {
       super(packages);
       myView = packages;
     }
@@ -408,9 +395,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     public void filter(List<RepoPackage> filtered, @Nullable final RepoPackage toSelect){
       myView.clear();
       myPackages.clearSelection();
-      for (RepoPackage repoPackage : filtered) {
-        myView.add(repoPackage);
-      }
+      myView.addAll(filtered);
       if (toSelect != null)
         myPackages.setSelectedValue(toSelect, true);
       Collections.sort(myView);
@@ -432,6 +417,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
   }
 
+  @Override
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     return myFilter;
@@ -501,6 +487,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[0];

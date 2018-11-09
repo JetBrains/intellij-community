@@ -2,16 +2,12 @@
 package com.intellij.ui.laf
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.UiTestRule
 import com.intellij.ui.changeLafIfNeed
-import com.intellij.ui.components.CheckBox
-import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -21,9 +17,8 @@ import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.awt.GridLayout
 import java.nio.file.Paths
-import javax.swing.*
+import javax.swing.JPanel
 
 /**
  * Nor UI DSL, neither ComponentPanelBuilder should be used to create test panels.
@@ -61,23 +56,7 @@ class LafTest {
   @Test
   fun components() {
     doTest {
-      val spacing = createIntelliJSpacingConfiguration()
-      val panel = JPanel(GridLayout(0, 1, spacing.horizontalGap, spacing.verticalGap))
-      panel.add(JTextField("text"))
-      panel.add(JPasswordField("secret"))
-      panel.add(JComboBox<String>(arrayOf("one", "two")))
-
-      val field = JComboBox<String>(arrayOf("one", "two"))
-      field.isEditable = true
-      panel.add(field)
-
-      panel.add(JButton("label"))
-      panel.add(CheckBox("enabled"))
-      panel.add(JRadioButton("label"))
-      panel.add(JBIntSpinner(0, 0, 7))
-      panel.add(textFieldWithHistoryWithBrowseButton(null, "File", FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()))
-
-      panel
+      createLafTestPanel()
     }
   }
 

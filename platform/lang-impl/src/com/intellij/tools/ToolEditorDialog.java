@@ -1,5 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tools;
 
 import com.intellij.execution.filters.RegexpFilter;
@@ -13,7 +12,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -48,30 +46,20 @@ public class ToolEditorDialog extends DialogWrapper {
   private static final Function<String, List<String>> OUTPUT_FILTERS_SPLITTER = s -> StringUtil.split(s, MacKeymapUtil.RETURN);
   private static final Function<List<String>, String> OUTPUT_FILTERS_JOINER = strings -> StringUtil.join(strings, MacKeymapUtil.RETURN);
 
-  @Nullable private final Project myProject;
-
+  private final Project myProject;
   private boolean myEnabled;
 
   private JPanel myMainPanel;
-
   private JTextField myNameField;
   private ComboBox<String> myGroupCombo;
   private JTextField myDescriptionField;
-
   private TextFieldWithBrowseButton myProgramField;
   private JButton myInsertCommandMacroButton;
   private RawCommandLineEditor myArgumentsField;
   private JButton myInsertParametersMacroButton;
   private TextFieldWithBrowseButton myWorkingDirField;
   private JButton myInsertWorkingDirectoryMacroButton;
-
-  private JBCheckBox myShowInMainMenuCheckbox;
-  private JBCheckBox myShowInEditorCheckbox;
-  private JBCheckBox myShowInProjectTreeCheckbox;
-  private JBCheckBox myShowInSearchResultsPopupCheckbox;
-
   private JPanel myAdditionalOptionsPanel;
-
   private AbstractTitledSeparatorWithIcon myAdvancedOptionsSeparator;
   private JPanel myAdvancedOptionsPanel;
   private JBCheckBox mySynchronizedAfterRunCheckbox;
@@ -79,35 +67,6 @@ public class ToolEditorDialog extends DialogWrapper {
   private JBCheckBox myShowConsoleOnStdOutCheckbox;
   private JBCheckBox myShowConsoleOnStdErrCheckbox;
   private RawCommandLineEditor myOutputFilterField;
-
-  @Nullable
-  public Project getProject() {
-    return myProject;
-  }
-
-  @Override
-  @NotNull
-  protected JPanel createCenterPanel() {
-    fillAdditionalOptionsPanel(myAdditionalOptionsPanel);
-    return myMainPanel;
-  }
-
-  protected void fillAdditionalOptionsPanel(@NotNull final JPanel panel) {}
-
-  @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(getIdForHelpAction());
-  }
-
-  protected String getIdForHelpAction() {
-    return "preferences.externalToolsEdit";
-  }
 
   protected ToolEditorDialog(JComponent parent, String title) {
     super(parent, true);
@@ -131,6 +90,25 @@ public class ToolEditorDialog extends DialogWrapper {
     init();
     addListeners();
   }
+
+  @Override
+  protected String getHelpId() {
+    return "preferences.externalToolsEdit";
+  }
+
+  @Nullable
+  public Project getProject() {
+    return myProject;
+  }
+
+  @Override
+  @NotNull
+  protected JPanel createCenterPanel() {
+    fillAdditionalOptionsPanel(myAdditionalOptionsPanel);
+    return myMainPanel;
+  }
+
+  protected void fillAdditionalOptionsPanel(@NotNull final JPanel panel) {}
 
   protected void addWorkingDirectoryBrowseAction(@NotNull final TextFieldWithBrowseButton workingDirField) {
     workingDirField.addBrowseFolderListener(null, null, myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
@@ -157,8 +135,8 @@ public class ToolEditorDialog extends DialogWrapper {
   private void createUIComponents() {
     myOutputFilterField = new RawCommandLineEditor(OUTPUT_FILTERS_SPLITTER, OUTPUT_FILTERS_JOINER);
 
-    myAdvancedOptionsSeparator = new AbstractTitledSeparatorWithIcon(AllIcons.General.SplitRight,
-                                                                     AllIcons.General.SplitDown,
+    myAdvancedOptionsSeparator = new AbstractTitledSeparatorWithIcon(AllIcons.General.ArrowRight,
+                                                                     AllIcons.General.ArrowDown,
                                                                      "Advanced Options") {
       @Override
       protected RefreshablePanel createPanel() {
@@ -202,7 +180,7 @@ public class ToolEditorDialog extends DialogWrapper {
   private class InsertMacroActionListener implements ActionListener {
     private final JTextField myTextField;
 
-    public InsertMacroActionListener(JTextField textField) {
+    InsertMacroActionListener(JTextField textField) {
       myTextField = textField;
     }
 
@@ -263,10 +241,6 @@ public class ToolEditorDialog extends DialogWrapper {
     tool.setDescription(convertString(myDescriptionField.getText()));
     Object selectedItem = myGroupCombo.getSelectedItem();
     tool.setGroup(StringUtil.notNullize(selectedItem != null ? convertString(selectedItem.toString()) : ""));
-    tool.setShownInMainMenu(myShowInMainMenuCheckbox.isSelected());
-    tool.setShownInEditor(myShowInEditorCheckbox.isSelected());
-    tool.setShownInProjectViews(myShowInProjectTreeCheckbox.isSelected());
-    tool.setShownInSearchResultsPopup(myShowInSearchResultsPopupCheckbox.isSelected());
     tool.setUseConsole(myUseConsoleCheckbox.isSelected());
     tool.setShowConsoleOnStdOut(myShowConsoleOnStdOutCheckbox.isSelected());
     tool.setShowConsoleOnStdErr(myShowConsoleOnStdErrCheckbox.isSelected());
@@ -308,10 +282,6 @@ public class ToolEditorDialog extends DialogWrapper {
       }
     }
     myGroupCombo.setSelectedItem(tool.getGroup());
-    myShowInMainMenuCheckbox.setSelected(tool.isShownInMainMenu());
-    myShowInEditorCheckbox.setSelected(tool.isShownInEditor());
-    myShowInProjectTreeCheckbox.setSelected(tool.isShownInProjectViews());
-    myShowInSearchResultsPopupCheckbox.setSelected(tool.isShownInSearchResultsPopup());
     myUseConsoleCheckbox.setSelected(tool.isUseConsole());
     myShowConsoleOnStdOutCheckbox.setEnabled(myUseConsoleCheckbox.isSelected());
     myShowConsoleOnStdOutCheckbox.setSelected(tool.isShowConsoleOnStdOut());

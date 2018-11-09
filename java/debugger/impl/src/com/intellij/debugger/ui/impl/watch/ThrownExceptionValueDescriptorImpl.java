@@ -33,18 +33,22 @@ public class ThrownExceptionValueDescriptorImpl extends ValueDescriptorImpl {
     setRenderer(DebugProcessImpl.getDefaultRenderer(exceptionObj));
   }
 
+  @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     return getValue();
   }
 
+  @Override
   public String getName() {
     return "Exception";
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     throw new EvaluateException("Evaluation not supported for thrown exception object");
   }
 
+  @Override
   public boolean canSetValue() {
     return false;
   }

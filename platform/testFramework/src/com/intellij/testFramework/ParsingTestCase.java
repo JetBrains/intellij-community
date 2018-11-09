@@ -18,6 +18,8 @@ package com.intellij.testFramework;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.mock.*;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.EditorFactory;
@@ -36,19 +38,17 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.TreeAspect;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.PsiCachedValuesFactory;
-import com.intellij.psi.impl.PsiFileFactoryImpl;
+import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
-import com.intellij.psi.impl.BlockSupportImpl;
-import com.intellij.psi.impl.DiffLog;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
@@ -205,7 +205,41 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     return true;
   }
 
+  /* Sanity check against thoughtlessly copy-pasting actual test results as the expected test data. */
+  protected void ensureNoErrorElements() {
+    myFile.accept(new PsiRecursiveElementVisitor() {
+      private static final int TAB_WIDTH = 8;
+
+      @Override
+      public void visitErrorElement(PsiErrorElement element) {
+        // Very dump approach since a corresponding Document is not available.
+        String text = myFile.getText();
+        String[] lines = StringUtil.splitByLinesKeepSeparators(text);
+
+        int offset = element.getTextOffset();
+        LineColumn position = StringUtil.offsetToLineColumn(text, offset);
+        int lineNumber = position != null ? position.line : -1;
+        int column = position != null ? position.column : 0;
+
+        String line = StringUtil.trimTrailing(lines[lineNumber]);
+        // Sanitize: expand indentation tabs, replace the rest with a single space
+        int numIndentTabs = StringUtil.countChars(line.subSequence(0, column), '\t', 0, true);
+        int indentedColumn = column + numIndentTabs * (TAB_WIDTH - 1);
+        String lineWithNoTabs = StringUtil.repeat(" ", numIndentTabs * TAB_WIDTH) + line.substring(numIndentTabs).replace('\t', ' ');
+        String errorUnderline = StringUtil.repeat(" ", indentedColumn) + StringUtil.repeat("^", Math.max(1, element.getTextLength()));
+
+        fail(String.format("Unexpected error element: %s:%d:%d\n\n%s\n%s\n%s",
+                           myFile.getName(), lineNumber + 1, column,
+                           lineWithNoTabs, errorUnderline, element.getErrorDescription()));
+      }
+    });
+  }
+
   protected void doTest(boolean checkResult) {
+    doTest(checkResult, false);
+  }
+
+  protected void doTest(boolean checkResult, boolean ensureNoErrorElements) {
     String name = getTestName();
     try {
       String text = loadFile(name + "." + myFileExt);
@@ -218,6 +252,9 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
       ensureCorrectReparse(myFile);
       if (checkResult){
         checkResult(name, myFile);
+        if (ensureNoErrorElements) {
+          ensureNoErrorElements();
+        }
       }
       else{
         toParseTreeText(myFile, skipSpaces(), includeRanges());
@@ -237,7 +274,7 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     checkResult(name + suffix, myFile);
   }
 
-  protected void doCodeTest(String code) throws IOException {
+  protected void doCodeTest(@NotNull String code) throws IOException {
     String name = getTestName();
     myFile = createPsiFile("a", code);
     ensureParsed(myFile);
@@ -245,21 +282,21 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     checkResult(myFilePrefix + name, myFile);
   }
 
-  protected PsiFile createPsiFile(String name, String text) {
+  protected PsiFile createPsiFile(@NotNull String name, @NotNull String text) {
     return createFile(name + "." + myFileExt, text);
   }
 
-  protected PsiFile createFile(@NonNls String name, String text) {
+  protected PsiFile createFile(@NotNull @NonNls String name, @NotNull String text) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, myLanguage, text);
     virtualFile.setCharset(CharsetToolkit.UTF8_CHARSET);
     return createFile(virtualFile);
   }
 
-  protected PsiFile createFile(LightVirtualFile virtualFile) {
+  protected PsiFile createFile(@NotNull LightVirtualFile virtualFile) {
     return myFileFactory.trySetupPsiForFile(virtualFile, myLanguage, true, false);
   }
 
-  protected void checkResult(@NonNls @TestDataFile String targetDataName, final PsiFile file) throws IOException {
+  protected void checkResult(@NotNull @NonNls @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
     doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
   }
 
@@ -267,19 +304,19 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     return false;
   }
 
-  public static void doCheckResult(String testDataDir,
-                                   PsiFile file,
+  public static void doCheckResult(@NotNull String testDataDir,
+                                   @NotNull PsiFile file,
                                    boolean checkAllPsiRoots,
-                                   String targetDataName,
+                                   @NotNull String targetDataName,
                                    boolean skipSpaces,
                                    boolean printRanges) {
     doCheckResult(testDataDir, file, checkAllPsiRoots, targetDataName, skipSpaces, printRanges, false);
   }
 
-  public static void doCheckResult(String testDataDir,
-                                   PsiFile file,
+  public static void doCheckResult(@NotNull String testDataDir,
+                                   @NotNull PsiFile file,
                                    boolean checkAllPsiRoots,
-                                   String targetDataName,
+                                   @NotNull String targetDataName,
                                    boolean skipSpaces,
                                    boolean printRanges,
                                    boolean allTreesInSingleFile) {
@@ -312,33 +349,33 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
     }
   }
 
-  protected void checkResult(String actual) {
+  protected void checkResult(@NotNull String actual) {
     String name = getTestName();
     doCheckResult(myFullDataPath, myFilePrefix + name + ".txt", actual);
   }
 
-  protected void checkResult(@TestDataFile @NonNls String targetDataName, String actual) {
+  protected void checkResult(@NotNull @TestDataFile @NonNls String targetDataName, @NotNull String actual) {
     doCheckResult(myFullDataPath, targetDataName, actual);
   }
 
-  public static void doCheckResult(String fullPath, String targetDataName, String actual) {
+  public static void doCheckResult(@NotNull String fullPath, @NotNull String targetDataName, @NotNull String actual) {
     String expectedFileName = fullPath + File.separatorChar + targetDataName;
     UsefulTestCase.assertSameLinesWithFile(expectedFileName, actual);
   }
 
-  protected static String toParseTreeText(PsiElement file,  boolean skipSpaces, boolean printRanges) {
+  protected static String toParseTreeText(@NotNull PsiElement file,  boolean skipSpaces, boolean printRanges) {
     return DebugUtil.psiToString(file, skipSpaces, printRanges);
   }
 
-  protected String loadFile(@NonNls @TestDataFile String name) throws IOException {
+  protected String loadFile(@NotNull @NonNls @TestDataFile String name) throws IOException {
     return loadFileDefault(myFullDataPath, name);
   }
 
-  public static String loadFileDefault(String dir, String name) throws IOException {
+  public static String loadFileDefault(@NotNull String dir, @NotNull String name) throws IOException {
     return FileUtil.loadFile(new File(dir, name), CharsetToolkit.UTF8, true).trim();
   }
 
-  public static void ensureParsed(PsiFile file) {
+  public static void ensureParsed(@NotNull PsiFile file) {
     file.accept(new PsiElementVisitor() {
       @Override
       public void visitElement(PsiElement element) {
@@ -350,11 +387,19 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   public static void ensureCorrectReparse(@NotNull final PsiFile file) {
     final String psiToStringDefault = DebugUtil.psiToString(file, false, false);
 
-    final String fileText = file.getText();
-    final DiffLog diffLog = new BlockSupportImpl(file.getProject()).reparseRange(
-      file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
-    diffLog.performActualPsiChange(file);
+    DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
+                                       final String fileText = file.getText();
+                                       final DiffLog diffLog = new BlockSupportImpl(file.getProject()).reparseRange(
+                                         file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
+                                       diffLog.performActualPsiChange(file);
+                                     });
 
     TestCase.assertEquals(psiToStringDefault, DebugUtil.psiToString(file, false, false));
+  }
+
+  public void registerMockInjectedLanguageManager() {
+    registerExtensionPoint(Extensions.getArea(myProject), MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME, MultiHostInjector.class);
+    registerExtensionPoint(LanguageInjector.EXTENSION_POINT_NAME, LanguageInjector.class);
+    myProject.registerService(InjectedLanguageManager.class, new InjectedLanguageManagerImpl(myProject, new MockDumbService(myProject)));
   }
 }

@@ -93,6 +93,11 @@ public class JetBrainsProtocolHandler {
     return ourMainParameter;
   }
 
+  public static boolean appStartedWithCommand() {
+    String property = System.getProperty(JetBrainsProtocolHandler.class.getName());
+    return property != null && property.startsWith(PROTOCOL);
+  }
+
   public static void clear() {
     ourCommand = null;
   }

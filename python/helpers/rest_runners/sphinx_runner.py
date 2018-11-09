@@ -1,10 +1,16 @@
-__author__ = 'catherine'
 
 if __name__ == "__main__":
-  try:
-    from sphinx import cmdline
-  except:
-    raise NameError("Cannot find sphinx in selected interpreter.")
+    import sys
 
-  import sys
-  cmdline.main(sys.argv)
+    try:
+        import sphinx
+    except ImportError:
+        raise NameError("Cannot find sphinx in selected interpreter.")
+
+    version = sphinx.version_info
+    if version[0] >= 1 and version[1] >= 7:
+        from sphinx.cmd import build
+        build.main(sys.argv[1:])
+    else:
+        from sphinx import cmdline
+        cmdline.main(sys.argv)

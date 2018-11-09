@@ -23,6 +23,7 @@ import com.intellij.psi.PsiReferenceRegistrar
 import com.intellij.psi.PsiReferenceRegistrar.HIGHER_PRIORITY
 import com.intellij.util.ProcessingContext
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyElementPattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyList
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
@@ -30,7 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 class LogbackReferenceContributor : PsiReferenceContributor() {
 
   companion object {
-    val appenderReferencePlace = GroovyPatterns.groovyLiteralExpression().withParent(
+    val appenderReferencePlace: GroovyElementPattern.Capture<GrLiteral> = GroovyPatterns.groovyLiteralExpression().withParent(
         StandardPatterns.or(
             groovyList().methodCallParameter(1, psiMethod(configDelegateFqn, "root")),
             groovyList().methodCallParameter(2, psiMethod(configDelegateFqn, "logger"))

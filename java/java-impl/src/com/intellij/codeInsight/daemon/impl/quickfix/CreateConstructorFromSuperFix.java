@@ -20,6 +20,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +52,7 @@ public class CreateConstructorFromSuperFix extends CreateConstructorFromThisOrSu
     if (extendsTypes.length == 0) return Collections.emptyList();
     PsiClass aClass = extendsTypes[0].resolve();
     if (aClass instanceof PsiTypeParameter) return Collections.emptyList();
-    if (aClass != null && aClass.isValid() && aClass.getManager().isInProject(aClass)) {
+    if (aClass != null && aClass.isValid() && ScratchFileService.isInProjectOrScratch(aClass)) {
       return Collections.singletonList(aClass);
     }
     return Collections.emptyList();

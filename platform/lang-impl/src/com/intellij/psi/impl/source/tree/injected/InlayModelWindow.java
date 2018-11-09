@@ -19,7 +19,20 @@ class InlayModelWindow implements InlayModel {
 
   @Nullable
   @Override
-  public Inlay addInlineElement(int offset, boolean relatesToPrecedingText, @NotNull EditorCustomElementRenderer renderer) {
+  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                           boolean relatesToPrecedingText,
+                                                                           @NotNull T renderer) {
+    logUnsupported();
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public <T extends EditorCustomElementRenderer> Inlay<T> addBlockElement(int offset,
+                                                                          boolean relatesToPrecedingText,
+                                                                          boolean showAbove,
+                                                                          int priority,
+                                                                          @NotNull T renderer) {
     logUnsupported();
     return null;
   }
@@ -27,6 +40,20 @@ class InlayModelWindow implements InlayModel {
   @NotNull
   @Override
   public List<Inlay> getInlineElementsInRange(int startOffset, int endOffset) {
+    logUnsupported();
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getBlockElementsInRange(int startOffset, int endOffset) {
+    logUnsupported();
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public List<Inlay> getBlockElementsForVisualLine(int visualLine, boolean above) {
     logUnsupported();
     return Collections.emptyList();
   }

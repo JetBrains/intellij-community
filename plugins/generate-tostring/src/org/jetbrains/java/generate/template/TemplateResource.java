@@ -178,7 +178,7 @@ public class TemplateResource implements Serializable {
       return s.substring(0, indexOf).trim();
     }
 
-    StringBuffer signature = new StringBuffer();
+    StringBuilder signature = new StringBuilder();
 
     String[] lines = s.split("\n");
     for (String line : lines) {

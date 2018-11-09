@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.fixes.junit;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.junit.AssertEqualsCalledOnArrayInspection;
@@ -43,7 +44,7 @@ public class AssertEqualsCalledOnArrayInspectionTest extends IGQuickFixesTestCas
   }
 
   private void doFixTest() {
-    doTest(getTestName(true), InspectionGadgetsBundle.message("replace.assertequals.quickfix", "assertArrayEquals"));
+    doTest(getTestName(true), CommonQuickFixBundle.message("fix.replace.with.x", "assertArrayEquals"));
   }
 
   @Override

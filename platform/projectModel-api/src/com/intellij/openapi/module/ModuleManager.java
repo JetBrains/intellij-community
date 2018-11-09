@@ -199,6 +199,6 @@ public abstract class ModuleManager extends SimpleModificationTracker {
   public abstract void setUnloadedModules(@NotNull List<String> unloadedModuleNames);
 
   @ApiStatus.Experimental
-  public void removeUnloadedModules(@NotNull Collection<UnloadedModuleDescription> unloadedModules) {
+  public void removeUnloadedModules(@NotNull Collection<? extends UnloadedModuleDescription> unloadedModules) {
   }
 }

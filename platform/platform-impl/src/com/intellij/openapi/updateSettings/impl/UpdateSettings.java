@@ -17,14 +17,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@State(
-  name = "UpdatesConfigurable",
-  storages = {
-    @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
-public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, UserUpdateSettings {
+@State(name = "UpdatesConfigurable", storages = @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED, exportable = true))
+public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   public static final String TOOLBOX_PM = "Toolbox";
   public static final String SNAP_PM = "Snap";
 
@@ -98,13 +92,11 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, 
   }
 
   @NotNull
-  @Override
   public List<String> getIgnoredBuildNumbers() {
     return myState.getIgnoredBuildNumbers();
   }
 
   @NotNull
-  @Override
   public ChannelStatus getSelectedChannelStatus() {
     return ChannelStatus.fromCode(myState.getUpdateChannelType());
   }
@@ -137,6 +129,8 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, 
     if (pluginHosts != null) {
       ContainerUtil.addAll(hosts, pluginHosts.split(";"));
     }
+
+    UpdateSettingsProviderHelper.addPluginRepositories(hosts);
     return hosts;
   }
 
@@ -153,17 +147,11 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, 
     return myState.isUseSecureConnection() && NetUtils.isSniEnabled();
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 2018) */
-  @SuppressWarnings("unused")
-  public String getUpdateChannelType() {
-    return myState.getUpdateChannelType();
+  public boolean isThirdPartyPluginsAllowed() {
+    return myState.isThirdPartyPluginsAllowed();
   }
 
-  /** @deprecated use {@link #setSelectedChannelStatus(ChannelStatus)} (to be removed in IDEA 2018) */
-  @SuppressWarnings("unused")
-  public void setUpdateChannelType(@NotNull String value) {
-    myState.setUpdateChannelType(value);
+  public void setThirdPartyPluginsAllowed(boolean value) {
+    myState.setThirdPartyPluginsAllowed(value);
   }
-  //</editor-fold>
 }

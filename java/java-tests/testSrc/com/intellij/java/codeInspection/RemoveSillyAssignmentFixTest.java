@@ -33,6 +33,7 @@ public class RemoveSillyAssignmentFixTest extends LightCodeInsightFixtureTestCas
   public void testSillyButIncomplete() { doTest(); }
 
   public void testFinalField() { assertQuickfixNotAvailable(); }
+  public void testFinalField2() { assertQuickfixNotAvailable(); }
 
   public void doTest() {
     myFixture.enableInspections(SillyAssignmentInspection.class);

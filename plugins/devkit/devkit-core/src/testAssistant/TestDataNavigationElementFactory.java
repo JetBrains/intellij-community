@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
-import com.google.common.collect.ImmutableList;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
@@ -25,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.FontUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -92,7 +78,7 @@ public class TestDataNavigationElementFactory {
 
       filePathsToCreate.forEach(path -> {
         VirtualFile file = TestDataUtil.createFileByName(project, path);
-        new OpenFileDescriptor(project, file).navigate(true);
+        PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
       });
     }
 
@@ -120,7 +106,7 @@ public class TestDataNavigationElementFactory {
 
     @Override
     public void performAction(@NotNull Project project) {
-      new OpenFileDescriptor(project, myGroup).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, myGroup, -1).navigate(true);
     }
 
     @Nullable
@@ -200,26 +186,28 @@ public class TestDataNavigationElementFactory {
     @Override
     public List<Pair<String, SimpleTextAttributes>> getTitleFragments() {
       VirtualFile file = TestDataUtil.getFileByPath(myPath);
+      String spaceAndThinSpace = FontUtil.spaceAndThinSpace();
+
       if (file == null) {
         Pair<String, String> relativePath = TestDataUtil.getRelativePathPairForMissingFile(myProject, myPath);
-        return ContainerUtil.list(
-          new Pair<>(PathUtil.getFileName(myPath) + " (", SimpleTextAttributes.GRAYED_ATTRIBUTES),
+        return ContainerUtil.newSmartList(
+          new Pair<>(PathUtil.getFileName(myPath) + spaceAndThinSpace, SimpleTextAttributes.GRAYED_ATTRIBUTES),
           new Pair<>(relativePath.first == null ? "" : relativePath.first, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES),
-          new Pair<>(relativePath.first == null ? "" : "/" + relativePath.second + ")", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+          new Pair<>(relativePath.first == null ? "" : "/" + relativePath.second, SimpleTextAttributes.GRAYED_ATTRIBUTES)
         );
       }
 
       Pair<String, String> relativePath = TestDataUtil.getModuleOrProjectRelativeParentPath(myProject, file);
       if (relativePath == null) {
         // cannot calculate module/project relative path, use absolute path
-        return Collections.singletonList(new Pair<>(
+        return ContainerUtil.newSmartList(new Pair<>(
           String.format("%s (%s)", file.getName(), PathUtil.getParentPath(myPath) + "/"),
           SimpleTextAttributes.REGULAR_ATTRIBUTES));
       }
 
-      return ImmutableList.of(new Pair<>(file.getName() + " (", SimpleTextAttributes.REGULAR_ATTRIBUTES),
-                              new Pair<>(relativePath.getFirst(), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES),
-                              new Pair<>("/" + relativePath.getSecond() + "/)", SimpleTextAttributes.REGULAR_ATTRIBUTES));
+      return ContainerUtil.newSmartList(new Pair<>(file.getName() + spaceAndThinSpace, SimpleTextAttributes.REGULAR_ATTRIBUTES),
+                                        new Pair<>(relativePath.first, SimpleTextAttributes.GRAYED_BOLD_ATTRIBUTES),
+                                        new Pair<>("/" + relativePath.second, SimpleTextAttributes.GRAYED_ATTRIBUTES));
     }
   }
 }

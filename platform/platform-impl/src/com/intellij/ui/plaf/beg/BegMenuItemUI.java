@@ -1,19 +1,5 @@
 
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
@@ -21,6 +7,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMe
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
@@ -77,6 +64,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     }
   }
 
+  @Override
   protected void installDefaults() {
     super.installDefaults();
     final String propertyPrefix = getPropertyPrefix();
@@ -93,6 +81,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     return model.isArmed() || (item instanceof JMenu) && model.isSelected();
   }
 
+  @Override
   public void paint(Graphics g, JComponent comp) {
     UISettings.setupAntialiasing(g);
     JMenuItem jmenuitem = (JMenuItem)comp;
@@ -276,6 +265,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     return true;
   }
 
+  @Override
   public MenuElement[] getPath() {
     MenuSelectionManager menuselectionmanager = MenuSelectionManager.defaultManager();
     MenuElement[] amenuelement = menuselectionmanager.getSelectedPath();
@@ -304,6 +294,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     return amenuelement1;
   }
 
+  @Override
   public Dimension getMinimumSize(JComponent jcomponent) {
     return null;
   }
@@ -395,6 +386,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     return icon;
   }
 
+  @Override
   public Dimension getPreferredSize(JComponent comp) {
     JMenuItem jmenuitem = (JMenuItem)comp;
     Icon icon1 = getIcon();
@@ -471,10 +463,12 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     return icon;
   }
 
+  @Override
   public Dimension getMaximumSize(JComponent comp) {
     return null;
   }
 
+  @Override
   public void update(Graphics g, JComponent comp) {
     paint(g, comp);
   }
@@ -521,7 +515,7 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     }
     ActionMenuItem item = (ActionMenuItem)menuItem;
     AnAction action = item.getAnAction();
-    if (action != null && ActionPlaces.MAIN_MENU.equals(item.getPlace())) {
+    if (action != null && ActionPlaces.MAIN_MENU.equals(item.getPlace()) && ApplicationManager.getApplication() != null) {
       MainMenuCollector.getInstance().record(action);
     }
     msm.clearSelectedPath();
@@ -536,11 +530,13 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     );
   }
 
+  @Override
   protected MouseInputListener createMouseInputListener(JComponent c){
     return new MyMouseInputHandler();
   }
 
   private class MyMouseInputHandler extends MouseInputHandler{
+    @Override
     public void mouseReleased(MouseEvent e){
       MenuSelectionManager manager=MenuSelectionManager.defaultManager();
       Point p=e.getPoint();
@@ -552,21 +548,26 @@ public class BegMenuItemUI extends BasicMenuItemUI {
     }
   }
 
+  @Override
   protected MenuDragMouseListener createMenuDragMouseListener(JComponent c){
     return new MyMenuDragMouseHandler();
   }
 
   private class MyMenuDragMouseHandler implements MenuDragMouseListener {
+    @Override
     public void menuDragMouseEntered(MenuDragMouseEvent e){}
 
+    @Override
     public void menuDragMouseDragged(MenuDragMouseEvent e){
       MenuSelectionManager manager=e.getMenuSelectionManager();
       MenuElement[] path = e.getPath();
       manager.setSelectedPath(path);
     }
 
+    @Override
     public void menuDragMouseExited(MenuDragMouseEvent e){}
 
+    @Override
     public void menuDragMouseReleased(MenuDragMouseEvent e){
       MenuSelectionManager manager=e.getMenuSelectionManager();
       Point p=e.getPoint();

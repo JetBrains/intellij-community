@@ -39,6 +39,7 @@ public class PropertyImpl extends PropertiesStubElementImpl<PropertyStub> implem
     super(stub, nodeType);
   }
 
+  @Override
   public String toString() {
     return "Property{ key = " + getKey() + ", value = " + getValue() + "}";
   }

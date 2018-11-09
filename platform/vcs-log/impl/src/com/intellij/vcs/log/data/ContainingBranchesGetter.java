@@ -30,13 +30,14 @@ import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo;
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor;
 import com.intellij.vcs.log.util.StopWatch;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * Provides capabilities to asynchronously calculate "contained in branches" information.
@@ -51,7 +52,7 @@ public class ContainingBranchesGetter {
   // other fields accessed only from EDT
   @NotNull private final List<Runnable> myLoadingFinishedListeners = ContainerUtil.newArrayList();
   @NotNull private SLRUMap<CommitId, List<String>> myCache = createCache();
-  @NotNull private Map<VirtualFile, ContainedInBranchCondition> myConditions = ContainerUtil.newHashMap();
+  @NotNull private Map<VirtualFile, Condition<Integer>> myConditions = ContainerUtil.newHashMap();
   private int myCurrentBranchesChecksum;
 
   ContainingBranchesGetter(@NotNull VcsLogData logData, @NotNull Disposable parentDisposable) {
@@ -78,11 +79,7 @@ public class ContainingBranchesGetter {
   private void clearCache() {
     myCache = createCache();
     myTaskExecutor.clear();
-    Map<VirtualFile, ContainedInBranchCondition> conditions = myConditions;
     myConditions = ContainerUtil.newHashMap();
-    for (ContainedInBranchCondition c : conditions.values()) {
-      c.dispose();
-    }
     // re-request containing branches information for the commit user (possibly) currently stays on
     ApplicationManager.getApplication().invokeLater(this::notifyListeners);
   }
@@ -139,7 +136,7 @@ public class ContainingBranchesGetter {
       if (pg instanceof PermanentGraphInfo) {
         //noinspection unchecked
         int nodeId = ((PermanentGraphInfo)pg).getPermanentCommitsInfo().getNodeId(index);
-        if (nodeId < 10000 && canUseGraphForComputation(myLogData.getLogProvider(root)) ) {
+        if (nodeId < 10000 && canUseGraphForComputation(myLogData.getLogProvider(root))) {
           branches = getContainingBranchesSynchronously(root, hash);
         }
         else {
@@ -152,25 +149,30 @@ public class ContainingBranchesGetter {
   }
 
   @NotNull
-  public Condition<CommitId> getContainedInBranchCondition(@NotNull final String branchName, @NotNull final VirtualFile root) {
+  public Condition<Integer> getContainedInCurrentBranchCondition(@NotNull VirtualFile root) {
     LOG.assertTrue(EventQueue.isDispatchThread());
 
-    DataPack dataPack = myLogData.getDataPack();
-    if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
-
-    PermanentGraph<Integer> graph = dataPack.getPermanentGraph();
-    VcsLogRefs refs = dataPack.getRefsModel();
-
-    ContainedInBranchCondition condition = myConditions.get(root);
-    if (condition == null || !condition.getBranch().equals(branchName)) {
-      VcsRef branchRef = ContainerUtil.find(refs.getBranches(),
-                                            vcsRef -> vcsRef.getRoot().equals(root) && vcsRef.getName().equals(branchName));
-      if (branchRef == null) return Conditions.alwaysFalse();
-      condition = new ContainedInBranchCondition(graph.getContainedInBranchCondition(
-        Collections.singleton(myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot()))), branchName);
+    Condition<Integer> condition = myConditions.get(root);
+    if (condition == null) {
+      condition = doGetContainedInCurrentBranchCondition(root);
       myConditions.put(root, condition);
     }
     return condition;
+  }
+
+  @NotNull
+  private Condition<Integer> doGetContainedInCurrentBranchCondition(@NotNull VirtualFile root) {
+    DataPack dataPack = myLogData.getDataPack();
+    if (dataPack == DataPack.EMPTY) return Conditions.alwaysFalse();
+
+    String branchName = myLogData.getLogProvider(root).getCurrentBranch(root);
+    if (branchName == null) return Conditions.alwaysFalse();
+
+    VcsRef branchRef = VcsLogUtil.findBranch(dataPack.getRefsModel(), root, branchName);
+    if (branchRef == null) return Conditions.alwaysFalse();
+
+    int branchIndex = myLogData.getCommitIndex(branchRef.getCommitHash(), branchRef.getRoot());
+    return dataPack.getPermanentGraph().getContainedInBranchCondition(Collections.singleton(branchIndex));
   }
 
   @NotNull
@@ -200,11 +202,11 @@ public class ContainingBranchesGetter {
     @NotNull private final RefsModel refs;
     @NotNull private final PermanentGraph<Integer> graph;
 
-    public Task(@NotNull VirtualFile root,
-                @NotNull Hash hash,
-                @NotNull SLRUMap<CommitId, List<String>> cache,
-                @NotNull PermanentGraph<Integer> graph,
-                @NotNull RefsModel refs) {
+    Task(@NotNull VirtualFile root,
+         @NotNull Hash hash,
+         @NotNull SLRUMap<CommitId, List<String>> cache,
+         @NotNull PermanentGraph<Integer> graph,
+         @NotNull RefsModel refs) {
       this.root = root;
       this.hash = hash;
       this.cache = cache;
@@ -245,32 +247,6 @@ public class ContainingBranchesGetter {
       finally {
         sw.report();
       }
-    }
-  }
-
-  private class ContainedInBranchCondition implements Condition<CommitId> {
-    @NotNull private final Condition<Integer> myCondition;
-    @NotNull private final String myBranch;
-    private volatile boolean isDisposed = false;
-
-    public ContainedInBranchCondition(@NotNull Condition<Integer> condition, @NotNull String branch) {
-      myCondition = condition;
-      myBranch = branch;
-    }
-
-    @NotNull
-    public String getBranch() {
-      return myBranch;
-    }
-
-    @Override
-    public boolean value(CommitId commitId) {
-      if (isDisposed) return false;
-      return myCondition.value(myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot()));
-    }
-
-    public void dispose() {
-      isDisposed = true;
     }
   }
 }

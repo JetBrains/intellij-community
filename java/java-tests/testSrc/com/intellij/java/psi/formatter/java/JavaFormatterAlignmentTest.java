@@ -27,7 +27,6 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT_WITH_CO
  * {@code Project Settings - Code Style - Alignment and Braces}).
  *
  * @author Denis Zhdanov
- * @since Apr 27, 2010 6:42:00 PM
  */
 public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
 
@@ -853,6 +852,46 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
       "    public void testSuperDuperFuckerMother() { System.out.println(\"AAA\"); }\n" +
       "\n" +
       "    public void testCounterMounter()         { System.out.println(\"XXXX\"); }\n" +
+      "\n" +
+      "}"
+    );
+  }
+
+  public void _testIdea199677() {
+    getSettings().ALIGN_CONSECUTIVE_VARIABLE_DECLARATIONS = true;
+    getSettings().CALL_PARAMETERS_WRAP = 2;
+    getSettings().CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true;
+    getSettings().CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true;
+
+    doTextTest(
+      "public class Main {\n" +
+      "\n" +
+      "    public static void main(String[] args) {\n" +
+      "        int one               = 1;\n" +
+      "        int a_million_dollars = 1000000;\n" +
+      "\n" +
+      "        doSomething(one, a_million_dollars);\n" +
+      "    }\n" +
+      "\n" +
+      "    private static void doSomething(int one, int two) {\n" +
+      "    }\n" +
+      "\n" +
+      "}",
+
+      "public class Main {\n" +
+      "\n" +
+      "    public static void main(String[] args) {\n" +
+      "        int one               = 1;\n" +
+      "        int a_million_dollars = 1000000;\n" +
+      "\n" +
+      "        doSomething(\n" +
+      "                one,\n" +
+      "                a_million_dollars\n" +
+      "        );\n" +
+      "    }\n" +
+      "\n" +
+      "    private static void doSomething(int one, int two) {\n" +
+      "    }\n" +
       "\n" +
       "}"
     );

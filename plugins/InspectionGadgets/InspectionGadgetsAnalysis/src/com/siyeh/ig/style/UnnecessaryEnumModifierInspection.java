@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -85,9 +86,8 @@ public class UnnecessaryEnumModifierInspection extends BaseInspection implements
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiModifierList modifierList =
-        element instanceof PsiModifierList ? (PsiModifierList)element : (PsiModifierList)element.getParent();
-      assert modifierList != null;
+      final PsiModifierList modifierList = PsiTreeUtil.getNonStrictParentOfType(element, PsiModifierList.class);
+      if (modifierList == null) return;
       modifierList.setModifierProperty(modifierList.getParent() instanceof PsiClass ? PsiModifier.STATIC : PsiModifier.PRIVATE, false);
     }
   }

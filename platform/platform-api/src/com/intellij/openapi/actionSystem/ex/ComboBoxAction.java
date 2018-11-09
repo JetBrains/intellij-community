@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
@@ -39,7 +27,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -51,13 +42,12 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   public static Icon getArrowIcon(boolean enabled) {
     if (UIUtil.isUnderWin10LookAndFeel()) {
       if (myWin10ComboDropTriangleIcon == null) {
-        myWin10ComboDropTriangleIcon = IconLoader.getIcon("/com/intellij/ide/ui/laf/icons/win10/comboDropTriangle.png");
+        myWin10ComboDropTriangleIcon = IconLoader.findLafIcon("win10/comboDropTriangle", ComboBoxAction.class, true);
       }
       return myWin10ComboDropTriangleIcon;
     }
-    Icon icon = UIUtil.isUnderDarcula() ? AllIcons.General.ComboArrow : AllIcons.General.ComboBoxButtonArrow;
-    if (myIcon != icon) {
-      myIcon = icon;
+    if (myIcon != AllIcons.General.ArrowDown) {
+      myIcon = AllIcons.General.ArrowDown;
       myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
     }
     return enabled ? myIcon : myDisabledIcon;
@@ -70,7 +60,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
 
@@ -90,8 +80,9 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return popup;
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     JPanel panel = new JPanel(new GridBagLayout());
     ComboBoxButton button = createComboBoxButton(presentation);
     panel.add(button,
@@ -122,7 +113,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   @NotNull
   protected abstract DefaultActionGroup createPopupActionGroup(JComponent button);
 
-  @SuppressWarnings("unused")
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(JComponent button, @NotNull  DataContext dataContext) {
     return createPopupActionGroup(button);
@@ -154,21 +144,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setFocusable(ScreenReader.isActive());
       putClientProperty("styleCombo", ComboBoxAction.this);
       setMargin(JBUI.insets(0, 5, 0, 2));
-      if (isSmallVariant() && !UIUtil.isUnderGTKLookAndFeel()) {
-        setFont(JBUI.Fonts.label(11));
+      if (isSmallVariant()) {
+        setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
       }
-      addActionListener(
-        new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            if (!myForcePressed) {
-              IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> showPopup());
-            }
-          }
-        }
-      );
 
-      //noinspection HardCodedStringLiteral
       addMouseListener(new MouseAdapter() {
         @Override
         public void mousePressed(final MouseEvent e) {
@@ -189,6 +168,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
                                                e.getY()));
         }
       });
+    }
+
+    @Override
+    protected void fireActionPerformed(ActionEvent event) {
+      if (!myForcePressed) {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> showPopup());
+      }
     }
 
     @NotNull
@@ -307,7 +293,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Dimension getPreferredSize() {
       Dimension prefSize = super.getPreferredSize();
-      int width = prefSize.width + getArrowIcon(isEnabled()).getIconWidth()
+      int width = prefSize.width
+                  + (myPresentation != null && isArrowVisible(myPresentation) ? getArrowIcon(isEnabled()).getIconWidth() : 0)
                   + (StringUtil.isNotEmpty(getText()) ? getIconTextGap() : 0)
                   + (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(6) : 0);
 
@@ -334,12 +321,18 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public void paint(Graphics g) {
       super.paint(g);
-
+      if (!isArrowVisible(myPresentation)) {
+        return;
+      }
       Icon icon = getArrowIcon(isEnabled());
       int x = getWidth() - icon.getIconWidth() - getInsets().right - getMargin().right -
               (UIUtil.isUnderWin10LookAndFeel() ? JBUI.scale(3) : 0); // Different icons correction
 
       icon.paintIcon(null, g, x, (getHeight() - icon.getIconHeight()) / 2);
+    }
+
+    protected boolean isArrowVisible(@NotNull Presentation presentation) {
+      return true;
     }
 
     @Override public void updateUI() {

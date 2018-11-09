@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
  * Is intended to test formatting in editor behavior, i.e. check how formatting affects things like caret position, selection etc.
  *
  * @author Denis Zhdanov
- * @since 6/1/11 6:17 PM
  */
 public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase {
 

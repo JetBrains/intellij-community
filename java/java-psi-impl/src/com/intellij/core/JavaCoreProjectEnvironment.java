@@ -31,7 +31,6 @@ import java.io.File;
 /**
  * Used in Kotlin.
  */
-@SuppressWarnings("unused")
 public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
   private final JavaFileManager myFileManager;
   private final PackageIndex myPackageIndex;

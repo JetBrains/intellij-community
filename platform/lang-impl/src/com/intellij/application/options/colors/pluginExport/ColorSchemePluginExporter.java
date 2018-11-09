@@ -36,15 +36,11 @@ public class ColorSchemePluginExporter extends ConfigurableSchemeExporter<Plugin
   public void exportScheme(@NotNull EditorColorsScheme scheme, @NotNull OutputStream outputStream, @Nullable PluginExportData exportData)
     throws Exception {
     if (exportData != null) {
-      ZipOutputStream zipStream = new ZipOutputStream(outputStream);
-      try {
+      try (ZipOutputStream zipStream = new ZipOutputStream(outputStream)) {
         zipStream.putNextEntry(new ZipEntry("META-INF/plugin.xml"));
         writePluginXml(scheme, zipStream, exportData);
         zipStream.putNextEntry(new ZipEntry("colors/" + scheme.getName() + ".xml"));
         SerializableSchemeExporter.writeToStream((SerializableScheme)scheme, zipStream);
-      }
-      finally {
-        zipStream.close();
       }
     }
   }

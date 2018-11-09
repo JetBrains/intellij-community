@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.execution.*;
@@ -22,6 +8,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Constraints;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.project.DumbAware;
@@ -32,11 +20,10 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/20/2014
  */
 public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup implements DumbAware {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     for (AnAction action : getChildActionsOrStubs()) {
       if (action instanceof ExecuteExternalSystemRunConfigurationAction) {
         remove(action);
@@ -48,14 +35,18 @@ public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup imple
     final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
     if (selectedNodes == null || selectedNodes.size() != 1 || !(selectedNodes.get(0) instanceof RunConfigurationNode)) return;
 
-    final RunnerAndConfigurationSettings settings = ((RunConfigurationNode)selectedNodes.get(0)).getSettings();
+    RunConfigurationNode runConfigurationNode = (RunConfigurationNode)selectedNodes.get(0);
+    final RunnerAndConfigurationSettings settings = runConfigurationNode.getSettings();
 
     if (settings == null || project == null) return;
 
+    ProjectSystemId projectSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(e.getDataContext());
     Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
     for (int i = executors.length; --i >= 0; ) {
-      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executors[i].getId(), settings.getConfiguration());
-      AnAction action = new ExecuteExternalSystemRunConfigurationAction(executors[i], runner != null, project, settings);
+      Executor executor = executors[i];
+      if(!executor.isApplicable(project)) continue;
+      final ProgramRunner runner = ProgramRunner.getRunner(executor.getId(), settings.getConfiguration());
+      AnAction action = new ExecuteExternalSystemRunConfigurationAction(executor, runner != null, project, projectSystemId, settings);
       addAction(action, Constraints.FIRST);
     }
 
@@ -67,21 +58,25 @@ public class ExternalSystemRunConfigurationMenu extends DefaultActionGroup imple
     private final boolean myEnabled;
     private final Project myProject;
     private final RunnerAndConfigurationSettings mySettings;
+    private final ProjectSystemId mySystemId;
 
-    public ExecuteExternalSystemRunConfigurationAction(Executor executor,
-                                                       boolean enabled,
-                                                       Project project,
-                                                       RunnerAndConfigurationSettings settings) {
+    ExecuteExternalSystemRunConfigurationAction(Executor executor,
+                                                boolean enabled,
+                                                Project project,
+                                                ProjectSystemId projectSystemId,
+                                                RunnerAndConfigurationSettings settings) {
       super(executor.getActionName(), null, executor.getIcon());
       myExecutor = executor;
       myEnabled = enabled;
       myProject = project;
       mySettings = settings;
+      mySystemId = projectSystemId;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent event) {
       if (myEnabled) {
+        ExternalSystemActionsCollector.trigger(myProject, mySystemId, this, event);
         ProgramRunnerUtil.executeConfiguration(mySettings, myExecutor);
         RunManager.getInstance(myProject).setSelectedConfiguration(mySettings);
       }

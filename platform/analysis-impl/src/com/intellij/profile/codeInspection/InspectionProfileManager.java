@@ -2,7 +2,6 @@
 package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -33,12 +32,6 @@ public interface InspectionProfileManager {
   }
 
   void setRootProfile(@Nullable String name);
-
-  @NotNull
-  @Deprecated
-  default InspectionProfile getRootProfile() {
-    return getCurrentProfile();
-  }
 
   @NotNull
   InspectionProfileImpl getCurrentProfile();

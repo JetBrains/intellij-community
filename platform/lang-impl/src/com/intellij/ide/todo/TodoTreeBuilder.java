@@ -17,50 +17,50 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.util.Processor;
-import java.util.HashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
 import java.util.*;
 
 /**
  * @author Vladimir Kondratyev
  */
-public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
+public abstract class TodoTreeBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoTreeBuilder");
   protected final Project myProject;
 
@@ -77,9 +77,10 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   protected final HashSet<VirtualFile> myDirtyFileSet;
 
-  protected final HashMap<VirtualFile, EditorHighlighter> myFile2Highlighter;
+  protected final Map<VirtualFile, EditorHighlighter> myFile2Highlighter;
 
   protected final PsiTodoSearchHelper mySearchHelper;
+  private final JTree myTree;
   /**
    * If this flag is false then the refresh() method does nothing. But when
    * the flag becomes true and myDirtyFileSet isn't empty the update is invoked.
@@ -90,15 +91,18 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
   /** Updates tree if containing files change VCS status. */
   private final MyFileStatusListener myFileStatusListener;
+  private TodoTreeStructure myTreeStructure;
+  private StructureTreeModel myModel;
+  private boolean myDisposed;
 
-  TodoTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-    super(tree, treeModel, null, MyComparator.ourInstance, false);
+  TodoTreeBuilder(JTree tree, Project project) {
+    myTree = tree;
     myProject = project;
 
     myFileTree = new FileTree();
     myDirtyFileSet = new HashSet<>();
 
-    myFile2Highlighter = new HashMap<>();
+    myFile2Highlighter = ContainerUtil.createConcurrentSoftValueMap(); //used from EDT and from StructureTreeModel invoker thread
 
     PsiManager psiManager = PsiManager.getInstance(myProject);
     mySearchHelper = PsiTodoSearchHelper.SERVICE.getInstance(myProject);
@@ -106,7 +110,15 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
 
     myFileStatusListener = new MyFileStatusListener();
 
-    setCanYieldUpdate(true);
+    //setCanYieldUpdate(true);
+  }
+
+  public StructureTreeModel getModel() {
+    return myModel;
+  }
+
+  public void setModel(StructureTreeModel model) {
+    myModel = model;
   }
 
   /**
@@ -114,32 +126,25 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    * been invoked.
    */
   public final void init() {
-    TodoTreeStructure todoTreeStructure = createTreeStructure();
-    setTreeStructure(todoTreeStructure);
-    todoTreeStructure.setTreeBuilder(this);
+    myTreeStructure = createTreeStructure();
+    myTreeStructure.setTreeBuilder(this);
 
     try {
       rebuildCache();
     }
     catch (IndexNotReadyException ignore) {}
-    initRootNode();
-
-    Object selectableElement = todoTreeStructure.getFirstSelectableElement();
-    if (selectableElement != null) {
-      buildNodeForElement(selectableElement);
-      DefaultMutableTreeNode node = getNodeForElement(selectableElement);
-      if (node != null) {
-        getTree().getSelectionModel().setSelectionPath(new TreePath(node.getPath()));
-      }
-    }
 
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
   }
 
+  public boolean isDisposed() {
+    return myDisposed;
+  }
+
   @Override
   public final void dispose() {
+    myDisposed = true;
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
-    super.dispose();
   }
 
   final boolean isUpdatable() {
@@ -153,7 +158,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     if (myUpdatable != updatable) {
       myUpdatable = updatable;
       if (updatable) {
-        DumbService.getInstance(myProject).runWhenSmart(() -> updateTree(false));
+        DumbService.getInstance(myProject).runWhenSmart(() -> updateTree());
       }
     }
   }
@@ -161,44 +166,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   @NotNull
   protected abstract TodoTreeStructure createTreeStructure();
 
-  @Override
-  protected boolean validateNode(final Object child) {
-    if (child instanceof ProjectViewNode) {
-      final ProjectViewNode projectViewNode = (ProjectViewNode)child;
-      projectViewNode.update();
-      if (projectViewNode.getValue() == null) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   public final TodoTreeStructure getTodoTreeStructure() {
-    return (TodoTreeStructure)getTreeStructure();
-  }
-
-  @Override
-  protected final AbstractTreeUpdater createUpdater() {
-    return new AbstractTreeUpdater(this) {
-      @Override
-      protected ActionCallback beforeUpdate(final TreeUpdatePass pass) {
-        if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
-          final AsyncResult callback = new AsyncResult();
-          DumbService.getInstance(myProject).runWhenSmart(() -> {
-            try {
-              validateCache();
-              getTodoTreeStructure().validateCache();
-            }
-            finally {
-              callback.setDone();
-            }
-          });
-          return callback;
-        }
-
-        return ActionCallback.DONE;
-      }
-    };
+    return myTreeStructure;
   }
 
   /**
@@ -333,6 +302,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    *         It means that file is in "dirty" file set or in "current" file set.
    */
   private boolean canContainTodoItems(PsiFile psiFile) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     VirtualFile vFile = psiFile.getVirtualFile();
     return myFileTree.contains(vFile) || myDirtyFileSet.contains(vFile);
   }
@@ -344,6 +314,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    * have happened.
    */
   private void markFileAsDirty(@NotNull PsiFile psiFile) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile != null && !(vFile instanceof LightVirtualFile)) { // If PSI file isn't valid then its VirtualFile can be null
       myDirtyFileSet.add(vFile);
@@ -351,18 +322,15 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   void rebuildCache(){
-    myFileTree.clear();
-    myDirtyFileSet.clear();
-    myFile2Highlighter.clear();
-
+    Set<VirtualFile> files = new HashSet<>(); 
     collectFiles(virtualFile -> {
-      myFileTree.add(virtualFile);
+      files.add(virtualFile);
       return true;
     });
-    getTodoTreeStructure().validateCache();
+    rebuildCache(files);
   }
 
-  void collectFiles(Processor<VirtualFile> collector) {
+  void collectFiles(Processor<? super VirtualFile> collector) {
     TodoTreeStructure treeStructure=getTodoTreeStructure();
     PsiFile[] psiFiles= mySearchHelper.findFilesWithTodoItems();
     for (PsiFile psiFile : psiFiles) {
@@ -372,7 +340,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  void rebuildCache(Set<VirtualFile> files){
+  void rebuildCache(@NotNull Set<? extends VirtualFile> files) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myFileTree.clear();
     myDirtyFileSet.clear();
     myFile2Highlighter.clear();
@@ -385,6 +354,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   private void validateCache() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     TodoTreeStructure treeStructure = getTodoTreeStructure();
     // First of all we need to update "dirty" file set.
     for (Iterator<VirtualFile> i = myDirtyFileSet.iterator(); i.hasNext();) {
@@ -393,18 +363,15 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       if (psiFile == null || !treeStructure.accept(psiFile)) {
         if (myFileTree.contains(file)) {
           myFileTree.removeFile(file);
-          if (myFile2Highlighter.containsKey(file)) { // highlighter isn't needed any more
-            myFile2Highlighter.remove(file);
-          }
+          myFile2Highlighter.remove(file);
         }
       }
       else { // file is valid and contains T.O.D.O items
         myFileTree.removeFile(file);
         myFileTree.add(file); // file can be moved. remove/add calls move it to another place
-        if (myFile2Highlighter.containsKey(file)) { // update highlighter text
-          Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
-          EditorHighlighter highlighter = myFile2Highlighter.get(file);
-          highlighter.setText(document.getCharsSequence());
+        EditorHighlighter highlighter = myFile2Highlighter.get(file);
+        if (highlighter != null) { // update highlighter text
+          highlighter.setText(PsiDocumentManager.getInstance(myProject).getDocument(psiFile).getCharsSequence());
         }
       }
       i.remove();
@@ -413,25 +380,8 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     // Now myDirtyFileSet should be empty
   }
 
-  @Override
   protected boolean isAutoExpandNode(NodeDescriptor descriptor) {
     return getTodoTreeStructure().isAutoExpandNode(descriptor);
-  }
-
-  @Override
-  protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
-    final Object element= nodeDescriptor.getElement();
-    if (element instanceof TodoItemNode){
-      return false;
-    } else if(element instanceof PsiFileNode) {
-      try {
-        return getTodoTreeStructure().mySearchHelper.getTodoItemsCount(((PsiFileNode)element).getValue()) > 0;
-      }
-      catch (IndexNotReadyException e) {
-        return true;
-      }
-    }
-    return true;
   }
 
   /**
@@ -446,7 +396,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       return null;
     }
     else {
-      Object[] children = getTreeStructure().getChildElements(element);
+      Object[] children = getTodoTreeStructure().getChildElements(element);
       if (children.length == 0) {
         return null;
       }
@@ -469,7 +419,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       return (TodoItemNode)element;
     }
     else {
-      Object[] children = getTreeStructure().getChildElements(element);
+      Object[] children = getTodoTreeStructure().getChildElements(element);
       if (children.length == 0) {
         return null;
       }
@@ -483,13 +433,49 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  protected final void updateTree(boolean later) {
+  public final Promise<?> updateTree() {
     if (myUpdatable) {
-      getUpdater().addSubtreeToUpdate(getRootNode());
-      if (!later) {
-        getUpdater().performUpdate();
+      return myModel.getInvoker().runOrInvokeLater(() -> {
+        DumbService.getInstance(myProject).runWhenSmart(() -> {
+          if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
+            validateCache();
+            getTodoTreeStructure().validateCache();
+          }
+          myModel.invalidate();
+        });
+      });
+    }
+    return Promises.resolvedPromise();
+  }
+
+  public void select(Object obj) {
+    TodoNodeVisitor visitor = getVisitorFor(obj);
+
+    if (visitor == null) {
+      TreeUtil.promiseSelectFirst(myTree);
+    }
+    else {
+      TreeUtil.promiseSelect(myTree, visitor).onError(error -> {
+        //select root if path disappeared from the tree
+        TreeUtil.promiseSelectFirst(myTree);
+      });
+    }
+  }
+
+  private static TodoNodeVisitor getVisitorFor(Object obj) {
+    if (obj instanceof TodoItemNode) {
+      SmartTodoItemPointer value = ((TodoItemNode)obj).getValue();
+      if (value != null) {
+        return new TodoNodeVisitor(value::getTodoItem,
+                                   value.getTodoItem().getFile().getVirtualFile());
       }
     }
+    else {
+      Object o = obj instanceof AbstractTreeNode ? ((AbstractTreeNode)obj).getValue() : null;
+      return new TodoNodeVisitor(() -> obj instanceof AbstractTreeNode ? ((AbstractTreeNode)obj).getValue() : obj,
+                                 o instanceof PsiElement ? PsiUtilCore.getVirtualFile((PsiElement)o) : null);
+    }
+    return null;
   }
 
   static PsiFile getFileForNode(DefaultMutableTreeNode node) {
@@ -504,41 +490,32 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     return null;
   }
 
-  void collapseAll() {
-    int row = getTree().getRowCount() - 1;
-    while (row > 0) {
-      getTree().collapseRow(row);
-      row--;
-    }
-  }
-
   /**
    * Sets whether packages are shown or not.
    */
   void setShowPackages(boolean state) {
     getTodoTreeStructure().setShownPackages(state);
-    ArrayList<Object> pathsToExpand = new ArrayList<>();
-    ArrayList<Object> pathsToSelect = new ArrayList<>();
-    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
-    getTree().clearSelection();
-    getTodoTreeStructure().validateCache();
-    updateTree(false);
-    TreeBuilderUtil.restorePaths(this, pathsToExpand, pathsToSelect, true);
+    rebuildTreeOnSettingChange();
   }
 
   /**
    * @param state if {@code true} then view is in "flatten packages" mode.
    */
   void setFlattenPackages(boolean state) {
-    ArrayList<Object> pathsToExpand = new ArrayList<>();
-    ArrayList<Object> pathsToSelect = new ArrayList<>();
-    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
-    getTree().clearSelection();
-    TodoTreeStructure todoTreeStructure = getTodoTreeStructure();
-    todoTreeStructure.setFlattenPackages(state);
-    todoTreeStructure.validateCache();
-    updateTree(false);
-    TreeBuilderUtil.restorePaths(this, pathsToExpand, pathsToSelect, true);
+    getTodoTreeStructure().setFlattenPackages(state);
+    rebuildTreeOnSettingChange();
+  }
+  
+  void setShowModules(boolean state) {
+    getTodoTreeStructure().setShownModules(state);
+    rebuildTreeOnSettingChange();
+  }
+
+  private void rebuildTreeOnSettingChange() {
+    List<Object> pathsToSelect = TreeUtil.collectSelectedUserObjects(myTree);
+    myTree.clearSelection();
+    getTodoTreeStructure().validateCache();
+    updateTree().onSuccess(o -> TreeUtil.promiseSelect(myTree, pathsToSelect.stream().map(TodoTreeBuilder::getVisitorFor)));
   }
 
   /**
@@ -552,7 +529,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       rebuildCache();
     }
     catch (IndexNotReadyException ignored) {}
-    updateTree(false);
+    updateTree();
   }
 
   /**
@@ -577,12 +554,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    *         returns {@code null}.
    */
   Object getNextSibling(Object obj) {
-    Object parent = getTreeStructure().getParentElement(obj);
+    Object parent = getTodoTreeStructure().getParentElement(obj);
     if (parent == null) {
       return null;
     }
-    Object[] children = getTreeStructure().getChildElements(parent);
-    Arrays.sort(children, getUi().getNodeDescriptorComparator());
+    Object[] children = getTodoTreeStructure().getChildElements(parent);
+    Arrays.sort(children, (Comparator)MyComparator.ourInstance);
     int idx = -1;
     for (int i = 0; i < children.length; i++) {
       if (obj.equals(children[i])) {
@@ -623,12 +600,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    *         returns {@code null}.
    */
   Object getPreviousSibling(Object obj) {
-    Object parent = getTreeStructure().getParentElement(obj);
+    Object parent = getTodoTreeStructure().getParentElement(obj);
     if (parent == null) {
       return null;
     }
-    Object[] children = getTreeStructure().getChildElements(parent);
-    Arrays.sort(children, getUi().getNodeDescriptorComparator());
+    Object[] children = getTodoTreeStructure().getChildElements(parent);
+    Arrays.sort(children, (Comparator)MyComparator.ourInstance);
     int idx = -1;
     for (int i = 0; i < children.length; i++) {
       if (obj.equals(children[i])) {
@@ -654,39 +631,20 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
    */
   public EditorHighlighter getHighlighter(PsiFile psiFile, Document document) {
     VirtualFile file = psiFile.getVirtualFile();
-    if (myFile2Highlighter.containsKey(file)) {
-      return myFile2Highlighter.get(file);
-    }
-    else {
-      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(UsageTreeColorsScheme.getInstance().getScheme(), file.getName(), myProject);
+    EditorHighlighter highlighter = myFile2Highlighter.get(file);
+    if (highlighter == null) {
+      highlighter = HighlighterFactory.createHighlighter(UsageTreeColorsScheme.getInstance().getScheme(), file.getName(), myProject);
       highlighter.setText(document.getCharsSequence());
       myFile2Highlighter.put(file, highlighter);
-      return highlighter;
     }
-  }
-
-  void setShowModules(boolean state) {
-    getTodoTreeStructure().setShownModules(state);
-    ArrayList<Object> pathsToExpand = new ArrayList<>();
-    ArrayList<Object> pathsToSelect = new ArrayList<>();
-    TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, pathsToSelect, true);
-    getTree().clearSelection();
-    getTodoTreeStructure().validateCache();
-    updateTree(false);
-    TreeBuilderUtil.restorePaths(this, pathsToExpand, pathsToSelect, true);
+    return highlighter;
   }
 
   public boolean isDirectoryEmpty(@NotNull PsiDirectory psiDirectory){
     return myFileTree.isDirectoryEmpty(psiDirectory.getVirtualFile());
   }
-
-  @Override
-  @NotNull
-  protected ProgressIndicator createProgressIndicator() {
-    return new StatusBarProgress();
-  }
-
-  private static final class MyComparator implements Comparator<NodeDescriptor> {
+  
+  protected static final class MyComparator implements Comparator<NodeDescriptor> {
     public static final Comparator<NodeDescriptor> ourInstance = new MyComparator();
 
     @Override
@@ -708,7 +666,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       // If local modification
       if (e.getFile() != null) {
         markFileAsDirty(e.getFile());
-        updateTree(true);
+        updateTree();
         return;
       }
       // If added element if PsiFile and it doesn't contains TODOs, then do nothing
@@ -718,7 +676,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       }
       PsiFile psiFile = (PsiFile)e.getChild();
       markFileAsDirty(psiFile);
-      updateTree(true);
+      updateTree();
     }
 
     @Override
@@ -727,14 +685,14 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       final PsiFile file = e.getFile();
       if (file != null) {
         markFileAsDirty(file);
-        updateTree(true);
+        updateTree();
         return;
       }
       PsiElement child = e.getChild();
       if (child instanceof PsiFile) { // file will be removed
         PsiFile psiFile = (PsiFile)child;
         markFileAsDirty(psiFile);
-        updateTree(true);
+        updateTree();
       }
       else if (child instanceof PsiDirectory) { // directory will be removed
         PsiDirectory psiDirectory = (PsiDirectory)child;
@@ -747,12 +705,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
             markFileAsDirty(psiFile);
           }
         }
-        updateTree(true);
+        updateTree();
       }
       else {
         if (PsiTreeUtil.getParentOfType(child, PsiComment.class, false) != null) { // change inside comment
           markFileAsDirty(child.getContainingFile());
-          updateTree(true);
+          updateTree();
         }
       }
     }
@@ -761,7 +719,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     public void childMoved(@NotNull PsiTreeChangeEvent e) {
       if (e.getFile() != null) { // local change
         markFileAsDirty(e.getFile());
-        updateTree(true);
+        updateTree();
         return;
       }
       if (e.getChild() instanceof PsiFile) { // file was moved
@@ -770,7 +728,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
           return;
         }
         markFileAsDirty(psiFile);
-        updateTree(true);
+        updateTree();
       }
       else if (e.getChild() instanceof PsiDirectory) { // directory was moved. mark all its files as dirty.
         PsiDirectory psiDirectory = (PsiDirectory)e.getChild();
@@ -786,7 +744,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
           }
         }
         if (shouldUpdate) {
-          updateTree(true);
+          updateTree();
         }
       }
     }
@@ -795,7 +753,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     public void childReplaced(@NotNull PsiTreeChangeEvent e) {
       if (e.getFile() != null) {
         markFileAsDirty(e.getFile());
-        updateTree(true);
+        updateTree();
       }
     }
 
@@ -803,7 +761,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     public void childrenChanged(@NotNull PsiTreeChangeEvent e) {
       if (e.getFile() != null) {
         markFileAsDirty(e.getFile());
-        updateTree(true);
+        updateTree();
       }
     }
 
@@ -811,23 +769,23 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     public void propertyChanged(@NotNull PsiTreeChangeEvent e) {
       String propertyName = e.getPropertyName();
       if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) { // rebuild all tree when source roots were changed
-        getUpdater().runBeforeUpdate(
+        myModel.getInvoker().runOrInvokeLater(
           () -> DumbService.getInstance(myProject).runWhenSmart(() -> rebuildCache())
         );
-        updateTree(true);
+        updateTree();
       }
       else if (PsiTreeChangeEvent.PROP_WRITABLE.equals(propertyName) || PsiTreeChangeEvent.PROP_FILE_NAME.equals(propertyName)) {
         PsiFile psiFile = (PsiFile)e.getElement();
         if (!canContainTodoItems(psiFile)) { // don't do anything if file cannot contain to-do items
           return;
         }
-        updateTree(true);
+        updateTree();
       }
       else if (PsiTreeChangeEvent.PROP_DIRECTORY_NAME.equals(propertyName)) {
         PsiDirectory psiDirectory = (PsiDirectory)e.getElement();
         Iterator<PsiFile> iterator = getFiles(psiDirectory);
         if (iterator.hasNext()) {
-          updateTree(true);
+          updateTree();
         }
       }
     }
@@ -836,14 +794,14 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   private final class MyFileStatusListener implements FileStatusListener {
     @Override
     public void fileStatusesChanged() {
-      updateTree(true);
+      updateTree();
     }
 
     @Override
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
       if (psiFile != null && canContainTodoItems(psiFile)) {
-        updateTree(true);
+        updateTree();
       }
     }
   }

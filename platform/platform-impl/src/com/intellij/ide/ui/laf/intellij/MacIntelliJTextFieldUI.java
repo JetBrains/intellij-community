@@ -11,6 +11,8 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isTableCellEditor;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.BW;
 import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.MINIMUM_HEIGHT;
 
@@ -46,7 +48,8 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
 
   @Override
   protected Insets getDefaultMargins() {
-    return JBUI.insets(1, 5);
+    Component c = getComponent();
+    return isCompact(c) || isTableCellEditor(c) ? JBUI.insets(0, 3) : JBUI.insets(1, 5);
   }
 
   @Override

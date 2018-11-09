@@ -23,15 +23,16 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class ToggleShowIndentLinesGloballyAction extends ToggleAction implements DumbAware {
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return EditorSettingsExternalizable.getInstance().isIndentGuidesShown();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     EditorSettingsExternalizable.getInstance().setIndentGuidesShown(state);
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     if (editor != null && editor.getSettings().isIndentGuidesShown() != state) {

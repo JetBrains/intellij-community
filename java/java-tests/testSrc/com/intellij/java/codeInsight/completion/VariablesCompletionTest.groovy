@@ -18,7 +18,6 @@ package com.intellij.java.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 
 class VariablesCompletionTest extends LightFixtureCompletionTestCase {
@@ -120,33 +119,23 @@ class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   void testFieldNameCompletion1() throws Exception {
-    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class)
-    String oldPrefix = settings.FIELD_NAME_PREFIX
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject())
     settings.FIELD_NAME_PREFIX = "my"
-    try {
       doSelectTest("FieldNameCompletion1.java", "FieldNameCompletion1-result.java")
-    }
-    finally {
-      settings.FIELD_NAME_PREFIX = oldPrefix
-    }
   }
 
   void testFieldNameCompletion2() throws Exception {
-    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class)
-    String oldPrefix = settings.FIELD_NAME_PREFIX
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject())
     settings.FIELD_NAME_PREFIX = "my"
     configureByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion2.java")
-    settings.FIELD_NAME_PREFIX = oldPrefix
     checkResultByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion2-result.java")
   }
 
   void testFieldNameCompletion3() throws Exception {
-    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class)
-    String oldPrefix = settings.FIELD_NAME_PREFIX
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject())
     settings.FIELD_NAME_PREFIX = "my"
     configureByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion3.java")
     complete()
-    settings.FIELD_NAME_PREFIX = oldPrefix
     checkResultByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion3-result.java")
   }
 
@@ -180,6 +169,21 @@ class Foo extends java.util.ArrayList {
 }""")
     complete()
     myFixture.assertPreferredCompletionItems 0, 'field', 'float'
+  }
+
+  void "test suggest fields initialized by init"() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+class Foo {
+  final Integer field;
+  
+  { field = 42; }
+  
+  Foo() {
+    equals(f<caret>); 
+  } 
+}""")
+    complete()
+    myFixture.assertPreferredCompletionItems 0, 'field'
   }
 
   void testInitializerMatters() throws Exception {
@@ -229,16 +233,11 @@ class Foo extends java.util.ArrayList {
   }
 
   void testConstructorParameterNameWithPrefix() {
-    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class)
-    String oldField = settings.FIELD_NAME_PREFIX
-    String oldParam = settings.PARAMETER_NAME_PREFIX
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject())
     settings.FIELD_NAME_PREFIX = "my"
     settings.PARAMETER_NAME_PREFIX = "p"
 
     configure()
-
-    settings.FIELD_NAME_PREFIX = oldField
-    settings.PARAMETER_NAME_PREFIX = oldParam
 
     assertStringItems("pColor")
   }

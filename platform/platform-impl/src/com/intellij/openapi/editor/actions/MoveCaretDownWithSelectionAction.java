@@ -41,12 +41,7 @@ public class MoveCaretDownWithSelectionAction extends EditorAction {
         new CloneCaretActionHandler(false).execute(editor, caret, dataContext);
       }
       else {
-        CaretAction caretAction = new CaretAction() {
-          @Override
-          public void perform(Caret caret) {
-            caret.moveCaretRelatively(0, 1, true, caret == editor.getCaretModel().getPrimaryCaret());
-          }
-        };
+        CaretAction caretAction = c -> c.moveCaretRelatively(0, 1, true, c == editor.getCaretModel().getPrimaryCaret());
         if (caret == null) {
           editor.getCaretModel().runForEachCaret(caretAction);
         }

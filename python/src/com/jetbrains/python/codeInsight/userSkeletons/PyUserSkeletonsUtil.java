@@ -34,7 +34,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -61,27 +60,17 @@ public class PyUserSkeletonsUtil {
     "asyncio",
     "multiprocessing",
     "os",
-    "__builtin__.py",
     "_csv.py",
-    "builtins.py",
-    "collections.py",
     "copy.py",
     "cStringIO.py",
-    "datetime.py",
     "decimal.py",
-    "functools.py",
     "io.py",
     "itertools.py",
     "logging.py",
-    "math.py",
     "pathlib.py",
     "pickle.py",
-    "re.py",
-    "shutil.py",
-    "sqlite3.py",
     "StringIO.py",
     "struct.py",
-    "subprocess.py",
     "sys.py"
   );
 
@@ -237,10 +226,6 @@ public class PyUserSkeletonsUtil {
     if (moduleVirtualFile != null) {
       String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
       if (moduleName != null) {
-        // TODO: Delete user-skeletons altogether, meanwhile disabled user-skeletons for modules already covered by PyTypeShed
-        if (PyTypeShed.INSTANCE.getWHITE_LIST().contains(moduleName)) {
-          return null;
-        }
         final QualifiedName qName = QualifiedName.fromDottedString(moduleName);
         final QualifiedName restored = QualifiedNameFinder.canonizeQualifiedName(qName, null);
         if (restored != null) {

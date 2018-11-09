@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -20,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Tagir Valeev
- */
 public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean WARN_ON_COMPARISON = true;
 
@@ -143,7 +139,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     private final String myTypeParameter;
     private final String myMethodName;
 
-    public ReplaceWithEmptyOptionalFix(PsiClassType type) {
+    ReplaceWithEmptyOptionalFix(PsiClassType type) {
       myTypeName = type.rawType().getCanonicalText();
       PsiType[] parameters = type.getParameters();
       myTypeParameter =
@@ -172,7 +168,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
       if (!(element instanceof PsiExpression)) return;
       String emptyCall = myTypeName + "." + myTypeParameter + myMethodName + "()";
       PsiElement result = new CommentTracker().replaceAndRestoreComments(element, emptyCall);
-      PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
+      RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
     }
   }
 

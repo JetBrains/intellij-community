@@ -47,9 +47,12 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import static com.intellij.util.ui.UIUtil.isUnderDarcula;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
@@ -134,13 +137,13 @@ public class AboutPopup {
     private float myShowCopyAlpha;
     private final Alarm myAlarm = new Alarm();
 
-    public InfoSurface(Icon image, final boolean showDebugInfo) {
+    InfoSurface(Icon image, final boolean showDebugInfo) {
       ApplicationInfoImpl appInfo = (ApplicationInfoImpl)ApplicationInfoEx.getInstanceEx();
 
       myImage = image;
       //noinspection UseJBColor
       myColor = Color.white;
-      myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : JBColor.link();
+      myLinkColor = appInfo.getAboutLinkColor() != null ? appInfo.getAboutLinkColor() : JBUI.CurrentTheme.Link.linkColor();
       myShowDebugInfo = showDebugInfo;
 
       setOpaque(false);
@@ -166,11 +169,11 @@ public class AboutPopup {
 
       myLines.add(new AboutBoxLine(""));
 
-      LicensingFacade provider = LicensingFacade.getInstance();
-      if (provider != null) {
-        myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true));
+      LicensingFacade la = LicensingFacade.getInstance();
+      if (la != null) {
+        myLines.add(new AboutBoxLine(la.getLicensedToMessage(), true));
         appendLast();
-        for (String message : provider.getLicenseRestrictionsMessages()) {
+        for (String message : la.getLicenseRestrictionsMessages()) {
           myLines.add(new AboutBoxLine(message));
           appendLast();
         }
@@ -429,7 +432,7 @@ public class AboutPopup {
 
       public class OverflowException extends Exception { }
 
-      public TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
+      TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
         this.xBase = xBase;
         this.yBase = yBase;
         this.w = w;
@@ -532,17 +535,17 @@ public class AboutPopup {
       private boolean myKeepWithNext;
       private final Runnable myRunnable;
 
-      public AboutBoxLine(final String text, final boolean bold) {
+      AboutBoxLine(final String text, final boolean bold) {
         myText = text;
         myBold = bold;
         myRunnable = null;
       }
 
-      public AboutBoxLine(final String text) {
+      AboutBoxLine(final String text) {
         this(text, false);
       }
 
-      public AboutBoxLine(final String text, @NotNull Runnable runnable) {
+      AboutBoxLine(final String text, @NotNull Runnable runnable) {
         myText = text;
         myBold = false;
         myRunnable = runnable;
@@ -685,6 +688,7 @@ public class AboutPopup {
       {
         init();
         setAutoAdjustable(false);
+        setOKButtonText("Close");
       }
 
       @Override
@@ -694,13 +698,17 @@ public class AboutPopup {
         JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
         viewer.setFocusable(true);
         viewer.addHyperlinkListener(new BrowserHyperlinkListener());
-        viewer.setText(htmlText);
+
+        String resultHtmlText = getScaledHtmlText();
+        if (isUnderDarcula()) {
+          resultHtmlText = resultHtmlText.replaceAll("779dbd", "5676a0");
+        }
+        viewer.setText(resultHtmlText);
 
         StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
         styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
         styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(14) + "pt;}");
-        styleSheet.addRule("th {border:0pt;}");
 
         viewer.setCaretPosition(0);
         viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
@@ -710,13 +718,33 @@ public class AboutPopup {
         centerPanel.add(scrollPane, BorderLayout.CENTER);
         return centerPanel;
       }
+
+      @Override
+      @NotNull
+      protected Action[] createActions() {
+        return new Action[]{getOKAction()};
+      }
+
+      @NotNull
+      private String getScaledHtmlText() {
+        final Pattern pattern = Pattern.compile("(\\d+)px");
+        final Matcher matcher = pattern.matcher(htmlText);
+
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+          matcher.appendReplacement(sb, JBUI.scale(Integer.parseInt(matcher.group(1))) + "px");
+        }
+        matcher.appendTail(sb);
+
+        return sb.toString();
+      }
     };
 
     ourPopup.cancel();
     dialog.setTitle(String.format("Third-Party Software Used by %s %s",
                                   ApplicationNamesInfo.getInstance().getFullProductName(),
                                   ApplicationInfo.getInstance().getFullVersion()));
-    dialog.setSize(JBUI.scale(1000), JBUI.scale(800));
+    dialog.setSize(JBUI.scale(750), JBUI.scale(650));
     dialog.show();
   }
 }

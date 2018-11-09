@@ -21,7 +21,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
   }
 
   public EditConfigurationsDialog(@NotNull Project project, @Nullable ConfigurationFactory factory) {
-    super(project, new RunConfigurable(project).selectConfigurableOnShow(factory == null), "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.IDE);
+    super(project, RunConfigurableKt.createRunConfigurationConfigurable(project).selectConfigurableOnShow(factory == null), "#com.intellij.execution.impl.EditConfigurationsDialog", IdeModalityType.IDE);
 
     ((RunConfigurable)getConfigurable()).setRunDialog(this);
     setTitle(ExecutionBundle.message("run.debug.dialog.title"));
@@ -31,7 +31,7 @@ public class EditConfigurationsDialog extends SingleConfigurableEditor implement
     }
   }
 
-  public void addRunConfiguration(@NotNull final ConfigurationFactory factory) {
+  private void addRunConfiguration(@NotNull final ConfigurationFactory factory) {
     final RunConfigurable configurable = (RunConfigurable)getConfigurable();
     final SingleConfigurationConfigurable<RunConfiguration> configuration = configurable.createNewConfiguration(factory);
 

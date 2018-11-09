@@ -2,19 +2,12 @@ package com.intellij.remote;
 
 import com.google.common.net.HostAndPort;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.PathMapper;
-import com.intellij.util.PathMappingSettings;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 /**
  * @author traff
  */
-public interface RemoteProcessControl {
-  @NotNull
-  PathMapper getMappingSettings();
+public interface RemoteProcessControl extends ProcessControlWithMappings {
 
   /**
    * @deprecated use {@link #getRemoteSocket(int)}
@@ -26,6 +19,4 @@ public interface RemoteProcessControl {
 
   @Nullable
   HostAndPort getLocalTunnel(int remotePort);
-
-  List<PathMappingSettings.PathMapping> getFileMappings();
 }

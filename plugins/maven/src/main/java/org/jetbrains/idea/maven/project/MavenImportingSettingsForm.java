@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.EnumComboBoxModel;
@@ -38,6 +39,7 @@ public class MavenImportingSettingsForm {
   private JCheckBox myUseMavenOutputCheckBox;
   private JCheckBox myDownloadSourcesCheckBox;
   private JCheckBox myDownloadDocsCheckBox;
+  private JCheckBox myDownloadAnnotationsCheckBox;
 
   private JPanel myAdditionalSettingsPanel;
   private JComboBox myGeneratedSourcesComboBox;
@@ -51,6 +53,7 @@ public class MavenImportingSettingsForm {
     myProjectFormatComboBox.setVisible(isImportStep && isCreatingNewProject);
 
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateControls();
       }
@@ -73,6 +76,7 @@ public class MavenImportingSettingsForm {
     });
 
     LabelTextReplacingUtil.replaceText(myPanel);
+    myDownloadAnnotationsCheckBox.setVisible(Registry.is("external.system.import.resolve.annotations"));
   }
 
   private void createUIComponents() {
@@ -113,6 +117,7 @@ public class MavenImportingSettingsForm {
 
     data.setDownloadSourcesAutomatically(myDownloadSourcesCheckBox.isSelected());
     data.setDownloadDocsAutomatically(myDownloadDocsCheckBox.isSelected());
+    data.setDownloadAnnotationsAutomatically(myDownloadAnnotationsCheckBox.isSelected());
 
     data.setDependencyTypes(myDependencyTypes.getText());
   }
@@ -144,6 +149,7 @@ public class MavenImportingSettingsForm {
 
     myDownloadSourcesCheckBox.setSelected(data.isDownloadSourcesAutomatically());
     myDownloadDocsCheckBox.setSelected(data.isDownloadDocsAutomatically());
+    myDownloadAnnotationsCheckBox.setSelected(data.isDownloadAnnotationsAutomatically());
 
     myDependencyTypes.setText(data.getDependencyTypes());
 

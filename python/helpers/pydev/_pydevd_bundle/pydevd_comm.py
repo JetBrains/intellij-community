@@ -58,14 +58,12 @@ each command has a format:
     * PYDB - pydevd, the python end
 '''
 
-import os
+from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR
 
 from _pydev_bundle.pydev_imports import _queue
-from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import thread
 from _pydev_imps._pydev_saved_modules import threading
-from _pydev_imps._pydev_saved_modules import socket
-from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
+from _pydev_imps._pydev_saved_modules import time
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
     IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON
 
@@ -79,12 +77,12 @@ if IS_IRONPYTHON:
     def unquote(s):
         return s
 
-import pydevconsole
+from _pydevd_bundle import pydevd_console_integration
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
 from _pydevd_bundle import pydevd_tracing
 from _pydevd_bundle import pydevd_vm_type
-from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, NORM_PATHS_AND_BASE_CONTAINER, norm_file_to_client
+from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client
 import sys
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string
@@ -1127,7 +1125,7 @@ class InternalGetFrame(InternalThreadCommand):
         try:
             frame = pydevd_vars.find_frame(self.thread_id, self.frame_id)
             if frame is not None:
-                hidden_ns = pydevconsole.get_ipython_hidden_vars()
+                hidden_ns = pydevd_console_integration.get_ipython_hidden_vars()
                 xml = "<xml>"
                 xml += pydevd_xml.frame_vars_to_xml(frame.f_locals, hidden_ns)
                 del frame
@@ -1445,7 +1443,7 @@ class InternalConsoleExec(InternalThreadCommand):
                 #don't trace new threads created by console command
                 disable_trace_thread_modules()
 
-                result = pydevconsole.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
+                result = pydevd_console_integration.console_exec(self.thread_id, self.frame_id, self.expression, dbg)
                 xml = "<xml>"
                 xml += pydevd_xml.var_to_xml(result, "")
                 xml += "</xml>"

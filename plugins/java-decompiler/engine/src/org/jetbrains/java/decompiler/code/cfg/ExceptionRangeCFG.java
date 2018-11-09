@@ -1,6 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code.cfg;
 
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,6 +23,27 @@ public class ExceptionRangeCFG {
 
   public boolean isCircular() {
     return protectedRange.contains(handler);
+  }
+
+  @Override
+  public String toString() {
+    String new_line_separator = DecompilerContext.getNewLineSeparator();
+    StringBuilder buf = new StringBuilder();
+
+    buf.append("exceptionType:");
+    for (String exception_type : exceptionTypes) {
+      buf.append(" ").append(exception_type);
+    }
+    buf.append(new_line_separator);
+
+    buf.append("handler: ").append(handler.id).append(new_line_separator);
+    buf.append("range: ");
+    for (BasicBlock block : protectedRange) {
+      buf.append(block.id).append(" ");
+    }
+    buf.append(new_line_separator);
+
+    return buf.toString();
   }
 
   public BasicBlock getHandler() {

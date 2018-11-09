@@ -6,8 +6,6 @@ package com.intellij.debugger.ui.tree;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 /**
  * @author Nikolay.Tropin
  */
@@ -19,6 +17,6 @@ public abstract class NodeDescriptorNameAdjuster {
   public abstract String fixName(String name, @NotNull NodeDescriptor descriptor);
 
   public static NodeDescriptorNameAdjuster findFor(@NotNull NodeDescriptor descriptor) {
-    return Arrays.stream(EP_NAME.getExtensions()).filter(adjuster -> adjuster.isApplicable(descriptor)).findFirst().orElse(null);
+    return EP_NAME.extensions().filter(adjuster -> adjuster.isApplicable(descriptor)).findFirst().orElse(null);
   }
 }

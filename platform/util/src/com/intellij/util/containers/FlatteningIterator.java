@@ -22,11 +22,11 @@ import java.util.Iterator;
 * @author peter
 */
 public abstract class FlatteningIterator<Group, Value> implements Iterator<Value> {
-  private final Iterator<Group> valuesIterator;
+  private final Iterator<? extends Group> valuesIterator;
   private Iterator<Value> groupIterator;
   private Boolean hasNextCache;
 
-  public FlatteningIterator(Iterator<Group> groups) {
+  public FlatteningIterator(Iterator<? extends Group> groups) {
     valuesIterator = groups;
     groupIterator = Collections.<Value>emptyList().iterator();
   }

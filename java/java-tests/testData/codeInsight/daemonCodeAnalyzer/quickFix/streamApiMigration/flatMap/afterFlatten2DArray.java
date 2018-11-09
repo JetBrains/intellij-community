@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   public List<String> test(String[][] arr) {
-      List<String> result = Arrays.stream(arr).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toList());
+    List<String> result = Arrays.stream(arr).filter(Objects::nonNull).flatMap(Arrays::stream).collect(Collectors.toList());
       return result;
   }
 }

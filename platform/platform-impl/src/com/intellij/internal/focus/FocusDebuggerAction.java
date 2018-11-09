@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.focus;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -27,13 +13,13 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
 import java.util.Arrays;
-import java.util.function.Consumer;
 
 /**
  * @author spleaner
@@ -44,11 +30,16 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
 
   public FocusDebuggerAction() {
     if (Boolean.getBoolean("idea.ui.debug.mode")) {
-      ApplicationManager.getApplication().invokeLater(() -> actionPerformed(null));
+      ApplicationManager.getApplication().invokeLater(() -> perform());
     }
   }
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
+    perform();
+  }
+
+  private void perform() {
     if (myFocusDrawer == null) {
       myFocusDrawer = new FocusDrawer();
       myFocusDrawer.start();
@@ -61,7 +52,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     if (myFocusDrawer == null) {
       presentation.setText("Start Focus Debugger");
@@ -97,21 +88,24 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
 
     private ApplicationState myApplicationState = ApplicationState.UNKNOWN;
 
-    public FocusDrawer() {
+    FocusDrawer() {
       super("focus debugger");
       Application app = ApplicationManager.getApplication();
       app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, this);
     }
 
-    public void applicationActivated(IdeFrame ideFrame) {
+    @Override
+    public void applicationActivated(@NotNull IdeFrame ideFrame) {
       myApplicationState = ApplicationState.ACTIVE;
     }
 
-    public void applicationDeactivated(IdeFrame ideFrame) {
+    @Override
+    public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
       myApplicationState = ApplicationState.INACTIVE;
     }
 
-    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
+    @Override
+    public void delayedApplicationDeactivated(@NotNull IdeFrame ideFrame) {
       myApplicationState = ApplicationState.DELAYED;
     }
 
@@ -123,6 +117,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
       return myRunning;
     }
 
+    @Override
     public void run() {
       try {
         while (myRunning) {
@@ -176,7 +171,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
             if (previousFocusGraphics != null) previousFocusGraphics.dispose();
           }
         }
-        drawOnGraphics(g -> {
+        Util.drawOnActiveFrameGraphics(g -> {
           g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g.setColor(myApplicationState.getColor());
           g.fillOval(5,5, 10, 10);
@@ -187,6 +182,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
       }
     }
 
+    @Override
     public void eventDispatched(AWTEvent event) {
       if (event instanceof FocusEvent) {
         FocusEvent focusEvent = (FocusEvent)event;
@@ -206,7 +202,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           default:
             break;
         }
-        drawOnGraphics(g -> {
+        Util.drawOnActiveFrameGraphics(g -> {
           g.setColor(myApplicationState.getColor());
           g.fillOval(5,5, 10, 10);
           g.setColor(JBColor.black);
@@ -216,7 +212,7 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           g.fillOval(5,5, 10, 10);
         });
         Arrays.stream(Window.getOwnerlessWindows()).
-          filter(window -> window != null && window instanceof RootPaneContainer).
+          filter(window -> window instanceof RootPaneContainer).
           map(window -> (RootPaneContainer)window).
           filter(f -> f.getRootPane() != null).
           filter(window -> window.getRootPane() != null).
@@ -232,27 +228,6 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
             }
           });
       }
-    }
-
-    private void drawOnGraphics(Consumer<Graphics2D> consumer) {
-      Arrays.stream(Frame.getFrames()).
-        filter(window -> window != null && window instanceof RootPaneContainer).
-        map(window -> (RootPaneContainer)window).
-        filter(w -> w instanceof JFrame).
-        filter(f -> f.getRootPane() != null).
-        filter(f -> f.getGlassPane() != null).
-        filter(window -> window.getRootPane() != null).
-        map(window -> (window).getGlassPane()).
-        map(jGlassPane -> jGlassPane.getGraphics()).
-        filter(g -> g != null).
-        forEach(graphics -> {
-          Graphics glassPaneGraphics = graphics.create();
-          try {
-            consumer.accept((Graphics2D)glassPaneGraphics);
-          } finally {
-            glassPaneGraphics.dispose();
-          }
-        });
     }
   }
 }

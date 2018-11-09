@@ -48,15 +48,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/commons-discovery-0.4.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="library" exported="" name="markdownj" level="project" />
@@ -64,5 +55,15 @@
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.tasks" exported="" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
+    <orderEntry type="module-library">
+      <library name="commons-discovery" type="repository">
+        <properties include-transitive-deps="false" maven-id="commons-discovery:commons-discovery:0.4" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/commons-discovery/commons-discovery/0.4/commons-discovery-0.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>

@@ -145,6 +145,7 @@ public class CheckboxTreeHelper {
 
   private KeyListener setupKeyListener(final Tree tree, final JComponent mainComponent) {
     KeyListener listener = new KeyAdapter() {
+      @Override
       public void keyPressed(@NotNull KeyEvent e) {
         if (isToggleEvent(e, mainComponent)) {
           TreePath treePath = tree.getLeadSelectionPath();
@@ -218,7 +219,7 @@ public class CheckboxTreeHelper {
   }
 
   @SuppressWarnings("unchecked")
-  public static <T> T[] getCheckedNodes(final Class<T> nodeType, @Nullable final Tree.NodeFilter<T> filter, final TreeModel model) {
+  public static <T> T[] getCheckedNodes(final Class<T> nodeType, @Nullable final Tree.NodeFilter<? super T> filter, final TreeModel model) {
     final ArrayList<T> nodes = new ArrayList<>();
     final Object root = model.getRoot();
     if (!(root instanceof CheckedTreeNode)) {

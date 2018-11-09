@@ -75,6 +75,20 @@ public class BooleanExpressionMayBeConditionalFixTest extends IGQuickFixesTestCa
            "}");
   }
 
+  public void testComparison() {
+    doTest(InspectionGadgetsBundle.message("if.may.be.conditional.quickfix"),
+           "class X {\n" +
+           "  boolean test(int x, int y, int z) {\n" +
+           "    return (x > y && z == 1) || /**/(x <= y && z == 2);\n" +
+           "  }\n" +
+           "}",
+           "class X {\n" +
+           "  boolean test(int x, int y, int z) {\n" +
+           "    return x > y ? z == 1 : z == 2;\n" +
+           "  }\n" +
+           "}");
+  }
+
   @Override
   protected BaseInspection getInspection() {
     return new BooleanExpressionMayBeConditionalInspection();

@@ -28,7 +28,6 @@ import org.junit.runner.Description;
 
 /**
 * @author Vladislav.Soroka
-* @since 11/27/2014
 */
 public class VersionMatcherRule extends TestWatcher {
 

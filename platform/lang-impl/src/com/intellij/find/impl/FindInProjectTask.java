@@ -29,7 +29,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.*;
-import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -76,11 +75,11 @@ class FindInProjectTask {
   private final ProgressIndicator myProgress;
   @Nullable private final Module myModule;
   private final Set<VirtualFile> myLargeFiles = Collections.synchronizedSet(ContainerUtil.newTroveSet());
-  private final Set<VirtualFile> myFilesToScanInitially;
+  private final Set<? extends VirtualFile> myFilesToScanInitially;
   private final AtomicLong myTotalFilesSize = new AtomicLong();
   private final String myStringToFindInIndices;
 
-  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project, @NotNull Set<VirtualFile> filesToScanInitially) {
+  FindInProjectTask(@NotNull final FindModel findModel, @NotNull final Project project, @NotNull Set<? extends VirtualFile> filesToScanInitially) {
     myFindModel = findModel;
     myProject = project;
     myFilesToScanInitially = filesToScanInitially;
@@ -109,7 +108,7 @@ class FindInProjectTask {
     TooManyUsagesStatus.createFor(myProgress);
   }
 
-  public void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<UsageInfo> consumer) {
+  public void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<? super UsageInfo> consumer) {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning indexed files...");
@@ -154,7 +153,7 @@ class FindInProjectTask {
     }
   }
 
-  private static void logStats(@NotNull Collection<VirtualFile> otherFiles, long time) {
+  private static void logStats(@NotNull Collection<? extends VirtualFile> otherFiles, long time) {
     Map<String, Long> extensionToCount = otherFiles.stream()
       .collect(Collectors.groupingBy(file -> StringUtil.notNullize(file.getExtension()).toLowerCase(Locale.ENGLISH), Collectors.counting()));
     String topExtensions = extensionToCount
@@ -171,7 +170,7 @@ class FindInProjectTask {
 
   private void searchInFiles(@NotNull Collection<VirtualFile> virtualFiles,
                              @NotNull FindUsagesProcessPresentation processPresentation,
-                             @NotNull final Processor<UsageInfo> consumer) {
+                             @NotNull final Processor<? super UsageInfo> consumer) {
     AtomicInteger occurrenceCount = new AtomicInteger();
     AtomicInteger processedFileCount = new AtomicInteger();
 
@@ -408,9 +407,7 @@ class FindInProjectTask {
 
       if (!keys.isEmpty()) {
         final List<VirtualFile> hits = new ArrayList<>();
-        ApplicationManager.getApplication().runReadAction(() -> {
-          FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, Processors.cancelableCollectProcessor(hits), scope);
-        });
+        FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, Processors.cancelableCollectProcessor(hits), scope);
 
         for (VirtualFile hit : hits) {
           if (myFileMask.value(hit)) {
@@ -445,7 +442,7 @@ class FindInProjectTask {
 
   private Pair.NonNull<PsiFile, VirtualFile> findFile(@NotNull final VirtualFile virtualFile) {
     PsiFile psiFile = myPsiManager.findFile(virtualFile);
-    if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
+    if (psiFile != null) {
       PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
       if (sourceFile != null) psiFile = sourceFile;
       if (psiFile.getFileType().isBinary()) {
@@ -453,7 +450,7 @@ class FindInProjectTask {
       }
     }
     VirtualFile sourceVirtualFile = PsiUtilCore.getVirtualFile(psiFile);
-    if (psiFile == null || psiFile.getFileType().isBinary() || sourceVirtualFile == null) {
+    if (psiFile == null || psiFile.getFileType().isBinary() || sourceVirtualFile == null || sourceVirtualFile.getFileType().isBinary()) {
       return null;
     }
 

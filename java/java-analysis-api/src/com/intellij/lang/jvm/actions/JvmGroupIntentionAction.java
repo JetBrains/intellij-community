@@ -12,6 +12,7 @@ public interface JvmGroupIntentionAction extends IntentionAction {
   /**
    * @return full action text, e.g. <i>Create abstract method 'foo' in 'SomeClass'</i>
    */
+  @Override
   @NotNull
   String getText();
 

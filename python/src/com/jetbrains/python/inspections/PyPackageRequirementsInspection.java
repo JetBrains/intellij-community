@@ -1,13 +1,17 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.execution.ExecutionException;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -32,6 +36,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.pipenv.PipEnvInstallQuickFix;
+import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +51,10 @@ import java.util.*;
  */
 public class PyPackageRequirementsInspection extends PyInspection {
   public JDOMExternalizableStringList ignoredPackages = new JDOMExternalizableStringList();
+
+  @NotNull
+  private static final NotificationGroup BALLOON_NOTIFICATIONS =
+    new NotificationGroup("Package requirements", NotificationDisplayType.BALLOON, false);
 
   @NotNull
   @Override
@@ -77,7 +87,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
   private static class Visitor extends PyInspectionVisitor {
     private final Set<String> myIgnoredPackages;
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, Collection<String> ignoredPackages) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session, Collection<String> ignoredPackages) {
       super(holder, session);
       myIgnoredPackages = ImmutableSet.copyOf(ignoredPackages);
     }
@@ -108,10 +118,16 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                        plural ? "are" : "is");
             final Set<String> unsatisfiedNames = new HashSet<>();
             for (PyRequirement req : unsatisfied) {
-              unsatisfiedNames.add(req.getFullName());
+              unsatisfiedNames.add(req.getName() + req.getExtras());
             }
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
-            quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
+            // TODO: Introduce an inspection extension
+            if (PipenvKt.isPipEnv(sdk)) {
+              quickFixes.add(new PipEnvInstallQuickFix());
+            }
+            else {
+              quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
+            }
             quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
             registerProblem(file, msg,
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
@@ -140,7 +156,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     private void checkPackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
-      for (PyInspectionExtension extension : Extensions.getExtensions(PyInspectionExtension.EP_NAME)) {
+      for (PyInspectionExtension extension : PyInspectionExtension.EP_NAME.getExtensionList()) {
         if (extension.ignorePackageNameInRequirements(importedExpression)) {
           return;
         }
@@ -351,14 +367,27 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @NotNull private final Module myModule;
     @NotNull private final Sdk mySdk;
     @NotNull private final List<PyRequirement> myUnsatisfied;
+    @NotNull private final List<String> myExtraArgs;
+    @Nullable private final PyPackageManagerUI.Listener myListener;
 
     public PyInstallRequirementsFix(@Nullable String name, @NotNull Module module, @NotNull Sdk sdk,
                                     @NotNull List<PyRequirement> unsatisfied) {
+      this(name, module, sdk, unsatisfied, Collections.emptyList(), null);
+    }
+
+    public PyInstallRequirementsFix(@Nullable String name,
+                                    @NotNull Module module,
+                                    @NotNull Sdk sdk,
+                                    @NotNull List<PyRequirement> unsatisfied,
+                                    @NotNull List<String> extraArgs,
+                                    @Nullable PyPackageManagerUI.Listener listener) {
       final boolean plural = unsatisfied.size() > 1;
       myName = name != null ? name : String.format("Install requirement%s", plural ? "s" : "");
       myModule = module;
       mySdk = sdk;
       myUnsatisfied = unsatisfied;
+      myExtraArgs = extraArgs;
+      myListener = listener;
     }
 
     @NotNull
@@ -401,8 +430,15 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (chosen.isEmpty()) {
         return;
       }
-      if (!PyPackageUtil.hasManagement(packages)) {
-        final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule) {
+      boolean hasManagement;
+      try {
+        hasManagement = manager.hasManagement();
+      }
+      catch (ExecutionException e) {
+        hasManagement = false;
+      }
+      if (!hasManagement) {
+        final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new RunningPackagingTasksListener(myModule) {
           @Override
           public void finished(List<ExecutionException> exceptions) {
             super.finished(exceptions);
@@ -419,8 +455,24 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     private void installRequirements(Project project, List<PyRequirement> requirements) {
-      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule));
-      ui.install(requirements, Collections.emptyList());
+      final PyPackageManagerUI.Listener listener =
+        myListener == null
+        ? new RunningPackagingTasksListener(myModule)
+        : new RunningPackagingTasksListener(myModule) {
+          @Override
+          public void started() {
+            super.started();
+            myListener.started();
+          }
+
+          @Override
+          public void finished(List<ExecutionException> exceptions) {
+            super.finished(exceptions);
+            myListener.finished(exceptions);
+          }
+        };
+
+      new PyPackageManagerUI(project, mySdk, listener).install(requirements, myExtraArgs);
     }
   }
 
@@ -468,7 +520,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     private void installAndImportPackage(@NotNull Project project) {
       if (mySdk == null) return;
-      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule) {
+      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new RunningPackagingTasksListener(myModule) {
         @Override
         public void finished(List<ExecutionException> exceptions) {
           super.finished(exceptions);
@@ -484,14 +536,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
           }
         }
       });
-      ui.install(Collections.singletonList(new PyRequirement(myPackageName)), Collections.emptyList());
+      ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(myPackageName)), Collections.emptyList());
     }
   }
 
-  private static class UIListener implements PyPackageManagerUI.Listener {
-    private final Module myModule;
+  public static class RunningPackagingTasksListener implements PyPackageManagerUI.Listener {
+    @NotNull private final Module myModule;
 
-    public UIListener(Module module) {
+    public RunningPackagingTasksListener(@NotNull Module module) {
       myModule = module;
     }
 
@@ -508,9 +560,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
 
   private static class IgnoreRequirementFix implements LocalQuickFix {
-    @NotNull private final Set<String> myPackageNames;
 
-    public IgnoreRequirementFix(@NotNull Set<String> packageNames) {
+    @NotNull
+    private final Set<String> myPackageNames;
+
+    private IgnoreRequirementFix(@NotNull Set<String> packageNames) {
       myPackageNames = packageNames;
     }
 
@@ -532,16 +586,43 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (element != null) {
         final PyPackageRequirementsInspection inspection = getInstance(element);
         if (inspection != null) {
-          final JDOMExternalizableStringList ignoredPackages = inspection.ignoredPackages;
-          boolean changed = false;
-          for (String name : myPackageNames) {
-            if (!ignoredPackages.contains(name)) {
-              ignoredPackages.add(name);
-              changed = true;
-            }
+          final Set<String> packagesToIgnore = new HashSet<>(myPackageNames);
+          for (String pkg : inspection.ignoredPackages) {
+            packagesToIgnore.remove(pkg);
           }
-          if (changed) {
-            ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
+
+          if (!packagesToIgnore.isEmpty()) {
+            inspection.ignoredPackages.addAll(packagesToIgnore);
+            final ProjectInspectionProfileManager profileManager = ProjectInspectionProfileManager.getInstance(project);
+            profileManager.fireProfileChanged();
+
+            BALLOON_NOTIFICATIONS
+              .createNotification(
+                packagesToIgnore.size() == 1
+                ? "'" + packagesToIgnore.iterator().next() + "' has been ignored"
+                : "Requirements have been ignored",
+                "<a href=\"#undo\">Undo</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#settings\">Settings</a>",
+                NotificationType.INFORMATION,
+                (notification, event) -> {
+                  try {
+                    switch (event.getDescription()) {
+                      case "#undo":
+                        inspection.ignoredPackages.removeAll(packagesToIgnore);
+                        profileManager.fireProfileChanged();
+                        break;
+                      case "#settings":
+                        final InspectionProfileImpl profile = profileManager.getCurrentProfile();
+                        final String toolName = PyPackageRequirementsInspection.class.getSimpleName();
+                        EditInspectionToolsSettingsAction.editToolSettings(project, profile, toolName);
+                        break;
+                    }
+                  }
+                  finally {
+                    notification.expire();
+                  }
+                }
+              )
+              .notify(project);
           }
         }
       }

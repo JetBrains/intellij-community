@@ -51,7 +51,14 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   void switchToAnchor(@NotNull PsiElement element) {
-    Pair<Identikit.ByAnchor, PsiElement> pair = Identikit.withAnchor(element, myIdentikit.getFileLanguage());
+    switchTo(element, findAnchor(element));
+  }
+
+  private Pair<Identikit.ByAnchor, PsiElement> findAnchor(@NotNull PsiElement element) {
+    return Identikit.withAnchor(element, myIdentikit.getFileLanguage());
+  }
+
+  private void switchTo(@NotNull PsiElement element, @Nullable Pair<Identikit.ByAnchor, PsiElement> pair) {
     if (pair != null) {
       assert pair.first.hashCode() == myIdentikit.hashCode();
       myIdentikit = pair.first;
@@ -61,6 +68,17 @@ public class SelfElementInfo extends SmartPointerElementInfo {
       setRange(element.getTextRange());
     }
   }
+
+  boolean updateRangeToPsi(@NotNull Segment pointerRange, PsiElement cachedElement) {
+    Pair<Identikit.ByAnchor, PsiElement> pair = findAnchor(cachedElement);
+    TextRange range = (pair != null ? pair.second : cachedElement).getTextRange();
+    if (range != null && range.intersects(pointerRange)) {
+      switchTo(cachedElement, pair);
+      return true;
+    }
+    return false;
+  }
+
 
   void setRange(@Nullable Segment range) {
     if (range == null) {

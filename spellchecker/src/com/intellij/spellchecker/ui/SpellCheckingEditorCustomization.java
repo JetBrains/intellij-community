@@ -46,18 +46,17 @@ import java.util.function.Function;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Aug 20, 2010 3:54:42 PM
  */
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
   /**
    * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getEnabledCustomization()} instead
    */
-  public static final SpellCheckingEditorCustomization ENABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
+  @Deprecated public static final SpellCheckingEditorCustomization ENABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
 
   /**
    * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getDisabledCustomization()} instead
    */
-  public static final SpellCheckingEditorCustomization DISABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+  @Deprecated public static final SpellCheckingEditorCustomization DISABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
 
   private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();
   private static final boolean READY = init();

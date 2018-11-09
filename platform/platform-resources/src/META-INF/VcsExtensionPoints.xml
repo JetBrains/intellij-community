@@ -26,6 +26,9 @@
     <extensionPoint name="vcsCheckinHandlerFactory"
                     interface="com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory"/>
 
+    <extensionPoint name="unresolvedMergeCheckProvider"
+                    interface="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckProvider"/>
+
     <extensionPoint name="changesViewContent"
                     beanClass="com.intellij.openapi.vcs.changes.ui.ChangesViewContentEP"
                     area="IDEA_PROJECT">
@@ -36,6 +39,8 @@
     <extensionPoint name="changesGroupingPolicy" beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean">
       <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
     </extensionPoint>
+
+    <extensionPoint name="vcs.branchStateProvider" interface="com.intellij.vcs.branch.BranchStateProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="vcs.commitMessageProvider" interface="com.intellij.openapi.vcs.changes.ui.CommitMessageProvider"/>
 
@@ -81,6 +86,8 @@
 
     <extensionPoint qualifiedName="com.intellij.ignoredFileProvider"
                     interface="com.intellij.openapi.vcs.changes.IgnoredFileProvider"/>
+    <extensionPoint qualifiedName="com.intellij.ignoredFileContentProvider"
+                    interface="com.intellij.openapi.vcs.changes.IgnoredFileContentProvider" area="IDEA_PROJECT"/>
 
     <extensionPoint name="openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"/>

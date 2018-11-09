@@ -40,5 +40,6 @@ public interface ConverterManager {
    * @param converterImpl      Implementation to use.
    * @deprecated use com.intellij.dom.converter extension instead
    */
+  @Deprecated
   <T extends Converter> void registerConverterImplementation(Class<T> converterInterface, T converterImpl);
 }

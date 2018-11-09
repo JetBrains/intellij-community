@@ -111,7 +111,7 @@ public class CollectionContainsUrlInspection extends BaseInspection {
     }
 
     private static ClassType isMapOrSet(
-      @Nullable PsiClass aClass, Set<PsiClass> visitedClasses) {
+      @Nullable PsiClass aClass, Set<? super PsiClass> visitedClasses) {
       if (aClass == null) {
         return ClassType.OTHER;
       }

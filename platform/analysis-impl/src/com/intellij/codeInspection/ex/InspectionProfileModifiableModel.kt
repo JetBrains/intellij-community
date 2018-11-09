@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
+import com.intellij.codeInspection.InspectionEP
+import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
@@ -19,17 +22,22 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     copyFrom(source)
   }
 
-  fun isChanged() = modified || source.myLockedProfile != myLockedProfile
+  fun isChanged(): Boolean = modified || source.myLockedProfile != myLockedProfile
 
   fun setModified(value: Boolean) {
     modified = value
+  }
+
+  override fun resetToBase(toolId: String?, scope: NamedScope?, project: Project?) {
+    super.resetToBase(toolId, scope, project)
+    setModified(true)
   }
 
   override fun copyToolsConfigurations(project: Project?) {
     copyToolsConfigurations(source, project)
   }
 
-  override fun createTools(project: Project?) = source.getDefaultStates(project).map { it.tool }
+  override fun createTools(project: Project?): List<InspectionToolWrapper<InspectionProfileEntry, InspectionEP>> = source.getDefaultStates(project).map { it.tool }
 
   private fun copyToolsConfigurations(profile: InspectionProfileImpl, project: Project?) {
     try {
@@ -88,12 +96,6 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     myUninitializedSettings.clear()
   }
 
-  fun resetToBase(toolId: String, scope: NamedScope, project: Project?) {
-    val baseDefaultWrapper = myBaseProfile.getToolsOrNull(toolId, null)?.defaultState?.tool!!
-    val state = myTools[toolId]?.tools?.first { s -> scope == s.getScope(project) }!!
-    state.tool = copyToolSettings(baseDefaultWrapper)
-  }
-
   //invoke when isChanged() == true
   fun commit() {
     source.commit(this)
@@ -121,7 +123,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     getTools(toolShortName, element.project).disableTool(element)
   }
 
-  override fun toString() = "$name (copy)"
+  override fun toString(): String = "$name (copy)"
 }
 
 fun modifyAndCommitProjectProfile(project: Project, action: Consumer<InspectionProfileModifiableModel>) {

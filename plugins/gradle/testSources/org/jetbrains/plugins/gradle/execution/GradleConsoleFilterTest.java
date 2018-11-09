@@ -19,7 +19,6 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/29/2015
  */
 public class GradleConsoleFilterTest extends CodeInsightFixtureTestCase {
 

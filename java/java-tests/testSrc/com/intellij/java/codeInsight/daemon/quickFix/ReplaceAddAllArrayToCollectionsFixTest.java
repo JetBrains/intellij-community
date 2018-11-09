@@ -19,11 +19,7 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 
 public class ReplaceAddAllArrayToCollectionsFixTest extends LightQuickFixParameterizedTestCase {
-   public void test() {
-     doAllTests();
-   }
-
-  @Override
+   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/replaceAddAllArrayToCollections";
   }

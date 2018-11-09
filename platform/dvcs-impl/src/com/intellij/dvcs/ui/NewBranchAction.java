@@ -37,7 +37,7 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
 
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     if (DvcsUtil.anyRepositoryIsFresh(myRepositories)) {
       e.getPresentation().setEnabled(false);
       e.getPresentation().setDescription("Checkout of a new branch is not possible before the first commit");
@@ -45,5 +45,5 @@ public abstract class NewBranchAction<T extends Repository> extends DumbAwareAct
   }
 
   @Override
-  public abstract void actionPerformed(AnActionEvent e);
+  public abstract void actionPerformed(@NotNull AnActionEvent e);
 }

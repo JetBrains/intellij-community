@@ -24,10 +24,10 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ExpandedItemListCellRendererWrapper<T> implements ListCellRenderer<T> {
-  @NotNull private final ListCellRenderer<T> myWrappee;
+  @NotNull private final ListCellRenderer<? super T> myWrappee;
   @NotNull private final ExpandableItemsHandler<Integer> myHandler;
 
-  public ExpandedItemListCellRendererWrapper(@NotNull ListCellRenderer<T> wrappee, @NotNull ExpandableItemsHandler<Integer> handler) {
+  public ExpandedItemListCellRendererWrapper(@NotNull ListCellRenderer<? super T> wrappee, @NotNull ExpandableItemsHandler<Integer> handler) {
     myWrappee = wrappee;
     myHandler = handler;
   }

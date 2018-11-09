@@ -17,6 +17,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -136,7 +137,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   public abstract String getDisplayName ();
-  
+
   public String getShortName() {
     return getDisplayName();
   }
@@ -208,12 +209,17 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
    */
   protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classToBeLoaded);
-    processClassesPrepare(debugProcess, debugProcess.getVirtualMachineProxy().classesByName(classToBeLoaded).stream());
+    VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+    if (virtualMachineProxy.canBeModified()) {
+      processClassesPrepare(debugProcess, virtualMachineProxy.classesByName(classToBeLoaded).stream());
+    }
   }
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
-    processClassesPrepare(debugProcess, debugProcess.getPositionManager().getAllClasses(classPosition).stream().distinct());
+    if (debugProcess.getVirtualMachineProxy().canBeModified()) {
+      processClassesPrepare(debugProcess, debugProcess.getPositionManager().getAllClasses(classPosition).stream().distinct());
+    }
   }
 
   private void processClassesPrepare(DebugProcessImpl debugProcess, Stream<ReferenceType> classes) {
@@ -327,6 +333,17 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       createRequest(debugProcess);
       debugProcess.getVirtualMachineProxy().resume();
     }
+
+    StackFrameProxyImpl frame = context.getFrameProxy();
+    if (getProperties().isCALLER_FILTERS_ENABLED() && frame != null) {
+      ThreadReferenceProxyImpl threadProxy = frame.threadProxy();
+      StackFrameProxyImpl parentFrame = threadProxy.frameCount() > 1 ? threadProxy.frame(1) : null;
+      String key = parentFrame != null ? DebuggerUtilsEx.methodKey(parentFrame.location().method()) : null;
+      if (!typeMatchesClassFilters(key, getProperties().getCallerFilters(), getProperties().getCallerExclusionFilters())) {
+        return false;
+      }
+    }
+
     if (isInstanceFiltersEnabled()) {
       Value value = context.computeThisObject();
       if (value != null) {  // non-static
@@ -348,7 +365,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         return true;
       }
 
-      StackFrameProxyImpl frame = context.getFrameProxy();
       if (frame != null) {
         Location location = frame.location();
         if (location != null) {
@@ -411,7 +427,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
                                           EventRequest request,
                                           PsiElement context,
                                           TextWithImports text,
-                                          EvaluatingComputable<ExpressionEvaluator> supplier) throws EvaluateException {
+                                          EvaluatingComputable<? extends ExpressionEvaluator> supplier) throws EvaluateException {
       EvaluatorCache cache = (EvaluatorCache)request.getProperty(propertyName);
       if (cache != null && Objects.equals(cache.myContext, context) && Objects.equals(cache.myTextWithImports, text)) {
         return cache.myEvaluator;
@@ -453,7 +469,18 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    return event.location().declaringType().name();
+    String className = null;
+    final ObjectReference thisObject = (ObjectReference)context.computeThisObject();
+    if (thisObject != null) {
+      className = thisObject.referenceType().name();
+    }
+    else {
+      final StackFrameProxyImpl frame = context.getFrameProxy();
+      if (frame != null) {
+        className = frame.location().declaringType().name();
+      }
+    }
+    return className;
   }
 
   protected static boolean typeMatchesClassFilters(@Nullable String typeName, ClassFilter[] includeFilters, ClassFilter[] exludeFilters) {
@@ -487,7 +514,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       }
 
       @Override
-      public void processDetached(DebugProcess process, boolean closedByUser) {
+      public void processDetached(@NotNull DebugProcess process, boolean closedByUser) {
         removeBreakpoint();
       }
 
@@ -543,10 +570,12 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return TextWithImportsImpl.fromXExpression(myXBreakpoint.getConditionExpression());
   }
 
+  @Override
   public boolean isEnabled() {
     return myXBreakpoint.isEnabled();
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     myXBreakpoint.setEnabled(enabled);
   }
@@ -685,6 +714,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     myXBreakpoint.setSuspendPolicy(transformSuspendPolicy(policy));
   }
 
+  @Override
   public boolean isConditionEnabled() {
     XExpression condition = myXBreakpoint.getConditionExpression();
     if (XDebuggerUtilImpl.isEmptyExpression(condition)) {

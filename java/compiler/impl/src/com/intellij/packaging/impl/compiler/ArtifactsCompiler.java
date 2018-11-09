@@ -38,6 +38,7 @@ public class ArtifactsCompiler implements Compiler {
   public ArtifactsCompiler() {
   }
 
+  @Override
   public boolean validateConfiguration(CompileScope scope) {
     return false;
   }
@@ -66,6 +67,7 @@ public class ArtifactsCompiler implements Compiler {
     paths.addAll(writtenPaths);
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "Artifacts Packaging Compiler";

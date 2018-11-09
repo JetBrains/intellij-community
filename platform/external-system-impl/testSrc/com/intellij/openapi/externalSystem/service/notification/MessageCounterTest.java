@@ -22,7 +22,6 @@ import static junit.framework.Assert.assertEquals;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/7/14
  */
 public class MessageCounterTest {
 

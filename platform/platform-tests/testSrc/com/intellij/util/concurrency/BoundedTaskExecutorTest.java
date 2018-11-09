@@ -150,51 +150,13 @@ public class BoundedTaskExecutorTest extends TestCase {
     if (!backendExecutor.awaitTermination(100, TimeUnit.SECONDS)) fail(ThreadDumper.dumpThreadsToString());
   }
 
-  public void testStressWhenSomeTasksCallOtherTasksGet() throws InterruptedException {
-    ExecutorService backendExecutor = Executors.newCachedThreadPool(ConcurrencyUtil.newNamedThreadFactory(getName()));
-    for (int maxSimultaneousTasks = 1; maxSimultaneousTasks<20; maxSimultaneousTasks++) {
-      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), backendExecutor, maxSimultaneousTasks);
-      AtomicInteger running = new AtomicInteger();
-      AtomicInteger maxThreads = new AtomicInteger();
+  public void testStressWhenSomeTasksCallOtherTasksGet() throws Exception {
+    BoundedScheduledExecutorTest.doTestBoundedExecutor(
+      getName(),
+      (backendExecutor, maxSimultaneousTasks) -> AppExecutorUtil.createBoundedApplicationPoolExecutor(getName(), backendExecutor, maxSimultaneousTasks),
+      maxSimultaneousTasks -> 3000,
+      (executor, runnable, i)-> executor.submit(runnable));
 
-      int N = 5000;
-      Future[] futures = new Future[N];
-      Random random = new Random();
-      for (int i = 0; i < N; i++) {
-        final int finalI = i;
-        final int finalMaxSimultaneousTasks = maxSimultaneousTasks;
-        futures[i] = executor.submit(() -> {
-          maxThreads.accumulateAndGet(running.incrementAndGet(), Math::max);
-
-          try {
-            int r = random.nextInt(finalMaxSimultaneousTasks);
-            int prev = finalI - r;
-            if (prev < finalI && prev >= 0) {
-              try {
-                futures[prev].get();
-              }
-              catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            }
-            TimeoutUtil.sleep(r);
-          }
-          finally {
-            running.decrementAndGet();
-          }
-        });
-      }
-
-      executor.shutdown();
-      if (!executor.awaitTermination(100, TimeUnit.SECONDS)) fail(ThreadDumper.dumpThreadsToString());
-      for (Future future : futures) {
-        assertTrue(future.isDone());
-      }
-
-      assertTrue("Max threads was: "+maxThreads+" but bound was: "+maxSimultaneousTasks, maxThreads.get() <= maxSimultaneousTasks);
-    }
-    backendExecutor.shutdownNow();
-    if (!backendExecutor.awaitTermination(100, TimeUnit.SECONDS)) fail(ThreadDumper.dumpThreadsToString());
   }
 
   public void testSequentialSubmitsMustExecuteSequentially() throws ExecutionException, InterruptedException {

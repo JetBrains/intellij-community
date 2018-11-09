@@ -52,4 +52,6 @@ public class UnclearBinaryExpressionFixTest extends IGQuickFixesTestCase {
   }
 
   public void testSimpleAssignment() { doTest(); }
+
+  public void testBrokenCode() { assertQuickfixNotAvailable(); }
 }

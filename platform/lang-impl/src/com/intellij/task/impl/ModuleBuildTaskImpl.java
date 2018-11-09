@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
  */
 public class ModuleBuildTaskImpl extends AbstractBuildTask implements ModuleBuildTask {
   @NotNull

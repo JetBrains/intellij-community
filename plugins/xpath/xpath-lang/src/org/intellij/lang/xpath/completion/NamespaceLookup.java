@@ -25,6 +25,7 @@ public class NamespaceLookup extends AbstractLookup implements Lookup, Iconable 
         super(name, name);
     }
 
+    @Override
     public Icon getIcon(int flags) {
         return XpathIcons.Namespace;
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.external;
 
 import com.intellij.ide.diff.DiffElement;
@@ -40,6 +26,7 @@ public class BinaryDiffTool implements DiffTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.BinaryDiffTool");
   public static final DiffTool INSTANCE = new BinaryDiffTool();
 
+  @Override
   public void show(final DiffRequest data) {
     final DiffContent current = data.getContents()[0];
     final DiffContent upToDate = data.getContents()[1];
@@ -133,14 +120,13 @@ public class BinaryDiffTool implements DiffTool {
     public DiffPanel create(final Window window, final Disposable disposable, final BinaryDiffTool tool) {
       if (! myCanCreatePanel) return null;
 
-      final Project project = myData.getProject();
-      final DiffPanel panel = DiffManager.getInstance().createDiffPanel(window, project, disposable, tool);
-      panel.setDiffRequest(myData);
+      final DiffPanel panel = DiffManagerImpl.createDiffPanel(myData, window, disposable, tool);
       panel.removeStatusBar();
       return panel;
     }
   }
 
+  @Override
   public boolean canShow(final DiffRequest data) {
     final DiffContent[] contents = data.getContents();
     if (contents.length != 2) {
@@ -169,8 +155,8 @@ public class BinaryDiffTool implements DiffTool {
   public static boolean canShow(@NotNull Project project, VirtualFile file) {
     if (file == null) return false;
     if (FileEditorProviderManager.getInstance().getProviders(project, file).length > 0) return true;
-    
+
     final DirDiffManager diffManager = DirDiffManager.getInstance(project);
-    return diffManager.createDiffElement(file) != null; 
+    return diffManager.createDiffElement(file) != null;
   }
 }

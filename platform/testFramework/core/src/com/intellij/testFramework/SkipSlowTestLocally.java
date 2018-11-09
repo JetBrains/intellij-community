@@ -24,7 +24,6 @@ import java.lang.annotation.Target;
  * Mark dog slow {@link com.intellij.testFramework.UsefulTestCase} implementations for skip in local test pass
  * if "skip.slow.tests.locally" property is defined.
  */
-@SuppressWarnings("JavadocReference")
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SkipSlowTestLocally { }

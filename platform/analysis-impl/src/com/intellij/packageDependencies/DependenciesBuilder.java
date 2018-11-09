@@ -29,7 +29,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since Jan 19, 2005
  */
 public abstract class DependenciesBuilder {
   private final Project myProject;
@@ -122,7 +121,7 @@ public abstract class DependenciesBuilder {
     return findPaths(from, to, new HashSet<>());
   }
 
-  private List<List<PsiFile>> findPaths(PsiFile from, PsiFile to, Set<PsiFile> processed) {
+  private List<List<PsiFile>> findPaths(PsiFile from, PsiFile to, Set<? super PsiFile> processed) {
     final List<List<PsiFile>> result = new ArrayList<>();
     final Set<PsiFile> reachable = getDirectDependencies().get(from);
     if (reachable != null) {

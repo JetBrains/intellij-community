@@ -53,6 +53,11 @@ public abstract class StubProcessingHelperBase {
       return true;
     }
 
+    if (value.size() == 1 && value.get(0) == 0) {
+      //noinspection unchecked
+      return !checkType(requiredClass, psiFile, psiFile) || processor.process((Psi)psiFile);
+    }
+
     List<StubbedSpine> spines = getAllSpines(psiFile);
     if (spines.isEmpty()) {
       return handleNonPsiStubs(file, processor, requiredClass, psiFile);
@@ -85,7 +90,7 @@ public abstract class StubProcessingHelperBase {
     return false;
   }
 
-  private static PsiElement getStubPsi(List<StubbedSpine> spines, int index) {
+  private static PsiElement getStubPsi(List<? extends StubbedSpine> spines, int index) {
     if (spines.size() == 1) return spines.get(0).getStubPsi(index);
 
     for (StubbedSpine spine : spines) {

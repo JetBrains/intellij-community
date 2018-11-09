@@ -117,7 +117,6 @@ public class JavaFxInjectPageLanguageIntention extends PsiElementBaseIntentionAc
           }
         }
       }
-      ;
     });
   }
 

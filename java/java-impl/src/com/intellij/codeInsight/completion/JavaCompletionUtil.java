@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -9,7 +9,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInspection.java15api.Java15APIUsageInspectionBase;
+import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -132,7 +132,6 @@ public class JavaCompletionUtil {
     return JavaProjectCodeInsightSettings.getSettings(member.getProject()).isExcluded(name);
   }
 
-  @SuppressWarnings({"unchecked"})
   @NotNull
   public static <T extends PsiType> T originalize(@NotNull T type) {
     if (!type.isValid()) {
@@ -208,7 +207,7 @@ public class JavaCompletionUtil {
       }
 
       @Override
-      public boolean shouldProcess(DeclarationKind kind) {
+      public boolean shouldProcess(@NotNull DeclarationKind kind) {
         return member instanceof PsiEnumConstant ? kind == DeclarationKind.ENUM_CONST :
                member instanceof PsiField ? kind == DeclarationKind.FIELD :
                kind == DeclarationKind.METHOD;
@@ -361,7 +360,7 @@ public class JavaCompletionUtil {
                                     @NotNull PsiTypeLookupItem castTypeItem,
                                     @Nullable PsiType plainQualifier,
                                     @NotNull JavaCompletionProcessor processor,
-                                    @NotNull Set<PsiType> expectedTypes) {
+                                    @NotNull Set<? extends PsiType> expectedTypes) {
     PsiType castType = castTypeItem.getType();
     if (plainQualifier != null) {
       Object o = item.getObject();
@@ -407,7 +406,7 @@ public class JavaCompletionUtil {
   private static LookupElement castQualifier(@NotNull LookupElement item, @NotNull PsiTypeLookupItem castTypeItem) {
     return LookupElementDecorator.withInsertHandler(item, new InsertHandlerDecorator<LookupElement>() {
       @Override
-      public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+      public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
         final Document document = context.getEditor().getDocument();
         context.commitDocument();
         final PsiFile file = context.getFile();
@@ -439,8 +438,8 @@ public class JavaCompletionUtil {
   }
 
   private static PsiTypeLookupItem findQualifierCast(@NotNull LookupElement item,
-                                                     @NotNull List<PsiTypeLookupItem> castTypeItems,
-                                                     @Nullable PsiType plainQualifier, JavaCompletionProcessor processor, Set<PsiType> expectedTypes) {
+                                                     @NotNull List<? extends PsiTypeLookupItem> castTypeItems,
+                                                     @Nullable PsiType plainQualifier, JavaCompletionProcessor processor, Set<? extends PsiType> expectedTypes) {
     return ContainerUtil.find(castTypeItems, c -> shouldCast(item, c, plainQualifier, processor, expectedTypes));
   }
 
@@ -478,7 +477,7 @@ public class JavaCompletionUtil {
 
   private static boolean shouldMarkRed(@NotNull Object object, @NotNull PsiElement place) {
     if (!(object instanceof PsiMember)) return false;
-    if (Java15APIUsageInspectionBase.getLastIncompatibleLanguageLevel((PsiMember)object, PsiUtil.getLanguageLevel(place)) != null) return true;
+    if (Java15APIUsageInspection.getLastIncompatibleLanguageLevel((PsiMember)object, PsiUtil.getLanguageLevel(place)) != null) return true;
 
     if (object instanceof PsiEnumConstant) {
       return findConstantsUsedInSwitch(place).contains(CompletionUtil.getOriginalOrSelf((PsiEnumConstant)object));
@@ -522,11 +521,11 @@ public class JavaCompletionUtil {
       }
 
       if (completion instanceof PsiClass) {
-        List<JavaPsiClassReferenceElement> classItems = JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
-                                                                                                             JavaClassNameCompletionContributor.AFTER_NEW
-                                                                                                               .accepts(reference),
-                                                                                                             JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
-                                                                                                             Conditions.alwaysTrue());
+        List<JavaPsiClassReferenceElement> classItems = JavaClassNameCompletionContributor.createClassLookupItems(
+          CompletionUtil.getOriginalOrSelf((PsiClass)completion),
+          JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
+          JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
+          Conditions.alwaysTrue());
         return JBIterable.from(classItems).flatMap(i -> JavaConstructorCallElement.wrap(i, reference.getElement()));
       }
     }
@@ -550,22 +549,28 @@ public class JavaCompletionUtil {
     if (completion instanceof PsiVariable) {
       return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor));
     }
+    if (completion instanceof PsiPackage) {
+      return Collections.singletonList(new PackageLookupItem((PsiPackage)completion, reference.getElement()));
+    }
 
     return Collections.singletonList(LookupItemUtil.objectToLookupItem(completion));
   }
 
-  public static boolean hasAccessibleConstructor(PsiType type) {
+  public static boolean hasAccessibleConstructor(@NotNull PsiType type, @NotNull PsiElement place) {
     if (type instanceof PsiArrayType) return true;
 
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null || psiClass.isEnum() || psiClass.isAnnotationType()) return false;
 
     PsiMethod[] methods = psiClass.getConstructors();
-    return methods.length == 0 || Arrays.stream(methods).anyMatch(JavaCompletionUtil::isConstructorCompletable);
+    return methods.length == 0 || Arrays.stream(methods).anyMatch(constructor -> isConstructorCompletable(constructor, place));
   }
 
-  private static boolean isConstructorCompletable(@NotNull PsiMethod constructor) {
-    return !(constructor instanceof PsiCompiledElement) || !constructor.hasModifierProperty(PsiModifier.PRIVATE);
+  private static boolean isConstructorCompletable(@NotNull PsiMethod constructor, @NotNull PsiElement place) {
+    if (!(constructor instanceof PsiCompiledElement)) return true; // it's possible to use a quick fix to make accessible after completion
+    if (constructor.hasModifierProperty(PsiModifier.PRIVATE)) return false;
+    if (constructor.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) return PsiUtil.isAccessible(constructor, place, null);
+    return true;
   }
 
   public static LinkedHashSet<String> getAllLookupStrings(@NotNull PsiMember member) {
@@ -704,15 +709,15 @@ public class JavaCompletionUtil {
     return null;
   }
 
-  public static void insertParentheses(final InsertionContext context,
-                                       final LookupElement item,
+  public static void insertParentheses(@NotNull InsertionContext context,
+                                       @NotNull LookupElement item,
                                        boolean overloadsMatter,
                                        boolean hasParams) {
     insertParentheses(context, item, overloadsMatter, hasParams, false);
   }
 
-  public static void insertParentheses(final InsertionContext context,
-                                       final LookupElement item,
+  public static void insertParentheses(@NotNull InsertionContext context,
+                                       @NotNull LookupElement item,
                                        boolean overloadsMatter,
                                        boolean hasParams,
                                        final boolean forceClosingParenthesis) {

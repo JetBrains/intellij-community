@@ -20,7 +20,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,7 +40,7 @@ public class CreateGetterSetterPropertyFromUsageFix extends CreatePropertyFromUs
   }
 
   @Override
-  protected boolean checkTargetClasses(List<PsiClass> classes, String methodName) {
+  protected boolean checkTargetClasses(List<? extends PsiClass> classes, String methodName) {
     String propertyName = PropertyUtilBase.getPropertyName(methodName);
     if (propertyName == null) return false;
     String getterName = PropertyUtilBase.suggestGetterName(propertyName, null);

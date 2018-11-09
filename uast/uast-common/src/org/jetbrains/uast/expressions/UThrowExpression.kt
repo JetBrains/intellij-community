@@ -37,10 +37,10 @@ interface UThrowExpression : UExpression {
     visitor.afterVisitThrowExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitThrowExpression(this, data)
 
-  override fun asRenderString() = "throw " + thrownExpression.asRenderString()
+  override fun asRenderString(): String = "throw " + thrownExpression.asRenderString()
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

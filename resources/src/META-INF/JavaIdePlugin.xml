@@ -23,6 +23,7 @@
   <module value="com.intellij.modules.all"/>
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/JvmAnalysisPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaIndexingPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaPsiPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/JavaPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -69,6 +70,9 @@
       <interface-class>com.intellij.compiler.CompilerReferenceService</interface-class>
       <implementation-class>com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl</implementation-class>
     </component>
+    <component>
+      <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter</implementation-class>
+    </component>
   </project-components>
 
   <extensionPoints>
@@ -108,6 +112,9 @@
 
     <extensionPoint name="debugger.frameExtraVarsProvider"
                     interface="com.intellij.debugger.engine.FrameExtraVariablesProvider"/>
+
+    <extensionPoint name="debugger.asyncStackTraceProvider"
+                    interface="com.intellij.debugger.engine.AsyncStackTraceProvider"/>
 
     <extensionPoint name="debugger.sourcePositionProvider"
                     interface="com.intellij.debugger.engine.SourcePositionProvider"/>
@@ -277,7 +284,11 @@
 
     <xdebugger.debuggerSupport implementation="com.intellij.debugger.ui.JavaDebuggerSupport"/>
     <xdebugger.settings implementation="com.intellij.debugger.settings.JavaDebuggerSettings"/>
-    <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.engine.JavaAttachDebuggerProvider"/>
+
+    <projectConfigurable parentId="project.propDebugger" instance="com.intellij.debugger.settings.CaptureConfigurable"/>
+
+    <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider"/>
+    <xdebugger.localAttachDebuggerProvider implementation="com.intellij.debugger.impl.attach.JavaSAAttachDebuggerProvider"/>
 
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaMethodBreakpointType"/>
     <xdebugger.breakpointType implementation="com.intellij.debugger.ui.breakpoints.JavaWildcardMethodBreakpointType"/>
@@ -291,6 +302,7 @@
     <debugger.sourcePositionHighlighter implementation="com.intellij.debugger.engine.JavaSourcePositionHighlighter"/>
     <java.elementFinder implementation="com.intellij.debugger.impl.AlternativeJreClassFinder" order="last"/>
     <additionalLibraryRootsProvider implementation="com.intellij.execution.AlternativeSdkRootsProvider"/>
+    <debugger.asyncStackTraceProvider implementation="com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint$CaptureAsyncStackTraceProvider"/>
 
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$BooleanRenderer"/>
     <debugger.nodeRenderer implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ByteRenderer"/>
@@ -314,6 +326,7 @@
     <debugger.nodeNameAdjuster implementation="com.intellij.debugger.ui.impl.watch.FieldOuterLocalNameAdjuster"/>
 
     <programRunner id="defaultDebugRunner" implementation="com.intellij.debugger.impl.GenericDebuggerRunner" order="last"/>
+    <programRunner implementation="com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider$ProcessAttachDebuggerRunner" order="last"/>
     <programRunner implementation="com.intellij.execution.jar.JarApplicationDebuggerRunner"/>
 
     <iconLayerProvider implementation="com.intellij.compiler.CompilerIconLayerProvider"/>
@@ -327,8 +340,6 @@
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.IdeaProjectSettingsService"/>
 
     <projectWizard.projectCategory implementation="com.intellij.ide.projectWizard.ModuleTypeCategory$JavaSE"/>
-    <statistics.usagesCollector implementation="com.intellij.ide.projectWizard.ProjectCategoryUsagesCollector"/>
-    <applicationService serviceImplementation="com.intellij.ide.projectWizard.ProjectCategoryUsagesCollector"/>
 
     <projectStructureDetector implementation="com.intellij.ide.util.projectWizard.importSources.impl.JavaProjectStructureDetector" order="first"/>
 
@@ -371,8 +382,6 @@
     <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.IndentHelper"
                         serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaIndentHelper"
                         overrides="true"/>
-    <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
-                        serviceImplementation="com.intellij.packageDependencies.JavaDependenciesVisitorFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.module.ModuleTypeManager"
                         serviceImplementation="com.intellij.openapi.module.impl.JavaAwareModuleTypeManagerImpl"/>
     <projectService serviceInterface="com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper"
@@ -404,7 +413,7 @@
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
     </action>
 
-    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsAction" id="ShowDiscoveredTests" text="Show Discovered Tests">
+    <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests" text="Show Affected Tests">
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
       <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>

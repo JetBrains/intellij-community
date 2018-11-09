@@ -4,6 +4,6 @@ public enum Enum {
     A,
 
     B,
-    C// foo
+    C // foo
     ;
 }

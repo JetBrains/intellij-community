@@ -23,7 +23,7 @@ public class BackpointerUtil {
   private BackpointerUtil() {
   }
 
-  public static boolean isBackpointerReference(PsiExpression expression, Condition<PsiField> value) {
+  public static boolean isBackpointerReference(PsiExpression expression, Condition<? super PsiField> value) {
     if (expression instanceof PsiParenthesizedExpression) {
       final PsiExpression contents = ((PsiParenthesizedExpression)expression).getExpression();
       return isBackpointerReference(contents, value);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.classFilter;
 
@@ -21,13 +7,13 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.PatternUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Tag("class-filter")
 public class ClassFilter implements JDOMExternalizable, Cloneable{
@@ -134,12 +120,12 @@ public class ClassFilter implements JDOMExternalizable, Cloneable{
 
   private Matcher getMatcher(final String name) {
     if (myMatcher == null) {
-      // need to quote dots and dollars
-      final String regex = getPattern().replaceAll("\\.", "\\\\.").replaceAll("\\$", "\\\\\\$").replaceAll("\\*", ".*");
-      final Pattern pattern = Pattern.compile(regex);
-      myMatcher = pattern.matcher("");
+      // need to quote dots, dollars, etc.
+      myMatcher = PatternUtil.fromMask(getPattern()).matcher(name);
     }
-    myMatcher.reset(name);
+    else {
+      myMatcher.reset(name);
+    }
     return myMatcher;
   }
 

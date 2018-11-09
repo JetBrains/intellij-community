@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.actions;
 
+import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.actions.actionVisibility.CvsActionVisibility;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsContext;
 import com.intellij.cvsSupport2.actions.cvsContext.CvsLightweightFile;
@@ -23,10 +24,9 @@ import com.intellij.cvsSupport2.config.CvsConfiguration;
 import com.intellij.cvsSupport2.cvshandlers.CommandCvsHandler;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
-import com.intellij.CvsBundle;
 
 public class GetFileFromRepositoryAction extends ActionOnSelectedElement{
   public GetFileFromRepositoryAction() {
@@ -37,10 +37,12 @@ public class GetFileFromRepositoryAction extends ActionOnSelectedElement{
     visibility.shouldNotBePerformedOnDirectory();
   }
 
+  @Override
   protected String getTitle(VcsContext context) {
     return CvsBundle.message("action.name.get.file.from.repository");
   }
 
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     CvsLightweightFile[] cvsLightweightFiles = context.getSelectedLightweightFiles();
     Project project = context.getProject();

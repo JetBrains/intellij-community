@@ -2,6 +2,8 @@ package com.intellij.tasks.jira;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
+import com.intellij.ui.DeferredIconImpl;
+import com.intellij.util.ObjectUtils;
 import icons.TasksCoreIcons;
 import icons.TasksIcons;
 import org.jetbrains.annotations.NotNull;
@@ -18,19 +20,27 @@ import java.util.Date;
  */
 public abstract class JiraTask extends Task {
   protected final TaskRepository myRepository;
+  // Deferred icon must be stored as a field because otherwise it's going to initiate repainting 
+  // of the containing component and will be re-built anew indefinitely.
+  // It can be accessed not only in EDT, e.g. to get completion items for tasks.
+  private volatile Icon myIcon;
 
   protected JiraTask(@NotNull TaskRepository repository) {
     myRepository = repository;
   }
 
+  @Override
   @NotNull
   public abstract String getId();
 
+  @Override
   @NotNull
   public abstract String getSummary();
 
+  @Override
   public abstract String getDescription();
 
+  @Override
   @NotNull
   public abstract Comment[] getComments();
 
@@ -60,7 +70,17 @@ public abstract class JiraTask extends Task {
   @Override
   @NotNull
   public final Icon getIcon() {
-    return getIconByUrl(getIconUrl());
+    if (myIcon == null) {
+      // getIconUrl() shouldn't be called before the instance is properly initialized
+      final String iconUrl = getIconUrl();
+      if (StringUtil.isEmpty(iconUrl)) {
+        myIcon = TasksCoreIcons.Jira;
+      }
+      else {
+        myIcon = new DeferredIconImpl<>(TasksCoreIcons.Jira, iconUrl, false, JiraTask::getIconByUrl);
+      }
+    }
+    return myIcon;
   }
 
   @Nullable
@@ -74,6 +94,7 @@ public abstract class JiraTask extends Task {
     return getState() == TaskState.RESOLVED;
   }
 
+  @Override
   public final boolean isIssue() {
     return true;
   }
@@ -86,12 +107,8 @@ public abstract class JiraTask extends Task {
    * @return task con.
    */
   @NotNull
-  protected final Icon getIconByUrl(@Nullable String iconUrl) {
-    if (StringUtil.isEmpty(iconUrl)) {
-      return TasksCoreIcons.Jira;
-    }
-    Icon icon = CachedIconLoader.getIcon(iconUrl);
-    return icon != null ? icon : TasksIcons.Other;
+  protected static Icon getIconByUrl(@Nullable String iconUrl) {
+    return ObjectUtils.notNull(CachedIconLoader.getIcon(iconUrl), TasksIcons.Other);
   }
 
   /**

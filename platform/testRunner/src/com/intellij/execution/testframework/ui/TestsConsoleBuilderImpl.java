@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
  * @author Roman.Chernyatchik
  */
 public class TestsConsoleBuilderImpl extends TextConsoleBuilderImpl {
-  TestsConsoleBuilderImpl(final Project project,
-                          final GlobalSearchScope scope,
-                          boolean isViewer,
-                          boolean usePredefinedMessageFilter) {
+  public TestsConsoleBuilderImpl(@NotNull Project project,
+                                 @NotNull GlobalSearchScope scope,
+                                 boolean isViewer,
+                                 boolean usePredefinedMessageFilter) {
     super(project, scope);
     setViewer(isViewer);
     setUsePredefinedMessageFilter(usePredefinedMessageFilter);

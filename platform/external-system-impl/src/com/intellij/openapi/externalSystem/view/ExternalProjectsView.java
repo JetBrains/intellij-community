@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/15/2015
  */
 public interface ExternalProjectsView {
   ExternalSystemUiAware getUiAware();
@@ -50,6 +49,8 @@ public interface ExternalProjectsView {
   boolean showInheritedTasks();
 
   boolean getGroupTasks();
+
+  boolean getGroupModules();
 
   boolean useTasksNode();
 

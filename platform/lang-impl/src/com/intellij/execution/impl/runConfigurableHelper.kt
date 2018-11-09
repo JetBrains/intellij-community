@@ -15,12 +15,10 @@ internal class RunConfigurationBean {
 
   constructor(configurable: SingleConfigurationConfigurable<*>) {
     this.configurable = configurable
-    settings = this.configurable.settings as RunnerAndConfigurationSettings
+    settings = this.configurable.settings
   }
 
-  override fun toString(): String {
-    return settings.toString()
-  }
+  override fun toString() = settings.toString()
 }
 
 enum class RunConfigurableNodeKind {

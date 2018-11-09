@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.parsing;
 
 import com.intellij.lang.ASTNode;
@@ -28,13 +14,13 @@ import org.jetbrains.annotations.NotNull;
  * User : catherine
  */
 public class RestParser implements PsiParser {
+  @Override
   @NotNull
   public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     final PsiBuilder.Marker rootMarker = builder.mark();
     while (!builder.eof()) {
       IElementType type = builder.getTokenType();
       if (type == RestTokenTypes.EXPLISIT_MARKUP_START) {
-        builder.advanceLexer();
         parseMarkup(builder);
       }
       else if (type == RestTokenTypes.REFERENCE_NAME || type == RestTokenTypes.SUBSTITUTION) {
@@ -75,6 +61,10 @@ public class RestParser implements PsiParser {
     PsiBuilder.Marker marker = builder.mark();
     boolean gotLine = false;
     while (type == RestTokenTypes.LINE || type == RestTokenTypes.WHITESPACE) {
+      final IElementType nextType = builder.lookAhead(1);
+      if (nextType != RestTokenTypes.LINE && type == RestTokenTypes.WHITESPACE) {
+        break;
+      }
       builder.advanceLexer();
       type = builder.getTokenType();
       gotLine = true;
@@ -102,6 +92,7 @@ public class RestParser implements PsiParser {
   }
 
   private static void parseMarkup(PsiBuilder builder) {
+    builder.advanceLexer();
     PsiBuilder.Marker marker = builder.mark();
     IElementType type = builder.getTokenType();
     if (type == RestTokenTypes.SUBSTITUTION) {
@@ -111,7 +102,7 @@ public class RestParser implements PsiParser {
       marker = builder.mark();
       type = builder.getTokenType();
     }
-    if (type == RestTokenTypes.DIRECTIVE) {
+    if (type == RestTokenTypes.DIRECTIVE || type == RestTokenTypes.CUSTOM_DIRECTIVE) {
       gotoNextWhiteSpaces(builder);
       if (builder.getTokenType() != RestTokenTypes.WHITESPACE) {
         builder.advanceLexer();
@@ -120,7 +111,7 @@ public class RestParser implements PsiParser {
       }
       skipBlankLines(builder);
       final String tokenText = builder.getTokenText();
-      if (builder.getTokenType() != RestTokenTypes.WHITESPACE ||
+      if (builder.getTokenType() != RestTokenTypes.LINE ||
           (tokenText != null && StringUtil.getLineBreakCount(tokenText) == tokenText.length())) {
         marker.done(RestElementTypes.DIRECTIVE_BLOCK);
         return;
@@ -151,17 +142,15 @@ public class RestParser implements PsiParser {
     }
   }
 
-  private static void parseDirective(PsiBuilder builder, String white, PsiBuilder.Marker marker) {
-    gotoNextWhiteSpaces(builder);
-    if (builder.getTokenType() != RestTokenTypes.WHITESPACE) {
-      builder.advanceLexer();
-      marker.done(RestElementTypes.DIRECTIVE_BLOCK);
-      return;
+  private static void parseDirective(PsiBuilder builder, String indent, PsiBuilder.Marker marker) {
+    while (builder.getTokenType() == RestTokenTypes.FIELD) {
+      parseFieldList(builder);
     }
+    gotoNextWhiteSpaces(builder);
     skipBlankLines(builder);
-    if (white.equals(builder.getTokenText())) {
+    if (indent.equals(builder.getTokenText())) {
       builder.advanceLexer();
-      parseDirective(builder, white, marker);
+      parseDirective(builder, indent, marker);
     }
     else {
       marker.done(RestElementTypes.DIRECTIVE_BLOCK);

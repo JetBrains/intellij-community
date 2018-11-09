@@ -3,25 +3,30 @@ package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiPolyVariantReference
+import com.intellij.psi.ResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UMultiResolvable
 import org.jetbrains.uast.UReferenceExpression
 
 class GrUReferenceExpression(
   override val sourcePsi: GrQualifiedReference<*>,
   parentProvider: () -> UElement?
-) : UReferenceExpression {
+) : UReferenceExpression, UMultiResolvable {
 
   override val psi: PsiElement = sourcePsi
   override val javaPsi: PsiElement? = null
 
   override val resolvedName: String? = (resolve() as? PsiNamedElement)?.name
 
-  override val uastParent by lazy(parentProvider)
+  override val uastParent: UElement? by lazy(parentProvider)
 
   override val annotations: List<UAnnotation> = emptyList()
 
   override fun resolve(): PsiElement? = sourcePsi.resolve()
+  override fun multiResolve(): Iterable<ResolveResult> =
+    (psi as? PsiPolyVariantReference)?.multiResolve(false)?.asIterable() ?: emptyList()
 
 }

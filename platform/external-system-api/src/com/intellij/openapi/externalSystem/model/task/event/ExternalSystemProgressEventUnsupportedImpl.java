@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.model.task.event;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/7/2015
  */
 public class ExternalSystemProgressEventUnsupportedImpl extends BaseExternalSystemProgressEvent<OperationDescriptor> implements
                                                                                                 ExternalSystemProgressEventUnsupported {

@@ -46,6 +46,7 @@ public class ExternalSystemEditTaskDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     if (contentPane == null) {
       contentPane = new PaintAwarePanel(new GridBagLayout());
@@ -55,6 +56,7 @@ public class ExternalSystemEditTaskDialog extends DialogWrapper {
     return contentPane;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return null;
   }

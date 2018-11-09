@@ -19,7 +19,6 @@ import java.util.Optional;
 
 /**
  * @author Denis Zhdanov
- * @since 4/24/13 11:57 AM
  */
 public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private String myGradleHome;
@@ -27,6 +26,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private DistributionType distributionType;
   private boolean disableWrapperSourceDistributionNotification;
   private boolean resolveModulePerSourceSet = ExternalSystemApiUtil.isJavaCompatibleIde();
+  private boolean resolveExternalAnnotations;
   @Nullable private CompositeBuild myCompositeBuild;
 
   private ThreeState storeProjectFilesExternally = ThreeState.NO;
@@ -74,6 +74,14 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     this.resolveModulePerSourceSet = useIdeModulePerSourceSet;
   }
 
+  public boolean isResolveExternalAnnotations() {
+    return resolveExternalAnnotations;
+  }
+
+  public void setResolveExternalAnnotations(boolean resolveExternalAnnotations) {
+    this.resolveExternalAnnotations = resolveExternalAnnotations;
+  }
+
   @OptionTag(tag = "compositeConfiguration", nameAttribute = "")
   @Nullable
   public CompositeBuild getCompositeBuild() {
@@ -94,6 +102,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
     result.distributionType = distributionType;
     result.disableWrapperSourceDistributionNotification = disableWrapperSourceDistributionNotification;
     result.resolveModulePerSourceSet = resolveModulePerSourceSet;
+    result.resolveExternalAnnotations = resolveExternalAnnotations;
     result.myCompositeBuild = myCompositeBuild != null ? myCompositeBuild.copy() : null;
     return result;
   }
@@ -111,6 +120,11 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   public GradleVersion resolveGradleVersion() {
     GradleVersion version = GradleInstallationManager.getGradleVersion(this);
     return Optional.ofNullable(version).orElseGet(GradleVersion::current);
+  }
+
+  public GradleProjectSettings withQualifiedModuleNames() {
+    setUseQualifiedModuleNames(true);
+    return this;
   }
 
   @Tag("compositeBuild")

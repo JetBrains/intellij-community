@@ -130,7 +130,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     /**
      * Creates a one-shot action with given nanoTime-based trigger time.
      */
-    private MyScheduledFutureTask(@NotNull Runnable r, V result, long ns) {
+    MyScheduledFutureTask(@NotNull Runnable r, V result, long ns) {
       super(r, result);
       time = ns;
       period = 0;
@@ -236,12 +236,16 @@ class SchedulingWrapper implements ScheduledExecutorService {
     @Override
     public String toString() {
       Object info = BoundedTaskExecutor.info(this);
-      return "Delay: " + getDelay(TimeUnit.MILLISECONDS) + "ms; " + (info == this ? super.toString() : info);
+      return "Delay: " + getDelay(TimeUnit.MILLISECONDS) + "ms; " + (info == this ? super.toString() : info) + " backendExecutorService: "+backendExecutorService;
     }
 
     @NotNull
-    ExecutorService getBackendExecutorService() {
+    private ExecutorService getBackendExecutorService() {
       return backendExecutorService;
+    }
+
+    void executeMeInBackendExecutor() {
+      backendExecutorService.execute(this);
     }
   }
 
@@ -254,7 +258,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   /**
    * Returns the trigger time of a delayed action.
    */
-  private static long triggerTime(@NotNull AppDelayQueue queue, long delay, TimeUnit unit) {
+  static long triggerTime(@NotNull AppDelayQueue queue, long delay, TimeUnit unit) {
     return triggerTime(queue, unit.toNanos(delay < 0 ? 0 : delay));
   }
 
@@ -297,7 +301,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
   }
 
   @NotNull
-  private <T> MyScheduledFutureTask<T> delayedExecute(@NotNull MyScheduledFutureTask<T> t) {
+  <T> MyScheduledFutureTask<T> delayedExecute(@NotNull MyScheduledFutureTask<T> t) {
     if (LOG.isTraceEnabled()) {
       LOG.trace("Submit at delay " + t.getDelay(TimeUnit.MILLISECONDS) + "ms " + BoundedTaskExecutor.info(t));
     }

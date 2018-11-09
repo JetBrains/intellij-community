@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -25,7 +12,6 @@ import com.intellij.codeInsight.lookup.impl.LookupManagerImpl;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
@@ -123,9 +109,8 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
   }
 
   public void testLocalVariablePreselect() {
-    final String path = BASE_PATH;
 
-    configureByFile(path + "/before5.java");
+    configureByFile(BASE_PATH + "/before5.java");
     performSmartCompletion();
     assertEquals("xxxx", getSelected().getLookupString());
   }
@@ -260,7 +245,7 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
   }
 
   private static CommonCodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+    return CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
   }
 
 
@@ -319,30 +304,34 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
     checkResultByFile(path + "/after38.java");
   }
 
-  private void performSmartCompletion(){
+  private static void performSmartCompletion(){
     new CodeCompletionHandlerBase(CompletionType.SMART).invokeCompletion(getProject(), getEditor());
   }
 
-  private void performNormalCompletion(){
+  private static void performNormalCompletion(){
     new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(getProject(), getEditor());
   }
 
-  private void select(char completionChar, int index){
+  private static void select(char completionChar, int index){
     ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, index);
   }
 
-  private void select(char completionChar, LookupElement item){
+  private static void select(char completionChar, LookupElement item){
     ((LookupManagerImpl)LookupManager.getInstance(getProject())).forceSelection(completionChar, item);
   }
 
-  private LookupElement getSelected(){
+  private static LookupElement getSelected(){
     return LookupManager.getInstance(getProject()).getActiveLookup().getCurrentItem();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    LookupManager.getInstance(getProject()).hideActiveLookup();
-    super.tearDown();    
+    try {
+      LookupManager.hideActiveLookup(getProject());
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   public void testAfterNew15() {

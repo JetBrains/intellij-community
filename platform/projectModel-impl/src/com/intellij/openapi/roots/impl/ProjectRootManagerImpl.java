@@ -8,7 +8,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -227,7 +226,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     incModificationCount();
     mergeRootsChangesDuring(() -> myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged());
     Sdk sdk = getProjectSdk();
-    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
+    for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
       extension.projectSdkChanged(sdk);
     }
   }
@@ -252,7 +251,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
 
   @Override
   public void loadState(@NotNull Element element) {
-    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
+    for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
       extension.readExternal(element);
     }
     myProjectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
@@ -264,7 +263,7 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public Element getState() {
     Element element = new Element("state");
     element.setAttribute(ATTRIBUTE_VERSION, "2");
-    for (ProjectExtension extension : Extensions.getExtensions(ProjectExtension.EP_NAME, myProject)) {
+    for (ProjectExtension extension : ProjectExtension.EP_NAME.getExtensions(myProject)) {
       extension.writeExternal(element);
     }
     if (myProjectSdkName != null) {
@@ -646,7 +645,10 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
     }
   }
 
-  public void markRootsForRefresh() { }
+  @Override
+  public void markRootsForRefresh() {
+
+  }
 
   @NotNull
   public VirtualFilePointerListener getRootsValidityChangedListener() {

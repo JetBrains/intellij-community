@@ -24,7 +24,7 @@
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(SELECT\\s.+?\\sFROM\\s.+)")]]></place>
     <!-- SELECT smth FROM smth -->
 
-    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(INSERT\\s+INTO\\s.+)")]]></place>
+    <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(INSERT\\s+(IGNORE\\s+)?INTO\\s.+)")]]></place>
     <!-- INSERT INTO smth -->
 
     <place><![CDATA[pyStringLiteralMatches("^(\\s*((((--|#)[^\n\r]*)|(/\\*([^*])+\\*+/))(\r\n|\n|\r))+)?\\s*(UPDATE\\s.+?\\sSET\\s.+)")]]></place>

@@ -2,8 +2,8 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
-import com.intellij.testGuiFramework.util.*
-import org.junit.Ignore
+import com.intellij.testGuiFramework.util.logInfo
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import org.junit.Test
 
 class CreateGradleProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
@@ -12,10 +12,12 @@ class CreateGradleProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   @JvmName("gradle_cfg_jvm")
   fun createGradleAndConfigureKotlinJvmActualVersion() {
     testCreateGradleAndConfigureKotlin(
-      kotlinKind = KotlinKind.JVM,
-      project = kotlinLibs[KotlinKind.JVM]!!.gradleGProject,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
+      project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
       expectedFacet = defaultFacetSettings[TargetPlatform.JVM18]!!,
-      gradleOptions = BuildGradleOptions().build()
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName
+      )
     )
   }
 
@@ -23,32 +25,13 @@ class CreateGradleProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
   @JvmName("gradle_cfg_js")
   fun createGradleAndConfigureKotlinJsActualVersion() {
     testCreateGradleAndConfigureKotlin(
-      kotlinKind = KotlinKind.JS,
-      project = kotlinLibs[KotlinKind.JS]!!.gradleGProject,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
+      project = kotlinProjects.getValue(Projects.GradleGProjectJs),
       expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!,
-      gradleOptions = BuildGradleOptions().build()
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName
+      )
     )
-  }
-
-  @Test
-  @Ignore
-  @JvmName("gradle_cfg_jvm_from_file")
-  fun createGradleAndConfigureKotlinJvmFromFile() {
-    val groupName = "group_gradle_jvm"
-    val artifactName = "art_gradle_jvm"
-    createGradleProject(
-      projectPath = projectFolder,
-      group = groupName,
-      artifact = artifactName,
-      gradleOptions = BuildGradleOptions().build())
-    waitAMoment(10000)
-//    configureKotlinJvm(libInPlugin = false)
-    createKotlinFile(
-        projectName = testMethod.methodName,
-        packageName = "src/main/java",
-        fileName = "K1"
-    )
-    waitAMoment(10000)
   }
 
   override fun isIdeFrameRun(): Boolean =

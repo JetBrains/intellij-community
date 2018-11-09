@@ -37,6 +37,7 @@ public class XsltAnnotator extends XPath2ElementVisitor implements Annotator {
 
   private AnnotationHolder myHolder;
 
+  @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {
     final boolean isXslt = ContextProvider.getContextProvider(psiElement) instanceof XsltContextProviderBase;
     if (isXslt) {

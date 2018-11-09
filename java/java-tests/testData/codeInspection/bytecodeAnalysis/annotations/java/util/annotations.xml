@@ -81,6 +81,7 @@
     </item>
     <item name='java.util.AbstractList java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -338,6 +339,7 @@
     </item>
     <item name='java.util.ArrayList java.lang.Object[] toArray()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -349,24 +351,28 @@
     </item>
     <item name='java.util.ArrayList java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.ArrayList java.util.List&lt;E&gt; subList(int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.ArrayList java.util.ListIterator&lt;E&gt; listIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.ArrayList java.util.ListIterator&lt;E&gt; listIterator(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -451,12 +457,14 @@
     </item>
     <item name='java.util.ArrayList.SubList java.util.List&lt;E&gt; subList(int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.ArrayList.SubList java.util.ListIterator&lt;E&gt; listIterator(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -483,6 +491,7 @@
     </item>
     <item name='java.util.Arrays T[] copyOf(T[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -491,6 +500,7 @@
     </item>
     <item name='java.util.Arrays T[] copyOf(U[], int, java.lang.Class&lt;? extends T[]&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -499,6 +509,7 @@
     </item>
     <item name='java.util.Arrays T[] copyOfRange(T[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -507,6 +518,7 @@
     </item>
     <item name='java.util.Arrays T[] copyOfRange(U[], int, int, java.lang.Class&lt;? extends T[]&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -618,6 +630,7 @@
     </item>
     <item name='java.util.Arrays boolean[] copyOf(boolean[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -627,6 +640,7 @@
     </item>
     <item name='java.util.Arrays boolean[] copyOfRange(boolean[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -636,6 +650,7 @@
     </item>
     <item name='java.util.Arrays byte[] copyOf(byte[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -645,6 +660,7 @@
     </item>
     <item name='java.util.Arrays byte[] copyOfRange(byte[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -654,6 +670,7 @@
     </item>
     <item name='java.util.Arrays char[] copyOf(char[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -663,6 +680,7 @@
     </item>
     <item name='java.util.Arrays char[] copyOfRange(char[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -672,6 +690,7 @@
     </item>
     <item name='java.util.Arrays double[] copyOf(double[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -681,6 +700,7 @@
     </item>
     <item name='java.util.Arrays double[] copyOfRange(double[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -690,6 +710,7 @@
     </item>
     <item name='java.util.Arrays float[] copyOf(float[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -699,6 +720,7 @@
     </item>
     <item name='java.util.Arrays float[] copyOfRange(float[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -946,6 +968,7 @@
     </item>
     <item name='java.util.Arrays int[] copyOf(int[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -955,6 +978,7 @@
     </item>
     <item name='java.util.Arrays int[] copyOfRange(int[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1051,6 +1075,7 @@
     </item>
     <item name='java.util.Arrays java.util.List&lt;T&gt; asList(T...)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1060,6 +1085,7 @@
     </item>
     <item name='java.util.Arrays long[] copyOf(long[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1069,6 +1095,7 @@
     </item>
     <item name='java.util.Arrays long[] copyOfRange(long[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1078,6 +1105,7 @@
     </item>
     <item name='java.util.Arrays short[] copyOf(short[], int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1087,6 +1115,7 @@
     </item>
     <item name='java.util.Arrays short[] copyOfRange(short[], int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1227,6 +1256,7 @@
     </item>
     <item name='java.util.Arrays.ArrayList java.lang.Object[] toArray()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1352,15 +1382,24 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Calendar java.util.Calendar getInstance()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Calendar java.util.Calendar getInstance(java.util.Locale)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Calendar java.util.Calendar getInstance(java.util.Locale) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Calendar java.util.Date getTime()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Calendar java.util.Map&lt;java.lang.String,java.lang.Integer&gt; getDisplayNames(int, int, java.util.Locale)'>
@@ -1399,6 +1438,7 @@
     </item>
     <item name='java.util.Collection java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1430,6 +1470,7 @@
     </item>
     <item name='java.util.Collections T[] zeroLengthArray(java.lang.Class&lt;T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -1490,11 +1531,17 @@
     <item name='java.util.Collections int lastIndexOfSubList(java.util.List&lt;?&gt;, java.util.List&lt;?&gt;) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.util.Collections java.util.ArrayList&lt;T&gt; list(java.util.Enumeration&lt;T&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='java.util.Collections java.util.ArrayList&lt;T&gt; list(java.util.Enumeration&lt;T&gt;) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.Collection&lt;E&gt; checkedCollection(java.util.Collection&lt;E&gt;, java.lang.Class&lt;E&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1507,6 +1554,7 @@
     </item>
     <item name='java.util.Collections java.util.Collection&lt;T&gt; synchronizedCollection(java.util.Collection&lt;T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1516,12 +1564,14 @@
     </item>
     <item name='java.util.Collections java.util.Collection&lt;T&gt; synchronizedCollection(java.util.Collection&lt;T&gt;, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.Collection&lt;T&gt; unmodifiableCollection(java.util.Collection&lt;? extends T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1549,12 +1599,14 @@
     </item>
     <item name='java.util.Collections java.util.Enumeration&lt;T&gt; enumeration(java.util.Collection&lt;T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.Iterator&lt;E&gt; singletonIterator(E)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1566,6 +1618,7 @@
     </item>
     <item name='java.util.Collections java.util.List&lt;E&gt; checkedList(java.util.List&lt;E&gt;, java.lang.Class&lt;E&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1583,18 +1636,21 @@
     </item>
     <item name='java.util.Collections java.util.List&lt;T&gt; nCopies(int, T)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.List&lt;T&gt; singletonList(T)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.List&lt;T&gt; synchronizedList(java.util.List&lt;T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1604,12 +1660,14 @@
     </item>
     <item name='java.util.Collections java.util.List&lt;T&gt; synchronizedList(java.util.List&lt;T&gt;, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.List&lt;T&gt; unmodifiableList(java.util.List&lt;? extends T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1624,6 +1682,7 @@
     </item>
     <item name='java.util.Collections java.util.Map&lt;K,V&gt; checkedMap(java.util.Map&lt;K,V&gt;, java.lang.Class&lt;K&gt;, java.lang.Class&lt;V&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1644,12 +1703,14 @@
     </item>
     <item name='java.util.Collections java.util.Map&lt;K,V&gt; singletonMap(K, V)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.Map&lt;K,V&gt; synchronizedMap(java.util.Map&lt;K,V&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1659,6 +1720,7 @@
     </item>
     <item name='java.util.Collections java.util.Map&lt;K,V&gt; unmodifiableMap(java.util.Map&lt;? extends K,? extends V&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1668,12 +1730,14 @@
     </item>
     <item name='java.util.Collections java.util.Queue&lt;T&gt; asLifoQueue(java.util.Deque&lt;T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.Set&lt;E&gt; checkedSet(java.util.Set&lt;E&gt;, java.lang.Class&lt;E&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1685,6 +1749,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.Set&lt;E&gt; newSetFromMap(java.util.Map&lt;E,java.lang.Boolean&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.Set&lt;E&gt; newSetFromMap(java.util.Map&lt;E,java.lang.Boolean&gt;) 0'>
@@ -1697,12 +1764,14 @@
     </item>
     <item name='java.util.Collections java.util.Set&lt;T&gt; singleton(T)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.Set&lt;T&gt; synchronizedSet(java.util.Set&lt;T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1712,12 +1781,14 @@
     </item>
     <item name='java.util.Collections java.util.Set&lt;T&gt; synchronizedSet(java.util.Set&lt;T&gt;, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections java.util.Set&lt;T&gt; unmodifiableSet(java.util.Set&lt;? extends T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1727,6 +1798,7 @@
     </item>
     <item name='java.util.Collections java.util.SortedMap&lt;K,V&gt; checkedSortedMap(java.util.SortedMap&lt;K,V&gt;, java.lang.Class&lt;K&gt;, java.lang.Class&lt;V&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1742,6 +1814,7 @@
     </item>
     <item name='java.util.Collections java.util.SortedMap&lt;K,V&gt; synchronizedSortedMap(java.util.SortedMap&lt;K,V&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1751,6 +1824,7 @@
     </item>
     <item name='java.util.Collections java.util.SortedMap&lt;K,V&gt; unmodifiableSortedMap(java.util.SortedMap&lt;K,? extends V&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1760,6 +1834,7 @@
     </item>
     <item name='java.util.Collections java.util.SortedSet&lt;E&gt; checkedSortedSet(java.util.SortedSet&lt;E&gt;, java.lang.Class&lt;E&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1772,6 +1847,7 @@
     </item>
     <item name='java.util.Collections java.util.SortedSet&lt;T&gt; synchronizedSortedSet(java.util.SortedSet&lt;T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1781,6 +1857,7 @@
     </item>
     <item name='java.util.Collections java.util.SortedSet&lt;T&gt; unmodifiableSortedSet(java.util.SortedSet&lt;T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1868,6 +1945,9 @@
         </annotation>
     </item>
     <item name='java.util.Collections.CheckedCollection java.util.Collection&lt;E&gt; checkedCopyOf(java.util.Collection&lt;? extends E&gt;)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedCollection java.util.Collection&lt;E&gt; checkedCopyOf(java.util.Collection&lt;? extends E&gt;) 0'>
@@ -1875,6 +1955,7 @@
     </item>
     <item name='java.util.Collections.CheckedCollection java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -1894,9 +1975,15 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedList java.util.List&lt;E&gt; subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedList java.util.ListIterator&lt;E&gt; listIterator(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedMap CheckedMap(java.util.Map&lt;K,V&gt;, java.lang.Class&lt;K&gt;, java.lang.Class&lt;V&gt;)'>
@@ -1997,12 +2084,14 @@
     </item>
     <item name='java.util.Collections.CheckedMap.CheckedEntrySet java.util.Collections.CheckedMap.CheckedEntrySet.CheckedEntry&lt;K,V,T&gt; checkedEntry(java.util.Map.Entry&lt;K,V&gt;, java.lang.Class&lt;T&gt;)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedMap.CheckedEntrySet java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2041,6 +2130,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedRandomAccessList java.util.List&lt;E&gt; subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedSet CheckedSet(java.util.Set&lt;E&gt;, java.lang.Class&lt;E&gt;)'>
@@ -2069,12 +2161,21 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedSortedMap java.util.SortedMap&lt;K,V&gt; headMap(K)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedSortedMap java.util.SortedMap&lt;K,V&gt; subMap(K, K)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedSortedMap java.util.SortedMap&lt;K,V&gt; tailMap(K)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedSortedSet CheckedSortedSet(java.util.SortedSet&lt;E&gt;, java.lang.Class&lt;E&gt;)'>
@@ -2089,12 +2190,21 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedSortedSet java.util.SortedSet&lt;E&gt; headSet(E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedSortedSet java.util.SortedSet&lt;E&gt; subSet(E, E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CheckedSortedSet java.util.SortedSet&lt;E&gt; tailSet(E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CopiesList CopiesList(int, E)'>
@@ -2120,12 +2230,14 @@
     </item>
     <item name='java.util.Collections.CopiesList java.lang.Object[] toArray()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.CopiesList java.util.List&lt;E&gt; subList(int, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2175,6 +2287,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.Collections.EmptyList T[] toArray(T[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.util.Collections.EmptyList T[] toArray(T[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -2220,6 +2337,7 @@
     </item>
     <item name='java.util.Collections.EmptyList java.lang.Object[] toArray()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2358,6 +2476,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.Collections.EmptySet T[] toArray(T[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;param1&quot;"/>
+        </annotation>
+    </item>
     <item name='java.util.Collections.EmptySet T[] toArray(T[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -2390,6 +2513,7 @@
     </item>
     <item name='java.util.Collections.EmptySet java.lang.Object[] toArray()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2430,6 +2554,7 @@
     </item>
     <item name='java.util.Collections.SetFromMap java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2456,6 +2581,7 @@
     </item>
     <item name='java.util.Collections.SingletonList java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2502,6 +2628,7 @@
     </item>
     <item name='java.util.Collections.SingletonSet java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2526,6 +2653,7 @@
     </item>
     <item name='java.util.Collections.SynchronizedCollection java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -2552,6 +2680,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.SynchronizedList java.util.List&lt;E&gt; subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.SynchronizedMap SynchronizedMap(java.util.Map&lt;K,V&gt;)'>
@@ -2590,11 +2721,15 @@
     </item>
     <item name='java.util.Collections.SynchronizedRandomAccessList java.lang.Object writeReplace()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.SynchronizedRandomAccessList java.util.List&lt;E&gt; subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.SynchronizedSet SynchronizedSet(java.util.Set&lt;E&gt;)'>
@@ -2624,12 +2759,21 @@
         </annotation>
     </item>
     <item name='java.util.Collections.SynchronizedSortedMap java.util.SortedMap&lt;K,V&gt; headMap(K)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.SynchronizedSortedMap java.util.SortedMap&lt;K,V&gt; subMap(K, K)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.SynchronizedSortedMap java.util.SortedMap&lt;K,V&gt; tailMap(K)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.SynchronizedSortedSet SynchronizedSortedSet(java.util.SortedSet&lt;E&gt;)'>
@@ -2646,12 +2790,21 @@
         </annotation>
     </item>
     <item name='java.util.Collections.SynchronizedSortedSet java.util.SortedSet&lt;E&gt; headSet(E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.SynchronizedSortedSet java.util.SortedSet&lt;E&gt; subSet(E, E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.SynchronizedSortedSet java.util.SortedSet&lt;E&gt; tailSet(E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableCollection UnmodifiableCollection(java.util.Collection&lt;? extends E&gt;)'>
@@ -2714,6 +2867,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableCollection java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2761,9 +2915,15 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableList java.util.List&lt;E&gt; subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableList java.util.ListIterator&lt;E&gt; listIterator(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableList void add(int, E)'>
@@ -2850,6 +3010,7 @@
     </item>
     <item name='java.util.Collections.UnmodifiableMap.UnmodifiableEntrySet java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -2886,11 +3047,15 @@
     </item>
     <item name='java.util.Collections.UnmodifiableRandomAccessList java.lang.Object writeReplace()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableRandomAccessList java.util.List&lt;E&gt; subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableSet UnmodifiableSet(java.util.Set&lt;? extends E&gt;)'>
@@ -2910,12 +3075,21 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableSortedMap java.util.SortedMap&lt;K,V&gt; headMap(K)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableSortedMap java.util.SortedMap&lt;K,V&gt; subMap(K, K)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableSortedMap java.util.SortedMap&lt;K,V&gt; tailMap(K)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableSortedSet UnmodifiableSortedSet(java.util.SortedSet&lt;E&gt;)'>
@@ -2927,12 +3101,21 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableSortedSet java.util.SortedSet&lt;E&gt; headSet(E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableSortedSet java.util.SortedSet&lt;E&gt; subSet(E, E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Collections.UnmodifiableSortedSet java.util.SortedSet&lt;E&gt; tailSet(E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.ConcurrentModificationException ConcurrentModificationException()'>
@@ -2994,7 +3177,7 @@
     </item>
     <item name='java.util.Date java.lang.StringBuilder convertToAbbr(java.lang.StringBuilder, java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;!null&quot;"/>
+            <val val="&quot;_,_-&gt;!null&quot;"/>
         </annotation>
     </item>
     <item name='java.util.Date java.lang.StringBuilder convertToAbbr(java.lang.StringBuilder, java.lang.String) 0'>
@@ -3045,6 +3228,7 @@
     </item>
     <item name='java.util.GregorianCalendar java.util.Date getGregorianChange()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3152,18 +3336,21 @@
     </item>
     <item name='java.util.HashMap java.util.Iterator&lt;K&gt; newKeyIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.HashMap java.util.Iterator&lt;V&gt; newValueIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.HashMap java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; newEntryIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3672,8 +3859,14 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.util.IdentityHashMap.EntrySet java.lang.Object[] toArray()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='java.util.IdentityHashMap.EntrySet java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3703,6 +3896,7 @@
     </item>
     <item name='java.util.IdentityHashMap.KeySet java.util.Iterator&lt;K&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3727,6 +3921,7 @@
     </item>
     <item name='java.util.IdentityHashMap.Values java.util.Iterator&lt;V&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3756,18 +3951,21 @@
     </item>
     <item name='java.util.LinkedHashMap java.util.Iterator&lt;K&gt; newKeyIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.LinkedHashMap java.util.Iterator&lt;V&gt; newValueIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.LinkedHashMap java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; newEntryIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3816,6 +4014,7 @@
     </item>
     <item name='java.util.List java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -3905,9 +4104,15 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Locale java.lang.String[] getISOCountries()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Locale java.lang.String[] getISOLanguages()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Locale java.util.Locale getDefault(java.util.Locale.Category) 0'>
@@ -3981,6 +4186,7 @@
     </item>
     <item name='java.util.Locale.Cache java.util.Locale createObject(java.util.Locale.LocaleKey)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -4020,6 +4226,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Properties java.lang.String loadConvert(char[], int, int, char[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.Properties java.lang.String loadConvert(char[], int, int, char[]) 3'>
@@ -4087,6 +4296,7 @@
     </item>
     <item name='java.util.Set java.util.Iterator&lt;E&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
@@ -4184,12 +4394,14 @@
     </item>
     <item name='java.util.TreeMap java.util.Iterator&lt;K&gt; descendingKeyIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap java.util.Iterator&lt;K&gt; keyIterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -4228,12 +4440,21 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.util.TreeMap java.util.NavigableMap&lt;K,V&gt; headMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap java.util.NavigableMap&lt;K,V&gt; subMap(K, boolean, K, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap java.util.NavigableMap&lt;K,V&gt; tailMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap java.util.TreeMap.Entry&lt;K,V&gt; buildFromSorted(int, int, int, int, java.util.Iterator, java.io.ObjectInputStream, V)'>
@@ -4351,12 +4572,21 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.AscendingSubMap java.util.NavigableMap&lt;K,V&gt; headMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.AscendingSubMap java.util.NavigableMap&lt;K,V&gt; subMap(K, boolean, K, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.AscendingSubMap java.util.NavigableMap&lt;K,V&gt; tailMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.AscendingSubMap java.util.Set&lt;java.util.Map.Entry&lt;K,V&gt;&gt; entrySet()'>
@@ -4392,12 +4622,21 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.DescendingSubMap java.util.NavigableMap&lt;K,V&gt; headMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.DescendingSubMap java.util.NavigableMap&lt;K,V&gt; subMap(K, boolean, K, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.DescendingSubMap java.util.NavigableMap&lt;K,V&gt; tailMap(K, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.DescendingSubMap java.util.Set&lt;java.util.Map.Entry&lt;K,V&gt;&gt; entrySet()'>
@@ -4473,6 +4712,7 @@
     </item>
     <item name='java.util.TreeMap.EntrySet java.util.Iterator&lt;java.util.Map.Entry&lt;K,V&gt;&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -4497,12 +4737,21 @@
         </annotation>
     </item>
     <item name='java.util.TreeMap.KeySet java.util.SortedSet&lt;E&gt; headSet(E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.KeySet java.util.SortedSet&lt;E&gt; subSet(E, E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.KeySet java.util.SortedSet&lt;E&gt; tailSet(E)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.NavigableSubMap K ceilingKey(K)'>
@@ -4656,6 +4905,9 @@
         </annotation>
     </item>
     <item name='java.util.TreeMap.SubMap java.lang.Object readResolve()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.TreeMap.SubMap java.util.SortedMap&lt;K,V&gt; headMap(K) 0'>
@@ -4685,6 +4937,7 @@
     </item>
     <item name='java.util.TreeMap.Values java.util.Iterator&lt;V&gt; iterator()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

@@ -17,18 +17,18 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiLocalVariable;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class NavigateToAlreadyDeclaredVariableFix implements IntentionAction {
-  private final PsiLocalVariable myVariable;
+  private final PsiVariable myVariable;
 
-  public NavigateToAlreadyDeclaredVariableFix(@NotNull PsiLocalVariable variable) {
+  public NavigateToAlreadyDeclaredVariableFix(@NotNull PsiVariable variable) {
     this.myVariable = variable;
   }
 
@@ -49,17 +49,12 @@ public class NavigateToAlreadyDeclaredVariableFix implements IntentionAction {
     if (!myVariable.isValid()) {
       return false;
     }
-    final PsiVariable previousVariable = ReuseVariableDeclarationFix.findPreviousVariable(myVariable);
-    return previousVariable != null &&
-           myVariable.getManager().isInProject(myVariable);
+    return ScratchFileService.isInProjectOrScratch(myVariable);
   }
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiVariable refVariable = ReuseVariableDeclarationFix.findPreviousVariable(myVariable);
-    if (refVariable == null) return;
-
-    refVariable.navigate(true);
+    myVariable.navigate(true);
   }
 
   @Override

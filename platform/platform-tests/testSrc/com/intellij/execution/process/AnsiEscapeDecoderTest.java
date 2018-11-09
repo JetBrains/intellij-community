@@ -51,14 +51,40 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
             .addExpected("Red", "\u001B[31m"));
   }
 
-  public void testBackspaceControlSequence() {
+  public void testPrivateSequence() {
+    check(new ColoredText("\u001B[0;32mgreen\u001B[0m\u001B[0K\u001B[?25l\n", ProcessOutputTypes.STDOUT)
+            .addExpected("green", "\u001B[0;32m")
+            .addExpected("\n", STDOUT_KEY)
+    );
+  }
+
+  public void testMalformedSequence() {
+    check(false, Collections.singletonList(new ColoredText("\u001B[32mGreen\u001B[\1World\n", ProcessOutputTypes.STDOUT)
+            .addExpected("Green\u001B[\1World\n", "\u001B[32m")
+    ));
+    check(false, Collections.singletonList(new ColoredText("\u001B\n", ProcessOutputTypes.STDOUT)
+            .addExpected("\u001B\n", ProcessOutputTypes.STDOUT.toString())
+    ));
+    check(false, Collections.singletonList(new ColoredText("\u001B[\n", ProcessOutputTypes.STDOUT)
+            .addExpected("\u001B[\n", ProcessOutputTypes.STDOUT.toString())
+    ));
     check(false, ContainerUtil.newArrayList(
-      new ColoredText(" 10% 0/1 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 70% 1/1 build modules", ProcessOutputTypes.STDOUT)
-        .addExpected(" 70% 1/1 build modules", STDOUT_KEY),
-      new ColoredText(
-        "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 40% 1/2 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 30% 1/3 build modules\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b 25% 1/4 build modules",
-        ProcessOutputTypes.STDOUT)
-        .addExpected("\n 25% 1/4 build modules", STDOUT_KEY)
+      new ColoredText("\u001B\nHello,", ProcessOutputTypes.STDOUT)
+        .addExpected("\u001B\nHello,", ProcessOutputTypes.STDOUT.toString()),
+      new ColoredText("\u001B[31mWorld", ProcessOutputTypes.STDOUT)
+        .addExpected("World", "\u001B[31m")
+    ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("\u001BHello,", ProcessOutputTypes.STDOUT)
+        .addExpected("\u001BHello,", ProcessOutputTypes.STDOUT.toString())
+    ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("\u001B[Hello,", ProcessOutputTypes.STDOUT)
+        .addExpected("ello,", ProcessOutputTypes.STDOUT.toString())
+    ));
+    check(false, ContainerUtil.newArrayList(
+      new ColoredText("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT)
+        .addExpected("something[\u001B]asdf[\u001B[]", ProcessOutputTypes.STDOUT.toString())
     ));
   }
 
@@ -190,7 +216,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
 
     //noinspection CodeBlock2Expr
     withProcessHandlerFrom(testProcess, handler -> {
-      PlatformTestUtil.startPerformanceTest("ansi color", 7000, () -> {
+      PlatformTestUtil.startPerformanceTest("ansi color", 8_500, () -> {
         for (int i = 0; i < 2_000_000; i++) {
           handler.notifyTextAvailable(i + "Chrome 35.0.1916 (Linux): Executed 0 of 1\u001B[32m SUCCESS\u001B[39m (0 secs / 0 secs)\n",
                                       ProcessOutputTypes.STDOUT);
@@ -222,7 +248,7 @@ public class AnsiEscapeDecoderTest extends PlatformTestCase {
     private final List<Pair<String, String>> myExpectedColoredChunks = new ArrayList<>();
     private final Key myOutputType;
 
-    public ColoredText(@NotNull String rawText, @NotNull Key outputType) {
+    ColoredText(@NotNull String rawText, @NotNull Key outputType) {
       myRawText = rawText;
       myOutputType = outputType;
     }

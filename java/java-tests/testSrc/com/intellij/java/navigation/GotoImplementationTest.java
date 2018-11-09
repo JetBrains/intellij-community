@@ -67,23 +67,23 @@ public class GotoImplementationTest extends CodeInsightTestCase {
     Module module1 = moduleManager.findModuleByName("test1");
     Module module2 = moduleManager.findModuleByName("test2");
     Module module3 = moduleManager.findModuleByName("test3");
-    final GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(module1);
-    PsiClass test1 = myJavaFacade.findClass("com.test.TestI", moduleScope);
+    final GlobalSearchScope module1Scope = GlobalSearchScope.moduleScope(module1);
+    PsiClass test1 = myJavaFacade.findClass("com.test.TestI", module1Scope);
     PsiClass test2 = myJavaFacade.findClass("com.test.TestI", GlobalSearchScope.moduleScope(module2));
     PsiClass test3 = myJavaFacade.findClass("com.test.TestI", GlobalSearchScope.moduleScope(module3));
     HashSet<PsiElement> expectedImpls1 = new HashSet<>(Arrays.asList(
-      myJavaFacade.findClass("com.test.TestIImpl1", moduleScope),
-      myJavaFacade.findClass("com.test.TestIImpl2", moduleScope)
+      myJavaFacade.findClass("com.test.TestIImpl1", module1Scope),
+      myJavaFacade.findClass("com.test.TestIImpl2", module1Scope)
     ));
     assertEquals(expectedImpls1, new HashSet<>(getClassImplementations(test1)));
 
     PsiMethod psiMethod = test1.findMethodsByName("test", false)[0];
     Set<PsiElement> expectedMethodImpl1 = new HashSet<>(Arrays.asList(
-      myJavaFacade.findClass("com.test.TestIImpl1", moduleScope).findMethodsByName("test", false)[0],
-      myJavaFacade.findClass("com.test.TestIImpl2", moduleScope).findMethodsByName("test", false)[0]
+      myJavaFacade.findClass("com.test.TestIImpl1", module1Scope).findMethodsByName("test", false)[0],
+      myJavaFacade.findClass("com.test.TestIImpl2", module1Scope).findMethodsByName("test", false)[0]
     ));
     CommonProcessors.CollectProcessor<PsiElement> processor = new CommonProcessors.CollectProcessor<>();
-    MethodImplementationsSearch.processImplementations(psiMethod, processor, moduleScope);
+    MethodImplementationsSearch.processImplementations(psiMethod, processor, module1Scope);
     assertEquals(expectedMethodImpl1, new HashSet<>(processor.getResults()));
 
     HashSet<PsiElement> expectedImpls2 = new HashSet<>(Arrays.asList(

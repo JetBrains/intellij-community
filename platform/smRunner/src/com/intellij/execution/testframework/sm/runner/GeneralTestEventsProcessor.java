@@ -18,28 +18,30 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.TransferToEDTQueue;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Processes events of test runner in general text-based form.
  * <p/>
  * Test name should be unique for all suites - e.g. it can consist of a suite name and a name of a test method.
- *
- * @author: Roman Chernyatchik
+ * 
+ * <p/>
+ * Threading information:
+ * <ul>
+ *   <li>{@link #onUncapturedOutput(String, Key)} can be called from output reader created whether for normal or error output as well as command line can be printed from pooled thread which started the test process;</li>
+ *   <li>all other events should be processed in the same output reader thread</li>
+ *   <li>{@link #dispose()} is called from EDT</li>
+ * </ul>
+ * 
  */
 public abstract class GeneralTestEventsProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(GeneralTestEventsProcessor.class.getName());
@@ -47,33 +49,24 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
   protected final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   protected SMTestLocator myLocator = null;
   private final String myTestFrameworkName;
-  private final Project myProject;
-  private final TransferToEDTQueue<Runnable> myTransferToEDTQueue;
-  protected List<SMTRunnerEventsListener> myListenerAdapters = new ArrayList<>();
+  protected List<SMTRunnerEventsListener> myListenerAdapters = new CopyOnWriteArrayList<>();
 
   protected boolean myTreeBuildBeforeStart = false;
 
   public GeneralTestEventsProcessor(Project project, @NotNull String testFrameworkName, @NotNull SMTestProxy.SMRootTestProxy testsRootProxy) {
-    myProject = project;
     myEventPublisher = project.getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
     myTestFrameworkName = testFrameworkName;
-    myTransferToEDTQueue = new TransferToEDTQueue<>("SM queue", runnable -> {
-      runnable.run();
-      return true;
-    }, project.getDisposed());
     myTestsRootProxy = testsRootProxy;
   }
   // tree construction events
 
   public void onRootPresentationAdded(final String rootName, final String comment, final String rootLocation) {
-    addToInvokeLater(() -> {
-      myTestsRootProxy.setPresentation(rootName);
-      myTestsRootProxy.setComment(comment);
-      myTestsRootProxy.setRootLocationUrl(rootLocation);
-      if (myLocator != null) {
-        myTestsRootProxy.setLocator(myLocator);
-      }
-    });
+    myTestsRootProxy.setPresentation(rootName);
+    myTestsRootProxy.setComment(comment);
+    myTestsRootProxy.setRootLocationUrl(rootLocation);
+    if (myLocator != null) {
+      myTestsRootProxy.setLocator(myLocator);
+    }
   }
 
   protected SMTestProxy createProxy(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
@@ -132,13 +125,11 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     processTreeBuildEvents(runnables);
   }
 
-  private void processTreeBuildEvents(final List<Runnable> runnables) {
-    addToInvokeLater(() -> {
-      for (Runnable runnable : runnables) {
-        runnable.run();
-      }
-      runnables.clear();
-    });
+  private static void processTreeBuildEvents(final List<Runnable> runnables) {
+    for (Runnable runnable : runnables) {
+      runnable.run();
+    }
+    runnables.clear();
   }
 
   // progress events
@@ -217,9 +208,7 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
     rootNode.setTestsReporterAttached();
   }
 
-  public void onFinishTesting() {
-    stopEventProcessing();
-  }
+  public void onFinishTesting() { }
 
   protected void fireOnTestingFinished(SMTestProxy.SMRootTestProxy root) {
     myEventPublisher.onTestingFinished(root);
@@ -237,39 +226,31 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
    */
   public void onCustomProgressTestsCategory(@Nullable final String categoryName,
                                             final int testCount) {
-    addToInvokeLater(() -> {
-      myEventPublisher.onCustomProgressTestsCategory(categoryName, testCount);
-      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-        adapter.onCustomProgressTestsCategory(categoryName, testCount);
-      }
-    });
+    myEventPublisher.onCustomProgressTestsCategory(categoryName, testCount);
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onCustomProgressTestsCategory(categoryName, testCount);
+    }
   }
 
   public void onCustomProgressTestStarted() {
-    addToInvokeLater(() -> {
-      myEventPublisher.onCustomProgressTestStarted();
-      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-        adapter.onCustomProgressTestStarted();
-      }
-    });
+    myEventPublisher.onCustomProgressTestStarted();
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onCustomProgressTestStarted();
+    }
   }
 
   public void onCustomProgressTestFinished() {
-    addToInvokeLater(() -> {
-      myEventPublisher.onCustomProgressTestFinished();
-      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-        adapter.onCustomProgressTestFinished();
-      }
-    });
+    myEventPublisher.onCustomProgressTestFinished();
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onCustomProgressTestFinished();
+    }
   }
 
   public void onCustomProgressTestFailed() {
-    addToInvokeLater(() -> {
-      myEventPublisher.onCustomProgressTestFailed();
-      for (SMTRunnerEventsListener adapter : myListenerAdapters) {
-        adapter.onCustomProgressTestFailed();
-      }
-    });
+    myEventPublisher.onCustomProgressTestFailed();
+    for (SMTRunnerEventsListener adapter : myListenerAdapters) {
+      adapter.onCustomProgressTestFailed();
+    }
   }
 
   // workflow/service methods
@@ -288,51 +269,12 @@ public abstract class GeneralTestEventsProcessor implements Disposable {
 
   @Override
   public void dispose() {
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        if (myProject.isDisposed()) {
-          return;
-        }
-        myTransferToEDTQueue.drain();
-      });
-    }
+    disconnectListeners();
   }
 
   protected void disconnectListeners() {
     myListenerAdapters.clear();
   }
-
-  public Condition getDisposedCondition() {
-    return Condition.FALSE;
-  }
-
-  public void addToInvokeLater(final Runnable runnable) {
-    final Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (!myProject.isDisposed()) {
-          runnable.run();
-        }
-      });
-    }
-    else if ((application.isHeadlessEnvironment() && !application.isOnAir())
-             || SwingUtilities.isEventDispatchThread()) {
-      runnable.run();
-    }
-    else {
-      myTransferToEDTQueue.offer(runnable);
-    }
-  }
-
-  public void stopEventProcessing() {
-    UIUtil.invokeLaterIfNeeded(() -> {
-      if (myProject.isDisposed()) {
-        return;
-      }
-      myTransferToEDTQueue.drain();
-    });
-  }
-
 
   protected static <T> boolean isTreeComplete(Collection<T> runningTests, SMTestProxy.SMRootTestProxy rootNode) {
     if (!runningTests.isEmpty()) {

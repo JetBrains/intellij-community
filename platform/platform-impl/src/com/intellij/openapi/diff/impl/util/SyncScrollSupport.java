@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.util;
 
 import com.intellij.openapi.Disposable;
@@ -26,16 +12,17 @@ import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
+import java.util.List;
 
 public class SyncScrollSupport implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.SyncScrollSupport");
   private boolean myDuringVerticalScroll = false;
-  @NotNull private final ArrayList<ScrollListener> myScrollers = new ArrayList<>();
+  @NotNull private final List<ScrollListener> myScrollers = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myEnabled = true;
 
   public void install(EditingSides[] sideContainers) {
@@ -52,6 +39,7 @@ public class SyncScrollSupport implements Disposable {
     else LOG.error(String.valueOf(editors.length));
   }
 
+  @Override
   public void dispose() {
     for (ScrollListener scrollListener : myScrollers) {
       Disposer.dispose(scrollListener);
@@ -94,7 +82,7 @@ public class SyncScrollSupport implements Disposable {
     private ScrollingContext[] myScrollContexts;
     @NotNull private final Editor myEditor;
 
-    public ScrollListener(@NotNull ScrollingContext[] scrollContexts, @NotNull Editor editor) {
+    ScrollListener(@NotNull ScrollingContext[] scrollContexts, @NotNull Editor editor) {
       myScrollContexts = scrollContexts;
       myEditor = editor;
     }
@@ -110,7 +98,7 @@ public class SyncScrollSupport implements Disposable {
     }
 
     @Override
-    public void visibleAreaChanged(VisibleAreaEvent e) {
+    public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       if (!myEnabled || myDuringVerticalScroll) return;
       Rectangle newRectangle = e.getNewRectangle();
       Rectangle oldRectangle = e.getOldRectangle();
@@ -217,7 +205,7 @@ public class SyncScrollSupport implements Disposable {
     @NotNull private final FragmentSide myMasterSide;
     @NotNull private final FragmentSide myMasterDiffSide;
 
-    public ScrollingContext(@NotNull FragmentSide masterSide, @NotNull EditingSides sidesContainer, @NotNull FragmentSide masterDiffSide) {
+    ScrollingContext(@NotNull FragmentSide masterSide, @NotNull EditingSides sidesContainer, @NotNull FragmentSide masterDiffSide) {
       mySidesContainer = sidesContainer;
       myMasterSide = masterSide;
       myMasterDiffSide = masterDiffSide;

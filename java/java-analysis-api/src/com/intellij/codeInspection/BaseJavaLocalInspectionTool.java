@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated superfluous, extend {@link AbstractBaseJavaLocalInspectionTool} / {@link CustomSuppressableInspectionTool} instead
  * (to be removed in IDEA 2019).
  */
+@Deprecated
 public abstract class BaseJavaLocalInspectionTool extends AbstractBaseJavaLocalInspectionTool implements CustomSuppressableInspectionTool {
   @NotNull
   @Override

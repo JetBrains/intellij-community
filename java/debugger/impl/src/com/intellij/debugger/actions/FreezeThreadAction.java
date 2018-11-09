@@ -23,12 +23,14 @@ import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author lex
  */
 public class FreezeThreadAction extends DebuggerAction {
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
     if (selectedNode == null) {
       return;
@@ -52,7 +54,8 @@ public class FreezeThreadAction extends DebuggerAction {
     }
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
     if (selectedNode == null) {
       return;

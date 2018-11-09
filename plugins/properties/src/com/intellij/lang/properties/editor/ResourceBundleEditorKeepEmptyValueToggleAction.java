@@ -18,6 +18,7 @@ package com.intellij.lang.properties.editor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
@@ -25,18 +26,18 @@ import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 class ResourceBundleEditorKeepEmptyValueToggleAction extends CheckboxAction {
   private final static String SELECTION_KEY = "resource.bundle.editor.insert.empty.values";
 
-  public ResourceBundleEditorKeepEmptyValueToggleAction() {
+  ResourceBundleEditorKeepEmptyValueToggleAction() {
     super("Do not insert properties with empty value",
           "Do not create value if value text field is empty. Delete existed value if text field become empty.", null);
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return keepEmptyProperties();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     PropertiesComponent.getInstance().setValue(SELECTION_KEY, state, true);
   }
 

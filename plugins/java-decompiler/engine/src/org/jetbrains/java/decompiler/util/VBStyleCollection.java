@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import java.util.ArrayList;
@@ -21,16 +21,19 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
     map = new HashMap<>(initialCapacity);
   }
 
+  @Override
   public boolean add(E element) {
     lstKeys.add(null);
     super.add(element);
     return true;
   }
 
+  @Override
   public boolean remove(Object element) {   // TODO: error on void remove(E element)
     throw new RuntimeException("not implemented!");
   }
 
+  @Override
   public boolean addAll(Collection<? extends E> c) {
     for (int i = c.size() - 1; i >= 0; i--) {
       lstKeys.add(null);
@@ -67,6 +70,7 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
     return null;
   }
 
+  @Override
   public void add(int index, E element) {
     addToListIndex(index, 1);
     lstKeys.add(index, null);
@@ -88,6 +92,7 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
     map.remove(key);
   }
 
+  @Override
   public E remove(int index) {
     addToListIndex(index + 1, -1);
     K obj = lstKeys.get(index);
@@ -118,12 +123,14 @@ public class VBStyleCollection<E, K> extends ArrayList<E> {
     return map.containsKey(key);
   }
 
+  @Override
   public void clear() {
     map.clear();
     lstKeys.clear();
     super.clear();
   }
 
+  @Override
   public VBStyleCollection<E, K> clone() {
     VBStyleCollection<E, K> c = new VBStyleCollection<>();
     c.addAll(new ArrayList<>(this));

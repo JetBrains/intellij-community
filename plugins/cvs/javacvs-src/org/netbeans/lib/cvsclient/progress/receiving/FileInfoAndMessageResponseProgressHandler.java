@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.netbeans.lib.cvsclient.progress.receiving;
 
 import org.netbeans.lib.cvsclient.command.CommandUtils;
@@ -33,17 +34,20 @@ public final class FileInfoAndMessageResponseProgressHandler extends AbstractRes
 
 	// Implemented ============================================================
 
-	public void registerListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void registerListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.addMessageListener(this);
 		listenerRegistry.addFileInfoListener(this);
 	}
 
-	public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.removeMessageListener(this);
 		listenerRegistry.removeFileInfoListener(this);
 	}
 
-	public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
+	@Override
+        public void messageSent(String message, final byte[] byteMessage, boolean error, boolean tagged) {
 		if (!error || tagged) {
 			return;
 		}
@@ -61,13 +65,15 @@ public final class FileInfoAndMessageResponseProgressHandler extends AbstractRes
 		}
 	}
 
-	public void fileInfoGenerated(Object info) {
+	@Override
+        public void fileInfoGenerated(Object info) {
 		if (info instanceof IFileInfo) {
 			final IFileInfo fileInfo = (IFileInfo)info;
 			fileProcessed(fileInfo.getFileObject());
 		}
 	}
 
+        @Override
         public void binaryMessageSent(final byte[] bytes) {
         }
 }

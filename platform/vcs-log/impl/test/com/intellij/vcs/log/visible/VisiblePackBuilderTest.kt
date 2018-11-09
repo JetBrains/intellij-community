@@ -147,14 +147,17 @@ class VisiblePackBuilderTest {
           throw UnsupportedOperationException()
         }
 
-        override fun loadCommitsData(hashes: MutableList<Int>, consumer: Consumer<MutableList<VcsFullCommitDetails>>, indicator: ProgressIndicator?) {
+        override fun loadCommitsData(hashes: MutableList<Int>,
+                                     consumer: Consumer<MutableList<VcsFullCommitDetails>>,
+                                     errorConsumer: Consumer<Throwable>,
+                                     indicator: ProgressIndicator?) {
         }
 
         override fun getCommitDataIfAvailable(hash: Int): VcsFullCommitDetails? {
           return null
         }
       }
-      val builder = VcsLogFilterer(providers, hashMap, detailsCache, commitDetailsGetter, EmptyIndex())
+      val builder = VcsLogFiltererImpl(providers, hashMap, detailsCache, commitDetailsGetter, EmptyIndex())
 
       return builder.filter(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }

@@ -23,7 +23,7 @@ class Test {
   private static final Object CONST = getNull();
 
   public static void test() {
-    System.out.println(CONST.<warning descr="Method invocation 'toString' may produce 'java.lang.NullPointerException'">toString</warning>());
+    System.out.println(CONST.<warning descr="Method invocation 'toString' may produce 'NullPointerException'">toString</warning>());
   }
 }
 
@@ -95,7 +95,7 @@ class Test6 extends BadSuper {
   }
 
   public Integer someLength() {
-    return something.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>();
+    return something.<warning descr="Method invocation 'length' may produce 'NullPointerException'">length</warning>();
   }
 
   protected void overrideableMethod() {
@@ -107,7 +107,7 @@ class Test7 extends BadSuper {
   private final String something = new String("something");
 
   protected void overrideableMethod() {
-    something.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>();
+    something.<warning descr="Method invocation 'length' may produce 'NullPointerException'">length</warning>();
   }
 }
 
@@ -124,6 +124,6 @@ class Test8 {
 
   void other() {
     System.out.println(s.hashCode());
-    System.out.println(s2.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+    System.out.println(s2.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
   }
 }

@@ -37,10 +37,10 @@ interface UReturnExpression : UExpression {
     visitor.afterVisitReturnExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitReturnExpression(this, data)
 
-  override fun asRenderString() = returnExpression.let { if (it == null) "return" else "return " + it.asRenderString() }
+  override fun asRenderString(): String = returnExpression.let { if (it == null) "return" else "return " + it.asRenderString() }
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

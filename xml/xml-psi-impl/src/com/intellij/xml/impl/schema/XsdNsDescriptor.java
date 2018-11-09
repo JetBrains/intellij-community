@@ -25,10 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public interface XsdNsDescriptor extends XmlNSDescriptor, XmlNSTypeDescriptorProvider {
-  boolean processTagsInNamespace(String[] tagNames, PsiElementProcessor<XmlTag> processor);
+  boolean processTagsInNamespace(String[] tagNames, PsiElementProcessor<? super XmlTag> processor);
 
   @Nullable
-  XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<XmlNSDescriptorImpl> visited, boolean reference);
+  XmlElementDescriptor getElementDescriptor(String localName, String namespace, Set<? super XmlNSDescriptorImpl> visited, boolean reference);
 
   @Nullable
   XmlAttributeDescriptor getAttribute(String localName, String namespace, XmlTag context);

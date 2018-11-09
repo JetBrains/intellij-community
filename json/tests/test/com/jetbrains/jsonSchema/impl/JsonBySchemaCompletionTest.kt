@@ -1,69 +1,58 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl
 
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTest
 import org.intellij.lang.annotations.Language
 import org.junit.Assert
 
-/**
- * @author Irina.Chernushina on 10/1/2015.
- */
 class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
-  @Throws(Exception::class)
   fun testTopLevel() {
     testImpl("""{"properties": {"prima": {}, "proto": {}, "primus": {}}}""", "{<caret>}", "\"prima\"", "\"primus\"", "\"proto\"")
   }
 
-  @Throws(Exception::class)
   fun testTopLevelVariant() {
     testImpl("""{"properties": {"prima": {}, "proto": {}, "primus": {}}}""", "{\"pri<caret>\"}", "prima", "primus", "proto")
   }
 
-  @Throws(Exception::class)
   fun testBoolean() {
     testImpl("""{"properties": {"prop": {"type": "boolean"}}}""", "{\"prop\": <caret>}", "false", "true")
   }
 
-  @Throws(Exception::class)
   fun testEnum() {
     testImpl("""{"properties": {"prop": {"enum": ["prima", "proto", "primus"]}}}""",
              """{"prop": <caret>}""", "\"prima\"", "\"primus\"", "\"proto\"")
   }
 
-  @Throws(Exception::class)
   fun testTopLevelAnyOfValues() {
     testImpl("""{"properties": {"prop": {"anyOf": [{"enum": ["prima", "proto", "primus"]},""" + "{\"type\": \"boolean\"}]}}}",
              """{"prop": <caret>}""", "\"prima\"", "\"primus\"", "\"proto\"", "false", "true")
   }
 
-  @Throws(Exception::class)
   fun testTopLevelAnyOf() {
     testImpl(
       """{"anyOf": [ {"properties": {"prima": {}, "proto": {}, "primus": {}}},""" + "{\"properties\": {\"abrakadabra\": {}}}]}",
       """{<caret>}""", "\"abrakadabra\"", "\"prima\"", "\"primus\"", "\"proto\"")
   }
 
-  @Throws(Exception::class)
   fun testSimpleHierarchy() {
     testImpl("""{"properties": {"top": {"properties": {"prima": {}, "proto": {}, "primus": {}}}}}""",
              """{"top": {<caret>}}""", "\"prima\"", "\"primus\"", "\"proto\"")
   }
 
-  @Throws(Exception::class)
   fun testObjectsInsideArray() {
     val schema = """{"properties": {"prop": {"type": "array", "items":
       {"type": "object","properties": {"innerType":{}, "innerValue":{}}, "additionalProperties": false}}}}"""
     testImpl(schema, """{"prop": [{<caret>}]}""", "\"innerType\"", "\"innerValue\"")
   }
 
-  @Throws(Exception::class)
   fun testObjectValuesInsideArray() {
     val schema = """{"properties": {"prop": {"type": "array", "items":
       {"type": "object","properties": {"innerType":{"enum": [115,117, "nothing"]}, "innerValue":{}}, "additionalProperties": false}}}}"""
     testImpl(schema, """{"prop": [{"innerType": <caret>}]}""", "\"nothing\"", "115", "117")
   }
 
-  @Throws(Exception::class)
   fun testLowLevelOneOf() {
     val schema = """{"properties": {"prop": {"type": "array", "items":
       {"type": "object","properties": {"innerType":{"oneOf": [{"properties": {"a1": {}, "a2": {}}},
@@ -71,25 +60,21 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     testImpl(schema, """{"prop": [{"innerType": {<caret>}}]}""", "\"a1\"", "\"a2\"", "\"b1\"", "\"b2\"")
   }
 
-  @Throws(Exception::class)
   fun testArrayValuesInsideObject() {
     val schema = """{"properties": {"prop": {"type": "array","items": {"enum": [1,2,3]}}}}"""
     testImpl(schema, """{"prop": [<caret>]}""", "1", "2", "3")
   }
 
-  @Throws(Exception::class)
   fun testAllOfTerminal() {
     val schema = """{"allOf": [{"type": "object", "properties": {"first": {}}}, {"properties": {"second": {"enum": [33,44]}}}]}"""
     testImpl(schema, """{"<caret>"}""", "first", "second")
   }
 
-  @Throws(Exception::class)
   fun testAllOfInTheMiddle() {
     val schema = """{"allOf": [{"type": "object", "properties": {"first": {}}}, {"properties": {"second": {"enum": [33,44]}}}]}"""
     testImpl(schema, """{"second": <caret>}""", "33", "44")
   }
 
-  @Throws(Exception::class)
   fun testValueCompletion() {
     val schema = """{
   "properties": {
@@ -101,7 +86,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     testImpl(schema, """{"top": <caret>}""", "\"me\"", "\"test\"")
   }
 
-  @Throws(Exception::class)
   fun testTopLevelArrayPropNameCompletion() {
     val schema = parcelShopSchema()
     testImpl(schema, "[{<caret>}]", "\"address\"")
@@ -109,7 +93,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     testImpl(schema, """[{"address": {"houseNumber": <caret>}}]""", "1", "2")
   }
 
-  @Throws(Exception::class)
   fun testPatternPropertyCompletion() {
     val schema = """{
   "patternProperties": {
@@ -121,12 +104,10 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     testImpl(schema, """{"Cyan": <caret>}""", "\"em\"", "\"test\"")
   }
 
-  @Throws(Exception::class)
   fun testRootObjectRedefined() {
     testImpl(JsonSchemaHighlightingTest.rootObjectRedefinedSchema(), "{<caret>}", "\"r1\"", "\"r2\"")
   }
 
-  @Throws(Exception::class)
   fun testSimpleNullCompletion() {
     val schema = """{
   "properties": {
@@ -138,7 +119,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     testImpl(schema, """{"null": <caret>}""", "null")
   }
 
-  @Throws(Exception::class)
   fun testNullCompletionInEnum() {
     val schema = """{
   "properties": {
@@ -151,7 +131,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     testImpl(schema, """{"null": <caret>}""", "1", "2", "null")
   }
 
-  @Throws(Exception::class)
   fun testNullCompletionInTypeVariants() {
     val schema = """{
   "properties": {
@@ -163,7 +142,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     testImpl(schema, """{"null": <caret>}""", "false", "null", "true")
   }
 
-  @Throws(Exception::class)
   fun testDescriptionFromDefinitionInCompletion() {
     val schema = """{
   "definitions": {
@@ -184,7 +162,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     Assert.assertEquals("Target description", presentation.typeText)
   }
 
-  @Throws(Exception::class)
   fun testDescriptionFromTitleInCompletion() {
     val schema = """{
   "definitions": {
@@ -206,7 +183,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     Assert.assertEquals("Target title", presentation.typeText)
   }
 
-  @Throws(Exception::class)
   fun testAnyOfInsideAllOfWithInnerProperties() {
     val schema = """
 {
@@ -280,7 +256,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
 }"""
   }
 
-  @Throws(Exception::class)
   private fun testImpl(@Language("JSON") schema: String, text: String,
                        vararg variants: String) {
     testBySchema(schema, text, ".json", *variants)
@@ -320,7 +295,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
       return schema
     }
 
-  @Throws(Exception::class)
   fun testIfThenElseV7EmptyPropName() {
     testImpl(ifThenElseSchema, "{<caret>}", "\"c\"")
     Assert.assertEquals(1, myItems.size.toLong())
@@ -329,7 +303,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     Assert.assertEquals("Target c description", presentation.typeText)
   }
 
-  @Throws(Exception::class)
   fun testIfThenElseV7ThenPropName() {
     testImpl(ifThenElseSchema, """{"a": "a", <caret>}""", "\"b\"")
     Assert.assertEquals(1, myItems.size.toLong())
@@ -338,7 +311,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     Assert.assertEquals("Target b description", presentation.typeText)
   }
 
-  @Throws(Exception::class)
   fun testIfThenElseV7ElsePropName() {
     testImpl(ifThenElseSchema, """{"a": 5, <caret>}""", "\"c\"")
     Assert.assertEquals(1, myItems.size.toLong())
@@ -347,13 +319,11 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
     Assert.assertEquals("Target c description", presentation.typeText)
   }
 
-  @Throws(Exception::class)
   fun testIfThenElseV7ElsePropValue() {
     testImpl(ifThenElseSchema, """{"a": 5, "c": <caret>}""", "false", "true")
-    Assert.assertEquals(2, myItems.size.toLong())
+    assertThat(myItems).hasSize(2)
   }
 
-  @Throws(Exception::class)
   fun testNestedPropsMerging() {
     testImpl("""{
   "allOf": [
@@ -374,6 +344,6 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
   ]
 }""","""{
   "severity": <caret>
-}""", "\"a\"", "\"b\"");
+}""", "\"a\"", "\"b\"")
   }
 }

@@ -31,8 +31,18 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "  }", "Optional&lt;String&gt;",
            "<table>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Optional&lt;String&gt;</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>NotNull</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Optional:</td><td>present Optional</td></tr>" +
+           "</table>");
+  }
+
+  public void testFunctionalType() {
+    doTest("  void test() {\n" +
+           "      Runnable r = <selection>() -> {}</selection>;\n" +
+           "  }", "Runnable", 
+           "<table>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Runnable</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
            "</table>");
   }
 
@@ -48,7 +58,7 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "  }", "Object",
            "<table>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Object</td></tr>" +
-           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>NotNull</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
            "<tr><td align='left' valign='top' style='color:#909090'>Constraints:</td><td>instanceof CharSequence\n" +
            "not instanceof Number, String</td></tr>" +
            "</table>");

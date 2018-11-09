@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * Implementations of this interface are not obliged to be thread-safe.
  *
  * @author Denis Zhdanov
- * @since May 31, 2010 12:26:51 PM
  */
 public interface TextChange {
 

@@ -25,7 +25,7 @@ public class SendFUStatisticsAction extends AnAction {
       return;
     }
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Collecting And Sending _NEW_ Statistics", false) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Collecting And Sending Statistics", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         StatisticsService service = StatisticsUploadAssistant.getApprovedGroupsStatisticsService();

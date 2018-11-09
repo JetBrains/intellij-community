@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -31,6 +32,7 @@ public class IpnbCodeOutputPanel<K extends IpnbOutputCell> extends IpnbPanel<JCo
     addRightClickMenu();
   }
 
+  @Override
   protected JComponent createViewPanel() {
     JTextArea textArea = new JTextArea(myCell.getSourceAsString());
     textArea.setLineWrap(true);
@@ -41,7 +43,7 @@ public class IpnbCodeOutputPanel<K extends IpnbOutputCell> extends IpnbPanel<JCo
     textArea.setBackground(IpnbEditorUtil.getBackground());
     return textArea;
   }
-  
+
   @Override
   public void addRightClickMenu() {
     myViewPanel.addMouseListener(new MouseAdapter() {

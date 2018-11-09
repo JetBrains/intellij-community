@@ -4,11 +4,12 @@ package com.intellij.dvcs.actions
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getColorManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.changes.actions.SetChangesGroupingAction
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 
 class SetRepositoryChangesGroupingAction : SetChangesGroupingAction() {
-  override val groupingKey get() = "repository"
+  override val groupingKey: String get() = REPOSITORY_GROUPING
 
-  override fun update(e: AnActionEvent) = super.update(e).also {
+  override fun update(e: AnActionEvent): Unit = super.update(e).also {
     val colorManager = e.project?.let(::getColorManager)
 
     e.presentation.isEnabledAndVisible = e.presentation.isEnabledAndVisible && colorManager?.isMultipleRoots ?: false

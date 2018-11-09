@@ -9,12 +9,12 @@ Groovy script
     PsiWhiteSpace(' ')
     RegexFindExpression
       Literal
-        PsiElement(Gstring)('"\$abc."')
+        PsiElement(double quoted string)('"\$abc."')
       PsiWhiteSpace(' ')
       PsiElement(=~)('=~')
       PsiWhiteSpace(' ')
       Literal
-        GroovyASTPsiElementImpl(regex literal)
+        GroovyASTPsiElementImpl(SLASHY_LITERAL)
           PsiElement(regex begin)('/')
           PsiElement(regex content)('\$(.*)\.')
           PsiElement(regex end)('/')

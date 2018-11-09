@@ -39,7 +39,7 @@ public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceCo
   }
 
   private static class XIncludeReferenceProvider extends XmlBaseReferenceProvider {
-    public XIncludeReferenceProvider() {
+    XIncludeReferenceProvider() {
       super(true);
     }
 

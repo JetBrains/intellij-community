@@ -40,10 +40,10 @@ public abstract class FavoriteNodeProvider {
   public static final ExtensionPointName<FavoriteNodeProvider> EP_NAME = new ExtensionPointName<>("com.intellij.favoriteNodeProvider");
 
   @Nullable
-  public abstract Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings);
+  public abstract Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, @NotNull ViewSettings viewSettings);
 
   @Nullable
-  public AbstractTreeNode createNode(final Project project, final Object element, final ViewSettings viewSettings) {
+  public AbstractTreeNode createNode(final Project project, final Object element, @NotNull ViewSettings viewSettings) {
     return null;
   }
 
@@ -61,7 +61,6 @@ public abstract class FavoriteNodeProvider {
    * Returns the weight of the specified project view node element to use when sorting the favorites list.
    *
    * @param element the element for which the weight is requested.
-   * @param isSortByType
    * @return the weight, or -1 if {@code element} is not an element supported by this provider.
    */
   public abstract int getElementWeight(final Object element, final boolean isSortByType);
@@ -94,7 +93,6 @@ public abstract class FavoriteNodeProvider {
   /**
    * Returns the persistable URL for the specified element.
    *
-   * @param element
    * @return the URL, or null if the element is not supported by this provider.
    */
   @Nullable @NonNls
@@ -103,7 +101,6 @@ public abstract class FavoriteNodeProvider {
   /**
    * Returns the name of the module containing the specified element.
    *
-   * @param element
    * @return the name of the module, or null if the element is not supported by this provider or the module name is unknown.
    */
   @Nullable

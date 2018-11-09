@@ -1,3 +1,3 @@
 from unittest.mock import patch
 
-patch.object
+patch.object()

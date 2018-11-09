@@ -11,6 +11,7 @@ public class ContainsPredicate extends MatchPredicate {
   public ContainsPredicate(String name, String within) {
   }
 
+  @Override
   public boolean match(PsiElement match, int start, int end, MatchContext context) {
     return false;
   }

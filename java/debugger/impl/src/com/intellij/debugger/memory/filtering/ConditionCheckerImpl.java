@@ -85,7 +85,7 @@ public class ConditionCheckerImpl implements ConditionChecker {
     private final Project myProject;
     private final String myClassName;
 
-    public MyCachedEvaluator(@NotNull Project project, @NotNull String className) {
+    MyCachedEvaluator(@NotNull Project project, @NotNull String className) {
       super();
       myProject = project;
       myClassName = className;

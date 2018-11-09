@@ -10,7 +10,7 @@ class Test {
     final List<String> input = new ArrayList<>();
     final List<String> output = new ArrayList<>();
 
-    doNormalize(input, output, new Function<String,String>() {
+    doNormalize(input, output, new Function<String, String>() {
         public String apply(String s) {
             return normalizer.normalize(s);
         }

@@ -35,14 +35,17 @@ import java.util.Set;
 
 public class XsltIntroduceVariableAction extends BaseIntroduceAction<IntroduceVariableOptions> {
 
+    @Override
     public String getRefactoringName() {
         return "Introduce Variable";
     }
 
+    @Override
     protected String getCommandName() {
         return "Introduce XSLT Variable";
     }
 
+    @Override
     protected boolean extractImpl(XPathExpression expression, Set<XPathExpression> matchingExpressions, List<XmlTag> otherMatches, IntroduceVariableOptions dlg) {
         final XmlAttribute attribute = PsiTreeUtil.getContextOfType(expression, XmlAttribute.class, true);
         assert attribute != null;
@@ -87,6 +90,7 @@ public class XsltIntroduceVariableAction extends BaseIntroduceAction<IntroduceVa
         }
     }
 
+    @Override
     protected IntroduceVariableOptions getSettings(XPathExpression expression, Set<XPathExpression> matchingExpressions) {
         final IntroduceVariableDialog dlg = new IntroduceVariableDialog(expression, matchingExpressions.size() + 1);
         dlg.show();

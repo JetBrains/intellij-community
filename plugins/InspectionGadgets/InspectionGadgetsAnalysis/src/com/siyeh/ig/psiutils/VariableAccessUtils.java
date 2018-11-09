@@ -20,6 +20,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -57,12 +58,12 @@ public class VariableAccessUtils {
   }
 
   public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable, @Nullable PsiElement context,
-                                                         Processor<PsiCall> callProcessor) {
+                                                         Processor<? super PsiCall> callProcessor) {
     return variableIsPassedAsMethodArgument(variable, context, false, callProcessor);
   }
 
   public static boolean variableIsPassedAsMethodArgument(@NotNull PsiVariable variable, @Nullable PsiElement context,
-                                                         boolean builderPattern, Processor<PsiCall> callProcessor) {
+                                                         boolean builderPattern, Processor<? super PsiCall> callProcessor) {
     if (context == null) {
       return false;
     }
@@ -95,13 +96,9 @@ public class VariableAccessUtils {
         final PsiClass aClass = PsiUtil.getTopLevelClass(variable);
         return variableIsAssigned(variable, aClass);
       }
-      return DeclarationSearchUtils.isTooExpensiveToSearch(variable, false) || !ReferencesSearch.search(variable).forEach(reference -> {
-        final PsiElement element = reference.getElement();
-        if (!(element instanceof PsiExpression)) {
-          return true;
-        }
-        final PsiExpression expression = (PsiExpression)element;
-        return !PsiUtil.isAccessedForWriting(expression);
+      return DeclarationSearchUtils.isTooExpensiveToSearch(variable, false) || ReferencesSearch.search(variable).anyMatch(reference -> {
+        final PsiExpression expression = ObjectUtils.tryCast(reference.getElement(), PsiExpression.class);
+        return expression != null && PsiUtil.isAccessedForWriting(expression);
       });
     }
     final PsiElement context =
@@ -397,7 +394,7 @@ public class VariableAccessUtils {
     return visitor.getUsedVariables();
   }
 
-  public static boolean isAnyVariableAssigned(@NotNull Collection<PsiVariable> variables, @Nullable PsiElement context) {
+  public static boolean isAnyVariableAssigned(@NotNull Collection<? extends PsiVariable> variables, @Nullable PsiElement context) {
     if (context == null) {
       return false;
     }

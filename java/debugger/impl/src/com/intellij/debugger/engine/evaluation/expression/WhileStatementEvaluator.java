@@ -32,10 +32,12 @@ public class WhileStatementEvaluator extends LoopEvaluator {
     myConditionEvaluator = DisableGC.create(conditionEvaluator);
   }
 
+  @Override
   public Modifier getModifier() {
     return myConditionEvaluator.getModifier();
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object value;
     while (true) {

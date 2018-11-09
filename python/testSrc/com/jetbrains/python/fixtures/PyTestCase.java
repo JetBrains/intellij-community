@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -28,13 +15,14 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
@@ -47,7 +35,6 @@ import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -89,7 +76,7 @@ import java.util.*;
 @TestDataPath("$CONTENT_ROOT/../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
   public static final String PYTHON_2_MOCK_SDK = "2.7";
-  public static final String PYTHON_3_MOCK_SDK = "3.4";
+  public static final String PYTHON_3_MOCK_SDK = "3.7";
 
   protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
   protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
@@ -165,6 +152,28 @@ public abstract class PyTestCase extends UsefulTestCase {
     return new LightTempDirTestFixtureImpl(true); // "tmp://" dir by default
   }
 
+  protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
+    final Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
+    assertNotNull(sdk);
+    WriteAction.run(() -> {
+      final SdkModificator modificator = sdk.getSdkModificator();
+      assertNotNull(modificator);
+      modificator.addRoot(directory, OrderRootType.CLASSES);
+      modificator.commitChanges();
+    });
+    try {
+      runnable.run();
+    }
+    finally {
+      WriteAction.run(() -> {
+        final SdkModificator modificator = sdk.getSdkModificator();
+        assertNotNull(modificator);
+        modificator.removeRoot(directory, OrderRootType.CLASSES);
+        modificator.commitChanges();
+      });
+    }
+  }
+
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
   }
@@ -175,7 +184,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       setLanguageLevel(null);
       myFixture.tearDown();
       myFixture = null;
-      Extensions.findExtension(FilePropertyPusher.EP_NAME, PythonLanguageLevelPusher.class).flushLanguageLevelCache();
+      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
     }
     finally {
       super.tearDown();
@@ -188,11 +197,13 @@ public abstract class PyTestCase extends UsefulTestCase {
     return ourPyDescriptor;
   }
 
+  @Nullable
   protected PsiReference findReferenceBySignature(final String signature) {
     int pos = findPosBySignature(signature);
     return findReferenceAt(pos);
   }
 
+  @Nullable
   protected PsiReference findReferenceAt(int pos) {
     return myFixture.getFile().findReferenceAt(pos);
   }
@@ -433,7 +444,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @NotNull
   protected CodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(myFixture.getProject());
+    return CodeStyle.getSettings(myFixture.getProject());
   }
 
   @NotNull
@@ -494,6 +505,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     PsiTestUtil.addExcludedRoot(module, dir);
     Disposer.register(myFixture.getProjectDisposable(), () -> PsiTestUtil.removeExcludedRoot(module, dir));
   }
-  
+
 }
 

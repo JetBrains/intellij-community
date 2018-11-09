@@ -15,16 +15,16 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.SerializationUtils;
@@ -70,31 +70,15 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends BaseInsp
   @NotNull
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
+    PsiField field = aClass.findFieldByName(HardcodedMethodConstants.SERIAL_VERSION_UID, false);
+    if (field == null) return InspectionGadgetsFix.EMPTY_ARRAY;
+    boolean onTheFly = (boolean)infos[1];
+    DelegatingFix removeFieldFix = new DelegatingFix((LocalQuickFix)QuickFixFactory.getInstance().createSafeDeleteFix(field));
     if (aClass.isAnnotationType() || aClass.isInterface() || aClass instanceof PsiAnonymousClass) {
-      return new InspectionGadgetsFix[]{new RemoveSerialVersionUIDFix()};
+      return onTheFly ? new InspectionGadgetsFix[]{removeFieldFix} : InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    return new InspectionGadgetsFix[]{DelegatingFixFactory.createMakeSerializableFix(aClass), new RemoveSerialVersionUIDFix()};
-  }
-
-  private static class RemoveSerialVersionUIDFix extends InspectionGadgetsFix {
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "non.serializable.with.serialversionuid.remove.quickfix");
-    }
-
-    @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement nameElement = descriptor.getPsiElement();
-      final PsiClass aClass = (PsiClass)nameElement.getParent();
-      final PsiField field = aClass.findFieldByName(HardcodedMethodConstants.SERIAL_VERSION_UID, false);
-      if (field == null) {
-        return;
-      }
-      field.delete();
-    }
+    return onTheFly ? new InspectionGadgetsFix[]{DelegatingFixFactory.createMakeSerializableFix(aClass), removeFieldFix} 
+                    : new InspectionGadgetsFix[]{DelegatingFixFactory.createMakeSerializableFix(aClass)};
   }
 
   @Override
@@ -113,7 +97,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection extends BaseInsp
       if (SerializationUtils.isSerializable(aClass)) {
         return;
       }
-      registerClassError(aClass, aClass);
+      registerClassError(aClass, aClass, isOnTheFly());
     }
   }
 }

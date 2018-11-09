@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiIntersectionType
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
@@ -12,6 +13,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
 import static com.intellij.psi.CommonClassNames.*
 
@@ -87,6 +91,10 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   void testClosure2() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("closure2/A.groovy").element
     assertTrue(ref.type.equalsToText("int"))
+  }
+
+  void 'test binding from inside closure'() {
+    doTest "list = ['a', 'b']; list.each { <caret>it }", JAVA_LANG_STRING
   }
 
   void testGrvy1209() {
@@ -252,7 +260,7 @@ map['i'] += 2
   }
 
   void testAllTypeParamsAreSubstituted() {
-    assertTypeEquals('java.util.Map', 'a.groovy')
+    assertTypeEquals('java.util.Map<java.lang.Object,java.lang.Object>', 'a.groovy')
   }
 
   void testDiamond() {
@@ -466,6 +474,15 @@ def bar(oo) {
 ''', null)
   }
 
+  void testNegatedInstanceOfInferring1() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String || oo != null
+  o<caret>o
+}
+''', null)
+  }
+
   void testInstanceOfInferring2() {
     doTest('''\
 def bar(oo) {
@@ -473,6 +490,15 @@ def bar(oo) {
   oo
 }
 ''', null)
+  }
+
+  void testNegatedInstanceOfInferring2() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String || o<caret>o != null
+  oo
+}
+''', JAVA_LANG_STRING)
   }
 
   void testInstanceOfInferring3() {
@@ -484,10 +510,28 @@ def bar(oo) {
 ''', String.canonicalName)
   }
 
+  void testNegatedInstanceOfInferring3() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String && o<caret>o != null
+  oo
+}
+''', null)
+  }
+
   void testInstanceOfInferring4() {
     doTest('''\
 def bar(oo) {
   boolean b = oo instanceof String && oo != null
+  o<caret>o
+}
+''', null)
+  }
+
+  void testNegatedInstanceOfInferring4() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String && oo != null
   o<caret>o
 }
 ''', null)
@@ -507,10 +551,35 @@ def foo(def oo) {
 ''', null)
   }
 
+  void testNegatedInstanceOfInferring5() {
+    doTest('''\
+def foo(def oo) {
+  if (oo !instanceof String || oo !instanceof CharSequence) {
+    oo
+  }
+  else {
+    o<caret>o
+  }
+
+}
+''', JAVA_LANG_STRING)
+  }
+
   void testInstanceOfInferring6() {
     doTest('''\
 def foo(bar) {
   if (!(bar instanceof String) && bar instanceof Runnable) {
+    ba<caret>r
+  }
+}''', 'java.lang.Runnable')
+  }
+
+  void testNegatedInstanceOfInferring6() {
+    doTest('''\
+def foo(bar) {
+  if (!(bar !instanceof String) || bar !instanceof Runnable) {
+    
+  } else {
     ba<caret>r
   }
 }''', 'java.lang.Runnable')
@@ -521,6 +590,14 @@ def foo(bar) {
 def foo(ii) {
   if (ii in String)
     print i<caret>i
+}''', 'java.lang.String'
+  }
+
+  void testNegatedInString() {
+    doTest '''\
+def foo(ii) {
+  if (ii !in String) {}
+  else print i<caret>i
 }''', 'java.lang.String'
   }
 
@@ -715,6 +792,16 @@ def foo(List list) {
 ''', 'java.util.List')
   }
 
+  void 'test substitutor is not inferred while inferring initializer type'() {
+    def file = (GroovyFile)fixture.configureByText('_.groovy', '''\
+class A { Closure foo = { 42 } }
+''')
+    GrClosureType.forbidClosureInference {
+      def getter = file.typeDefinitions[0].findMethodsByName("getFoo", false)[0]
+      def type = (PsiClassType)PsiUtil.getSmartReturnType(getter)
+      assert type.resolve().qualifiedName == GroovyCommonClassNames.GROOVY_LANG_CLOSURE
+    }
+  }
 
   void testClassExpressions() {
     doExprTest 'String[]', 'java.lang.Class<java.lang.String[]>'
@@ -751,18 +838,6 @@ def foo(List list) {
     doCSExprTest '[].class', "java.lang.Class<java.util.List>"
     doCSExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
     doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
-  }
-
-  void testMapClassReference() {
-    doExprTest '[:].class', null
-    doExprTest '[class : 1].class', 'java.lang.Integer'
-    doExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
-    doExprTest 'new HashMap().class', null
-
-    doCSExprTest '[:].class', null
-    doCSExprTest '[class : 1].class', 'java.lang.Integer'
-    doCSExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
-    doCSExprTest 'new HashMap().class', null
   }
 
   void testUnknownClass() {
@@ -867,5 +942,11 @@ class W {
   }
 }
 ''', 'W'
+  }
+
+  void 'test elvis assignment'() {
+    doExprTest 'def a; a ?= "hello"', 'java.lang.String'
+    doExprTest 'def a = ""; a ?= null', 'java.lang.String'
+    doExprTest 'def a = "s"; a ?= 1', '[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]'
   }
 }

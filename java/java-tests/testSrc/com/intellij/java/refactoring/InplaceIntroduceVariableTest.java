@@ -27,7 +27,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -66,20 +65,14 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testConflictingInnerClassName() {
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    final boolean oldOption = settings.INSERT_INNER_CLASS_IMPORTS;
-    try {
-      settings.INSERT_INNER_CLASS_IMPORTS = true;
-      doTest(new Pass<AbstractInplaceIntroducer>() {
-         @Override
-         public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
-           type("constants");
-         }
-       });
-    }
-    finally {
-      settings.INSERT_INNER_CLASS_IMPORTS = oldOption;
-    }
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.INSERT_INNER_CLASS_IMPORTS = true;
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+       @Override
+       public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+         type("constants");
+       }
+     });
   }
 
   public void testInsideInjectedString() {

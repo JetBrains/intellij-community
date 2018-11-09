@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.tasks.MavenKeymapExtension;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
@@ -35,7 +36,7 @@ import java.util.List;
 
 public class AssignShortcutAction extends MavenAction {
   @Override
-  protected boolean isAvailable(AnActionEvent e) {
+  protected boolean isAvailable(@NotNull AnActionEvent e) {
     final DataContext context = e.getDataContext();
     return super.isAvailable(e) && !isIgnoredProject(context) && getGoalActionId(context) != null;
   }
@@ -47,7 +48,9 @@ public class AssignShortcutAction extends MavenAction {
     return projectsManager != null && projectsManager.isIgnored(project);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    MavenActionsUsagesCollector.trigger(e.getProject(), this, e);
     final DataContext context = e.getDataContext();
     String actionId = getGoalActionId(context);
     if (actionId != null) {

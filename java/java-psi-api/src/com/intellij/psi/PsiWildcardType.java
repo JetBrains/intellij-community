@@ -79,6 +79,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
   /**
    * @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18)
    */
+  @Deprecated
   public PsiWildcardType annotate(@NotNull final PsiAnnotation[] annotations) {
     return annotations.length == 0 ? this : new PsiWildcardType(this, TypeAnnotationProvider.Static.create(annotations));
   }
@@ -155,6 +156,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     return myManager;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof PsiWildcardType)) return false;
 
@@ -168,6 +170,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     return myIsExtending == that.myIsExtending && Comparing.equal(myBound, that.myBound);
   }
 
+  @Override
   public int hashCode() {
     return (myIsExtending ? 1 : 0) + (myBound != null ? myBound.hashCode() : 0);
   }

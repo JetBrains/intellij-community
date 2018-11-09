@@ -15,15 +15,8 @@
  */
 package com.intellij.execution;
 
-import com.intellij.execution.configurations.*;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.TextConsoleBuilder;
-import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
+import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.util.ExecutionErrorDialog;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -31,7 +24,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -42,7 +34,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -58,23 +49,7 @@ public class JavaExecutionUtil {
   private JavaExecutionUtil() {
   }
 
-  public static boolean executeRun(@NotNull final Project project, String contentName, Icon icon,
-                      final DataContext dataContext) throws ExecutionException {
-    return executeRun(project, contentName, icon, dataContext, null);
-  }
-
-  public static boolean executeRun(@NotNull final Project project, String contentName, Icon icon, DataContext dataContext, Filter[] filters) throws ExecutionException {
-    final JavaParameters cmdLine = JavaParameters.JAVA_PARAMETERS.getData(dataContext);
-    final DefaultRunProfile profile = new DefaultRunProfile(project, cmdLine, contentName, icon, filters);
-    ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.createOrNull(project, DefaultRunExecutor.getRunExecutorInstance(), profile);
-    if (builder != null) {
-      builder.buildAndExecute();
-      return true;
-    }
-    return false;
-  }
-
-  public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<PsiClass> isTestMethod) {
+  public static Module findModule(final Module contextModule, final Set<String> patterns, final Project project, Condition<? super PsiClass> isTestMethod) {
     final Set<Module> modules = new HashSet<>();
     for (String className : patterns) {
       final PsiClass psiClass = findMainClass(project,
@@ -97,50 +72,9 @@ public class JavaExecutionUtil {
       if (moduleDependencies.containsAll(modules)) {
         return contextModule;
       }
+      return null;
     }
-    return null;
-  }
-
-  private static final class DefaultRunProfile implements RunProfile {
-    private final JavaParameters myParameters;
-    private final String myContentName;
-    private final Filter[] myFilters;
-    private final Project myProject;
-    private final Icon myIcon;
-
-    public DefaultRunProfile(final Project project, final JavaParameters parameters, final String contentName, final Icon icon, Filter[] filters) {
-      myProject = project;
-      myParameters = parameters;
-      myContentName = contentName;
-      myFilters = filters;
-      myIcon = icon;
-    }
-
-    @Override
-    public Icon getIcon() {
-      return myIcon;
-    }
-
-    @Override
-    public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
-      final JavaCommandLineState state = new JavaCommandLineState(env) {
-        @Override
-        protected JavaParameters createJavaParameters() {
-          return myParameters;
-        }
-      };
-      final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(myProject);
-      if (myFilters != null) {
-        builder.filters(myFilters);
-      }
-      state.setConsoleBuilder(builder);
-      return state;
-    }
-
-    @Override
-    public String getName() {
-      return myContentName;
-    }
+    return contextModule;
   }
 
   @Nullable
@@ -168,7 +102,7 @@ public class JavaExecutionUtil {
   }
 
   public static Module findModule(@NotNull final PsiClass psiClass) {
-    return ModuleUtilCore.findModuleForPsiElement(psiClass);
+    return ModuleUtilCore.findModuleForPsiElement(psiClass.getContainingFile());
   }
 
   @Nullable
@@ -244,39 +178,44 @@ public class JavaExecutionUtil {
       agentContainingDir = new File(agentPath).getParent();
     }
     if (agentContainingDir.contains(" ")) {
-      File dir = new File(PathManager.getSystemPath(), copyDirName);
-      if (dir.getAbsolutePath().contains(" ")) {
+      String res = tryCopy(agentContainingDir, new File(PathManager.getSystemPath(), copyDirName), fileFilter);
+      if (res == null) {
         try {
-          dir = FileUtil.createTempDirectory(copyDirName, "jars");
-          if (dir.getAbsolutePath().contains(" ")) {
+          res = tryCopy(agentContainingDir, FileUtil.createTempDirectory(copyDirName, "jars"), fileFilter);
+          if (res == null) {
             String message = "agent not used since the agent path contains spaces: " + agentContainingDir;
             if (agentPathPropertyKey != null) {
               message += "\nOne can move the agent libraries to a directory with no spaces in path and specify its path in idea.properties as " +
               agentPathPropertyKey + "=<path>";
             }
             LOG.info(message);
-            return null;
           }
         }
         catch (IOException e) {
           LOG.info(e);
-          return null;
         }
       }
-
-      try {
-        LOG.info("Agent jars were copied to " + dir.getPath());
-        if (fileFilter == null) {
-          fileFilter = pathname -> FileUtilRt.extensionEquals(pathname.getPath(), "jar");
-        }
-        FileUtil.copyDir(new File(agentContainingDir), dir, fileFilter);
-        return dir.getPath();
-      }
-      catch (IOException e) {
-        LOG.info(e);
-        return null;
-      }
+      return res;
     }
     return agentContainingDir;
+  }
+
+  @Nullable
+  private static String tryCopy(@NotNull String agentDir,
+                                @NotNull File targetDir,
+                                @Nullable FileFilter fileFilter) {
+    if (targetDir.getAbsolutePath().contains(" ")) return null;
+    try {
+      LOG.info("Agent jars were copied to " + targetDir.getPath());
+      if (fileFilter == null) {
+        fileFilter = pathname -> FileUtilRt.extensionEquals(pathname.getPath(), "jar");
+      }
+      FileUtil.copyDir(new File(agentDir), targetDir, fileFilter);
+      return targetDir.getPath();
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      return null;
+    }
   }
 }

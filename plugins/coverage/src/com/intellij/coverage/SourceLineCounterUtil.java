@@ -15,7 +15,7 @@ public class SourceLineCounterUtil {
   public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo, 
                                                    final PackageAnnotator.PackageCoverageInfo packageCoverageInfo, byte[] content, 
                                                    final boolean excludeLines,
-                                                   final Condition<String> includeDescriptionCondition) {
+                                                   final Condition<? super String> includeDescriptionCondition) {
     if (content == null) return false;
     ClassReader reader = new ClassReader(content, 0, content.length);
 
@@ -38,10 +38,14 @@ public class SourceLineCounterUtil {
     if (!counter.isInterface()) {
       packageCoverageInfo.totalClassCount++;
     }
+
+    packageCoverageInfo.totalBranchCount += counter.getTotalBranches();
+    classCoverageInfo.totalBranchCount += counter.getTotalBranches();
+
     return !counter.isInterface();
   }
 
-  public static void collectSrcLinesForUntouchedFiles(final List<Integer> uncoveredLines,
+  public static void collectSrcLinesForUntouchedFiles(final List<? super Integer> uncoveredLines,
                                                       byte[] content, 
                                                       final boolean excludeLines, 
                                                       final Project project) {

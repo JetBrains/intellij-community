@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ChangeTemplateDataLanguageAction extends AnAction {
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     e.getPresentation().setVisible(false);
 
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
@@ -57,7 +57,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 

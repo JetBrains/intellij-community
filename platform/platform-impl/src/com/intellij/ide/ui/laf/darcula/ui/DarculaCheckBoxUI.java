@@ -3,7 +3,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.*;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -52,7 +51,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
     Font f = c.getFont();
     g.setFont(f);
-    FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
+    FontMetrics fm = UIUtilities.getFontMetrics(c, g, f);
 
     String text = SwingUtilities.layoutCompoundLabel(
       c, fm, b.getText(), getDefaultIcon(),
@@ -71,12 +70,15 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   }
 
   protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
+    if (!(b.getBorder() instanceof DarculaCheckBoxBorder)) {
+      JBInsets.removeFrom(viewRect, b.getInsets());
+    }
     return viewRect;
   }
 
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-    Icon icon = IconCache.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
+    Icon icon = LafIconLookup.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 
@@ -89,7 +91,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       } else {
         g.setColor(b.isEnabled() ? b.getForeground() : getDisabledTextColor());
         final int mnemonicIndex = SystemInfo.isMac && !UIManager.getBoolean("Button.showMnemonics") ? -1 : b.getDisplayedMnemonicIndex();
-        SwingUtilities2.drawStringUnderlineCharAt(c, g, text,
+        UIUtilities.drawStringUnderlineCharAt(c, g, text,
                                                   mnemonicIndex,
                                                   textRect.x,
                                                   textRect.y + fm.getAscent());

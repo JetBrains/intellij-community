@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
@@ -14,7 +14,6 @@ import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -42,7 +41,6 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
@@ -133,12 +131,7 @@ public class XmlUtil {
   @NonNls public static final String HTML4_LOOSE_URI = "http://www.w3.org/TR/html4/loose.dtd";
   @NonNls public static final String WSDL_SCHEMA_URI = "http://schemas.xmlsoap.org/wsdl/";
   public static final String XHTML4_SCHEMA_LOCATION;
-  public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = new ThreadLocal<Boolean>() {
-    @Override
-    protected Boolean initialValue() {
-      return Boolean.FALSE;
-    }
-  };
+  public final static ThreadLocal<Boolean> BUILDING_DOM_STUBS = ThreadLocal.withInitial(() -> Boolean.FALSE);
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.XmlUtil");
   @NonNls private static final String JSTL_FORMAT_URI3 = "http://java.sun.com/jstl/fmt_rt";
   @NonNls public static final String[] JSTL_FORMAT_URIS = {JSTL_FORMAT_URI, JSTL_FORMAT_URI2, JSTL_FORMAT_URI3};
@@ -187,32 +180,6 @@ public class XmlUtil {
     }
 
     return null;
-  }
-
-  public static String[] findNamespacesByURI(XmlFile file, String uri) {
-    if (file == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final XmlDocument document = file.getDocument();
-    if (document == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    final XmlTag tag = document.getRootTag();
-    if (tag == null) return ArrayUtil.EMPTY_STRING_ARRAY;
-    XmlAttribute[] attributes = tag.getAttributes();
-
-
-    List<String> result = new ArrayList<>();
-
-    for (XmlAttribute attribute : attributes) {
-      if (attribute.getName().startsWith("xmlns:") && attribute.getValue().equals(uri)) {
-        result.add(attribute.getName().substring("xmlns:".length()));
-      }
-      if ("xmlns".equals(attribute.getName()) && attribute.getValue().equals(uri)) result.add("");
-    }
-
-    return ArrayUtil.toStringArray(result);
-  }
-
-  @Nullable
-  public static String getXsiNamespace(XmlFile file) {
-    return findNamespacePrefixByURI(file, XML_SCHEMA_INSTANCE_URI);
   }
 
   @Nullable
@@ -331,7 +298,11 @@ public class XmlUtil {
     try {
       if (text.charAt(1) != '#') {
         text = text.substring(1, text.length() - 1);
-        return XmlTagUtil.getCharacterByEntityName(text);
+        char c = XmlTagUtil.getCharacterByEntityName(text);
+        if (c == 0) {
+          LOG.error("Unknown entity: " + text);
+        }
+        return c == 0 ? ' ' : c;
       }
       text = text.substring(2, text.length() - 1);
     }
@@ -350,10 +321,6 @@ public class XmlUtil {
       return (char)code;
     }
     catch (NumberFormatException e) {
-      return 0;
-    }
-    catch (NullPointerException e) {
-      LOG.error("Cannot parse ref: '" + text + "'", e);
       return 0;
     }
   }
@@ -408,7 +375,7 @@ public class XmlUtil {
 
   public static <T extends PsiElement> void doDuplicationCheckForElements(final T[] elements,
                                                                           final Map<String, T> presentNames,
-                                                                          DuplicationInfoProvider<T> provider,
+                                                                          DuplicationInfoProvider<? super T> provider,
                                                                           final Validator.ValidationHost host) {
     for (T t : elements) {
       final String name = provider.getName(t);
@@ -432,20 +399,6 @@ public class XmlUtil {
         presentNames.put(nameKey, t);
       }
     }
-  }
-
-  public static String getEntityValue(final XmlEntityRef entityRef) {
-    final XmlEntityDecl decl = entityRef.resolve(entityRef.getContainingFile());
-    if (decl != null) {
-      final XmlAttributeValue valueElement = decl.getValueElement();
-      if (valueElement != null) {
-        final String value = valueElement.getValue();
-        if (value != null) {
-          return value;
-        }
-      }
-    }
-    return entityRef.getText();
   }
 
   public static boolean isAntFile(final PsiFile file) {
@@ -495,40 +448,10 @@ public class XmlUtil {
     return null;
   }
 
-  @Nullable
+  @Deprecated()
+  @NotNull
   public static String getCommentText(XmlComment comment) {
-    final PsiElement firstChild = comment.getFirstChild();
-    if (firstChild != null) {
-      final PsiElement nextSibling = firstChild.getNextSibling();
-      if (nextSibling instanceof XmlToken) {
-        final XmlToken token = (XmlToken)nextSibling;
-        if (token.getTokenType() == XmlTokenType.XML_COMMENT_CHARACTERS) {
-          return token.getText();
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiElement findNamespaceDeclaration(XmlElement xmlElement, String nsName) {
-    while (!(xmlElement instanceof XmlTag) && xmlElement != null) {
-      final PsiElement parent = xmlElement.getParent();
-      if (!(parent instanceof XmlElement)) return null;
-      xmlElement = (XmlElement)parent;
-    }
-    if (xmlElement != null) {
-      XmlTag tag = (XmlTag)xmlElement;
-      while (tag != null) {
-        for (XmlAttribute attribute : tag.getAttributes()) {
-          if (attribute.isNamespaceDeclaration() && attribute.getLocalName().equals(nsName)) {
-            return attribute;
-          }
-        }
-        tag = tag.getParentTag();
-      }
-    }
-    return null;
+    return comment.getCommentText();
   }
 
   public static void reformatTagStart(XmlTag tag) {
@@ -566,6 +489,9 @@ public class XmlUtil {
     final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(compositeElement);
     if (emptyTagEnd == null) return;
 
+    if (XmlTokenType.WHITESPACES.contains(emptyTagEnd.getTreePrev().getElementType())) {
+      compositeElement.removeChild(emptyTagEnd.getTreePrev());
+    }
     compositeElement.removeChild(emptyTagEnd);
     PsiElement[] children = newTag.getChildren();
 
@@ -589,15 +515,6 @@ public class XmlUtil {
 
   public static boolean isStubBuilding() {
     return BUILDING_DOM_STUBS.get();
-  }
-
-  /**
-   * add child to the parent according to DTD/Schema element ordering
-   *
-   * @return newly added child
-   */
-  public static XmlTag addChildTag(XmlTag parent, XmlTag child) throws IncorrectOperationException {
-    return addChildTag(parent, child, -1);
   }
 
   public static XmlTag addChildTag(XmlTag parent, XmlTag child, int index) throws IncorrectOperationException {
@@ -632,36 +549,6 @@ public class XmlUtil {
     return (XmlTag)parent.add(child);
   }
 
-  /**
-   * @see XmlTag#getAttributeValue(String)
-   */
-  @Nullable
-  @Deprecated
-  public static String getAttributeValue(XmlTag tag, String name) {
-    for (XmlAttribute attribute : tag.getAttributes()) {
-      if (name.equals(attribute.getName())) return attribute.getValue();
-    }
-    return null;
-  }
-
-  // Read the function name and parameter names to find out what this function does... :-)
-  @Nullable
-  public static XmlTag find(String subTag, String withValue, String forTag, XmlTag insideRoot) {
-    final XmlTag[] forTags = insideRoot.findSubTags(forTag);
-
-    for (XmlTag tag : forTags) {
-      final XmlTag[] allTags = tag.findSubTags(subTag);
-
-      for (XmlTag curTag : allTags) {
-        if (curTag.getName().equals(subTag) && curTag.getValue().getTrimmedText().equalsIgnoreCase(withValue)) {
-          return tag;
-        }
-      }
-    }
-
-    return null;
-  }
-
   @Nullable
   @NonNls
   public static String[][] getDefaultNamespaces(final XmlDocument document) {
@@ -670,7 +557,7 @@ public class XmlUtil {
     final XmlTag tag = document.getRootTag();
     if (tag == null) return null;
 
-    @NotNull final XmlFileNSInfoProvider[] nsProviders = Extensions.getExtensions(XmlFileNSInfoProvider.EP_NAME);
+    @NotNull final List<XmlFileNSInfoProvider> nsProviders = XmlFileNSInfoProvider.EP_NAME.getExtensionList();
     if (file != null) {
 
       NextProvider:
@@ -904,7 +791,7 @@ public class XmlUtil {
     return elementDescriptor;
   }
 
-  public static boolean collectEnumerationValues(final XmlTag element, final HashSet<String> variants) {
+  public static boolean collectEnumerationValues(final XmlTag element, final HashSet<? super String> variants) {
     return processEnumerationValues(element, xmlTag -> {
       variants.add(xmlTag.getAttributeValue(VALUE_ATTR_NAME));
       return true;
@@ -914,7 +801,7 @@ public class XmlUtil {
   /**
    * @return true if enumeration is exhaustive
    */
-  public static boolean processEnumerationValues(final XmlTag element, final Processor<XmlTag> tagProcessor) {
+  public static boolean processEnumerationValues(final XmlTag element, final Processor<? super XmlTag> tagProcessor) {
     boolean exhaustiveEnum = true;
 
     for (final XmlTag tag : element.getSubTags()) {
@@ -931,6 +818,21 @@ public class XmlUtil {
       else if (localName.equals("union")) {
         exhaustiveEnum = false;
         processEnumerationValues(tag, tagProcessor);
+        XmlAttribute attribute = tag.getAttribute("memberTypes");
+        if (attribute != null && attribute.getValueElement() != null) {
+          for (PsiReference reference : attribute.getValueElement().getReferences()) {
+            PsiElement resolve = reference.resolve();
+            if (resolve instanceof XmlTag) {
+              processEnumerationValues((XmlTag)resolve, tagProcessor);
+            }
+          }
+        }
+      }
+      else if (localName.equals("extension")) {
+        XmlTag base = XmlSchemaTagsProcessor.resolveTagReference(tag.getAttribute("base"));
+        if (base != null) {
+          return processEnumerationValues(base, tagProcessor);
+        }
       }
       else if (!doNotVisitTags.contains(localName)) {
         // don't go into annotation
@@ -1160,8 +1062,8 @@ public class XmlUtil {
     return buffer.toString();
   }
 
-  public static String generateElementDTD(String name, List<String> tags, List<MyAttributeInfo> attributes) {
-    if (name == null || "".equals(name)) return "";
+  public static String generateElementDTD(String name, List<String> tags, List<? extends MyAttributeInfo> attributes) {
+    if (name == null || name.isEmpty()) return "";
     if (name.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) return "";
 
     @NonNls final StringBuilder buffer = new StringBuilder();
@@ -1197,11 +1099,6 @@ public class XmlUtil {
   private static String generateAttributeDTD(MyAttributeInfo info) {
     if (info.myName.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) return "";
     return info.myName + " " + "CDATA" + (info.myRequired ? " #REQUIRED" : " #IMPLIED");
-  }
-
-  @Nullable
-  public static String trimLeadingSpacesInMultilineTagValue(@NonNls String tagValue) {
-    return tagValue == null ? null : tagValue.replaceAll("\n\\s*", "\n");
   }
 
   public static String findNamespaceByPrefix(final String prefix, XmlTag contextTag) {
@@ -1241,82 +1138,6 @@ public class XmlUtil {
       }
     }
     return (XmlFile)element;
-  }
-
-  @Nullable
-  public static String getSubTagValue(XmlTag tag, final String subTagName) {
-    final XmlTag subTag = tag.findFirstSubTag(subTagName);
-    if (subTag != null) {
-      return subTag.getValue().getTrimmedText();
-    }
-    return null;
-  }
-
-  public static int getStartOffsetInFile(XmlTag xmlTag) {
-    int off = 0;
-    while (true) {
-      off += xmlTag.getStartOffsetInParent();
-      final PsiElement parent = xmlTag.getParent();
-      if (!(parent instanceof XmlTag)) break;
-      xmlTag = (XmlTag)parent;
-    }
-    return off;
-  }
-
-  public static XmlElement setNewValue(XmlElement tag, String value) throws IncorrectOperationException {
-    if (tag instanceof XmlTag) {
-      ((XmlTag)tag).getValue().setText(value);
-      return tag;
-    }
-    else if (tag instanceof XmlAttribute) {
-      XmlAttribute attr = (XmlAttribute)tag;
-      attr.setValue(value);
-      return attr;
-    }
-    else {
-      throw new IncorrectOperationException();
-    }
-  }
-
-  public static String decode(@NonNls String text) {
-    if (text.isEmpty()) return text;
-    if (text.charAt(0) != '&' || text.length() < 3) {
-      if (text.indexOf('<') < 0 && text.indexOf('>') < 0) return text;
-      return text.replaceAll("<!\\[CDATA\\[", "").replaceAll("\\]\\]>", "");
-    }
-
-    if (text.equals("&lt;")) {
-      return "<";
-    }
-    if (text.equals("&gt;")) {
-      return ">";
-    }
-    if (text.equals("&nbsp;")) {
-      return "\u00a0";
-    }
-    if (text.equals("&amp;")) {
-      return "&";
-    }
-    if (text.equals("&apos;")) {
-      return "'";
-    }
-    if (text.equals("&quot;")) {
-      return "\"";
-    }
-    if (text.startsWith("&quot;") && text.endsWith("&quot;")) {
-      return "\"" + text.substring(6, text.length() - 6) + "\"";
-    }
-    if (text.startsWith("&#")) {
-      text = text.substring(3, text.length() - 1);
-      try {
-        return String.valueOf((char)Integer.parseInt(text));
-      }
-      catch (NumberFormatException e) {
-        // ignore
-      }
-    }
-
-    return text;
   }
 
   public static String unescape(String text) {
@@ -1413,6 +1234,26 @@ public class XmlUtil {
     return descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor);
   }
 
+  @Nullable
+  public static XmlComment findPreviousComment(final PsiElement element) {
+    PsiElement curElement = element;
+
+    while(curElement!=null && !(curElement instanceof XmlComment)) {
+      curElement = curElement.getPrevSibling();
+      if (curElement instanceof XmlText && StringUtil.isEmptyOrSpaces(curElement.getText())) {
+        continue;
+      }
+      if (!(curElement instanceof PsiWhiteSpace) &&
+          !(curElement instanceof XmlProlog) &&
+          !(curElement instanceof XmlComment)
+         ) {
+        curElement = null; // finding comment fails, we found another similar declaration
+        break;
+      }
+    }
+    return (XmlComment)curElement;
+  }
+
   public interface DuplicationInfoProvider<T extends PsiElement> {
     @Nullable
     String getName(@NotNull T t);
@@ -1426,7 +1267,7 @@ public class XmlUtil {
 
   private static class MyAttributeInfo implements Comparable {
     boolean myRequired = true;
-    String myName = null;
+    String myName;
 
     MyAttributeInfo(String name) {
       myName = name;

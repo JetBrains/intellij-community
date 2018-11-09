@@ -6,24 +6,33 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.messages.MessageDialog;
+import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.BrowserHyperlinkListener;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.MessageException;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacMessages;
 import com.intellij.util.Function;
 import com.intellij.util.PairFunction;
 import com.intellij.util.execution.ParametersListUtil;
+import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.basic.BasicHTML;
-import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.List;
 
 public class Messages {
@@ -40,7 +49,6 @@ public class Messages {
   private static TestDialog ourTestImplementation = TestDialog.DEFAULT;
   private static TestInputDialog ourTestInputImplementation = TestInputDialog.DEFAULT;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Messages");
-
 
   @TestOnly
   public static TestDialog setTestDialog(TestDialog newValue) {
@@ -62,6 +70,14 @@ public class Messages {
     TestInputDialog oldValue = ourTestInputImplementation;
     ourTestInputImplementation = newValue;
     return oldValue;
+  }
+
+  public static TestDialog getTestImplementation() {
+    return ourTestImplementation;
+  }
+
+  public static TestInputDialog getTestInputImplementation() {
+    return ourTestInputImplementation;
   }
 
   @NotNull
@@ -153,10 +169,9 @@ public class Messages {
     return showDialog(project, message, title, options, defaultOptionIndex, icon, null);
   }
 
-  static boolean isApplicationInUnitTestOrHeadless() {
+  public static boolean isApplicationInUnitTestOrHeadless() {
     final Application application = ApplicationManager.getApplication();
-    return application != null && !application.isOnAir() &&
-           (application.isUnitTestMode() || application.isHeadlessEnvironment());
+    return application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment());
   }
 
   @NotNull
@@ -190,11 +205,8 @@ public class Messages {
                                int defaultOptionIndex,
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    return MessagesService.SERVICE.getInstance()
-      .showMessageDialog(project, message, title, options, defaultOptionIndex, icon, doNotAskOption);
+    return MessagesService.getInstance()
+      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, false);
   }
 
   /**
@@ -207,16 +219,16 @@ public class Messages {
                                           int defaultOptionIndex,
                                           @Nullable Icon icon,
                                           @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
-    return MessagesService.SERVICE.getInstance()
-      .showIdeaMessageDialog(project, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption);
+    return MessagesService.getInstance()
+      .showMessageDialog(project, null, message, title, options, defaultOptionIndex, -1, icon, doNotAskOption, true);
   }
 
   public static boolean canShowMacSheetPanel() {
-    return MessagesService.SERVICE.getInstance().canShowMacSheetPanel();
+    return SystemInfo.isMac && ApplicationManager.getApplication() != null && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
   }
 
   public static boolean isMacSheetEmulation() {
-    return MessagesService.SERVICE.getInstance().isMacSheetEmulation();
+    return SystemInfo.isMac && Registry.is("ide.mac.message.dialogs.as.sheets") && Registry.is("ide.mac.message.sheets.java.emulation");
   }
 
   /**
@@ -230,11 +242,8 @@ public class Messages {
                                int defaultOptionIndex,
                                int focusedOptionIndex,
                                Icon icon) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    return MessagesService.SERVICE.getInstance()
-      .showDialog2(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
+    return MessagesService.getInstance()
+      .showMoreInfoMessageDialog(project, message, title, moreInfo, options, defaultOptionIndex, focusedOptionIndex, icon);
   }
 
 
@@ -247,12 +256,7 @@ public class Messages {
                                @NotNull String[] options,
                                int defaultOptionIndex,
                                @Nullable Icon icon) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance().showDialog3(parent, message, title, options, defaultOptionIndex, icon);
-    }
+    return MessagesService.getInstance().showMessageDialog(null, parent, message, title, options, defaultOptionIndex, -1, icon, null, false);
   }
 
   /**
@@ -270,11 +274,8 @@ public class Messages {
                                @Nullable Icon icon,
                                @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
 
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    return MessagesService.SERVICE.getInstance()
-      .showDialog(message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption);
+    return MessagesService.getInstance()
+      .showMessageDialog(null, null, message, title, options, defaultOptionIndex, focusedOptionIndex, icon, doNotAskOption, false);
   }
 
   /**
@@ -624,8 +625,10 @@ public class Messages {
 
   /**
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Project, String, String, String, String, Icon)} instead
    */
   @OkCancelResult
+  @Deprecated
   public static int showOkCancelDialog(Project project,
                                        String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
@@ -660,8 +663,10 @@ public class Messages {
 
   /**
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(Component, String, String, String, String, Icon)} instead
    */
   @OkCancelResult
+  @Deprecated
   public static int showOkCancelDialog(@NotNull Component parent,
                                        String message,
                                        @Nls(capitalization = Nls.Capitalization.Title) String title,
@@ -673,10 +678,10 @@ public class Messages {
    * Use this method only if you do not know project or component
    *
    * @return {@link #OK} if user pressed "Ok" or {@link #CANCEL} if user pressed "Cancel" button.
-   * @see #showOkCancelDialog(Project, String, String, Icon)
-   * @see #showOkCancelDialog(Component, String, String, Icon)
+   * @deprecated Please provide meaningful action names via {@link #showOkCancelDialog(String, String, String, String, Icon)} instead
    */
   @OkCancelResult
+  @Deprecated
   public static int showOkCancelDialog(String message, @Nls(capitalization = Nls.Capitalization.Title) String title, Icon icon) {
     return showOkCancelDialog(message, title, OK_BUTTON, CANCEL_BUTTON, icon, null);
   }
@@ -733,12 +738,8 @@ public class Messages {
                                                final int focusedOptionIndex,
                                                Icon icon) {
     return showCheckboxMessageDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, checkboxText, checked, defaultOptionIndex,
-                                     focusedOptionIndex, icon, new PairFunction<Integer, JCheckBox, Integer>() {
-        @Override
-        public Integer fun(final Integer exitCode, final JCheckBox cb) {
-          return exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0);
-        }
-      });
+                                     focusedOptionIndex, icon,
+                                     (exitCode, cb) -> exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0));
   }
 
   public static int showCheckboxMessageDialog(String message,
@@ -749,15 +750,10 @@ public class Messages {
                                               final int defaultOptionIndex,
                                               final int focusedOptionIndex,
                                               Icon icon,
-                                              @Nullable final PairFunction<Integer, JCheckBox, Integer> exitFunc) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance()
-        .showTwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
-                                       exitFunc);
-    }
+                                              @Nullable final PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
+    return MessagesService.getInstance()
+      .showTwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
+                                     exitFunc);
   }
 
 
@@ -1060,11 +1056,7 @@ public class Messages {
                                           @Nls(capitalization = Nls.Capitalization.Title) String title,
                                           @Nullable Icon icon,
                                           @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-
-    return MessagesService.SERVICE.getInstance().showPasswordDialog(project, message, title, icon, validator);
+    return MessagesService.getInstance().showPasswordDialog(project, message, title, icon, validator);
   }
 
   /**
@@ -1107,12 +1099,7 @@ public class Messages {
                                        @Nullable Icon icon,
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance().showInputDialog(project, message, title, icon, initialValue, validator);
-    }
+    return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, null, null);
   }
 
   @Nullable
@@ -1136,12 +1123,7 @@ public class Messages {
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection,
                                        @Nullable String comment) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance().showInputDialog2(project, message, title, icon, initialValue, validator, selection, comment);
-    }
+    return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, selection, comment);
   }
 
   @Nullable
@@ -1151,12 +1133,7 @@ public class Messages {
                                        @Nullable Icon icon,
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance().showInputDialog3(parent, message, title, icon, initialValue, validator);
-    }
+    return MessagesService.getInstance().showInputDialog(null, parent, message, title, icon, initialValue, validator, null, null);
   }
 
   /**
@@ -1171,12 +1148,7 @@ public class Messages {
                                        @Nullable Icon icon,
                                        @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance().showInputDialog4(message, title, icon, initialValue, validator);
-    }
+    return MessagesService.getInstance().showInputDialog(null, null, message, title, icon, initialValue, validator, null, null);
   }
 
   @Nullable
@@ -1186,10 +1158,7 @@ public class Messages {
                                                 @Nullable String initialValue,
                                                 @Nullable Icon icon,
                                                 @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    return MessagesService.SERVICE.getInstance().showMultilineInputDialog(project, message, title, initialValue, icon, validator);
+    return MessagesService.getInstance().showMultilineInputDialog(project, message, title, initialValue, icon, validator);
   }
 
   @NotNull
@@ -1201,13 +1170,8 @@ public class Messages {
                                                                   @Nullable Icon icon,
                                                                   @NonNls String initialValue,
                                                                   @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return new Pair<>(ourTestInputImplementation.show(message), checked);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance()
-        .showInputDialogWithCheckBox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
-    }
+    return MessagesService.getInstance()
+      .showInputDialogWithCheckBox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
   }
 
   @Nullable
@@ -1217,12 +1181,7 @@ public class Messages {
                                                 String[] values,
                                                 String initialValue,
                                                 @Nullable InputValidator validator) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestInputImplementation.show(message, validator);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance().showEditableChooseDialog(message, title, icon, values, initialValue, validator);
-    }
+    return MessagesService.getInstance().showEditableChooseDialog(message, title, icon, values, initialValue, validator);
   }
 
   /**
@@ -1234,12 +1193,7 @@ public class Messages {
                                      String[] values,
                                      String initialValue,
                                      @Nullable Icon icon) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance().showChooseDialog(message, title, values, initialValue, icon);
-    }
+    return MessagesService.getInstance().showChooseDialog(null, null, message, title, values, initialValue, icon);
   }
 
   /**
@@ -1252,12 +1206,7 @@ public class Messages {
                                      String[] values,
                                      String initialValue,
                                      Icon icon) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance().showChooseDialog2(parent, message, title, values, initialValue, icon);
-    }
+    return MessagesService.getInstance().showChooseDialog(null, parent, message, title, values, initialValue, icon);
   }
 
   /**
@@ -1271,12 +1220,7 @@ public class Messages {
                                      Icon icon,
                                      String[] values,
                                      String initialValue) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      return ourTestImplementation.show(message);
-    }
-    else {
-      return MessagesService.SERVICE.getInstance().showChooseDialog3(project, message, title, icon, values, initialValue);
-    }
+    return MessagesService.getInstance().showChooseDialog(project, null, message, title, values, initialValue, icon);
   }
 
   /**
@@ -1348,14 +1292,9 @@ public class Messages {
   public static void showTextAreaDialog(final JTextField textField,
                                         @Nls(capitalization = Nls.Capitalization.Title) final String title,
                                         @NonNls final String dimensionServiceKey,
-                                        final Function<String, List<String>> parser,
-                                        final Function<List<String>, String> lineJoiner) {
-    if (isApplicationInUnitTestOrHeadless()) {
-      ourTestImplementation.show(title);
-    }
-    else {
-      MessagesService.SERVICE.getInstance().showTextAreaDialog(textField, title, dimensionServiceKey, parser, lineJoiner);
-    }
+                                        final Function<? super String, ? extends List<String>> parser,
+                                        final Function<? super List<String>, String> lineJoiner) {
+    MessagesService.getInstance().showTextAreaDialog(textField, title, dimensionServiceKey, parser, lineJoiner);
   }
 
   public static void showTextAreaDialog(final JTextField textField,
@@ -1364,4 +1303,217 @@ public class Messages {
     showTextAreaDialog(textField, title, dimensionServiceKey, ParametersListUtil.DEFAULT_LINE_PARSER,
                        ParametersListUtil.DEFAULT_LINE_JOINER);
   }
+
+  public static class InputDialog extends MessageDialog {
+    protected JTextComponent myField;
+    private final InputValidator myValidator;
+    private final String myComment;
+
+    public InputDialog(@Nullable Project project,
+                       String message,
+                       @Nls(capitalization = Nls.Capitalization.Title) String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator,
+                       @NotNull String[] options,
+                       int defaultOption,
+                       @Nullable String comment) {
+      super(project, true);
+      myComment = comment;
+      myValidator = validator;
+      _init(title, message, options, defaultOption, -1, icon, null);
+      myField.setText(initialValue);
+      enableOkAction();
+    }
+
+    public InputDialog(@Nullable Project project,
+                       String message,
+                       @Nls(capitalization = Nls.Capitalization.Title) String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator,
+                       @NotNull String[] options,
+                       int defaultOption) {
+      this(project, message, title, icon, initialValue, validator, options, defaultOption, null);
+    }
+
+    public InputDialog(@Nullable Project project,
+                       String message,
+                       @Nls(capitalization = Nls.Capitalization.Title) String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator) {
+      this(project, message, title, icon, initialValue, validator, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
+    }
+
+    public InputDialog(@NotNull Component parent,
+                       String message,
+                       @Nls(capitalization = Nls.Capitalization.Title) String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator) {
+      super(null, parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, -1, 0, icon, null, true);
+      myValidator = validator;
+      myComment = null;
+      myField.setText(initialValue);
+      enableOkAction();
+    }
+
+    public InputDialog(String message,
+                       @Nls(capitalization = Nls.Capitalization.Title) String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator) {
+      super(null, null, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, -1, icon, null, true);
+      myValidator = validator;
+      myComment = null;
+      myField.setText(initialValue);
+      enableOkAction();
+    }
+
+    private void enableOkAction() {
+      getOKAction().setEnabled(myValidator == null || myValidator.checkInput(myField.getText().trim()));
+    }
+
+    @NotNull
+    @Override
+    protected Action[] createActions() {
+      final Action[] actions = new Action[myOptions.length];
+      for (int i = 0; i < myOptions.length; i++) {
+        String option = myOptions[i];
+        final int exitCode = i;
+        if (i == 0) { // "OK" is default button. It has index 0.
+          actions[0] = getOKAction();
+          actions[0].putValue(DEFAULT_ACTION, Boolean.TRUE);
+          myField.getDocument().addDocumentListener(new DocumentAdapter() {
+            @Override
+            public void textChanged(@NotNull DocumentEvent event) {
+              final String text = myField.getText().trim();
+              actions[exitCode].setEnabled(myValidator == null || myValidator.checkInput(text));
+              if (myValidator instanceof InputValidatorEx) {
+                setErrorText(((InputValidatorEx) myValidator).getErrorText(text), myField);
+              }
+            }
+          });
+        }
+        else {
+          actions[i] = new AbstractAction(option) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+              close(exitCode);
+            }
+          };
+        }
+      }
+      return actions;
+    }
+
+    @Override
+    protected void doOKAction() {
+      String inputString = myField.getText().trim();
+      if (myValidator == null ||
+          myValidator.checkInput(inputString) &&
+          myValidator.canClose(inputString)) {
+        close(0);
+      }
+    }
+
+    @Override
+    protected JComponent createCenterPanel() {
+      return null;
+    }
+
+    @Override
+    protected JComponent createNorthPanel() {
+      JPanel panel = createIconPanel();
+
+      JPanel messagePanel = createMessagePanel();
+      panel.add(messagePanel, BorderLayout.CENTER);
+
+      if (myComment != null) {
+        return UI.PanelFactory.panel(panel).withComment(myComment).createPanel();
+      }
+      else {
+        return panel;
+      }
+    }
+
+    @Override
+    @NotNull
+    protected JPanel createMessagePanel() {
+      JPanel messagePanel = new JPanel(new BorderLayout());
+      if (myMessage != null) {
+        JComponent textComponent = createTextComponent();
+        messagePanel.add(textComponent, BorderLayout.NORTH);
+      }
+
+      myField = createTextFieldComponent();
+      messagePanel.add(createScrollableTextComponent(), BorderLayout.SOUTH);
+
+      return messagePanel;
+    }
+
+    protected JComponent createScrollableTextComponent() {
+      return myField;
+    }
+
+    protected JComponent createTextComponent() {
+      JComponent textComponent;
+      if (BasicHTML.isHTMLString(myMessage)) {
+        textComponent = createMessageComponent(myMessage);
+      }
+      else {
+        JLabel textLabel = new JLabel(myMessage);
+        textLabel.setUI(new MultiLineLabelUI());
+        textComponent = textLabel;
+      }
+      textComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 20));
+      return textComponent;
+    }
+
+    public JTextComponent getTextField() {
+      return myField;
+    }
+
+    protected JTextComponent createTextFieldComponent() {
+      return new JTextField(30);
+    }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myField;
+    }
+
+    @Nullable
+    public String getInputString() {
+      if (getExitCode() == 0) {
+        return myField.getText().trim();
+      }
+      return null;
+    }
+  }
+
+  public static class MultilineInputDialog extends InputDialog {
+    public MultilineInputDialog(Project project,
+                                String message,
+                                @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                @Nullable Icon icon,
+                                @Nullable String initialValue,
+                                @Nullable InputValidator validator,
+                                @NotNull String[] options,
+                                int defaultOption) {
+      super(project, message, title, icon, initialValue, validator, options, defaultOption);
+    }
+
+    @Override
+    protected JTextComponent createTextFieldComponent() {
+      return new JTextArea(7, 50);
+    }
+
+    @Override
+    protected JComponent createScrollableTextComponent() {
+      return new JBScrollPane(myField);
+    }
+  }
+
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -35,8 +35,10 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -98,6 +100,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   public EditorTextField(Document document, Project project, FileType fileType) {
     this(document, project, fileType, false, true);
+  }
+
+  public EditorTextField(Project project, FileType fileType) {
+    this(null, project, fileType, false, true);
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer) {
@@ -171,14 +177,14 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   @Override
-  public void beforeDocumentChange(DocumentEvent event) {
+  public void beforeDocumentChange(@NotNull DocumentEvent event) {
     for (DocumentListener documentListener : myDocumentListeners) {
       documentListener.beforeDocumentChange(event);
     }
   }
 
   @Override
-  public void documentChanged(DocumentEvent event) {
+  public void documentChanged(@NotNull DocumentEvent event) {
     for (DocumentListener documentListener : myDocumentListeners) {
       documentListener.documentChanged(event);
     }
@@ -189,7 +195,11 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   @Override
+  @NotNull
   public Document getDocument() {
+    if (myDocument == null) {
+      myDocument = createDocument();
+    }
     return myDocument;
   }
 
@@ -236,7 +246,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   @Override
   public void setText(@Nullable final String text) {
-    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+    CommandProcessor.getInstance().executeCommand(getProject(), () ->
+      ApplicationManager.getApplication().runWriteAction(() -> {
       myDocument.replaceString(0, myDocument.getTextLength(), StringUtil.notNullize(text));
       if (myEditor != null) {
         final CaretModel caretModel = myEditor.getCaretModel();
@@ -244,7 +255,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
           caretModel.moveToOffset(myDocument.getTextLength());
         }
       }
-    }, null, null, UndoConfirmationPolicy.DEFAULT, getDocument()));
+    }), null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
   }
 
   /**
@@ -260,7 +271,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       myEditor.setPlaceholder(text);
     }
   }
-  
+
   public void selectAll() {
     if (myEditor != null) {
       doSelectAll(myEditor);
@@ -320,7 +331,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (myProject != null) {
       ProjectManagerListener listener = new ProjectManagerListener() {
         @Override
-        public void projectClosing(Project project) {
+        public void projectClosing(@NotNull Project project) {
           releaseEditor(myEditor);
           myEditor = null;
         }
@@ -440,17 +451,21 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.setBackgroundColor(getBackgroundColor(isEnabled(), colorsScheme));
   }
 
-
-
   public void setOneLineMode(boolean oneLineMode) {
     myOneLineMode = oneLineMode;
   }
 
-  protected EditorEx createEditor() {
-    LOG.assertTrue(myDocument != null);
+  protected Document createDocument() {
+    final PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
+    final long stamp = LocalTimeCounter.currentTime();
+    final PsiFile psiFile = factory.createFileFromText("Dummy." + myFileType.getDefaultExtension(), myFileType, "", stamp, true, false);
+    return PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
+  }
 
+  protected EditorEx createEditor() {
+    Document document = getDocument();
     final EditorFactory factory = EditorFactory.getInstance();
-    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(myDocument, myProject) : factory.createEditor(myDocument, myProject));
+    EditorEx editor = (EditorEx)(myIsViewer ? factory.createViewer(document, myProject) : factory.createEditor(document, myProject));
 
     final EditorSettings settings = editor.getSettings();
     settings.setAdditionalLinesCount(0);
@@ -483,7 +498,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     editor.getSettings().setCaretRowShown(false);
 
     editor.setOneLineMode(myOneLineMode);
-    editor.getCaretModel().moveToOffset(myDocument.getTextLength());
+    editor.getCaretModel().moveToOffset(document.getTextLength());
 
     if (!shouldHaveBorder()) {
       editor.setBorder(null);
@@ -510,7 +525,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       ((EditorImpl)editor).setPaintSelection(true);
       editor.getColorsScheme().setColor(EditorColors.SELECTION_BACKGROUND_COLOR, myRendererBg);
       editor.getColorsScheme().setColor(EditorColors.SELECTION_FOREGROUND_COLOR, myRendererFg);
-      editor.getSelectionModel().setSelection(0, myDocument.getTextLength());
+      editor.getSelectionModel().setSelection(0, document.getTextLength());
       editor.setBackgroundColor(myRendererBg);
     }
 
@@ -734,6 +749,10 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return myEditor;
   }
 
+  public FileType getFileType() {
+    return myFileType;
+  }
+
   @NotNull
   public JComponent getFocusTarget() {
     return myEditor == null ? this : myEditor.getContentComponent();
@@ -811,7 +830,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (myEditor != null && myEditor.isRendererMode()) {
       if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
         return myEditor.getCopyProvider();
@@ -826,7 +845,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return null;
   }
 
-  public void setFileType(FileType fileType) {
+  public void setFileType(@NotNull FileType fileType) {
     setNewDocumentAndFileType(fileType, getDocument());
   }
 
@@ -844,7 +863,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     myRendererBg = backgroundColor;
     myRendererFg = foregroundColor;
   }
-  
+
   public void addSettingsProvider(@NotNull EditorSettingsProvider provider) {
     mySettingsProviders.add(provider);
   }

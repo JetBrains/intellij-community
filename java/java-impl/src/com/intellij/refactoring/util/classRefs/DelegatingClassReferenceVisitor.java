@@ -28,34 +28,42 @@ public class DelegatingClassReferenceVisitor implements ClassReferenceVisitor {
     myDelegate = delegate;
   }
 
+  @Override
   public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
     myDelegate.visitReferenceExpression(referenceExpression);
   }
 
+  @Override
   public void visitLocalVariableDeclaration(PsiLocalVariable variable, ClassReferenceVisitor.TypeOccurence occurence) {
     myDelegate.visitLocalVariableDeclaration(variable, occurence);
   }
 
+  @Override
   public void visitFieldDeclaration(PsiField field, ClassReferenceVisitor.TypeOccurence occurence) {
     myDelegate.visitFieldDeclaration(field, occurence);
   }
 
+  @Override
   public void visitParameterDeclaration(PsiParameter parameter, ClassReferenceVisitor.TypeOccurence occurence) {
     myDelegate.visitParameterDeclaration(parameter, occurence);
   }
 
+  @Override
   public void visitMethodReturnType(PsiMethod method, ClassReferenceVisitor.TypeOccurence occurence) {
     myDelegate.visitMethodReturnType(method, occurence);
   }
 
+  @Override
   public void visitTypeCastExpression(PsiTypeCastExpression typeCastExpression, ClassReferenceVisitor.TypeOccurence occurence) {
     myDelegate.visitTypeCastExpression(typeCastExpression, occurence);
   }
 
+  @Override
   public void visitNewExpression(PsiNewExpression newExpression, ClassReferenceVisitor.TypeOccurence occurence) {
     myDelegate.visitNewExpression(newExpression, occurence);
   }
 
+  @Override
   public void visitOther(PsiElement ref) {
     myDelegate.visitOther(ref);
   }

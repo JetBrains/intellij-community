@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.ui.paint.RectanglePainter;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
@@ -37,8 +36,8 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author spleaner
@@ -231,7 +230,6 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     repaint();
   }
 
-  @SuppressWarnings({"ForLoopReplaceableByForEach"})
   private void fireItemSelected(@Nullable final T item, final int modifiers) {
     if (item != null) {
       for (BreadcrumbsItemListener listener : myListeners) {
@@ -372,7 +370,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     private int myPage;
     private final int myTotalWidth;
 
-    public PagedImage(int totalWidth, int pageWidth) {
+    PagedImage(int totalWidth, int pageWidth) {
       myPageWidth = pageWidth;
       myTotalWidth = totalWidth;
     }
@@ -429,7 +427,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     private final BreadcrumbsComponent myBreadcrumbs;
     private Crumb myHoveredCrumb;
 
-    public CrumbLineMouseListener(@NotNull final BreadcrumbsComponent line) {
+    CrumbLineMouseListener(@NotNull final BreadcrumbsComponent line) {
       myBreadcrumbs = line;
     }
 
@@ -476,14 +474,14 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     private boolean myHovered;
     private boolean myLight;
 
-    public Crumb(final BreadcrumbsComponent line, final String string, final int width, final T item) {
+    Crumb(final BreadcrumbsComponent line, final String string, final int width, final T item) {
       this(string, width);
 
       myLine = line;
       myItem = item;
     }
 
-    public Crumb(final String string, final int width) {
+    Crumb(final String string, final int width) {
       myString = string;
       myWidth = width;
     }
@@ -562,7 +560,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
     private final boolean myForward;
     private final BreadcrumbsComponent myLine;
 
-    public NavigationCrumb(@NotNull final BreadcrumbsComponent line,
+    NavigationCrumb(@NotNull final BreadcrumbsComponent line,
                            @NotNull final FontMetrics fm,
                            final boolean forward,
                            @NotNull final Painter p) {
@@ -583,7 +581,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   private static class DummyCrumb extends Crumb {
-    public DummyCrumb(final int width) {
+    DummyCrumb(final int width) {
       super(null, width);
     }
 
@@ -673,7 +671,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
 
     private final PainterSettings mySettings;
 
-    public Painter(@NotNull final PainterSettings s) {
+    Painter(@NotNull final PainterSettings s) {
       mySettings = s;
     }
 
@@ -692,7 +690,7 @@ public class BreadcrumbsComponent<T extends BreadcrumbsItem> extends JComponent 
   }
 
   private static class DefaultPainter extends Painter {
-    public DefaultPainter(@NotNull final PainterSettings s) {
+    DefaultPainter(@NotNull final PainterSettings s) {
       super(s);
     }
 

@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
+import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames;
 import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
@@ -30,11 +31,11 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.endsWithChar;
 import static org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings.PreferredTestRunner.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/26/2015
  */
 public abstract class GradleTestRunConfigurationProducer extends RunConfigurationProducer<ExternalSystemRunConfiguration> {
 
@@ -61,7 +62,10 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
                                                   Ref<PsiElement> sourceElement) {
     if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
     if (GradleSystemRunningSettings.getInstance().getPreferredTestRunner() == PLATFORM_TEST_RUNNER) return false;
-
+    if (configuration instanceof GradleRunConfiguration) {
+      final GradleRunConfiguration gradleRunConfiguration = (GradleRunConfiguration)configuration;
+      gradleRunConfiguration.setScriptDebugEnabled(false);
+    }
     return doSetupConfigurationFromContext(configuration, context, sourceElement);
   }
 
@@ -94,7 +98,6 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       }
     }
 
-    final List<String> result;
     final String externalProjectId = ExternalSystemApiUtil.getExternalProjectId(module);
     if (externalProjectId == null) return ContainerUtil.emptyList();
     final String projectPath = ExternalSystemApiUtil.getExternalProjectPath(module);
@@ -103,42 +106,37 @@ public abstract class GradleTestRunConfigurationProducer extends RunConfiguratio
       ExternalSystemUtil.getExternalProjectInfo(module.getProject(), GradleConstants.SYSTEM_ID, projectPath);
     if (externalProjectInfo == null) return ContainerUtil.emptyList();
 
-    boolean trimSourceSet = false;
+    final List<String> tasks;
+    final String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
+    if (gradlePath == null) return ContainerUtil.emptyList();
+    String taskPrefix = endsWithChar(gradlePath, ':') ? gradlePath : (gradlePath + ':');
+
     if (StringUtil.endsWith(externalProjectId, ":test") || StringUtil.endsWith(externalProjectId, ":main")) {
-      result = TEST_SOURCE_SET_TASKS;
-      trimSourceSet = true;
+      return ContainerUtil.map(TEST_SOURCE_SET_TASKS, task -> taskPrefix + task);
+    }
+
+    final DataNode<ModuleData> moduleNode =
+      GradleProjectResolverUtil.findModule(externalProjectInfo.getExternalProjectStructure(), projectPath);
+    if (moduleNode == null) return ContainerUtil.emptyList();
+
+    final DataNode<TaskData> taskNode;
+    final String sourceSetId = StringUtil.substringAfter(externalProjectId, moduleNode.getData().getExternalName() + ':');
+    if (sourceSetId == null) {
+      taskNode = ExternalSystemApiUtil.find(
+        moduleNode, ProjectKeys.TASK,
+        node -> GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(node.getData().getType()) &&
+                StringUtil.equals("test", node.getData().getName()) || StringUtil.equals(taskPrefix + "test", node.getData().getName()));
     }
     else {
-      final DataNode<ModuleData> moduleNode =
-        GradleProjectResolverUtil.findModule(externalProjectInfo.getExternalProjectStructure(), projectPath);
-      if (moduleNode == null) return ContainerUtil.emptyList();
-
-      final DataNode<TaskData> taskNode;
-      final String sourceSetId = StringUtil.substringAfter(externalProjectId, moduleNode.getData().getExternalName() + ':');
-      if (sourceSetId == null) {
-        taskNode = ExternalSystemApiUtil.find(
-          moduleNode, ProjectKeys.TASK,
-          node -> GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(node.getData().getType()) &&
-                  StringUtil.equals("test", node.getData().getName()));
-      }
-      else {
-        trimSourceSet = true;
-        taskNode = ExternalSystemApiUtil.find(
-          moduleNode, ProjectKeys.TASK,
-          node -> GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(node.getData().getType()) &&
-                  StringUtil.startsWith(node.getData().getName(), sourceSetId));
-      }
-
-      if (taskNode == null) return ContainerUtil.emptyList();
-      final String taskName = taskNode.getData().getName();
-      result = ContainerUtil.list("clean" + StringUtil.capitalize(taskName), taskName);
+      taskNode = ExternalSystemApiUtil.find(
+        moduleNode, ProjectKeys.TASK,
+        node -> GradleCommonClassNames.GRADLE_API_TASKS_TESTING_TEST.equals(node.getData().getType()) &&
+                StringUtil.startsWith(node.getData().getName(), sourceSetId));
     }
 
-    final List<String> pathParts = StringUtil.split(externalProjectId, ":");
-    if (!externalProjectId.startsWith(":") && !pathParts.isEmpty()) pathParts.remove(0);
-    if (trimSourceSet && !pathParts.isEmpty()) pathParts.remove(pathParts.size() - 1);
-    String join = StringUtil.join(pathParts, ":");
-    String path = ":" + join + (!join.isEmpty() ? ":" : "");
-    return ContainerUtil.map(result, s -> path + s);
+    if (taskNode == null) return ContainerUtil.emptyList();
+    String taskName = StringUtil.trimStart(taskNode.getData().getName(), taskPrefix);
+    tasks = ContainerUtil.list("clean" + StringUtil.capitalize(taskName), taskName);
+    return ContainerUtil.map(tasks, task -> taskPrefix + task);
   }
 }

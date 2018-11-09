@@ -4,10 +4,10 @@ package com.intellij.execution.actions;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -31,24 +31,27 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
   @NotNull
   public static List<RunConfigurationProducer<?>> getProducers(@NotNull Project project) {
     RunConfigurationProducerService runConfigurationProducerService = RunConfigurationProducerService.getInstance(project);
-    RunConfigurationProducer[] allProducers = Extensions.getExtensions(EP_NAME);
-    List<RunConfigurationProducer<?>> result = new ArrayList<>(allProducers.length);
+    List<RunConfigurationProducer> allProducers = EP_NAME.getExtensionList();
+    List<RunConfigurationProducer<?>> result = new ArrayList<>(allProducers.size());
     for (RunConfigurationProducer producer : allProducers) {
       if (!runConfigurationProducerService.isIgnored(producer)) {
         result.add(producer);
       }
     }
-
     return result;
   }
 
   private final ConfigurationFactory myConfigurationFactory;
 
-  protected RunConfigurationProducer(final ConfigurationFactory configurationFactory) {
+  protected RunConfigurationProducer(@NotNull ConfigurationFactory configurationFactory) {
     myConfigurationFactory = configurationFactory;
   }
 
-  protected RunConfigurationProducer(final ConfigurationType configurationType) {
+  protected RunConfigurationProducer(@NotNull Class<? extends ConfigurationType> type) {
+    this(ConfigurationTypeUtil.findConfigurationType(type));
+  }
+
+  protected RunConfigurationProducer(@NotNull ConfigurationType configurationType) {
     myConfigurationFactory = configurationType.getConfigurationFactories()[0];
   }
 
@@ -220,12 +223,12 @@ public abstract class RunConfigurationProducer<T extends RunConfiguration> {
     if (original != null) {
       return RunManager.getInstance(context.getProject()).createConfiguration(original.clone(), configurationFactory);
     }
-    return RunManager.getInstance(context.getProject()).createRunConfiguration("", configurationFactory);
+    return RunManager.getInstance(context.getProject()).createConfiguration("", configurationFactory);
   }
 
   @NotNull
   public static <T extends RunConfigurationProducer> T getInstance(Class<? extends T> aClass) {
-    for (RunConfigurationProducer producer : Extensions.getExtensions(EP_NAME)) {
+    for (RunConfigurationProducer producer : EP_NAME.getExtensionList()) {
       if (aClass.isInstance(producer)) {
         //noinspection unchecked
         return (T)producer;

@@ -21,7 +21,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -171,11 +170,6 @@ public class TabLabel extends JPanel implements Accessible {
   private SimpleColoredComponent createLabel(final JBTabsImpl tabs) {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
-      protected boolean shouldDrawMacShadow() {
-        return SystemInfo.isMac || UIUtil.isUnderDarcula();
-      }
-
-      @Override
       protected boolean shouldDrawDimmed() {
         return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
       }
@@ -213,6 +207,13 @@ public class TabLabel extends JPanel implements Accessible {
           g.setClip(oldClip);
         }
       }
+
+      @Override
+      protected Color getActiveTextColor(Color attributesColor) {
+        return myTabs.getSelectedInfo() == myInfo && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null) ?
+          JBColor.namedColor("EditorTabs.active.foreground", UIUtil.getLabelForeground()) : super.getActiveTextColor(attributesColor);
+      }
+
     };
     label.setOpaque(false);
     label.setBorder(null);
@@ -226,7 +227,7 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton()) {
+    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton() && hasIcons()) {
       if (!UISettings.getShadowInstance().getCloseTabButtonOnTheRight()) {
         insets.left = 3;
       }
@@ -287,7 +288,7 @@ public class TabLabel extends JPanel implements Accessible {
     }
   }
 
-  public void doTranslate(PairConsumer<Integer, Integer> consumer) {
+  public void doTranslate(PairConsumer<? super Integer, ? super Integer> consumer) {
     final JBTabsPosition pos = myTabs.getTabsPosition();
 
     int dX = 0;
@@ -352,8 +353,9 @@ public class TabLabel extends JPanel implements Accessible {
 
   @Override
   public Dimension getPreferredSize() {
-    final Dimension size = super.getPreferredSize();
-    size.height = TabsUtil.getTabsHeight();
+    Dimension size = super.getPreferredSize();
+    size.height += TabsUtil.TAB_VERTICAL_PADDING.get();
+
     if (myActionPanel != null && !myActionPanel.isVisible()) {
       final Dimension actionPanelSize = myActionPanel.getPreferredSize();
       size.width += actionPanelSize.width;
@@ -363,7 +365,7 @@ public class TabLabel extends JPanel implements Accessible {
     switch (pos) {
       case top:
       case bottom:
-        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - 1;
+        if (myTabs.hasUnderline()) size.height += myTabs.getActiveTabUnderlineHeight() - JBUI.scale(1);
         break;
       case left:
       case right:

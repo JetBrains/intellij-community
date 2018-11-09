@@ -103,7 +103,7 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
           return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_AFTER);
         }
       }
-      else if (getPosition(editor, offset + 1).matchesRule(
+      else if (afterOptionalWhitespaceOnSameLine(editor, offset).matchesRule(
         position -> position.isAt(BlockClosingBrace) && !position.after().afterOptional(Whitespace).isAt(Comma))) {
         return myFactory.createIndentCalculator(
           NONE,
@@ -116,7 +116,18 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
           });
       }
       else if (getPosition(editor, offset).beforeOptional(Whitespace).isAt(BlockClosingBrace)) {
-        return myFactory.createIndentCalculator(getBlockIndentType(editor, language), IndentCalculator.LINE_BEFORE);
+        SemanticEditorPosition position = getPosition(editor, offset).beforeOptional(Whitespace).before();
+        position.moveToLeftParenthesisBackwardsSkippingNested(BlockOpeningBrace, BlockClosingBrace);
+        position.moveBefore();
+        int statementStart = getStatementStartOffset(position, true);
+        position = getPosition(editor, statementStart);
+        if (!isStartOfStatementWithOptionalBlock(position)) {
+          return myFactory.createIndentCalculator(getBlockIndentType(editor, language), IndentCalculator.LINE_BEFORE);
+        }
+        else {
+          return myFactory
+            .createIndentCalculator(getBlockIndentType(editor, language), this::getFirstUppermostControlStructureKeywordOffset);
+        }
       }
       else if (getPosition(editor, offset).before().isAt(Semicolon)) {
         SemanticEditorPosition beforeSemicolon = getPosition(editor, offset).before().beforeOptional(Semicolon);
@@ -189,6 +200,15 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     }
     //return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_BEFORE); /* TO CHECK UNCOVERED CASES */
     return null;
+  }
+
+  private SemanticEditorPosition afterOptionalWhitespaceOnSameLine(@NotNull Editor editor, int offset) {
+    SemanticEditorPosition position = getPosition(editor, offset);
+    if (position.isAt(Whitespace)) {
+      if (position.hasLineBreaksAfter(offset)) return position;
+      position.moveAfter();
+    }
+    return position;
   }
 
   /**
@@ -348,6 +368,42 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return maybeColon.isAt(Colon)
            && maybeColon.after().isAtMultiline(Whitespace)
            && !afterColonStatement.isAtEnd();
+  }
+
+
+  /**
+   * Search for the topmost control structure keyword which doesn't have any code block delimiters like {@code {...}}. For example:
+   * <pre>
+   * 1  for (...)
+   * 2      if (...)
+   * 3          for(...) {}
+   * 4  [position]
+   * </pre>
+   * The method will return an offset of the first {@code for} on line 1.
+   * @return
+   */
+  private int getFirstUppermostControlStructureKeywordOffset(@NotNull SemanticEditorPosition position) {
+    SemanticEditorPosition curr = position.copy();
+    while (!curr.isAtEnd()) {
+      if (isStartOfStatementWithOptionalBlock(curr)) {
+        SemanticEditorPosition candidate = curr.copy();
+        curr.moveBefore();
+        curr.moveBeforeOptionalMix(Whitespace, LineComment, BlockComment);
+        if (!curr.isAt(RightParenthesis)) {
+          return candidate.getStartOffset();
+        }
+        else {
+          curr.moveBeforeParentheses(LeftParenthesis, RightParenthesis);
+          continue;
+        }
+      }
+      else if (curr.isAt(BlockClosingBrace)) {
+        curr.moveBeforeParentheses(BlockOpeningBrace, BlockClosingBrace);
+        continue;
+      }
+      curr.moveBefore();
+    }
+    return position.before().getStartOffset();
   }
 
   /**

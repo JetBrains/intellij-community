@@ -5,10 +5,9 @@ Groovy script
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('foo')
-    PsiElement(()('(')
     Parameter list
-      <empty list>
-    PsiElement())(')')
+      PsiElement(()('(')
+      PsiElement())(')')
     Throw clause
       <empty list>
     PsiWhiteSpace(' ')
@@ -37,7 +36,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Literal
               PsiElement(Integer)('2')
-        PsiElement(new line)('\n    ')
+          PsiElement(new line)('\n    ')
         PsiElement(})('}')
       PsiElement(new line)('\n  ')
       PsiElement(})('}')
@@ -50,10 +49,9 @@ Groovy script
       PsiElement(def)('def')
     PsiWhiteSpace(' ')
     PsiElement(identifier)('foo')
-    PsiElement(()('(')
     Parameter list
-      <empty list>
-    PsiElement())(')')
+      PsiElement(()('(')
+      PsiElement())(')')
     Throw clause
       <empty list>
     PsiWhiteSpace(' ')
@@ -79,7 +77,7 @@ Groovy script
           PsiElement(new line)('\n      ')
           For statement
             PsiElement(for)('for')
-            PsiErrorElement:'(' expected
+            PsiErrorElement:'(' expected, got 'return'
               <empty list>
           PsiWhiteSpace(' ')
           RETURN statement
@@ -87,7 +85,7 @@ Groovy script
             PsiWhiteSpace(' ')
             Literal
               PsiElement(Integer)('2')
-        PsiElement(new line)('\n    ')
+          PsiElement(new line)('\n    ')
         PsiElement(})('}')
       PsiElement(new line)('\n  ')
       PsiElement(})('}')

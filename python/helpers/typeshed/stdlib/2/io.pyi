@@ -33,13 +33,10 @@ SEEK_END = ...  # type: int
 
 class IOBase(_io._IOBase): ...
 
-class RawIOBase(_io._RawIOBase, IOBase):
-    pass
+class RawIOBase(_io._RawIOBase, IOBase): ...
 
-class BufferedIOBase(_io._BufferedIOBase, IOBase):
-    pass
+class BufferedIOBase(_io._BufferedIOBase, IOBase): ...
 
 # Note: In the actual io.py, TextIOBase subclasses IOBase.
 # (Which we don't do here because we don't want to subclass both TextIO and BinaryIO.)
-class TextIOBase(_io._TextIOBase):
-    pass
+class TextIOBase(_io._TextIOBase): ...

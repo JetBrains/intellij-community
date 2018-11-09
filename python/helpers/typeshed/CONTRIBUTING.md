@@ -85,6 +85,7 @@ At present the core developers are (alphabetically):
 * Ivan Levkivskyi (@ilevkivskyi)
 * Matthias Kramm (@matthiaskramm)
 * Greg Price (@gnprice)
+* Sebastian Rittau (@srittau)
 * Guido van Rossum (@gvanrossum)
 * Jelle Zijlstra (@JelleZijlstra)
 
@@ -185,8 +186,7 @@ you should know about.
 
 Style conventions for stub files are different from PEP 8. The general
 rule is that they should be as concise as possible.  Specifically:
-* there is no line length limit;
-* prefer long lines over elaborate indentation;
+* lines can be up to 130 characters long;
 * all function bodies should be empty;
 * prefer ``...`` over ``pass``;
 * prefer ``...`` on the same line as the class/function signature;
@@ -212,7 +212,9 @@ Some further tips for good type hints:
   positions, in favor of covariant types like `Mapping` or `Sequence`;
 * avoid Union return types: https://github.com/python/mypy/issues/1693;
 * in Python 2, whenever possible, use `unicode` if that's the only
-  possible type, and `Text` if it can be either `unicode` or `bytes`.
+  possible type, and `Text` if it can be either `unicode` or `bytes`;
+* use platform checks like `if sys.platform == 'win32'` to denote
+  platform-dependent APIs.
 
 Imports in stubs are considered private (not part of the exported API)
 unless:

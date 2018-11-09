@@ -20,7 +20,7 @@ package com.intellij.refactoring.rename;
 import com.intellij.psi.PsiElement;
 
 class LocalHidesFieldUsageInfo extends ResolvableCollisionUsageInfo {
-  public LocalHidesFieldUsageInfo(PsiElement element, PsiElement referencedElement) {
+  LocalHidesFieldUsageInfo(PsiElement element, PsiElement referencedElement) {
     super(element, referencedElement);
   }
 

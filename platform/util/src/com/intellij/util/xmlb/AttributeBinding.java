@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 class AttributeBinding extends BasePrimitiveBinding {
   private final Class<?> valueClass;
 
-  public AttributeBinding(@NotNull MutableAccessor accessor, @Nullable Attribute attribute) {
+  AttributeBinding(@NotNull MutableAccessor accessor, @Nullable Attribute attribute) {
     super(accessor, attribute == null ? null : attribute.value(), attribute == null ? null : attribute.converter());
 
     valueClass = XmlSerializerImpl.typeToClass(accessor.getGenericType());

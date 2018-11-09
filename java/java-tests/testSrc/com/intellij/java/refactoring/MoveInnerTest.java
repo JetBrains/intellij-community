@@ -16,9 +16,11 @@
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -58,6 +60,12 @@ public class MoveInnerTest extends MultiFileTestCase {
   }
 
   public void testXmlReferences() {
+    doTest(createAction("pack1.Outer.Inner", "Inner", false, null, true, true, null));
+  }
+
+  public void testMostInnerClassImport() {
+    JavaCodeStyleSettings javaCodeStyleSettings = CodeStyle.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    javaCodeStyleSettings.INSERT_INNER_CLASS_IMPORTS = true;
     doTest(createAction("pack1.Outer.Inner", "Inner", false, null, true, true, null));
   }
 
@@ -153,7 +161,7 @@ public class MoveInnerTest extends MultiFileTestCase {
     private final boolean mySearchInComments;
     private final boolean mySearchInNonJava;
 
-    public MyPerformAction(String innerClassName, String newClassName, boolean passOuterClass, String parameterName, boolean searchInComments,
+    MyPerformAction(String innerClassName, String newClassName, boolean passOuterClass, String parameterName, boolean searchInComments,
                            boolean searchInNonJava,
                            String packageName) {
       myInnerClassName = innerClassName;

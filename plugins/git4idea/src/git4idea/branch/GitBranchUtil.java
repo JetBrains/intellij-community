@@ -16,18 +16,19 @@
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitBranchTrackInfo;
@@ -36,6 +37,8 @@ import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import git4idea.validators.GitNewBranchNameValidator;
+import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
@@ -43,9 +46,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -64,17 +67,12 @@ public class GitBranchUtil {
    */
   @Nullable
   public static GitBranchTrackInfo getTrackInfoForBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch branch) {
-    for (GitBranchTrackInfo trackInfo : repository.getBranchTrackInfos()) {
-      if (trackInfo.getLocalBranch().equals(branch)) {
-        return trackInfo;
-      }
-    }
-    return null;
+    return getTrackInfo(repository, branch.getName());
   }
 
   @Nullable
   public static GitBranchTrackInfo getTrackInfo(@NotNull GitRepository repository, @NotNull String localBranchName) {
-    return ContainerUtil.find(repository.getBranchTrackInfos(), it -> it.getLocalBranch().getName().equals(localBranchName));
+    return repository.getBranchTrackInfo(localBranchName);
   }
 
   @NotNull
@@ -134,12 +132,25 @@ public class GitBranchUtil {
     }
   }
 
-  /**
-   * Get tracked branch of the given branch
-   */
-  @Nullable
-  public static String getTrackedBranchName(Project project, VirtualFile root, String branchName) throws VcsException {
-    return GitConfigUtil.getValue(project, root, trackedBranchKey(branchName));
+  @NotNull
+  public static List<String> getAllTags(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.TAG);
+    h.addParameters("-l");
+    h.setSilent(true);
+
+    List<String> tags = new ArrayList<>();
+    h.addLineListener(new GitLineHandlerListener() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        if (outputType != ProcessOutputTypes.STDOUT) return;
+        if (line.length() != 0) tags.add(line);
+      }
+    });
+
+    GitCommandResult result = Git.getInstance().runCommandWithoutCollectingOutput(h);
+    result.throwOnError();
+
+    return tags;
   }
 
   @NotNull
@@ -199,7 +210,7 @@ public class GitBranchUtil {
    * Convert {@link git4idea.GitRemoteBranch GitRemoteBranches} to their names, and remove remote HEAD pointers: origin/HEAD.
    */
   @NotNull
-  public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<GitRemoteBranch> remoteBranches) {
+  public static Collection<String> getBranchNamesWithoutRemoteHead(@NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
     return ContainerUtil.filter(convertBranchesToNames(remoteBranches), input -> !input.equals("HEAD"));
   }
 
@@ -311,19 +322,57 @@ public class GitBranchUtil {
   }
 
   @NotNull
-  public static Collection<String> getCommonBranches(Collection<GitRepository> repositories,
+  public static Collection<String> getCommonBranches(Collection<? extends GitRepository> repositories,
                                                      boolean local) {
-    Collection<String> commonBranches = null;
-    for (GitRepository repository : repositories) {
-      GitBranchesCollection branchesCollection = repository.getBranches();
-
-      Collection<String> names = local
-                                 ? convertBranchesToNames(branchesCollection.getLocalBranches())
-                                 : getBranchNamesWithoutRemoteHead(branchesCollection.getRemoteBranches());
-      commonBranches = commonBranches == null ? names : ContainerUtil.intersection(commonBranches, names);
+    Collection<String> names;
+    if (local) {
+      names = convertBranchesToNames(getCommonLocalBranches(repositories));
     }
+    else {
+      names = getBranchNamesWithoutRemoteHead(getCommonRemoteBranches(repositories));
+    }
+    return StreamEx.of(names).sorted(StringUtil::naturalCompare).toList();
+  }
 
-    return commonBranches != null ? StreamEx.of(commonBranches).sorted(StringUtil::naturalCompare).toList() : Collections.emptyList();
+  @NotNull
+  public static List<GitLocalBranch> getCommonLocalBranches(@NotNull Collection<? extends GitRepository> repositories) {
+    return collectCommon(repositories.stream().map(repository -> repository.getBranches().getLocalBranches()));
+  }
+
+  @NotNull
+  public static List<GitRemoteBranch> getCommonRemoteBranches(@NotNull Collection<? extends GitRepository> repositories) {
+    return collectCommon(repositories.stream().map(repository -> repository.getBranches().getRemoteBranches()));
+  }
+
+  @NotNull
+  public static <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups) {
+    return collectCommon(groups, ContainerUtil.canonicalStrategy());
+  }
+
+  @NotNull
+  public static <T> List<T> collectCommon(@NotNull Stream<? extends Collection<T>> groups,
+                                          @NotNull TObjectHashingStrategy<? super T> hashingStrategy) {
+    List<T> common = new ArrayList<>();
+    boolean[] firstGroup = {true};
+
+    groups.forEach(values -> {
+      if (firstGroup[0]) {
+        firstGroup[0] = false;
+        common.addAll(values);
+      }
+      else {
+        common.retainAll(new THashSet<>(values, hashingStrategy));
+      }
+    });
+
+    return common;
+  }
+
+  @NotNull
+  public static <T extends GitReference> List<T> sortBranchesByName(@NotNull Collection<? extends T> branches) {
+    return branches.stream()
+                   .sorted(Comparator.comparing(GitReference::getFullName, NaturalComparator.INSTANCE))
+                   .collect(Collectors.toList());
   }
 
   /**

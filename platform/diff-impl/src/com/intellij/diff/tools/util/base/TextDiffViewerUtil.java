@@ -26,11 +26,11 @@ import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -105,7 +105,7 @@ public class TextDiffViewerUtil {
   }
 
   public static void installDocumentListeners(@NotNull DocumentListener listener,
-                                              @NotNull List<Document> documents,
+                                              @NotNull List<? extends Document> documents,
                                               @NotNull Disposable disposable) {
     for (Document document : ContainerUtil.newHashSet(documents)) {
       document.addDocumentListener(listener, disposable);
@@ -168,7 +168,7 @@ public class TextDiffViewerUtil {
     private DefaultActionGroup myActions;
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
       presentation.setText(getText(getValue()));
     }
@@ -204,7 +204,7 @@ public class TextDiffViewerUtil {
     private class MyAction extends AnAction implements DumbAware {
       @NotNull private final T myOption;
 
-      public MyAction(@NotNull T option) {
+      MyAction(@NotNull T option) {
         super(getText(option));
         myOption = option;
       }
@@ -219,13 +219,13 @@ public class TextDiffViewerUtil {
   private static abstract class EnumPolicySettingAction<T extends Enum> extends TextDiffViewerUtil.ComboBoxSettingAction<T> {
     @NotNull private final T[] myPolicies;
 
-    public EnumPolicySettingAction(@NotNull T[] policies) {
+    EnumPolicySettingAction(@NotNull T[] policies) {
       assert policies.length > 0;
       myPolicies = policies;
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabledAndVisible(myPolicies.length > 1);
     }
@@ -270,7 +270,7 @@ public class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull HighlightPolicy option) {
       if (getValue() == option) return;
-      UsageTrigger.trigger("diff.TextDiffSettings.HighlightPolicy." + option.name());
+      DiffUsageTriggerCollector.trigger("toggle.highlight.policy." + option.name());
       mySettings.setHighlightPolicy(option);
     }
 
@@ -311,7 +311,7 @@ public class TextDiffViewerUtil {
     @Override
     protected void setValue(@NotNull IgnorePolicy option) {
       if (getValue() == option) return;
-      UsageTrigger.trigger("diff.TextDiffSettings.IgnorePolicy." + option.name());
+      DiffUsageTriggerCollector.trigger("toggle.ignore.policy." + option.name());
       mySettings.setIgnorePolicy(option);
     }
 
@@ -400,7 +400,7 @@ public class TextDiffViewerUtil {
 
     protected void applyDefaults() {
       if (isVisible()) { // apply default state
-        setSelected(null, isSelected(null));
+        setSelected(isSelected());
       }
     }
 
@@ -415,12 +415,20 @@ public class TextDiffViewerUtil {
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return isSelected();
+    }
+
+    boolean isSelected() {
       return mySettings.isReadOnlyLock();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      setSelected(state);
+    }
+
+    void setSelected(boolean state) {
       mySettings.setReadOnlyLock(state);
       doApply(state);
     }

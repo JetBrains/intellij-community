@@ -40,6 +40,7 @@ public class IgnoredFiles extends Generator{
 
 
 
+  @Override
   public void generate(PrintWriter out) throws IOException {
     myPatternSet.generate(out);
   }

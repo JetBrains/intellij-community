@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -20,12 +18,14 @@ public class CollapseBlockAction extends BaseCodeInsightAction {
   @Override
   protected CodeInsightActionHandler getHandler() {
     return new CodeInsightActionHandler() {
+      @Override
       public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
         executor(project, editor, file, true);
       }
     };
   }
 
+  @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return executor(project, editor, file, false);
   }

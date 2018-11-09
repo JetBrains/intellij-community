@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,7 +36,7 @@ public class RefreshDirDiffAction extends DirDiffAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return false;
   }
 

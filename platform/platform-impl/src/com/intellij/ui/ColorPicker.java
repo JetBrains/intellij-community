@@ -173,20 +173,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private JTextField createColorField(boolean hex) {
-    final NumberDocument doc = new NumberDocument(hex);
-    int lafFix = UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderDarcula() ? 1 : 0;
-    UIManager.LookAndFeelInfo info = LafManager.getInstance().getCurrentLookAndFeel();
-    if (info != null && (info.getName().startsWith("IDEA") || info.getName().equals("Windows Classic")))
-      lafFix = 1;
-    final JTextField field;
-    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-      field = new JTextField("");
-      field.setDocument(doc);
-      field.setPreferredSize(new Dimension(hex ? 60 : 40, 26));
-    } else {
-      field = new JTextField(doc, "", (hex ? 5 : 2) + lafFix);
-      field.setSize(50, -1);
-    }
+    NumberDocument doc = new NumberDocument(hex);
+    JTextField field = new JTextField("");
+    field.setDocument(doc);
+
     doc.setSource(field);
     field.getDocument().addDocumentListener(this);
     field.addFocusListener(new FocusAdapter() {
@@ -696,6 +686,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     void setSource(JTextField field) {
       mySrc = field;
     }
+    @Override
     public void insertString(int offs, String str, AttributeSet a) throws BadLocationException {
       final boolean rgb = isRGBMode();
       char[] source = str.toCharArray();
@@ -904,7 +895,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     private final boolean myEnableOpacity;
     private final boolean myOpacityInPercent;
 
-    public ColorPickerDialog(@NotNull Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
+    ColorPickerDialog(@NotNull Component parent, String caption, @Nullable Color preselectedColor, boolean enableOpacity,
                              List<ColorPickerListener> listeners, boolean opacityInPercent) {
       super(parent, true);
       myListeners = listeners;
@@ -1081,6 +1072,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       return false;
     }
 
+    @Override
     @NotNull
     @SuppressWarnings("UseJBColor")
     protected Dialog getOrCreatePickerDialog() {
@@ -1123,7 +1115,6 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
         myPipetteImage = UIUtil.createImage(pickerDialog, AllIcons.Ide.Pipette.getIconWidth(), AllIcons.Ide.Pipette.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
         Graphics2D graphics = myPipetteImage.createGraphics();
-        //noinspection ConstantConditions
         AllIcons.Ide.Pipette.paintIcon(null, graphics, 0, 0);
         graphics.dispose();
 

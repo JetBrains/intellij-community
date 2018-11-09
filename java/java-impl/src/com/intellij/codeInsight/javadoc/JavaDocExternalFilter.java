@@ -98,13 +98,9 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
       Url url = Urls.parseFromIdea(docURL);
       VirtualFile file = url == null ? null : WebServerPathToFileManager.getInstance(myProject).findVirtualFile(url.getPath().substring(projectPath.length()));
       if (file != null) {
-        InputStreamReader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
         StringBuilder result = new StringBuilder();
-        try {
+        try (InputStreamReader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8)) {
           doBuildFromStream(docURL, reader, result);
-        }
-        finally {
-          reader.close();
         }
 
         externalDoc = correctDocText(docURL, result);

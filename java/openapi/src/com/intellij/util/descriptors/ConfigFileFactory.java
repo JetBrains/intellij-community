@@ -29,7 +29,7 @@ public abstract class ConfigFileFactory {
     return ServiceManager.getService(ConfigFileFactory.class);
   }
 
-  public abstract ConfigFileMetaDataProvider createMetaDataProvider(ConfigFileMetaData... metaDatas);
+  public abstract ConfigFileMetaDataProvider createMetaDataProvider(ConfigFileMetaData... metaData);
 
   public abstract ConfigFileInfoSet createConfigFileInfoSet(ConfigFileMetaDataProvider metaDataProvider);
 

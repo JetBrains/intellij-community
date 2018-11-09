@@ -66,6 +66,7 @@ public class XPath2RangeExpressionImpl extends XPath2ElementImpl implements XPat
     return XPath2SequenceType.create(XPath2Type.INTEGER, XPath2SequenceType.Cardinality.ZERO_OR_MORE);
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2RangeExpression(this);
   }

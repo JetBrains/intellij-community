@@ -1,18 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -41,6 +31,8 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   private boolean myFocused;
   private boolean myFocusedCalculated;
 
+  protected boolean myUsedCustomSpeedSearchHighlighting = false;
+
   protected JTree myTree;
 
   private boolean myOpaque = true;
@@ -67,7 +59,10 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     else if (WideSelectionTreeUI.isWideSelection(tree)) {
       setPaintFocusBorder(false);
       if (selected) {
-        setBackground(hasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
+        setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
+      }
+      else {
+        setBackground(null);
       }
     }
     else if (selected) {
@@ -92,11 +87,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       setIcon(null);
     }
 
-    if (UIUtil.isUnderGTKLookAndFeel()){
-      super.setOpaque(false);  // avoid nasty background
-      super.setIconOpaque(false);
-    }
-    else if (WideSelectionTreeUI.isWideSelection(tree)) {
+    if (WideSelectionTreeUI.isWideSelection(tree)) {
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
@@ -105,6 +96,9 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     }
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
+    if (!myUsedCustomSpeedSearchHighlighting && !AbstractTreeUi.isLoadingNode(value)) {
+      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
+    }
     return this;
   }
 
@@ -147,11 +141,8 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    */
   @Override
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
-    if (mySelected && isFocused()) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
-    }
-    else if (mySelected && UIUtil.isUnderAquaBasedLookAndFeel()) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeForeground()), isMainText);
+    if (mySelected) {
+      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground(isFocused())), isMainText);
     }
     else {
       super.append(fragment, attributes, isMainText);

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -53,7 +54,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
   protected List<PsiClass> getTargetClasses(PsiElement element) {
     final List<PsiClass> targetClasses = new ArrayList<>();
     for (PsiClass psiClass : super.getTargetClasses(element)) {
-      if (psiClass.getManager().isInProject(psiClass) && 
+      if (ScratchFileService.isInProjectOrScratch(psiClass) &&
           (!psiClass.isInterface() && !psiClass.isAnnotationType() || shouldCreateStaticMember(myReferenceExpression, psiClass))) {
         targetClasses.add(psiClass);
       }
@@ -63,7 +64,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
   @Override
   protected boolean canBeTargetClass(PsiClass psiClass) {
-    return psiClass.getManager().isInProject(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
+    return ScratchFileService.isInProjectOrScratch(psiClass) && !psiClass.isInterface() && !psiClass.isAnnotationType();
   }
 
   @Override
@@ -124,7 +125,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
     startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
         final int offset = newEditor.getCaretModel().getOffset();
         final PsiField psiField = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiField.class, false);

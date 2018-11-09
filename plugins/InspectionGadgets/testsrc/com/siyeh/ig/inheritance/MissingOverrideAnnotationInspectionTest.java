@@ -16,7 +16,12 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MissingOverrideAnnotationInspectionTest extends LightInspectionTestCase {
@@ -35,6 +40,21 @@ public class MissingOverrideAnnotationInspectionTest extends LightInspectionTest
 
   public void testHierarchy2() {
     doTest();
+  }
+  
+  public void testNotAvailableMethodInLanguageLevel7() {
+    doTest();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return new ProjectDescriptor(LanguageLevel.JDK_1_7) {
+      @Override
+      public Sdk getSdk() {
+        return IdeaTestUtil.getMockJdk18();
+      }
+    };
   }
 
   @Nullable

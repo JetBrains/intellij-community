@@ -104,7 +104,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     // show check mark for active and visible project frame
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
@@ -114,7 +114,7 @@ public class ProjectWindowAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public void setSelected(@Nullable AnActionEvent e, boolean selected) {
+  public void setSelected(@NotNull AnActionEvent e, boolean selected) {
 
     if (e == null) return;
     boolean macMainMenu = SystemInfo.isMac && ActionPlaces.isMainMenuOrActionSearch(e.getPlace());

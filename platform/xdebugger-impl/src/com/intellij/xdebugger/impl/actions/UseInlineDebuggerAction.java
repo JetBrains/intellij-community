@@ -20,18 +20,19 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class UseInlineDebuggerAction extends ToggleAction implements DumbAware {
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isShowValuesInline();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().setShowValuesInline(state);
     XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
   }

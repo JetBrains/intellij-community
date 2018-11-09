@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.indexing;
 
@@ -30,15 +16,13 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
@@ -56,7 +40,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
   }
 
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
-  private final TIntObjectHashMap<Collection<Key>> myInMemoryKeys = new TIntObjectHashMap<>();
+  private final TIntObjectHashMap<Map<Key, Value>> myInMemoryKeysAndValues = new TIntObjectHashMap<>();
   private final SnapshotInputMappings<Key, Value, Input> mySnapshotInputMappings;
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
@@ -94,7 +78,8 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       final SnapshotInputMappings.Snapshot<Key, Value> snapshot = mySnapshotInputMappings.readPersistentDataOrMap(content);
       data = snapshot.getData();
       hashId = snapshot.getHashId();
-    } else {
+    }
+    else {
       data = mapInput(content);
       hashId = 0;
     }
@@ -103,10 +88,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
         return new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
       }
       if (myInMemoryMode.get()) {
-        synchronized (myInMemoryKeys) {
-          Collection<Key> keys = myInMemoryKeys.get(inputId);
-          if (keys != null) {
-            return new CollectionInputDataDiffBuilder<>(inputId, keys);
+        synchronized (myInMemoryKeysAndValues) {
+          Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
+          if (keysAndValues != null) {
+            return new MapInputDataDiffBuilder<>(inputId, keysAndValues);
           }
         }
 
@@ -117,8 +102,8 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       return getKeysDiffBuilder(inputId);
     }, () -> {
       if (myInMemoryMode.get()) {
-        synchronized (myInMemoryKeys) {
-          myInMemoryKeys.put(inputId, data.keySet());
+        synchronized (myInMemoryKeysAndValues) {
+          myInMemoryKeysAndValues.put(inputId, data);
         }
       } else {
         if (mySnapshotInputMappings != null ) {
@@ -145,33 +130,68 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     return IndexingStamp.isFileIndexedStateCurrent(fileId, (ID<?, ?>)myIndexId);
   }
 
+  @Override
   public void removeTransientDataForFile(int inputId) {
     Lock lock = getWriteLock();
     lock.lock();
     try {
       Collection<Key> keyCollection;
-      synchronized (myInMemoryKeys) {
-        keyCollection = myInMemoryKeys.remove(inputId);
+      synchronized (myInMemoryKeysAndValues) {
+        Map<Key, Value> keyValueMap = myInMemoryKeysAndValues.remove(inputId);
+        keyCollection = keyValueMap != null ? keyValueMap.keySet() : null;
       }
-      if (keyCollection != null && !keyCollection.isEmpty()) {
+
+      if (keyCollection == null) return;
+
+      try {
         removeTransientDataForKeys(inputId, keyCollection);
+
+        InputDataDiffBuilder<Key, Value> builder;
+        if (mySnapshotInputMappings != null) {
+          builder =  new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
+        } else {
+          builder = getKeysDiffBuilder(inputId);
+        }
+
+        if (builder instanceof CollectionInputDataDiffBuilder<?, ?>) {
+          Collection<Key> keyCollectionFromDisk = ((CollectionInputDataDiffBuilder<Key, Value>)builder).getSeq();
+          if (keyCollectionFromDisk != null) {
+            removeTransientDataForKeys(inputId, keyCollectionFromDisk);
+          }
+        } else {
+          Set<Key> diskKeySet = new THashSet<>();
+
+          builder.differentiate(
+            Collections.emptyMap(),
+            (key, value, inputId1) -> {
+            },
+            (key, value, inputId1) -> {},
+            (key, inputId1) -> {
+              diskKeySet.add(key);
+            }
+          );
+          removeTransientDataForKeys(inputId, diskKeySet);
+        }
+      } catch (Throwable throwable) {
+        throw new RuntimeException(throwable);
       }
-      
     } finally {
       lock.unlock();
     }
   }
 
-  public void removeTransientDataForKeys(int inputId, Collection<Key> keys) {
+  public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys) {
     MemoryIndexStorage memoryIndexStorage = (MemoryIndexStorage)getStorage();
-    for(Key key:keys) memoryIndexStorage.clearMemoryMapForId(key, inputId);
+    for (Key key : keys) {
+      memoryIndexStorage.clearMemoryMapForId(key, inputId);
+    }
   }
 
   @Override
-  public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, IdFilter idFilter) throws StorageException {
+  public boolean processAllKeys(@NotNull Processor<Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
     final Lock lock = getReadLock();
+    lock.lock();
     try {
-      lock.lock();
       return ((VfsAwareIndexStorage<Key, Value>)myStorage).processKeys(processor, scope, idFilter);
     }
     finally {
@@ -296,8 +316,8 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
         @Override
         public void memoryStorageCleared() {
-          synchronized (myInMemoryKeys) {
-            myInMemoryKeys.clear();
+          synchronized (myInMemoryKeysAndValues) {
+            myInMemoryKeysAndValues.clear();
           }
         }
       });

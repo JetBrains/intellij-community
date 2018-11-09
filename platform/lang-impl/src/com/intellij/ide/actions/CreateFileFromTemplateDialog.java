@@ -136,10 +136,10 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       private final CreateFileFromTemplateDialog myDialog;
       private final Project myProject;
 
-      public BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
-        myDialog = dialog;
-        myProject = project;
-      }
+     BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
+      myDialog = dialog;
+      myProject = project;
+    }
 
       @Override
       public Builder setTitle(String title) {

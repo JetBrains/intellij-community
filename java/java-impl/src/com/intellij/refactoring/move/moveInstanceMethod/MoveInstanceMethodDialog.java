@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.*;
@@ -27,16 +12,15 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ObjectUtils;
-import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -45,7 +29,7 @@ import java.util.Set;
  * @author ven
  */
 public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
-  @NonNls private static final String KEY = "#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialog";
+  private static final String KEY = "#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodDialog";
 
   //Map from classes referenced by 'this' to sets of referenced members
   private Map<PsiClass, Set<PsiMember>> myThisClassesMap;
@@ -58,10 +42,12 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     init();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return KEY;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel mainPanel = new JPanel(new GridBagLayout());
     final TitledSeparator separator = new TitledSeparator();
@@ -70,6 +56,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
 
     myList = createTargetVariableChooser();
     myList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         validateTextFields(e.getFirstIndex());
       }
@@ -137,6 +124,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     return panel;
   }
 
+  @Override
   protected void doAction() {
     Map<PsiClass, String> parameterNames = new LinkedHashMap<>();
     for (final PsiClass aClass : myThisClassesMap.keySet()) {
@@ -175,8 +163,9 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
     }
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.MOVE_INSTANCE_METHOD);
+  @Override
+  protected String getHelpId() {
+    return HelpID.MOVE_INSTANCE_METHOD;
   }
 
   @Override

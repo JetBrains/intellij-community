@@ -37,7 +37,7 @@ public class TextRangeTest {
     assertEquals("", new TextRange(2, 2).substring("abcd"));
   }
 
-  @Test(expected = AssertionError.class)
+  @Test(expected = IllegalArgumentException.class)
   public void cutOut() {
     assertEquals(new TextRange(1, 5), new TextRange(1, 5).cutOut(new TextRange(0, 4)));
     assertEquals(new TextRange(2, 5), new TextRange(1, 5).cutOut(new TextRange(1, 4)));

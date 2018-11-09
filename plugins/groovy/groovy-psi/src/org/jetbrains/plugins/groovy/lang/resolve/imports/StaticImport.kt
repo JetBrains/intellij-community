@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.imports
 
+import com.intellij.openapi.util.text.StringUtil.getQualifiedName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -36,6 +37,10 @@ data class StaticImport constructor(
   constructor(classFqn: String, memberName: String) : this(classFqn, memberName, memberName)
 
   override val isAliased: Boolean = memberName != name
+
+  override val shortName: String get() = memberName
+
+  override val fullyQualifiedName: String get() = getQualifiedName(classFqn, memberName)
 
   override fun processDeclarations(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement, file: GroovyFileBase): Boolean {
     if (processor.isAnnotationResolve()) return true

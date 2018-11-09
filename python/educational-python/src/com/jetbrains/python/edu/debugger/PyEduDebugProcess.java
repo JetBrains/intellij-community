@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.edu.debugger;
 
 import com.google.common.collect.Collections2;
@@ -28,7 +29,7 @@ class PyEduDebugProcess extends PyDebugProcess {
   private final String myScriptName;
   private final int myLine;
 
-  public PyEduDebugProcess(@NotNull XDebugSession session,
+  PyEduDebugProcess(@NotNull XDebugSession session,
                            @NotNull ServerSocket serverSocket,
                            @NotNull ExecutionConsole executionConsole,
                            @Nullable ProcessHandler processHandler, boolean multiProcess,
@@ -84,7 +85,7 @@ class PyEduDebugProcess extends PyDebugProcess {
         Content eduConsole =
           ui.createContent("EduConsole", view.getComponent(),
                            XDebuggerBundle.message("debugger.session.tab.console.content.name"),
-                           AllIcons.Debugger.ToolConsole, view.getPreferredFocusableComponent());
+                           AllIcons.Debugger.Console, view.getPreferredFocusableComponent());
         eduConsole.setCloseable(false);
         ui.addContent(eduConsole, 0, PlaceInGrid.right, false);
         return eduConsole;

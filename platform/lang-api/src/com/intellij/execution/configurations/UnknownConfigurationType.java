@@ -4,42 +4,41 @@ package com.intellij.execution.configurations;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Contract;
+import com.intellij.openapi.util.NotNullLazyValue;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
-public final class UnknownConfigurationType extends ConfigurationTypeBase {
+public final class UnknownConfigurationType extends SimpleConfigurationType {
   @NotNull
-  public static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
+  private static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
+
+  private static final String NAME = "Unknown";
 
   private UnknownConfigurationType() {
-    this(AllIcons.RunConfigurations.Unknown);
+    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"),
+          NotNullLazyValue.createValue(() -> AllIcons.Actions.Help));
   }
-
-  private UnknownConfigurationType(@NotNull Icon icon) {
-    super(NAME, NAME, ExecutionBundle.message("run.configuration.unknown.description"), icon);
-
-    addFactory(new ConfigurationFactory(this) {
-      @NotNull
-      @Override
-      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
-        return new UnknownRunConfiguration(this, project);
-      }
-
-      @Contract(pure = true)
-      @Override
-      public boolean canConfigurationBeSingleton() {
-        return false;
-      }
-    });
-  }
-
-  public static final String NAME = "Unknown";
 
   @NotNull
-  public static ConfigurationFactory getFactory() {
-    return INSTANCE.getConfigurationFactories()[0];
+  public static UnknownConfigurationType getInstance() {
+    return INSTANCE;
+  }
+
+  @NotNull
+  @Override
+  public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
+    return new UnknownRunConfiguration(this, project);
+  }
+
+  @NotNull
+  @Override
+  public RunConfigurationSingletonPolicy getSingletonPolicy() {
+    // in any case you cannot run UnknownConfigurationType
+    return RunConfigurationSingletonPolicy.SINGLE_INSTANCE_ONLY;
+  }
+
+  @Override
+  public String getHelpTopic() {
+    return "reference.dialogs.rundebug.Unknown";
   }
 
   @Override

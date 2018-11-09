@@ -11,11 +11,13 @@ import java.util.Set;
 
 public class DisabledPluginsUsagesCollector extends ApplicationUsagesCollector {
 
+  @Override
   @NotNull
   public String getGroupId() {
     return "statistics.plugins.disabled";
   }
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getUsages() {
     return ContainerUtil.map2Set(PluginManagerCore.getDisabledPlugins(), descriptor -> new UsageDescriptor(descriptor, 1));

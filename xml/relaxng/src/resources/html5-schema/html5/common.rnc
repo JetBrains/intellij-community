@@ -409,6 +409,10 @@ common.attrs.other =
 	common.data.content-security-policy =
 		w:content-security-policy
 
+## Feature Policy
+	common.data.feature-policy =
+		string
+
 ## List of sandbox keywords
 	common.data.sandbox-allow-list =
 		w:string "" | w:sandbox-allow-list
@@ -545,7 +549,6 @@ common.attrs.aria.implicit.table |= ( notAllowed )
 common.attrs.aria.implicit.textbox = ( notAllowed )
 common.attrs.aria.implicit.toolbar = ( notAllowed )
 common.attrs.aria.prop.readonly = ( notAllowed )
-common.attrs.aria.landmark.application = ( notAllowed )
 common.attrs.aria.landmark.banner = ( notAllowed )
 common.attrs.aria.landmark.complementary = ( notAllowed )
 common.attrs.aria.landmark.contentinfo = ( notAllowed )

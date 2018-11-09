@@ -17,19 +17,26 @@ package com.intellij.util.containers;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.RunFirst;
+import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ref.GCUtil;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-import static org.junit.Assert.*;
-
 // tests various ContainerUtil.create* and ContainerUtil.new* collections for being really weak/soft/concurrent
-public class ContainerUtilCollectionsTest {
+@RunFirst
+public class ContainerUtilCollectionsTest extends Assert {
+  @Rule
+  public TestRule watcher = TestLoggerFactory.createTestWatcher();
+
   private static final long TIMEOUT = 5 * 60 * 1000;  // 5 minutes
 
   private static final TObjectHashingStrategy<String> IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY = new TObjectHashingStrategy<String>() {
@@ -166,7 +173,6 @@ public class ContainerUtilCollectionsTest {
       assertNull(map.get(strong));
 
       GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
@@ -192,7 +198,6 @@ public class ContainerUtilCollectionsTest {
       assertEquals(0, map.get(strong));
 
       GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
@@ -218,7 +223,6 @@ public class ContainerUtilCollectionsTest {
       assertNull(map.get(RANDOM_INT));
 
       GCUtil.tryGcSoftlyReachableObjects();
-      System.gc();
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
@@ -411,7 +415,6 @@ public class ContainerUtilCollectionsTest {
     checkValueTossedEventually(map);
   }
 
-  @SuppressWarnings("FieldCanBeLocal")
   private volatile Object strong;
 
   @Test
@@ -568,5 +571,79 @@ public class ContainerUtilCollectionsTest {
   public void testIntKeyWeakValueMapTossed() {
     IntObjectMap<Object> map = ContainerUtil.createIntKeyWeakValueMap();
     checkValueTossedEventually(map);
+  }
+
+  @Test
+  public void testEntrySet() {
+    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectMap());
+    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectSoftValueMap());
+    checkEntrySetIterator(ContainerUtil.createConcurrentIntObjectWeakValueMap());
+    checkEntrySetIterator(ContainerUtil.createIntKeyWeakValueMap());
+  }
+
+  @Test
+  public void testEntrySetTossesValue() {
+    checkEntrySetIteratorTossesValue(ContainerUtil.createConcurrentIntObjectSoftValueMap());
+    checkEntrySetIteratorTossesValue(ContainerUtil.createConcurrentIntObjectWeakValueMap());
+    checkEntrySetIteratorTossesValue(ContainerUtil.createIntKeyWeakValueMap());
+  }
+
+  private void checkEntrySetIteratorTossesValue(IntObjectMap<Object> map) {
+    map.put(1, this);
+    map.put(2, this);
+    map.put(3, strong = new Object());
+    map.put(4, this);
+
+    Iterator<IntObjectMap.Entry<Object>> iterator = map.entrySet().iterator();
+    assertTrue(iterator.hasNext());
+    strong = null;
+    for (int i=0; i<10; i++) {
+      if (map.get(3)==null) break;
+      GCUtil.tryGcSoftlyReachableObjects();
+    }
+    if (map.get(3) == null) {
+      List<Integer> keys = ContainerUtil.map(ContainerUtil.collect(iterator), e -> e.getKey());
+      assertFalse(keys.contains(3));
+    }
+    else {
+      // bad luck - iterator has started with 3
+      assertEquals(3, iterator.next().getKey());
+    }
+  }
+
+  private void checkEntrySetIterator(IntObjectMap<Object> map) {
+    map.clear();
+    int K1 = 1;
+    map.put(K1, this);
+    int K2 = 2;
+    map.put(K2, map);
+
+    assertEquals(2, ContainerUtil.collect(map.entrySet().iterator()).size());
+    assertEquals(2, ContainerUtil.collect(map.entrySet().iterator()).size());
+
+    Iterator<IntObjectMap.Entry<Object>> iterator = map.entrySet().iterator();
+    assertTrue(iterator.hasNext());
+    IntObjectMap.Entry<Object> next = iterator.next();
+    int key = next.getKey();
+    assertTrue(key==K1 || key==K2);
+    iterator.remove();
+
+    assertEquals(1, ContainerUtil.collect(map.entrySet().iterator()).size());
+    Iterator<IntObjectMap.Entry<Object>> it2 = map.entrySet().iterator();
+    int otherKey = K1 + K2 - key;
+    assertEquals(otherKey, it2.next().getKey());
+    assertFalse(it2.hasNext());
+    try {
+      it2.next();
+      fail("must throw");
+    }
+    catch (NoSuchElementException ignored) {
+    }
+
+    assertTrue(iterator.hasNext());
+    assertEquals(otherKey, iterator.next().getKey());
+    iterator.remove();
+    UsefulTestCase.assertEmpty(ContainerUtil.collect(map.entrySet().iterator()));
+    assertTrue(map.isEmpty());
   }
 }

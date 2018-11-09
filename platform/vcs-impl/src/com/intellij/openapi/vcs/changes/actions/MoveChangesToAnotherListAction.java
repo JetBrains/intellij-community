@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
@@ -52,9 +37,10 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   public MoveChangesToAnotherListAction() {
     super(ActionsBundle.actionText(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST),
           ActionsBundle.actionDescription(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST),
-          AllIcons.Actions.MoveToAnotherChangelist);
+          null);
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     boolean isEnabled = isEnabled(e);
 
@@ -125,6 +111,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     }
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     List<Change> changesList = ContainerUtil.newArrayList();
@@ -196,7 +183,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   @Nullable
-  public static ChangeList guessPreferredList(@NotNull List<LocalChangeList> lists) {
+  public static ChangeList guessPreferredList(@NotNull List<? extends LocalChangeList> lists) {
     LocalChangeList activeChangeList = ContainerUtil.find(lists, LocalChangeList::isDefault);
     if (activeChangeList != null) return activeChangeList;
 

@@ -1,4 +1,4 @@
-// "Merge else if statement" "false"
+// "Merge 'else if' statement" "false"
 
 import java.util.Collection;
 import java.util.List;

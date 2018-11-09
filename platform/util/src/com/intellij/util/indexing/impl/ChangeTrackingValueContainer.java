@@ -71,10 +71,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
   // Resets diff of index value for particular fileId
   public void dropAssociatedValue(int inputId) {
-    ValueContainerImpl<Value> merged = myMerged;
-    if (merged != null) {
-      merged.removeAssociatedValue(inputId);
-    }
+    myMerged = null;
 
     if (myAdded != null) myAdded.removeAssociatedValue(inputId);
     if (myRemoved != null) myRemoved.remove(inputId); // todo removal from list
@@ -165,7 +162,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   }
   
   @Override
-  public void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
+  public void saveTo(DataOutput out, DataExternalizer<? super Value> externalizer) throws IOException {
     if (needsCompacting()) {
       getMergedData().saveTo(out, externalizer);
     } else {

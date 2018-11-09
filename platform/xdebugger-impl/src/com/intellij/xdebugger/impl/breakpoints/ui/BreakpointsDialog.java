@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
@@ -50,6 +36,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,8 +44,8 @@ import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class BreakpointsDialog extends DialogWrapper {
   @NotNull private final Project myProject;
@@ -190,7 +177,7 @@ public class BreakpointsDialog extends DialogWrapper {
   private class ToggleBreakpointGroupingRuleEnabledAction extends ToggleActionButton {
     private final XBreakpointGroupingRule myRule;
 
-    public ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
+    ToggleBreakpointGroupingRuleEnabledAction(XBreakpointGroupingRule rule) {
       super(rule.getPresentableName(), rule.getIcon());
       myRule = rule;
       getTemplatePresentation().setText(rule.getPresentableName());
@@ -292,7 +279,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
     new AnAction("BreakpointDialog.GoToSource") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
         close(OK_EXIT_CODE);
       }
@@ -300,7 +287,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
     new AnAction("BreakpointDialog.ShowSource") {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(true);
         close(OK_EXIT_CODE);
       }
@@ -329,7 +316,7 @@ public class BreakpointsDialog extends DialogWrapper {
       }).
       setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           for (BreakpointItem item : myTreeController.getSelectedBreakpoints(true)) {
             if (item.allowedToRemove()) {
               return true;
@@ -397,7 +384,7 @@ public class BreakpointsDialog extends DialogWrapper {
     saveTreeState(dialogState);
     final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, rule -> !rule.isAlwaysEnabled());
 
-    dialogState.setSelectedGroupingRules(new HashSet<>(ContainerUtil.map(rulesEnabled, rule -> rule.getId())));
+    dialogState.setSelectedGroupingRules(new THashSet<>(ContainerUtil.map(rulesEnabled, rule -> rule.getId())));
     getBreakpointManager().setBreakpointsDialogSettings(dialogState);
   }
 
@@ -435,14 +422,14 @@ public class BreakpointsDialog extends DialogWrapper {
   private class AddXBreakpointAction extends AnAction implements DumbAware {
     private final XBreakpointType<?, ?> myType;
 
-    public AddXBreakpointAction(XBreakpointType<?, ?> type) {
+    AddXBreakpointAction(XBreakpointType<?, ?> type) {
       myType = type;
       getTemplatePresentation().setIcon(type.getEnabledIcon());
       getTemplatePresentation().setText(type.getTitle());
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       saveCurrentItem();
       XBreakpoint<?> breakpoint = myType.addBreakpoint(myProject, null);
       if (breakpoint != null) {
@@ -451,7 +438,13 @@ public class BreakpointsDialog extends DialogWrapper {
     }
   }
 
-  private boolean selectBreakpoint(Object breakpoint) {
+  @Override
+  public void toFront() {
+    getWindow().setBounds(getWindow().getBounds()); // will force fit to screen
+    super.toFront();
+  }
+
+  public boolean selectBreakpoint(Object breakpoint) {
     if (breakpoint != null) {
       for (BreakpointItem item : myBreakpointItems) {
         if (item.getBreakpoint() == breakpoint) {
@@ -480,10 +473,10 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       String groupName = myGroup;
       if (myNewGroup) {
-        groupName = Messages.showInputDialog("New group name", "New Group", AllIcons.Nodes.NewFolder);
+        groupName = Messages.showInputDialog("New group name", "New Group", AllIcons.Nodes.Folder);
         if (groupName == null) {
           return;
         }
@@ -507,7 +500,7 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       getBreakpointManager().setDefaultGroup(myName);
       myTreeController.rebuildTree(myBreakpointItems);
     }
@@ -522,7 +515,7 @@ public class BreakpointsDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       String description = Messages.showInputDialog("", "Edit Description", null, myBreakpoint.getUserDescription(), null);
       if (description == null) {
         return;

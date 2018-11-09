@@ -28,6 +28,7 @@ public class ThreadGroupData extends DescriptorData<ThreadGroupDescriptorImpl>{
     myThreadGroup = threadGroup;
   }
 
+  @Override
   protected ThreadGroupDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new ThreadGroupDescriptorImpl(myThreadGroup);
   }
@@ -42,6 +43,7 @@ public class ThreadGroupData extends DescriptorData<ThreadGroupDescriptorImpl>{
     return myThreadGroup.hashCode();
   }
 
+  @Override
   public DisplayKey<ThreadGroupDescriptorImpl> getDisplayKey() {
     return new SimpleDisplayKey<>(myThreadGroup);
   }

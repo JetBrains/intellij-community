@@ -15,12 +15,18 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.PsiCapturedWildcardType;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiWildcardType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * @author peter
@@ -28,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public class DfaPsiType {
   private final PsiType myPsiType;
   private final DfaValueFactory myFactory;
+  private List<DfaPsiType> mySuperTypes;
   private final int myID;
 
   DfaPsiType(int id, @NotNull PsiType psiType, DfaValueFactory factory) {
@@ -39,6 +46,25 @@ public class DfaPsiType {
   @NotNull
   public PsiType getPsiType() {
     return myPsiType;
+  }
+
+  /**
+   * @return stream of all supertypes of given type excluding self
+   */
+  public Stream<DfaPsiType> superTypes() {
+    if (mySuperTypes == null) {
+      List<DfaPsiType> superTypes = new ArrayList<>();
+      InheritanceUtil.processSuperTypes(getPsiType(), false, t -> superTypes.add(myFactory.createDfaType(t)));
+      mySuperTypes = superTypes;
+    }
+    return mySuperTypes.stream();
+  }
+
+  @NotNull
+  public TypeConstraint asConstraint() {
+    TypeConstraint constraint = TypeConstraint.empty().withInstanceofValue(this);
+    assert constraint != null;
+    return constraint;
   }
 
   public boolean isAssignableFrom(DfaPsiType other) {
@@ -68,20 +94,52 @@ public class DfaPsiType {
 
   @NotNull
   public static PsiType normalizeType(@NotNull PsiType psiType) {
-    int dimensions = psiType.getArrayDimensions();
-    psiType = psiType.getDeepComponentType();
-    if (psiType instanceof PsiCapturedWildcardType) {
-      psiType = ((PsiCapturedWildcardType)psiType).getUpperBound();
+    if (psiType instanceof PsiArrayType) {
+      int dimensions = psiType.getArrayDimensions();
+      psiType = psiType.getDeepComponentType();
+      psiType = normalizeType(psiType);
+      while (dimensions-- > 0) {
+        psiType = psiType.createArrayType();
+      }
+      return psiType;
     }
     if (psiType instanceof PsiWildcardType) {
-      psiType = ((PsiWildcardType)psiType).getExtendsBound();
+      return normalizeType(((PsiWildcardType)psiType).getExtendsBound());
+    }
+    if (psiType instanceof PsiCapturedWildcardType) {
+      return normalizeType(((PsiCapturedWildcardType)psiType).getUpperBound());
+    }
+    if (psiType instanceof PsiIntersectionType) {
+      PsiType[] types =
+        StreamEx.of(((PsiIntersectionType)psiType).getConjuncts()).map(DfaPsiType::normalizeType).toArray(PsiType.EMPTY_ARRAY);
+      if (types.length > 0) {
+        return PsiIntersectionType.createIntersection(true, types);
+      }
     }
     if (psiType instanceof PsiClassType) {
-      psiType = ((PsiClassType)psiType).rawType();
-    }
-    while (dimensions-- > 0) {
-      psiType = psiType.createArrayType();
+      return normalizeClassType((PsiClassType)psiType, new HashSet<>());
     }
     return psiType;
+  }
+
+  @NotNull
+  private static PsiType normalizeClassType(@NotNull PsiClassType psiType, Set<PsiClass> processed) {
+    PsiClass aClass = psiType.resolve();
+    if (aClass instanceof PsiTypeParameter) {
+      PsiClassType[] types = aClass.getExtendsListTypes();
+      List<PsiType> result = new ArrayList<>();
+      for (PsiClassType type : types) {
+        PsiClass resolved = type.resolve();
+        if (resolved != null && processed.add(resolved)) {
+          PsiClassType classType = JavaPsiFacade.getElementFactory(aClass.getProject()).createType(resolved);
+          result.add(normalizeClassType(classType, processed));
+        }
+      }
+      if (!result.isEmpty()) {
+        return PsiIntersectionType.createIntersection(true, result.toArray(PsiType.EMPTY_ARRAY));
+      }
+      return PsiType.getJavaLangObject(aClass.getManager(), aClass.getResolveScope());
+    }
+    return psiType.rawType();
   }
 }

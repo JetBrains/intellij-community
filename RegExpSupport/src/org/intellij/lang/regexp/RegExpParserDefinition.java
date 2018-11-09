@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 
 public class RegExpParserDefinition implements ParserDefinition {
+    // whitespace to make handling char ranges simple, consider for example the following regex: [\Q[]\E-z]
     private static final TokenSet WHITE_SPACE_TOKENS = TokenSet.create(RegExpTT.QUOTE_BEGIN, RegExpTT.QUOTE_END, TokenType.WHITE_SPACE);
     private static final TokenSet COMMENT_TOKENS = TokenSet.create(RegExpTT.COMMENT);
     private static final EnumSet<RegExpCapability> CAPABILITIES = EnumSet.of(RegExpCapability.NESTED_CHARACTER_CLASSES,
@@ -145,7 +146,7 @@ public class RegExpParserDefinition implements ParserDefinition {
     }
 
     @Override
-    public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
         return SpaceRequirements.MUST_NOT;
     }
 }

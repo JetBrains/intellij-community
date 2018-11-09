@@ -101,4 +101,16 @@ public class Utils {
   public static String formatDuration(long duration) {
     return StringUtil.formatDuration(duration);
   }
+
+  public static int suggestForkedCompilerHeapSize() {
+    //final JpsProject project = context.getProjectDescriptor().getProject();
+    //final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
+    //final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
+    //return options.MAXIMUM_HEAP_SIZE;
+    final int maxMbytes = (int)(Runtime.getRuntime().maxMemory() / 1048576L);
+    if (maxMbytes < 0) {
+      return -1; // in case of int overflow, return -1 to let VM choose the heap size
+    }
+    return Math.max(maxMbytes * 75 / 100, 256); // minimum 256 Mb, maximum 75% from JPS max heap size
+  }
 }

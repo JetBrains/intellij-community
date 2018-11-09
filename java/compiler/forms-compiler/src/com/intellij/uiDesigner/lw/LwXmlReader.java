@@ -138,7 +138,6 @@ public final class LwXmlReader {
     final String str = getRequiredString(element, attributeName);
     try {
       final Method method = valueClass.getMethod("valueOf", new Class[]{String.class});
-      //noinspection unchecked
       return method.invoke(null, new Object[]{str});
     }
     catch (NumberFormatException e) {

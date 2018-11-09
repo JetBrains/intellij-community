@@ -36,6 +36,7 @@ public class RestoreDirectoriesConfirmationDialog extends OptionsDialog{
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myIconLabel.setText("");
     myIconLabel.setIcon(Messages.getInformationIcon());
@@ -43,14 +44,17 @@ public class RestoreDirectoriesConfirmationDialog extends OptionsDialog{
   }
 
 
+  @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     CvsApplicationLevelConfiguration.getInstance().SHOW_RESTORE_DIRECTORIES_CONFIRMATION = value;
   }
 
+  @Override
   protected boolean isToBeShown() {
     return CvsApplicationLevelConfiguration.getInstance().SHOW_RESTORE_DIRECTORIES_CONFIRMATION;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     Action okAction = getOKAction();
@@ -58,6 +62,7 @@ public class RestoreDirectoriesConfirmationDialog extends OptionsDialog{
     return new Action[]{okAction};
   }
 
+  @Override
   protected boolean shouldSaveOptionsOnCancel() {
     return false;
   }

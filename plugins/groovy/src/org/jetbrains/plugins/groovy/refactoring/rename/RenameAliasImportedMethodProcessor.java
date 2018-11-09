@@ -181,7 +181,7 @@ public class RenameAliasImportedMethodProcessor extends RenameJavaMethodProcesso
     private final String myName;
     private final String myBaseName;
 
-    public FieldNameCollisionInfo(GrField field, PsiMethod baseMethod) {
+    FieldNameCollisionInfo(GrField field, PsiMethod baseMethod) {
       super(field, field);
       myName = field.getName();
       myBaseName = baseMethod.getName();

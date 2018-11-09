@@ -52,7 +52,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
   }
 
   protected boolean checkFile(@NotNull PsiFile file) {
-    return file.getManager().isInProject(file) || ScratchFileService.isInScratchRoot(file.getVirtualFile());
+    return ScratchFileService.isInProjectOrScratch(file);
   }
 
   /**

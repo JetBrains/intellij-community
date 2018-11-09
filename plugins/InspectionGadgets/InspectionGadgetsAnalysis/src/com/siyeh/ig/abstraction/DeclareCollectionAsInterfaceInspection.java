@@ -92,7 +92,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
 
     private final String typeString;
 
-    DeclareCollectionAsInterfaceFix(String typeString) {
+    DeclareCollectionAsInterfaceFix(@NotNull String typeString) {
       this.typeString = typeString;
     }
 
@@ -215,17 +215,9 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
       final List<PsiClass> weaklingList = new ArrayList<>(weaklings);
       final PsiClass objectClass = javaLangObject.resolve();
       weaklingList.remove(objectClass);
-      if (weaklingList.isEmpty()) {
-        final String typeText = type.getCanonicalText();
-        final String interfaceText = CollectionUtils.getInterfaceForClass(typeText);
-        if (interfaceText == null) {
-          return;
-        }
-        registerError(nameElement, interfaceText);
-      }
-      else {
-        final PsiClass weakling = weaklingList.get(0);
-        final String qualifiedName = weakling.getQualifiedName();
+      String qualifiedName = weaklingList.isEmpty() ? CollectionUtils.getInterfaceForClass(type.getCanonicalText())
+                                                    : weaklingList.get(0).getQualifiedName();
+      if (qualifiedName != null) {
         registerError(nameElement, qualifiedName);
       }
     }

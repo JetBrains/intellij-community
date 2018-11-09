@@ -37,7 +37,7 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
 
   @NotNull
   @Override
-  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(List<PsiMethod> methodsToImport,
+  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(List<? extends PsiMethod> methodsToImport,
                                                                              @NotNull Project project,
                                                                              Editor editor) {
     return new StaticImportMethodQuestionAction<PsiMethod>(project, editor, methodsToImport, myMethodCall) {

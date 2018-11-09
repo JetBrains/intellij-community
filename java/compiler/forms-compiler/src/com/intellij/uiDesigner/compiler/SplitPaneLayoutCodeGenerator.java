@@ -31,6 +31,7 @@ public class SplitPaneLayoutCodeGenerator extends LayoutCodeGenerator {
   private final Method mySetLeftMethod = Method.getMethod("void setLeftComponent(java.awt.Component)");
   private final Method mySetRightMethod = Method.getMethod("void setRightComponent(java.awt.Component)");
 
+  @Override
   public void generateComponentLayout(final LwComponent lwComponent,
                                       final GeneratorAdapter generator,
                                       final int componentLocal,

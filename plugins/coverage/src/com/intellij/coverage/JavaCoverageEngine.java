@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
@@ -33,14 +19,12 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -57,20 +41,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.tree.java.PsiSwitchStatementImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
-import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.rt.coverage.data.SwitchData;
-import com.intellij.rt.coverage.instrumentation.SaveHook;
-import jetbrains.coverage.report.ClassInfo;
-import jetbrains.coverage.report.ReportBuilderFactory;
 import jetbrains.coverage.report.ReportGenerationFailedException;
-import jetbrains.coverage.report.SourceCodeProvider;
-import jetbrains.coverage.report.html.HTMLReportBuilder;
-import jetbrains.coverage.report.idea.IDEACoverageData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -86,7 +61,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   private static final Logger LOG = Logger.getInstance(JavaCoverageEngine.class.getName());
 
   public static JavaCoverageEngine getInstance() {
-    return Extensions.findExtension(EP_NAME, JavaCoverageEngine.class);
+    return EP_NAME.findExtensionOrFail(JavaCoverageEngine.class);
   }
 
   @Override
@@ -94,7 +69,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     if (conf instanceof CommonJavaRunConfigurationParameters) {
       return true;
     }
-    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (extension.isApplicableTo(conf)) {
         return true;
       }
@@ -177,7 +152,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return false;
     final Project project = psiFile.getProject();
-    if (!suite.isTrackTestFolders() && TestSourcesFilter.isTestSources(virtualFile, project)) {
+    if (!suite.isTrackTestFolders() && ReadAction.compute(() -> TestSourcesFilter.isTestSources(virtualFile, project))) {
       return false;
     }
 
@@ -282,7 +257,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   public Set<String> getQualifiedNames(@NotNull final PsiFile sourceFile) {
     final PsiClass[] classes = ReadAction.compute(() -> ((PsiClassOwner)sourceFile).getClasses());
     final Set<String> qNames = new HashSet<>();
-    for (final JavaCoverageEngineExtension nameExtension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+    for (final JavaCoverageEngineExtension nameExtension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (ReadAction.compute(() -> nameExtension.suggestQualifiedName(sourceFile, classes, qNames))) {
         return qNames;
       }
@@ -307,7 +282,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final VirtualFile outputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPath();
     final VirtualFile testOutputpath = CompilerModuleExtension.getInstance(module).getCompilerOutputPathForTests();
 
-    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (extension.collectOutputFiles(srcFile, outputpath, testOutputpath, suite, classFiles)) return classFiles;
     }
 
@@ -366,7 +341,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     buf.append(lineData.getHits()).append("\n");
 
 
-    for (JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+    for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       String report = extension.generateBriefReport(editor, psiFile, lineNumber, startOffset, endOffset, lineData);
       if (report != null) {
         buf.append(report);
@@ -522,7 +497,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     return elements;
   }
 
-  private static void collectTestsByName(List<PsiElement> elements, String testName, PsiClass psiClass, int lastIdx) {
+  private static void collectTestsByName(List<? super PsiElement> elements, String testName, PsiClass psiClass, int lastIdx) {
     final PsiMethod[] testsByName = psiClass.findMethodsByName(testName.substring(lastIdx + 1), true);
     if (testsByName.length == 1) {
       elements.add(testsByName[0]);
@@ -566,69 +541,6 @@ public class JavaCoverageEngine extends CoverageEngine {
     return ReadAction.compute(() -> ((PsiClassOwner)sourceFile).getPackageName());
   }
 
-  protected static void generateJavaReport(@NotNull final Project project,
-                                           final File tempFile,
-                                           final CoverageSuitesBundle currentSuite) {
-    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
-    final ProjectData projectData = currentSuite.getCoverageData();
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Generating Coverage Report ...") {
-      final Exception[] myExceptions = new Exception[1];
-
-      @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
-        try {
-          new SaveHook(tempFile, true, new IdeaClassFinder(project, currentSuite)).save(projectData);
-          final HTMLReportBuilder builder = ReportBuilderFactory.createHTMLReportBuilder();
-          builder.setReportDir(new File(settings.OUTPUT_DIRECTORY));
-          final SourceCodeProvider sourceCodeProvider = classname -> DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-            if (project.isDisposed()) return "";
-            final PsiClass psiClass = ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), classname);
-            return psiClass != null ? psiClass.getNavigationElement().getContainingFile().getText() : "";
-          });
-          builder.generateReport(new IDEACoverageData(projectData, sourceCodeProvider) {
-            @NotNull
-            @Override
-            public Collection<ClassInfo> getClasses() {
-              final Collection<ClassInfo> classes = super.getClasses();
-              if (!currentSuite.isTrackTestFolders()) {
-                final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-                final GlobalSearchScope productionScope = GlobalSearchScopesCore.projectProductionScope(project);
-                for (Iterator<ClassInfo> iterator = classes.iterator(); iterator.hasNext();) {
-                  final ClassInfo aClass = iterator.next();
-                  final PsiClass psiClass = DumbService.getInstance(project).runReadActionInSmartMode(() -> {
-                    if (project.isDisposed()) return null;
-                    return psiFacade.findClass(aClass.getFQName(), productionScope);
-                  });
-                  if (psiClass == null) {
-                    iterator.remove();
-                  }
-                }
-              }
-              return classes;
-            }
-          });
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-        catch (ReportGenerationFailedException e) {
-          myExceptions[0] = e;
-        }
-      }
-
-      @Override
-      public void onSuccess() {
-        if (myExceptions[0] != null) {
-          Messages.showErrorDialog(project, myExceptions[0].getMessage(), CommonBundle.getErrorTitle());
-          return;
-        }
-        if (settings.OPEN_IN_BROWSER) {
-          BrowserUtil.browse(new File(settings.OUTPUT_DIRECTORY, "index.html"));
-        }
-      }
-    });
-  }
-
   @Override
   public boolean isReportGenerationAvailable(@NotNull Project project,
                                              @NotNull DataContext dataContext,
@@ -641,14 +553,36 @@ public class JavaCoverageEngine extends CoverageEngine {
   public final void generateReport(@NotNull final Project project,
                                    @NotNull final DataContext dataContext,
                                    @NotNull final CoverageSuitesBundle currentSuite) {
-    try {
-      final File tempFile = FileUtil.createTempFile("temp", "");
-      tempFile.deleteOnExit();
-      generateJavaReport(project, tempFile, currentSuite);
-    }
-    catch (IOException e1) {
-      LOG.error(e1);
-    }
+
+    final ExportToHTMLSettings settings = ExportToHTMLSettings.getInstance(project);
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Generating Coverage Report ...") {
+      final Exception[] myExceptions = new Exception[1];
+
+      @Override
+      public void run(@NotNull final ProgressIndicator indicator) {
+        try {
+          ((JavaCoverageRunner)currentSuite.getSuites()[0].getRunner()).generateReport(currentSuite, project);
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+        catch (ReportGenerationFailedException e) {
+          myExceptions[0] = e;
+        }
+      }
+
+
+      @Override
+      public void onSuccess() {
+        if (myExceptions[0] != null) {
+          Messages.showErrorDialog(project, myExceptions[0].getMessage(), CommonBundle.getErrorTitle());
+          return;
+        }
+        if (settings.OPEN_IN_BROWSER) {
+          BrowserUtil.browse(new File(settings.OUTPUT_DIRECTORY, "index.html"));
+        }
+      }
+    });
   }
 
   @Override
@@ -670,7 +604,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   public boolean isSourceMapNeeded(RunConfigurationBase configuration) {
-    for (final JavaCoverageEngineExtension extension : Extensions.getExtensions(JavaCoverageEngineExtension.EP_NAME)) {
+    for (final JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (extension.isSourceMapNeeded(configuration)) {
         return true;
       }

@@ -45,9 +45,9 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.*;
 public class TypeInferenceHelper {
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<>();
 
-  private static <T> T doInference(@NotNull Map<String, PsiType> bindings, @NotNull Computable<T> computation) {
+  private static <T> T doInference(@NotNull Map<String, PsiType> bindings, @NotNull Computable<? extends T> computation) {
     InferenceContext old = ourInferenceContext.get();
-    ourInferenceContext.set(new InferenceContext.PartialContext(bindings));
+    ourInferenceContext.set(new InferenceContext.PartialContext(bindings, getCurrentContext()));
     try {
       return computation.compute();
     }
@@ -163,8 +163,8 @@ public class TypeInferenceHelper {
         if (idx >= 0 && rValue != null) {
           PsiType rType = rValue.getType();
           if (rType instanceof GrTupleType) {
-            PsiType[] componentTypes = ((GrTupleType)rType).getComponentTypes();
-            if (idx < componentTypes.length) return componentTypes[idx];
+            List<PsiType> componentTypes = ((GrTupleType)rType).getComponentTypes();
+            if (idx < componentTypes.size()) return componentTypes.get(idx);
             return null;
           }
           return PsiUtil.extractIterableTypeParameter(rType, false);
@@ -247,7 +247,7 @@ public class TypeInferenceHelper {
       }
     }
 
-    private void updateVariableType(@NotNull TypeDfaState state, @NotNull Instruction instruction, @NotNull String variableName, @NotNull Computable<DFAType> computation) {
+    private void updateVariableType(@NotNull TypeDfaState state, @NotNull Instruction instruction, @NotNull String variableName, @NotNull Computable<? extends DFAType> computation) {
       if (!myInteresting.contains(instruction)) {
         state.removeBinding(variableName);
         return;
@@ -270,14 +270,15 @@ public class TypeInferenceHelper {
   private static class InferenceCache {
     final GrControlFlowOwner scope;
     final Instruction[] flow;
+    final Map<PsiElement, List<Instruction>> flowByElements;
     final AtomicReference<List<TypeDfaState>> varTypes;
     final Set<Instruction> tooComplex = ContainerUtil.newConcurrentSet();
 
     InferenceCache(final GrControlFlowOwner scope) {
       this.scope = scope;
       this.flow = scope.getControlFlow();
+      this.flowByElements = Arrays.stream(flow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
       List<TypeDfaState> noTypes = new ArrayList<>();
-      //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < flow.length; i++) {
         noTypes.add(new TypeDfaState());
       }
@@ -324,8 +325,8 @@ public class TypeInferenceHelper {
 
     private Set<Instruction> collectRequiredInstructions(@NotNull Instruction instruction,
                                                          @NotNull String variableName,
-                                                         @NotNull Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> defUse,
-                                                         @NotNull Predicate<Instruction> predicate
+                                                         @NotNull Pair<? extends ReachingDefinitionsDfaInstance, ? extends List<DefinitionMap>> defUse,
+                                                         @NotNull Predicate<? super Instruction> predicate
                                                          ) {
       Set<Instruction> interesting = ContainerUtil.newHashSet(instruction);
       LinkedList<Pair<Instruction,String>> queue = ContainerUtil.newLinkedList();
@@ -343,7 +344,7 @@ public class TypeInferenceHelper {
     }
 
     @NotNull
-    private Set<Pair<Instruction,String>> findDependencies(@NotNull Pair<ReachingDefinitionsDfaInstance, List<DefinitionMap>> defUse,
+    private Set<Pair<Instruction,String>> findDependencies(@NotNull Pair<? extends ReachingDefinitionsDfaInstance, ? extends List<DefinitionMap>> defUse,
                                                            @NotNull Instruction insn,
                                                            @NotNull String varName) {
       DefinitionMap definitionMap = defUse.second.get(insn.num());
@@ -371,8 +372,9 @@ public class TypeInferenceHelper {
         public void visitElement(PsiElement element) {
           if (element instanceof GrReferenceExpression && !((GrReferenceExpression)element).isQualified()) {
             String varName = ((GrReferenceExpression)element).getReferenceName();
-            if (varName != null) {
-              for (Instruction dependency : ControlFlowUtils.findAllInstructions(element, flow)) {
+            List<Instruction> instructionList = flowByElements.get(element);
+            if (varName != null && instructionList != null) {
+              for (Instruction dependency : instructionList) {
                 result.add(Pair.create(dependency, varName));
               }
             }
@@ -390,7 +392,7 @@ public class TypeInferenceHelper {
                                                      !(element1.getParent() instanceof GrExpression));
     }
 
-    private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult) {
+    private void cacheDfaResult(@NotNull List<? extends TypeDfaState> dfaResult) {
       while (true) {
         List<TypeDfaState> oldTypes = varTypes.get();
         if (varTypes.compareAndSet(oldTypes, addDfaResult(dfaResult, oldTypes))) {
@@ -400,7 +402,7 @@ public class TypeInferenceHelper {
     }
 
     @NotNull
-    private static List<TypeDfaState> addDfaResult(@NotNull List<TypeDfaState> dfaResult, @NotNull List<TypeDfaState> oldTypes) {
+    private static List<TypeDfaState> addDfaResult(@NotNull List<? extends TypeDfaState> dfaResult, @NotNull List<? extends TypeDfaState> oldTypes) {
       List<TypeDfaState> newTypes = new ArrayList<>(oldTypes);
       for (int i = 0; i < dfaResult.size(); i++) {
         newTypes.set(i, newTypes.get(i).mergeWith(dfaResult.get(i)));

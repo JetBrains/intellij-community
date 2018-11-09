@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,7 +60,7 @@ public class VfsUtilCore {
   /**
    * @return {@code true} if {@code file} is located under one of {@code roots} or equal to one of them
    */
-  public static boolean isUnder(@NotNull VirtualFile file, @Nullable Set<VirtualFile> roots) {
+  public static boolean isUnder(@NotNull VirtualFile file, @Nullable Set<? extends VirtualFile> roots) {
     if (roots == null || roots.isEmpty()) return false;
 
     VirtualFile parent = file;
@@ -254,7 +252,7 @@ public class VfsUtilCore {
 
   @NotNull
   public static InputStream byteStreamSkippingBOM(@NotNull byte[] buf, @NotNull VirtualFile file) throws IOException {
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") BufferExposingByteArrayInputStream stream = new BufferExposingByteArrayInputStream(buf);
+    BufferExposingByteArrayInputStream stream = new BufferExposingByteArrayInputStream(buf);
     return inputStreamSkippingBOM(stream, file);
   }
 
@@ -287,7 +285,7 @@ public class VfsUtilCore {
     return !Comparing.equal(result.skipToParent, root);
   }
 
-  @SuppressWarnings({"UnsafeVfsRecursion", "Duplicates"})
+  @SuppressWarnings({"UnsafeVfsRecursion"})
   @NotNull
   public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                    @NotNull VirtualFileVisitor<?> visitor) throws
@@ -414,8 +412,8 @@ public class VfsUtilCore {
     return VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, path);
   }
 
-  public static List<File> virtualToIoFiles(@NotNull Collection<VirtualFile> scope) {
-    return ContainerUtil.map2List(scope, file -> virtualToIoFile(file));
+  public static List<File> virtualToIoFiles(@NotNull Collection<? extends VirtualFile> files) {
+    return ContainerUtil.map2List(files, file -> virtualToIoFile(file));
   }
 
   @NotNull
@@ -612,7 +610,7 @@ public class VfsUtilCore {
     return file;
   }
 
-  public static boolean processFilesRecursively(@NotNull final VirtualFile root, @NotNull final Processor<VirtualFile> processor) {
+  public static boolean processFilesRecursively(@NotNull final VirtualFile root, @NotNull final Processor<? super VirtualFile> processor) {
     final Ref<Boolean> result = Ref.create(true);
     visitChildrenRecursively(root, new VirtualFileVisitor() {
       @NotNull
@@ -691,7 +689,7 @@ public class VfsUtilCore {
     return components;
   }
 
-  public static boolean hasInvalidFiles(@NotNull Iterable<VirtualFile> files) {
+  public static boolean hasInvalidFiles(@NotNull Iterable<? extends VirtualFile> files) {
     for (VirtualFile file : files) {
       if (!file.isValid()) {
         return true;
@@ -700,13 +698,25 @@ public class VfsUtilCore {
     return false;
   }
 
+  @Nullable
+  public static VirtualFile findContainingDirectory(@NotNull VirtualFile file, @NotNull CharSequence name) {
+    VirtualFile parent = file.isDirectory() ? file: file.getParent();
+    while (parent != null) {
+      if (Comparing.equal(parent.getNameSequence(), name, SystemInfoRt.isFileSystemCaseSensitive)) {
+        return parent;
+      }
+      parent = parent.getParent();
+    }
+    return null;
+  }
+
   /**
    * this collection will keep only distinct files/folders, e.g. C:\foo\bar will be removed when C:\foo is added
    */
   public static class DistinctVFilesRootsCollection extends DistinctRootsCollection<VirtualFile> {
     public DistinctVFilesRootsCollection() { }
 
-    public DistinctVFilesRootsCollection(Collection<VirtualFile> virtualFiles) {
+    public DistinctVFilesRootsCollection(Collection<? extends VirtualFile> virtualFiles) {
       super(virtualFiles);
     }
 
@@ -722,9 +732,10 @@ public class VfsUtilCore {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated does not handle recursive symlinks, use {@link #visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2018) */
+  @Deprecated
   public static void processFilesRecursively(@NotNull VirtualFile root,
-                                             @NotNull Processor<VirtualFile> processor,
-                                             @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {
+                                             @NotNull Processor<? super VirtualFile> processor,
+                                             @NotNull Convertor<? super VirtualFile, Boolean> directoryFilter) {
     if (!processor.process(root)) return;
 
     if (root.isDirectory() && directoryFilter.convert(root)) {

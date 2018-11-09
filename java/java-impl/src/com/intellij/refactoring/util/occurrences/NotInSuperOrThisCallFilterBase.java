@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NonNls;
  * @author dsl
  */
 public abstract class NotInSuperOrThisCallFilterBase implements OccurrenceFilter {
+  @Override
   public boolean isOK(PsiExpression occurrence) {
     PsiElement parent = occurrence.getParent();
     while(parent instanceof PsiExpression) {

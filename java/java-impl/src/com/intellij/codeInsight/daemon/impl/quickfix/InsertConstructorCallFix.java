@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -50,9 +51,9 @@ public class InsertConstructorCallFix implements IntentionAction, HighPriorityAc
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myConstructor.isValid()
-        && myConstructor.getBody() != null
-        && myConstructor.getBody().getLBrace() != null
-        && myConstructor.getManager().isInProject(myConstructor)
+           && myConstructor.getBody() != null
+           && myConstructor.getBody().getLBrace() != null
+           && ScratchFileService.isInProjectOrScratch(myConstructor)
     ;
   }
 
@@ -65,7 +66,7 @@ public class InsertConstructorCallFix implements IntentionAction, HighPriorityAc
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     PsiStatement superCall =
-      JavaPsiFacade.getInstance(myConstructor.getProject()).getElementFactory().createStatementFromText(myCall,null);
+      JavaPsiFacade.getElementFactory(myConstructor.getProject()).createStatementFromText(myCall,null);
 
     PsiCodeBlock body = myConstructor.getBody();
     PsiJavaToken lBrace = body.getLBrace();

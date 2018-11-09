@@ -133,6 +133,14 @@ public class IJSwingUtilities extends JBSwingUtilities {
    */
   public static void updateComponentTreeUI(@Nullable Component c) {
     if (c == null) return;
+
+    if (c instanceof RootPaneContainer) {
+      JRootPane rootPane = ((RootPaneContainer)c).getRootPane();
+      if (rootPane != null) {
+        UIUtil.decorateWindowHeader(rootPane);
+      }
+    }
+
     for (Component component : UIUtil.uiTraverser(c).postOrderDfsTraversal()) {
       if (component instanceof JComponent) ((JComponent)component).updateUI();
     }
@@ -150,6 +158,7 @@ public class IJSwingUtilities extends JBSwingUtilities {
         int dy = component.getHeight() / 2;
         try {
           new Robot().mouseMove(point.x + dx, point.y + dy);
+          component.requestFocusInWindow();
         }
         catch (AWTException ignored) {
           // robot is not available

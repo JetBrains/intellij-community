@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.task;
 
 import org.jetbrains.annotations.NotNull;
@@ -5,7 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
- * @since 11/10/11 12:18 PM
  */
 public abstract class ExternalSystemTaskNotificationListenerAdapter implements ExternalSystemTaskNotificationListener {
 
@@ -25,6 +25,8 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
   /**
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
+  @Override
+  @Deprecated
   public void onQueued(@NotNull ExternalSystemTaskId id, String workingDir) {
     if (myDelegate != null) {
       myDelegate.onQueued(id, workingDir);
@@ -45,6 +47,8 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
   /**
    * @deprecated use {@link #onStart(ExternalSystemTaskId, String)}
    */
+  @Override
+  @Deprecated
   public void onStart(@NotNull ExternalSystemTaskId id) {
     if (myDelegate != null) {
       myDelegate.onStart(id);

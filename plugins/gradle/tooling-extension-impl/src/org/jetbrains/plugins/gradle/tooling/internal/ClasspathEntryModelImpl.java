@@ -23,7 +23,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/20/13
  */
 public class ClasspathEntryModelImpl implements ClasspathEntryModel, Serializable {
   @NotNull

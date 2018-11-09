@@ -178,7 +178,7 @@ public class UnifiedDiffChange {
                                                 @NotNull final Icon icon) {
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      protected void performAction(AnActionEvent e) {
+      protected void performAction(@NotNull AnActionEvent e) {
         if (myViewer.isStateIsOutOfDate()) return;
         if (!myViewer.isEditable(sourceSide.other(), true)) return;
 

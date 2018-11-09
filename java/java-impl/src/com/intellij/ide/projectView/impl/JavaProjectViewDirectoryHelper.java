@@ -35,7 +35,6 @@ import java.util.Arrays;
 
 /**
  * @author anna
- * @since 23-Jan-2008
  */
 public class JavaProjectViewDirectoryHelper extends ProjectViewDirectoryHelper {
   public JavaProjectViewDirectoryHelper(Project project, DirectoryIndex index) {

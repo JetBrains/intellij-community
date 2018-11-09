@@ -2,7 +2,7 @@ package com.siyeh.igtest.encapsulation.public_inner_class;
 
 public class PublicInnerClass
 {
-    public class Barangus
+    public class <warning descr="'public' nested class 'Barangus'">Barangus</warning>
     {
 
         public Barangus(int val)

@@ -16,44 +16,39 @@
 package com.intellij.util.containers.hash;
 
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 
 
 class HashUtil {
+  static final int MIN_CAPACITY = 5;
 
+  static final float DEFAULT_LOAD_FACTOR = 1;
 
-  public static final int MIN_CAPACITY = 5;
-
-  public static final float DEFAULT_LOAD_FACTOR = 1;
-
-  public static final float CAPACITY_MULTIPLE = 1.618033989f;
+  static final float CAPACITY_MULTIPLE = 1.618033989f;
 
 
   public static int hash(Object key) {
 
     return key == null ? 0 : key.hashCode() & 0x7fffffff;
-
   }
 
-  public static int hash(Object key, EqualityPolicy hashingStrategy) {
-
+  public static <K> int hash(K key, @NotNull EqualityPolicy<? super K> hashingStrategy) {
     return key == null ? 0 : hashingStrategy.getHashCode(key) & 0x7fffffff;
-
   }
 
 
-  public static int adjustTableSize(int size) {
+  static int adjustTableSize(int size) {
 
     int i = Arrays.binarySearch(tableSizes, size);
 
     if (i < 0) {
 
       i = ~i;
-
     }
 
     return tableSizes[i];
-
   }
 
 
@@ -142,15 +137,11 @@ class HashUtil {
 
 
     Integer.MAX_VALUE,
-
   };
-
 
   static {
 
     Arrays.sort(tableSizes);
-
   }
-
 }
 

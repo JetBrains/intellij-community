@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -361,7 +348,7 @@ public class NameUtil {
     return i;
   }
 
-  private static void addAllWords(@NotNull String text, @NotNull List<String> result) {
+  private static void addAllWords(@NotNull String text, @NotNull List<? super String> result) {
     int start = 0;
     while (start < text.length()) {
       int next = nextWord(text, start);
@@ -402,13 +389,6 @@ public class NameUtil {
     boolean matches(@NotNull String name);
   }
 
-  @Deprecated
-  @NotNull
-  public static com.intellij.util.text.Matcher buildCompletionMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, options);
-  }
-
   @NotNull
   public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, 
                                                             boolean allowToUpper, boolean allowToLower) {
@@ -418,7 +398,6 @@ public class NameUtil {
     return buildMatcher(pattern, options);
   }
 
-  @SuppressWarnings("UnusedParameters")
   @Deprecated
   @NotNull
   public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower, boolean lowerCaseWords) {
@@ -446,7 +425,8 @@ public class NameUtil {
     }
 
     public MinusculeMatcher build() {
-      return new FixingLayoutMatcher(pattern, caseSensitivity, separators);
+      return Registry.is("ide.completion.typo.tolerance") ? new FixingLayoutTypoTolerantMatcher(pattern, caseSensitivity, separators)
+                                                          : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
     }
   }
 
@@ -471,7 +451,7 @@ public class NameUtil {
   }
 
   @NotNull
-  public static String splitWords(@NotNull String text, char separator, @NotNull Function<String, String> transformWord) {
+  public static String splitWords(@NotNull String text, char separator, @NotNull Function<? super String, String> transformWord) {
     final String[] words = nameToWords(text);
     boolean insertSeparator = false;
     final StringBuilder buf = new StringBuilder();

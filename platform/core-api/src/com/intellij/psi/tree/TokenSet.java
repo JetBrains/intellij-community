@@ -4,6 +4,7 @@ package com.intellij.psi.tree;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.psi.TokenType;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ public class TokenSet {
    * @param t the element type to search for.
    * @return true if the element type is found in the set, false otherwise.
    */
+  @Contract("null -> false")
   public boolean contains(@Nullable IElementType t) {
     if (t == null) return false;
     final short i = t.getIndex();

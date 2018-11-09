@@ -39,23 +39,28 @@ public class EditOptionsDialog extends OptionsDialog {
     init();
   }
 
+  @Override
   protected boolean isToBeShown() {
     return CvsVcs2.getInstance(myProject).getEditOptions().getValue();
   }
 
+  @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     CvsVcs2.getInstance(myProject).getEditOptions().setValue(value);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
 
+  @Override
   protected void doOKAction() {
     CvsConfiguration.getInstance(myProject).RESERVED_EDIT = myReservedEdit.isSelected();
     super.doOKAction();
   }
 
+  @Override
   protected boolean shouldSaveOptionsOnCancel() {
     return false;
   }

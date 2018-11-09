@@ -38,15 +38,6 @@ import java.util.List;
 public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements ComponentWithEmptyText {
   private final String myTitle;
 
-  /**
-   * @deprecated
-   */
-  protected JButton myAddButton = new JButton(CommonBundle.message("button.add"));
-  /**
-   * @deprecated
-   */
-  protected JButton myDeleteButton = new JButton(CommonBundle.message("button.delete"));
-
   protected DefaultListModel<T> myListModel = new DefaultListModel<T>();
   protected JBList<T> myList = new JBList<T>(myListModel);
 
@@ -107,14 +98,17 @@ public abstract class AddDeleteListPanel<T> extends PanelWithButtons implements 
     return items.toArray();
   }
 
+  @Override
   protected String getLabelText() {
     return myTitle;
   }
 
+  @Override
   protected JButton[] createButtons() {
-    return new JButton[]{myAddButton, myDeleteButton};
+    return new JButton[]{new JButton(CommonBundle.message("button.add")), new JButton(CommonBundle.message("button.delete"))};
   }
 
+  @Override
   protected JComponent createMainComponent() {
     if (!myListModel.isEmpty()) myList.setSelectedIndex(0);
     return ScrollPaneFactory.createScrollPane(myList);

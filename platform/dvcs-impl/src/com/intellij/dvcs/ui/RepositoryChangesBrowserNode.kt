@@ -6,16 +6,31 @@ import com.intellij.dvcs.repo.Repository
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.TEXT_COLOR
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getBranchPresentationBackground
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getCurrentBranch
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getPresentableText
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.Companion.getSingleTooltip
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
+import com.intellij.ui.SimpleTextAttributes.STYLE_OPAQUE
+import com.intellij.util.FontUtil.spaceAndThinSpace
 import com.intellij.util.ui.ColorIcon
+import com.intellij.util.ui.JBUI.insets
 import com.intellij.util.ui.JBUI.scale
+import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.vcs.log.impl.VcsLogManager.findLogProviders
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl.getBackgroundColor
+import java.awt.Color
 
 private val ICON_SIZE = scale(14)
+private val BRANCH_BACKGROUND_INSETS = insets(1, 0)
+
+private fun getBranchLabelAttributes(background: Color) =
+  SimpleTextAttributes(getBranchPresentationBackground(background), TEXT_COLOR, null, STYLE_OPAQUE)
 
 class RepositoryChangesBrowserNode(repository: Repository) : ChangesBrowserNode<Repository>(repository) {
   private val colorManager = getColorManager(repository.project)
@@ -24,16 +39,32 @@ class RepositoryChangesBrowserNode(repository: Repository) : ChangesBrowserNode<
     renderer.icon = ColorIcon(ICON_SIZE, getBackgroundColor(colorManager.getRootColor(getUserObject().root)))
     renderer.append(" $textPresentation", REGULAR_ATTRIBUTES)
     appendCount(renderer)
+
+    if (renderer.isShowingLocalChanges) {
+      appendCurrentBranch(renderer)
+    }
   }
 
-  override fun getSortWeight() = REPOSITORY_SORT_WEIGHT
+  private fun appendCurrentBranch(renderer: ChangesBrowserNodeRenderer) {
+    val repository = getUserObject()
+    val branch = getCurrentBranch(repository.project, repository.root)
 
-  override fun compareUserObjects(o2: Repository) = getShortRepositoryName(getUserObject()).compareTo(getShortRepositoryName(o2), true)
+    if (branch != null) {
+      renderer.append(spaceAndThinSpace())
+      renderer.append(" ${getPresentableText(branch)} ", getBranchLabelAttributes(renderer.background ?: getTreeBackground()))
+      renderer.setBackgroundInsets(BRANCH_BACKGROUND_INSETS)
+      renderer.toolTipText = getSingleTooltip(branch)
+    }
+  }
 
-  override fun getTextPresentation() = getShortRepositoryName(getUserObject())
+  override fun getSortWeight(): Int = REPOSITORY_SORT_WEIGHT
+
+  override fun compareUserObjects(o2: Repository): Int = getShortRepositoryName(getUserObject()).compareTo(getShortRepositoryName(o2), true)
+
+  override fun getTextPresentation(): String = getShortRepositoryName(getUserObject())
 
   companion object {
-    fun getColorManager(project: Project) = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
+    fun getColorManager(project: Project): VcsLogColorManagerImpl = VcsProjectLog.getInstance(project).logManager?.colorManager ?: VcsLogColorManagerImpl(
       findLogProviders(ProjectLevelVcsManagerImpl.getInstance(project).allVcsRoots.asList(), project).keys)
   }
 }

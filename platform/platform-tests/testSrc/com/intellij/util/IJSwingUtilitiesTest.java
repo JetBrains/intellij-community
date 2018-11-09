@@ -59,7 +59,7 @@ public class IJSwingUtilitiesTest extends TestCase {
   private static class MockComponent extends JComponent {
     private final String myName;
 
-    public MockComponent(String name) {
+    MockComponent(String name) {
       myName = name;
     }
 

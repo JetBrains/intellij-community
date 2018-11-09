@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -42,6 +28,7 @@ public class RunContentDescriptor implements Disposable {
   private final Icon myIcon;
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
+  private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
 
   private boolean myActivateToolWindowWhenAdded = true;
   private boolean myReuseToolWindowActivation = false;
@@ -190,7 +177,7 @@ public class RunContentDescriptor implements Disposable {
     return myContentToolWindowId;
   }
 
-  public void setContentToolWindowId(String contentToolWindowId) {
+  public void setContentToolWindowId(@Nullable String contentToolWindowId) {
     myContentToolWindowId = contentToolWindowId;
   }
 
@@ -277,5 +264,16 @@ public class RunContentDescriptor implements Disposable {
   @ApiStatus.Experimental
   public boolean isHiddenContent() {
     return false;
+  }
+
+  @NotNull
+  @ApiStatus.Experimental
+  public RunContentDescriptorReusePolicy getReusePolicy() {
+    return myReusePolicy;
+  }
+
+  @ApiStatus.Experimental
+  public void setReusePolicy(@NotNull RunContentDescriptorReusePolicy reusePolicy) {
+    myReusePolicy = reusePolicy;
   }
 }

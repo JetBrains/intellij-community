@@ -27,9 +27,11 @@ import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.ThreadDescriptorImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.NotNull;
 
 public class ResumeThreadAction extends DebuggerAction{
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNode = getSelectedNodes(e.getDataContext());
     final DebuggerContextImpl debuggerContext = getDebuggerContext(e.getDataContext());
     final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
@@ -56,7 +58,8 @@ public class ResumeThreadAction extends DebuggerAction{
     }
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     DebuggerTreeNodeImpl[] selectedNodes = getSelectedNodes(e.getDataContext());
 
     boolean visible = false;

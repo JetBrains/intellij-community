@@ -21,6 +21,7 @@ import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   private final DecompiledLocalVariable myVariable;
@@ -36,10 +37,12 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     return LocalVariablesUtil.canSetValues();
   }
 
+  @Override
   public boolean isPrimitive() {
     return getValue() instanceof PrimitiveValue;
   }
 
+  @Override
   public Value calcValue(final EvaluationContextImpl evaluationContext) throws EvaluateException {
     return getValue();
   }
@@ -48,6 +51,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     return myVariable;
   }
 
+  @Override
   public String getName() {
     return myVariable.getDisplayName();
   }
@@ -56,8 +60,9 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     return myVariable.isParam();
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
       return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
     }
@@ -75,6 +80,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
         if (local != null) {
           final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
           set(expression, callback, debuggerContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException {
@@ -82,13 +88,10 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
               update(debuggerContext);
             }
 
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                             ClassNotLoadedException,
-                                                                                                             IncompatibleThreadStateException,
-                                                                                                             InvalidTypeException,
-                                                                                                             EvaluateException {
-              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                   evaluationContext.getClassLoader());
+            @Nullable
+            @Override
+            public Type getLType() {
+              return null;
             }
           });
         }

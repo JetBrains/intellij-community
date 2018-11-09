@@ -134,7 +134,6 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       }
       while (true);
 
-      //noinspection unchecked
       final List<SmartStepTarget> targets = new OrderedSet<>();
 
       final Ref<TextRange> textRange = new Ref<>(lineRange);
@@ -157,6 +156,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           }
         }
 
+        @Override
         public void visitLambdaExpression(PsiLambdaExpression expression) {
           boolean inLambda = myInsideLambda;
           myInsideLambda = true;
@@ -257,6 +257,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           return false;
         }
 
+        @Override
         public void visitExpressionList(PsiExpressionList expressionList) {
           PsiMethod psiMethod = myContextStack.peekFirst();
           if (psiMethod != null) {

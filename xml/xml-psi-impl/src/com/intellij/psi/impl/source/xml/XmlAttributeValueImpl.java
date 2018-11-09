@@ -32,7 +32,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
@@ -66,6 +65,7 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
     }
   }
 
+  @NotNull
   @Override
   public String getValue() {
     // it is more correct way to strip quotes since injected xml may have quotes encoded
@@ -137,7 +137,9 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
       final String quoteChar = getTextLength() > 0 ? getText().substring(0, 1) : "";
       String contents = StringUtil.containsAnyChar(quoteChar, "'\"") ?
               StringUtil.trimEnd(StringUtil.trimStart(text, quoteChar), quoteChar) : text;
-      XmlAttribute newAttribute = XmlElementFactory.getInstance(getProject()).createAttribute("q", contents, this);
+      XmlAttribute newAttribute = XmlElementFactory.getInstance(getProject()).createAttribute(
+        StringUtil.defaultIfEmpty((getParent() instanceof XmlAttribute) ? ((XmlAttribute)getParent()).getName() : null, "q"),
+        contents, this);
       XmlAttributeValue newValue = newAttribute.getValueElement();
 
       CheckUtil.checkWritable(this);
@@ -177,12 +179,6 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
 
   @Override
   public void init(final PsiElement element) {
-  }
-
-  @NotNull
-  @Override
-  public Object[] getDependences() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

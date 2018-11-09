@@ -24,6 +24,7 @@ import com.intellij.codeInsight.intention.impl.TypeExpression;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -74,7 +75,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
 
   @Override
   protected PsiElement getElement() {
-    if (!myMethodCall.isValid() || !myMethodCall.getManager().isInProject(myMethodCall)) return null;
+    if (!myMethodCall.isValid() || !ScratchFileService.isInProjectOrScratch(myMethodCall)) return null;
     return myMethodCall;
   }
 
@@ -114,7 +115,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     return false;
   }
 
-  protected boolean checkTargetClasses(List<PsiClass> classes, String methodName) {
+  protected boolean checkTargetClasses(List<? extends PsiClass> classes, String methodName) {
     return true;
   }
 
@@ -124,7 +125,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     private final SmartPsiElementPointer<PsiClass> myClass;
     private final List<SmartTypePointer> myExpectedTypes;
 
-    public FieldExpression(final PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
+    FieldExpression(final PsiField field, PsiClass aClass, PsiType[] expectedTypes) {
       myField = PointersKt.createSmartPointer(field);
       myClass = PointersKt.createSmartPointer(aClass);
       myExpectedTypes = ContainerUtil.map(expectedTypes, type -> SmartTypePointerManager.getInstance(field.getProject()).createSmartTypePointer(type));
@@ -182,7 +183,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   protected void invokeImpl(PsiClass targetClass) {
     PsiManager manager = myMethodCall.getManager();
     final Project project = manager.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
 
     boolean isStatic = false;
     PsiExpression qualifierExpression = myMethodCall.getMethodExpression().getQualifierExpression();
@@ -269,7 +270,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
     final boolean isStatic1 = isStatic;
     startTemplate(editor, template, project, new TemplateEditingAdapter() {
       @Override
-      public void beforeTemplateFinished(final TemplateState state, Template template) {
+      public void beforeTemplateFinished(@NotNull final TemplateState state, Template template) {
         ApplicationManager.getApplication().runWriteAction(() -> {
           String fieldName1 = state.getVariableValue(FIELD_VARIABLE).getText();
           if (!PsiNameHelper.getInstance(project).isIdentifier(fieldName1)) return;
@@ -283,7 +284,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
             CreatePropertyFromUsageFix.this.beforeTemplateFinished(aClass, field1);
             return;
           }
-          PsiElementFactory factory1 = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+          PsiElementFactory factory1 = JavaPsiFacade.getElementFactory(aClass.getProject());
           try {
             PsiType type1 = factory1.createTypeFromText(fieldType, aClass);
             try {
@@ -302,7 +303,7 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
       }
 
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         final int offset = editor.getCaretModel().getOffset();
         final PsiMethod generatedMethod = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PsiMethod.class, false);

@@ -5,7 +5,12 @@ if(NOT WIN32)
   message(FATAL_ERROR "Windows only.")
 endif()
 
-set(BUILD_NUMBER $ENV{BUILD_NUMBER})
+if (DEFINED ENV{BUILD_NUMBER})
+  set(BUILD_NUMBER $ENV{BUILD_NUMBER})
+else()
+  set(BUILD_NUMBER 9999)
+endif()
+
 string(TIMESTAMP YEAR "%Y")
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")

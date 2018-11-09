@@ -41,7 +41,7 @@ class FieldRepr extends ProtoMember {
     super(access, signature, name, TypeRepr.getType(context, descriptor), annotations, value);
   }
 
-  public FieldRepr(final DependencyContext context, final DataInput in) {
+  FieldRepr(final DependencyContext context, final DataInput in) {
     super(context, in);
   }
 

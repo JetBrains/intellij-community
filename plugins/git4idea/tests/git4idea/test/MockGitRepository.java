@@ -84,6 +84,12 @@ public class MockGitRepository implements GitRepository {
     throw new UnsupportedOperationException();
   }
 
+  @Nullable
+  @Override
+  public GitBranchTrackInfo getBranchTrackInfo(@NotNull String localBranchName) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public boolean isRebaseInProgress() {
     throw new UnsupportedOperationException();

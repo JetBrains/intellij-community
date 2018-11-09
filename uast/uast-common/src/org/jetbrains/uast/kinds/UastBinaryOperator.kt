@@ -27,107 +27,107 @@ open class UastBinaryOperator(override val text: String) : UastOperator {
 
   companion object {
     @JvmField
-    val ASSIGN = AssignOperator("=")
+    val ASSIGN: AssignOperator = AssignOperator("=")
 
     @JvmField
-    val PLUS = ArithmeticOperator("+")
+    val PLUS: ArithmeticOperator = ArithmeticOperator("+")
 
     @JvmField
-    val MINUS = ArithmeticOperator("-")
+    val MINUS: ArithmeticOperator = ArithmeticOperator("-")
 
     @JvmField
-    val MULTIPLY = ArithmeticOperator("*")
+    val MULTIPLY: ArithmeticOperator = ArithmeticOperator("*")
 
     @JvmField
-    val DIV = ArithmeticOperator("/")
+    val DIV: ArithmeticOperator = ArithmeticOperator("/")
 
     @JvmField
-    val MOD = ArithmeticOperator("%")
+    val MOD: ArithmeticOperator = ArithmeticOperator("%")
 
     @JvmField
-    val LOGICAL_OR = LogicalOperator("||")
+    val LOGICAL_OR: LogicalOperator = LogicalOperator("||")
 
     @JvmField
-    val LOGICAL_AND = LogicalOperator("&&")
+    val LOGICAL_AND: LogicalOperator = LogicalOperator("&&")
 
     @JvmField
-    val BITWISE_OR = BitwiseOperator("|")
+    val BITWISE_OR: BitwiseOperator = BitwiseOperator("|")
 
     @JvmField
-    val BITWISE_AND = BitwiseOperator("&")
+    val BITWISE_AND: BitwiseOperator = BitwiseOperator("&")
 
     @JvmField
-    val BITWISE_XOR = BitwiseOperator("^")
+    val BITWISE_XOR: BitwiseOperator = BitwiseOperator("^")
 
     @JvmField
-    val EQUALS = ComparisonOperator("==")
+    val EQUALS: ComparisonOperator = ComparisonOperator("==")
 
     @JvmField
-    val NOT_EQUALS = ComparisonOperator("!=")
+    val NOT_EQUALS: ComparisonOperator = ComparisonOperator("!=")
 
     @JvmField
-    val IDENTITY_EQUALS = ComparisonOperator("===")
+    val IDENTITY_EQUALS: ComparisonOperator = ComparisonOperator("===")
 
     @JvmField
-    val IDENTITY_NOT_EQUALS = ComparisonOperator("!==")
+    val IDENTITY_NOT_EQUALS: ComparisonOperator = ComparisonOperator("!==")
 
     @JvmField
-    val GREATER = ComparisonOperator(">")
+    val GREATER: ComparisonOperator = ComparisonOperator(">")
 
     @JvmField
-    val GREATER_OR_EQUALS = ComparisonOperator(">=")
+    val GREATER_OR_EQUALS: ComparisonOperator = ComparisonOperator(">=")
 
     @JvmField
-    val LESS = ComparisonOperator("<")
+    val LESS: ComparisonOperator = ComparisonOperator("<")
 
     @JvmField
-    val LESS_OR_EQUALS = ComparisonOperator("<=")
+    val LESS_OR_EQUALS: ComparisonOperator = ComparisonOperator("<=")
 
     @JvmField
-    val SHIFT_LEFT = BitwiseOperator("<<")
+    val SHIFT_LEFT: BitwiseOperator = BitwiseOperator("<<")
 
     @JvmField
-    val SHIFT_RIGHT = BitwiseOperator(">>")
+    val SHIFT_RIGHT: BitwiseOperator = BitwiseOperator(">>")
 
     @JvmField
-    val UNSIGNED_SHIFT_RIGHT = BitwiseOperator(">>>")
+    val UNSIGNED_SHIFT_RIGHT: BitwiseOperator = BitwiseOperator(">>>")
 
     @JvmField
-    val OTHER = UastBinaryOperator("<other>")
+    val OTHER: UastBinaryOperator = UastBinaryOperator("<other>")
 
     @JvmField
-    val PLUS_ASSIGN = AssignOperator("+=")
+    val PLUS_ASSIGN: AssignOperator = AssignOperator("+=")
 
     @JvmField
-    val MINUS_ASSIGN = AssignOperator("-=")
+    val MINUS_ASSIGN: AssignOperator = AssignOperator("-=")
 
     @JvmField
-    val MULTIPLY_ASSIGN = AssignOperator("*=")
+    val MULTIPLY_ASSIGN: AssignOperator = AssignOperator("*=")
 
     @JvmField
-    val DIVIDE_ASSIGN = AssignOperator("/=")
+    val DIVIDE_ASSIGN: AssignOperator = AssignOperator("/=")
 
     @JvmField
-    val REMAINDER_ASSIGN = AssignOperator("%=")
+    val REMAINDER_ASSIGN: AssignOperator = AssignOperator("%=")
 
     @JvmField
-    val AND_ASSIGN = AssignOperator("&=")
+    val AND_ASSIGN: AssignOperator = AssignOperator("&=")
 
     @JvmField
-    val XOR_ASSIGN = AssignOperator("^=")
+    val XOR_ASSIGN: AssignOperator = AssignOperator("^=")
 
     @JvmField
-    val OR_ASSIGN = AssignOperator("|=")
+    val OR_ASSIGN: AssignOperator = AssignOperator("|=")
 
     @JvmField
-    val SHIFT_LEFT_ASSIGN = AssignOperator("<<=")
+    val SHIFT_LEFT_ASSIGN: AssignOperator = AssignOperator("<<=")
 
     @JvmField
-    val SHIFT_RIGHT_ASSIGN = AssignOperator(">>=")
+    val SHIFT_RIGHT_ASSIGN: AssignOperator = AssignOperator(">>=")
 
     @JvmField
-    val UNSIGNED_SHIFT_RIGHT_ASSIGN = AssignOperator(">>>=")
+    val UNSIGNED_SHIFT_RIGHT_ASSIGN: AssignOperator = AssignOperator(">>>=")
   }
 
-  override fun toString() = text
+  override fun toString(): String = text
 }

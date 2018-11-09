@@ -25,7 +25,6 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/12/2016
  */
 public class JpsGradleArtifactExtensionImpl extends JpsCompositeElementBase<JpsGradleArtifactExtensionImpl>
   implements JpsGradleArtifactExtension {

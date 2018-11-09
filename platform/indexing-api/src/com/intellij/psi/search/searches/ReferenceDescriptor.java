@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public class ReferenceDescriptor {
   @NotNull
-  static final Function<PsiReference, ReferenceDescriptor> MAPPER = psiReference -> {
+  public static final Function<PsiReference, ReferenceDescriptor> MAPPER = psiReference -> {
     final PsiElement element = psiReference.getElement();
     final PsiFile file1 = element.getContainingFile();
     TextRange textRange = element.getTextRange();

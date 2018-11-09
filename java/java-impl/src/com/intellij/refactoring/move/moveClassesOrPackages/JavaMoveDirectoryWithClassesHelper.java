@@ -135,7 +135,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
   }
 
   private static class RemoveOnDemandImportStatementsUsageInfo extends UsageInfo {
-    public RemoveOnDemandImportStatementsUsageInfo(PsiImportStatementBase statementBase) {
+    RemoveOnDemandImportStatementsUsageInfo(PsiImportStatementBase statementBase) {
       super(statementBase);
     }
   }

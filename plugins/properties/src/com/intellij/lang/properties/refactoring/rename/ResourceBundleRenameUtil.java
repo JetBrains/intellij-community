@@ -51,7 +51,7 @@ public class ResourceBundleRenameUtil {
                              resourceBundle.getBaseName(), new ResourceBundleBaseNameInputValidator(project, resourceBundle));
   }
 
-  public static void renameResourceBundleKeySection(final List<PsiElement> psiElements, final String section, final int sectionPosition) {
+  public static void renameResourceBundleKeySection(final List<? extends PsiElement> psiElements, final String section, final int sectionPosition) {
     if (psiElements.isEmpty()) {
       return;
     }
@@ -63,12 +63,12 @@ public class ResourceBundleRenameUtil {
 
   private static class ResourceBundleKeySectionInputValidator implements InputValidator {
 
-    private final List<PsiElement> myPsiElements;
+    private final List<? extends PsiElement> myPsiElements;
     private final String mySection;
     private final int mySectionPosition;
     private final Project myProject;
 
-    private ResourceBundleKeySectionInputValidator(final List<PsiElement> psiElements,
+    private ResourceBundleKeySectionInputValidator(final List<? extends PsiElement> psiElements,
                                                    final String section,
                                                    final int sectionPosition,
                                                    final Project project) {
@@ -110,7 +110,7 @@ public class ResourceBundleRenameUtil {
     private final Project myProject;
     private final ResourceBundle myResourceBundle;
 
-    public ResourceBundleBaseNameInputValidator(final Project project, final ResourceBundle resourceBundle) {
+    ResourceBundleBaseNameInputValidator(final Project project, final ResourceBundle resourceBundle) {
       myProject = project;
       myResourceBundle = resourceBundle;
     }

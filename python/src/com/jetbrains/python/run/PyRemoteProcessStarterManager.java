@@ -27,10 +27,13 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Set;
-
 /**
- * @author Alexander Koshevoy
+ * For anything but plain code execution consider introducing a separate
+ * extension point with implementations for different
+ * {@link com.intellij.remote.CredentialsType} using
+ * {@link PyRemoteSdkAdditionalDataBase#switchOnConnectionType(com.intellij.remote.ext.CredentialsCase[])}.
+ *
+ * @see PyRemoteProcessStarterManagerUtil
  */
 public interface PyRemoteProcessStarterManager {
   ExtensionPointName<PyRemoteProcessStarterManager> EP_NAME = ExtensionPointName.create("Pythonid.remoteProcessStarterManager");
@@ -48,21 +51,6 @@ public interface PyRemoteProcessStarterManager {
   ProcessOutput executeRemoteProcess(@Nullable Project project,
                                      @NotNull String[] command,
                                      @Nullable String workingDir,
-                                     @NotNull PythonRemoteInterpreterManager manager,
                                      @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
-                                     @NotNull PyRemotePathMapper pathMapper, boolean askForSudo, boolean checkHelpers) throws ExecutionException, InterruptedException;
-
-  default ProcessOutput executeRemoteProcess(@Nullable Project project,
-                                            @NotNull String[] command,
-                                            @Nullable String workingDir,
-                                            @NotNull PythonRemoteInterpreterManager manager,
-                                            @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
-                                            @NotNull PyRemotePathMapper pathMapper,
-                                            boolean askForSudo,
-                                            @NotNull Set<String> checkHelpersPaths) throws ExecutionException, InterruptedException {
-    return executeRemoteProcess(project, command, workingDir, manager, sdkAdditionalData, pathMapper, askForSudo, !checkHelpersPaths.isEmpty());
-  }
-
-  String getFullInterpreterPath(@NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData)
-    throws ExecutionException, InterruptedException;
+                                     @NotNull PyRemotePathMapper pathMapper) throws ExecutionException, InterruptedException;
 }

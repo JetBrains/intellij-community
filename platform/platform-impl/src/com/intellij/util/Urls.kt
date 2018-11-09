@@ -24,7 +24,7 @@ object Urls {
   val caseInsensitiveUrlHashingStrategy: TObjectHashingStrategy<Url> by lazy { CaseInsensitiveUrlHashingStrategy() }
 
   @JvmStatic
-  fun newUri(scheme: String?, path: String) = UrlImpl(scheme, null, path)
+  fun newUri(scheme: String?, path: String): UrlImpl = UrlImpl(scheme, null, path)
 
   @JvmStatic
   fun newUrl(scheme: String, authority: String, path: String, rawParameters: String?): UrlImpl {
@@ -73,7 +73,7 @@ object Urls {
   }
 
   @JvmStatic
-  fun parseEncoded(url: String) = parse(url, false)
+  fun parseEncoded(url: String): Url? = parse(url, false)
 
   @JvmStatic
   fun newHttpUrl(authority: String, path: String?): Url {
@@ -198,7 +198,7 @@ object Urls {
   }
 
   @JvmStatic
-  fun newUnparsable(string: String) = UrlImpl(null, null, string, null)
+  fun newUnparsable(string: String): UrlImpl = UrlImpl(null, null, string, null)
 
   @JvmOverloads
   @JvmStatic

@@ -16,34 +16,38 @@
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/31/2014
  */
 public abstract class ExternalSystemViewGearAction extends ExternalSystemToggleAction {
 
   private ExternalProjectsViewImpl myView;
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     return getView() != null;
   }
 
   @Override
-  protected boolean doIsSelected(AnActionEvent e) {
+  protected boolean doIsSelected(@NotNull AnActionEvent e) {
     final ExternalProjectsViewImpl view = getView();
     return view != null && isSelected(view);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     final ExternalProjectsViewImpl view = getView();
     if (view != null){
+      // es system id does not available in the action context, get it from the view
+      ProjectSystemId systemId = view.getSystemId();
+      ExternalSystemActionsCollector.trigger(getProject(e), systemId, this, e);
       setSelected(view, state);
     }
   }

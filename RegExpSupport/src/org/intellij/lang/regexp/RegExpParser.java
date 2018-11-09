@@ -38,11 +38,11 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   public void parseLight(IElementType root, PsiBuilder builder) {
     final PsiBuilder.Marker rootMarker = builder.mark();
 
-    parsePattern(builder);
-
-    while (!builder.eof()) {
+    while (true) {
+      parsePattern(builder);
+      if (builder.eof()) break;
       patternExpected(builder);
-      builder.advanceLexer();
+      if (builder.eof()) break;
     }
 
     rootMarker.done(root);
@@ -59,49 +59,39 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   /**
    * PATTERN ::= BRANCH "|" PATTERN | BRANCH
    */
-  private boolean parsePattern(PsiBuilder builder) {
+  private void parsePattern(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
-    if (!parseBranch(builder)) {
-      marker.drop();
-      return false;
-    }
+    parseBranch(builder);
 
     while (builder.getTokenType() == RegExpTT.UNION) {
       builder.advanceLexer();
-      if (!parseBranch(builder)) {
-        patternExpected(builder);
-        break;
-      }
+      parseBranch(builder);
     }
 
     marker.done(RegExpElementTypes.PATTERN);
-
-    return true;
   }
 
   /**
    * BRANCH  ::= ATOM BRANCH | ""
    */
-  private boolean parseBranch(PsiBuilder builder) {
+  private void parseBranch(PsiBuilder builder) {
     final PsiBuilder.Marker marker = builder.mark();
 
-    if (!parseAtom(builder)) {
+    while (!parseAtom(builder)) {
       final IElementType token = builder.getTokenType();
       if (token == RegExpTT.GROUP_END || token == RegExpTT.UNION || token == null) {
         // empty branches are allowed
         marker.done(RegExpElementTypes.BRANCH);
-        return true;
+        return;
       }
-      marker.drop();
-      return false;
+      patternExpected(builder);
     }
 
     //noinspection StatementWithEmptyBody
     while (parseAtom(builder)) {}
 
     marker.done(RegExpElementTypes.BRANCH);
-    return true;
   }
 
   /**
@@ -391,6 +381,12 @@ public class RegExpParser implements PsiParser, LightPsiParser {
       marker.drop();
       parseCharacter(builder);
     }
+    else if (type == RegExpTT.NUMBER || type == RegExpTT.COMMA) {
+      // don't show these as errors
+      builder.remapCurrentToken(RegExpTT.CHARACTER);
+      builder.advanceLexer();
+      marker.done(RegExpElementTypes.CHAR);
+    }
     else if (RegExpTT.BOUNDARIES.contains(type)) {
       builder.advanceLexer();
       marker.done(RegExpElementTypes.BOUNDARY);
@@ -424,18 +420,12 @@ public class RegExpParser implements PsiParser, LightPsiParser {
         builder.error("Group name or number expected");
       }
       checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group reference");
-      if (!parseBranch(builder)) {
-        patternExpected(builder);
+      parseBranch(builder);
+      if (builder.getTokenType() == RegExpTT.UNION) {
+        builder.advanceLexer();
+        parseBranch(builder);
       }
-      else {
-        if (builder.getTokenType() == RegExpTT.UNION) {
-          builder.advanceLexer();
-          if (!parseBranch(builder)) {
-            patternExpected(builder);
-          }
-        }
-        checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
-      }
+      checkMatches(builder, RegExpTT.GROUP_END, "Unclosed conditional");
       marker.done(RegExpElementTypes.PY_COND_REF);
     }
     else if (type == RegExpTT.PROPERTY) {
@@ -458,12 +448,8 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   }
 
   private void parseGroupEnd(PsiBuilder builder) {
-    if (!parsePattern(builder)) {
-      patternExpected(builder);
-    }
-    else {
-      checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
-    }
+    parsePattern(builder);
+    checkMatches(builder, RegExpTT.GROUP_END, "Unclosed group");
   }
 
   private static void parseNamedGroupRef(PsiBuilder builder, PsiBuilder.Marker marker, IElementType type) {
@@ -474,6 +460,7 @@ public class RegExpParser implements PsiParser, LightPsiParser {
   }
 
   private static boolean isLetter(CharSequence text) {
+    if (text == null) return false;
     assert text.length() == 1;
     final char c = text.charAt(0);
     return AsciiUtil.isLetter(c);
@@ -552,9 +539,10 @@ public class RegExpParser implements PsiParser, LightPsiParser {
     else {
       builder.error("Pattern expected");
     }
+    builder.advanceLexer();
   }
 
-  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, final String message) {
+  protected static boolean checkMatches(final PsiBuilder builder, final IElementType token, @NotNull String message) {
     if (builder.getTokenType() == token) {
       builder.advanceLexer();
       return true;

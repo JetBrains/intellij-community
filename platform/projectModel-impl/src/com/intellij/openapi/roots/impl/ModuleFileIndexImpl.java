@@ -115,7 +115,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   @Nullable
-  public static OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule, @NotNull List<OrderEntry> orderEntries) {
+  public static OrderEntry findOrderEntryWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> orderEntries) {
     if (orderEntries.size() < 10) {
       for (OrderEntry orderEntry : orderEntries) {
         if (orderEntry.getOwnerModule() == ownerModule) {
@@ -129,7 +129,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   @NotNull
-  private static List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull List<OrderEntry> entries) {
+  private static List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> entries) {
     if (entries.isEmpty()) return Collections.emptyList();
 
     if (entries.size() == 1) {

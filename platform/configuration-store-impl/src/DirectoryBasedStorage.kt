@@ -4,10 +4,10 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.createDir
 import com.intellij.configurationStore.schemeManager.getOrCreateChild
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.StateSplitter
 import com.intellij.openapi.components.StateSplitterEx
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.components.impl.stores.DirectoryStorageUtil
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -26,16 +26,16 @@ import java.nio.ByteBuffer
 import java.nio.file.Path
 
 abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val splitter: StateSplitter,
-                                         protected val pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
+                                         protected val pathMacroSubstitutor: PathMacroSubstitutor? = null) : StateStorageBase<StateMap>() {
   protected var componentName: String? = null
 
   protected abstract val virtualFile: VirtualFile?
 
-  override public fun loadData() = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
+  public override fun loadData(): StateMap = StateMap.fromMap(DirectoryStorageUtil.loadFrom(virtualFile, pathMacroSubstitutor))
 
-  override fun startExternalization(): StateStorage.ExternalizationSession? = null
+  override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = null
 
-  override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<String>) {
+  override fun analyzeExternalChangesAndUpdateIfNeed(componentNames: MutableSet<in String>) {
     // todo reload only changed file, compute diff
     val newData = loadData()
     storageDataRef.set(newData)
@@ -73,13 +73,14 @@ abstract class DirectoryBasedStorageBase(@Suppress("DEPRECATION") protected val 
     return state
   }
 
-  override fun hasState(storageData: StateMap, componentName: String) = storageData.hasStates()
+  override fun hasState(storageData: StateMap, componentName: String): Boolean = storageData.hasStates()
 }
 
 open class DirectoryBasedStorage(private val dir: Path,
                                  @Suppress("DEPRECATION") splitter: StateSplitter,
-                                 pathMacroSubstitutor: TrackingPathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
-  private @Volatile var cachedVirtualFile: VirtualFile? = null
+                                 pathMacroSubstitutor: PathMacroSubstitutor? = null) : DirectoryBasedStorageBase(splitter, pathMacroSubstitutor) {
+  @Volatile
+  private var cachedVirtualFile: VirtualFile? = null
 
   override val virtualFile: VirtualFile?
     get() {
@@ -95,7 +96,7 @@ open class DirectoryBasedStorage(private val dir: Path,
     cachedVirtualFile = dir
   }
 
-  override fun startExternalization(): StateStorage.ExternalizationSession? = if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
+  override fun createSaveSessionProducer(): StateStorage.SaveSessionProducer? = if (checkIsSavingDisabled()) null else MySaveSession(this, getStorageData())
 
   private class MySaveSession(private val storage: DirectoryBasedStorage, private val originalStates: StateMap) : SaveSessionBase() {
     private var copiedStorageData: MutableMap<String, Any>? = null
@@ -178,31 +179,20 @@ open class DirectoryBasedStorage(private val dir: Path,
     }
 
     private fun saveStates(dir: VirtualFile, states: StateMap) {
-      val storeElement = Element(FileStorageCoreUtil.COMPONENT)
       for (fileName in states.keys()) {
         if (!dirtyFileNames.contains(fileName)) {
           continue
         }
 
-        var element: Element? = null
         try {
-          element = states.getElement(fileName) ?: continue
-          storage.pathMacroSubstitutor?.collapsePaths(element)
-
-          storeElement.setAttribute(FileStorageCoreUtil.NAME, storage.componentName!!)
-          storeElement.addContent(element)
-
+          val element = states.getElement(fileName) ?: continue
           val file = dir.getOrCreateChild(fileName, this)
           // we don't write xml prolog due to historical reasons (and should not in any case)
-          writeFile(null, this, file, storeElement, getOrDetectLineSeparator(file) ?: LineSeparator.getSystemLineSeparator(), false)
+          val macroManager = if (storage.pathMacroSubstitutor == null) null else (storage.pathMacroSubstitutor as TrackingPathMacroSubstitutorImpl).macroManager
+          writeFile(null, this, file, XmlDataWriter(FileStorageCoreUtil.COMPONENT, listOf(element), mapOf(FileStorageCoreUtil.NAME to storage.componentName!!), macroManager), getOrDetectLineSeparator(file) ?: LineSeparator.getSystemLineSeparator(), false)
         }
         catch (e: IOException) {
           LOG.error(e)
-        }
-        finally {
-          if (element != null) {
-            element.detach()
-          }
         }
       }
     }

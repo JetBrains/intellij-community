@@ -16,8 +16,8 @@
 
 package com.intellij.openapi.vcs.rollback;
 
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
@@ -29,15 +29,18 @@ public abstract class DefaultRollbackEnvironment implements RollbackEnvironment 
 
   public static final String ROLLBACK_OPERATION_NAME = VcsBundle.message("changes.action.rollback.text");
 
+  @Override
   public String getRollbackOperationName() {
     return ROLLBACK_OPERATION_NAME;
   }
 
+  @Override
   public void rollbackModifiedWithoutCheckout(final List<VirtualFile> files, final List<VcsException> exceptions,
-                                                            final RollbackProgressListener listener) {
+                                              final RollbackProgressListener listener) {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void rollbackIfUnchanged(final VirtualFile file) {
   }
 }

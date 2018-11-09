@@ -27,6 +27,10 @@ import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.xml.DOMConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.AssumptionViolatedException;
+import org.junit.rules.TestRule;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 import java.io.*;
 import java.util.regex.Matcher;
@@ -177,6 +181,10 @@ public class TestLoggerFactory implements Logger.Factory {
     }
   }
 
+  public static void onTestStarted() {
+    // clear buffer from tests which failed to report their termination properly
+    BUFFER.setLength(0);
+  }
   public static void onTestFinished(boolean success) {
     if (!success && BUFFER.length() != 0) {
       if (UsefulTestCase.IS_UNDER_TEAMCITY) {
@@ -199,5 +207,30 @@ public class TestLoggerFactory implements Logger.Factory {
       }
     }
     BUFFER.setLength(0);
+  }
+
+  @NotNull
+  public static TestRule createTestWatcher() {
+    return new TestWatcher() {
+      @Override
+      protected void succeeded(Description description) {
+        onTestFinished(true);
+      }
+
+      @Override
+      protected void failed(Throwable e, Description description) {
+        onTestFinished(false);
+      }
+
+      @Override
+      protected void skipped(AssumptionViolatedException e, Description description) {
+        onTestFinished(true);
+      }
+
+      @Override
+      protected void starting(@NotNull Description d) {
+        onTestStarted();
+      }
+    };
   }
 }

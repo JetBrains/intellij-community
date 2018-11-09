@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -21,7 +22,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -44,6 +44,7 @@ import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
@@ -54,9 +55,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
+import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 import static org.jetbrains.idea.maven.project.ProjectBundle.message;
 
 public class MavenProjectsStructure extends SimpleTreeStructure {
@@ -91,7 +93,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     configureTree(tree);
 
-    myTreeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null);
+    myTreeBuilder = new SimpleTreeBuilder(tree, (DefaultTreeModel)tree.getModel(), this, null) {
+      // unique class to simplify search through the logs
+    };
     Disposer.register(myProject, myTreeBuilder);
 
     myTreeBuilder.initRoot();
@@ -133,6 +137,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     });
   }
 
+  @NotNull
   @Override
   public RootNode getRootElement() {
     return myRoot;
@@ -146,7 +151,9 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   }
 
   private void updateFrom(SimpleNode node) {
-    myTreeBuilder.addSubtreeToUpdateByElement(node);
+    if (node != null) {
+      myTreeBuilder.addSubtreeToUpdateByElement(node);
+    }
   }
 
   private void updateUpTo(SimpleNode node) {
@@ -490,7 +497,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
       String actionId = getActionId();
       if (actionId != null) {
-        MavenUIUtil.executeAction(actionId, inputEvent);
+        MavenUIUtil.executeAction(actionId, TOOL_WINDOW_PLACE_ID, inputEvent);
       }
     }
   }
@@ -707,7 +714,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
                                                               boolean isSelected,
                                                               boolean cellHasFocus) {
                   Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                  @SuppressWarnings("unchecked") MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
+                  MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
                   XmlElement xmlElement = mavenDomProfile.getXmlElement();
                   if (xmlElement != null) {
                     setText(xmlElement.getContainingFile().getVirtualFile().getPath());
@@ -1459,14 +1466,14 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         }
       }
 
-      String directory = PathUtil.getCanonicalPath(mavenProject.getDirectory());
+      String directory = mavenProject.getDirectory();
 
       int oldSize = myChildren.size();
 
       for (RunnerAndConfigurationSettings cfg : settings) {
         MavenRunConfiguration mavenRunConfiguration = (MavenRunConfiguration)cfg.getConfiguration();
 
-        if (directory.equals(PathUtil.getCanonicalPath(mavenRunConfiguration.getRunnerParameters().getWorkingDirPath()))) {
+        if (FileUtil.pathsEqual(directory, mavenRunConfiguration.getRunnerParameters().getWorkingDirPath())) {
           myChildren.add(new RunConfigurationNode(this, cfg));
         }
       }
@@ -1519,6 +1526,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
+      MavenActionsUsagesCollector.trigger(myProject, "ExecuteMavenRunConfigurationAction", TOOL_WINDOW_PLACE_ID, false);
       ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
     }
   }

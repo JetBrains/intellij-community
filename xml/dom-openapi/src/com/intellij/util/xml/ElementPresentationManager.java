@@ -69,7 +69,7 @@ public abstract class ElementPresentationManager {
   }
 
   @NotNull
-  public <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer) {
+  public <T> Object[] createVariants(Collection<? extends T> elements, Function<? super T, String> namer) {
     return createVariants(elements, namer, 0);
   }
 
@@ -80,7 +80,7 @@ public abstract class ElementPresentationManager {
   public abstract Object createVariant(final Object variant, final String name, final PsiElement psiElement);
 
   @NotNull
-  public abstract <T> Object[] createVariants(Collection<T> elements, Function<T, String> namer, int iconFlags);
+  public abstract <T> Object[] createVariants(Collection<? extends T> elements, Function<? super T, String> namer, int iconFlags);
 
 
   private static final List<Function<Object, String>> ourNameProviders = new ArrayList<>();
@@ -96,12 +96,14 @@ public abstract class ElementPresentationManager {
    * @deprecated
    * @see com.intellij.ide.presentation.Presentation#provider()
    */
+  @Deprecated
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
 
   /**
    * @deprecated
    * @see Documentation
    */
+  @Deprecated
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
 
 

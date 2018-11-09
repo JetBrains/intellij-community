@@ -19,12 +19,13 @@ import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FileHistoryUiDataRule implements GetDataRule {
   @Nullable
   @Override
-  public Object getData(DataProvider dataProvider) {
+  public Object getData(@NotNull DataProvider dataProvider) {
     VcsLogUi ui = VcsLogDataKeys.VCS_LOG_UI.getData(dataProvider);
     if (ui instanceof FileHistoryUi) {
       return ui;

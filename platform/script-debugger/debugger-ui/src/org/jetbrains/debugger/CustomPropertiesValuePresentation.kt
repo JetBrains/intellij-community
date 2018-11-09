@@ -43,7 +43,7 @@ class CustomPropertiesValuePresentation(private val value: ObjectValue, private 
       when (value.type) {
         ValueType.BOOLEAN, ValueType.NULL, ValueType.UNDEFINED, ValueType.SYMBOL -> renderer.renderKeywordValue(value.valueString!!)
 
-        ValueType.NUMBER -> renderer.renderNumericValue(value.valueString!!)
+        ValueType.NUMBER, ValueType.BIGINT -> renderer.renderNumericValue(value.valueString!!)
 
         ValueType.STRING -> {
           val string = value.valueString

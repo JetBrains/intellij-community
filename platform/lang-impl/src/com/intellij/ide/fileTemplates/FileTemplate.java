@@ -47,7 +47,12 @@ public interface FileTemplate extends Cloneable {
   String ATTRIBUTE_SIMPLE_CLASS_NAME = "SIMPLE_CLASS_NAME";
   String ATTRIBUTE_METHOD_NAME = "METHOD_NAME";
   String ATTRIBUTE_PACKAGE_NAME = "PACKAGE_NAME";
+
   String ATTRIBUTE_NAME = "NAME";
+
+  /** Relative path of containing directory */
+  String ATTRIBUTE_DIR_PATH = "DIR_PATH";
+  /** File name with extension */
   String ATTRIBUTE_FILE_NAME = "FILE_NAME";
 
   /** Name without extension */

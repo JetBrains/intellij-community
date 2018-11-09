@@ -162,7 +162,7 @@ public class SynchronizationOnLocalVariableOrMethodParameterInspection extends B
     private final PsiElement myContext;
     private boolean escaping = false;
 
-    public EscapeVisitor(@NotNull PsiVariable variable, @NotNull PsiElement context) {
+    EscapeVisitor(@NotNull PsiVariable variable, @NotNull PsiElement context) {
       myVariable = variable;
       myContext = context;
     }

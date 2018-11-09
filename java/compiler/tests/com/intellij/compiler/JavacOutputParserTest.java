@@ -95,7 +95,7 @@ LIne read: #[wrote C:\temp\rmiTest\classes\mycompany\TTT.class]#
   private static class MyJavacParserAction extends JavacParserAction {
     private String myExpected;
 
-    public MyJavacParserAction(Matcher matcher) {
+    MyJavacParserAction(Matcher matcher) {
       super(matcher);
     }
 

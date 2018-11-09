@@ -388,12 +388,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private void listenForProjectsTreeChanges() {
     myProjectsTree.addListener(new MavenProjectsTree.Listener() {
       @Override
-      public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
+      public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
         if (!fromImport) scheduleImport();
       }
 
       @Override
-      public void projectsUpdated(List<Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
+      public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
         myEmbeddersManager.clearCaches();
 
         unscheduleAllTasks(deleted);
@@ -444,7 +444,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       }
 
       @Override
-      public void projectResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges,
+      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
                                   @Nullable NativeMavenProjectHolder nativeMavenProject) {
         if (nativeMavenProject != null) {
           if (shouldScheduleProject(projectWithChanges)) {
@@ -469,7 +469,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       }
 
       @Override
-      public void foldersResolved(Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
+      public void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
         if (shouldScheduleProject(projectWithChanges)) {
           scheduleForNextImport(projectWithChanges);
         }

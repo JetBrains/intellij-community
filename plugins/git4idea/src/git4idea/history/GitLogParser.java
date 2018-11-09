@@ -4,11 +4,15 @@ package git4idea.history;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import git4idea.GitFormatException;
+import git4idea.GitUtil;
 import git4idea.config.GitVersionSpecialty;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +20,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <p>Parses the 'git log' output basing on the given number of options.
@@ -44,16 +50,16 @@ import java.util.Map;
 public class GitLogParser {
   private static final Logger LOG = Logger.getInstance(GitLogParser.class);
 
-  // Single records begin with %x01, end with %03. Items of commit information (hash, committer, subject, etc.) are separated by %x02.
-  // each character is declared twice - for Git pattern format and for actual character in the output.
-  public static final String RECORD_START = "\u0001\u0001";
-  public static final char ITEMS_SEPARATOR = '\u0002';
-  public static final String RECORD_END = "\u0003\u0003";
-  public static final String RECORD_START_GIT = "%x01%x01";
-  private static final String ITEMS_SEPARATOR_GIT = "%x02";
-  private static final String RECORD_END_GIT = "%x03%x03";
+  // Single records begin with %x01%x01, end with %03%03. Items of commit information (hash, committer, subject, etc.) are separated by %x02%x02.
+  static final String RECORD_START = "\u0001\u0001";
+  static final String ITEMS_SEPARATOR = "\u0002\u0002";
+  static final String RECORD_END = "\u0003\u0003";
+  private static final int MAX_SEPARATOR_LENGTH = 10;
+  private static final char[] CONTROL_CHARS = new char[]{'\u0001', '\u0002', '\u0003'};
   private static final int INPUT_ERROR_MESSAGE_HEAD_LIMIT = 1000000; // limit the string by ~2mb
   private static final int INPUT_ERROR_MESSAGE_TAIL_LIMIT = 100;
+
+  private static final AtomicInteger ERROR_COUNT = new AtomicInteger();
 
   private final boolean mySupportsRawBody;
   @NotNull private final String myPretty;
@@ -61,13 +67,22 @@ public class GitLogParser {
   @NotNull private final OptionsParser myOptionsParser;
   @NotNull private final PathsParser myPathsParser;
 
+  private final String myRecordStart;
+  private final String myRecordEnd;
+  private final String myItemsSeparator;
+
   private boolean myIsInBody = true;
 
   private GitLogParser(boolean supportsRawBody,
                        @NotNull NameStatus nameStatusOption,
                        @NotNull GitLogOption... options) {
-    myPretty = "--pretty=format:" + makeFormatFromOptions(options);
     mySupportsRawBody = supportsRawBody;
+
+    myRecordStart = RECORD_START + generateRandomSequence();
+    myRecordEnd = RECORD_END + generateRandomSequence();
+    myItemsSeparator = ITEMS_SEPARATOR + generateRandomSequence();
+
+    myPretty = "--pretty=format:" + makeFormatFromOptions(options);
 
     myOptionsParser = new OptionsParser(options);
     myPathsParser = new PathsParser(nameStatusOption);
@@ -89,7 +104,7 @@ public class GitLogParser {
     List<GitLogRecord> result = ContainerUtil.newArrayList();
 
     List<CharSequence> lines = StringUtil.split(output, "\n", true, false);
-    for (CharSequence line : lines) {
+    for (CharSequence line: lines) {
       try {
         GitLogRecord record = parseLine(line);
         if (record != null) {
@@ -133,7 +148,7 @@ public class GitLogParser {
       myIsInBody = !myOptionsParser.parseLine(line);
     }
     else {
-      if (CharArrayUtil.regionMatches(line, 0, RECORD_START)) {
+      if (CharArrayUtil.regionMatches(line, 0, myRecordStart)) {
         GitLogRecord record = createRecord();
         myIsInBody = !myOptionsParser.parseLine(line);
         return record;
@@ -164,7 +179,7 @@ public class GitLogParser {
     Map<GitLogOption, String> options = myOptionsParser.getResult();
     myOptionsParser.clear();
 
-    List<GitLogStatusInfo> result = myPathsParser.getResult();
+    List<VcsFileStatusInfo> result = myPathsParser.getResult();
     myPathsParser.clear();
 
     myIsInBody = true;
@@ -184,12 +199,31 @@ public class GitLogParser {
   }
 
   @NotNull
-  private static String makeFormatFromOptions(@NotNull GitLogOption[] options) {
+  private String makeFormatFromOptions(@NotNull GitLogOption[] options) {
     Function<GitLogOption, String> function = option -> "%" + option.getPlaceholder();
-    return RECORD_START_GIT + StringUtil.join(options, function, ITEMS_SEPARATOR_GIT) + RECORD_END_GIT;
+    return encodeForGit(myRecordStart) + StringUtil.join(options, function, encodeForGit(myItemsSeparator)) + encodeForGit(myRecordEnd);
+  }
+
+  @NotNull
+  private static String encodeForGit(@NotNull String line) {
+    StringBuilder encoded = new StringBuilder();
+    line.chars().forEachOrdered(c -> encoded.append("%x").append(String.format("%02x", c)));
+    return encoded.toString();
+  }
+
+  @NotNull
+  private static String generateRandomSequence() {
+    int length = ERROR_COUNT.get() % (MAX_SEPARATOR_LENGTH - RECORD_START.length());
+    StringBuilder tail = new StringBuilder();
+    for (int i = 0; i < length; i++) {
+      int randomIndex = ThreadLocalRandom.current().nextInt(0, CONTROL_CHARS.length);
+      tail.append(CONTROL_CHARS[randomIndex]);
+    }
+    return tail.toString();
   }
 
   private static void throwGFE(@NotNull String message, @NotNull CharSequence line) {
+    ERROR_COUNT.incrementAndGet();
     throw new GitFormatException(message + " [" + getTruncatedEscapedOutput(line) + "]");
   }
 
@@ -242,11 +276,11 @@ public class GitLogParser {
     }
   }
 
-  private static class OptionsParser {
+  private class OptionsParser {
     @NotNull private final GitLogOption[] myOptions;
     @NotNull private final PartialResult myResult = new PartialResult();
 
-    public OptionsParser(@NotNull GitLogOption[] options) {
+    OptionsParser(@NotNull GitLogOption[] options) {
       myOptions = options;
     }
 
@@ -254,10 +288,10 @@ public class GitLogParser {
       int offset = 0;
 
       if (myResult.isEmpty()) {
-        if (!CharArrayUtil.regionMatches(line, offset, RECORD_START)) {
+        if (!CharArrayUtil.regionMatches(line, offset, myRecordStart)) {
           return false;
         }
-        offset += RECORD_START.length();
+        offset += myRecordStart.length();
       }
 
       while (offset < line.length()) {
@@ -270,14 +304,15 @@ public class GitLogParser {
           return true;
         }
 
-        char c = line.charAt(offset);
-        if (c == ITEMS_SEPARATOR) {
+        if (CharArrayUtil.regionMatches(line, offset, myItemsSeparator)) {
           myResult.finishItem();
+          offset += myItemsSeparator.length();
         }
         else {
+          char c = line.charAt(offset);
           myResult.append(c);
+          offset++;
         }
-        offset++;
       }
 
       myResult.append('\n');
@@ -285,8 +320,8 @@ public class GitLogParser {
       return false;
     }
 
-    private static boolean atRecordEnd(@NotNull CharSequence line, int offset) {
-      return (offset == line.length() - RECORD_END.length() && CharArrayUtil.regionMatches(line, offset, RECORD_END));
+    private boolean atRecordEnd(@NotNull CharSequence line, int offset) {
+      return (offset == line.length() - myRecordEnd.length() && CharArrayUtil.regionMatches(line, offset, myRecordEnd));
     }
 
     @NotNull
@@ -312,11 +347,11 @@ public class GitLogParser {
     }
   }
 
-  private static class PathsParser {
+  private class PathsParser {
     @NotNull private final NameStatus myNameStatusOption;
-    @NotNull private List<GitLogStatusInfo> myStatuses = ContainerUtil.newArrayList();
+    @NotNull private List<VcsFileStatusInfo> myStatuses = ContainerUtil.newArrayList();
 
-    public PathsParser(@NotNull NameStatus nameStatusOption) {
+    PathsParser(@NotNull NameStatus nameStatusOption) {
       myNameStatusOption = nameStatusOption;
     }
 
@@ -331,17 +366,41 @@ public class GitLogParser {
       else {
         if (myNameStatusOption != NameStatus.STATUS) throwGFE("Status list not expected", line);
 
-        if (match.size() == 2) {
-          myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), null));
+        if (match.size() < 2) {
+          LOG.error("Could not parse status line [" + line + "] for record " + myOptionsParser.myResult.getResult());
         }
         else {
-          myStatuses.add(new GitLogStatusInfo(GitChangeType.fromString(match.get(0)), match.get(1), match.get(2)));
+          if (match.size() == 2) {
+            myStatuses.add(createStatusInfo(match.get(0), match.get(1), null));
+          }
+          else {
+            myStatuses.add(createStatusInfo(match.get(0), match.get(1), match.get(2)));
+          }
         }
       }
     }
 
     @NotNull
-    private static List<String> parsePathsLine(@NotNull CharSequence line) {
+    private VcsFileStatusInfo createStatusInfo(@NotNull String type, @NotNull String firstPath, @Nullable String secondPath) {
+      return new VcsFileStatusInfo(GitChangesParser.getChangeType(GitChangeType.fromString(type)), tryUnescapePath(firstPath),
+                                   tryUnescapePath(secondPath));
+    }
+
+    @Nullable
+    @Contract("!null -> !null")
+    private String tryUnescapePath(@Nullable String path) {
+      if (path == null) return null;
+      try {
+        return GitUtil.unescapePath(path);
+      }
+      catch (VcsException e) {
+        LOG.error(e);
+        return path;
+      }
+    }
+
+    @NotNull
+    private List<String> parsePathsLine(@NotNull CharSequence line) {
       int offset = 0;
 
       PartialResult result = new PartialResult();
@@ -365,14 +424,14 @@ public class GitLogParser {
       return result.getResult();
     }
 
-    private static boolean atLineEnd(@NotNull CharSequence line, int offset) {
-      while (offset < line.length() && (line.charAt(offset) == '\t' || line.charAt(offset) == ' ')) offset++;
+    private boolean atLineEnd(@NotNull CharSequence line, int offset) {
+      while (offset < line.length() && (line.charAt(offset) == '\t')) offset++;
       if (offset == line.length() || (line.charAt(offset) == '\n' || line.charAt(offset) == '\r')) return true;
       return false;
     }
 
     @NotNull
-    public List<GitLogStatusInfo> getResult() {
+    public List<VcsFileStatusInfo> getResult() {
       return myStatuses;
     }
 

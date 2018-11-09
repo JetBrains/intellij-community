@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.ExecutionException;
@@ -16,19 +16,18 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.List;
 
@@ -75,8 +74,6 @@ public class SMTestRunnerConnectionUtil {
    * @param processHandler    Process handler
    * @param consoleProperties Console properties for test console actions
    * @return Console view
-   * @throws ExecutionException If IDEA cannot execute process this exception will
-   *                            be caught and shown in error message box
    */
   @NotNull
   public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
@@ -214,11 +211,9 @@ public class SMTestRunnerConnectionUtil {
     processHandler.addProcessListener(new ProcessAdapter() {
       @Override
       public void processTerminated(@NotNull final ProcessEvent event) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
-          outputConsumer.finishTesting();
-          Disposer.dispose(outputConsumer);
-        });
+        outputConsumer.flushBufferOnProcessTermination(event.getExitCode());
+        outputConsumer.finishTesting();
+        Disposer.dispose(outputConsumer);
       }
 
       @Override
@@ -231,7 +226,7 @@ public class SMTestRunnerConnectionUtil {
   private static class CombinedTestLocator implements SMTestLocator, DumbAware {
     private final SMTestLocator myLocator;
 
-    public CombinedTestLocator(SMTestLocator locator) {
+    CombinedTestLocator(SMTestLocator locator) {
       myLocator = locator;
     }
 
@@ -258,10 +253,23 @@ public class SMTestRunnerConnectionUtil {
         return Collections.emptyList();
       }
     }
+
+    @NotNull
+    @Override
+    public List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+      return myLocator.getLocation(stacktraceLine, project, scope);
+    }
+
+    @NotNull
+    @Override
+    public ModificationTracker getLocationCacheModificationTracker(@NotNull Project project) {
+      return myLocator.getLocationCacheModificationTracker(project);
+    }
   }
 
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */
-  @SuppressWarnings({"unused", "deprecation"})
+  @Deprecated
+  @SuppressWarnings({"unused"})
   public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                           @NotNull TestConsoleProperties consoleProperties,
                                                                           ExecutionEnvironment environment,
@@ -270,7 +278,8 @@ public class SMTestRunnerConnectionUtil {
   }
 
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */
-  @SuppressWarnings({"unused", "deprecation"})
+  @Deprecated
+  @SuppressWarnings({"unused"})
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                     @NotNull TestConsoleProperties consoleProperties,
                                                                     ExecutionEnvironment environment,
@@ -284,7 +293,8 @@ public class SMTestRunnerConnectionUtil {
   }
 
   /** @deprecated use {@link #initConsoleView(SMTRunnerConsoleView, String)} (to be removed in IDEA 17) */
-  @SuppressWarnings({"unused", "deprecation"})
+  @Deprecated
+  @SuppressWarnings({"unused"})
   public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView,
                                      @NotNull final String testFrameworkName,
                                      @Nullable final TestLocationProvider locator,
@@ -319,11 +329,11 @@ public class SMTestRunnerConnectionUtil {
   @SuppressWarnings("deprecation")
   private static class CompositeTestLocationProvider implements SMTestLocator {
     private final TestLocationProvider myPrimaryLocator;
-    private final TestLocationProvider[] myLocators;
+    private final List<TestLocationProvider> myLocators;
 
     private CompositeTestLocationProvider(@Nullable TestLocationProvider primaryLocator) {
       myPrimaryLocator = primaryLocator;
-      myLocators = Extensions.getExtensions(TestLocationProvider.EP_NAME);
+      myLocators = TestLocationProvider.EP_NAME.getExtensionList();
     }
 
     @NotNull

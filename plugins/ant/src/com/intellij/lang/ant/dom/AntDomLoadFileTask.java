@@ -32,7 +32,7 @@ import java.io.IOException;
 public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.dom.AntDomLoadFileTask");
-  
+
   private String myCachedText;
 
   @Attribute("srcfile")
@@ -41,11 +41,12 @@ public abstract class AntDomLoadFileTask extends AntDomPropertyDefiningTask {
 
   @Attribute("encoding")
   public abstract GenericAttributeValue<String> getEncoding();
-  
+
+  @Override
   protected String calcPropertyValue(String propertyName) {
     String text = myCachedText;
     if (text != null) {
-      return text; 
+      return text;
     }
     final PsiFileSystemItem file = getSrcFile().getValue();
     if (!(file instanceof PsiFile)) {

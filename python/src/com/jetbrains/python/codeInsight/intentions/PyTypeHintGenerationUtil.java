@@ -268,7 +268,6 @@ public class PyTypeHintGenerationUtil {
       final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
       editor.getCaretModel().moveToOffset(initialCaretOffset);
       final TemplateBuilder templateBuilder = TemplateBuilderFactory.getInstance().createTemplateBuilder(insertedComment);
-      //noinspection ConstantConditions
       for (TextRange range : typeRanges) {
         final String individualType = range.substring(annotation);
         final String replacementText = testMode ? "[" + individualType + "]" : individualType;

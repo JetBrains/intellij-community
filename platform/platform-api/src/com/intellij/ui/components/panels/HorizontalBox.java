@@ -25,6 +25,7 @@ public class HorizontalBox extends JPanel {
   public HorizontalBox() {
     setLayout(new BorderLayout());
     myBox = new Box(BoxLayout.X_AXIS) {
+      @Override
       public Component add(Component comp) {
         ((JComponent) comp).setAlignmentY(0f);
         return super.add(comp);
@@ -34,14 +35,17 @@ public class HorizontalBox extends JPanel {
     setOpaque(false);
   }
 
+  @Override
   public Component add(Component aComponent) {
     return myBox.add(aComponent);
   }
 
+  @Override
   public void remove(Component aComponent) {
     myBox.remove(aComponent);
   }
 
+  @Override
   public void removeAll() {
     myBox.removeAll();
   }

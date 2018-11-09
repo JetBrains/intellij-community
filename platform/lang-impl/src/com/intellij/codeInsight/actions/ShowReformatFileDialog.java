@@ -23,12 +23,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 public class ShowReformatFileDialog extends AnAction implements DumbAware {
   private static final @NonNls String HELP_ID = "editing.codeReformatting";
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -50,7 +51,7 @@ public class ShowReformatFileDialog extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);

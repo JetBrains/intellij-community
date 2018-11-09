@@ -14,10 +14,19 @@
     <action id="Vcs.Push" class="com.intellij.dvcs.push.VcsPushAction" icon="AllIcons.Vcs.Push" text="Push...">
       <keyboard-shortcut first-keystroke="control shift K" keymap="$default"/>
     </action>
+    <action id="Vcs.Force.Push" class="com.intellij.dvcs.push.ui.ForcePushAction" text="_Force Push" />
+
+    <group id="Vcs.Push.Actions">
+      <reference id="Vcs.Force.Push" />
+    </group>
+
     <group id="Dvcs.Log.ContextMenu">
-      <separator/>
       <reference id="Vcs.CherryPick"/>
-      <add-to-group group-id="Vcs.Log.ContextMenu"/>
+      <add-to-group group-id="Vcs.Log.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
+    </group>
+    <group id="Dvcs.FileHistory.ContextMenu">
+      <reference id="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu" relative-to-action="ChangesView.CreatePatchFromChanges" anchor="after"/>
     </group>
 
     <group id="Dvcs.Log.Toolbar">

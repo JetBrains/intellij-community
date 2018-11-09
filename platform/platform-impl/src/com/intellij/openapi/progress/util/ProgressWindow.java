@@ -15,22 +15,31 @@
  */
 package com.intellij.openapi.progress.util;
 
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.ModalityStateEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
 
 @SuppressWarnings("NonStaticInitializer")
 public class ProgressWindow extends ProgressIndicatorBase implements BlockingProgressIndicator, Disposable {
@@ -54,13 +63,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private boolean myStoppedAlready;
   private boolean myStarted;
   protected boolean myBackgrounded;
-  @Nullable private volatile Runnable myBackgroundHandler;
-  protected int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+  int myDelayInMillis = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
   private boolean myModalityEntered;
 
   @FunctionalInterface
   public interface Listener {
-    void progressWindowCreated(ProgressWindow pw);
+    void progressWindowCreated(@NotNull ProgressWindow pw);
   }
 
   public static final Topic<Listener> TOPIC = Topic.create("progress window", Listener.class);
@@ -88,7 +96,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     setModalityProgress(shouldShowBackground ? null : this);
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
     myDialog = ProgressDialogFactory.SERVICE.getInstance().createProgressDialog(this, project, cancelText, shouldShowBackground, parentComponent);
-
+    addStateDelegate(new MyDelegate());
     if (myProject != null) {
       Disposer.register(myProject, this);
     }
@@ -175,28 +183,20 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
+  final boolean isCancellationEvent(@Nullable AWTEvent event) {
+    return myShouldShowCancel &&
+           event instanceof KeyEvent &&
+           event.getID() == KeyEvent.KEY_PRESSED &&
+           ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ESCAPE &&
+           ((KeyEvent)event).getModifiers() == 0;
+  }
+
   public void showDialog() {
     if (!isRunning() || isCanceled()) {
       return;
     }
 
     myDialog.show();
-  }
-
-  @Override
-  public void startNonCancelableSection() {
-    if (isCancelable()) {
-      enableCancel(false);
-    }
-    super.startNonCancelableSection();
-  }
-
-  @Override
-  public void finishNonCancelableSection() {
-    super.finishNonCancelableSection();
-    if (isCancelable()) {
-      enableCancel(true);
-    }
   }
 
   @Override
@@ -234,12 +234,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   public void background() {
-    final Runnable backgroundHandler = myBackgroundHandler;
-    if (backgroundHandler != null) {
-      backgroundHandler.run();
-      return;
-    }
-
     if (myDialog != null) {
       myBackgrounded = true;
       myDialog.background();
@@ -292,12 +286,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     return myTitle;
   }
 
-  public void setBackgroundHandler(@Nullable Runnable backgroundHandler) {
-    myBackgroundHandler = backgroundHandler;
-    myDialog.setShouldShowBackground(backgroundHandler != null);
-  }
-
-  public void setCancelButtonText(String text) {
+  public void setCancelButtonText(@NotNull String text) {
     if (myDialog != null) {
       myDialog.changeCancelButtonText(text);
     }
@@ -312,6 +301,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Override
   public void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     stopSystemActivity();
     if (isRunning()) {
       cancel();
@@ -323,7 +313,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     return myDialog != null && myDialog.isPopupWasShown();
   }
 
-  private void enableCancel(boolean enable) {
+  private void enableCancelButton(boolean enable) {
     if (myDialog != null) {
       myDialog.enableCancelButtonIfNeeded(enable);
     }
@@ -332,5 +322,55 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   @Override
   public String toString() {
     return getTitle() + " " + System.identityHashCode(this) + ": running="+isRunning()+"; canceled="+isCanceled();
+  }
+
+  private class MyDelegate extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
+    private long myLastUpdatedButtonTimestamp;
+    @Override
+    public void cancel() {
+      super.cancel();
+      if (myDialog != null) {
+        myDialog.cancel();
+      }
+    }
+
+    @Override
+    public void checkCanceled() {
+      super.checkCanceled();
+      // assume checkCanceled() would be called from the correct thread
+      long now = System.currentTimeMillis();
+      if (now - myLastUpdatedButtonTimestamp > 10) {
+        enableCancelButton(!ProgressManager.getInstance().isInNonCancelableSection());
+        myLastUpdatedButtonTimestamp = now;
+      }
+    }
+
+    @Override
+    public void addStateDelegate(@NotNull ProgressIndicatorEx delegate) {
+      throw new IncorrectOperationException();
+    }
+
+    @Override
+    public void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
+
+    }
+
+    @Override
+    public void finish(@NotNull TaskInfo task) {
+    }
+
+    @Override
+    public boolean isFinished(@NotNull TaskInfo task) {
+      return true;
+    }
+
+    @Override
+    public boolean wasStarted() {
+      return false;
+    }
+
+    @Override
+    public void processFinish() {
+    }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.highlighting;
 
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -33,7 +19,6 @@ import java.util.Map;
  * @author yole
  */
 public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<LanguageLevel, PyHighlighter> myMap = FactoryMap.create(key -> new PyHighlighter(key));
 
   private final Map<LanguageLevel, PyHighlighter> myConsoleMap = FactoryMap.create(key -> new PyHighlighter(key) {
@@ -43,6 +28,7 @@ public class PySyntaxHighlighterFactory extends SyntaxHighlighterFactory {
     }
   });
 
+  @Override
   @NotNull
   public SyntaxHighlighter getSyntaxHighlighter(@Nullable final Project project, @Nullable final VirtualFile virtualFile) {
     final LanguageLevel level = project != null && virtualFile != null ?

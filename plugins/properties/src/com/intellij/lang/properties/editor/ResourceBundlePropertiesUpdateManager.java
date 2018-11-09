@@ -174,6 +174,7 @@ public class ResourceBundlePropertiesUpdateManager {
 
     final boolean[] isAlphaSorted = new boolean[]{true};
     final Graph<String> generator = GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<String>() {
+      @NotNull
       @Override
       public Collection<String> getNodes() {
         final Set<String> nodes = new LinkedHashSet<>();
@@ -183,6 +184,7 @@ public class ResourceBundlePropertiesUpdateManager {
         return nodes;
       }
 
+      @NotNull
       @Override
       public Iterator<String> getIn(String n) {
         final Collection<String> siblings = new LinkedHashSet<>();
@@ -229,7 +231,7 @@ public class ResourceBundlePropertiesUpdateManager {
     List<String> myKeys;
     Map<String, IntArrayList> myKeyIndices;
 
-    public PropertiesOrder(@NotNull PropertiesFile file) {
+    PropertiesOrder(@NotNull PropertiesFile file) {
       final List<IProperty> properties = file.getProperties();
       myKeys = new ArrayList<>(properties.size());
       myKeyIndices = FactoryMap.createMap(k->new IntArrayList(1),()->new THashMap<>(properties.size()));

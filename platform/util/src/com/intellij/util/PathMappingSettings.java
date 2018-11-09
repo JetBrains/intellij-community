@@ -39,12 +39,12 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
   @NotNull
   private List<PathMapping> myPathMappings;
 
-  public PathMappingSettings(@Nullable final List<PathMapping> pathMappings) {
+  public PathMappingSettings(@Nullable final List<? extends PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 
   @NotNull
-  private static List<PathMapping> create(@Nullable final List<PathMapping> mappings) {
+  private static List<PathMapping> create(@Nullable final List<? extends PathMapping> mappings) {
     List<PathMapping> result = ContainerUtil.newArrayList();
     if (mappings != null) {
       for (PathMapping m : mappings) {
@@ -79,15 +79,6 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return myPathMappings.isEmpty();
   }
 
-  /**
-   * @deprecated use {@code !isEmpty()} instead
-   * @see #isEmpty()
-   */
-  @Deprecated
-  public boolean isUseMapping() {
-    return !isEmpty();
-  }
-
   public static class BestMappingSelector {
     private int myBestWeight = -1;
     private PathMapping myBest = null;
@@ -119,7 +110,10 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return remotePath != null ? remotePath : localPath;
   }
 
-  public void add(@NotNull PathMapping mapping) {
+  public void add(@Nullable PathMapping mapping) {
+    if (mapping == null) {
+      return;
+    }
     if (isAnyEmpty(mapping.getLocalRoot(), mapping.getRemoteRoot())) {
       return;
     }
@@ -155,7 +149,7 @@ public class PathMappingSettings extends AbstractPathMapper implements Cloneable
     return myPathMappings;
   }
 
-  public void setPathMappings(@Nullable final List<PathMapping> pathMappings) {
+  public void setPathMappings(@Nullable final List<? extends PathMapping> pathMappings) {
     myPathMappings = create(pathMappings);
   }
 

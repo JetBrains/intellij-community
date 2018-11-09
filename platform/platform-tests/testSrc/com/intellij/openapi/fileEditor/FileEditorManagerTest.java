@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsState;
 import com.intellij.mock.Mock;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
@@ -40,10 +41,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      UISettings template = new UISettings();
-      UISettings.getInstance().setEditorTabLimit(template.getEditorTabLimit());
-      UISettings.getInstance().setReuseNotModifiedTabs(template.getReuseNotModifiedTabs());
-      UISettings.getInstance().setEditorTabPlacement(template.getEditorTabPlacement());
+      UISettingsState template = new UISettingsState();
+      UISettingsState uiSettings = UISettings.getInstance().getState();
+      uiSettings.setEditorTabLimit(template.getEditorTabLimit());
+      uiSettings.setReuseNotModifiedTabs(template.getReuseNotModifiedTabs());
+      uiSettings.setEditorTabPlacement(template.getEditorTabPlacement());
     }
     finally {
       super.tearDown();
@@ -51,14 +53,14 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testTabLimit() throws Exception {
-    UISettings.getInstance().setEditorTabLimit(2);
+    UISettings.getInstance().getState().setEditorTabLimit(2);
     openFiles(STRING);
     // note that foo.xml is pinned
     assertOpenFiles("foo.xml", "3.txt");
   }
 
   public void testSingleTabLimit() throws Exception {
-    UISettings.getInstance().setEditorTabLimit(1);
+    UISettings.getInstance().getState().setEditorTabLimit(1);
     openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("3.txt");
 
@@ -80,20 +82,21 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   public void testReuseNotModifiedTabs() {
-    UISettings.getInstance().setEditorTabLimit(2);
-    UISettings.getInstance().setReuseNotModifiedTabs(false);
+    UISettingsState uiSettings = UISettings.getInstance().getState();
+    uiSettings.setEditorTabLimit(2);
+    uiSettings.setReuseNotModifiedTabs(false);
 
     myManager.openFile(getFile("/src/3.txt"), true);
     myManager.openFile(getFile("/src/foo.xml"), true);
     assertOpenFiles("3.txt", "foo.xml");
-    UISettings.getInstance().setEditorTabLimit(1);
+    uiSettings.setEditorTabLimit(1);
     callTrimToSize();
     assertOpenFiles("foo.xml");
-    UISettings.getInstance().setEditorTabLimit(2);
+    uiSettings.setEditorTabLimit(2);
 
     myManager.closeAllFiles();
 
-    UISettings.getInstance().setReuseNotModifiedTabs(true);
+    uiSettings.setReuseNotModifiedTabs(true);
     myManager.openFile(getFile("/src/3.txt"), true);
     assertOpenFiles("3.txt");
     myManager.openFile(getFile("/src/foo.xml"), true);
@@ -101,8 +104,9 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   private void callTrimToSize() {
+    UISettingsState uiSettings = UISettings.getInstance().getState();
     for (EditorsSplitters each : myManager.getAllSplitters()) {
-      each.trimToSize(UISettings.getInstance().getEditorTabLimit());
+      each.trimToSize(uiSettings.getEditorTabLimit());
     }
   }
 

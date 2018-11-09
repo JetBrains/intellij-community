@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Executor;
@@ -18,7 +16,7 @@ import javax.swing.*;
 /**
  * @author Roman Chernyatchik
  */
-public class MockRuntimeConfiguration extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
+public final class MockRuntimeConfiguration extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
   public MockRuntimeConfiguration(final Project project) {
     super(project, new MockConfigurationFactory(), "");
   }
@@ -45,7 +43,7 @@ public class MockRuntimeConfiguration extends LocatableConfigurationBase impleme
   }
 
   private static class MockConfigurationFactory extends ConfigurationFactory {
-    public MockConfigurationFactory() {
+    MockConfigurationFactory() {
       super(new MyConfigurationType());
     }
 
@@ -58,6 +56,7 @@ public class MockRuntimeConfiguration extends LocatableConfigurationBase impleme
   }
 
   private static class MyConfigurationType implements ConfigurationType {
+    @NotNull
     @Override
     public String getDisplayName() {
       return "mock";

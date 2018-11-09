@@ -17,8 +17,10 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaFactType;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -188,9 +190,9 @@ public class DfaRelationValue extends DfaValue {
           dfaRight instanceof DfaFactMapValue && !(dfaLeft instanceof DfaFactMapValue)) {
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
-      if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
-          || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue || dfaRight instanceof DfaUnboxedValue) {
-        if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue)) {
+      if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue
+          || dfaRight instanceof DfaVariableValue || dfaRight instanceof DfaBoxedValue) {
+        if (!(dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue)) {
           RelationType flipped = relationType.getFlipped();
           return flipped == null ? null : createCanonicalRelation(dfaRight, flipped, dfaLeft);
         }
@@ -207,8 +209,8 @@ public class DfaRelationValue extends DfaValue {
 
     @NotNull
     private DfaRelationValue createConstBasedRelation(DfaFactMapValue dfaLeft, RelationType relationType, DfaConstValue dfaRight) {
-      if (dfaRight.getValue() == null && Boolean.TRUE.equals(dfaLeft.get(DfaFactType.CAN_BE_NULL))) {
-        return createCanonicalRelation(myFactory.getFactValue(DfaFactType.CAN_BE_NULL, Boolean.TRUE), relationType, dfaRight);
+      if (dfaRight.getValue() == null && DfaNullability.isNullable(dfaLeft.getFacts())) {
+        return createCanonicalRelation(myFactory.getFactValue(DfaFactType.NULLABILITY, DfaNullability.NULLABLE), relationType, dfaRight);
       }
       return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
     }
@@ -233,6 +235,12 @@ public class DfaRelationValue extends DfaValue {
   @NotNull
   public RelationType getRelation() {
     return myRelation;
+  }
+
+  @Nullable
+  @Override
+  public PsiType getType() {
+    return PsiType.BOOLEAN;
   }
 
   @NonNls public String toString() {

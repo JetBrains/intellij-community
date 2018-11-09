@@ -3,10 +3,13 @@ package com.intellij.execution.testDiscovery;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.coverage.data.api.TestDiscoveryProtocolReader;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, TestDiscoveryProtocolReader.NameEnumeratorReader {
   private static final Logger LOG = Logger.getInstance(IdeaTestDiscoveryProtocolReader.class);
@@ -87,6 +90,7 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
       private final String myTestClassName = myTestExecutionNameEnumerator.get(testClassId);
       private final String myTestMethodName = myTestExecutionNameEnumerator.get(testMethodId);
       private final MultiMap<String, String> myUsedMethods = new MultiMap<>();
+      private String[] myUsedFiles = ArrayUtil.EMPTY_STRING_ARRAY;
       private int myCurrentClassId;
 
       @Override
@@ -103,7 +107,6 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
           return;
         }
         myUsedMethods.putValue(className, methodName);
-
       }
 
       @Override
@@ -113,7 +116,12 @@ class IdeaTestDiscoveryProtocolReader implements TestDiscoveryProtocolReader, Te
 
       @Override
       public void testDataProcessed() {
-        myIndex.updateTestData(myTestClassName, myTestMethodName, myUsedMethods, myModuleName, myFrameworkId);
+        myIndex.updateTestData(myTestClassName, myTestMethodName, myUsedMethods, myUsedFiles, myModuleName, myFrameworkId);
+      }
+
+      @Override
+      public void processAffectedFile(int[] ints) {
+        myUsedFiles = Arrays.stream(ints).mapToObj(id -> myTestExecutionNameEnumerator.get(id)).toArray(ArrayUtil.STRING_ARRAY_FACTORY::create);
       }
     };
   }

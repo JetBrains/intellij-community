@@ -3,9 +3,9 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IconCache;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -40,7 +40,7 @@ public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
     AbstractButton b = (AbstractButton)c;
     ButtonModel bm = b.getModel();
     boolean focused = c.hasFocus() || bm.isRollover();
-    Icon icon = IconCache.getIcon("radio", bm.isSelected(), focused, bm.isEnabled(), false, bm.isPressed());
+    Icon icon = LafIconLookup.getIcon("radio", bm.isSelected(), focused, bm.isEnabled(), false, bm.isPressed());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 

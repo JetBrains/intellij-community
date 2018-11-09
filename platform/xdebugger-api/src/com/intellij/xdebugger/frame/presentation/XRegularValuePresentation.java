@@ -39,6 +39,7 @@ public class XRegularValuePresentation extends XValuePresentation {
     mySeparator = separator;
   }
 
+  @Override
   public String getType() {
     return myType;
   }

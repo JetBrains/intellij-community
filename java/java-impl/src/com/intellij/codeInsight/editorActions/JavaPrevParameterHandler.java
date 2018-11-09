@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.util.text.CharArrayUtil;
@@ -56,7 +57,8 @@ public class JavaPrevParameterHandler extends EditorActionHandler {
                   PsiMethod currentMethod = (PsiMethod)((CandidateInfo)objects[currentIndex]).getElement();
                   if (currentMethod.isVarArgs() ||
                       offset != rParOffset + 1 &&
-                      ((PsiExpressionList)exprList).getExpressionCount() > JavaMethodCallElement.getCompletionHintsLimit()) {
+                      ((PsiExpressionList)exprList).getExpressionCount() >
+                      (Registry.is("editor.completion.hints.virtual.comma") ? 1 : JavaMethodCallElement.getCompletionHintsLimit())) {
                     boolean toReturn = false;
                     if (offset == rParOffset + 1) {
                       WriteAction.run(() -> editor.getDocument().insertString(rParOffset, ", "));

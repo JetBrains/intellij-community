@@ -19,7 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.ide.TypePresentationService;
-import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -64,8 +64,7 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
   }
 
   private static String formatType(@NotNull PsiVariable variable) {
-    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(variable.getLanguage());
-    final String type = provider.getType(variable);
+    final String type = LanguageFindUsages.getType(variable);
     if (StringUtil.isNotEmpty(type)) {
       return type;
     }
@@ -157,7 +156,7 @@ public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
 
     return myVariable != null
            && myVariable.isValid()
-           && myVariable.getManager().isInProject(myVariable)
+           && ScratchFileService.isInProjectOrScratch(myVariable)
            && myTargetType.isValid();
   }
 

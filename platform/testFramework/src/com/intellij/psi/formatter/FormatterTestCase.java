@@ -24,7 +24,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.IncorrectOperationException;
@@ -67,7 +66,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    assertFalse(CodeStyleSettingsManager.getInstance(getProject()).USE_PER_PROJECT_SETTINGS);
+    assertFalse(CodeStyle.usesOwnSettings(getProject()));
   }
 
   protected void doTest(String resultNumber) throws Exception {
@@ -353,7 +352,7 @@ public abstract class FormatterTestCase extends LightPlatformTestCase {
   }
 
   private String composeMessage(final List<File> failedFiles) {
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     for (File file : failedFiles) {
       result.append(file.getPath());
       result.append("\n");

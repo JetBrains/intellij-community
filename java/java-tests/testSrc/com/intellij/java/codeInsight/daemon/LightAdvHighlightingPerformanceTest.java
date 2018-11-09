@@ -29,7 +29,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.source.tree.injected.JavaConcatenationInjectorManager;
+import com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
@@ -47,7 +47,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
 
     Disposer.register(my, BlockExtensions.create(Extensions.getRootArea().getExtensionPoint(LanguageAnnotators.EP_NAME)));
     Disposer.register(my, BlockExtensions.create(Extensions.getRootArea().getExtensionPoint(LineMarkerProviders.EP_NAME)));
-    Disposer.register(my, BlockExtensions.create(Extensions.getArea(getProject()).getExtensionPoint(JavaConcatenationInjectorManager.CONCATENATION_INJECTOR_EP_NAME)));
+    Disposer.register(my, BlockExtensions.create(Extensions.getArea(getProject()).getExtensionPoint(ConcatenationInjectorManager.CONCATENATION_INJECTOR_EP_NAME)));
     Disposer.register(my, BlockExtensions.create(Extensions.getArea(getProject()).getExtensionPoint(MultiHostInjector.MULTIHOST_INJECTOR_EP_NAME)));
 
     IntentionManager.getInstance().getAvailableIntentionActions();  // hack to avoid slowdowns in PyExtensionFactory
@@ -73,7 +73,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     private final ExtensionPoint<T> myEp;
     private T[] myExtensions;
 
-    public BlockExtensions(ExtensionPoint<T> extensionPoint) {
+    BlockExtensions(ExtensionPoint<T> extensionPoint) {
       myEp = extensionPoint;
       block();
     }
@@ -148,7 +148,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
     text.append("}");
     configureFromFileText("x.java", text.toString());
 
-    List<HighlightInfo> infos = startTest(3_000);
+    List<HighlightInfo> infos = startTest(3_300);
     assertEmpty(infos);
   }
 }

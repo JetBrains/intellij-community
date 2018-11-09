@@ -36,7 +36,7 @@ public class GroovyTraitFieldSearcher extends QueryExecutorBase<PsiReference, Re
     private final PsiElement myTarget;
     private final PsiManager myManager;
 
-    public MyProcessor(PsiElement target) {
+    MyProcessor(PsiElement target) {
       myTarget = target;
       myManager = myTarget.getManager();
     }

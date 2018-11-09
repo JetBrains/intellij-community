@@ -98,11 +98,11 @@ public class TemplateFormatUtil {
     return matchingElements;
   }
 
-  private static Pair<Integer,PsiElement> addElementSequence(PsiElement startElement, Language templateLanguage, TextRange range, List<PsiElement> targetList, boolean fromTemplate) {
+  private static Pair<Integer,PsiElement> addElementSequence(PsiElement startElement, Language templateLanguage, TextRange range, List<? super PsiElement> targetList, boolean fromTemplate) {
     PsiElement currElement = startElement;
     int lastOffset = -1;
     while (currElement != null && (lastOffset = currElement.getTextRange().getEndOffset()) <= range.getEndOffset()) {
-      boolean isTemplateLanguage = currElement.getLanguage().is(templateLanguage);
+      boolean isTemplateLanguage = templateLanguage.isKindOf(currElement.getLanguage());
       if (fromTemplate == isTemplateLanguage) {
         targetList.add(currElement);
       }
@@ -135,7 +135,7 @@ public class TemplateFormatUtil {
     return original;
   }
 
-  static List<Block> mergeBlocks(List<Block> originalBlocks, List<Block> blocksToMerge, TextRange range)
+  static List<Block> mergeBlocks(List<Block> originalBlocks, List<? extends Block> blocksToMerge, TextRange range)
     throws FragmentedTemplateException {
     if (blocksToMerge.isEmpty()) return originalBlocks;
     List<Block> result = new ArrayList<>();
@@ -185,15 +185,15 @@ public class TemplateFormatUtil {
     return result;
   }
 
-  private static int fillGap(List<TextRange> originalRanges, List<Block> blocks, List<Block> result, int startOffset, int endOffset)
+  private static int fillGap(List<? extends TextRange> originalRanges, List<? extends Block> blocks, List<? super Block> result, int startOffset, int endOffset)
     throws FragmentedTemplateException {
     return fillGap(null, originalRanges, blocks, result, startOffset, endOffset, 0);
   }
 
   private static int fillGap(@Nullable Block parent,
-                             List<TextRange> originalRanges,
-                             List<Block> blocks,
-                             List<Block> result,
+                             List<? extends TextRange> originalRanges,
+                             List<? extends Block> blocks,
+                             List<? super Block> result,
                              int startOffset,
                              int endOffset,
                              int depth) throws
@@ -222,13 +222,13 @@ public class TemplateFormatUtil {
     return lastOffset;
   }
 
-  public static boolean intersectsOneOf(TextRange blockRange, List<TextRange> originalRanges) {
+  public static boolean intersectsOneOf(TextRange blockRange, List<? extends TextRange> originalRanges) {
     return
       rangesContain(originalRanges, 0, originalRanges.size() - 1, blockRange.getStartOffset()) ||
       rangesContain(originalRanges, 0, originalRanges.size() - 1, blockRange.getEndOffset());
   }
 
-  static boolean rangesContain(List<TextRange> ranges, int startIndex, int endIndex, int offset) {
+  static boolean rangesContain(List<? extends TextRange> ranges, int startIndex, int endIndex, int offset) {
     if (endIndex < startIndex || ranges.size() <= startIndex || ranges.size() <= endIndex) return false;
     int startOffset = ranges.get(startIndex).getStartOffset();
     int endOffset = ranges.get(endIndex).getEndOffset();
@@ -238,12 +238,12 @@ public class TemplateFormatUtil {
     return rangesContain(ranges, startIndex, midIndex, offset)  || rangesContain(ranges, midIndex  + 1, endIndex, offset);
   }
 
-  private static Block getBlockContaining(List<Block> blockList, List<TextRange> originalRanges, TextRange range) {
+  private static Block getBlockContaining(List<? extends Block> blockList, List<? extends TextRange> originalRanges, TextRange range) {
     return getBlockContaining(blockList, originalRanges, range, 0);
   }
 
   @Nullable
-  private static Block getBlockContaining(List<Block> blockList, List<TextRange> originalRanges, TextRange range, int depth) {
+  private static Block getBlockContaining(List<? extends Block> blockList, List<? extends TextRange> originalRanges, TextRange range, int depth) {
     for (Block block : blockList) {
       if (block.getTextRange().contains(range)) {
         if (intersectsOneOf(block.getTextRange(), originalRanges)) {

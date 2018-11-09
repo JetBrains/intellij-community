@@ -42,6 +42,7 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
     myRoot = new ResourceBundleFileStructureViewElement(myResourceBundle);
   }
 
+  @Override
   public void setSeparator(String separator) {
     myByWordPrefixesGrouper.setSeparator(separator);
     PropertiesSeparatorManager.getInstance(myResourceBundle.getProject()).setSeparator(myResourceBundle, separator);
@@ -55,54 +56,66 @@ public class ResourceBundleStructureViewModel implements PropertiesGroupingStruc
     return myRoot.isShowOnlyIncomplete();
   }
 
+  @Override
   public String getSeparator() {
     return myByWordPrefixesGrouper.getSeparator();
   }
 
+  @Override
   @NotNull
   public StructureViewTreeElement getRoot() {
     return myRoot;
   }
 
+  @Override
   @NotNull
   public Grouper[] getGroupers() {
     return new Grouper[]{myByWordPrefixesGrouper};
   }
 
+  @Override
   @NotNull
   public Sorter[] getSorters() {
     return new Sorter[] {Sorter.ALPHA_SORTER};
   }
 
+  @Override
   @NotNull
   public Filter[] getFilters() {
     return Filter.EMPTY_ARRAY;
   }
 
+  @Override
   public Object getCurrentEditorElement() {
     return null;
   }
 
+  @Override
   public void addEditorPositionListener(@NotNull FileEditorPositionListener listener) {
 
   }
 
+  @Override
   public void removeEditorPositionListener(@NotNull FileEditorPositionListener listener) {
 
   }
 
+  @Override
   public void addModelListener(@NotNull ModelListener modelListener) {
 
   }
 
+  @Override
   public void removeModelListener(@NotNull ModelListener modelListener) {
 
   }
 
+  @Override
   public void dispose() {
 
   }
 
+  @Override
   public boolean shouldEnterElement(final Object element) {
     return false;
   }

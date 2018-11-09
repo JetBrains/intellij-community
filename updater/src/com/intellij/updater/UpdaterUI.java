@@ -6,6 +6,7 @@ import java.util.Map;
 
 public interface UpdaterUI {
   void setDescription(String oldBuildDesc, String newBuildDesc);
+  void setDescription(String text);
 
   void startProcess(String title);
   void setProgress(int percentage);
@@ -15,7 +16,7 @@ public interface UpdaterUI {
   void showError(String message);
 
   void askUser(String message) throws OperationCancelledException;
-  Map<String, ValidationResult.Option> askUser(List<ValidationResult> validationResults) throws OperationCancelledException;
+  Map<String, ValidationResult.Option> askUser(List<? extends ValidationResult> validationResults) throws OperationCancelledException;
 
   default String bold(String text) { return text; }
 }

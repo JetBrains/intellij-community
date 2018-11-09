@@ -72,7 +72,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
   private class MyChangesBrowser extends ChangesBrowserBase {
     @NotNull private final Ref<JBPopup> myRef;
 
-    public MyChangesBrowser(@NotNull Project project, @NotNull Ref<JBPopup> popupRef) {
+    MyChangesBrowser(@NotNull Project project, @NotNull Ref<JBPopup> popupRef) {
       super(project, false, false);
       myRef = popupRef;
       myViewer.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -94,6 +94,12 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
     @NotNull
     @Override
     protected List<AnAction> createToolbarActions() {
+      return Collections.emptyList(); // remove diff action
+    }
+
+    @NotNull
+    @Override
+    protected List<AnAction> createPopupMenuActions() {
       return Collections.emptyList(); // remove diff action
     }
 

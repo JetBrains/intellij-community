@@ -43,7 +43,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 class RefCountHolder {
@@ -172,8 +175,20 @@ class RefCountHolder {
   }
 
   private void registerLocalRef(@NotNull PsiReference ref, PsiElement refElement) {
-    if (refElement instanceof PsiMethod && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter self-recursive calls
-    if (refElement instanceof PsiClass && PsiTreeUtil.isAncestor(refElement, ref.getElement(), true)) return; // filter inner use of itself
+    PsiElement element = ref.getElement();
+    if (refElement instanceof PsiMethod && PsiTreeUtil.isAncestor(refElement, element, true)) return; // filter self-recursive calls
+    if (refElement instanceof PsiClass) {
+      if (PsiTreeUtil.isAncestor(refElement, element, true)) {
+        return; // filter inner use of itself
+      }
+      PsiImportStatementBase importStmt = PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
+      if (importStmt != null) {
+        PsiElement resolve = importStmt.resolve();
+        if (resolve != null && PsiTreeUtil.isAncestor(refElement, resolve, false)) {
+          return;//filter refs on inner members in imports
+        }
+      }
+    }
     synchronized (myLocalRefsMap) {
       myLocalRefsMap.putValue(refElement, ref);
     }
@@ -217,7 +232,7 @@ class RefCountHolder {
     return usedStatus == Boolean.TRUE;
   }
 
-  private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull Collection<PsiReference> array) {
+  private static boolean isParameterUsedRecursively(@NotNull PsiElement element, @NotNull Collection<? extends PsiReference> array) {
     if (!(element instanceof PsiParameter)) return false;
     PsiParameter parameter = (PsiParameter)element;
     PsiElement scope = parameter.getDeclarationScope();

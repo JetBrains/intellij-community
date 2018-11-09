@@ -64,7 +64,7 @@ class InstancesView extends InstancesViewBase {
   private final XDebuggerExpressionEditor myFilterConditionEditor;
 
   private final MyNodeManager myNodeManager;
-  private final Consumer<String> myWarningMessageConsumer;
+  private final Consumer<? super String> myWarningMessageConsumer;
 
   private final JButton myFilterButton = new JButton("Filter");
   private final FilteringProgressView myProgress = new FilteringProgressView();
@@ -78,7 +78,7 @@ class InstancesView extends InstancesViewBase {
 
   private volatile MyFilteringWorker myFilteringTask = null;
 
-  public InstancesView(@NotNull XDebugSession session, InstancesProvider instancesProvider, String className, Consumer<String> warningMessageConsumer) {
+  InstancesView(@NotNull XDebugSession session, InstancesProvider instancesProvider, String className, Consumer<? super String> warningMessageConsumer) {
     super(new BorderLayout(0, JBUI.scale(BORDER_LAYOUT_DEFAULT_GAP)), session, instancesProvider);
     myClassName = className;
     myDebugProcess = (DebugProcessImpl) (DebuggerManager.getInstance(session.getProject()).getDebugProcess(session.getDebugProcess().getProcessHandler()));
@@ -264,7 +264,7 @@ class InstancesView extends InstancesViewBase {
     private long myLastTreeUpdatingTime;
     private long myLastProgressUpdatingTime;
 
-    public MyFilteringCallback(@NotNull EvaluationContextImpl evaluationContext) {
+    MyFilteringCallback(@NotNull EvaluationContextImpl evaluationContext) {
       myEvaluationContext = evaluationContext;
     }
 
@@ -360,9 +360,9 @@ class InstancesView extends InstancesViewBase {
     }
   }
   private static class MyValuesList implements FilteringTask.ValuesList {
-    private final List<ObjectReference> myRefs;
+    private final List<? extends ObjectReference> myRefs;
 
-    public MyValuesList(List<ObjectReference> refs) {
+    MyValuesList(List<? extends ObjectReference> refs) {
       myRefs = refs;
     }
 

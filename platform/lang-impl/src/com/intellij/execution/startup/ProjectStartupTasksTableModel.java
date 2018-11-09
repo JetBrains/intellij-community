@@ -130,7 +130,7 @@ public class ProjectStartupTasksTableModel extends AbstractTableModel implements
 
   public void addConfiguration(final @NotNull RunnerAndConfigurationSettings configuration) {
     if (myAllConfigurations.contains(configuration)) return;
-    if (! myAllConfigurations.add(configuration)) return;
+    myAllConfigurations.add(configuration);
     Collections.sort(myAllConfigurations, RunnerAndConfigurationSettingsComparator.getInstance());
     if (configuration.isShared()) {
       mySharedConfigurations.add(configuration);

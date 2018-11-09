@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
@@ -24,14 +25,13 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.admin.AdminWriter;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminWriter;
 import org.netbeans.lib.cvsclient.file.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,10 +55,11 @@ public class AdminWriterOnCache implements IAdminWriter {
     myUpdatedFilesManager = updatedFilesManager;
     myProjectContentInfoProvider = projectContentInfoProvider;
     myAdminWriter = new AdminWriter(
-      CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator(),
-      CvsApplicationLevelConfiguration.getCharset());    
+      CodeStyle.getDefaultSettings().getLineSeparator(),
+      CvsApplicationLevelConfiguration.getCharset());
   }
 
+  @Override
   public void ensureCvsDirectory(DirectoryObject directoryObject,
                                  String repositoryPath,
                                  CvsRoot cvsRoot,
@@ -98,6 +99,7 @@ public class AdminWriterOnCache implements IAdminWriter {
   }
 
 
+  @Override
   public void setEntry(final DirectoryObject directoryObject, final Entry entry, final ICvsFileSystem cvsFileSystem)
     throws IOException {
     File parent = cvsFileSystem.getLocalFileSystem().getFile(directoryObject);
@@ -109,6 +111,7 @@ public class AdminWriterOnCache implements IAdminWriter {
     if (existing == null) myUpdatedFilesManager.addNewlyCreatedEntry(entry);
   }
 
+  @Override
   public void removeEntryForFile(final AbstractFileObject fileObject, final ICvsFileSystem cvsFileSystem)
     throws IOException {
     if (notUnderCvs(fileObject, cvsFileSystem)) return;
@@ -117,10 +120,12 @@ public class AdminWriterOnCache implements IAdminWriter {
     myAdminWriter.removeEntryForFile(fileObject, cvsFileSystem);
   }
 
+  @Override
   public void pruneDirectory(DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) {
     LOG.error("Cannot be called");
   }
 
+  @Override
   public void editFile(FileObject fileObject,
                        Entry entry,
                        ICvsFileSystem cvsFileSystem,
@@ -131,6 +136,7 @@ public class AdminWriterOnCache implements IAdminWriter {
     editBackupFile.setLastModified(file.lastModified());
   }
 
+  @Override
   public void uneditFile(FileObject fileObject,
                          ICvsFileSystem cvsFileSystem,
                          IFileReadOnlyHandler fileReadOnlyHandler) throws IOException {
@@ -153,6 +159,7 @@ public class AdminWriterOnCache implements IAdminWriter {
   }
 
 
+  @Override
   public void setStickyTagForDirectory(DirectoryObject directoryObject, String tag, ICvsFileSystem cvsFileSystem)
     throws IOException {
     myAdminWriter.setStickyTagForDirectory(directoryObject, tag, cvsFileSystem);
@@ -160,11 +167,13 @@ public class AdminWriterOnCache implements IAdminWriter {
     CvsEntriesManager.getInstance().getCvsInfoFor(CvsVfsUtil.findFileByIoFile(ioDirectory)).clearStickyInformation();
   }
 
+  @Override
   public void setEntriesDotStatic(DirectoryObject directoryObject, boolean set, ICvsFileSystem cvsFileSystem)
     throws IOException {
     myAdminWriter.setEntriesDotStatic(directoryObject, set, cvsFileSystem);
   }
 
+  @Override
   public void writeTemplateFile(@NotNull DirectoryObject directoryObject,
                                 int fileLength,
                                 InputStream inputStream,
@@ -173,6 +182,7 @@ public class AdminWriterOnCache implements IAdminWriter {
     myAdminWriter.writeTemplateFile(directoryObject, fileLength, inputStream, readerFactory, clientEnvironment);
   }
 
+  @Override
   public void directoryAdded(@NotNull DirectoryObject directoryObject, ICvsFileSystem cvsFileSystem) throws IOException {
     LOG.assertTrue(directoryObject.getParent() != null, directoryObject.getPath());
 

@@ -42,6 +42,7 @@ public class ScalableIconComponent extends JComponent {
     }
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     final Icon icon = myIsSelected? mySelectedIcon : myIcon;
     if (icon != null) {

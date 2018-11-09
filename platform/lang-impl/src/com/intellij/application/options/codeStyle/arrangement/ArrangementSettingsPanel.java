@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
@@ -23,8 +9,11 @@ import com.intellij.application.options.codeStyle.arrangement.group.ArrangementG
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesPanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -32,6 +21,7 @@ import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
 import com.intellij.psi.codeStyle.arrangement.std.*;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
@@ -46,9 +36,8 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 10/30/12 5:17 PM
  */
-public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
+public class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @NotNull private final JPanel myContent = new JPanel(new GridBagLayout());
 
@@ -63,7 +52,9 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myLanguage = language;
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
 
-    assert rearranger instanceof ArrangementStandardSettingsAware;
+    if (!(rearranger instanceof ArrangementStandardSettingsAware)) {
+      throw new IllegalArgumentException("Incorrect rearranger for " + language.getID() + " language: " + rearranger);
+    }
     mySettingsAware = (ArrangementStandardSettingsAware)rearranger;
 
     final ArrangementColorsProvider colorsProvider;
@@ -82,8 +73,6 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myContent.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
     myContent.add(myGroupingRulesPanel, new GridBag().coverLine().fillCellHorizontally().weightx(1));
     myContent.add(myMatchingRulesPanel, new GridBag().fillCell().weightx(1).weighty(1).coverLine());
-
-
 
     if (settings.getCommonSettings(myLanguage).isForceArrangeMenuAvailable()) {
       myForceArrangementPanel = new ForceArrangementPanel();
@@ -110,7 +99,6 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     return null;
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   private StdArrangementSettings getSettings(@NotNull CodeStyleSettings settings) {
     StdArrangementSettings result = (StdArrangementSettings)settings.getCommonSettings(myLanguage).getArrangementSettings();
@@ -179,5 +167,24 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   @Override
   protected String getTabTitle() {
     return ApplicationBundle.message("arrangement.title.settings.tab");
+  }
+
+  @Nullable
+  @Override
+  protected String getPreviewText() {
+    return null;
+  }
+
+  @Override
+  protected int getRightMargin() {
+    Logger.getInstance(ArrangementSettingsPanel.class).error("This method should not be called because getPreviewText() returns null");
+    return 0;
+  }
+
+  @NotNull
+  @Override
+  protected FileType getFileType() {
+    Logger.getInstance(ArrangementSettingsPanel.class).error("This method should not be called because getPreviewText() returns null");
+    return ObjectUtils.notNull(myLanguage.getAssociatedFileType(), FileTypes.UNKNOWN);
   }
 }

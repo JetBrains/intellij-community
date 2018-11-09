@@ -103,14 +103,10 @@ public class ApplyPatchForBaseRevisionTexts {
 
   @NotNull
   private static ApplyPatchForBaseRevisionTexts createFromLocal(@NotNull String localContent, @NotNull TextFilePatch patch) {
-    final GenericPatchApplier applier = new GenericPatchApplier(localContent, patch.getHunks());
-    boolean exactlyApplied = applier.execute();
-    if (!exactlyApplied) {
-      applier.trySolveSomehow();
-    }
-    String patched = StringUtil.convertLineSeparators(applier.getAfter());
+    GenericPatchApplier.AppliedSomehowPatch appliedPatch = GenericPatchApplier.applySomehow(localContent, patch.getHunks());
 
-    return new ApplyPatchForBaseRevisionTexts(patched, localContent, null, !exactlyApplied);
+    String patchedContent = StringUtil.convertLineSeparators(appliedPatch.patchedText);
+    return new ApplyPatchForBaseRevisionTexts(patchedContent, localContent, null, appliedPatch.isAppliedSomehow);
   }
 
   @Nullable
@@ -130,11 +126,11 @@ public class ApplyPatchForBaseRevisionTexts {
       Ref<String> patchedRef = new Ref<>();
 
       baseVersionProvider.getBaseVersionContent(pathBeforeRename, base -> {
-        final GenericPatchApplier applier = new GenericPatchApplier(base, hunks);
-        if (!applier.execute()) return true;
+        GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(base, hunks);
+        if (appliedPatch == null) return true;
 
         baseRef.set(base);
-        patchedRef.set(StringUtil.convertLineSeparators(applier.getAfter()));
+        patchedRef.set(StringUtil.convertLineSeparators(appliedPatch.patchedText));
         return false;
       });
 
@@ -157,17 +153,16 @@ public class ApplyPatchForBaseRevisionTexts {
     final List<PatchHunk> hunks = patch.getHunks();
 
     String base = baseContents.toString();
-    final GenericPatchApplier applier = new GenericPatchApplier(base, hunks);
-    boolean exactlyApplied = applier.execute();
+    GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(base, hunks);
 
-    if (!exactlyApplied) {
+    if (appliedPatch == null) {
       LOG.warn(String.format("Patch for %s has wrong base and can't be applied properly",
                              chooseNotNull(patch.getBeforeName(), patch.getAfterName())));
 
       return null;
     }
 
-    String patched = StringUtil.convertLineSeparators(applier.getAfter());
+    String patched = StringUtil.convertLineSeparators(appliedPatch.patchedText);
 
     return new ApplyPatchForBaseRevisionTexts(patched, localContent, base, false);
   }

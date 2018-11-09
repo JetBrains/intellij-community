@@ -16,16 +16,16 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.PathUtils;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -34,36 +34,15 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager> implements StandardJavaFileManager{
+class JavacFileManager extends JpsJavacFileManager {
 
-  private final Context myContext;
-  private final Collection<JavaSourceTransformer> mySourceTransformers;
-  private Map<File, Set<File>> myOutputsMap = Collections.emptyMap();
+  private final Collection<? extends JavaSourceTransformer> mySourceTransformers;
   @Nullable
   private String myEncodingName;
 
-  interface Context {
-    boolean isCanceled();
-
-    StandardJavaFileManager getStandardFileManager();
-
-    void consumeOutputFile(@NotNull OutputFileObject obj);
-
-    void reportMessage(final Diagnostic.Kind kind, String message);
-  }
-
-  public JavacFileManager(Context context, Collection<JavaSourceTransformer> transformers) {
-    super(context.getStandardFileManager());
-    myContext = context;
+  JavacFileManager(Context context, Collection<? extends JavaSourceTransformer> transformers) {
+    super(context);
     mySourceTransformers = transformers;
-  }
-
-  public void setOutputDirectories(final Map<File, Set<File>> outputDirToSrcRoots) throws IOException{
-    for (File outputDir : outputDirToSrcRoots.keySet()) {
-      // this will validate output dirs
-      setLocation(StandardLocation.CLASS_OUTPUT, Collections.singleton(outputDir));
-    }
-    myOutputsMap = outputDirToSrcRoots;
   }
 
   @Override
@@ -72,7 +51,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
       final String encoding = remaining.next();
       myEncodingName = encoding;
       return super.handleOption(current, new Iterator<String>() {
-        private boolean encodingConsumed = false; 
+        private boolean encodingConsumed = false;
         @Override
         public boolean hasNext() {
           return !encodingConsumed || remaining.hasNext();
@@ -103,30 +82,37 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return super.inferBinaryName(location, unwrapFileObject(file));
   }
 
+  @Override
   public void setLocation(Location location, Iterable<? extends File> path) throws IOException{
     getStdManager().setLocation(location, path);
   }
 
+  @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromFiles(Iterable<? extends File> files) {
     return wrapJavaFileObjects(getStdManager().getJavaFileObjectsFromFiles(files));
   }
 
+  @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjects(File... files) {
     return wrapJavaFileObjects(getStdManager().getJavaFileObjects(files));
   }
 
+  @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjectsFromStrings(Iterable<String> names) {
     return wrapJavaFileObjects(getStdManager().getJavaFileObjectsFromStrings(names));
   }
 
+  @Override
   public Iterable<? extends JavaFileObject> getJavaFileObjects(String... names) {
     return wrapJavaFileObjects(getStdManager().getJavaFileObjects(names));
   }
 
+  @Override
   public Iterable<? extends File> getLocation(Location location) {
     return getStdManager().getLocation(location);
   }
 
+  @Override
   public boolean isSameFile(FileObject a, FileObject b) {
     if (a instanceof OutputFileObject || b instanceof OutputFileObject) {
       return a.equals(b);
@@ -160,6 +146,14 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return kinds.contains(JavaFileObject.Kind.SOURCE)? (Iterable<JavaFileObject>)wrapJavaFileObjects(objects) : objects;
   }
 
+  private static <T> List<T> toList(Iterable<T> iterable) {
+    final List<T> list = new ArrayList<T>();
+    for (T t : iterable) {
+      list.add(t);
+    }
+    return list;
+  }
+
   private Iterable<? extends JavaFileObject> wrapJavaFileObjects(Iterable<? extends JavaFileObject> originalObjects) {
     if (mySourceTransformers.isEmpty()) {
       return originalObjects;
@@ -173,7 +167,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     }
     return wrapped != null? wrapped : originalObjects;
   }
-  
+
   @Override
   public JavaFileObject getJavaFileForInput(Location location, String className, JavaFileObject.Kind kind) throws IOException {
     checkCanceled();
@@ -185,6 +179,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return mySourceTransformers.isEmpty()? fo : new TransformableJavaFileObject(fo, mySourceTransformers);
   }
 
+  @Override
   public JavaFileObject getJavaFileForOutput(Location location, String className, JavaFileObject.Kind kind, FileObject sibling) throws IOException {
     if (kind != JavaFileObject.Kind.SOURCE && kind != JavaFileObject.Kind.CLASS) {
       throw new IllegalArgumentException("Invalid kind " + kind);
@@ -192,6 +187,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return getFileForOutput(location, kind, externalizeFileName(className, kind), className, sibling);
   }
 
+  @Override
   public FileObject getFileForOutput(Location location, String packageName, String relativeName, FileObject sibling) throws IOException {
     final StringBuilder name = new StringBuilder();
     if (packageName.isEmpty()) {
@@ -244,7 +240,7 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     for (File f: path) {
       try {
         urls.add(f.toURI().toURL());
-      } 
+      }
       catch (MalformedURLException e) {
         throw new AssertionError(e);
       }
@@ -287,24 +283,6 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     return null;
   }
 
-  @NotNull
-  private StandardJavaFileManager getStdManager() {
-    return fileManager;
-  }
-
-  @Override
-  public void close() {
-    try {
-      super.close();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    finally {
-      myOutputsMap = Collections.emptyMap();
-    }
-  }
-
   private static JavaFileObject.Kind getKind(String name) {
     if (name.endsWith(JavaFileObject.Kind.CLASS.extension)){
       return JavaFileObject.Kind.CLASS;
@@ -334,26 +312,5 @@ class JavacFileManager extends ForwardingJavaFileManager<StandardJavaFileManager
     if (counter == 0 && myContext.isCanceled()) {
       throw new CompilationCanceledException();
     }
-  }
-
-  public Context getContext() {
-    return myContext;
-  }
-
-  private static final Map<Method, Boolean> ourImplStatus = Collections.synchronizedMap(new HashMap<Method, Boolean>());
-
-  JavaFileManager getApiCallHandler(Method method) {
-    Boolean isImplemented = ourImplStatus.get(method);
-    if (isImplemented == null) {
-      try {
-        JavacFileManager.class.getDeclaredMethod(method.getName(), method.getParameterTypes());
-        isImplemented = Boolean.TRUE;
-      }
-      catch (NoSuchMethodException e) {
-        isImplemented = Boolean.FALSE;
-      }
-      ourImplStatus.put(method, isImplemented);
-    }
-    return isImplemented? this : getStdManager();
   }
 }

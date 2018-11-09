@@ -50,7 +50,6 @@ class PortUnificationServerHandler extends Decoder {
       try {
         KeyStore ks = KeyStore.getInstance("JKS");
         char[] password = "jetbrains".toCharArray();
-        //noinspection IOResourceOpenedButNotSafelyClosed
         ks.load(getClass().getResourceAsStream("cert.jks"), password);
         KeyManagerFactory kmf = KeyManagerFactory.getInstance(algorithm);
         kmf.init(ks, password);
@@ -69,7 +68,7 @@ class PortUnificationServerHandler extends Decoder {
 
   private final DelegatingHttpRequestHandler delegatingHttpRequestHandler;
 
-  public PortUnificationServerHandler() {
+  PortUnificationServerHandler() {
     this(new DelegatingHttpRequestHandler(), true, true);
   }
 

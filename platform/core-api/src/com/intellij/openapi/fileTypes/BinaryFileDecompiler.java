@@ -24,5 +24,5 @@ import org.jetbrains.annotations.NotNull;
 
 public interface BinaryFileDecompiler {
   @NotNull
-  CharSequence decompile(VirtualFile file);
+  CharSequence decompile(@NotNull VirtualFile file);
 }

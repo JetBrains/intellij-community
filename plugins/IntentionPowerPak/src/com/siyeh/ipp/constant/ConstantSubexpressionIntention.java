@@ -110,7 +110,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
             }
           }
           else {
-            newExpressionText.append(Double.toString(v));
+            newExpressionText.append(v);
           }
         }
         else if (value instanceof Float) {
@@ -127,7 +127,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
             }
           }
           else {
-            newExpressionText.append(Float.toString(v)).append('f');
+            newExpressionText.append(v).append('f');
           }
         }
         else {

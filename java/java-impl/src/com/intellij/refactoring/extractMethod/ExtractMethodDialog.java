@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,20 +49,20 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
-
 /**
  * @author Konstantin Bulenkov
  */
 public class ExtractMethodDialog extends RefactoringDialog implements AbstractExtractDialog {
-  private static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
-  public static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
+  static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
+  static final String EXTRACT_METHOD_GENERATE_ANNOTATIONS = "extractMethod.generateAnnotations";
+
   private final Project myProject;
   private final PsiType myReturnType;
   private final PsiTypeParameterList myTypeParameterList;
   private final PsiType[] myExceptions;
   private final boolean myStaticFlag;
   private final boolean myCanBeStatic;
-  private final Nullness myNullness;
+  private final @Nullable Nullability myNullability;
   private final PsiElement[] myElementsToExtract;
   private final String myHelpId;
 
@@ -101,14 +87,10 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   private TypeSelector mySelector;
   private final Supplier<Integer> myDuplicatesCountSupplier;
 
-  public ExtractMethodDialog(Project project,
-                             PsiClass targetClass, final InputVariables inputVariables, PsiType returnType,
-                             PsiTypeParameterList typeParameterList, PsiType[] exceptions, boolean isStatic, boolean canBeStatic,
-                             final boolean canBeChainedConstructor,
-                             String title,
-                             String helpId,
-                             Nullness nullness,
-                             final PsiElement[] elementsToExtract,
+  public ExtractMethodDialog(Project project, PsiClass targetClass, InputVariables inputVariables,
+                             PsiType returnType, PsiTypeParameterList typeParameterList, PsiType[] exceptions,
+                             boolean isStatic, boolean canBeStatic, boolean canBeChainedConstructor,
+                             String title, String helpId, @Nullable Nullability nullability, PsiElement[] elementsToExtract,
                              @Nullable Supplier<Integer> duplicatesCountSupplier) {
     super(project, true);
     myProject = project;
@@ -118,7 +100,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     myExceptions = exceptions;
     myStaticFlag = isStatic;
     myCanBeStatic = canBeStatic;
-    myNullness = nullness;
+    myNullability = nullability;
     myElementsToExtract = elementsToExtract;
     myVariableData = inputVariables;
     myHelpId = helpId;
@@ -151,8 +133,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   @Override
   public boolean isMakeStatic() {
-    if (myStaticFlag) return true;
-    return myCanBeStatic && myMakeStatic.isSelected();
+    return myStaticFlag || myCanBeStatic && myMakeStatic.isSelected();
   }
 
   @Override
@@ -161,25 +142,13 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    if (isPreviewSupported()) {
-      return super.createActions();
-    }
-    if (hasHelpAction()) {
-      return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-    } else {
-      return new Action[]{getOKAction(), getCancelAction()};
-    }
+  protected boolean hasPreviewButton() {
+    return false;
   }
 
   @Override
   protected boolean hasHelpAction() {
     return getHelpId() != null;
-  }
-
-  protected boolean isPreviewSupported() {
-    return false;
   }
 
   @Override
@@ -282,7 +251,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
   
   @Nullable
   private JPanel createReturnTypePanel() {
-    if (TypeConversionUtil.isPrimitiveWrapper(myReturnType) && myNullness == Nullness.NULLABLE) {
+    if (TypeConversionUtil.isPrimitiveWrapper(myReturnType) && myNullability == Nullability.NULLABLE) {
       return null;
     }
     final TypeSelectorManagerImpl manager = new TypeSelectorManagerImpl(myProject, myReturnType, findOccurrences(), areTypesDirected()) {
@@ -375,7 +344,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
       optionsPanel.add(myMakeVarargs);
     }
 
-    if (myNullness != null && myNullness != Nullness.UNKNOWN) {
+    if (myNullability != null && myNullability != Nullability.UNKNOWN) {
       final boolean isSelected = PropertiesComponent.getInstance(myProject).getBoolean(EXTRACT_METHOD_GENERATE_ANNOTATIONS, true);
       myGenerateAnnotations = new JCheckBox(RefactoringBundle.message("declare.generated.annotations"), isSelected);
       myGenerateAnnotations.addItemListener(e -> updateSignature());
@@ -484,7 +453,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     JPanel secondPanel = new JPanel(new BorderLayout(0, 5));
     secondPanel.add(createSignaturePanel(), BorderLayout.CENTER);
 
-    if (isPreviewSupported()) {
+    if (hasPreviewButton()) {
       JBLabel duplicatesCount = createDuplicatesCountLabel();
       secondPanel.add(duplicatesCount, BorderLayout.SOUTH);
     }
@@ -501,7 +470,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
         new Task.Backgroundable(myProject, RefactoringBundle.message("refactoring.extract.method.dialog.duplicates.progress")) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            int count = ReadAction.compute(() -> myDuplicatesCountSupplier.get());
+            int count = ReadAction.compute(myDuplicatesCountSupplier::get);
             ApplicationManager.getApplication().invokeLater(
               () -> {
                 if (count != 0) {
@@ -607,7 +576,8 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     if (myGenerateAnnotations != null && myGenerateAnnotations.isSelected()) {
       final NullableNotNullManager nullManager = NullableNotNullManager.getInstance(myProject);
       buffer.append("@");
-      buffer.append(StringUtil.getShortName(myNullness == Nullness.NULLABLE ? nullManager.getDefaultNullable() : nullManager.getDefaultNotNull()));
+      buffer.append(
+        StringUtil.getShortName(myNullability == Nullability.NULLABLE ? nullManager.getDefaultNullable() : nullManager.getDefaultNotNull()));
       buffer.append("\n");
     }
     final String visibilityString = VisibilityUtil.getVisibilityString(getVisibility());
@@ -683,7 +653,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     checkParametersConflicts(conflicts);
     PsiMethod prototype;
     try {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
       prototype = factory.createMethod(getChosenMethodName(), myReturnType);
       if (myTypeParameterList != null) prototype.getTypeParameterList().replace(myTypeParameterList);
       for (VariableData data : myInputVariables) {

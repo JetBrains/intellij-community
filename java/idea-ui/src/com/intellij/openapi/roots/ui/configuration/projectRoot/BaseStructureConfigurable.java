@@ -154,7 +154,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   public void checkCanApply() throws ConfigurationException {
   }
 
-  protected void addCollapseExpandActions(final List<AnAction> result) {
+  protected void addCollapseExpandActions(final List<? super AnAction> result) {
     final TreeExpander expander = new TreeExpander() {
       @Override
       public void expandAll() {
@@ -196,7 +196,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   private class MyFindUsagesAction extends FindUsagesInProjectStructureActionBase {
 
-    public MyFindUsagesAction(JComponent parentComponent) {
+    MyFindUsagesAction(JComponent parentComponent) {
       super(parentComponent, myProject);
     }
 
@@ -308,7 +308,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   @NotNull
-  private MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<MyNode> nodes) {
+  private MultiMap<RemoveConfigurableHandler, MyNode> groupNodes(List<? extends MyNode> nodes) {
     List<? extends RemoveConfigurableHandler<?>> handlers = getRemoveHandlers();
     MultiMap<RemoveConfigurableHandler, MyNode> grouped = new LinkedMultiMap<>();
     for (MyNode node : nodes) {
@@ -356,7 +356,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) return;
 
@@ -383,7 +383,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     }
   }
 
-  private static List<?> getEditableObjects(Collection<MyNode> value) {
+  private static List<?> getEditableObjects(Collection<? extends MyNode> value) {
     List<Object> objects = new ArrayList<>();
     for (MyNode node : value) {
       objects.add(node.getConfigurable().getEditableObject());
@@ -391,7 +391,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     return objects;
   }
 
-  protected void removeFacetNodes(@NotNull List<Facet> facets) {
+  protected void removeFacetNodes(@NotNull List<? extends Facet> facets) {
     for (Facet facet : facets) {
       MyNode node = findNodeByObject(myRoot, facet);
       if (node != null) {

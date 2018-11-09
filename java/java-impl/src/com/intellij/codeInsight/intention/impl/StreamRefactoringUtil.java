@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class StreamRefactoringUtil {
   static boolean isRefactoringCandidate(PsiExpression expression, boolean requireExpressionLambda) {
     if(expression instanceof PsiLambdaExpression) {
@@ -36,7 +33,8 @@ public class StreamRefactoringUtil {
       return lambdaExpression.getParameterList().getParametersCount() == 1 &&
              (!requireExpressionLambda || LambdaUtil.extractSingleExpressionFromBody(lambdaExpression.getBody()) != null);
     } else if(expression instanceof PsiMethodReferenceExpression) {
-      return LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects((PsiMethodReferenceExpression)expression);
+      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
+      return methodRef.resolve() != null && LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodRef);
     }
     return false;
   }

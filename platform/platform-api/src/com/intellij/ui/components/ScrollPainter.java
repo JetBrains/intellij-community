@@ -24,7 +24,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.RegionPainter;
 
 import java.awt.*;
-import java.awt.image.*;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
 
@@ -56,8 +55,7 @@ class ScrollPainter extends RegionPainter.Alpha {
 
   static final class Thumb {
     static final RegionPainter<Float> DARCULA = new ScrollPainter(0, .28f, .07f, Gray.xA6, Gray.x38);
-    static final RegionPainter<Float> DEFAULT = new Protected(new SubtractColor(0, .20f, .08f, Gray.x73, Gray.x91),
-                                                              new ScrollPainter(0, .20f, .08f, Gray.x73, Gray.x59));
+    static final RegionPainter<Float> DEFAULT = new ScrollPainter(0, .20f, .08f, Gray.x73, Gray.x59);
 
     static final class Mac {
       static final RegionPainter<Float> DARCULA = new Round(1, .35f, .20f, Gray.x80, Gray.x26);
@@ -81,8 +79,7 @@ class ScrollPainter extends RegionPainter.Alpha {
         value("win.editor.thumb.darcula.fill.max", 0xA1)),
       gray("win.editor.thumb.darcula.border", 0x1F));
 
-    private static final RegionPainter<Float> DEFAULT_OLD = new Protected(new SubtractColor(0, .25f, .15f, Gray.x80, Gray.xA6),
-                                                                          new ScrollPainter(0, .25f, .15f, Gray.x80, Gray.x59));
+    private static final RegionPainter<Float> DEFAULT_OLD = new ScrollPainter(0, .25f, .15f, Gray.x80, Gray.x59);
     private static final RegionPainter<Float> DEFAULT_NEW = new EditorThumbPainter(
       0,
       value("win.editor.thumb.default.alpha.base", 140),
@@ -213,103 +210,6 @@ class ScrollPainter extends RegionPainter.Alpha {
     }
   }
 
-  private static class Protected implements RegionPainter<Float> {
-    private RegionPainter<Float> myPainter;
-    private final RegionPainter<Float> myFallback;
-
-    private Protected(RegionPainter<Float> painter, RegionPainter<Float> fallback) {
-      myPainter = painter;
-      myFallback = fallback;
-    }
-
-    @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Float value) {
-      RegionPainter<Float> painter = myFallback;
-      if (myPainter != null) {
-        try {
-          myPainter.paint(g, x, y, width, height, value);
-          return;
-        }
-        catch (Throwable exception) {
-          // do not try to use myPainter again on other systems
-          if (!SystemInfo.isWindows) myPainter = null;
-        }
-      }
-      if (painter != null) {
-        painter.paint(g, x, y, width, height, value);
-      }
-    }
-  }
-
-  private static class SubtractColor extends ScrollPainter {
-    private SubtractColor(int offset, float base, float delta, Color fill, Color draw) {
-      super(offset, base, delta, fill, draw);
-    }
-
-    @Override
-    protected Composite getComposite(float alpha) {
-      return alpha < 1
-             ? new SubtractComposite(alpha)
-             : AlphaComposite.SrcOver;
-    }
-  }
-
-  private static class SubtractComposite implements Composite, CompositeContext {
-    private final float myAlpha;
-
-    private SubtractComposite(float alpha) {
-      myAlpha = alpha;
-    }
-
-    private int subtract(int newValue, int oldValue) {
-      float value = (oldValue & 0xFF) - (newValue & 0xFF) * myAlpha;
-      return value <= 0 ? 0 : (int)value;
-    }
-
-    @Override
-    public CompositeContext createContext(ColorModel src, ColorModel dst, RenderingHints hints) {
-      return isValid(src) && isValid(dst) ? this : AlphaComposite.SrcOver.derive(myAlpha).createContext(src, dst, hints);
-    }
-
-    private static boolean isValid(ColorModel model) {
-      if (model instanceof DirectColorModel && DataBuffer.TYPE_INT == model.getTransferType()) {
-        DirectColorModel dcm = (DirectColorModel)model;
-        if (0x00FF0000 == dcm.getRedMask() && 0x0000FF00 == dcm.getGreenMask() && 0x000000FF == dcm.getBlueMask()) {
-          return 4 != dcm.getNumComponents() || 0xFF000000 == dcm.getAlphaMask();
-        }
-      }
-      return false;
-    }
-
-    @Override
-    public void compose(Raster srcIn, Raster dstIn, WritableRaster dstOut) {
-      int width = Math.min(srcIn.getWidth(), dstIn.getWidth());
-      int height = Math.min(srcIn.getHeight(), dstIn.getHeight());
-
-      int[] srcPixels = new int[width];
-      int[] dstPixels = new int[width];
-
-      for (int y = 0; y < height; y++) {
-        srcIn.getDataElements(0, y, width, 1, srcPixels);
-        dstIn.getDataElements(0, y, width, 1, dstPixels);
-        for (int x = 0; x < width; x++) {
-          int src = srcPixels[x];
-          int dst = dstPixels[x];
-          int a = subtract(src >> 24, dst >> 24) << 24;
-          int r = subtract(src >> 16, dst >> 16) << 16;
-          int g = subtract(src >> 8, dst >> 8) << 8;
-          int b = subtract(src, dst);
-          dstPixels[x] = a | r | g | b;
-        }
-        dstOut.setDataElements(0, y, width, 1, dstPixels);
-      }
-    }
-
-    @Override
-    public void dispose() {
-    }
-  }
-
   private static final class ColorFunction implements Function<Float, Color> {
     private final IntSupplier myMinSupplier;
     private final IntSupplier myMaxSupplier;
@@ -335,11 +235,11 @@ class ScrollPainter extends RegionPainter.Alpha {
     private final int myOffset;
     private final IntSupplier myAlphaBase;
     private final IntSupplier myAlphaDelta;
-    private final Function<Float, Color> myFillFunction;
+    private final Function<? super Float, ? extends Color> myFillFunction;
     private final Color myDrawColor;
     private Color myFillColor;
 
-    private EditorThumbPainter(int offset, IntSupplier base, IntSupplier delta, Function<Float, Color> fill, Color draw) {
+    private EditorThumbPainter(int offset, IntSupplier base, IntSupplier delta, Function<? super Float, ? extends Color> fill, Color draw) {
       myOffset = offset;
       myAlphaBase = base;
       myAlphaDelta = delta;

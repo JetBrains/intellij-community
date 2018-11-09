@@ -19,7 +19,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl;
-import com.intellij.vcs.log.graph.utils.DfsUtil;
+import com.intellij.vcs.log.graph.utils.Dfs;
+import com.intellij.vcs.log.graph.utils.DfsUtilKt;
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ class BekBranchCreator {
 
   @NotNull private final BekEdgeRestrictions myEdgeRestrictions = new BekEdgeRestrictions();
 
-  public BekBranchCreator(@NotNull LinearGraph permanentGraph, @NotNull GraphLayoutImpl graphLayout) {
+  BekBranchCreator(@NotNull LinearGraph permanentGraph, @NotNull GraphLayoutImpl graphLayout) {
     myPermanentGraph = permanentGraph;
     myGraphLayout = graphLayout;
     myDoneNodes = new BitSetFlags(permanentGraph.nodesCount(), false);
@@ -62,37 +63,34 @@ class BekBranchCreator {
 
     final int startLayout = myGraphLayout.getLayoutIndex(headNode);
 
-    DfsUtil.walk(headNode, new DfsUtil.NextNode() {
-      @Override
-      public int fun(int currentNode) {
-        int currentLayout = myGraphLayout.getLayoutIndex(currentNode);
-        List<Integer> downNodes = getDownNodes(myPermanentGraph, currentNode);
-        for (int i = downNodes.size() - 1; i >= 0; i--) {
-          int downNode = downNodes.get(i);
+    DfsUtilKt.walk(headNode, currentNode -> {
+      int currentLayout = myGraphLayout.getLayoutIndex(currentNode);
+      List<Integer> downNodes = getDownNodes(myPermanentGraph, currentNode);
+      for (int i = downNodes.size() - 1; i >= 0; i--) {
+        int downNode = downNodes.get(i);
 
-          if (myDoneNodes.get(downNode)) {
-            if (myGraphLayout.getLayoutIndex(downNode) < startLayout) myEdgeRestrictions.addRestriction(currentNode, downNode);
+        if (myDoneNodes.get(downNode)) {
+          if (myGraphLayout.getLayoutIndex(downNode) < startLayout) myEdgeRestrictions.addRestriction(currentNode, downNode);
+        }
+        else if (currentLayout <= myGraphLayout.getLayoutIndex(downNode)) {
+
+          // almost ok node, except (may be) up nodes
+          boolean hasUndoneUpNodes = false;
+          for (int upNode : getUpNodes(myPermanentGraph, downNode)) {
+            if (!myDoneNodes.get(upNode) && myGraphLayout.getLayoutIndex(upNode) <= myGraphLayout.getLayoutIndex(downNode)) {
+              hasUndoneUpNodes = true;
+              break;
+            }
           }
-          else if (currentLayout <= myGraphLayout.getLayoutIndex(downNode)) {
 
-            // almost ok node, except (may be) up nodes
-            boolean hasUndoneUpNodes = false;
-            for (int upNode : getUpNodes(myPermanentGraph, downNode)) {
-              if (!myDoneNodes.get(upNode) && myGraphLayout.getLayoutIndex(upNode) <= myGraphLayout.getLayoutIndex(downNode)) {
-                hasUndoneUpNodes = true;
-                break;
-              }
-            }
-
-            if (!hasUndoneUpNodes) {
-              myDoneNodes.set(downNode, true);
-              nodeIndexes.add(downNode);
-              return downNode;
-            }
+          if (!hasUndoneUpNodes) {
+            myDoneNodes.set(downNode, true);
+            nodeIndexes.add(downNode);
+            return downNode;
           }
         }
-        return NODE_NOT_FOUND;
       }
+      return Dfs.NextNode.NODE_NOT_FOUND;
     });
 
     return nodeIndexes;

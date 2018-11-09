@@ -33,8 +33,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -61,7 +61,6 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
   private final Consumer<TaskRepository> myChangeListener;
   private int count;
-  @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<TaskRepository, String> myRepoNames = ConcurrentFactoryMap.createMap(repository->
       Integer.toString(count++)
 
@@ -148,6 +147,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     myServersPanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
 
     myRepositoriesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(@NotNull ListSelectionEvent e) {
         TaskRepository repository = getSelectedRepository();
         if (repository != null) {
@@ -193,6 +193,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     return (TaskRepository)myRepositoriesList.getSelectedValue();
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Servers";
@@ -203,6 +204,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     return "reference.settings.project.tasks.servers";
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }
@@ -212,10 +214,12 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     return myRepositoriesList;
   }
 
+  @Override
   public boolean isModified() {
     return !myRepositories.equals(getReps());
   }
 
+  @Override
   public void apply() {
     List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, taskRepository -> taskRepository.clone());
     myManager.setRepositories(newRepositories);
@@ -223,6 +227,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     RecentTaskRepositories.getInstance().addRepositories(myRepositories);
   }
 
+  @Override
   public void reset() {
     myRepoNames.clear();
     myRepositoryEditor.removeAll();
@@ -243,7 +248,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     for (TaskRepository clone : myRepositories) {
       addRepositoryEditor(clone);
     }
-    
+
     if (!myRepositories.isEmpty()) {
       myRepositoriesList.setSelectedValue(myRepositories.get(0), true);
     }
@@ -253,6 +258,7 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
     return Arrays.asList(myManager.getAllRepositories());
   }
 
+  @Override
   public void disposeUIResources() {
     for (TaskRepositoryEditor editor : myEditors) {
       Disposer.dispose(editor);
@@ -275,11 +281,11 @@ public class TaskRepositoriesConfigurable implements Configurable.NoScroll, Sear
 
   private abstract class AddServerAction extends IconWithTextAction implements DumbAware {
 
-    public AddServerAction(TaskRepositorySubtype subtype) {
+    AddServerAction(TaskRepositorySubtype subtype) {
       super(subtype.getName(), "New " + subtype.getName() + " server", subtype.getIcon());
     }
 
-    public AddServerAction(TaskRepository repository) {
+    AddServerAction(TaskRepository repository) {
       super(repository.getUrl(), repository.getUrl(), repository.getIcon());
     }
 

@@ -17,6 +17,7 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.refactoring.anonymousToInner.AnonymousToInnerHandler;
+import com.intellij.refactoring.anonymousToInner.VariableInfo;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,24 @@ public class AnonymousToInnerTest extends LightCodeInsightTestCase {
     };
     handler.invoke(getProject(), myEditor, myFile, null);
     assertFalse(handler.needsThis());
+    checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
+  }
+
+  public void testNameConflict() {
+    configureByFile(TEST_ROOT + getTestName(true) + ".java");
+    AnonymousToInnerHandler handler = new AnonymousToInnerHandler(){
+      @Override
+      protected boolean showRefactoringDialog() {
+        myNewClassName = "MyObject";
+        myMakeStatic = !needsThis();
+        VariableInfo info = myVariableInfos[0];
+        info.fieldName = "myFast";
+        info.parameterName = "fast";
+        myVariableInfos = new VariableInfo[] {info};
+        return true;
+      }
+    };
+    handler.invoke(getProject(), myEditor, myFile, null);
     checkResultByFile(TEST_ROOT + getTestName(true) + "_after.java");
   }
   

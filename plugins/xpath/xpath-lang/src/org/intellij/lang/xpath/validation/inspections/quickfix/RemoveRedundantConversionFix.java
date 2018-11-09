@@ -16,7 +16,6 @@
 package org.intellij.lang.xpath.validation.inspections.quickfix;
 
 import org.intellij.lang.xpath.psi.XPathExpression;
-
 import org.jetbrains.annotations.NotNull;
 
 public class RemoveRedundantConversionFix extends RemoveExplicitConversionFix {
@@ -25,11 +24,13 @@ public class RemoveRedundantConversionFix extends RemoveExplicitConversionFix {
         super(expression);
     }
 
+    @Override
     @NotNull
     public String getText() {
         return "Remove Redundant Conversion";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
         return "RemoveRedundantConversion";

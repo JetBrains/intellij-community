@@ -45,6 +45,7 @@ public class InheritanceToDelegationHandler implements RefactoringActionHandler,
   public static final String REFACTORING_NAME = RefactoringBundle.message("replace.inheritance.with.delegation.title");
 
   private static final MemberInfo.Filter<PsiMember> MEMBER_INFO_FILTER = new MemberInfo.Filter<PsiMember>() {
+    @Override
     public boolean includeMember(PsiMember element) {
       if (element instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)element;

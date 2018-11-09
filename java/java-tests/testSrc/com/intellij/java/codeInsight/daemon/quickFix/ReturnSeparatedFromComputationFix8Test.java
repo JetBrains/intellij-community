@@ -32,10 +32,6 @@ public class ReturnSeparatedFromComputationFix8Test extends LightQuickFixParamet
     return new LocalInspectionTool[]{new ReturnSeparatedFromComputationInspection()};
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/returnSeparatedFromComputation8";

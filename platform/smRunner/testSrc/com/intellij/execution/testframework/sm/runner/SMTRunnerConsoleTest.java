@@ -32,7 +32,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     private MyConsoleView(final TestConsoleProperties consoleProperties) {
       super(consoleProperties);
 
-      myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(MyConsoleView.this, consoleProperties, null) {
+      myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(this, consoleProperties, null) {
         @Override
         public void print(final String text, final ConsoleViewContentType contentType) {
           myMockResettablePrinter.print(text, contentType);
@@ -242,7 +242,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      "error msg\n" +
                      "expected\n" +
                      "actual\n" +
-                     " \n" +
+                     "\n" +
                      "\n" +
                      "method1:1\n" +
                      "method2:2\n" +
@@ -259,7 +259,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
                      "stderr1 \nerror msg\n" +
                      "expected\n" +
                      "actual\n" +
-                     " \n" +
+                     "\n" +
                      "\n" +
                      "method1:1\nmethod2:2\n",
                      // std sys
@@ -274,7 +274,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stdout1 ", true));
     myEventsProcessor.onTestOutput(new TestOutputEvent("my_test", "stderr1 ", false));
 
-    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "\nerror msg \n" +
+    assertAllOutputs(myMockResettablePrinter, "stdout1 ", "\nerror msg\n" +
+                                                         "\n" +
                                                          "\n" +
                                                          "method1:1\n" +
                                                          "method2:2\n" +
@@ -283,7 +284,8 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     final MockPrinter mockPrinter1 = new MockPrinter(true);
     mockPrinter1.onNewAvailable(myTest1);
     assertAllOutputs(mockPrinter1, "stdout1 ", "stderr1 \n" +
-                                               "error msg \n" +
+                                               "error msg\n" +
+                                               "\n" +
                                                "\n" +
                                                "method1:1\n" +
                                                "method2:2\n", "");
@@ -500,7 +502,6 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
 
   public void testStopCollectingOutput() {
     myResultsViewer.selectAndNotify(myResultsViewer.getTestsRootNode());
-    //noinspection NullableProblems
     myConsole.attachToProcess(null);
 
     myEventsProcessor.onStartTesting();
@@ -522,7 +523,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
     //the string above doesn't update tree immediately so we should simulate update
     myConsole.getPrinter().updateOnTestSelected(myResultsViewer.getTestsRootNode());
 
-    assertAllOutputs(myMockResettablePrinter, "preved", "","Empty test suite.\n");
+    assertAllOutputs(myMockResettablePrinter, "preved", "","");
   }
 
   public void testPrintingOnlyOwnContentForRoot() {

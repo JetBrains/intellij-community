@@ -32,6 +32,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
     super(node);
   }
 
+  @Override
   @NotNull
   public XPathType getType() {
     if (getNode().getElementType() == XPath2ElementTypes.CONTEXT_ITEM) {
@@ -56,6 +57,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
     return XPathType.NODESET;
   }
 
+  @Override
   public XPathAxisSpecifier getAxisSpecifier() {
     final ASTNode node = getNode().findChildByType(XPathElementTypes.AXIS_SPECIFIER);
     if (node != null) {
@@ -76,6 +78,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
     return null;
   }
 
+  @Override
   public XPathNodeTest getNodeTest() {
     final ASTNode node = getNode().findChildByType(XPathElementTypes.NODE_TEST);
     if (node != null) {
@@ -85,6 +88,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
     }
   }
 
+  @Override
   @NotNull
   public XPathPredicate[] getPredicates() {
     final ASTNode[] nodes = getNode().getChildren(XPathElementTypes.PREDICATES);
@@ -95,6 +99,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
     return predicates;
   }
 
+  @Override
   @Nullable
   public XPathExpression getPreviousStep() {
     final XPathExpression[] nodes = findChildrenByClass(XPathExpression.class);
@@ -105,6 +110,7 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
     return null;
   }
 
+  @Override
   @Nullable
   public XPathExpression getStep() {
     final XPathExpression[] nodes = findChildrenByClass(XPathExpression.class);
@@ -115,10 +121,12 @@ public class XPathStepImpl extends XPathElementImpl implements XPathStep {
     return null;
   }
 
+  @Override
   public boolean isAbsolute() {
     return getPreviousStep() == null && getNode().getChildren(XPathTokenTypes.PATH_OPS).length > 0;
   }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathStep(this);
   }

@@ -17,6 +17,7 @@ package com.intellij.diff.contents;
 
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineCol;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -128,7 +129,7 @@ public class DocumentContentImpl extends DiffContentBase implements DocumentCont
     @NotNull private final Document myDocument;
     @NotNull private final LineCol myPosition;
 
-    public MyNavigatable(@NotNull Project project, @NotNull VirtualFile targetFile, @NotNull Document document, @NotNull LineCol position) {
+    MyNavigatable(@NotNull Project project, @NotNull VirtualFile targetFile, @NotNull Document document, @NotNull LineCol position) {
       myProject = project;
       myTargetFile = targetFile;
       myDocument = document;
@@ -139,9 +140,11 @@ public class DocumentContentImpl extends DiffContentBase implements DocumentCont
     public void navigate(boolean requestFocus) {
       Document targetDocument = FileDocumentManager.getInstance().getDocument(myTargetFile);
       LineCol targetPosition = translatePosition(myDocument, targetDocument, myPosition);
-      OpenFileDescriptor descriptor = targetDocument != null
-                                      ? new OpenFileDescriptor(myProject, myTargetFile, targetPosition.toOffset(targetDocument))
-                                      : new OpenFileDescriptor(myProject, myTargetFile, targetPosition.line, targetPosition.column);
+      Navigatable descriptor = targetDocument != null
+                               ? PsiNavigationSupport.getInstance().createNavigatable(myProject, myTargetFile,
+                                                                                      targetPosition
+                                                                                        .toOffset(targetDocument))
+                               : new OpenFileDescriptor(myProject, myTargetFile, targetPosition.line, targetPosition.column);
       if (descriptor.canNavigate()) descriptor.navigate(true);
     }
 

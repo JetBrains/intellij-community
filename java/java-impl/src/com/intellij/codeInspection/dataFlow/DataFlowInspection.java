@@ -18,6 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.SimplifyBooleanExpressionFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.UnwrapSwitchLabelFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
@@ -36,6 +37,7 @@ import com.siyeh.ig.fixes.IntroduceVariableFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,10 +72,22 @@ public class DataFlowInspection extends DataFlowInspectionBase {
   }
 
   @Override
+  protected LocalQuickFix createMutabilityViolationFix(ProblemsHolder holder, PsiElement violation) {
+    return WrapWithMutableCollectionFix.createFix(violation, holder.isOnTheFly());
+  }
+
+  @Nullable
+  @Override
+  protected LocalQuickFix createUnwrapSwitchLabelFix() {
+    return new UnwrapSwitchLabelFix();
+  }
+
+  @Override
   protected LocalQuickFix createIntroduceVariableFix(final PsiExpression expression) {
     return new IntroduceVariableFix(true);
   }
 
+  @Override
   protected LocalQuickFixOnPsiElement createSimplifyBooleanFix(PsiElement element, boolean value) {
     if (!(element instanceof PsiExpression)) return null;
     if (PsiTreeUtil.findChildOfType(element, PsiAssignmentExpression.class) != null) return null;
@@ -107,9 +121,10 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     if (assignment == null || assignment.getRExpression() == null || !(assignment.getParent() instanceof PsiExpressionStatement)) {
       return null;
     }
-    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression());
+    return new DeleteSideEffectsAwareFix((PsiStatement)assignment.getParent(), assignment.getRExpression(), true);
   }
 
+  @Override
   @NotNull
   protected List<LocalQuickFix> createNPEFixes(PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
     qualifier = PsiUtil.deparenthesizeExpression(qualifier);
@@ -119,13 +134,14 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
     try {
       ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(qualifier));
+      ContainerUtil.addIfNotNull(fixes, ReplaceComputeWithComputeIfPresentFix.makeFix(qualifier));
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
       }
       else if (!ExpressionUtils.isNullLiteral(qualifier) && !SideEffectChecker.mayHaveSideEffects(qualifier))  {
         if (PsiUtil.getLanguageLevel(qualifier).isAtLeast(LanguageLevel.JDK_1_4)) {
           final Project project = qualifier.getProject();
-          final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
           final PsiBinaryExpression binary = (PsiBinaryExpression)elementFactory.createExpressionFromText("a != null", null);
           binary.getLOperand().replace(qualifier);
           if (RefactoringUtil.getParentStatement(expression, false) != null) {
@@ -159,7 +175,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new NullableStuffInspection.NavigateToNullLiteralArguments(parameter);
   }
 
-  private static JCheckBox createCheckBoxWithHTML(String text, boolean selected, Consumer<JCheckBox> consumer) {
+  private static JCheckBox createCheckBoxWithHTML(String text, boolean selected, Consumer<? super JCheckBox> consumer) {
     JCheckBox box = new JCheckBox(wrapInHtml(text));
     box.setVerticalTextPosition(TOP);
     box.setSelected(selected);

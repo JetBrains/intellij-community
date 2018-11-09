@@ -224,10 +224,10 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public void uri(String s) {
     String currentDir = System.getProperty("org.jetbrains.run.directory");
     if (currentDir != null) {
-      uri = currentDir + File.separator + s;
+      uri = FILE_RESOURCE_PREFIX + currentDir + File.separator + s;
     }
     else {
-      uri = s;
+      uri = FILE_RESOURCE_PREFIX + s;
     }
   }
 
@@ -248,6 +248,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public void match(Match match) {
   }
 
+  @Override
   @SuppressWarnings("UnusedDeclaration")
   public void embedding(String mimeType, byte[] data) {
     outCommand("embedding\n");

@@ -57,7 +57,7 @@ public interface PydevConsoleRunner {
   Key<Sdk> CONSOLE_SDK = new Key<>("PYDEV_CONSOLE_SDK_KEY");
 
   interface ConsoleListener {
-    void handleConsoleInitialized(LanguageConsoleView consoleView);
+    void handleConsoleInitialized(@NotNull LanguageConsoleView consoleView);
   }
 
 
@@ -80,7 +80,6 @@ public interface PydevConsoleRunner {
                                           PyConsoleOptions.PyConsoleSettings consoleSettings,
                                           PythonRemoteInterpreterManager instance,
                                           PyRemoteSdkAdditionalDataBase remoteSdkAdditionalData) {
-    //noinspection ConstantConditions
     PyRemotePathMapper remotePathMapper = instance.setupMappings(project, remoteSdkAdditionalData, null);
     PathMappingSettings mappingSettings = consoleSettings.getMappingSettings();
     remotePathMapper.addAll(mappingSettings.getPathMappings(), PyRemotePathMapper.PyPathMappingType.USER_DEFINED);
@@ -138,7 +137,6 @@ public interface PydevConsoleRunner {
     }
     if (sdk == null) {
       if (PythonSdkType.getAllSdks().size() > 0) {
-        //noinspection UnusedAssignment
         sdk = PythonSdkType.getAllSdks().get(0); //take any python sdk
       }
     }

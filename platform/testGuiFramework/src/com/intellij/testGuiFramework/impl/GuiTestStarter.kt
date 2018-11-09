@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.idea.IdeStarter
@@ -25,11 +11,11 @@ import com.intellij.openapi.diagnostic.Logger
 class GuiTestStarter : IdeStarter(true), ApplicationStarter {
 
   companion object {
-    val COMMAND_NAME = "guitest"
+    const val COMMAND_NAME: String = "guitest"
 
-    val GUI_TEST_PORT = "idea.gui.test.port"
-    val GUI_TEST_HOST = "idea.gui.test.host"
-    val GUI_TEST_LIST = "idea.gui.test.list"
+    const val GUI_TEST_PORT: String = "idea.gui.test.port"
+    const val GUI_TEST_HOST: String = "idea.gui.test.host"
+    const val GUI_TEST_LIST: String = "idea.gui.test.list"
 
     fun isGuiTestThread(): Boolean = Thread.currentThread().name == GuiTestThread.GUI_TEST_THREAD_NAME
   }
@@ -40,7 +26,7 @@ class GuiTestStarter : IdeStarter(true), ApplicationStarter {
 
   private val guiTestThread = GuiTestThread()
 
-  override fun getCommandName() = COMMAND_NAME
+  override fun getCommandName(): String = COMMAND_NAME
 
   override fun premain(args: Array<String>) {
     processArgs(args)

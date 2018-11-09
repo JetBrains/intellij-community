@@ -123,7 +123,7 @@ public class DuplicateConditionInspection extends BaseInspection {
       }
     }
 
-    private void collectConditionsForIfStatement(PsiIfStatement statement, Set<PsiExpression> conditions, int depth) {
+    private void collectConditionsForIfStatement(PsiIfStatement statement, Set<? super PsiExpression> conditions, int depth) {
       if (depth > LIMIT_DEPTH || !myAnalyzedStatements.add(statement)) {
         return;
       }
@@ -145,7 +145,7 @@ public class DuplicateConditionInspection extends BaseInspection {
       }
     }
 
-    private void collectConditionsForExpression(PsiExpression condition, Set<PsiExpression> conditions) {
+    private void collectConditionsForExpression(PsiExpression condition, Set<? super PsiExpression> conditions) {
       if (condition == null) {
         return;
       }

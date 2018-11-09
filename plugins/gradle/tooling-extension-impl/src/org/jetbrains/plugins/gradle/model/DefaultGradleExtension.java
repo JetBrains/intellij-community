@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 public class DefaultGradleExtension extends DefaultGradleProperty implements GradleExtension {
   private static final long serialVersionUID = 1L;

@@ -89,7 +89,7 @@ public abstract class AbstractMemberInfoStorage<T extends PsiElement, C extends 
     return result;
   }
 
-  private Set<M> getIntermediateClassesMemberInfosList(C targetClass, Set<C> visited) {
+  private Set<M> getIntermediateClassesMemberInfosList(C targetClass, Set<? super C> visited) {
     LinkedHashSet<M> result = myTargetClassToMemberInfosListMap.get(targetClass);
     if(result == null) {
       result = new LinkedHashSet<>();

@@ -26,14 +26,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
-public abstract class TextFieldWithProgress extends JPanel {
+public class TextFieldWithProgress extends JPanel {
   @NotNull private final TextFieldWithCompletion myTextField;
   @NotNull private final AsyncProcessIcon myProgressIcon;
 
   public TextFieldWithProgress(@NotNull Project project,
                                @NotNull TextCompletionProvider completionProvider) {
     super(new BorderLayout());
-    setBorder(JBUI.Borders.empty(3));
 
     myProgressIcon = new AsyncProcessIcon("Loading commits");
     myTextField = new TextFieldWithCompletion(project, completionProvider, "", true, true, false) {
@@ -81,5 +80,6 @@ public abstract class TextFieldWithProgress extends JPanel {
     return myTextField.getText();
   }
 
-  public abstract void onOk();
+  public void onOk() {
+  }
 }

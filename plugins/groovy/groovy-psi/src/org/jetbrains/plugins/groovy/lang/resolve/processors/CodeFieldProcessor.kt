@@ -8,9 +8,9 @@ import com.intellij.psi.scope.ElementClassHint
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.CompilationPhaseHint
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 
-class CodeFieldProcessor(name: String, private val place: PsiElement) : FindFirstProcessor<ElementGroovyResult<GrField>>() {
+class CodeFieldProcessor(name: String, private val place: PsiElement) : FindFirstProcessor<ElementResolveResult<GrField>>() {
 
   init {
     nameHint(name)
@@ -19,7 +19,7 @@ class CodeFieldProcessor(name: String, private val place: PsiElement) : FindFirs
     hint(CompilationPhaseHint.HINT_KEY, CompilationPhaseHint.BEFORE_TRANSFORMATION)
   }
 
-  override fun result(element: PsiElement, state: ResolveState): ElementGroovyResult<GrField>? {
+  override fun result(element: PsiElement, state: ResolveState): ElementResolveResult<GrField>? {
     val field = element as? GrField ?: return null
     return BaseGroovyResolveResult(field, place, state.get(ClassHint.RESOLVE_CONTEXT), state.get(PsiSubstitutor.KEY))
   }

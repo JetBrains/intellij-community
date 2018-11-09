@@ -27,23 +27,27 @@ class MoveInnerViewDescriptor implements UsageViewDescriptor {
 
   private final PsiClass myInnerClass;
 
-  public MoveInnerViewDescriptor(PsiClass innerClass) {
+  MoveInnerViewDescriptor(PsiClass innerClass) {
     myInnerClass = innerClass;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return new PsiElement[] {myInnerClass};
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("move.inner.class.to.be.moved");
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

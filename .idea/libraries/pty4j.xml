@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="pty4j">
+  <library name="pty4j" type="repository">
+    <properties maven-id="org.jetbrains.pty4j:pty4j:0.8.5" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/pty4j-0.7.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.8.5/pty4j-0.8.5.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/pty4j-0.7.2-src.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/pty4j/pty4j/0.8.5/pty4j-0.8.5-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

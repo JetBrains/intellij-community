@@ -24,19 +24,22 @@ import org.jetbrains.annotations.NonNls;
 public class GenerateAntMain implements ApplicationStarter {
   private GenerateAntApplication myApplication;
 
+  @Override
   @NonNls
   public String getCommandName() {
     return "ant";
   }
 
+  @Override
   public void premain(String[] args) {
     System.setProperty("idea.load.plugins", "false");
     myApplication = new GenerateAntApplication();
 
     myApplication.myProjectPath = args[1];
-    myApplication.myOutPath = args[2];    
+    myApplication.myOutPath = args[2];
   }
 
+  @Override
   public void main(String[] args) {
     myApplication.startup();
   }

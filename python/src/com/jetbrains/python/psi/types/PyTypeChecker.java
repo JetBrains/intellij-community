@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.jetbrains.python.codeInsight.typing.PyProtocolsKt.inspectProtocolSubclass;
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -199,8 +199,9 @@ public class PyTypeChecker {
     final PyType substitution = context.substitutions.get(expected);
     PyType bound = expected.getBound();
     // Promote int in Type[TypeVar('T', int)] to Type[int] before checking that bounds match
-    if (expected.isDefinition() && bound instanceof PyInstantiableType) {
-      bound = ((PyInstantiableType)bound).toClass();
+    if (expected.isDefinition()) {
+      final Function<PyType, PyType> toDefinition = t -> t instanceof PyInstantiableType ? ((PyInstantiableType)t).toClass() : t;
+      bound = PyUnionType.union(PyTypeUtil.toStream(bound).map(toDefinition).toList());
     }
 
     Optional<Boolean> match = match(bound, actual, context);
@@ -297,7 +298,7 @@ public class PyTypeChecker {
       }
 
       final PyType originalProtocolGenericType = StreamEx
-        .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
+        .of(PyTypeProvider.EP_NAME.getExtensionList())
         .map(provider -> provider.getGenericType(superClass, context.context))
         .findFirst(Objects::nonNull)
         .orElse(null);
@@ -762,7 +763,7 @@ public class PyTypeChecker {
     }
     if (qualifierType != null) {
       for (PyClassType type : toPossibleClassTypes(qualifierType)) {
-        for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+        for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
           final PyType genericType = provider.getGenericType(type.getPyClass(), context);
           final Set<PyGenericType> providedTypeGenerics = new LinkedHashSet<>();
 
@@ -859,6 +860,9 @@ public class PyTypeChecker {
     }
     if (type instanceof PyStructuralType && ((PyStructuralType)type).isInferredFromUsages()) {
       return true;
+    }
+    if (type instanceof PyGenericType) {
+      return ((PyGenericType)type).isDefinition();
     }
     return false;
   }
@@ -976,7 +980,7 @@ public class PyTypeChecker {
     @NotNull
     private final Set<Pair<PyType, PyType>> matching; // mutable
 
-    public MatchContext(@NotNull TypeEvalContext context,
+    MatchContext(@NotNull TypeEvalContext context,
                         @NotNull Map<PyGenericType, PyType> substitutions) {
       this(context, substitutions, true, new HashSet<>());
     }

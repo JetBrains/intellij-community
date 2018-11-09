@@ -124,7 +124,6 @@ public abstract class PyEnvTestCase {
    *                     See <a href="http://junit.sourceforge.net/javadoc/org/junit/Assume.html">Assume manual</a>.
    *                     Check [IDEA-122939] and [TW-25043] as well.
    */
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected PyEnvTestCase(@NotNull final String... requiredTags) {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
   }

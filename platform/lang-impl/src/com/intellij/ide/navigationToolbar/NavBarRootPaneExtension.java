@@ -29,6 +29,7 @@ import java.awt.*;
 public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private JComponent myWrapperPanel;
   @NonNls public static final String NAV_BAR = "NavBar";
+  @SuppressWarnings("StatefulEp")
   private Project myProject;
   private NavBarPanel myNavigationBar;
   private JPanel myRunPanel;
@@ -118,7 +119,6 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       final ActionManager manager = ActionManager.getInstance();
       AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar");
       if (toolbarRunGroup instanceof ActionGroup && myWrapperPanel != null) {
-        final boolean needGap = isNeedGap(toolbarRunGroup);
         final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)toolbarRunGroup, true);
         final JComponent component = actionToolbar.getComponent();
         myRunPanel = new JPanel(new BorderLayout()) {
@@ -129,7 +129,8 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         };
         myRunPanel.setOpaque(false);
         myRunPanel.add(component, BorderLayout.CENTER);
-        myRunPanel.setBorder(JBUI.Borders.empty(0, needGap ? 5 : 1, 0, 0));
+        final boolean needGap = isNeedGap(toolbarRunGroup);
+        myRunPanel.setBorder(JBUI.Borders.emptyLeft(needGap ? 5 : 1));
         myWrapperPanel.add(myRunPanel, BorderLayout.EAST);
       }
     }

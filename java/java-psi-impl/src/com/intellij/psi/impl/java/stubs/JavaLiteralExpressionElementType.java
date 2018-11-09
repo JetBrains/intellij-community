@@ -44,8 +44,9 @@ public class JavaLiteralExpressionElementType extends JavaStubElementType<PsiLit
     return new PsiLiteralExpressionImpl(node);
   }
 
+  @NotNull
   @Override
-  public PsiLiteralStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+  public PsiLiteralStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
     return new PsiLiteralStub(parentStub, RecordUtil.intern(tree.getCharTable(), tree.getChildren(node).get(0)));
   }
 
@@ -75,7 +76,7 @@ public class JavaLiteralExpressionElementType extends JavaStubElementType<PsiLit
   }
 
   @Override
-  public boolean shouldCreateStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+  public boolean shouldCreateStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
     LighterASTNode parent = tree.getParent(node);
     return parent != null && parent.getTokenType() == JavaStubElementTypes.NAME_VALUE_PAIR;
   }

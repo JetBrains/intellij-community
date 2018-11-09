@@ -28,5 +28,5 @@ public interface Fragment {
 
   void highlight(FragmentHighlighter fragmentHighlighter);
 
-  Fragment getSubfragmentAt(int offset, FragmentSide side, Condition<Fragment> condition);
+  Fragment getSubfragmentAt(int offset, FragmentSide side, Condition<? super Fragment> condition);
 }

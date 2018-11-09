@@ -19,10 +19,10 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
- * @since May 13, 2002
  */
 public class SimplePasteAction extends EditorAction {
   public SimplePasteAction() {
@@ -30,7 +30,7 @@ public class SimplePasteAction extends EditorAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     super.update(e);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       Presentation presentation = e.getPresentation();

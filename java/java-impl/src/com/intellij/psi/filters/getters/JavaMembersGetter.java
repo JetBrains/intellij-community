@@ -68,7 +68,7 @@ public class JavaMembersGetter extends MembersGetter {
     }
   }
 
-  private void addConstantsFromReferencedClassesInSwitch(final Consumer<LookupElement> results) {
+  private void addConstantsFromReferencedClassesInSwitch(final Consumer<? super LookupElement> results) {
     final Set<PsiField> fields = ReferenceExpressionCompletionContributor.findConstantsUsedInSwitch(myPlace);
     final Set<PsiClass> classes = new HashSet<>();
     for (PsiField field : fields) {
@@ -84,7 +84,7 @@ public class JavaMembersGetter extends MembersGetter {
     }
   }
 
-  private void addConstantsFromTargetClass(Consumer<LookupElement> results, boolean searchInheritors) {
+  private void addConstantsFromTargetClass(Consumer<? super LookupElement> results, boolean searchInheritors) {
     PsiElement parent = myPlace.getParent();
     if (!(parent instanceof PsiReferenceExpression)) {
       return;

@@ -12,5 +12,5 @@ Groovy script
       PsiElement(identifier)('a')
       PsiWhiteSpace(' ')
       PsiElement(=)('=')
-      PsiErrorElement:Expression expected
+      PsiErrorElement:<expression> expected
         <empty list>

@@ -24,7 +24,10 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,15 +58,24 @@ public class TestStatusLine extends NonOpaquePanel {
     myState.append(ExecutionBundle.message("junit.runing.info.starting.label"));
   }
 
-  public void formatTestMessage(int testsTotal,
+  public void formatTestMessage(final int testsTotal,
                                 final int finishedTestsCount,
                                 final int failuresCount,
                                 final int ignoredTestsCount,
                                 final Long duration,
                                 final long endTime) {
+    UIUtil.invokeLaterIfNeeded(() -> doFormatTestMessage(testsTotal, finishedTestsCount, failuresCount, ignoredTestsCount, duration, endTime));
+  }
+
+  private void doFormatTestMessage(int testsTotal,
+                                   int finishedTestsCount,
+                                   int failuresCount,
+                                   int ignoredTestsCount,
+                                   Long duration,
+                                   long endTime) {
     myState.clear();
     if (testsTotal == 0) {
-      testsTotal = finishedTestsCount + failuresCount + ignoredTestsCount;
+      testsTotal = finishedTestsCount;
       if (testsTotal == 0) return;
     }
     int passedCount = finishedTestsCount - failuresCount - ignoredTestsCount;
@@ -122,7 +134,7 @@ public class TestStatusLine extends NonOpaquePanel {
   public void onTestsDone(@Nullable TestStateInfo.Magnitude info) {
     myProgressPanel.remove(myProgressBar);
     if (info != null) {
-      myState.setIcon(TestIconMapper.getIcon(info));
+      myState.setIcon(TestIconMapper.getToolbarIcon(info));
     }
   }
 
@@ -153,9 +165,17 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressPanel.setMinimumSize(size);
     myProgressPanel.setPreferredSize(size);
   }
-  
+
   public void setText(String progressStatus_text) {
-    myState.clear();
-    myState.append(progressStatus_text);
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myState.clear();
+      myState.append(progressStatus_text);
+    });
+  }
+
+  @TestOnly
+  @NotNull
+  public String getStateText() {
+    return myState.toString();
   }
 }

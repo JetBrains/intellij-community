@@ -29,5 +29,5 @@ public abstract class InjectedReferenceVisitor implements PsiLanguageInjectionHo
   @Override
   public void visit(@NotNull PsiFile injectedPsi, @NotNull List<PsiLanguageInjectionHost.Shred> places) {}
 
-  public abstract void visitInjectedReference(@NotNull ReferenceInjector injector, @NotNull List<PsiLanguageInjectionHost.Shred> places);
+  public abstract void visitInjectedReference(@NotNull ReferenceInjector injector, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places);
 }

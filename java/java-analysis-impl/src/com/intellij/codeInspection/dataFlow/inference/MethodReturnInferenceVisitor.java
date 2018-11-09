@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference;
 
-import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.util.Pair;
@@ -30,6 +30,7 @@ class MethodReturnInferenceVisitor {
   private boolean hasNotNulls;
   private boolean hasNulls;
   private boolean hasUnknowns;
+  private boolean hasSystemExit;
   MultiMap<String, ExpressionRange> delegates = MultiMap.create();
   Set<String> assignments = ContainerUtil.newHashSet();
   Set<String> returnedCheckedVars = ContainerUtil.newHashSet();
@@ -55,6 +56,15 @@ class MethodReturnInferenceVisitor {
     }
     else if (type == ASSIGNMENT_EXPRESSION) {
       ContainerUtil.addIfNotNull(assignments, getNameIdentifierText(tree, findExpressionChild(tree, element)));
+    }
+    else if (type == METHOD_CALL_EXPRESSION) {
+      LighterASTNode reference = findExpressionChild(tree, element);
+      if ("exit".equals(getNameIdentifierText(tree, reference))) {
+        LighterASTNode qualifier = findExpressionChild(tree, reference);
+        if ("System".equals(getNameIdentifierText(tree, qualifier)) && findExpressionChild(tree, qualifier) == null) {
+          hasSystemExit = true;
+        }
+      }
     }
   }
 
@@ -169,19 +179,22 @@ class MethodReturnInferenceVisitor {
       delegateCalls = ContainerUtil.newArrayList(delegates.get(delegates.keySet().iterator().next()));
     }
     if (hasNulls) {
+      if (hasSystemExit) {
+        return new MethodReturnInferenceResult.Predefined(Nullability.UNKNOWN);
+      }
       return delegateCalls == null || hasNotNulls || hasErrors || hasUnknowns
-             ? new MethodReturnInferenceResult.Predefined(Nullness.NULLABLE)
-             : new MethodReturnInferenceResult.FromDelegate(Nullness.NULLABLE, delegateCalls);
+             ? new MethodReturnInferenceResult.Predefined(Nullability.NULLABLE)
+             : new MethodReturnInferenceResult.FromDelegate(Nullability.NULLABLE, delegateCalls);
     }
     if (hasErrors || hasUnknowns || delegates.size() > 1) {
       return null;
     }
     if (delegateCalls != null) {
-      return new MethodReturnInferenceResult.FromDelegate(hasNotNulls ? Nullness.NOT_NULL : Nullness.UNKNOWN, delegateCalls);
+      return new MethodReturnInferenceResult.FromDelegate(hasNotNulls ? Nullability.NOT_NULL : Nullability.UNKNOWN, delegateCalls);
     }
 
     if (hasNotNulls) {
-      return new MethodReturnInferenceResult.Predefined(Nullness.NOT_NULL);
+      return new MethodReturnInferenceResult.Predefined(Nullability.NOT_NULL);
     }
     return null;
   }

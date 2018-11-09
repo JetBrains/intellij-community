@@ -186,7 +186,7 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
     private final int myWidth;
     private final Font myFont;
 
-    public TextIcon(JComponent component, @NotNull String str, @NotNull Color textColor) {
+    TextIcon(JComponent component, @NotNull String str, @NotNull Color textColor) {
       myStr = str;
       myComponent = component;
       myTextColor = textColor;
@@ -228,12 +228,17 @@ public class IdeNotificationArea extends JLabel implements UISettingsListener, C
       y += SimpleColoredComponent.getTextBaseLine(g.getFontMetrics(), getIconHeight());
 
       int length = myStr.length();
-      if ((SystemInfo.isMac && length == 1) || ((SystemInfo.isLinux || SystemInfo.isWindows) && length == 2)) {
+      if (SystemInfo.isMac || (SystemInfo.isWindows && length == 2)) {
         x += JBUI.scale(1);
       }
 
       g.setColor(myTextColor);
-      g.drawString(myStr, x, y);
+      g.drawString(myStr.substring(0, 1), x, y);
+
+      if (length == 2) {
+        x += g.getFontMetrics().charWidth(myStr.charAt(0)) - JBUI.scale(1);
+        g.drawString(myStr.substring(1), x, y);
+      }
 
       g.setFont(originalFont);
       g.setColor(originalColor);

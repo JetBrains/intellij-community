@@ -19,15 +19,11 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ModuleGroup;
-import com.intellij.ide.scratch.ScratchProjectViewPane;
-import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,11 +35,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
-  protected AbstractProjectNode(Project project, Project value, ViewSettings viewSettings) {
+  protected AbstractProjectNode(Project project, @NotNull Project value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
-  protected Collection<AbstractTreeNode> modulesAndGroups(Collection<ModuleDescription> modules) {
+  @NotNull
+  protected Collection<AbstractTreeNode> modulesAndGroups(@NotNull Collection<? extends ModuleDescription> modules) {
     if (getSettings().isFlattenModules()) {
       return ContainerUtil.mapNotNull(modules, moduleDescription -> {
         try {
@@ -107,7 +104,8 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     return result;
   }
 
-  protected abstract AbstractTreeNode createModuleGroup(final Module module)
+  @NotNull
+  protected abstract AbstractTreeNode createModuleGroup(@NotNull Module module)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
   @Nullable
@@ -116,7 +114,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     if (moduleDescription instanceof LoadedModuleDescription) {
       return createModuleGroup(((LoadedModuleDescription)moduleDescription).getModule());
     }
-    else if (moduleDescription instanceof UnloadedModuleDescription) {
+    if (moduleDescription instanceof UnloadedModuleDescription) {
       return createUnloadedModuleNode((UnloadedModuleDescription)moduleDescription);
     }
     return null;
@@ -126,11 +124,12 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     return null;
   }
 
-  protected abstract AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
+  @NotNull
+  protected abstract AbstractTreeNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
   @Override
-  public void update(PresentationData presentation) {
+  public void update(@NotNull PresentationData presentation) {
     presentation.setIcon(PlatformIcons.PROJECT_ICON);
     presentation.setPresentableText(getProject().getName());
   }
@@ -142,11 +141,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
 
   @Override
   public boolean contains(@NotNull VirtualFile vFile) {
-    ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
-    return index.getContentRootForFile(vFile, false) != null ||
-           index.isInLibraryClasses(vFile) ||
-           index.isInLibrarySource(vFile) ||
-           Comparing.equal(vFile.getParent(), myProject.getBaseDir()) ||
-           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && ScratchUtil.isScratch(vFile);
+    assert myProject != null;
+    return ProjectViewPane.canBeSelectedInProjectView(myProject, vFile);
   }
 }

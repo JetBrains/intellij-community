@@ -48,7 +48,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
       RefJavaModule refJavaModule = (RefJavaModule)refEntity;
 
       RefModule refModule = refJavaModule.getModule();
-      PsiJavaModule psiJavaModule = refJavaModule.getElement();
+      PsiJavaModule psiJavaModule = refJavaModule.getPsiElement();
       if (refModule != null && psiJavaModule != null) {
         Set<String> moduleImportedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
         if (moduleImportedPackages != null) {
@@ -112,7 +112,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     private final String myRequiredModuleName;
     private final Set<String> myImportedPackages;
 
-    public DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages) {
+    DeleteRedundantRequiresStatementFix(String requiredModuleName, Set<String> importedPackages) {
       myRequiredModuleName = requiredModuleName;
       myImportedPackages = importedPackages;
     }
@@ -203,7 +203,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     public void onReferencesBuild(RefElement refElement) {
       if (refElement instanceof RefFile) {
         RefFile refFile = (RefFile)refElement;
-        PsiFile file = refFile.getElement();
+        PsiFile file = refFile.getPsiElement();
         if (file instanceof PsiJavaFile) {
           onJavaFileReferencesBuilt(refFile, (PsiJavaFile)file);
         }
@@ -211,7 +211,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
       else if (refElement instanceof RefJavaModule) {
         RefModule refModule = refElement.getModule();
         if (refModule != null) {
-          setImportedPackages(refModule, refElement.getElement() != null);
+          setImportedPackages(refModule, refElement.getPsiElement() != null);
         }
       }
     }
@@ -256,7 +256,7 @@ public class Java9RedundantRequiresStatementInspection extends GlobalJavaBatchIn
     private static Set<String> getImportedPackages(@NotNull RefModule refModule, @NotNull RefFile refFile) {
       Set<String> importedPackages = refModule.getUserData(IMPORTED_JAVA_PACKAGES);
       if (importedPackages == null) {
-        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getElement());
+        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByElement(refFile.getPsiElement());
         importedPackages = javaModule != null ? new THashSet<>() : DONT_COLLECT_PACKAGES;
         refModule.putUserData(IMPORTED_JAVA_PACKAGES, importedPackages);
       }

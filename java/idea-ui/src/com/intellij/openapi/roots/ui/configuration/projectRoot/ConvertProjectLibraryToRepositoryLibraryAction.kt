@@ -29,7 +29,7 @@ class ConvertProjectLibraryToRepositoryLibraryAction(private val librariesConfig
                                                      context: StructureConfigurableContext)
   : ConvertToRepositoryLibraryActionBase(context) {
 
-  override fun getSelectedLibrary() = (librariesConfigurable.selectedElement as? LibraryProjectStructureElement)?.library as? LibraryEx
+  override fun getSelectedLibrary(): LibraryEx? = (librariesConfigurable.selectedElement as? LibraryProjectStructureElement)?.library as? LibraryEx
 
   override fun replaceLibrary(library: Library, configureNewLibrary: (LibraryEditorBase) -> Unit) {
     val name = library.name

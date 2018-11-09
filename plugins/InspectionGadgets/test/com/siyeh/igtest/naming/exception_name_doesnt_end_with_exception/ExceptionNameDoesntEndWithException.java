@@ -4,5 +4,5 @@ public class ExceptionNameDoesntEndWithException {
 
     public <E extends Exception> void method() { }
 
-    class X extends IllegalArgumentException {}
+    class <warning descr="Exception class name 'X' does not end with 'Exception'">X</warning> extends IllegalArgumentException {}
 }

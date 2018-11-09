@@ -72,7 +72,7 @@ public class UnnecessaryConditionalExpressionInspection extends BaseInspection i
 
     private final String myReplacement;
 
-    public UnnecessaryConditionalFix(String replacement) {
+    UnnecessaryConditionalFix(String replacement) {
       myReplacement = replacement;
     }
 

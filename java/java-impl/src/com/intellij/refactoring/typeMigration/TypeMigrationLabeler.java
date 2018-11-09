@@ -132,7 +132,7 @@ public class TypeMigrationLabeler {
   }
 
   @NotNull
-  private static UsageInfo[] map2Usages(Collection<Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> usages) {
+  private static UsageInfo[] map2Usages(Collection<? extends Pair<SmartPsiElementPointer<PsiExpression>, PsiType>> usages) {
     return ContainerUtil
       .map2Array(usages, new UsageInfo[usages.size()], pair -> {
         final PsiExpression expr = pair.getFirst().getElement();
@@ -201,6 +201,7 @@ public class TypeMigrationLabeler {
   private TypeMigrationUsageInfo[] sortMigratedUsages(TypeMigrationUsageInfo[] infos) {
     final DFSTBuilder<TypeMigrationUsageInfo> builder = new DFSTBuilder<>(GraphGenerator.generate(
       new InboundSemiGraph<TypeMigrationUsageInfo>() {
+        @NotNull
         @Override
         public Collection<TypeMigrationUsageInfo> getNodes() {
           final Set<TypeMigrationUsageInfo> infos = new HashSet<>();
@@ -211,6 +212,7 @@ public class TypeMigrationLabeler {
           return infos;
         }
 
+        @NotNull
         @Override
         public Iterator<TypeMigrationUsageInfo> getIn(TypeMigrationUsageInfo n) {
           final HashSet<Pair<TypeMigrationUsageInfo, PsiType>> rawNodes = myRootsTree.get(n);
@@ -292,7 +294,7 @@ public class TypeMigrationLabeler {
     }
 
     public void change(@NotNull final TypeMigrationUsageInfo usageInfo,
-                       @NotNull Consumer<PsiNewExpression> consumer) {
+                       @NotNull Consumer<? super PsiNewExpression> consumer) {
       final PsiElement element = usageInfo.getElement();
       if (element == null) return;
       final Project project = element.getProject();
@@ -318,7 +320,7 @@ public class TypeMigrationLabeler {
       } else if (element instanceof PsiReferenceParameterList) {
         for (Map.Entry<TypeMigrationUsageInfo, PsiClassType> entry : myClassTypeArgumentsChange.entrySet()) {
           if (element.equals(entry.getKey().getElement())) { //todo check null
-            final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+            final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
             try {
               element.getParent().replace(factory.createReferenceElementByType(entry.getValue()));
             }
@@ -956,11 +958,30 @@ public class TypeMigrationLabeler {
 
   private static PsiElement getContainingStatement(final PsiElement root) {
     final PsiStatement statement = PsiTreeUtil.getParentOfType(root, PsiStatement.class);
+    PsiExpression condition = getContainingCondition(root, statement);
+    if (condition != null) return condition;
     final PsiField field = PsiTreeUtil.getParentOfType(root, PsiField.class);
     return statement != null ? statement : field != null ? field : root;
   }
 
-  void migrateRootUsageExpression(final PsiReference usage, final Set<PsiElement> processed) {
+  private static PsiExpression getContainingCondition(PsiElement root, PsiStatement statement) {
+    PsiExpression condition = null;
+    if (statement instanceof PsiWhileStatement) {
+      condition = ((PsiWhileStatement)statement).getCondition();
+    }
+    else if (statement instanceof PsiDoWhileStatement) {
+      condition = ((PsiDoWhileStatement)statement).getCondition();
+    }
+    else if (statement instanceof PsiForStatement) {
+      condition = ((PsiForStatement)statement).getCondition();
+    }
+    else if (statement instanceof PsiIfStatement) {
+      condition = ((PsiIfStatement)statement).getCondition();
+    }
+    return PsiTreeUtil.isAncestor(condition, root, false) ? condition : null;
+  }
+
+  void migrateRootUsageExpression(final PsiReference usage, final Set<? super PsiElement> processed) {
     final PsiElement ref = usage.getElement();
     if (ref != null && ref.getLanguage() == JavaLanguage.INSTANCE) {
       final PsiElement element = getContainingStatement(ref);
@@ -1095,7 +1116,7 @@ public class TypeMigrationLabeler {
     return myMigrationRoots;
   }
 
-  public static List<PsiReference> filterReferences(final PsiClass psiClass, final Query<PsiReference> memberReferences) {
+  public static List<PsiReference> filterReferences(final PsiClass psiClass, final Query<? extends PsiReference> memberReferences) {
     final List<PsiReference> refs = new ArrayList<>();
     for (PsiReference memberReference : memberReferences) {
       if (psiClass == null) {

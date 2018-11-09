@@ -59,8 +59,9 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
     }
   }
 
+  @NotNull
   @Override
-  public PsiImportStatementStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+  public PsiImportStatementStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
     boolean isOnDemand = false;
     String refText = null;
 

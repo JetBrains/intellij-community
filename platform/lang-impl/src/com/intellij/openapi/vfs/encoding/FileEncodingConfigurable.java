@@ -130,7 +130,7 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
 
   @NotNull
   @Override
-  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<Charset> onChosen) {
+  protected ActionGroup createActionListGroup(@Nullable Object target, @NotNull Consumer<? super Charset> onChosen) {
     VirtualFile file = target instanceof VirtualFile ? (VirtualFile)target : null;
     byte[] b = null;
     try {

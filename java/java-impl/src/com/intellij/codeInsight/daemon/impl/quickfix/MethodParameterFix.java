@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -74,11 +75,11 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
-    return myMethod.getManager().isInProject(myMethod)
-        && myParameterType != null
-        && !TypeConversionUtil.isNullType(myParameterType)
-        && myMethod.getReturnType() != null
-        && !Comparing.equal(myParameterType, myMethod.getReturnType());
+    return ScratchFileService.isInProjectOrScratch(myMethod)
+           && myParameterType != null
+           && !TypeConversionUtil.isNullType(myParameterType)
+           && myMethod.getReturnType() != null
+           && !Comparing.equal(myParameterType, myMethod.getReturnType());
   }
 
   @Override
@@ -123,7 +124,7 @@ public class MethodParameterFix extends LocalQuickFixAndIntentionActionOnPsiElem
   private ParameterInfoImpl[] getNewParametersInfo(PsiMethod method) throws IncorrectOperationException {
     List<ParameterInfoImpl> result = new ArrayList<>();
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(method.getProject());
     SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, null, null, myParameterType);
     PsiParameter newParameter = factory.createParameter(nameInfo.names[0], myParameterType);

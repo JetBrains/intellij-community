@@ -298,8 +298,26 @@ public class EditorFragmentComponent extends JPanel {
     return BorderFactory.createCompoundBorder(outsideBorder, insideBorder);
   }
 
+  public static int getAvailableVisualLinesAboveEditor(@NotNull Editor editor) {
+    int availableVisualLines = 2;
+    JComponent editorComponent = editor.getComponent();
+    Container editorComponentParent = editorComponent.getParent();
+    if (editorComponentParent != null) {
+      JRootPane rootPane = editorComponent.getRootPane();
+      if (rootPane != null) {
+        Container contentPane = rootPane.getContentPane();
+        if (contentPane != null) {
+          int y = SwingUtilities.convertPoint(editorComponentParent, editorComponent.getLocation(), contentPane).y;
+          int visualLines = y / editor.getLineHeight();
+          availableVisualLines = Math.max(availableVisualLines, visualLines);
+        }
+      }
+    }
+    return availableVisualLines;
+  }
+
   private static class MyComponentHint extends LightweightHint {
-    public MyComponentHint(JComponent component) {
+    MyComponentHint(JComponent component) {
       super(component);
       setForceLightweightPopup(true);
     }

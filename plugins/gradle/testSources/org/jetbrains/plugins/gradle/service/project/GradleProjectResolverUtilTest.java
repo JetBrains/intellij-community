@@ -33,7 +33,6 @@ import static org.mockito.Mockito.when;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/28/2017
  */
 public class GradleProjectResolverUtilTest {
 
@@ -46,6 +45,9 @@ public class GradleProjectResolverUtilTest {
 
     final Module subModule = createModuleMock(":foo:subModule");
     assertEquals(":foo:subModule", GradleProjectResolverUtil.getGradlePath(subModule));
+
+    final Module compositeBuildSubModule = createModuleMock("composite:subModule");
+    assertEquals(":subModule", GradleProjectResolverUtil.getGradlePath(compositeBuildSubModule));
 
     final Module sourceSetModule = createModuleMock("rootModule:main", GRADLE_SOURCE_SET_MODULE_TYPE_KEY);
     assertEquals(":", GradleProjectResolverUtil.getGradlePath(sourceSetModule));

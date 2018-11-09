@@ -243,7 +243,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class ArtifactRootElementSerializer extends JpsPackagingElementSerializer<JpsArtifactRootElement> {
-    public ArtifactRootElementSerializer() {
+    ArtifactRootElementSerializer() {
       super("root", JpsArtifactRootElement.class);
     }
 
@@ -258,7 +258,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class DirectoryElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryPackagingElement> {
-    public DirectoryElementSerializer() {
+    DirectoryElementSerializer() {
       super("directory", JpsDirectoryPackagingElement.class);
     }
 
@@ -274,7 +274,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class ArchiveElementSerializer extends JpsPackagingElementSerializer<JpsArchivePackagingElement> {
-    public ArchiveElementSerializer() {
+    ArchiveElementSerializer() {
       super("archive", JpsArchivePackagingElement.class);
     }
 
@@ -290,7 +290,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class FileCopyElementSerializer extends JpsPackagingElementSerializer<JpsFileCopyPackagingElement> {
-    public FileCopyElementSerializer() {
+    FileCopyElementSerializer() {
       super("file-copy", JpsFileCopyPackagingElement.class);
     }
 
@@ -311,7 +311,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class DirectoryCopyElementSerializer extends JpsPackagingElementSerializer<JpsDirectoryCopyPackagingElement> {
-    public DirectoryCopyElementSerializer() {
+    DirectoryCopyElementSerializer() {
       super("dir-copy", JpsDirectoryCopyPackagingElement.class);
     }
 
@@ -328,7 +328,7 @@ public class JpsArtifactSerializer {
 
   private static class ExtractedDirectoryElementSerializer
     extends JpsPackagingElementSerializer<JpsExtractedDirectoryPackagingElement> {
-    public ExtractedDirectoryElementSerializer() {
+    ExtractedDirectoryElementSerializer() {
       super("extracted-dir", JpsExtractedDirectoryPackagingElement.class);
     }
 
@@ -346,7 +346,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class LibraryFilesElementSerializer extends JpsPackagingElementSerializer<JpsLibraryFilesPackagingElement> {
-    public LibraryFilesElementSerializer() {
+    LibraryFilesElementSerializer() {
       super("library", JpsLibraryFilesPackagingElement.class);
     }
 
@@ -379,7 +379,7 @@ public class JpsArtifactSerializer {
   }
 
   private static class ArtifactOutputElementSerializer extends JpsPackagingElementSerializer<JpsArtifactOutputPackagingElement> {
-    public ArtifactOutputElementSerializer() {
+    ArtifactOutputElementSerializer() {
       super("artifact", JpsArtifactOutputPackagingElement.class);
     }
 

@@ -17,7 +17,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-@SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "ConstantConditions"})
+@SuppressWarnings({"ConstantConditions"})
 public class XmlSchemaIndexTest extends LightCodeInsightFixtureTestCase {
 
   private static final String NS = "http://java.jb.com/xml/ns/javaee";

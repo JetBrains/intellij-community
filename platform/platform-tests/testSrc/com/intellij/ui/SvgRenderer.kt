@@ -1,13 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.util.ui.IconCache
+import com.intellij.util.ui.LafIconLookup
 import gnu.trove.THashMap
 import org.apache.batik.anim.dom.SVGDOMImplementation
 import org.apache.batik.dom.GenericDOMImplementation
@@ -16,7 +17,6 @@ import org.w3c.dom.Element
 import java.awt.Component
 import java.awt.GraphicsConfiguration
 import java.awt.Image
-import java.awt.image.BufferedImage
 import java.io.StringWriter
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -40,6 +40,8 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
     xmlTransformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
     xmlTransformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes")
 
+    IconLoader.activate()
+
     context.imageHandler = object : ImageHandlerBase64Encoder() {
       override fun handleImage(image: Image, imageElement: Element, generatorContext: SVGGeneratorContext) {
         imageElement.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", findImagePath(image))
@@ -47,24 +49,27 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
 
       private fun findImagePath(image: Image): String {
         fun isImage(iconWrapper: Icon): Boolean {
-          val thatImage = (iconWrapper as IconLoader.CachedImageIcon).doGetRealIcon()?.image
-          if (thatImage is BufferedImage) {
-            throw RuntimeException("BufferedImage - it seems it is scaled icon and so, cannot be matched, please investigate why scaled")
+          if (iconWrapper === AllIcons.Actions.Stub) {
+            return false
           }
+
+          val thatImage = (iconWrapper as IconLoader.CachedImageIcon).doGetRealIcon()?.image
           return thatImage === image
         }
 
-        for (name in arrayOf("checkBox", "radio", "gear", "spinnerRight")) {
+        for (name in arrayOf("checkBox", "radio", "gear.png", "gearPlain.png", "gearPlain.svg", "spinnerRight")) {
           val iconWrapper = when (name) {
-                              "gear" -> IconLoader.getIcon("/general/gear.png")
-                              else -> IconCache.getIcon(name, findIfNotInCache = false)
-                            } ?: continue
+            "gear.png", "gearPlain.png", "gearPlain.svg" -> IconLoader.getIcon("/general/$name")
+            else -> LafIconLookup.findIcon(name)
+          } ?: continue
+
           if (isImage(iconWrapper)) {
             return getIconRelativePath(iconWrapper.toString())
           }
         }
+
         for (name in arrayOf("checkBox", "radio")) {
-          val iconWrapper = IconCache.getIcon(name, selected = true, findIfNotInCache = false) ?: continue
+          val iconWrapper = LafIconLookup.findIcon(name, selected = true) ?: continue
           if (isImage(iconWrapper)) {
             return getIconRelativePath(iconWrapper.toString())
           }
@@ -80,7 +85,7 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
       override fun handleError(error: SVGGraphics2DRuntimeException) = throw error
     }
 
-    class PrefixInfo() {
+    class PrefixInfo {
       var currentId = 0
     }
 
@@ -115,6 +120,7 @@ internal class SvgRenderer(val svgFileDir: Path, private val deviceConfiguration
     writer.use {
       val root = svgGenerator.root
       root.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns", SVGSyntax.SVG_NAMESPACE_URI)
+      @Suppress("SpellCheckingInspection")
       root.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink")
 
       root.setAttributeNS(null, "viewBox", "0 0 ${component.width} ${component.height}")

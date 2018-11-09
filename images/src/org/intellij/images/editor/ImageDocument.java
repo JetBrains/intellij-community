@@ -15,10 +15,12 @@
  */
 package org.intellij.images.editor;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * Image document to show or edit in {@link ImageEditor}.
@@ -30,7 +32,14 @@ public interface ImageDocument {
     /**
      * A scaled image provider.
      */
-    interface ScaledImageProvider extends Function<Double/* scale */, BufferedImage> {}
+    interface ScaledImageProvider extends BiFunction<Double/* scale */, Component, BufferedImage> {}
+
+    /**
+     * A scaled image provider with caching strategy.
+     */
+    interface CachedScaledImageProvider extends ScaledImageProvider {
+        default void clearCache() {}
+    }
 
     /**
      * Return image for rendering
@@ -57,6 +66,23 @@ public interface ImageDocument {
      * Returns an image represented in the provided scale.
      */
     BufferedImage getValue(double scale);
+
+    /**
+     * Returns the bounds of the current image.
+     */
+    @Nullable
+    default Rectangle getBounds() {
+        return getBounds(1d);
+    }
+
+    /**
+     * Returns the bounds of the image represented in the provided scale.
+     */
+    @Nullable
+    default Rectangle getBounds(double scale) {
+        BufferedImage image = getValue(scale);
+        return image != null ? new Rectangle(image.getWidth(), image.getHeight()) : null;
+    }
 
     /**
      * Set image value

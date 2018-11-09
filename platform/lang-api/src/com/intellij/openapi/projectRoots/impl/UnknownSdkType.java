@@ -59,6 +59,7 @@ public class UnknownSdkType extends SdkType{
     return "";
   }
 
+  @NotNull
   @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     return currentSdkName;

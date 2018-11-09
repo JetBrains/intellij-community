@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -29,10 +15,7 @@ import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -53,7 +36,7 @@ import java.util.Set;
 
 public class ClassRenderer extends NodeRendererImpl{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.ClassRenderer");
-  
+
   public static final @NonNls String UNIQUE_ID = "ClassRenderer";
 
   public boolean SHOW_SYNTHETICS = true;
@@ -66,9 +49,9 @@ public class ClassRenderer extends NodeRendererImpl{
   public boolean SHOW_OBJECT_ID = true;
 
   public boolean SHOW_STRINGS_TYPE = false;
-  
+
   public ClassRenderer() {
-    myProperties.setEnabled(true);
+    super(DEFAULT_NAME, true);
   }
 
   @Nullable
@@ -99,15 +82,16 @@ public class ClassRenderer extends NodeRendererImpl{
   }
 
   @Override
-  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)  throws EvaluateException {
-    return calcLabel(descriptor);
+  public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener labelListener)
+    throws EvaluateException {
+    return calcLabel(descriptor, evaluationContext);
   }
 
-  protected static String calcLabel(ValueDescriptor descriptor) {
-    final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
-    final Value value = valueDescriptor.getValue();
+  protected static String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext) throws EvaluateException {
+    Value value = descriptor.getValue();
     if (value instanceof ObjectReference) {
       if (value instanceof StringReference) {
+        DebuggerUtils.ensureNotInsideObjectConstructor((ObjectReference)value, evaluationContext);
         return ((StringReference)value).value();
       }
       else if (value instanceof ClassObjectReference) {
@@ -132,7 +116,6 @@ public class ClassRenderer extends NodeRendererImpl{
       }
     }
     else if (value == null) {
-      //noinspection HardCodedStringLiteral
       return "null";
     }
     else {
@@ -233,14 +216,14 @@ public class ClassRenderer extends NodeRendererImpl{
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
     super.writeExternal(element);
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<>(this, new ClassRenderer()));
   }
 
   @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     FieldDescriptor fieldDescriptor = (FieldDescriptor)node.getDescriptor();
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(node.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(node.getProject());
     try {
       return elementFactory.createExpressionFromText("this." + fieldDescriptor.getField().name(), DebuggerUtils.findClass(
         fieldDescriptor.getObject().referenceType().name(), context.getProject(), context.getDebugProcess().getSearchScope())
@@ -301,7 +284,6 @@ public class ClassRenderer extends NodeRendererImpl{
       }
     }
     while (!(CommonClassNames.JAVA_LANG_ENUM.equals(classType.name())));
-    //noinspection HardCodedStringLiteral
     final Field field = classType.fieldByName("name");
     if (field == null) {
       return null;

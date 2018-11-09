@@ -1,5 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.lang.ASTNode;
@@ -38,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProcessLocals;
 
@@ -46,21 +46,21 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.shouldProc
  */
 public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock {
 
-  private volatile GrParameter[] mySyntheticItParameter;
+  private final AtomicReference<GrParameter[]> mySyntheticItParameter = new AtomicReference<>();
 
   public GrClosableBlockImpl(@NotNull IElementType type, CharSequence buffer) {
     super(type, buffer);
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitClosure(this);
   }
 
   @Override
   public void clearCaches() {
     super.clearCaches();
-    mySyntheticItParameter = null;
+    mySyntheticItParameter.set(null);
   }
 
   @Override
@@ -135,7 +135,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                   @Nullable final PsiType classToDelegate) {
     if (classToDelegate == null) return true;
 
-    return ResolveUtil.processAllDeclarations(classToDelegate, processor, state.put(ClassHint.RESOLVE_CONTEXT, this), place);
+    ResolveState delegateState = state.put(ClassHint.THIS_TYPE, classToDelegate).put(ClassHint.RESOLVE_CONTEXT, this);
+    return ResolveUtil.processAllDeclarations(classToDelegate, processor, delegateState, place);
   }
 
   private boolean processClosureClassMembers(@NotNull PsiScopeProcessor processor,
@@ -190,10 +191,12 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     return false;
   }
 
+  @Override
   public String toString() {
     return "Closable block";
   }
 
+  @NotNull
   @Override
   public GrParameter[] getParameters() {
     if (hasParametersSection()) {
@@ -265,18 +268,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
     if (getParent() instanceof GrStringInjection) {
       return GrParameter.EMPTY_ARRAY;
     }
-
-    GrParameter[] res = mySyntheticItParameter;
-    if (res == null) {
-      res = new GrParameter[]{new ClosureSyntheticParameter(this, true)};
-      synchronized (this) {
-        if (mySyntheticItParameter == null) {
-          mySyntheticItParameter = res;
-        }
-      }
-    }
-
-    return res;
+    return mySyntheticItParameter.updateAndGet(
+      value -> value == null ? new GrParameter[]{new ClosureSyntheticParameter(this, true)} : value
+    );
   }
 
   @Nullable

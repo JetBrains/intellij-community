@@ -1,12 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
@@ -18,7 +15,6 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
@@ -78,7 +74,10 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     super(new BorderLayout());
     myProvider = rootNode.getProvider();
     myToolWindow = toolWindow;
-    final ToolWindowManagerListener listener = new ToolWindowManagerListener() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myProject = project;
+
+    myProject.getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       ToolWindowAnchor myAnchor = toolWindow.getAnchor();
       @Override
       public void toolWindowRegistered(@NotNull String id) {
@@ -92,11 +91,8 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
           layoutPanel();
         }
       }
-    };
-    ToolWindowManagerEx.getInstanceEx(project).addToolWindowManagerListener(listener, this);
+    });
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    myProject = project;
     myTree = createTree();
 
     myBuilder = new SliceTreeBuilder(myTree, project, dataFlowToThis, rootNode, splitByLeafExpressions);
@@ -158,7 +154,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
       UsageViewSettings.getInstance().setPreviewUsagesSplitterProportion(((Splitter)myUsagePreviewPanel.getParent()).getProportion());
       myUsagePreviewPanel = null;
     }
-    
+
     isDisposed = true;
     ToolTipManager.sharedInstance().unregisterComponent(myTree);
   }
@@ -170,7 +166,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     @NotNull
     private final Map<SliceLanguageSupportProvider, SliceUsageCellRendererBase> providersToRenderers = new HashMap<>();
 
-    public MultiLanguageTreeCellRenderer(@NotNull SliceUsageCellRendererBase rootRenderer) {
+    MultiLanguageTreeCellRenderer(@NotNull SliceUsageCellRendererBase rootRenderer) {
       this.rootRenderer = rootRenderer;
       rootRenderer.setOpaque(false);
     }
@@ -222,7 +218,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     tree.setCellRenderer(new MultiLanguageTreeCellRenderer(myProvider.getRenderer()));
     UIUtil.setLineStyleAngled(tree);
     tree.setRootVisible(false);
-    
+
     tree.setShowsRootHandles(true);
     tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
     tree.setSelectionPath(new TreePath(root.getPath()));
@@ -314,7 +310,7 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   }
 
   @Override
-  public void calcData(DataKey key, DataSink sink) {
+  public void calcData(@NotNull DataKey key, @NotNull DataSink sink) {
     if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
       List<Navigatable> navigatables = getNavigatables();
       if (!navigatables.isEmpty()) {
@@ -351,18 +347,16 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     if (isToShowAutoScrollButton()) {
       actionGroup.add(myAutoScrollToSourceHandler.createToggleAction());
     }
-    if (isToShowCloseButton()) {
-      actionGroup.add(new CloseAction());
-    }
+
     if (isToShowPreviewButton()) {
       actionGroup.add(new ToggleAction(UsageViewBundle.message("preview.usages.action.text", "usages"), "preview", AllIcons.Actions.PreviewDetails) {
         @Override
-        public boolean isSelected(AnActionEvent e) {
+        public boolean isSelected(@NotNull AnActionEvent e) {
           return isPreview();
         }
 
         @Override
-        public void setSelected(AnActionEvent e, boolean state) {
+        public void setSelected(@NotNull AnActionEvent e, boolean state) {
           setPreview(state);
           layoutPanel();
         }
@@ -382,19 +376,10 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
 
   public abstract void setAutoScroll(boolean autoScroll);
 
-  public boolean isToShowCloseButton() {return true;}
-
   public boolean isToShowPreviewButton() {return true;}
   public abstract boolean isPreview();
 
   public abstract void setPreview(boolean preview);
-
-  private class CloseAction extends CloseTabToolbarAction {
-    @Override
-    public final void actionPerformed(final AnActionEvent e) {
-      close();
-    }
-  }
 
   protected void close() {
     final ProgressIndicator progress = myBuilder.getUi().getProgress();
@@ -410,14 +395,14 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
     }
 
     @Override
-    public final void actionPerformed(final AnActionEvent e) {
+    public final void actionPerformed(@NotNull final AnActionEvent e) {
       SliceNode rootNode = (SliceNode)myBuilder.getRootNode().getUserObject();
       rootNode.setChanged();
       myBuilder.addSubtreeToUpdate(myBuilder.getRootNode());
     }
 
     @Override
-    public final void update(final AnActionEvent event) {
+    public final void update(@NotNull final AnActionEvent event) {
       final Presentation presentation = event.getPresentation();
       presentation.setEnabled(true);
     }

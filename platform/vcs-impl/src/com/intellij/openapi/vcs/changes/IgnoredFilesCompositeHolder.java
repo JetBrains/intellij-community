@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -22,7 +21,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
     super();
     myProject = project;
     myVcsIgnoredHolderMap = new HashMap<>();
-    myIdeIgnoredFilesHolder = new RecursiveFileHolder<>(myProject, HolderType.IGNORED);
+    myIdeIgnoredFilesHolder = new RecursiveFileHolder(myProject, HolderType.IGNORED);
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
@@ -99,10 +98,10 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
 
   @NotNull
   private static IgnoredFilesHolder getHolderForVcs(@NotNull Project project, AbstractVcs vcs) {
-    for (VcsIgnoredFilesHolder.Provider provider : Extensions.getExtensions(VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP, project)) {
+    for (VcsIgnoredFilesHolder.Provider provider : VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.getExtensionList(project)) {
       if (provider.getVcs().equals(vcs)) return provider.createHolder();
     }
-    return new RecursiveFileHolder<>(project, HolderType.IGNORED);
+    return new RecursiveFileHolder(project, HolderType.IGNORED);
   }
 
   @Override

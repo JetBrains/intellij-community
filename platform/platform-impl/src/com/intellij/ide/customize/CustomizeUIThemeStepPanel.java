@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
@@ -62,9 +60,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
 
   protected static final ThemeInfo AQUA = new ThemeInfo("Aqua", "Aqua", "com.apple.laf.AquaLookAndFeel");
   protected static final ThemeInfo DARCULA = new ThemeInfo("Darcula", "Darcula", DarculaLaf.class.getName());
-  protected static final ThemeInfo INTELLIJ = new ThemeInfo(
-    LafManagerImpl.useIntelliJInsteadOfAqua() ? "Light" : "IntelliJ", "IntelliJ", IntelliJLaf.class.getName());
-  protected static final ThemeInfo GTK = new ThemeInfo("GTK+", "GTK", "com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+  protected static final ThemeInfo INTELLIJ = new ThemeInfo("Light", "IntelliJ", IntelliJLaf.class.getName());
 
   private final boolean myColumnMode;
   private final JLabel myPreviewLabel;
@@ -93,7 +89,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       Icon icon = theme.getIcon();
       int maxThumbnailSize = 400 / myThemes.size();
       final JLabel label = new JLabel(
-        myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, maxThumbnailSize * 2, maxThumbnailSize * 2), .5) : icon);
+        myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, maxThumbnailSize * 2, maxThumbnailSize * 2), this, .5f) : icon);
       label.setVerticalAlignment(SwingConstants.TOP);
       label.setHorizontalAlignment(SwingConstants.RIGHT);
       panel.add(label, BorderLayout.CENTER);
@@ -130,13 +126,12 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     else {
       result.add(DARCULA);
       result.add(INTELLIJ);
-      result.add(GTK);
     }
   }
 
   @NotNull
   protected static ThemeInfo getDefaultLafOnMac() {
-    return LafManagerImpl.useIntelliJInsteadOfAqua() ? INTELLIJ : AQUA;
+    return INTELLIJ;
   }
 
   @NotNull
@@ -144,7 +139,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     if (ApplicationManager.getApplication() != null) {
       if (UIUtil.isUnderAquaLookAndFeel()) return AQUA;
       if (UIUtil.isUnderDarcula()) return DARCULA;
-      if (UIUtil.isUnderGTKLookAndFeel()) return GTK;
       return INTELLIJ;
     }
     CloudConfigProvider provider = CloudConfigProvider.getProvider();

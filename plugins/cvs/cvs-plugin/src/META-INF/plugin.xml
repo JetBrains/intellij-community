@@ -40,23 +40,20 @@
     <applicationService serviceInterface="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"
                         serviceImplementation="com.intellij.cvsSupport2.connections.ssh.SocksAuthenticatorManager"/>
 
-    <projectService serviceInterface="com.intellij.cvsSupport2.ui.CvsTabbedWindow"
-               serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
-    <projectService serviceInterface="com.intellij.cvsSupport2.config.CvsConfiguration"
-               serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>
-    <projectService serviceInterface="com.intellij.cvsSupport2.application.CvsStorageComponent"
-               serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
+    <projectService serviceImplementation="com.intellij.cvsSupport2.ui.CvsTabbedWindow"/>
+    <projectService serviceImplementation="com.intellij.cvsSupport2.config.CvsConfiguration"/>
+    <projectService serviceImplementation="com.intellij.cvsSupport2.application.CvsStorageSupportingDeletionComponent"/>
 
     <vcsCheckinHandlerFactory implementation="com.intellij.cvsSupport2.CvsCheckinHandlerFactory"/>
 
     <search.topHitProvider implementation="com.intellij.cvsSupport2.config.CvsOptionsTopHitProvider"/>
     <vcs name="CVS" vcsClass="com.intellij.cvsSupport2.CvsVcs2" displayName="CVS" administrativeAreaName="CVS"/>
-    <vcsPopupProvider implementation="com.intellij.cvsSupport2.actions.CvsQuickListContentProvider"/>
   </extensions>
 
   <actions>
     <action id="Cvs.Import" class="com.intellij.cvsSupport2.actions.ImportAction">
       <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
     </action>
 
     <action id="Cvs.BrowseCVSRepository" class="com.intellij.cvsSupport2.actions.BrowseCvsRepositoryAction">
@@ -79,11 +76,9 @@
     <action id="Cvs.GetFromRepository" class="com.intellij.cvsSupport2.actions.GetFileFromRepositoryAction">
       <add-to-group group-id="UpdateActionGroup" anchor="last"/>
     </action>
-    
+
     <group id="AddOptionDialogActionGroup">
-      <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction">
-        <add-to-group group-id="Vcs.CheckinProjectPopup" anchor="last"/>
-      </action>
+      <action id="Cvs.Ignore" class="com.intellij.cvsSupport2.actions.IgnoreFileAction"/>
     </group>
 
     <group id="CvsActions" class="com.intellij.cvsSupport2.actions.Cvs2Group">

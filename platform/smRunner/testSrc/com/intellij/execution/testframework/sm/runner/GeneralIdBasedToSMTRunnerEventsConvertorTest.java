@@ -63,8 +63,10 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
 
   public void testOnTestStarted() {
     onTestStarted("my test", null, "1", TreeNodeEvent.ROOT_NODE_ID, true);
+    assertStatusLine("");
     SMTestProxy proxy = validateTest("1", "my test", null, true, myRootProxy);
     onTestFailed("1", "", 1);
+    assertStatusLine("Tests failed: 1 of 1 test");
     validateTestFailure("1", proxy, 1);
   }
 
@@ -111,6 +113,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
     SMTestProxy testB = validateTest("B", "testB", null, true, suite);
     assertEquals(1, myResultsViewer.getFinishedTestCount());
     onTestIgnored("B");
+    assertStatusLine("Tests ignored: 2 of 2 tests");
     assertEquals(2, myResultsViewer.getFinishedTestCount());
     validateTestIgnored("B", testB);
   }
@@ -191,5 +194,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
 
   private void onTestIgnored(@NotNull String id) {
     myEventsProcessor.onTestIgnored(new TestIgnoredEvent(null, id, null, null));
+  }
+
+  private void assertStatusLine(@NotNull String expectedTestStatus) {
+    assertEquals(expectedTestStatus, myResultsViewer.getStatusLine().getStateText());
   }
 }

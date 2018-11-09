@@ -9,7 +9,6 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.CloseTabToolbarAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
@@ -37,6 +36,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -67,6 +68,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (configuration != null) {
       emptyText.appendText(" Click ");
       emptyText.appendText("Edit", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+        @Override
         public void actionPerformed(final ActionEvent e) {
           final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findSettings(configuration);
           if (configurationSettings != null) {
@@ -79,7 +81,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       });
       emptyText.appendText(" to fix configuration settings.");
     }
-    myTable.getColumnModel().getColumn(0).setCellRenderer(new NodeDescriptorTableCellRenderer());
+    TableColumnModel columnModel = myTable.getColumnModel();
+    TableColumn nameColumn = columnModel.getColumn(0);
+    nameColumn.setCellRenderer(new NodeDescriptorTableCellRenderer());
+    nameColumn.setPreferredWidth(myStateBean.myElementSize);
     myTable.getTableHeader().setReorderingAllowed(false);
     JPanel centerPanel = JBUI.Panels.simplePanel()
       .addToCenter(ScrollPaneFactory.createScrollPane(myTable))
@@ -101,6 +106,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     ScrollingUtil.installActions(myTable);
 
     myTable.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (myBuilder == null) return;
         myBuilder.buildRoot();
@@ -111,6 +117,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myTable.getInputMap(WHEN_FOCUSED).put(
       KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_DOWN, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_DRILL_DOWN);
     myTable.getActionMap().put(ACTION_DRILL_DOWN, new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         drillDown(structure);
       }
@@ -119,6 +126,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       KeyStroke.getKeyStroke(KeyEvent.VK_PAGE_UP, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK), ACTION_GO_UP);
     myTable.getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), ACTION_GO_UP);
     myTable.getActionMap().put(ACTION_GO_UP, new AbstractAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         goUp();
       }
@@ -134,6 +142,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (!myProject.isDisposed()) {
       CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null);
     }
+  }
+
+  public void saveSize() {
+    myStateBean.myElementSize = myTable.getColumnModel().getColumn(0).getWidth();
   }
 
   private static ActionGroup createPopupGroup() {
@@ -153,12 +165,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     installAutoScrollFromSource(actionGroup);
 
     actionGroup.add(ActionManager.getInstance().getAction("GenerateCoverageReport"));
-    actionGroup.add(new CloseTabToolbarAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null);
-      }
-    });
     return actionGroup;
   }
 
@@ -231,7 +237,8 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     myBuilder.select(file);
   }
 
-  public Object getData(@NonNls String dataId) {
+  @Override
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return getSelectedValue();
     }
@@ -267,12 +274,12 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myStateBean.myFlattenPackages;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myStateBean.myFlattenPackages = state;
       final Object selectedValue = myBuilder.getSelectedValue();
       myBuilder.buildRoot();
@@ -289,25 +296,25 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
 
     private final CoverageViewTreeStructure myTreeStructure;
 
-    public GoUpAction(CoverageViewTreeStructure treeStructure) {
+    GoUpAction(CoverageViewTreeStructure treeStructure) {
       super("Go Up", "Go to Upper Level", AllIcons.Nodes.UpLevel);
       myTreeStructure = treeStructure;
       registerCustomShortcutSet(KeyEvent.VK_BACK_SPACE, 0, myTable);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       goUp();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!topElementIsSelected(myTreeStructure));
     }
   }
 
   private class MyAutoScrollFromSourceHandler extends AutoScrollFromSourceHandler {
-    public MyAutoScrollFromSourceHandler() {
+    MyAutoScrollFromSourceHandler() {
       super(CoverageView.this.myProject, CoverageView.this, CoverageView.this);
     }
 

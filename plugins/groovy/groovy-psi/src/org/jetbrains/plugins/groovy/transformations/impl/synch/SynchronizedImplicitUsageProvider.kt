@@ -21,9 +21,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 
 class SynchronizedImplicitUsageProvider : ImplicitUsageProvider {
 
-  override fun isImplicitUsage(element: PsiElement) = isImplicitRead(element)
+  override fun isImplicitUsage(element: PsiElement): Boolean = isImplicitRead(element)
 
-  override fun isImplicitRead(element: PsiElement) = element is GrField && getImplicitLockUsages(element).any()
+  override fun isImplicitRead(element: PsiElement): Boolean = element is GrField && getImplicitLockUsages(element).any()
 
-  override fun isImplicitWrite(element: PsiElement) = false
+  override fun isImplicitWrite(element: PsiElement): Boolean = false
 }

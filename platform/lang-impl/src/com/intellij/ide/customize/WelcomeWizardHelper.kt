@@ -1,32 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.customize
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.ide.WelcomeWizardUtil
 import com.intellij.ide.projectView.impl.ProjectViewSharedSettings
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.lang.Language
-import com.intellij.openapi.components.ApplicationComponent
+import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.codeStyle.*
 
-class WelcomeWizardHelper : ApplicationComponent {
+class WelcomeWizardHelper : BaseComponent {
   override fun initComponent() {
     //Project View settings
     WelcomeWizardUtil.getAutoScrollToSource()?.let {
@@ -48,7 +34,7 @@ class WelcomeWizardHelper : ApplicationComponent {
     //Code style settings
     WelcomeWizardUtil.getContinuationIndent()?.let {
       Language.getRegisteredLanguages()
-        .map { CodeStyleSettingsManager.getInstance().currentSettings.getIndentOptions(it.associatedFileType) }
+        .map { CodeStyle.getDefaultSettings().getIndentOptions(it.associatedFileType) }
         .filter { it.CONTINUATION_INDENT_SIZE > WelcomeWizardUtil.getContinuationIndent() }
         .forEach { it.CONTINUATION_INDENT_SIZE = WelcomeWizardUtil.getContinuationIndent() }
     }
@@ -57,12 +43,14 @@ class WelcomeWizardHelper : ApplicationComponent {
       UISettings.instance.editorTabPlacement = it
     }
     WelcomeWizardUtil.getAppearanceFontSize()?.let {
-      UISettings.instance.overrideLafFonts = true
-      UISettings.instance.fontSize = it
+      val settings = UISettings.instance.state
+      settings.overrideLafFonts = true
+      UISettings.instance.state.fontSize = it
     }
     WelcomeWizardUtil.getAppearanceFontFace()?.let {
-      UISettings.instance.overrideLafFonts = true
-      UISettings.instance.fontFace = it
+      val settings = UISettings.instance.state
+      settings.overrideLafFonts = true
+      settings.fontFace = it
     }
     LafManager.getInstance().updateUI()
   }

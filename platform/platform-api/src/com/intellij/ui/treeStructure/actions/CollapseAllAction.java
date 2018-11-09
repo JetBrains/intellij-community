@@ -19,6 +19,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -31,7 +32,8 @@ public class CollapseAllAction extends AnAction implements DumbAware {
     myTree = tree;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     int row = getTree().getRowCount() - 1;
     while (row >= 0) {
       getTree().collapseRow(row);

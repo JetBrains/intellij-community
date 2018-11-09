@@ -31,7 +31,10 @@ public interface GenerationInfo {
 
   void insert(@NotNull PsiClass aClass, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException;
 
-  @NotNull
+  /**
+   * @return the associated PSI member or null if it has become invalid
+   */
+  @Nullable
   PsiMember getPsiMember();
 
   /**

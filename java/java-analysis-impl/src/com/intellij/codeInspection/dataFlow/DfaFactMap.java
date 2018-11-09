@@ -79,9 +79,9 @@ public final class DfaFactMap {
    */
   public boolean isSuperStateOf(DfaFactMap subMap) {
     // absent fact is not always a superstate of present fact
-    // e.g. absent CAN_BE_NULL means that nullability is unknown,
-    // but CAN_BE_NULL=false means that value is definitely nullable and we should warn about nullability violation if any
-    // so the (CAN_BE_NULL=false) state cannot be superseded by (CAN_BE_NULL=null) state
+    // e.g. absent NULLABILITY means that nullability is unknown,
+    // but NULLABILITY=NULLABLE means that value is definitely nullable and we should warn about nullability violation if any
+    // so the (NULLABILITY=NULLABLE) state cannot be superseded by (NULLABILITY=null) state
     for (DfaFactType<?> key : DfaFactType.getTypes()) {
       @SuppressWarnings("unchecked")
       DfaFactType<Object> type = (DfaFactType<Object>)key;
@@ -137,22 +137,22 @@ public final class DfaFactMap {
    * @return a new fact map. May return itself if it's known that new fact does not actually change this map.
    */
   @NotNull
-  public <T> DfaFactMap union(@NotNull DfaFactType<T> type, @Nullable T value) {
+  public <T> DfaFactMap unite(@NotNull DfaFactType<T> type, @Nullable T value) {
     if (value == null) return with(type, null);
     T curFact = get(type);
     if (curFact == null) return this;
-    T newFact = type.unionFacts(curFact, value);
+    T newFact = type.uniteFacts(curFact, value);
     return with(type, newFact);
   }
 
   @NotNull
-  private <TT> DfaFactMap union(DfaFactMap otherMap, @NotNull DfaFactType<TT> type) {
-    return union(type, otherMap.get(type));
+  private <TT> DfaFactMap unite(DfaFactMap otherMap, @NotNull DfaFactType<TT> type) {
+    return unite(type, otherMap.get(type));
   }
 
   @NotNull
-  public DfaFactMap union(@NotNull DfaFactMap other) {
-    return StreamEx.of(DfaFactType.getTypes()).foldLeft(this, (map, type) -> map.union(other, type));
+  public DfaFactMap unite(@NotNull DfaFactMap other) {
+    return StreamEx.of(DfaFactType.getTypes()).foldLeft(this, (map, type) -> map.unite(other, type));
   }
 
   @Override
@@ -166,14 +166,13 @@ public final class DfaFactMap {
     return myMap.hashCode();
   }
 
-  @SuppressWarnings("unchecked")
   @Override
   public String toString() {
     return facts(DfaFactType::toString).joining(", ");
   }
 
   @SuppressWarnings("unchecked")
-  public <R> StreamEx<R> facts(FactMapper<R> mapper) {
+  public <R> StreamEx<R> facts(FactMapper<? extends R> mapper) {
     return StreamEx.of(myMap.getKeys()).map(f -> {
       DfaFactType<Object> key = (DfaFactType<Object>)f;
       Object value = myMap.get(f);

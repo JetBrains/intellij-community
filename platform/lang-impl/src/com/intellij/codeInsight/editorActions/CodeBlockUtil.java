@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.highlighting.BraceMatchingUtil;
+import com.intellij.codeInsight.highlighting.CodeBlockSupportHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -28,6 +29,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class CodeBlockUtil {
   private CodeBlockUtil() {
@@ -113,8 +115,21 @@ public class CodeBlockUtil {
     }
   }
 
-  private static int calcBlockEndOffset(Editor editor, PsiFile file) {
+  private static int calcBlockEndOffset(@NotNull Editor editor, @NotNull PsiFile file) {
+    int offsetFromBraceMatcher = calcBlockEndOffsetFromBraceMatcher(editor, file);
+    TextRange rangeFromStructuralSupport = CodeBlockSupportHandler.findCodeBlockRange(editor, file);
+    if (rangeFromStructuralSupport.isEmpty()) {
+      return offsetFromBraceMatcher;
+    }
+    else if (offsetFromBraceMatcher == -1) {
+      return rangeFromStructuralSupport.getEndOffset();
+    }
+    else {
+      return Math.min(rangeFromStructuralSupport.getEndOffset(), offsetFromBraceMatcher);
+    }
+  }
 
+  private static int calcBlockEndOffsetFromBraceMatcher(@NotNull Editor editor, @NotNull PsiFile file) {
     Document document = editor.getDocument();
     int offset = editor.getCaretModel().getOffset();
     final FileType fileType = file.getFileType();
@@ -136,11 +151,11 @@ public class CodeBlockUtil {
     while (true) {
       if (iterator.atEnd()) return -1;
 
-      if (isRStructuralBrace(fileType, iterator,document.getCharsSequence()) &&
-          ( braceType == getBraceType(iterator) ||
-            braceType == null
+      if (isRStructuralBrace(fileType, iterator, document.getCharsSequence()) &&
+          (braceType == getBraceType(iterator) ||
+           braceType == null
           )
-          ) {
+      ) {
         if (moved) {
           if (depth == 0) break;
           depth--;
@@ -150,11 +165,11 @@ public class CodeBlockUtil {
           braceType = getBraceType(iterator);
         }
       }
-      else if (isLStructuralBrace(fileType, iterator,document.getCharsSequence()) &&
-               ( braceType == getBraceType(iterator) ||
-                 braceType == null
+      else if (isLStructuralBrace(fileType, iterator, document.getCharsSequence()) &&
+               (braceType == getBraceType(iterator) ||
+                braceType == null
                )
-              ) {
+      ) {
         if (braceType == null) {
           braceType = getBraceType(iterator);
         }
@@ -165,10 +180,24 @@ public class CodeBlockUtil {
       iterator.advance();
     }
 
-    return isBeforeLBrace? iterator.getEnd() : iterator.getStart();
+    return isBeforeLBrace ? iterator.getEnd() : iterator.getStart();
   }
 
-  private static int calcBlockStartOffset(Editor editor, PsiFile file) {
+  private static int calcBlockStartOffset(@NotNull Editor editor, @NotNull PsiFile file) {
+    int offsetFromBraceMatcher = calcBlockStartOffsetFromBraceMatcher(editor, file);
+    TextRange rangeFromStructuralSupport = CodeBlockSupportHandler.findCodeBlockRange(editor, file);
+    if (rangeFromStructuralSupport.isEmpty()) {
+      return offsetFromBraceMatcher;
+    }
+    else if (offsetFromBraceMatcher == -1) {
+      return rangeFromStructuralSupport.getStartOffset();
+    }
+    else {
+      return Math.max(rangeFromStructuralSupport.getStartOffset(), offsetFromBraceMatcher);
+    }
+  }
+
+  private static int calcBlockStartOffsetFromBraceMatcher(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset() - 1;
     if (offset < 0) return -1;
 

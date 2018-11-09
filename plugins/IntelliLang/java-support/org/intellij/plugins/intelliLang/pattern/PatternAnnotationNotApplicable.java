@@ -30,25 +30,30 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class PatternAnnotationNotApplicable extends LocalInspectionTool {
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return PatternValidator.PATTERN_VALIDATION;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Pattern Annotation not applicable";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -90,6 +95,7 @@ public class PatternAnnotationNotApplicable extends LocalInspectionTool {
     holder.registerProblem(annotation, "Pattern Annotation is only applicable to elements of type String", new RemoveAnnotationFix(this));
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {

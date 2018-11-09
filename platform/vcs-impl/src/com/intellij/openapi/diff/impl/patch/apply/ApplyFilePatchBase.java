@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.apply;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,6 +27,7 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
     return myPatch;
   }
 
+  @Override
   public Result apply(final VirtualFile fileToPatch,
                       final ApplyPatchContext context,
                       final Project project,
@@ -67,14 +54,14 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
   protected abstract Result applyChange(Project project, VirtualFile fileToPatch, FilePath pathBeforeRename, Getter<CharSequence> baseContents) throws IOException;
 
   @Nullable
-  public static VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName,
-                                            final boolean isNewFile) throws IOException {
+  public static VirtualFile findPatchTarget(final ApplyPatchContext context, final String beforeName, final String afterName)
+    throws IOException {
     VirtualFile file = null;
     if (beforeName != null) {
-      file = findFileToPatchByName(context, beforeName, isNewFile);
+      file = findFileToPatchByName(context, beforeName);
     }
     if (file == null) {
-      file = findFileToPatchByName(context, afterName, isNewFile);
+      file = findFileToPatchByName(context, afterName);
     }
     else if (context.isAllowRename() && afterName != null && !beforeName.equals(afterName)) {
       String[] beforeNameComponents = beforeName.split("/");
@@ -121,10 +108,9 @@ public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFi
   }
 
   @Nullable
-  private static VirtualFile findFileToPatchByName(@NotNull ApplyPatchContext context, final String fileName,
-                                                   boolean isNewFile) {
+  private static VirtualFile findFileToPatchByName(@NotNull ApplyPatchContext context, final String fileName) {
     String[] pathNameComponents = fileName.split("/");
-    int lastComponentToFind = isNewFile ? pathNameComponents.length-1 : pathNameComponents.length;
+    int lastComponentToFind = pathNameComponents.length;
     return findFileToPatchByComponents(context, pathNameComponents, lastComponentToFind);
   }
 

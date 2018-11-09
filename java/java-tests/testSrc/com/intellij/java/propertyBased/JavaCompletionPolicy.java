@@ -15,12 +15,15 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.patterns.PsiJavaPatterns;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -40,14 +43,21 @@ class JavaCompletionPolicy extends CompletionPolicy {
     return super.getExpectedVariant(editor, file, leaf, ref);
   }
 
-  // a language where there are bugs in completion which maintainers of this Java-specific tests can't or don't want to fix
+  // a language where there are bugs in completion which maintainers of this Java-specific test can't or don't want to fix
   private static boolean isBuggyInjection(@NotNull PsiFile file) {
-    return Arrays.asList("XML", "HTML", "PointcutExpression").contains(file.getLanguage().getID());
+    return Arrays.asList("XML", "HTML", "PointcutExpression", "HQL").contains(file.getLanguage().getID());
   }
 
   @Override
   protected boolean isAfterError(@NotNull PsiFile file, @NotNull PsiElement leaf) {
-    return super.isAfterError(file, leaf) || isAdoptedOrphanPsiAfterClassEnd(leaf) || isInsideAnnotationWithErrors(leaf);
+    return super.isAfterError(file, leaf) ||
+           isAdoptedOrphanPsiAfterClassEnd(leaf) ||
+           isInsideAnnotationWithErrors(leaf) ||
+           isUnexpectedStatementInSwitchBody(leaf);
+  }
+
+  private static boolean isUnexpectedStatementInSwitchBody(@NotNull PsiElement leaf) {
+    return PsiJavaPatterns.psiElement().withParents(PsiReturnStatement.class, PsiCodeBlock.class, PsiSwitchStatement.class).accepts(leaf);
   }
 
   private static boolean isInsideAnnotationWithErrors(PsiElement leaf) {
@@ -58,7 +68,12 @@ class JavaCompletionPolicy extends CompletionPolicy {
   @Override
   protected boolean shouldSuggestReferenceText(@NotNull PsiReference ref, @NotNull PsiElement target) {
     PsiElement refElement = ref.getElement();
-    if (refElement instanceof PsiJavaCodeReferenceElement && 
+    if (refElement.getContainingFile().getLanguage().getID().equals("GWT JavaScript")) {
+      // for GWT class members refs like "MyClass::mmm(I)(1)", lookup items are only a subset of possible reference texts
+      return false;
+    }
+
+    if (refElement instanceof PsiJavaCodeReferenceElement &&
         !shouldSuggestJavaTarget((PsiJavaCodeReferenceElement)refElement, target)) {
       return false;
     }
@@ -138,12 +153,12 @@ class JavaCompletionPolicy extends CompletionPolicy {
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {
     PsiElement parent = leaf.getParent();
     if (leaf instanceof PsiKeyword) {
-      if (parent instanceof PsiClassObjectAccessExpression &&
-          PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)parent).getOperand().getType()) == null) {
+      if (parent instanceof PsiExpression && hasUnresolvedRefsBefore(leaf, parent)) {
         return false;
       }
       if (parent instanceof PsiModifierList) {
-        if (Arrays.stream(parent.getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1) {
+        if (Arrays.stream(parent.getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1 ||
+            HighlightUtil.checkIllegalModifierCombination((PsiKeyword)leaf, (PsiModifierList)parent) != null) {
           return false;
         }
         if (parent.getParent() instanceof PsiModifierListOwner && PsiTreeUtil.getParentOfType(parent.getParent(), PsiCodeBlock.class, true, PsiClass.class) != null) {
@@ -154,19 +169,23 @@ class JavaCompletionPolicy extends CompletionPolicy {
     if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
       return false; // boolean literal presence depends on expected types, which can be missing in red files
     }
-    if (parent instanceof PsiNewExpression && ((PsiNewExpression)parent).getQualifier() != null) {
-      PsiJavaCodeReferenceElement reference = ((PsiNewExpression)parent).getClassOrAnonymousClassReference();
-      if (reference == null || reference.resolve() == null) {
-        return false; // this.new Foo isn't completed when there's no "Foo"
-      }
-    }
     if (leaf.textMatches(PsiKeyword.IMPLEMENTS)) {
       PsiClass cls = PsiTreeUtil.getParentOfType(leaf, PsiClass.class);
       if (cls == null || cls.isInterface()) {
         return false;
       }
     }
+    if (JavaLexer.isSoftKeyword(leaf.getText(), LanguageLevel.JDK_1_9) &&
+        !PsiJavaModule.MODULE_INFO_FILE.equals(leaf.getContainingFile().getName())) {
+      return false;
+    }
     return true;
   }
 
+  private static boolean hasUnresolvedRefsBefore(PsiElement leaf, PsiElement parent) {
+    return SyntaxTraverser.psiTraverser(parent)
+                          .filter(PsiJavaCodeReferenceElement.class)
+                          .filter(r -> r.getTextRange().getEndOffset() < leaf.getTextRange().getEndOffset() && r.resolve() == null)
+                          .isNotEmpty();
+  }
 }

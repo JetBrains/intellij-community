@@ -19,7 +19,7 @@ Groovy script
             PsiElement(identifier)('B')
           PsiWhiteSpace(' ')
           PsiElement(&)('&')
-          PsiErrorElement:Type expected
+          PsiErrorElement:<type> expected, got ','
             <empty list>
       PsiWhiteSpace(' ')
       PsiElement(,)(',')

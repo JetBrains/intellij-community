@@ -45,7 +45,7 @@ public class QuickFixPreviewPanelFactory {
     private final InspectionToolWrapper myWrapper;
     private final boolean myEmpty;
 
-    public QuickFixReadyPanel(@NotNull InspectionResultsView view) {
+    QuickFixReadyPanel(@NotNull InspectionResultsView view) {
       myView = view;
       myWrapper = view.getTree().getSelectedToolWrapper(true);
       LOG.assertTrue(myWrapper != null);
@@ -165,7 +165,7 @@ public class QuickFixPreviewPanelFactory {
         final ComboBoxAction fixComboBox = new ComboBoxAction() {
           {
             getTemplatePresentation().setText("Apply quick fixes" + (multipleDescriptors ? " to all the problems" : ""));
-            getTemplatePresentation().setIcon(AllIcons.Actions.CreateFromUsage);
+            getTemplatePresentation().setIcon(AllIcons.Actions.IntentionBulb);
             setSmallVariant(false);
           }
 

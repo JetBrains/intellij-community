@@ -278,7 +278,7 @@ public class PatternValidator extends LocalInspectionTool {
 
   private static class IntroduceVariableFix implements RefactoringQuickFix {
 
-    public IntroduceVariableFix() {}
+    IntroduceVariableFix() {}
 
     @Override
     @NotNull

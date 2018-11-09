@@ -100,7 +100,7 @@ public class DynamicMethodDialog extends DynamicDialog {
 
 
   private class TypeColumnInfo extends ColumnInfo<ParamInfo, String> {
-    public TypeColumnInfo() {
+    TypeColumnInfo() {
       super(GroovyBundle.message("dynamic.type"));
     }
 
@@ -124,7 +124,7 @@ public class DynamicMethodDialog extends DynamicDialog {
   }
 
   private static class NameColumnInfo extends ColumnInfo<ParamInfo, String> {
-    public NameColumnInfo() {
+    NameColumnInfo() {
       super(GroovyBundle.message("dynamic.name"));
     }
 
@@ -142,7 +142,7 @@ public class DynamicMethodDialog extends DynamicDialog {
   private static class MySuggestedNameCellEditor extends AbstractTableCellEditor {
     JTextField myNameField;
 
-    public MySuggestedNameCellEditor(String[] names) {
+    MySuggestedNameCellEditor(String[] names) {
       myNameField = names.length == 0 ? new JTextField() : new JTextField(names[0]);
     }
 

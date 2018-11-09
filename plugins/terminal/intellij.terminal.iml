@@ -14,11 +14,11 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="pty4j" level="project" />
     <orderEntry type="library" name="jna" level="project" />
-    <orderEntry type="library" name="purejavacomm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" name="jediterm-pty" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
   </component>
 </module>

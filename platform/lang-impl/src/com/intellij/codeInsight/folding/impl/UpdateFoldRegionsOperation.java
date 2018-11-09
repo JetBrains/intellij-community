@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.folding.impl;
 
@@ -23,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +38,7 @@ class UpdateFoldRegionsOperation implements Runnable {
   private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed"); 
   static final Key<Boolean> COLLAPSED_BY_DEFAULT = Key.create("collapsedByDefault");
   static final Key<String> SIGNATURE = Key.create("signature");
+  static final String NO_SIGNATURE = "no signature";
 
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET_REVERSED = (element, element1) -> {
     int startOffsetDiff = element1.getTextRange().getStartOffset() - element.getTextRange().getStartOffset();
@@ -147,7 +147,7 @@ class UpdateFoldRegionsOperation implements Runnable {
         
       if (descriptor.canBeRemovedWhenCollapsed()) region.putUserData(CAN_BE_REMOVED_WHEN_COLLAPSED, Boolean.TRUE);
       region.putUserData(COLLAPSED_BY_DEFAULT, regionInfo.collapsedByDefault);
-      region.putUserData(SIGNATURE, regionInfo.signature);
+      region.putUserData(SIGNATURE, ObjectUtils.chooseNotNull(regionInfo.signature, NO_SIGNATURE));
 
       info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
       newRegions.add(region);
@@ -252,7 +252,7 @@ class UpdateFoldRegionsOperation implements Runnable {
   }
 
   private boolean shouldRemoveRegion(FoldRegion region, EditorFoldingInfo info,
-                                     Map<TextRange, Boolean> rangeToExpandStatusMap, Ref<FoldingUpdate.RegionInfo> matchingInfo) {
+                                     Map<TextRange, Boolean> rangeToExpandStatusMap, Ref<? super FoldingUpdate.RegionInfo> matchingInfo) {
     matchingInfo.set(null);
     PsiElement element = info.getPsiElement(region);
     if (element != null) {
@@ -293,7 +293,7 @@ class UpdateFoldRegionsOperation implements Runnable {
         return true;
       }
     }
-    else if (!forceKeepRegion && !(region.isValid() && info.isLightRegion(region))) {
+    else if (!forceKeepRegion && !(region.isValid() && region.getUserData(SIGNATURE) == null /* 'light' region */)) {
       return true;
     }
     return false;

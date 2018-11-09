@@ -30,7 +30,6 @@ import java.awt.event.ItemListener;
 import java.util.Calendar;
 
 public class CleanUnshelvedFilterDialog extends DialogWrapper {
-  private final JRadioButton mySystemUnshelvedButton;
   private final JRadioButton myUnshelvedWithFilterButton;
   private final JRadioButton myAllUnshelvedButton;
   private final ComboBox myTimePeriodComboBox;
@@ -65,7 +64,6 @@ public class CleanUnshelvedFilterDialog extends DialogWrapper {
   public CleanUnshelvedFilterDialog(@Nullable Project project) {
     super(project);
     setTitle("Clean Unshelved Changelists");
-    mySystemUnshelvedButton = new JRadioButton("created automatically", true);
     myUnshelvedWithFilterButton = new JRadioButton("older than one", false);
     myAllUnshelvedButton = new JRadioButton("all", false);
     myTimePeriodComboBox = new ComboBox(new EnumComboBoxModel<>(TimePeriod.class));
@@ -90,15 +88,11 @@ public class CleanUnshelvedFilterDialog extends DialogWrapper {
     final MigLayout migLayout = new MigLayout(panelConstraints);
     JPanel buttonsPanel = new JPanel(migLayout);
     ButtonGroup gr = new ButtonGroup();
-    gr.add(mySystemUnshelvedButton);
     gr.add(myUnshelvedWithFilterButton);
     gr.add(myAllUnshelvedButton);
 
-    mySystemUnshelvedButton.setBorder(BorderFactory.createEmptyBorder());
     myUnshelvedWithFilterButton.setBorder(BorderFactory.createEmptyBorder());
     myAllUnshelvedButton.setBorder(BorderFactory.createEmptyBorder());
-
-    buttonsPanel.add(mySystemUnshelvedButton, "wrap");
 
     JPanel filterPanel = new JPanel(new MigLayout(panelConstraints));
     filterPanel.add(myUnshelvedWithFilterButton);

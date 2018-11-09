@@ -179,7 +179,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         private final HashMap<String, Kind> myMap;
         private final Kind myKind;
 
-        public MyAttributeHandler(HashMap<String, Kind> map, Kind k) {
+        MyAttributeHandler(HashMap<String, Kind> map, Kind k) {
             myMap = map;
             myKind = k;
         }
@@ -201,7 +201,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
 
         private final Collection<NavigationItem> myResult = new ArrayList<>();
 
-        public SymbolCollector(String name, Project project, GlobalSearchScope scope) {
+        SymbolCollector(String name, Project project, GlobalSearchScope scope) {
             myMgr = PsiManager.getInstance(project);
             myScope = scope;
             myName = name;

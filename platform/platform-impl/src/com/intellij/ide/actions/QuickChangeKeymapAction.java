@@ -27,7 +27,7 @@ public class QuickChangeKeymapAction extends QuickSwitchSchemeAction {
   private static void addKeymapAction(final DefaultActionGroup group, final KeymapManagerEx manager, final Keymap current, final Keymap keymap, final boolean addScheme) {
     group.add(new DumbAwareAction(keymap.getPresentableName(), "", keymap == current ? ourCurrentAction : ourNotCurrentAction) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         if (addScheme) {
           manager.getSchemeManager().addScheme(keymap, false);
         }

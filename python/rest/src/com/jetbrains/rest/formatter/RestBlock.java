@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.rest.formatter;
 
 
@@ -30,15 +16,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class RestBlock implements ASTBlock {
-  private final RestBlock myParent;
   private final ASTNode myNode;
   private final Alignment myAlignment;
   private final Indent myIndent;
   private final Wrap myWrap;
   private List<RestBlock> mySubBlocks = null;
 
-  public RestBlock(RestBlock parent, ASTNode node, final Alignment alignment, Indent indent, Wrap wrap) {
-    myParent = parent;
+  public RestBlock(ASTNode node, final Alignment alignment, Indent indent, Wrap wrap) {
     myNode = node;
     myAlignment = alignment;
     myIndent = indent;
@@ -57,6 +41,7 @@ public class RestBlock implements ASTBlock {
     return myNode.getTextRange();
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
@@ -80,21 +65,14 @@ public class RestBlock implements ASTBlock {
   }
 
   private RestBlock buildSubBlock(ASTNode child) {
-    IElementType parentType = myNode.getElementType();
     IElementType childType = child.getElementType();
     IElementType grandparentType = myNode.getTreeParent() == null ? null : myNode.getTreeParent().getElementType();
-    Wrap wrap = null;
     Indent childIndent = Indent.getNoneIndent();
-    Alignment childAlignment = null;
 
-    if (grandparentType == RestElementTypes.FIELD_LIST && parentType == RestElementTypes.LINE_TEXT &&
-      childType == RestTokenTypes.LINE) {
+    if (grandparentType == RestElementTypes.DIRECTIVE_BLOCK && childType == RestTokenTypes.FIELD) {
       childIndent = Indent.getNormalIndent();
     }
-    if (parentType == RestElementTypes.DIRECTIVE_BLOCK && childType == RestTokenTypes.FIELD) {
-      childIndent = Indent.getNormalIndent();
-    }
-    return new RestBlock(this, child, childAlignment, childIndent, wrap);
+    return new RestBlock(child, null, childIndent, null);
   }
 
 

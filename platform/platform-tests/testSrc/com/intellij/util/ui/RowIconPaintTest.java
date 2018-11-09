@@ -4,8 +4,11 @@ package com.intellij.util.ui;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.RowIcon;
+import com.intellij.util.ui.JBUI.ScaleContext;
 
 import javax.swing.*;
+
+import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 
 /**
  * Tests {@link com.intellij.ui.RowIcon} painting.
@@ -14,7 +17,7 @@ import javax.swing.*;
  */
 public class RowIconPaintTest extends LayeredIconPaintTest {
   @Override
-  protected ScalableIcon createCompositeIcon(Icon... cellIcons) {
+  protected ScalableIcon createCompositeIcon(ScaleContext ctx, Icon... cellIcons) {
     RowIcon icon = new RowIcon(2);
     icon.setIcon(cellIcons[0], 0);
     icon.setIcon(cellIcons[1], 1);
@@ -22,7 +25,7 @@ public class RowIconPaintTest extends LayeredIconPaintTest {
   }
 
   @Override
-  protected String getGoldImagePath(int scale) {
-    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_RowIcon@" + scale + "x.png";
+  protected String getGoldImagePath(ScaleContext ctx) {
+    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_RowIcon@" + (int)ctx.getScale(PIX_SCALE) + "x.png";
   }
 }

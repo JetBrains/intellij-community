@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision;
@@ -42,7 +43,7 @@ import static git4idea.branch.GitBranchUiHandler.DeleteRemoteBranchDecision.DELE
 class GitDeleteRemoteBranchOperation extends GitBranchOperation {
   private final String myBranchName;
 
-  public GitDeleteRemoteBranchOperation(@NotNull Project project, @NotNull Git git,
+  GitDeleteRemoteBranchOperation(@NotNull Project project, @NotNull Git git,
                                         @NotNull GitBranchUiHandler handler, @NotNull List<GitRepository> repositories,
                                         @NotNull String name) {
     super(project, git, handler, repositories);
@@ -163,7 +164,7 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
 
   @NotNull
   private GitCommandResult pushDeletion(@NotNull GitRepository repository, @NotNull GitRemote remote, @NotNull String branchName) {
-    return myGit.push(repository, new GitPushParamsImpl(remote, ":" + branchName, false, false, false, null));
+    return myGit.push(repository, new GitPushParamsImpl(remote, ":" + branchName, false, false, false, null, Collections.emptyList()));
   }
 
   @Nullable

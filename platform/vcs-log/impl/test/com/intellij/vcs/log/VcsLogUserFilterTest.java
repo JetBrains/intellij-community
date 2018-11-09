@@ -66,7 +66,7 @@ public abstract class VcsLogUserFilterTest {
     List<String> names = ContainerUtil.newArrayList();
 
     for (Character c : UserNameRegex.EXTENDED_REGEX_CHARS) {
-      String name = "user" + Character.toString(c) + "userovich" + c.hashCode(); // hashCode is required so that uses wont be synonyms
+      String name = "user" + c + "userovich" + c.hashCode(); // hashCode is required so that uses wont be synonyms
       names.add(name);
       names.add(name + "@company.com");
     }
@@ -101,7 +101,7 @@ public abstract class VcsLogUserFilterTest {
     Set<String> synonyms = ContainerUtil.newHashSet();
     for (char c = ' '; c <= '~'; c++) {
       if (c == '\'' || c == '!' || c == '\\' || Character.isUpperCase(c) || excludes.contains(c)) continue;
-      String name = "User" + Character.toString(c) + "Userovich";
+      String name = "User" + c + "Userovich";
       names.add(name);
       names.add(name + "@company.com");
       if (!Character.isLetterOrDigit(c)) synonyms.add(name);

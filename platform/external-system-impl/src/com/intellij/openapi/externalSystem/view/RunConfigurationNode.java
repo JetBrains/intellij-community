@@ -23,19 +23,20 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.treeStructure.SimpleTree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.awt.event.InputEvent;
 
 import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.getRunConfigurationActivationTaskName;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/7/2014
  */
 public class RunConfigurationNode extends ExternalSystemNode {
   private final RunnerAndConfigurationSettings mySettings;
@@ -48,7 +49,7 @@ public class RunConfigurationNode extends ExternalSystemNode {
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     super.update(presentation);
     presentation.setIcon(ProgramRunnerUtil.getConfigurationIcon(mySettings, false));
 
@@ -83,6 +84,7 @@ public class RunConfigurationNode extends ExternalSystemNode {
     return mySettings.getName();
   }
 
+  @Override
   public boolean isAlwaysLeaf() {
     return true;
   }
@@ -98,6 +100,10 @@ public class RunConfigurationNode extends ExternalSystemNode {
 
   @Override
   public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
+    ExternalProjectsView projectsView = getExternalProjectsView();
+    String place = projectsView instanceof Component ? ((Component)projectsView).getName() : "unknown";
+    ExternalSystemActionsCollector.trigger(myProject, projectsView.getSystemId(),
+                                           "ExecuteExternalSystemRunConfigurationAction", place, false);
     ProgramRunnerUtil.executeConfiguration(mySettings, DefaultRunExecutor.getRunExecutorInstance());
     RunManager.getInstance(mySettings.getConfiguration().getProject()).setSelectedConfiguration(mySettings);
   }

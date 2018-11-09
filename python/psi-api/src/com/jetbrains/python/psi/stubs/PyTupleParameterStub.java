@@ -9,14 +9,6 @@ import org.jetbrains.annotations.Nullable;
  * Tuple parameter stub, collects nested parameters from stubs.
  */
 public interface PyTupleParameterStub extends StubElement<PyTupleParameter> {
-  /**
-   * @deprecated Use {@link PyTupleParameterStub#getDefaultValueText()} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Deprecated
-  default boolean hasDefaultValue() {
-    return getDefaultValueText() != null;
-  }
 
   @Nullable
   default String getDefaultValueText() {

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.testFramework.fixtures.impl;
 
@@ -25,7 +23,6 @@ import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -96,19 +93,23 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
   @Override
   public void tearDown() throws Exception {
-    RunAll runAll = new RunAll()
-      .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication))
-      .append(() -> {
-        for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
-          moduleFixtureBuilder.getFixture().tearDown();
-        }
-      })
-      .append(() -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
-      .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
-      .append(() -> myProject = null);
+    RunAll runAll = new RunAll();
 
-    ((JarFileSystemImpl)JarFileSystem.getInstance()).cleanupForNextTest();
-    
+    if (myProject != null) {
+      runAll = runAll
+        .append(() -> LightPlatformTestCase.doTearDown(getProject(), myApplication))
+        .append(() -> {
+          for (ModuleFixtureBuilder moduleFixtureBuilder : myModuleFixtureBuilders) {
+            moduleFixtureBuilder.getFixture().tearDown();
+          }
+        })
+        .append(() -> EdtTestUtil.runInEdtAndWait(() -> PlatformTestCase.closeAndDisposeProjectAndCheckThatNoOpenProjects(getProject())))
+        .append(() -> InjectedLanguageManagerImpl.checkInjectorsAreDisposed(getProject()))
+        .append(() -> myProject = null);
+    }
+
+    JarFileSystemImpl.cleanupForNextTest();
+
     for (File fileToDelete : myFilesToDelete) {
       runAll = runAll.append(() -> {
         List<Throwable> errors = Files.walk(fileToDelete.toPath())
@@ -131,10 +132,22 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
 
     runAll
       .append(super::tearDown)
-      .append(() -> myEditorListenerTracker.checkListenersLeak())
-      .append(() -> myThreadTracker.checkLeak())
+      .append(() -> {
+        if (myEditorListenerTracker != null) {
+          myEditorListenerTracker.checkListenersLeak();
+        }
+      })
+      .append(() -> {
+        if (myThreadTracker != null) {
+          myThreadTracker.checkLeak();
+        }
+      })
       .append(LightPlatformTestCase::checkEditorsReleased)
-      .append(() -> myOldSdks.checkForJdkTableLeaks())
+      .append(() -> {
+        if (myOldSdks != null) {
+          myOldSdks.checkForJdkTableLeaks();
+        }
+      })
       .append(() -> PlatformTestCase.cleanupApplicationCaches(null))  // project is disposed by now, no point in passing it
       .run();
   }
@@ -188,7 +201,7 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
   private class MyDataProvider implements DataProvider {
     @Override
     @Nullable
-    public Object getData(@NonNls String dataId) {
+    public Object getData(@NotNull @NonNls String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }

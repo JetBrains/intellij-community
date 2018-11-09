@@ -75,4 +75,23 @@ public class SameParameterValueLocalTest extends InspectionTestCase {
   public void testNegativeDouble() {
     doTest(getGlobalTestDir(), myTool);
   }
+
+  public void testMethodReferenceInCallArguments() {
+    doTest(getGlobalTestDir(), myTool);
+  }
+
+  public void testUsageCount() {
+    int previous = myGlobalTool.minimalUsageCount;
+    try {
+      myGlobalTool.minimalUsageCount = 5;
+      doTest(getGlobalTestDir(), myTool);
+    }
+    finally {
+      myGlobalTool.minimalUsageCount = previous;
+    }
+  }
+
+  public void testOverrideGroovy() {
+    doTest(getGlobalTestDir(), myTool);
+  }
 }

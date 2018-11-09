@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -25,7 +26,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
   private final PsiType myExpressionType;
   private final PsiVariable myVar;
 
-  private VariableTypeFromCallFix(@NotNull PsiClassType type, @NotNull PsiVariable var) {
+  private VariableTypeFromCallFix(@NotNull PsiType type, @NotNull PsiVariable var) {
     myExpressionType = type;
     myVar = var;
   }
@@ -94,13 +95,15 @@ public class VariableTypeFromCallFix implements IntentionAction {
         if (resolved instanceof PsiVariable) {
           final PsiType varType = ((PsiVariable)resolved).getType();
           final PsiClass varClass = PsiUtil.resolveClassInType(varType);
-          final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
+          final Project project = expression.getProject();
+          final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
           if (varClass != null) {
             final PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(varClass.getTypeParameters(),
                                                                                    parameters,
                                                                                    expressions, PsiSubstitutor.EMPTY, resolved,
                                                                                    DefaultParameterTypeInferencePolicy.INSTANCE);
-            final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
+            final PsiType appropriateVarType = GenericsUtil.getVariableTypeByExpressionType(JavaPsiFacade.getElementFactory(
+              project).createType(varClass, psiSubstitutor));
             if (!varType.equals(appropriateVarType)) {
               actions.add(new VariableTypeFromCallFix(appropriateVarType, (PsiVariable)resolved));
               break;
@@ -120,15 +123,17 @@ public class VariableTypeFromCallFix implements IntentionAction {
       return Collections.emptyList();
     }
     List<IntentionAction> result = new ArrayList<>();
-    final PsiManager manager = method.getManager();
-    if (manager.isInProject(method)) {
+    if (ScratchFileService.isInProjectOrScratch(method)) {
       final PsiMethod[] superMethods = method.findDeepestSuperMethods();
       for (PsiMethod superMethod : superMethods) {
-        if (!manager.isInProject(superMethod)) return Collections.emptyList();
+        if (!ScratchFileService.isInProjectOrScratch(superMethod)) return Collections.emptyList();
       }
       final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
       if (resolve instanceof PsiVariable) {
-        result.addAll(HighlightFixUtil.getChangeVariableTypeFixes((PsiVariable)resolve, parameterType));
+        PsiType varType = ((PsiVariable)resolve).getType();
+        if (!varType.equals(GenericsUtil.getVariableTypeByExpressionType(parameterType))) {
+          result.addAll(HighlightFixUtil.getChangeVariableTypeFixes((PsiVariable)resolve, parameterType));
+        }
       }
     }
     return result;

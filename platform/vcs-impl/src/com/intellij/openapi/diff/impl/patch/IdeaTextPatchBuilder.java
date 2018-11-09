@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch;
 
 import com.intellij.diff.util.Side;
@@ -44,7 +30,7 @@ public class IdeaTextPatchBuilder {
   }
 
   public static List<BeforeAfter<AirContentRevision>> revisionsConvertor(@NotNull Project project,
-                                                                         @NotNull List<Change> changes) throws VcsException {
+                                                                         @NotNull List<? extends Change> changes) throws VcsException {
     final List<BeforeAfter<AirContentRevision>> result = new ArrayList<>(changes.size());
     Map<VcsRoot, List<Change>> byRoots =
       groupByRoots(project, changes, change -> chooseNotNull(getBeforePath(change), getAfterPath(change)));
@@ -91,7 +77,7 @@ public class IdeaTextPatchBuilder {
   }
 
   @NotNull
-  public static List<FilePatch> buildPatch(final Project project, final Collection<Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
+  public static List<FilePatch> buildPatch(final Project project, final Collection<? extends Change> changes, final String basePath, final boolean reversePatch) throws VcsException {
     final Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
       revisions = revisionsConvertor(project, new ArrayList<>(changes));
@@ -150,7 +136,7 @@ public class IdeaTextPatchBuilder {
     @NotNull private final StaticPathDescription myDescription;
     @Nullable private final Long myTimestamp;
 
-    public BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
+    BinaryAirContentRevision(@NotNull BinaryContentRevision revision,
                                     @NotNull StaticPathDescription description,
                                     @Nullable Long timestamp) {
       myRevision = revision;
@@ -158,22 +144,27 @@ public class IdeaTextPatchBuilder {
       myTimestamp = timestamp;
     }
 
+    @Override
     public boolean isBinary() {
       return true;
     }
 
+    @Override
     public String getContentAsString() {
       throw new IllegalStateException();
     }
 
+    @Override
     public byte[] getContentAsBytes() throws VcsException {
       return myRevision.getBinaryContent();
     }
 
+    @Override
     public String getRevisionNumber() {
       return myTimestamp != null ? null : myRevision.getRevisionNumber().asString();
     }
 
+    @Override
     @NotNull
     public PathDescription getPath() {
       return myDescription;
@@ -185,7 +176,7 @@ public class IdeaTextPatchBuilder {
     @NotNull private final StaticPathDescription myDescription;
     @Nullable private final Long myTimestamp;
 
-    public TextAirContentRevision(@NotNull ContentRevision revision,
+    TextAirContentRevision(@NotNull ContentRevision revision,
                                   @NotNull StaticPathDescription description,
                                   @Nullable Long timestamp) {
       myRevision = revision;
@@ -193,14 +184,17 @@ public class IdeaTextPatchBuilder {
       myTimestamp = timestamp;
     }
 
+    @Override
     public boolean isBinary() {
       return false;
     }
 
+    @Override
     public String getContentAsString() throws VcsException {
       return myRevision.getContent();
     }
 
+    @Override
     public byte[] getContentAsBytes() throws VcsException {
       if (myRevision instanceof ByteBackedContentRevision) {
         return ((ByteBackedContentRevision)myRevision).getContentAsBytes();
@@ -211,10 +205,12 @@ public class IdeaTextPatchBuilder {
       return textContent.getBytes(getCharset());
     }
 
+    @Override
     public String getRevisionNumber() {
       return myTimestamp != null ? null : myRevision.getRevisionNumber().asString();
     }
 
+    @Override
     @NotNull
     public PathDescription getPath() {
       return myDescription;
@@ -237,7 +233,7 @@ public class IdeaTextPatchBuilder {
   private static class PartialTextAirContentRevision extends TextAirContentRevision {
     @NotNull private final String myContent;
 
-    public PartialTextAirContentRevision(@NotNull String content,
+    PartialTextAirContentRevision(@NotNull String content,
                                          @NotNull ContentRevision delegateRevision,
                                          @NotNull StaticPathDescription description,
                                          @Nullable Long timestamp) {

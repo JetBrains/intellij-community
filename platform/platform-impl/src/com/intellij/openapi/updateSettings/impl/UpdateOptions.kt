@@ -35,4 +35,7 @@ class UpdateOptions : BaseState() {
 
   @get:OptionTag("SECURE_CONNECTION")
   var isUseSecureConnection by property(true)
+
+  @get:OptionTag("THIRD_PARTY_PLUGINS_ALLOWED")
+  var isThirdPartyPluginsAllowed by property(false)
 }

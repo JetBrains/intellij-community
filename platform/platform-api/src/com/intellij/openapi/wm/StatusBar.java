@@ -95,4 +95,22 @@ public interface StatusBar extends StatusBarInfo, Disposable {
   IdeFrame getFrame();
 
   void install(IdeFrame frame);
+
+  class Anchors {
+    public static final String DEFAULT_ANCHOR = after(StandardWidgets.COLUMN_SELECTION_MODE_PANEL);
+
+    public static String before(String widgetId) {
+      return "before " + widgetId;
+    }
+    public static String after(String widgetId) {
+      return "after " + widgetId;
+    }
+  }
+
+  class StandardWidgets {
+    public static final String ENCODING_PANEL = "Encoding";
+    public static final String COLUMN_SELECTION_MODE_PANEL = "InsertOverwrite"; // Keep the old ID for backwards compatibility
+    public static final String READONLY_ATTRIBUTE_PANEL = "ReadOnlyAttribute";
+    public static final String POSITION_PANEL = "Position";
+  }
 }

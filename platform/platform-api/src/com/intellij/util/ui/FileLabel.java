@@ -52,6 +52,7 @@ public class FileLabel extends JLabel {
     }
   }
 
+  @Override
   public String getText() {
     if (myFile == null) return "";
     int width = getWidth();

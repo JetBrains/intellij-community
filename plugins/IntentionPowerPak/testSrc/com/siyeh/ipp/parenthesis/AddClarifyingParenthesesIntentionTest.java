@@ -15,13 +15,25 @@
  */
 package com.siyeh.ipp.parenthesis;
 
-import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.IPPTestCase;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.IGQuickFixesTestCase;
+import com.siyeh.ig.style.UnclearBinaryExpressionInspection;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AddClarifyingParenthesesIntentionTest extends IPPTestCase {
+public class AddClarifyingParenthesesIntentionTest extends IGQuickFixesTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myDefaultHint = InspectionGadgetsBundle.message("unclear.binary.expression.quickfix");
+  }
+
+  @Override
+  protected BaseInspection getInspection() {
+    return new UnclearBinaryExpressionInspection();
+  }
 
   public void testCommentsInAssignment() { doTest(); }
   public void testCommentsInConditional() { doTest(); }
@@ -29,16 +41,11 @@ public class AddClarifyingParenthesesIntentionTest extends IPPTestCase {
   public void testCommentsInParentheses() { doTest(); }
   public void testCommentsInPolyadicExpression() { doTest(); }
   public void testNotTooManyParentheses() { doTest(); }
-  public void testSimpleAssignment() { assertIntentionNotAvailable(); }
+  public void testSimpleAssignment() { assertQuickfixNotAvailable(); }
   public void testUnclearAssignment() { doTest(); }
 
   @Override
   protected String getRelativePath() {
-    return "add_clarifying_parentheses";
-  }
-
-  @Override
-  protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("add.clarifying.parentheses.intention.name");
+    return "style/add_clarifying_parentheses";
   }
 }

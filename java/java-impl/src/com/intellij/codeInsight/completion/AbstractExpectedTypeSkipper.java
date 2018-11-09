@@ -45,7 +45,7 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
   }
 
   private static Result getSkippingStatus(final LookupElement item, final CompletionLocation location) {
-    if (location.getCompletionType() != CompletionType.SMART) return Result.ACCEPT;
+    if (location.getCompletionType() != CompletionType.SMART && !hasEmptyPrefix(location)) return Result.ACCEPT;
 
     final PsiExpression expression = PsiTreeUtil.getParentOfType(location.getCompletionParameters().getPosition(), PsiExpression.class);
     if (!(expression instanceof PsiNewExpression)) return Result.ACCEPT;
@@ -75,7 +75,7 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
     final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);
     boolean isDefaultType = false;
     if (infos != null) {
-      final PsiType type = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory().createType(psiClass);
+      final PsiType type = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
       for (final ExpectedTypeInfo info : infos) {
         final PsiType infoType = TypeConversionUtil.erasure(info.getType().getDeepComponentType());
         final PsiType defaultType = TypeConversionUtil.erasure(info.getDefaultType().getDeepComponentType());
@@ -95,4 +95,7 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
     return Result.ACCEPT;
   }
 
+  private static boolean hasEmptyPrefix(CompletionLocation location) {
+    return location.getCompletionParameters().getPosition().getTextRange().getStartOffset() == location.getCompletionParameters().getOffset();
+  }
 }

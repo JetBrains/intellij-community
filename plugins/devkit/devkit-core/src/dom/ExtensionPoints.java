@@ -22,13 +22,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author mike
- */
 public interface ExtensionPoints extends DomElement {
+
   @NotNull
   @Stubbed
   @SubTagList("extensionPoint")
   List<ExtensionPoint> getExtensionPoints();
+
   ExtensionPoint addExtensionPoint();
 }

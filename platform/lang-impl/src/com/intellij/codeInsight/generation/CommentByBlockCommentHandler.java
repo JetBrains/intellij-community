@@ -140,7 +140,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
         int selectionEnd = myCaret.getSelectionEnd();
         if (commenter instanceof IndentedCommenter) {
           final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
-          if (value != null && value == Boolean.TRUE) {
+          if (value == Boolean.TRUE) {
             selectionStart = myDocument.getLineStartOffset(myDocument.getLineNumber(selectionStart));
             selectionEnd = myDocument.getLineEndOffset(myDocument.getLineNumber(selectionEnd));
           }
@@ -152,7 +152,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
         int caretOffset = myCaret.getOffset();
         if (commenter instanceof IndentedCommenter) {
           final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
-          if (value != null && value == Boolean.TRUE) {
+          if (value == Boolean.TRUE) {
             final int lineNumber = myDocument.getLineNumber(caretOffset);
             final int start = myDocument.getLineStartOffset(lineNumber);
             final int end = myDocument.getLineEndOffset(lineNumber);
@@ -238,7 +238,7 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
     intersection = TextRange.create(Math.max(intersection.getStartOffset() - textRange.getStartOffset(), 0),
                                     Math.min(intersection.getEndOffset() - textRange.getStartOffset(), textRange.getLength()));
     return isWhiteSpaceOrComment(element) ||
-           intersection.substring(element.getText()).trim().length() == 0;
+           intersection.substring(element.getText()).trim().isEmpty();
   }
 
   private static boolean isWhiteSpaceOrComment(PsiElement element) {
@@ -435,11 +435,9 @@ public class CommentByBlockCommentHandler extends MultiCaretCodeInsightActionHan
         if (!commentPrefix.endsWith("\n")) {
           nestingPrefix.append("\n");
         }
-        final StringBuilder nestingSuffix = new StringBuilder(space);
-        nestingSuffix.append(commentSuffix.startsWith("\n") ? commentSuffix.substring(1) : commentSuffix);
-        nestingSuffix.append("\n");
+        String nestingSuffix = space + (commentSuffix.startsWith("\n") ? commentSuffix.substring(1) : commentSuffix) + "\n";
         TextRange range =
-          insertNestedComments(startOffset, endOffset, nestingPrefix.toString(), nestingSuffix.toString(), commenter);
+          insertNestedComments(startOffset, endOffset, nestingPrefix.toString(), nestingSuffix, commenter);
         if (range != null) {
           myCaret.setSelection(range.getStartOffset(), range.getEndOffset());
           LogicalPosition pos = new LogicalPosition(caretPosition.line + 1, caretPosition.column);

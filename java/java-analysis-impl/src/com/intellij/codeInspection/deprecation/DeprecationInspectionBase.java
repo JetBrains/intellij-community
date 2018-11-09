@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
@@ -11,6 +12,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -18,12 +20,14 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
+import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,7 +147,7 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
       final PsiClass containingClass = method.getContainingClass();
       assert containingClass != null;
       final PsiClass superClass = containingClass.getSuperClass();
-      if (hasDefaultDeprecatedConstructor(superClass, myForRemoval)) {
+      if (superClass != null && hasDefaultDeprecatedConstructor(superClass, myForRemoval)) {
         if (superClass instanceof PsiAnonymousClass) {
           final PsiExpressionList argumentList = ((PsiAnonymousClass)superClass).getArgumentList();
           if (argumentList != null && !argumentList.isEmpty()) return;
@@ -172,7 +176,7 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
       final PsiMethod[] currentConstructors = aClass.getConstructors();
       if (currentConstructors.length == 0) {
         final PsiClass superClass = aClass.getSuperClass();
-        if (hasDefaultDeprecatedConstructor(superClass, myForRemoval)) {
+        if (superClass != null && hasDefaultDeprecatedConstructor(superClass, myForRemoval)) {
           final boolean isAnonymous = aClass instanceof PsiAnonymousClass;
           if (isAnonymous) {
             final PsiExpressionList argumentList = ((PsiAnonymousClass)aClass).getArgumentList();
@@ -188,22 +192,62 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
     @Override
     public void visitRequiresStatement(PsiRequiresStatement statement) {
       PsiJavaModuleReferenceElement refElement = statement.getReferenceElement();
-      if (refElement != null) {
-        PsiPolyVariantReference ref = refElement.getReference();
-        PsiElement target = ref != null ? ref.resolve() : null;
-        if (target instanceof PsiJavaModule &&
-            isMarkedForRemoval((PsiJavaModule)target, myForRemoval) &&
-            PsiImplUtil.isDeprecatedByAnnotation((PsiJavaModule)target)) {
-          String description = JavaErrorMessages.message(myForRemoval ? "marked.for.removal.symbol" : "deprecated.symbol",
-                                                         HighlightMessageUtil.getSymbolName(target));
-          myHolder.registerProblem(refElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
+      PsiJavaModule target = PsiJavaModuleReference.resolve(refElement);
+      if (target != null && isMarkedForRemoval(target, myForRemoval) && PsiImplUtil.isDeprecatedByAnnotation(target)) {
+        String key = myForRemoval ? "marked.for.removal.symbol" : "deprecated.symbol";
+        String description = JavaErrorMessages.message(key, HighlightMessageUtil.getSymbolName(target));
+        myHolder.registerProblem(refElement, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
+      }
+    }
+
+    @Override
+    public void visitNameValuePair(PsiNameValuePair pair) {
+      String name = pair.getName();
+      PsiIdentifier identifier = pair.getNameIdentifier();
+      if (name != null && identifier != null) {
+        PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);
+        if (annotation != null) {
+          PsiJavaCodeReferenceElement reference = annotation.getNameReferenceElement();
+          if (reference != null) {
+            PsiElement resolved = reference.resolve();
+            if (resolved instanceof PsiClass) {
+              for (JvmMethod method : ((PsiClass)resolved).findMethodsByName(name)) {
+                if (method instanceof PsiMethod &&
+                    isMarkedForRemoval((PsiMethod)method, myForRemoval) &&
+                    ((PsiMethod)method).isDeprecated()) {
+                  String description = JavaErrorMessages.message(myForRemoval ? "marked.for.removal.symbol" : "deprecated.symbol", name);
+                  myHolder.registerProblem(identifier, getDescription(description, myForRemoval, myHighlightType), myHighlightType);
+                  break;
+                }
+              }
+            }
+          }
         }
       }
     }
   }
 
-  private static boolean hasDefaultDeprecatedConstructor(PsiClass superClass, boolean forRemoval) {
-    return superClass != null && Arrays.stream(superClass.getConstructors())
+  private static boolean hasDefaultDeprecatedConstructor(@NotNull PsiClass superClass, boolean forRemoval) {
+    PsiMethod[] constructors = superClass.getConstructors();
+    if (constructors.length == 0) {
+      /*
+        The default constructor of a class can be externally annotated (IDEA-200832).
+        There cannot be inferred annotations for a default constructor,
+        so here is no need to check all annotations returned
+        by `AnnotationUtil.findAnnotations()`, but only external ones.
+
+        Note that there may be multiple external annotations roots,
+        so we check them all.
+       */
+      List<PsiAnnotation> externalDeprecated = ExternalAnnotationsManager
+        .getInstance(superClass.getProject())
+        .findDefaultConstructorExternalAnnotations(superClass, CommonClassNames.JAVA_LANG_DEPRECATED);
+
+      return externalDeprecated != null
+             && !externalDeprecated.isEmpty()
+             && ContainerUtil.exists(externalDeprecated, annotation -> isMarkedForRemoval(annotation) == forRemoval);
+    }
+    return Arrays.stream(constructors)
       .anyMatch(constructor -> constructor.getParameterList().isEmpty() &&
                                constructor.isDeprecated() &&
                                isMarkedForRemoval(constructor, forRemoval));
@@ -283,7 +327,11 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private static boolean isMarkedForRemoval(PsiModifierListOwner element, boolean forRemoval) {
-    return isMarkedForRemoval(element) == forRemoval;
+    PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, CommonClassNames.JAVA_LANG_DEPRECATED);
+    if (annotation == null) {
+      return !forRemoval;
+    }
+    return isMarkedForRemoval(annotation) == forRemoval;
   }
 
   private static boolean isInSameOutermostClass(PsiElement refElement, PsiElement elementToHighlight, boolean ignoreInSameOutermostClass) {
@@ -301,12 +349,15 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
     return maybeClass instanceof PsiClass ? (PsiClass)maybeClass : null;
   }
 
-  private static boolean isMarkedForRemoval(@Nullable PsiModifierListOwner element) {
-    PsiAnnotation annotation = AnnotationUtil.findAnnotation(element, CommonClassNames.JAVA_LANG_DEPRECATED);
-    if (annotation == null) {
-      return false;
-    }
-    PsiAnnotationMemberValue value = annotation.findAttributeValue("forRemoval");
+  /**
+   * Returns value of {@link Deprecated#forRemoval} attribute, which is available since Java 9.
+   *
+   * @param deprecatedAnnotation annotation instance to extract value of
+   * @return {@code true} if the {@code forRemoval} attribute is set to true,
+   * {@code false} if it isn't set or is set to {@code false}.
+   */
+  private static boolean isMarkedForRemoval(@NotNull PsiAnnotation deprecatedAnnotation) {
+    PsiAnnotationMemberValue value = deprecatedAnnotation.findAttributeValue("forRemoval");
     Object result = null;
     if (value instanceof PsiLiteral) {
       result = ((PsiLiteral)value).getValue();

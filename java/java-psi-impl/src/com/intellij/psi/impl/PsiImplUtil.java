@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -59,7 +45,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
@@ -120,7 +105,7 @@ public class PsiImplUtil {
     for (int i = 0; i < names.length; i++) {
       String name = names[i];
       try {
-        refs[i] = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createPackageReferenceElement(name);
+        refs[i] = JavaPsiFacade.getElementFactory(manager.getProject()).createPackageReferenceElement(name);
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);
@@ -273,14 +258,14 @@ public class PsiImplUtil {
     }
     if (!PsiUtil.isLanguageLevel5OrHigher(classAccessExpression)) {
       //Raw java.lang.Class
-      return JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(classClass);
+      return JavaPsiFacade.getElementFactory(manager.getProject()).createType(classClass);
     }
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     PsiType operandType = classAccessExpression.getOperand().getType();
     if (operandType instanceof PsiPrimitiveType && !PsiType.NULL.equals(operandType)) {
       if (PsiType.VOID.equals(operandType)) {
-        operandType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory()
+        operandType = JavaPsiFacade.getElementFactory(manager.getProject())
             .createTypeByFQClassName("java.lang.Void", classAccessExpression.getResolveScope());
       }
       else {
@@ -316,21 +301,19 @@ public class PsiImplUtil {
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiAnnotation, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
+  @Deprecated
   public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType... types) {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, types);
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiClass, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
+  @Deprecated
   public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiClass annotationType, @NotNull PsiAnnotation.TargetType... types) {
     return AnnotationTargetUtil.findAnnotationTarget(annotationType, types);
   }
 
-  /** @deprecated use {@link AnnotationTargetUtil#getAnnotationTargets(PsiClass)} (to be removed ion IDEA 17) */
-  public static Set<PsiAnnotation.TargetType> getAnnotationTargets(@NotNull PsiClass annotationType) {
-    return AnnotationTargetUtil.getAnnotationTargets(annotationType);
-  }
-
   /** @deprecated use {@link AnnotationTargetUtil#getTargetsForLocation(PsiAnnotationOwner)} (to be removed ion IDEA 17) */
+  @Deprecated
   @NotNull
   public static PsiAnnotation.TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
     return AnnotationTargetUtil.getTargetsForLocation(owner);
@@ -412,7 +395,7 @@ public class PsiImplUtil {
                                                  member.hasModifierProperty(PsiModifier.PUBLIC) &&
                                                  ((PsiMethod)member).findSuperMethods().length > 0)) {
       //member from anonymous class can be called from outside the class
-      PsiElement methodCallExpr = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiStatement.class) 
+      PsiElement methodCallExpr = PsiUtil.isLanguageLevel8OrHigher(aClass) ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiStatement.class)
                                                                            : PsiTreeUtil.getParentOfType(aClass, PsiMethodCallExpression.class);
       return new LocalSearchScope(methodCallExpr != null ? methodCallExpr : aClass);
     }
@@ -420,6 +403,13 @@ public class PsiImplUtil {
     PsiModifierList modifierList = member.getModifierList();
     int accessLevel = modifierList == null ? PsiUtil.ACCESS_LEVEL_PUBLIC : PsiUtil.getAccessLevel(modifierList);
     if (accessLevel == PsiUtil.ACCESS_LEVEL_PUBLIC || accessLevel == PsiUtil.ACCESS_LEVEL_PROTECTED) {
+      if (member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
+        PsiClass containingClass = member.getContainingClass();
+        if (containingClass != null) {
+          //constructors cannot be overridden so their use scope can't be wider than their class's
+          return containingClass.getUseScope();
+        }
+      }
       return maximalUseScope; // class use scope doesn't matter, since another very visible class can inherit from aClass
     }
     if (accessLevel == PsiUtil.ACCESS_LEVEL_PRIVATE) {
@@ -448,7 +438,7 @@ public class PsiImplUtil {
 
   public static PsiElement setName(@NotNull PsiElement element, @NotNull String name) throws IncorrectOperationException {
     PsiManager manager = element.getManager();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     PsiIdentifier newNameIdentifier = factory.createIdentifier(name);
     return element.replace(newNameIdentifier);
   }
@@ -478,7 +468,7 @@ public class PsiImplUtil {
   public static PsiAnnotationMemberValue setDeclaredAttributeValue(@NotNull PsiAnnotation psiAnnotation,
                                                                    @Nullable String attributeName,
                                                                    @Nullable PsiAnnotationMemberValue value,
-                                                                   @NotNull PairFunction<Project, String, PsiAnnotation> annotationCreator) {
+                                                                   @NotNull PairFunction<? super Project, ? super String, ? extends PsiAnnotation> annotationCreator) {
     PsiAnnotationMemberValue existing = psiAnnotation.findDeclaredAttributeValue(attributeName);
     if (value == null) {
       if (existing == null) {
@@ -511,7 +501,7 @@ public class PsiImplUtil {
 
   private static PsiNameValuePair createNameValuePair(@NotNull PsiAnnotationMemberValue value,
                                                      @NotNull String namePrefix,
-                                                     @NotNull PairFunction<Project, String, PsiAnnotation> annotationCreator) {
+                                                     @NotNull PairFunction<? super Project, ? super String, ? extends PsiAnnotation> annotationCreator) {
     return annotationCreator.fun(value.getProject(), "@A(" + namePrefix + value.getText() + ")").getParameterList().getAttributes()[0];
   }
 
@@ -610,7 +600,7 @@ public class PsiImplUtil {
     return element instanceof PsiAnnotation && AnnotationTargetUtil.isTypeAnnotation((PsiAnnotation)element);
   }
 
-  public static void collectTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<PsiAnnotation> annotations) {
+  public static void collectTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<? super PsiAnnotation> annotations) {
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
         annotations.add(annotation);
@@ -655,7 +645,7 @@ public class PsiImplUtil {
 
     if (typeName.indexOf('<') != -1 || typeName.indexOf('[') != -1 || typeName.indexOf('.') == -1) {
       try {
-        return JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createTypeFromText(typeName, context);
+        return JavaPsiFacade.getElementFactory(psiManager.getProject()).createTypeFromText(typeName, context);
       }
       catch(Exception ignored) { } // invalid syntax will produce unresolved class type
     }
@@ -673,7 +663,7 @@ public class PsiImplUtil {
       );
       resultType = new PsiClassReferenceType(ref, null);
     } else {
-      PsiElementFactory factory = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiManager.getProject());
       PsiSubstitutor substitutor = factory.createRawSubstitutor(aClass);
       resultType = factory.createType(aClass, substitutor);
     }
@@ -726,11 +716,6 @@ public class PsiImplUtil {
   }
 
   public static VirtualFile getModuleVirtualFile(@NotNull PsiJavaModule module) {
-    if (module instanceof LightJavaModule) {
-      return ((LightJavaModule)module).getRootVirtualFile();
-    }
-    else {
-      return module.getContainingFile().getVirtualFile();
-    }
+    return module instanceof LightJavaModule ? ((LightJavaModule)module).getRootVirtualFile() : module.getContainingFile().getVirtualFile();
   }
 }

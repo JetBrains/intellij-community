@@ -1,11 +1,11 @@
-// "Replace with 'StandardCharsets.UTF_16'" "true"
+// "Replace with 'StandardCharsets.US_ASCII'" "true"
 import java.io.UnsupportedEncodingException;
 
 class Test {
   void test(byte[] bytes) {
     String string = null;
     try {
-      string = new String(bytes, "UTF<caret>-16");
+      string = new String(bytes, "ASC<caret>II");
     }
     catch (UnsupportedEncodingException exception) {
       exception.printStackTrace();

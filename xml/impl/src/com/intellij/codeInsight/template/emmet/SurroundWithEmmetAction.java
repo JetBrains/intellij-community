@@ -57,7 +57,7 @@ public class SurroundWithEmmetAction extends BaseCodeInsightAction {
 
       ZenCodingTemplate emmetCustomTemplate = CustomLiveTemplate.EP_NAME.findExtension(ZenCodingTemplate.class);
       if (emmetCustomTemplate != null) {
-        new WrapWithCustomTemplateAction(emmetCustomTemplate, editor, file, ContainerUtil.newHashSet()).actionPerformed(null);
+        new WrapWithCustomTemplateAction(emmetCustomTemplate, editor, file, ContainerUtil.newHashSet()).perform();
       }
       else if (!ApplicationManager.getApplication().isUnitTestMode()) {
         HintManager.getInstance().showErrorHint(editor, "Cannot invoke Surround with Emmet in the current context");

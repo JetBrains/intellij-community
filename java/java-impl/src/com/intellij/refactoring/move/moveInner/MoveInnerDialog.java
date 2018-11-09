@@ -1,23 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveInner;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -42,6 +26,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.RecentsManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -134,6 +119,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     return myInnerClass;
   }
 
+  @Override
   protected void init() {
     myClassNameField.setText(myInnerClass.getName());
     myClassNameField.selectAll();
@@ -141,6 +127,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     if (!myInnerClass.hasModifierProperty(PsiModifier.STATIC)) {
       myCbPassOuterClass.setSelected(true);
       myCbPassOuterClass.addItemListener(new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           myParameterField.setEnabled(myCbPassOuterClass.isSelected());
         }
@@ -159,6 +146,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     }
 
     myCbPassOuterClass.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         boolean selected = myCbPassOuterClass.isSelected();
         myParameterField.getComponent().setEnabled(selected);
@@ -183,18 +171,22 @@ public class MoveInnerDialog extends MoveDialogBase {
     return false;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myClassNameField;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.move.moveInner.MoveInnerDialog";
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     return myPanel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
@@ -205,7 +197,7 @@ public class MoveInnerDialog extends MoveDialogBase {
       final PsiDirectory psiDirectory = (PsiDirectory)myTargetContainer;
       PsiPackage oldPackage = getTargetPackage();
       String name = oldPackage == null ? "" : oldPackage.getQualifiedName();
-      final String targetName = myPackageNameField.getText();
+      final String targetName = getPackageName();
       if (!Comparing.equal(name, targetName)) {
         final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
         final List<VirtualFile> contentSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject);
@@ -248,6 +240,7 @@ public class MoveInnerDialog extends MoveDialogBase {
     return myTargetContainer;
   }
 
+  @Override
   protected void doAction() {
     String message = null;
     final String className = getClassName();
@@ -302,7 +295,7 @@ public class MoveInnerDialog extends MoveDialogBase {
         message = RefactoringMessageUtil.checkCanCreateClass((PsiDirectory)target, className);
 
         if (message == null) {
-          final String packageName = myPackageNameField.getText().trim();
+          final String packageName = getPackageName();
           if (packageName.length() > 0 && !PsiNameHelper.getInstance(myProject).isQualifiedName(packageName)) {
             message = RefactoringMessageUtil.getIncorrectIdentifierMessage(packageName);
           }
@@ -319,6 +312,7 @@ public class MoveInnerDialog extends MoveDialogBase {
       return;
     }
 
+    RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, getPackageName());
     myProcessor.setup(getInnerClass(), className, isPassOuterClass(), parameterName,
                       isSearchInComments(), isSearchInNonJavaFiles(), target);
 
@@ -328,14 +322,19 @@ public class MoveInnerDialog extends MoveDialogBase {
     invokeRefactoring(myProcessor);
   }
 
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.MOVE_INNER_UPPER);
+  private String getPackageName() {
+    return myPackageNameField.getText().trim();
+  }
+
+  @Override
+  protected String getHelpId() {
+    return HelpID.MOVE_INNER_UPPER;
   }
 
   private void createUIComponents() {
     if (!myInnerClass.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiManager manager = myInnerClass.getManager();
-      PsiType outerType = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(myInnerClass.getContainingClass());
+      PsiType outerType = JavaPsiFacade.getElementFactory(manager.getProject()).createType(myInnerClass.getContainingClass());
       mySuggestedNameInfo =  JavaCodeStyleManager.getInstance(myProject).suggestVariableName(VariableKind.PARAMETER, null, null, outerType);
       String[] variants = mySuggestedNameInfo.names;
       myParameterField = new NameSuggestionsField(variants, myProject);
@@ -345,12 +344,9 @@ public class MoveInnerDialog extends MoveDialogBase {
       myParameterField.getComponent().setEnabled(false);
     }
 
-    myPackageNameField = new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY,
-                                                             RefactoringBundle.message("choose.destination.package"));
     PsiPackage psiPackage = getTargetPackage();
-    if (psiPackage != null) {
-      myPackageNameField.prependItem(psiPackage.getQualifiedName());
-    }
+    myPackageNameField = new PackageNameReferenceEditorCombo(psiPackage != null ? psiPackage.getQualifiedName() : "", myProject, RECENTS_KEY,
+                                                             RefactoringBundle.message("choose.destination.package"));
   }
 
   @Nullable

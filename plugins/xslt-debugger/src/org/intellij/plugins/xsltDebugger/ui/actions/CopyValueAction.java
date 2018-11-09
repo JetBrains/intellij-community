@@ -22,12 +22,12 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 import org.intellij.plugins.xsltDebugger.ui.GeneratedStructureModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.datatransfer.StringSelection;
 
-@SuppressWarnings({ "ComponentNotRegistered" })
 public class CopyValueAction extends AnAction {
   public static final DataKey<DefaultMutableTreeNode> SELECTED_NODE = DataKey.create("SELECTED_NODE");
 
@@ -40,11 +40,12 @@ public class CopyValueAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e));
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DefaultMutableTreeNode node = e.getData(SELECTED_NODE);
     if (node instanceof GeneratedStructureModel.StructureNode) {
       final GeneratedStructureModel.StructureNode structureNode = (GeneratedStructureModel.StructureNode)node;

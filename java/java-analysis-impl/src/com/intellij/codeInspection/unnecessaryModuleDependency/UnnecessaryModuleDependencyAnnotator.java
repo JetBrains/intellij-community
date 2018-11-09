@@ -13,7 +13,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.*;
 
 import java.util.*;
 
@@ -36,7 +38,7 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
         final RefModule refModule = myManager.getRefModule(fromModule);
         if (refModule != null) {
           HashSet<Module> modules = new HashSet<>(onModules);
-          collectRequiredModulesInHierarchy(what, modules);
+          collectRequiredModulesInHierarchy(myManager.getReference(what), modules);
           modules.remove(fromModule);
           getModules(refModule).addAll(modules);
         }
@@ -61,11 +63,10 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
 
   @Override
   public void onInitialize(RefElement refElement) {
-    PsiElement element = refElement.getElement();
     RefModule refModule = refElement.getModule();
     if (refModule != null) {
       HashSet<Module> modules = new HashSet<>();
-      collectRequiredModulesInHierarchy(element, modules);
+      collectRequiredModulesInHierarchy(refElement, modules);
       modules.remove(refModule.getModule());
       if (!modules.isEmpty()) {
         refElement.putUserData(DEPENDENCIES, modules);
@@ -74,42 +75,55 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     }
   }
 
-  private void collectRequiredModulesInHierarchy(PsiElement element, Set<Module> modules) {
-    if (element instanceof PsiClass) {
-      processClassHierarchy((PsiClass)element, modules);
+  private void collectRequiredModulesInHierarchy(RefElement refElement, Set<? super Module> modules) {
+    if (refElement instanceof RefClass) {
+      processClassHierarchy(null, (RefClass)refElement, modules);
     }
-    else if (element instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)element;
-      Set<PsiClass> classes = new HashSet<>();
-      processTypeHierarchy(classes, method.getReturnType(), modules);
-      for (PsiParameter parameter : method.getParameterList().getParameters()) {
-        processTypeHierarchy(classes, parameter.getType(), modules);
+    else if (refElement instanceof RefMethod) {
+      UMethod uMethod = ObjectUtils.tryCast(((RefMethod)refElement).getUastElement(), UMethod.class);
+      if (uMethod != null) {
+        Set<PsiClass> classes = new HashSet<>();
+        processTypeHierarchy(classes, uMethod.getReturnType(), modules);
+        for (UParameter parameter : uMethod.getUastParameters()) {
+          processTypeHierarchy(classes, parameter.getType(), modules);
+        }
       }
     }
-    else if (element instanceof PsiField) {
-      PsiClass aClass = PsiUtil.resolveClassInType(((PsiField)element).getType());
+    else if (refElement instanceof RefField) {
+      UField element = ((RefField)refElement).getUastElement();
+      UClass aClass = UastContextKt.toUElement(PsiUtil.resolveClassInType(element.getType()), UClass.class);
       if (aClass != null) {
-        processClassHierarchy(aClass, modules);
+        processClassHierarchy(aClass, null, modules);
       }
     }
   }
 
-  private void processTypeHierarchy(Set<PsiClass> classes, PsiType returnType, Set<Module> modules) {
-    PsiClass aClass = PsiUtil.resolveClassInType(returnType);
+  private void processTypeHierarchy(Set<? super PsiClass> classes, PsiType returnType, Set<? super Module> modules) {
+    UClass aClass = UastContextKt.toUElement(PsiUtil.resolveClassInType(returnType), UClass.class);
     if (aClass != null && classes.add(aClass)) {
-      processClassHierarchy(aClass, modules);
+      processClassHierarchy(aClass, null, modules);
     }
   }
 
-  private void processClassHierarchy(PsiClass currentClass, Set<Module> modules) {
-    LinkedHashSet<PsiClass> superClasses = new LinkedHashSet<>();
-    RefElement refClass = myManager.getReference(currentClass);
-    if (!(refClass instanceof RefClass)) {
-      InheritanceUtil.getSuperClasses(currentClass, superClasses, false);
+  private void processClassHierarchy(UClass uClass, RefClass refClass, Set<? super Module> modules) {
+    LinkedHashSet<UClass> superClasses = new LinkedHashSet<>();
+    if (refClass == null) {
+      refClass = ObjectUtils.tryCast(myManager.getReference(uClass.getPsi()), RefClass.class);
+    }
+    if (refClass == null) {
+      PsiClass psiClass = uClass.getJavaPsi();
+      PsiManager psiManager = psiClass.getManager();
+      InheritanceUtil.processSupers(psiClass, false, s -> {
+        UClass uc = UastContextKt.toUElement(s, UClass.class);
+        if (uc != null && psiManager.isInProject(s)) {
+          superClasses.add(uc);
+        }
+        return true;
+      });
     }
     else {
-      for (RefClass aClass : ((RefClass)refClass).getBaseClasses()) {
-        PsiClass superClass = aClass.getElement();
+      for (RefClass aClass : refClass.getBaseClasses()) {
+        UClass superClass = aClass.getUastElement();
         if (superClass != null) {
           superClasses.add(superClass);
         }

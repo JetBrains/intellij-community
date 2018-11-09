@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -38,11 +39,11 @@ public class CollectionFactoryInliner implements CallInliner {
     final int mySize;
     final SpecialField mySizeField;
 
-    public FactoryInfo(int size, SpecialField sizeField) {
+    FactoryInfo(int size, SpecialField sizeField) {
       this(size, sizeField, false);
     }
 
-    public FactoryInfo(int size, SpecialField sizeField, boolean notNull) {
+    FactoryInfo(int size, SpecialField sizeField, boolean notNull) {
       mySize = size;
       mySizeField = sizeField;
       myNotNull = notNull;
@@ -99,13 +100,13 @@ public class CollectionFactoryInliner implements CallInliner {
     }
     DfaValueFactory factory = builder.getFactory();
     DfaValue result =
-      factory.withFact(factory.createTypeValue(call.getType(), Nullness.NOT_NULL), DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+      factory.withFact(factory.createTypeValue(call.getType(), Nullability.NOT_NULL), DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
     if (factoryInfo.mySize == -1) {
-      builder.push(result);
+      builder.push(result, call);
     } else {
       DfaVariableValue variableValue = builder.createTempVariable(call.getType());
       // tmpVar = <Value of collection type>; leave tmpVar on stack: it's result of method call
-      builder.assign(variableValue, result);
+      builder.pushForWrite(variableValue).push(result, call).assign();
       // tmpVar.size = <size>
       builder.assignAndPop(factoryInfo.mySizeField.createValue(factory, variableValue), factory.getInt(factoryInfo.mySize));
     }

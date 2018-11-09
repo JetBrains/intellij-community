@@ -22,6 +22,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.testframework.ui.TestsConsoleBuilderImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
@@ -47,7 +48,6 @@ import java.util.Map;
 
 /**
  * @author anna
- * @since 25-May-2007
  */
 public abstract class TestConsoleProperties extends StoringPropertyContainer implements Disposable {
   public static final BooleanProperty SCROLL_TO_STACK_TRACE = new BooleanProperty("scrollToStackTrace", false);
@@ -104,11 +104,9 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
       return GlobalSearchScope.allScope(myProject);
     }
 
-    GlobalSearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
-    for (Module each : modules) {
-      scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(each, true));
-    }
-    return scope;
+    GlobalSearchScope[] scopes =
+      ContainerUtil.map2Array(modules, GlobalSearchScope.class, module -> GlobalSearchScope.moduleRuntimeScope(module, true));
+    return GlobalSearchScope.union(scopes);
   }
 
   public boolean isPreservePresentableName() {
@@ -120,10 +118,8 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   }
 
   public <T> void addListener(@NotNull AbstractProperty<T> property, @NotNull TestFrameworkPropertyListener<T> listener) {
-    List<TestFrameworkPropertyListener> listeners = myListeners.get(property);
-    if (listeners == null) {
-      myListeners.put(property, (listeners = ContainerUtil.newArrayList()));
-    }
+    List<TestFrameworkPropertyListener> listeners =
+      myListeners.computeIfAbsent(property, __ -> ContainerUtil.createLockFreeCopyOnWriteList());
     listeners.add(listener);
   }
 
@@ -156,8 +152,7 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   protected <T> void onPropertyChanged(@NotNull AbstractProperty<T> property, T value) {
     List<TestFrameworkPropertyListener> listeners = myListeners.get(property);
     if (listeners != null) {
-      for (Object o : listeners.toArray()) {
-        @SuppressWarnings("unchecked") TestFrameworkPropertyListener<T> listener = (TestFrameworkPropertyListener<T>)o;
+      for (TestFrameworkPropertyListener<T> listener : listeners) {
         listener.onChanged(value);
       }
     }
@@ -193,6 +188,14 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
 
   protected ExecutionConsole getConsole() {
     return myConsole;
+  }
+
+  @NotNull
+  public ConsoleView createConsole() {
+    return new TestsConsoleBuilderImpl(getProject(),
+                                       getScope(),
+                                       !isEditable(),
+                                       isUsePredefinedMessageFilter()).getConsole();
   }
 
   public boolean isUsePredefinedMessageFilter() {

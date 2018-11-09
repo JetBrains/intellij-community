@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.google.common.base.Preconditions;
@@ -24,10 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author max
@@ -71,7 +69,7 @@ public class PyPsiUtils {
    */
   @Nullable
   public static ASTNode getPrevNonWhitespaceSibling(@NotNull ASTNode node) {
-    return skipSiblingsBackward(node, TokenSet.create(TokenType.WHITE_SPACE));
+    return skipSiblingsBackward(node, TokenSet.WHITE_SPACE);
   }
 
   /**
@@ -126,7 +124,7 @@ public class PyPsiUtils {
    */
   @Nullable
   public static ASTNode getNextNonWhitespaceSibling(@NotNull ASTNode after) {
-    return skipSiblingsForward(after, TokenSet.create(TokenType.WHITE_SPACE));
+    return skipSiblingsForward(after, TokenSet.WHITE_SPACE);
   }
 
   /**
@@ -250,7 +248,6 @@ public class PyPsiUtils {
     final ASTNode parentNode = elements[0].getParent().getNode();
     LOG.assertTrue(parentNode != null);
     for (PsiElement element : elements) {
-      //noinspection ConstantConditions
       parentNode.removeChild(element.getNode());
     }
   }
@@ -265,7 +262,6 @@ public class PyPsiUtils {
   }
 
   public static PyElement getStatementList(final PsiElement element) {
-    //noinspection ConstantConditions
     return element instanceof PyFile || element instanceof PyStatementList
            ? (PyElement)element
            : PsiTreeUtil.getParentOfType(element, PyFile.class, PyStatementList.class);
@@ -414,7 +410,6 @@ public class PyPsiUtils {
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();
       for (StubElement child : children) {
-        //noinspection unchecked
         result.add(child.getPsi());
       }
     }
@@ -469,7 +464,7 @@ public class PyPsiUtils {
     return result;
   }
 
-  public static void sequenceToList(List<PyExpression> result, PyExpression value) {
+  public static void sequenceToList(List<? super PyExpression> result, PyExpression value) {
     value = flattenParens(value);
     if (value instanceof PySequenceExpression) {
       result.addAll(ContainerUtil.newArrayList(((PySequenceExpression)value).getElements()));
@@ -597,16 +592,38 @@ public class PyPsiUtils {
     return null;
   }
 
+  /**
+   * Checks if specified file contains passed source in top-level import in stub-safe way.
+   * Does not process scopes inside the file.
+   *
+   * @param file   file whose imports should be visited
+   * @param source qualified name separated by dots that is looking for in imports
+   * @return true if specified file contains passed source in top-level import.
+   */
+  public static boolean containsImport(@NotNull PyFile file, @NotNull String source) {
+    final QualifiedName sourceQName = QualifiedName.fromDottedString(source);
+
+    return Stream.concat(
+      file.getFromImports().stream().map(PyFromImportStatement::getImportSourceQName),
+      file.getImportTargets().stream().map(PyImportElement::getImportedQName)
+    )
+      .filter(Objects::nonNull)
+      .anyMatch(name -> name.matchesPrefix(sourceQName));
+  }
+
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
+    @Override
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
       checkAddElement(node);
     }
 
+    @Override
     public void visitPyClass(final PyClass node) {
       checkAddElement(node);  // do not recurse into functions
     }
 
+    @Override
     public void visitPyFunction(final PyFunction node) {
       checkAddElement(node);  // do not recurse into classes
     }

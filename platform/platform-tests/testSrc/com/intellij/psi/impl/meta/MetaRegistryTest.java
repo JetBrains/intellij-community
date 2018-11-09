@@ -16,7 +16,6 @@
 
 package com.intellij.psi.impl.meta;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.filters.ElementFilter;
@@ -44,7 +43,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }
-    }, MyTrueMetaData.class, getTestRootDisposable());
+    }, MyTrueMetaData::new, getTestRootDisposable());
     MetaRegistry.addMetadataBinding(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
@@ -55,7 +54,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }
-    }, MyFalseMetaData.class, getTestRootDisposable());
+    }, MyFalseMetaData::new, getTestRootDisposable());
 
     final XmlTag tag = ((XmlFile)LightPlatformTestCase.createFile("a.xml", "<a/>")).getDocument().getRootTag();
     UsefulTestCase.assertInstanceOf(tag.getMetaData(), MyFalseMetaData.class);
@@ -76,7 +75,7 @@ public class MetaRegistryTest extends LightPlatformTestCase {
 
     @NotNull
     @Override
-    public Object[] getDependences() {
+    public Object[] getDependencies() {
       return new Object[]{myDeclaration};
     }
 

@@ -15,13 +15,16 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +39,7 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.*;
 public class PyInjectionUtil {
 
   public static class InjectionResult {
-    public static InjectionResult EMPTY = new InjectionResult(false, true);
+    public static final InjectionResult EMPTY = new InjectionResult(false, true);
 
     private final boolean myInjected;
     private final boolean myStrict;
@@ -83,8 +86,15 @@ public class PyInjectionUtil {
    * string concatenations or formatting.
    */
   @NotNull
-  public static InjectionResult registerStringLiteralInjection(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
-    return processStringLiteral(element, registrar, "", "", Formatting.NONE);
+  public static InjectionResult registerStringLiteralInjection(@NotNull PsiElement element,
+                                                               @NotNull MultiHostRegistrar registrar,
+                                                               @NotNull Language language) {
+    registrar.startInjecting(language);
+    final InjectionResult result = processStringLiteral(element, registrar, "", "", Formatting.NONE);
+    if (result.isInjected()) {
+      registrar.doneInjecting();
+    }
+    return result;
   }
 
   private static boolean isStringLiteralPart(@NotNull PsiElement element, @Nullable PsiElement context) {
@@ -139,46 +149,70 @@ public class PyInjectionUtil {
       boolean injected = false;
       boolean strict = true;
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
-      final List<TextRange> ranges = expr.getStringValueTextRanges();
-      final String text = expr.getText();
-      for (TextRange range : ranges) {
-        if (formatting != Formatting.NONE) {
-          final String part = range.substring(text);
-          final List<FormatStringChunk> chunks = formatting == Formatting.NEW_STYLE ? parseNewStyleFormat(part) : parsePercentFormat(part);
-          if (!filterSubstitutions(chunks).isEmpty()) {
+      for (PyStringElement stringElem : expr.getStringElements()) {
+        final int nodeOffsetInParent = stringElem.getTextOffset() - expr.getTextRange().getStartOffset();
+        final TextRange contentRange = stringElem.getContentRange();
+        final int contentStartOffset = contentRange.getStartOffset();
+        if (formatting != Formatting.NONE || stringElem.isFormatted()) {
+          // Each range is relative to the start of the string element
+          final List<TextRange> subsRanges;
+          if (formatting != Formatting.NONE) {
+            final String content = stringElem.getContent();
+            subsRanges = StreamEx.of(formatting == Formatting.NEW_STYLE ? parseNewStyleFormat(content) : parsePercentFormat(content))
+                                 .select(SubstitutionChunk.class)
+                                 .map(chunk -> chunk.getTextRange().shiftRight(contentStartOffset))
+                                 .toList();
+          }
+          else {
+            subsRanges = StreamEx.of(((PyFormattedStringElement)stringElem).getFragments())
+                                 .map(PsiElement::getTextRangeInParent)
+                                 .toList();
+          }
+          if (!subsRanges.isEmpty()) {
             strict = false;
           }
-          for (int i = 0; i < chunks.size(); i++) {
-            final FormatStringChunk chunk = chunks.get(i);
-            if (chunk instanceof ConstantChunk) {
-              final int nextIndex = i + 1;
+
+
+          final TextRange sentinel = TextRange.from(contentRange.getEndOffset(), 0);
+          final List<TextRange> withSentinel = ContainerUtil.append(subsRanges, sentinel);
+
+          int literalChunkStart = contentStartOffset;
+          int literalChunkEnd;
+          for (int i = 0; i < withSentinel.size(); i++) {
+            final TextRange subRange = withSentinel.get(i);
+            literalChunkEnd = subRange.getStartOffset();
+            if (literalChunkEnd > literalChunkStart) {
               final String chunkPrefix;
-              if (i == 1 && chunks.get(0) instanceof SubstitutionChunk) {
+              if (i == 0) {
+                chunkPrefix = prefix;
+              }
+              else if (i == 1 && withSentinel.get(0).getStartOffset() == contentStartOffset) {
                 chunkPrefix = missingValue;
               }
-              else if (i == 0) {
-                chunkPrefix = prefix;
-              } else {
+              else {
                 chunkPrefix = "";
               }
+
               final String chunkSuffix;
-              if (nextIndex < chunks.size() && chunks.get(nextIndex) instanceof SubstitutionChunk) {
+              if (i < withSentinel.size() - 1) {
                 chunkSuffix = missingValue;
               }
-              else if (nextIndex == chunks.size()) {
+              else if (i == withSentinel.size() - 1) {
                 chunkSuffix = suffix;
               }
               else {
                 chunkSuffix = "";
               }
-              final TextRange chunkRange = chunk.getTextRange().shiftRight(range.getStartOffset());
-              registrar.addPlace(chunkPrefix, chunkSuffix, expr, chunkRange);
+
+              final TextRange chunkRange = TextRange.create(literalChunkStart, literalChunkEnd);
+              registrar.addPlace(chunkPrefix, chunkSuffix, expr, chunkRange.shiftRight(nodeOffsetInParent));
               injected = true;
             }
+            literalChunkStart = subRange.getEndOffset();
           }
         }
         else {
-          registrar.addPlace(prefix, suffix, expr, range);
+          registrar.addPlace(prefix, suffix, expr, contentRange.shiftRight(nodeOffsetInParent));
           injected = true;
         }
       }

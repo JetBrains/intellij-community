@@ -25,7 +25,6 @@ import java.util.regex.Matcher;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/16/13
  */
 public abstract class AbstractProjectImportErrorHandler {
   public static final String OPEN_GRADLE_SETTINGS = "Please fix the project's Gradle settings.";
@@ -55,6 +54,7 @@ public abstract class AbstractProjectImportErrorHandler {
   /**
    * @deprecated use {@link GradleExecutionErrorHandler#getRootCauseAndLocation(Throwable)}
    */
+  @Deprecated
   @NotNull
   public Pair<Throwable, String> getRootCauseAndLocation(@NotNull Throwable error) {
     return GradleExecutionErrorHandler.getRootCauseAndLocation(error);
@@ -63,6 +63,7 @@ public abstract class AbstractProjectImportErrorHandler {
   /**
    * @deprecated use {@link GradleExecutionErrorHandler#getLocationFrom(Throwable)}
    */
+  @Deprecated
   @Nullable
   public String getLocationFrom(@NotNull Throwable error) {
     return GradleExecutionErrorHandler.getLocationFrom(error);

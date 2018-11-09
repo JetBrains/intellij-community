@@ -25,12 +25,18 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.texen.util.PropertiesUtil java.util.Properties loadFromClassPath(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.texen.util.PropertiesUtil java.util.Properties loadFromClassPath(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.texen.util.PropertiesUtil java.util.Properties loadFromTemplatePath(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
 </root>

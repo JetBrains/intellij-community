@@ -19,7 +19,7 @@ public class CapturingProcessRunner {
   }
 
   public CapturingProcessRunner(@NotNull BaseProcessHandler processHandler,
-                                @NotNull Function<ProcessOutput, ProcessAdapter> processAdapterProducer) {
+                                @NotNull Function<? super ProcessOutput, ? extends ProcessAdapter> processAdapterProducer) {
     myOutput = new ProcessOutput();
     myProcessHandler = processHandler;
     myProcessHandler.addProcessListener(processAdapterProducer.apply(myOutput));

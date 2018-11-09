@@ -34,7 +34,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   protected final RefEntity myElement;
 
   public ProblemDescriptionNode(RefEntity element,
-                                CommonProblemDescriptor descriptor,
+                                @NotNull CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolPresentation presentation) {
     this(element, descriptor, presentation, null);
   }
@@ -69,7 +69,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
       HighlightSeverity severity = presentation.getSeverity(refElement);
       if (severity == null) return null;
       HighlightInfoType highlightInfoType = ProblemDescriptorUtil.highlightTypeFromDescriptor((ProblemDescriptor)descriptor, severity, severityRegistrar);
-      HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(refElement.getElement());
+      HighlightSeverity highlightSeverity = highlightInfoType.getSeverity(refElement.getPsiElement());
       return HighlightDisplayLevel.find(highlightSeverity);
     }
     else {

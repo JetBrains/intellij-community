@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -32,13 +18,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -53,8 +39,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class TemplateListPanel extends JPanel implements Disposable {
   private static final String NO_SELECTION = "NoSelection";
@@ -142,16 +128,17 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
       List<TemplateImpl> templates = templateGroup.getElements();
       for (TemplateImpl template : templates) {
-        if (StringUtil.isEmptyOrSpaces(template.getKey())) {
-          throw new ConfigurationException("A live template with an empty key has been found in " + templateGroup.getName() + " group, such live templates cannot be invoked");
+        String key = template.getKey();
+        if (StringUtil.isEmptyOrSpaces(key)) {
+          throw new ConfigurationException("A live template with an empty abbreviation has been found in '" + templateGroup.getName() + "' group, such live templates are not allowed");
         }
 
         if (StringUtil.isEmptyOrSpaces(template.getString())) {
-          throw new ConfigurationException("A live template with an empty text has been found in " + templateGroup.getName() + " group, such live templates cannot be invoked");
+          throw new ConfigurationException("A live template '" + key + "' with an empty text has been found in '" + templateGroup.getName() + "' group, such live templates make no sense");
         }
 
-        if (!names.add(template.getKey())) {
-          throw new ConfigurationException("Duplicate " + template.getKey() + " live templates in " + templateGroup.getName() + " group");
+        if (!names.add(key)) {
+          throw new ConfigurationException("Duplicate `" + key + "` live templates in " + templateGroup.getName() + " group");
         }
       }
     }
@@ -437,7 +424,6 @@ public class TemplateListPanel extends JPanel implements Disposable {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       Object o = node.getUserObject();
       if (o instanceof TemplateGroup) {
-        //noinspection SuspiciousMethodCalls
         myTemplateGroups.remove(o);
         removeNodeFromParent(node);
       } else if (o instanceof TemplateImpl) {
@@ -593,17 +579,17 @@ public class TemplateListPanel extends JPanel implements Disposable {
       })
       .disableDownAction()
       .disableUpAction()
-      .addExtraAction(new AnActionButton("Duplicate", PlatformIcons.COPY_ICON) {
+      .addExtraAction(new AnActionButton("Duplicate", AllIcons.Actions.Copy) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           copyRow();
         }
 
         @Override
-        public void updateButton(AnActionEvent e) {
+        public void updateButton(@NotNull AnActionEvent e) {
           e.getPresentation().setEnabled(getTemplate(getSingleSelectedIndex()) != null);
         }
-      }).addExtraAction(new AnActionButton("Restore deleted defaults", AllIcons.General.TodoDefault) {
+      }).addExtraAction(new AnActionButton("Restore deleted defaults", AllIcons.Actions.Rollback) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           TemplateSettings.getInstance().reset();
@@ -670,7 +656,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
 
     final DefaultActionGroup move = new DefaultActionGroup("Move", true) {
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         boolean enabled = !templates.isEmpty();
         e.getPresentation().setEnabled(enabled);
@@ -718,9 +704,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
       public void actionPerformed(@NotNull AnActionEvent e) {
         Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
         TemplateContext context = new TemplateContext();
-        JPanel contextPanel = LiveTemplateSettingsEditor.createPopupContextPanel(EmptyRunnable.INSTANCE, context);
+        Pair<JPanel, CheckboxTree> pair = LiveTemplateSettingsEditor.createPopupContextPanel(EmptyRunnable.INSTANCE, context);
         DialogBuilder builder = new DialogBuilder(TemplateListPanel.this);
-        builder.setCenterPanel(contextPanel);
+        builder.setCenterPanel(pair.first);
+        builder.setPreferredFocusComponent(pair.second);
         builder.setTitle("Change Context Type For Selected Templates");
         int result = builder.show();
         if (result == DialogWrapper.OK_EXIT_CODE) {
@@ -968,7 +955,7 @@ public class TemplateListPanel extends JPanel implements Disposable {
   private class TemplateGroupInputValidator implements InputValidator {
     private final String myOldName;
 
-    public TemplateGroupInputValidator(String oldName) {
+    TemplateGroupInputValidator(String oldName) {
       myOldName = oldName;
     }
 

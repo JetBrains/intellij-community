@@ -4,8 +4,6 @@ package com.intellij.ui.layout.migLayout
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.ui.SeparatorComponent
-import com.intellij.ui.TextFieldWithHistory
-import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.BoundSize
@@ -23,9 +21,9 @@ private fun CC.apply(flags: Array<out CCFlags>): CC {
     //CCFlags.wrap -> isWrap = true
       CCFlags.grow -> grow()
       CCFlags.growX -> {
-        growX()
+        growX(1000f)
       }
-      CCFlags.growY -> growY()
+      CCFlags.growY -> growY(1000f)
 
     // If you have more than one component in a cell the alignment keywords will not work since the behavior would be indeterministic.
     // You can however accomplish the same thing by setting a gap before and/or after the components.
@@ -87,7 +85,7 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
 
   private fun addGrowIfNeed(cc: Lazy<CC>, component: Component, spacing: SpacingConfiguration) {
     when {
-      component is TextFieldWithHistory || component is TextFieldWithHistoryWithBrowseButton -> {
+      component is ComponentWithBrowseButton<*> -> {
         // yes, no max width. approved by UI team (all path fields stretched to the width of the window)
         cc.value.minWidth("${spacing.maxShortTextWidth}px")
         cc.value.growX()
@@ -98,12 +96,12 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
       }
 
       component is JTextComponent || component is SeparatorComponent || component is ComponentWithBrowseButton<*> -> {
-        cc.value.growX()
+        cc.value
+          .growX()
+//          .pushX()
       }
 
-      component is JScrollPane ||
-      (component is JPanel && component.componentCount == 1 && (component.getComponent(0) as? JComponent)?.getClientProperty(
-        ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null) -> {
+      component is JScrollPane || component.isPanelWithToolbar() -> {
         // no need to use pushX - default pushX for cell is 100. avoid to configure more than need
         cc.value
           .grow()
@@ -126,4 +124,9 @@ internal class DefaultComponentConstraintCreator(private val spacing: SpacingCon
       GrowPolicy.MEDIUM_TEXT -> mediumTextSizeSpec
     }
   }
+}
+
+private fun Component.isPanelWithToolbar(): Boolean {
+  return this is JPanel && componentCount == 1 &&
+         (getComponent(0) as? JComponent)?.getClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY) != null
 }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
@@ -16,7 +17,6 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.Keymap;
@@ -75,8 +74,8 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenamer");
@@ -230,11 +229,23 @@ public abstract class InplaceRefactoring {
   protected PsiElement checkLocalScope() {
     final SearchScope searchScope = PsiSearchHelper.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
     if (searchScope instanceof LocalSearchScope) {
-      final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
+      final PsiElement[] elements = getElements((LocalSearchScope)searchScope);
       return PsiTreeUtil.findCommonParent(elements);
     }
 
     return null;
+  }
+
+  @NotNull
+  private PsiElement[] getElements(LocalSearchScope searchScope) {
+    final PsiElement[] elements = searchScope.getScope();
+    FileViewProvider provider = myElementToRename.getContainingFile().getViewProvider();
+    for (PsiElement element : elements) {
+      if (!(element instanceof PsiFile) || ((PsiFile)element).getViewProvider() != provider) {
+        return elements;
+      }
+    }
+    return new PsiElement[] { myElementToRename.getContainingFile() };
   }
 
   protected abstract void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages);
@@ -458,7 +469,8 @@ public abstract class InplaceRefactoring {
               if (exitCode == Messages.YES) {
                 final TextRange range = templateState.getVariableRange(PRIMARY_VARIABLE_NAME);
                 if (range != null) {
-                  new OpenFileDescriptor(project, virtualFile, range.getStartOffset()).navigate(true);
+                  PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, range.getStartOffset())
+                                      .navigate(true);
                   return;
                 }
               }
@@ -816,6 +828,12 @@ public abstract class InplaceRefactoring {
     if (component == null) return;
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     final BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createDialogBalloonBuilder(component, null).setSmallVariant(true);
+
+    Color borderColor = UIManager.getColor("InplaceRefactoringPopup.borderColor");
+    if (borderColor != null) {
+      balloonBuilder.setBorderColor(borderColor);
+    }
+
     myBalloon = balloonBuilder.createBalloon();
     Disposer.register(myProject, myBalloon);
     Disposer.register(myBalloon, new Disposable() {
@@ -861,7 +879,7 @@ public abstract class InplaceRefactoring {
     protected abstract void restoreDaemonUpdateState();
 
     @Override
-    public void beforeTemplateFinished(final TemplateState templateState, Template template) {
+    public void beforeTemplateFinished(@NotNull final TemplateState templateState, Template template) {
       try {
         final TextResult value = templateState.getVariableValue(PRIMARY_VARIABLE_NAME);
         myInsertedName = value != null ? value.toString().trim() : null;
@@ -886,7 +904,7 @@ public abstract class InplaceRefactoring {
     }
 
     @Override
-    public void templateFinished(Template template, final boolean brokenOff) {
+    public void templateFinished(@NotNull Template template, final boolean brokenOff) {
       boolean bind = false;
       try {
         if (!brokenOff) {

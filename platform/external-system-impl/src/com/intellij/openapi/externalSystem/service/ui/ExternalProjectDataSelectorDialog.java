@@ -71,7 +71,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/12/2015
  */
 public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
@@ -312,6 +311,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private Couple<CheckedTreeNode> createRoot() {
     final Map<DataNode, DataNodeCheckedTreeNode> treeNodeMap = ContainerUtil.newIdentityTroveMap();
+    final Map<String, DataNode> ideGroupingMap = ContainerUtil.newTreeMap(); // need order for assigning parents
 
     final DataNodeCheckedTreeNode[] preselectedNode = {null};
     final DataNodeCheckedTreeNode[] rootModuleNode = {null};
@@ -355,21 +355,49 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
           preselectedNode[0] = treeNode;
         }
         if (node.getData() instanceof ModuleData) {
-          if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(((ModuleData)node.getData()).getLinkedExternalProjectPath())) {
+          ModuleData moduleData = (ModuleData)node.getData();
+          if (key.equals(ProjectKeys.MODULE) && myProjectInfo.getExternalProjectPath().equals(moduleData.getLinkedExternalProjectPath())) {
             rootModuleNode[0] = treeNode;
+          }
+          String ideGrouping = moduleData.getIdeGrouping();
+          if (ideGrouping != null) {
+            ideGroupingMap.put(ideGrouping, node);
+          }
+        } else {
+          // add elements under module node like web/enterprise artifacts
+          DataNode<ModuleData> parentModule = node.getParent(ModuleData.class);
+          if(parentModule != null) {
+            DataNodeCheckedTreeNode moduleTreeNode = treeNodeMap.get(parentModule);
+            if(moduleTreeNode != null) {
+              moduleTreeNode.add(treeNode);
+              treeNode.setParent(moduleTreeNode);
+            }
           }
         }
         treeNode.setEnabled(myIgnorableKeys.contains(key));
         treeNodeMap.put(node, treeNode);
-        final DataNode parent = node.getParent();
-        if (parent != null) {
-          final CheckedTreeNode parentTreeNode = treeNodeMap.get(parent);
-          if (parentTreeNode != null) {
-            parentTreeNode.add(treeNode);
-          }
-        }
       }
     });
+
+    for (Map.Entry<String, DataNode> groupingEntry : ideGroupingMap.entrySet()) {
+      DataNode node = groupingEntry.getValue();
+      if (!(node.getData() instanceof ModuleData)) continue;
+      ModuleData moduleData = (ModuleData)node.getData();
+      String ideParentGrouping = moduleData.getIdeParentGrouping();
+      DataNode structuralParent = ideParentGrouping != null ? ideGroupingMap.get(ideParentGrouping) : null;
+      DataNodeCheckedTreeNode treeParentNode = structuralParent != null ? treeNodeMap.get(structuralParent) : null;
+
+      DataNodeCheckedTreeNode treeNode = treeNodeMap.get(node);
+
+      if (treeParentNode == null) {
+        treeParentNode = treeNodeMap.get(node.getParent());
+      }
+
+      if (treeNode == null || treeParentNode == null) continue;
+
+      treeParentNode.add(treeNode);
+      treeNode.setParent(treeParentNode);
+    }
 
     myModulesCount = modulesCount[0];
 
@@ -666,19 +694,19 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
     boolean isRequiredSelectionEnabled;
     @Nullable String message;
 
-    public SelectionState(boolean isRequiredSelectionEnabled, @Nullable String message) {
+    SelectionState(boolean isRequiredSelectionEnabled, @Nullable String message) {
       this.isRequiredSelectionEnabled = isRequiredSelectionEnabled;
       this.message = message;
     }
   }
 
   private class SelectAllButton extends AnActionButton {
-    public SelectAllButton() {
+    SelectAllButton() {
       super("Select All", AllIcons.Actions.Selectall);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
       final Object root = treeModel.getRoot();
       if (!(root instanceof CheckedTreeNode)) return;
@@ -696,12 +724,12 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private class UnselectAllButton extends AnActionButton {
-    public UnselectAllButton() {
+    UnselectAllButton() {
       super("Unselect All", AllIcons.Actions.Unselectall);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
       final Object root = treeModel.getRoot();
       if (!(root instanceof CheckedTreeNode)) return;
@@ -721,7 +749,7 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   private class ShowSelectedOnlyButton extends ToggleActionButton {
 
-    public ShowSelectedOnlyButton() {
+    ShowSelectedOnlyButton() {
       super("Show Selected Only", AllIcons.Actions.ShowHiddens);
     }
 
@@ -738,19 +766,19 @@ public class ExternalProjectDataSelectorDialog extends DialogWrapper {
   }
 
   private class SelectRequiredButton extends AnActionButton {
-    public SelectRequiredButton() {
+    SelectRequiredButton() {
       super("Select Required", "select modules depended on currently selected modules", AllIcons.Actions.IntentionBulb);
 
       addCustomUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return selectionState.getValue().isRequiredSelectionEnabled;
         }
       });
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       boolean showSelectedRowsOnly = myShowSelectedRowsOnly;
       if (showSelectedRowsOnly) {
         myShowSelectedRowsOnly = false;

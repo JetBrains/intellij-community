@@ -32,7 +32,7 @@ public class SpeedSearchObjectWithWeight {
   }
 
   public int compareWith(SpeedSearchObjectWithWeight obj) {
-    return weight == obj.weight ? 0 : weight < obj.weight ? 1 : -1;
+    return Integer.compare(obj.weight, weight);
   }
 
   public static List<SpeedSearchObjectWithWeight> findElement(String pattern, SpeedSearchBase speedSearch) {

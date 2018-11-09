@@ -21,7 +21,11 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.remote.RemoteProcess;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jvnet.winp.WinProcess;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -39,6 +43,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   private boolean myShouldKillProcessSoftly = true;
   private final boolean myMediatedProcess;
+  private boolean myShouldKillProcessSoftlyWithWinP = SystemInfo.isWin10OrNewer && Registry.is("use.winp.for.graceful.process.termination");
 
   public KillableProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
@@ -99,8 +104,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   private boolean canKillProcessSoftly() {
     if (processCanBeKilledByOS(myProcess)) {
       if (SystemInfo.isWindows) {
-        // runnerw.exe can send Ctrl+C events to a wrapped process
-        return myMediatedProcess;
+        return myMediatedProcess || myShouldKillProcessSoftlyWithWinP;
       }
       else if (SystemInfo.isUnix) {
         // 'kill -SIGINT <pid>' will be executed
@@ -144,9 +148,38 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
     }
   }
 
+  /**
+   * Enables sending Ctrl+C to a Windows-process on first termination attempt.
+   * This is an experimental API which will be removed in future releases once stabilized.
+   * Please do not use this API.
+   * @param shouldKillProcessSoftlyWithWinP true to use
+   */
+  @ApiStatus.Experimental
+  public void setShouldKillProcessSoftlyWithWinP(boolean shouldKillProcessSoftlyWithWinP) {
+    myShouldKillProcessSoftlyWithWinP = shouldKillProcessSoftlyWithWinP;
+  }
+
   protected boolean destroyProcessGracefully() {
-    if (SystemInfo.isWindows && myMediatedProcess) {
-      return RunnerMediator.destroyProcess(myProcess, true);
+    if (SystemInfo.isWindows) {
+      if (myMediatedProcess) {
+        return RunnerMediator.destroyProcess(myProcess, true);
+      }
+      if (myShouldKillProcessSoftlyWithWinP) {
+        try {
+          if (!myProcess.isAlive()) {
+            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
+            return true;
+          }
+          return new WinProcess(myProcess).sendCtrlC();
+        }
+        catch (Throwable e) {
+          if (!myProcess.isAlive()) {
+            OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
+            return true;
+          }
+          LOG.error("Failed to send Ctrl+C, fallback to default termination: " + getCommandLine(), e);
+        }
+      }
     }
     else if (SystemInfo.isUnix) {
       return UnixProcessManager.sendSigIntToProcessTree(myProcess);
@@ -156,12 +189,17 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
 
   @Override
   public boolean canKillProcess() {
-    return processCanBeKilledByOS(getProcess());
+    return processCanBeKilledByOS(getProcess()) || getProcess() instanceof RemoteProcess;
   }
 
   @Override
   public void killProcess() {
-    // execute 'kill -SIGKILL <pid>' on Unix
-    killProcessTree(getProcess());
+    if (processCanBeKilledByOS(getProcess())) {
+      // execute 'kill -SIGKILL <pid>' on Unix
+      killProcessTree(getProcess());
+    }
+    else if (getProcess() instanceof RemoteProcess) {
+      ((RemoteProcess)getProcess()).killProcessTree();
+    }
   }
 }

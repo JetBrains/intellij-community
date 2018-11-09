@@ -17,8 +17,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -33,17 +34,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.ExternalChangeAction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class UndoManagerImpl extends UndoManager implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
+  private static final Logger LOG = Logger.getInstance(UndoManagerImpl.class);
 
   @TestOnly
   public static boolean ourNeverAskUser;
@@ -53,9 +55,8 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   private static final int FREE_QUEUES_LIMIT = 30;
 
   @Nullable private final ProjectEx myProject;
-  private final CommandProcessor myCommandProcessor;
 
-  private UndoProvider[] myUndoProviders;
+  private List<UndoProvider> myUndoProviders;
   private CurrentEditorProvider myEditorProvider;
 
   private final UndoRedoStacksHolder myUndoStacksHolder = new UndoRedoStacksHolder(true);
@@ -86,16 +87,15 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     return Registry.intValue("undo.documentUndoLimit");
   }
 
-  public UndoManagerImpl(CommandProcessor commandProcessor) {
-    this(null, commandProcessor);
+  public UndoManagerImpl() {
+    this(null);
   }
 
-  public UndoManagerImpl(@Nullable ProjectEx project, CommandProcessor commandProcessor) {
+  public UndoManagerImpl(@Nullable ProjectEx project) {
     myProject = project;
-    myCommandProcessor = commandProcessor;
 
     if (myProject == null || !myProject.isDefault()) {
-      runStartupActivity();
+      runStartupActivity(myProject);
     }
 
     myMerger = new CommandMerger(this);
@@ -110,61 +110,64 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   public void dispose() {
   }
 
-  private void runStartupActivity() {
+  private void runStartupActivity(@Nullable Project project) {
+    myUndoProviders = project == null
+                      ? UndoProvider.EP_NAME.getExtensionList()
+                      : UndoProvider.PROJECT_EP_NAME.getExtensionList(project);
+    for (UndoProvider undoProvider : myUndoProviders) {
+      if (undoProvider instanceof Disposable) {
+        Disposer.register(this, (Disposable)undoProvider);
+      }
+    }
+
     myEditorProvider = myProject != null ? new CurrentEditorProvider() {
       @Override
       public FileEditor getCurrentEditor() {
         return FileEditorManager.getInstance(myProject).getSelectedEditor();
       }
     } : new FocusBasedCurrentEditorProvider();
-    myCommandProcessor.addCommandListener(new CommandListener() {
+
+    MessageBus messageBus = project == null ? ApplicationManager.getApplication().getMessageBus() : project.getMessageBus();
+
+    messageBus.connect(this).subscribe(CommandListener.TOPIC, new CommandListener() {
       private boolean myStarted;
 
       @Override
-      public void commandStarted(CommandEvent event) {
-        if (myProject != null && myProject.isDisposed() || myStarted) return;
+      public void commandStarted(@NotNull CommandEvent event) {
+        if (project != null && project.isDisposed() || myStarted) return;
         onCommandStarted(event.getProject(), event.getUndoConfirmationPolicy(), event.shouldRecordActionForOriginalDocument());
       }
 
       @Override
-      public void commandFinished(CommandEvent event) {
-        if (myProject != null && myProject.isDisposed() || myStarted) return;
+      public void commandFinished(@NotNull CommandEvent event) {
+        if (project != null && project.isDisposed() || myStarted) return;
         onCommandFinished(event.getProject(), event.getCommandName(), event.getCommandGroupId());
       }
 
       @Override
       public void undoTransparentActionStarted() {
-        if (myProject != null && myProject.isDisposed()) return;
+        if (project != null && project.isDisposed()) return;
         if (!isInsideCommand()) {
           myStarted = true;
-          onCommandStarted(myProject, UndoConfirmationPolicy.DEFAULT, true);
+          onCommandStarted(project, UndoConfirmationPolicy.DEFAULT, true);
         }
       }
 
       @Override
       public void undoTransparentActionFinished() {
-        if (myProject != null && myProject.isDisposed()) return;
+        if (project != null && project.isDisposed()) return;
         if (myStarted) {
           myStarted = false;
-          onCommandFinished(myProject, "", null);
+          onCommandFinished(project, "", null);
         }
       }
-    }, this);
+    });
 
     Disposer.register(this, new DocumentUndoProvider(myProject));
-
-    myUndoProviders = myProject == null
-                      ? Extensions.getExtensions(UndoProvider.EP_NAME)
-                      : Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
-    for (UndoProvider undoProvider : myUndoProviders) {
-      if (undoProvider instanceof Disposable) {
-        Disposer.register(this, (Disposable)undoProvider);
-      }
-    }
   }
 
   public boolean isActive() {
-    return Comparing.equal(myProject, myCurrentActionProject);
+    return Comparing.equal(myProject, myCurrentActionProject) || myProject == null && myCurrentActionProject.isDefault();
   }
 
   private boolean isInsideCommand() {

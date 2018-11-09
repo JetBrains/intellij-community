@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -84,6 +85,9 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
       super.visitExpression(expression);
       final PsiElement parent = expression.getParent();
       if (mightBeConfusingExpression(parent) || !isUnclearExpression(expression, parent)) {
+        return;
+      }
+      if (ErrorUtil.containsDeepError(expression)) {
         return;
       }
       registerError(expression);

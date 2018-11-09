@@ -94,7 +94,10 @@ class BuildMessagesImpl implements BuildMessages {
 
   @Override
   void error(String message, Throwable cause) {
-    throw new BuildException(message, cause)
+    def writer = new StringWriter()
+    new PrintWriter(writer).withCloseable { cause?.printStackTrace(it) }
+    processMessage(new LogMessage(LogMessage.Kind.ERROR, "$message\n$writer"))
+    throw new BuildException(message)
   }
 
   @Override
@@ -121,6 +124,11 @@ class BuildMessagesImpl implements BuildMessages {
   @Override
   void buildStatus(String message) {
     processMessage(new LogMessage(LogMessage.Kind.BUILD_STATUS, message))
+  }
+
+  @Override
+  void setParameter(String parameterName, String value) {
+    processMessage(new LogMessage(LogMessage.Kind.SET_PARAMETER, "$parameterName=$value"))
   }
 
   @Override

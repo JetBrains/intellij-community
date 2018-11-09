@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.Disposable;
@@ -16,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog;
 
 import javax.swing.*;
@@ -24,7 +23,8 @@ import java.awt.*;
 public class BrowseRepositoryAction extends AnAction implements DumbAware {
   public static final String REPOSITORY_BROWSER_TOOLWINDOW = "SVN Repositories";
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       RepositoryBrowserDialog dialog = new RepositoryBrowserDialog(ProjectManager.getInstance().getDefaultProject());
@@ -61,6 +61,7 @@ public class BrowseRepositoryAction extends AnAction implements DumbAware {
       add(myDialog.createToolbar(false), BorderLayout.WEST);
     }
 
+    @Override
     public void dispose() {
       myDialog.disposeRepositoryBrowser();
       ToolWindowManager.getInstance(myProject).unregisterToolWindow(REPOSITORY_BROWSER_TOOLWINDOW);

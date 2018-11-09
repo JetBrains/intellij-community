@@ -10,9 +10,10 @@ import org.jetbrains.annotations.NotNull;
  * @author irengrig
  */
 public class LightIndexPatternSearcher extends IndexPatternSearcher {
+
   @Override
-  public boolean execute(@NotNull IndexPatternSearch.SearchParameters queryParameters,
-                         @NotNull Processor<? super IndexPatternOccurrence> consumer) {
-    return executeImpl(queryParameters, consumer);
+  public void processQuery(@NotNull IndexPatternSearch.SearchParameters queryParameters,
+                           @NotNull Processor<? super IndexPatternOccurrence> consumer) {
+    executeImpl(queryParameters, consumer);
   }
 }

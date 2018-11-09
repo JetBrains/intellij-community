@@ -35,7 +35,7 @@ import java.util.Set;
  * @author peter
  */
 class CompilingGroovycRunner extends JpsGroovycRunner<JavaSourceRootDescriptor, ModuleBuildTarget> {
-  public CompilingGroovycRunner(boolean forStubs) {
+  CompilingGroovycRunner(boolean forStubs) {
     super(forStubs);
   }
 

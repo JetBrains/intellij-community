@@ -17,6 +17,7 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -27,6 +28,9 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author peter
@@ -96,6 +100,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNotEqualsDoesntImplyNotNullity() { doTest(); }
   public void testEqualsEnumConstant() { doTest(); }
   public void testSwitchEnumConstant() { doTest(); }
+  public void testIncompleteSwitchEnum() { doTest(); }
   public void testEnumConstantNotNull() { doTest(); }
   public void testCheckEnumConstantConstructor() { doTest(); }
   public void testCompareToEnumConstant() { doTest(); }
@@ -149,6 +154,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testSkipAssertions() {
     final DataFlowInspection inspection = new DataFlowInspection();
     inspection.DONT_REPORT_TRUE_ASSERT_STATEMENTS = true;
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = true;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }
@@ -280,6 +286,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFinalGetter() { doTest(); }
   public void testGetterResultsNotSame() { doTest(); }
   public void testIntersectionTypeInstanceof() { doTest(); }
+  
+  public void testKeepComments() { 
+    doTest();
+    checkIntentionResult("Simplify");
+  }
 
   public void testImmutableClassNonGetterMethod() {
     myFixture.addClass("package javax.annotation.concurrent; public @interface Immutable {}");
@@ -557,12 +568,12 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
       @Override
       public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
-        return element instanceof PsiField && ((PsiField)element).getName().startsWith("field");
+        return element instanceof PsiField && ((PsiField)element).getName() != null && ((PsiField)element).getName().startsWith("field");
       }
 
       @Override
       public boolean isClassWithCustomizedInitialization(@NotNull PsiElement element) {
-        return element instanceof PsiClass && ((PsiClass)element).getName().equals("Instrumented");
+        return element instanceof PsiClass && Objects.equals(((PsiClass)element).getName(), "Instrumented");
       }
     }, myFixture.getTestRootDisposable());
     doTest();
@@ -593,7 +604,10 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNullableReturn() { doTest(); }
   public void testManyBooleans() { doTest(); }
   public void testPureNoArgMethodAsVariable() { doTest(); }
-  public void testRedundantAssignment() { doTest(); }
+  public void testRedundantAssignment() {
+    doTest();
+    assertTrue(myFixture.getAvailableIntentions().stream().anyMatch(action -> action.getText().equals("Extract side effect")));
+  }
   public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
   public void testLessThanRelations() { doTest(); }
@@ -610,4 +624,45 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testMergedInitializerAndConstructor() { doTest(); }
   public void testClassMethodsInlining() { doTest(); }
   public void testObjectLocality() { doTest(); }
+  public void testInstanceOfForUnknownVariable() { doTest(); }
+  public void testNanComparisonWrong() { doTest(); }
+  public void testConstantMethods() { doTest(); }
+  public void testPolyadicEquality() { doTest(); }
+  public void testEqualsInLoopNotTooComplex() { doTest(); }
+  public void testEqualsWithItself() { doTest(); }
+  public void testBoxingBoolean() { doTest(); }
+  public void testOrWithAssignment() { doTest(); }
+  public void testAndAndLastOperand() { doTest(); }
+  public void testReportAlwaysNull() {
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
+  public void testBoxUnboxArrayElement() { doTest(); }
+  public void testExactInstanceOf() { doTest(); }
+  public void testNullFlushed() { doTest(); }
+  public void testBooleanMergeInLoop() { doTest(); }
+  public void testVoidIsAlwaysNull() { doTest(); }
+  public void testStringEquality() { doTest(); }
+  public void testAssignmentFieldAliasing() { doTest(); }
+  public void testNewBoxedNumberEquality() { doTest(); }
+  public void testBoxingIncorrectLiteral() { doTest(); }
+
+  public void testIncompleteArrayAccessInLoop() { doTest(); }
+  public void testSameArguments() { doTest(); }
+  public void testMaxLoop() { doTest(); }
+  public void testExplicitBoxing() { doTest(); }
+  public void testBoxedBoolean() { doTest(); }
+  public void testRedundantSimplifyToFalseQuickFix() {
+    doTest();
+    List<IntentionAction> intentions = myFixture.getAvailableIntentions();
+    assertEquals(1, intentions.stream().filter(i -> i.getText().equals("Remove 'if' statement")).count());
+    assertEquals(0, intentions.stream().filter(i -> i.getText().equals("Simplify 'expirationDay != other.expirationDay' to false")).count());
+  }
+  public void testAlwaysTrueSwitchLabel() { doTest(); }
+  public void testWideningToDouble() { doTest(); }
+  public void testCompoundAssignment() { doTest(); }
+  public void testNumericCast() { doTest(); }
+  public void testEnumValues() { doTest(); }
 }

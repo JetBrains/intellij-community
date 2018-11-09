@@ -1,33 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.psiView.formattingblocks;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.FormattingModel;
 import com.intellij.formatting.FormattingModelBuilder;
-import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.internal.psiView.PsiViewerDialog;
 import com.intellij.internal.psiView.ViewerPsiBasedTree;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -38,10 +23,15 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.StructureTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +40,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Set;
@@ -60,18 +51,16 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @NotNull
   private final JPanel myBlockStructurePanel;
-  @Nullable
-  private BlockTreeBuilder myBlockTreeBuilder;
   @NotNull
   private final Tree myBlockTree;
   @NotNull
   private final Project myProject;
   @NotNull
   private final PsiTreeUpdater myUpdater;
-
-  private int myIgnoreBlockTreeSelectionMarker = 0;
   @Nullable
   private volatile HashMap<PsiElement, BlockTreeNode> myPsiToBlockMap;
+  private AsyncTreeModel myTreeModel;
+  private Disposable myTreeModelDisposable = Disposer.newDisposable();
 
   public BlockViewerPsiBasedTree(@NotNull Project project, @NotNull PsiTreeUpdater updater) {
     myProject = project;
@@ -91,7 +80,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Override
   public void selectNodeFromPsi(@Nullable PsiElement element) {
-    if (myBlockTreeBuilder != null && element != null) {
+    if (myTreeModel != null && element != null) {
       BlockTreeNode currentBlockNode = findBlockNode(element);
       if (currentBlockNode != null) {
         selectBlockNode(currentBlockNode);
@@ -122,9 +111,10 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   private void resetBlockTree() {
     myBlockTree.removeAll();
-    if (myBlockTreeBuilder != null) {
-      Disposer.dispose(myBlockTreeBuilder);
-      myBlockTreeBuilder = null;
+    if (myTreeModel != null) {
+      Disposer.dispose(myTreeModelDisposable);
+      myTreeModel = null;
+      myTreeModelDisposable = Disposer.newDisposable();
     }
     myPsiToBlockMap = null;
     ViewerPsiBasedTree.removeListenerOfClass(myBlockTree, BlockTreeSelectionListener.class);
@@ -134,7 +124,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
   private void buildBlockTree(@Nullable PsiElement rootElement) {
     Block rootBlock = rootElement == null ? null : buildBlocks(rootElement);
     if (rootBlock == null) {
-      myBlockTreeBuilder = null;
+      myTreeModel = null;
       myBlockTree.setRootVisible(false);
       myBlockTree.setVisible(false);
       return;
@@ -143,8 +133,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     myBlockTree.setVisible(true);
     BlockTreeStructure blockTreeStructure = new BlockTreeStructure();
     BlockTreeNode rootNode = new BlockTreeNode(rootBlock, null);
-    blockTreeStructure.setRoot(rootNode);
-    myBlockTreeBuilder = new BlockTreeBuilder(myBlockTree, blockTreeStructure);
+    StructureTreeModel treeModel = new StructureTreeModel(blockTreeStructure);
     initMap(rootNode, rootElement);
     assert myPsiToBlockMap != null;
 
@@ -153,19 +142,21 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     BlockTreeNode blockNode = myPsiToBlockMap.get(rootPsi);
 
     if (blockNode == null) {
-      PsiViewerDialog.LOG.error(LogMessageEx
-                                  .createEvent("PsiViewer: rootNode not found",
-                                               "Current language: " + rootElement.getContainingFile().getLanguage(),
-                                               AttachmentFactory
-                                                 .createAttachment(rootElement.getContainingFile().getOriginalFile().getVirtualFile())));
+      PsiViewerDialog.LOG.error("PsiViewer: rootNode not found\nCurrent language: " + rootElement.getContainingFile().getLanguage(),
+                                (Throwable)null,
+                                AttachmentFactory.createAttachment(rootElement.getContainingFile().getOriginalFile().getVirtualFile()));
       blockNode = findBlockNode(rootPsi);
     }
 
     blockTreeStructure.setRoot(blockNode);
+    myTreeModel = new AsyncTreeModel(treeModel, myTreeModelDisposable);
+    myBlockTree.setModel(myTreeModel);
+
     myBlockTree.addTreeSelectionListener(new BlockTreeSelectionListener(rootElement));
     myBlockTree.setRootVisible(true);
     myBlockTree.expandRow(0);
-    myBlockTreeBuilder.queueUpdate();
+
+    treeModel.invalidate();
   }
 
 
@@ -181,26 +172,37 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
     return result;
   }
 
+
+  @NotNull
+  private TreeVisitor createVisitor(@NotNull BlockTreeNode currentBlockNode) {
+    Function<Object, BlockTreeNode> converter = el -> el instanceof DefaultMutableTreeNode ?
+                                                      (BlockTreeNode)((DefaultMutableTreeNode)el).getUserObject() :
+                                                      null;
+    Set<SimpleNode> parents = ContainerUtil.newHashSet();
+    SimpleNode parent = currentBlockNode.getParent();
+    while (parent != null) {
+      parents.add(parent);
+      parent = parent.getParent();
+    }
+    parents.add((SimpleNode)getRoot().getUserObject());
+
+    return new TreeVisitor.ByComponent<BlockTreeNode, BlockTreeNode>(currentBlockNode, converter) {
+
+      @Override
+      protected boolean contains(@NotNull BlockTreeNode pathComponent, @NotNull BlockTreeNode thisComponent) {
+        return parents.contains(pathComponent);
+      }
+    };
+  }
+
   private void selectBlockNode(@Nullable BlockTreeNode currentBlockNode) {
-    if (myBlockTreeBuilder == null) return;
+    if (myTreeModel == null) return;
 
     if (currentBlockNode != null) {
-      myIgnoreBlockTreeSelectionMarker++;
-      myBlockTreeBuilder.select(currentBlockNode, () -> {
-        // hope this is always called!
-        assert myIgnoreBlockTreeSelectionMarker > 0;
-        myIgnoreBlockTreeSelectionMarker--;
-      });
+      TreeUtil.promiseSelect(myBlockTree, createVisitor(currentBlockNode));
     }
     else {
-      myIgnoreBlockTreeSelectionMarker++;
-      try {
-        myBlockTree.getSelectionModel().clearSelection();
-      }
-      finally {
-        assert myIgnoreBlockTreeSelectionMarker > 0;
-        myIgnoreBlockTreeSelectionMarker--;
-      }
+      myBlockTree.getSelectionModel().clearSelection();
     }
   }
 
@@ -214,18 +216,21 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
     @Override
     public void valueChanged(@NotNull TreeSelectionEvent e) {
-      if (myIgnoreBlockTreeSelectionMarker > 0 || myBlockTreeBuilder == null) {
+      if (myTreeModel == null) {
         return;
       }
 
-      Set<?> blockElementsSet = myBlockTreeBuilder.getSelectedElements();
-      Object item = ContainerUtil.getFirstItem(blockElementsSet);
+      TreePath path = myBlockTree.getSelectionModel().getSelectionPath();
+      if (path == null) return;
+      DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
+      if (component == null) return;
+      Object item = component.getUserObject();
+
       if (!(item instanceof BlockTreeNode)) return;
       BlockTreeNode descriptor = (BlockTreeNode)item;
 
-      PsiElement rootPsi = myRootElement;
       int blockStart = descriptor.getBlock().getTextRange().getStartOffset();
-      PsiFile file = rootPsi.getContainingFile();
+      PsiFile file = myRootElement.getContainingFile();
       PsiElement currentPsiEl = InjectedLanguageUtil.findElementAtNoCommit(file, blockStart);
       if (currentPsiEl == null) currentPsiEl = file;
       int blockLength = descriptor.getBlock().getTextRange().getLength();
@@ -234,8 +239,7 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
              currentPsiEl.getTextLength() != blockLength) {
         currentPsiEl = currentPsiEl.getParent();
       }
-      final BlockTreeStructure treeStructure = ObjectUtils.notNull((BlockTreeStructure)myBlockTreeBuilder.getTreeStructure());
-      BlockTreeNode rootBlockNode = treeStructure.getRootElement();
+      BlockTreeNode rootBlockNode = (BlockTreeNode)getRoot().getUserObject();
       int baseOffset = 0;
       if (rootBlockNode != null) {
         baseOffset = rootBlockNode.getBlock().getTextRange().getStartOffset();
@@ -249,14 +253,14 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
 
   @Nullable
   private BlockTreeNode findBlockNode(TextRange range) {
-    final BlockTreeBuilder builder = myBlockTreeBuilder;
-    if (builder == null || !myBlockStructurePanel.isVisible()) {
+    if (myTreeModel == null || !myBlockStructurePanel.isVisible()) {
       return null;
     }
 
-    AbstractTreeStructure treeStructure = builder.getTreeStructure();
-    if (treeStructure == null) return null;
-    BlockTreeNode node = (BlockTreeNode)treeStructure.getRootElement();
+    DefaultMutableTreeNode root = getRoot();
+    if (root == null) return null;
+    
+    BlockTreeNode node = (BlockTreeNode)root.getUserObject();
     main_loop:
     while (true) {
       if (node.getBlock().getTextRange().equals(range)) {
@@ -313,5 +317,10 @@ public class BlockViewerPsiBasedTree implements ViewerPsiBasedTree {
         parentElem = parentElem.getParent();
       }
     }
+  }
+
+  @Nullable
+  private DefaultMutableTreeNode getRoot() {
+    return (DefaultMutableTreeNode)myBlockTree.getModel().getRoot();
   }
 }

@@ -16,7 +16,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -199,22 +198,6 @@ public class StaticGenericInfo extends DomGenericInfoEx {
 
   @Override
   @Nullable
-  public XmlElement getNameElement(DomElement element) {
-    buildMethodMaps();
-
-    Object o = getNameObject(element);
-    if (o instanceof GenericAttributeValue) {
-      return ((GenericAttributeValue)o).getXmlAttributeValue();
-    } else if (o instanceof DomElement) {
-      return ((DomElement)o).getXmlTag();
-    }
-    else {
-      return null;
-    }
-  }
-
-  @Override
-  @Nullable
   public GenericDomValue getNameDomElement(DomElement element) {
     buildMethodMaps();
 
@@ -281,7 +264,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  public boolean processAttributeChildrenDescriptions(Processor<AttributeChildDescriptionImpl> processor) {
+  public boolean processAttributeChildrenDescriptions(Processor<? super AttributeChildDescriptionImpl> processor) {
     List<AttributeChildDescriptionImpl> descriptions = getAttributeChildrenDescriptions();
     return ContainerUtil.process(descriptions, processor);
   }

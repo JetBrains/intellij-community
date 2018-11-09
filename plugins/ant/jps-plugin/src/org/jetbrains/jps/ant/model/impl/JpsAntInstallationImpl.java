@@ -77,7 +77,7 @@ public class JpsAntInstallationImpl extends JpsElementBase<JpsAntInstallationImp
     return result;
   }
 
-  public static void addAllJarsFromDirectory(List<String> classpath, final File dir) {
+  public static void addAllJarsFromDirectory(List<? super String> classpath, final File dir) {
     File[] files = dir.listFiles();
     if (files != null) {
       for (File file : files) {

@@ -30,5 +30,5 @@ public interface IGlobalOptions {
 
 	boolean isSomeQuiet();
 
-	Map getEnvVariables();
+	Map<String, String> getEnvVariables();
 }

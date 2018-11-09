@@ -3,6 +3,7 @@ package com.intellij.find.impl.livePreview;
 
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.ide.IdeTooltipManager;
@@ -26,7 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -61,13 +62,13 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   private final Set<RangeHighlighter> myHighlighters = new HashSet<>();
   private RangeHighlighter myCursorHighlighter;
-  private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = new ArrayList<>();
+  private final List<VisibleAreaListener> myVisibleAreaListenersToRemove = ContainerUtil.createLockFreeCopyOnWriteList();
   private Delegate myDelegate;
   private final SearchResults mySearchResults;
   private Balloon myReplacementBalloon;
 
   @Override
-  public void selectionChanged(SelectionEvent e) {
+  public void selectionChanged(@NotNull SelectionEvent e) {
     updateInSelectionHighlighters();
   }
 
@@ -81,7 +82,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   public interface Delegate {
     @Nullable
-    String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult);
+    String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult) throws FindManager.MalformedReplacementStringException;
   }
 
   private static TextAttributes strikeout() {
@@ -90,7 +91,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   @Override
-  public void searchResultsUpdated(SearchResults sr) {
+  public void searchResultsUpdated(@NotNull SearchResults sr) {
     final Project project = mySearchResults.getProject();
     if (project == null || project.isDisposed()) return;
     if (mySuppressedUpdate) {
@@ -228,7 +229,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     }
   }
 
-  public LivePreview(SearchResults searchResults) {
+  public LivePreview(@NotNull SearchResults searchResults) {
     mySearchResults = searchResults;
     searchResultsUpdated(searchResults);
     searchResults.addListener(this);
@@ -358,14 +359,22 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     if (!mySearchResults.isUpToDate()) return;
     final FindResult cursor = mySearchResults.getCursor();
     final Editor editor = mySearchResults.getEditor();
-    if (myDelegate != null && cursor != null) {
-      String replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
-      if (StringUtil.isEmpty(replacementPreviewText)) {
-        replacementPreviewText = EMPTY_STRING_DISPLAY_TEXT;
+    final FindModel findModel = mySearchResults.getFindModel();
+    if (myDelegate != null && cursor != null && findModel.isReplaceState() && findModel.isRegularExpressions()) {
+      String replacementPreviewText;
+      try {
+        replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
       }
-      final FindModel findModel = mySearchResults.getFindModel();
-      if (findModel.isRegularExpressions() && findModel.isReplaceState()) {
-
+      catch (FindManager.MalformedReplacementStringException e) {
+        return;
+      }
+      if (replacementPreviewText == null) {
+        return;//malformed replacement string
+      }
+      if (Registry.is("ide.find.show.replacement.hint.for.simple.regexp")) {
+        showBalloon(editor, replacementPreviewText.isEmpty() ? EMPTY_STRING_DISPLAY_TEXT : replacementPreviewText);
+      }
+      else if (!replacementPreviewText.equals(findModel.getStringToReplace())) {
         showBalloon(editor, replacementPreviewText);
       }
     }
@@ -405,7 +414,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   @NotNull
-  private RangeHighlighter highlightRange(TextRange textRange, TextAttributes attributes, Set<RangeHighlighter> highlighters) {
+  private RangeHighlighter highlightRange(TextRange textRange, TextAttributes attributes, Set<? super RangeHighlighter> highlighters) {
     if (myInSmartUpdate) {
       for (RangeHighlighter highlighter : myHighlighters) {
         if (highlighter.isValid() && highlighter.getStartOffset() == textRange.getStartOffset() && highlighter.getEndOffset() == textRange.getEndOffset()) {
@@ -426,7 +435,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     return highlighter;
   }
 
-  private RangeHighlighter doHightlightRange(final TextRange textRange, final TextAttributes attributes, Set<RangeHighlighter> highlighters) {
+  private RangeHighlighter doHightlightRange(final TextRange textRange, final TextAttributes attributes, Set<? super RangeHighlighter> highlighters) {
     HighlightManager highlightManager = HighlightManager.getInstance(mySearchResults.getProject());
 
     MarkupModelEx markupModel = (MarkupModelEx)mySearchResults.getEditor().getMarkupModel();
@@ -470,7 +479,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   private class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
     private final Editor myEditor;
 
-    public ReplacementBalloonPositionTracker(Editor editor) {
+    ReplacementBalloonPositionTracker(Editor editor) {
       super(editor.getContentComponent());
       myEditor = editor;
 
@@ -495,7 +504,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
         VisibleAreaListener visibleAreaListener = new VisibleAreaListener() {
           @Override
-          public void visibleAreaChanged(VisibleAreaEvent e) {
+          public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
             if (SearchResults.insideVisibleArea(myEditor, cur)) {
               showReplacementPreview();
               final VisibleAreaListener visibleAreaListener = this;

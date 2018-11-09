@@ -17,8 +17,6 @@ package com.siyeh.ipp.forloop;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -66,8 +64,7 @@ public class ReplaceForEachLoopWithIteratorForLoopIntention extends Intention {
     final String iterator = codeStyleManager.suggestUniqueVariableName("iterator", statement, true);
     newStatement.append(iterator).append("=").append(iteratorCall.getText()).append(';');
     newStatement.append(iterator).append(".hasNext();) {");
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-    if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+    if (JavaCodeStyleSettings.getInstance(statement.getContainingFile()).GENERATE_FINAL_LOCALS) {
       newStatement.append("final ");
     }
     final PsiParameter iterationParameter = statement.getIterationParameter();

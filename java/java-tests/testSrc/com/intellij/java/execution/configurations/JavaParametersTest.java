@@ -114,15 +114,15 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testPreviewLanguageFeatures() throws CantRunException {
     ModuleRootModificationUtil.updateModel(myModule, (model) -> {
       model.getModuleExtension(LanguageLevelModuleExtension.class)
-           .setLanguageLevel(LanguageLevel.JDK_11_PREVIEW);
-      model.setSdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(11)));
+           .setLanguageLevel(LanguageLevel.JDK_12_PREVIEW);
+      model.setSdk(IdeaTestUtil.getMockJdk(JavaVersion.compose(12)));
     });
     JavaParameters javaParameters = new JavaParameters();
     javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
     assertTrue(javaParameters.getVMParametersList().hasParameter(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));
 
     ModuleRootModificationUtil.updateModel(myModule, (model) -> model.getModuleExtension(LanguageLevelModuleExtension.class)
-                                                                     .setLanguageLevel(LanguageLevel.JDK_11));
+                                                                     .setLanguageLevel(LanguageLevel.JDK_12));
     javaParameters = new JavaParameters();
     javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);
     assertFalse(javaParameters.getVMParametersList().hasParameter(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY));

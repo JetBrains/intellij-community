@@ -78,9 +78,18 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
 
   @Override
   public boolean isConfigurationFromContext(JUnitConfiguration unitConfiguration, ConfigurationContext context) {
+     if (!isApplicableTestType(unitConfiguration.getTestType(), context)) return false;
     if (differentParamSet(unitConfiguration, context.getLocation())) return false;
     final Set<String> patterns = unitConfiguration.getPersistentData().getPatterns();
     if (isConfiguredFromContext(context, patterns)) return true;
     return false;
+  }
+
+  @Override
+  protected boolean isRequiredVisibility(PsiMember psiElement) {
+    if (JUnitUtil.isJUnit5(psiElement)) {
+      return true;
+    }
+    return super.isRequiredVisibility(psiElement);
   }
 }

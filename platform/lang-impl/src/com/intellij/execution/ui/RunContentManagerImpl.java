@@ -1,9 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -29,8 +28,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
 import com.intellij.ui.docking.DockManager;
@@ -81,7 +80,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     initToolWindow(null, dashboardManager.getToolWindowId(), dashboardManager.getToolWindowIcon(),
                    dashboardManager.getDashboardContentManager());
 
-    toolWindowManager.addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+    myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged() {
         if (myProject.isDisposed()) {
@@ -119,7 +118,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       private int myInsideGetData = 0;
 
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         myInsideGetData++;
         try {
           if (PlatformDataKeys.HELP_ID.is(dataId)) {
@@ -144,7 +143,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     myToolwindowIdToBaseIconMap.put(toolWindowId, toolWindowIcon);
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
-      public void selectionChanged(final ContentManagerEvent event) {
+      public void selectionChanged(@NotNull final ContentManagerEvent event) {
         if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
           Content content = event.getContent();
           Executor contentExecutor = executor;
@@ -368,7 +367,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return contentToReuse;
     }
 
-    String toolWindowId = getContentDescriptorToolWindowId(executionEnvironment.getRunnerAndConfigurationSettings());
+    String toolWindowId = getContentDescriptorToolWindowId(executionEnvironment);
     final ContentManager contentManager = toolWindowId == null ?
                                           getContentManagerForRunner(executionEnvironment.getExecutor(), null) :
                                           myToolwindowIdToContentManagerMap.get(toolWindowId);
@@ -409,7 +408,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
                                                                       @Nullable RunContentDescriptor descriptor,
                                                                       long executionId,
                                                                       @Nullable String preferredName,
-                                                                      @Nullable Condition<Content> reuseCondition) {
+                                                                      @Nullable Condition<? super Content> reuseCondition) {
     Content content = null;
     if (descriptor != null) {
       //Stage one: some specific descriptors (like AnalyzeStacktrace) cannot be reused at all
@@ -434,9 +433,13 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
       return null;
     }
     final RunContentDescriptor oldDescriptor = getRunContentDescriptorByContent(content);
-    if (oldDescriptor != null && !oldDescriptor.isContentReuseProhibited() ) {
-      //content.setExecutionId(executionId);
-      return oldDescriptor;
+    if (oldDescriptor != null) {
+      if (oldDescriptor.isContentReuseProhibited()) {
+        return null;
+      }
+      if (descriptor == null || oldDescriptor.getReusePolicy().canBeReusedBy(descriptor)) {
+        return oldDescriptor;
+      }
     }
 
     return null;
@@ -446,7 +449,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private static Content getContentFromManager(ContentManager contentManager,
                                                @Nullable String preferredName,
                                                long executionId,
-                                               @Nullable Condition<Content> reuseCondition) {
+                                               @Nullable Condition<? super Content> reuseCondition) {
     ArrayList<Content> contents = new ArrayList<>(Arrays.asList(contentManager.getContents()));
     Content first = contentManager.getSelectedContent();
     if (first != null && contents.remove(first)) {//selected content should be checked first
@@ -565,10 +568,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
   @Override
   @Nullable
-  public String getContentDescriptorToolWindowId(@Nullable RunnerAndConfigurationSettings settings) {
-    if (settings != null) {
+  public String getContentDescriptorToolWindowId(@Nullable RunConfiguration configuration) {
+    if (configuration != null) {
       RunDashboardManager runDashboardManager = RunDashboardManager.getInstance(myProject);
-      if (runDashboardManager.isShowInDashboard(settings.getConfiguration())) {
+      if (runDashboardManager.isShowInDashboard(configuration)) {
         return runDashboardManager.getToolWindowId();
       }
     }
@@ -582,7 +585,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     // Also there are some places where ToolWindowId.RUN or ToolWindowId.DEBUG are used directly.
     // For example, HotSwapProgressImpl.NOTIFICATION_GROUP. All notifications for this group is shown in Debug tool window,
     // however such notifications should be shown in Run Dashboard tool window, if run content is redirected to Run Dashboard tool window.
-    String toolWindowId = getContentDescriptorToolWindowId(executionEnvironment.getRunnerAndConfigurationSettings());
+    String toolWindowId = getContentDescriptorToolWindowId(executionEnvironment);
     return toolWindowId != null ? toolWindowId : executionEnvironment.getExecutor().getToolWindowId();
   }
 
@@ -614,7 +617,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void contentRemoved(final ContentManagerEvent event) {
+    public void contentRemoved(@NotNull final ContentManagerEvent event) {
       final Content content = event.getContent();
       if (content == myContent) {
         Disposer.dispose(this);
@@ -642,7 +645,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void contentRemoveQuery(final ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull final ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         final boolean canClose = closeQuery(false);
         if (!canClose) {
@@ -652,7 +655,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
 
     @Override
-    public void projectClosed(final Project project) {
+    public void projectClosed(@NotNull final Project project) {
       if (myContent != null && project == myProject) {
         myContent.getManager().removeContent(myContent, true);
         Disposer.dispose(this); // Dispose content even if content manager refused to.

@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.*;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.SAXParseException;
 
 import java.util.concurrent.Future;
@@ -107,13 +108,13 @@ public class StdErrorReporter extends ErrorReporter {
     private final Content myContent;
     private final MessageView myMessageView;
 
-    public MyContentDisposer(final Content content, final MessageView messageView) {
+    MyContentDisposer(final Content content, final MessageView messageView) {
       myContent = content;
       myMessageView = messageView;
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       final Content eventContent = event.getContent();
       if (!eventContent.equals(myContent)) {
         return;
@@ -127,13 +128,13 @@ public class StdErrorReporter extends ErrorReporter {
     }
 
     @Override
-    public void contentAdded(ContentManagerEvent event) {
+    public void contentAdded(@NotNull ContentManagerEvent event) {
     }
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
     }
     @Override
-    public void selectionChanged(ContentManagerEvent event) {
+    public void selectionChanged(@NotNull ContentManagerEvent event) {
     }
   }
 
@@ -141,13 +142,13 @@ public class StdErrorReporter extends ErrorReporter {
     private Content myContent;
     private final ContentManager myContentManager;
 
-    public CloseListener(Content content, ContentManager contentManager) {
+    CloseListener(Content content, ContentManager contentManager) {
       myContent = content;
       myContentManager = contentManager;
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         myErrorsView.stopProcess();
 
@@ -158,7 +159,7 @@ public class StdErrorReporter extends ErrorReporter {
     }
 
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (!myErrorsView.isProcessStopped()) {
           int result = Messages.showYesNoDialog(

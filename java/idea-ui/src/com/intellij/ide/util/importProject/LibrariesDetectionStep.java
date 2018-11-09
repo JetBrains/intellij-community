@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.util.projectWizard.AbstractStepWithProgress;
-import com.intellij.ide.util.projectWizard.importSources.*;
+import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
+import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
+import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder;
+import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import org.jetbrains.annotations.NonNls;
 
@@ -47,20 +36,24 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     myHelpId = helpId;
   }
 
+  @Override
   public void updateDataModel() {
     myProjectDescriptor.setLibraries(myLibrariesPanel.getChosenEntries());
   }
 
+  @Override
   protected JComponent createResultsPanel() {
     myLibrariesPanel = new LibrariesLayoutPanel(myInsight);
     return myLibrariesPanel;
   }
 
+  @Override
   protected String getProgressText() {
     return "Searching for libraries. Please wait.";
   }
 
-  int myPreviousStateHashCode = -1;
+  private int myPreviousStateHashCode = -1;
+  @Override
   protected boolean shouldRunProgress() {
     final int currentHash = calcStateHashCode();
     try {
@@ -79,6 +72,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     return hash;
   }
 
+  @Override
   protected List<LibraryDescriptor> calculate() {
     final List<DetectedSourceRoot> sourceRoots = getSourceRoots();
 
@@ -87,10 +81,10 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     while (tokenizer.hasMoreTokens()) {
       ignored.add(tokenizer.nextToken());
     }
-    
+
     myInsight.setRoots(Collections.singletonList(new File(myBuilder.getBaseProjectPath())), sourceRoots, ignored);
     myInsight.scanLibraries();
-    
+
     return myInsight.getSuggestedLibraries();
   }
 
@@ -106,16 +100,19 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     return sourceRoots;
   }
 
+  @Override
   protected void onFinished(List<LibraryDescriptor> libraries, final boolean canceled) {
     myLibrariesPanel.rebuild();
   }
-  
+
+  @Override
   public Icon getIcon() {
     return myIcon;
   }
 
+  @Override
   public String getHelpId() {
     return myHelpId;
   }
-  
+
 }

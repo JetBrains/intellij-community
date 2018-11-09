@@ -36,7 +36,7 @@ public class InvalidWriteAccessSearcher {
   @Nullable
   public static List<ReadWriteVariableInstruction> findInvalidWriteAccess(@NotNull Instruction[] flow,
                                                                           @NotNull Map<String, GrVariable> variables,
-                                                                          @NotNull Set<GrVariable> alreadyInitialized) {
+                                                                          @NotNull Set<? super GrVariable> alreadyInitialized) {
     DFAEngine<MyData> engine = new DFAEngine<>(flow, new MyDFAInstance(), new MySemilattice());
     final List<MyData> dfaResult = engine.performDFAWithTimeout();
     if (dfaResult == null) return null;
@@ -83,7 +83,7 @@ public class InvalidWriteAccessSearcher {
   private static class MySemilattice implements Semilattice<MyData> {
     @NotNull
     @Override
-    public MyData join(@NotNull List<MyData> ins) {
+    public MyData join(@NotNull List<? extends MyData> ins) {
       return new MyData(ins);
     }
 
@@ -97,14 +97,14 @@ public class InvalidWriteAccessSearcher {
     private final Set<String> myInitialized = ContainerUtil.newHashSet();
     private final Set<String> myOverInitialized = ContainerUtil.newHashSet();
 
-    public MyData(List<MyData> ins) {
+    MyData(List<? extends MyData> ins) {
       for (MyData data : ins) {
         myInitialized.addAll(data.myInitialized);
         myOverInitialized.addAll(data.myOverInitialized);
       }
     }
 
-    public MyData() {
+    MyData() {
     }
 
     public void add(String var) {

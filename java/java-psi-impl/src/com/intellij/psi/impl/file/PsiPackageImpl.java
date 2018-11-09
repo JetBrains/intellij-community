@@ -92,8 +92,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  protected PsiElement findPackage(String qName) {
-    return getFacade().findPackage(qName);
+  protected PsiPackageImpl findPackage(String qName) {
+    return (PsiPackageImpl)getFacade().findPackage(qName);
   }
 
   @Override
@@ -110,11 +110,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   @Override
   public PsiPackageImpl getParentPackage() {
     return (PsiPackageImpl)super.getParentPackage();
-  }
-
-  @Override
-  protected PsiPackageImpl createInstance(PsiManager manager, String qName) {
-    return new PsiPackageImpl(getManager(), qName);
   }
 
   @Override
@@ -294,7 +289,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
                                      @NotNull ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    GlobalSearchScope scope = place.getResolveScope();
+    GlobalSearchScope scope = PsiUtil.isInsideJavadocComment(place) ? allScope() : place.getResolveScope();
 
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
@@ -341,7 +336,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   private static boolean processClasses(@NotNull PsiScopeProcessor processor,
                                         @NotNull ResolveState state,
                                         @NotNull PsiClass[] classes,
-                                        @NotNull Condition<String> nameCondition) {
+                                        @NotNull Condition<? super String> nameCondition) {
     for (PsiClass aClass : classes) {
       String name = aClass.getName();
       if (name != null && nameCondition.value(name)) {
@@ -372,6 +367,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   @Override
   public void navigate(final boolean requestFocus) {
     PsiPackageImplementationHelper.getInstance().navigate(this, requestFocus);
+  }
+
+  public boolean mayHaveContentInScope(@NotNull GlobalSearchScope scope) {
+    return getDirectories(scope).length > 0 ||
+           getClasses(scope).length > 0 ||
+           ContainerUtil.exists(occursInPackagePrefixes(), scope::contains);
   }
 
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {

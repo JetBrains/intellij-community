@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -31,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativePath;
 import static org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction.getPropertyList;
 
 class SvnChangeProviderContext implements StatusReceiver {
@@ -48,23 +48,26 @@ class SvnChangeProviderContext implements StatusReceiver {
 
   @Nullable private final ProgressIndicator myProgress;
 
-  public SvnChangeProviderContext(@NotNull SvnVcs vcs, @NotNull ChangelistBuilder changelistBuilder, @Nullable ProgressIndicator progress) {
+  SvnChangeProviderContext(@NotNull SvnVcs vcs, @NotNull ChangelistBuilder changelistBuilder, @Nullable ProgressIndicator progress) {
     myVcs = vcs;
     myChangelistBuilder = changelistBuilder;
     myProgress = progress;
     myBranchConfigurationManager = SvnBranchConfigurationManager.getInstance(myVcs.getProject());
   }
 
+  @Override
   public void process(FilePath path, Status status) throws SvnBindException {
     if (status != null) {
       processStatusFirstPass(path, status);
     }
   }
 
+  @Override
   public void processIgnored(VirtualFile vFile) {
     myChangelistBuilder.processIgnoredFile(vFile);
   }
 
+  @Override
   public void processUnversioned(VirtualFile vFile) {
     myChangelistBuilder.processUnversionedFile(vFile);
   }
@@ -138,9 +141,7 @@ class SvnChangeProviderContext implements StatusReceiver {
 
     if (parent != null) {
       Url copyFromUrl = myCopyFromURLs.get(parent);
-
-      //noinspection ConstantConditions
-      result = parent == filePath ? copyFromUrl : append(copyFromUrl, FileUtil.getRelativePath(parent.getIOFile(), filePath.getIOFile()));
+      result = parent == filePath ? copyFromUrl : append(copyFromUrl, getRelativePath(parent.getPath(), filePath.getPath()));
     }
 
     return result;
@@ -266,7 +267,7 @@ class SvnChangeProviderContext implements StatusReceiver {
       final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(virtualFile);
       if (vcsRoot != null) {  // it will be null if we walked into an excluded directory
         String baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
-        myChangelistBuilder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl.toString() : baseUrl, true);
+        myChangelistBuilder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl.toDecodedString() : baseUrl, true);
       }
     }
   }

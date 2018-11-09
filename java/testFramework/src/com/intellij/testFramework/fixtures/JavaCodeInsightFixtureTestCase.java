@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.openapi.application.PathManager;
@@ -32,7 +18,7 @@ import java.io.File;
 /**
  * @author peter
  */
-public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
+public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase {
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
 
@@ -48,10 +34,10 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
     } else {
       moduleFixtureBuilder.addContentRoot(myFixture.getTempDirPath());
     }
-    tuneFixture(moduleFixtureBuilder);    
+    tuneFixture(moduleFixtureBuilder);
 
-    myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
     myModule = moduleFixtureBuilder.getFixture().getModule();
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_6);
   }
@@ -107,6 +93,6 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
   }
 
   public PsiElementFactory getElementFactory() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    return JavaPsiFacade.getElementFactory(getProject());
   }
 }

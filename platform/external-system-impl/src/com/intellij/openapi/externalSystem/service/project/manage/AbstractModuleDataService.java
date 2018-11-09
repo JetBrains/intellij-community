@@ -57,14 +57,13 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2015
  */
 public abstract class AbstractModuleDataService<E extends ModuleData> extends AbstractProjectDataService<E, Module> {
 
@@ -324,6 +323,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
   }
 
+  @Override
   public void onFailureImport(Project project) {
     project.putUserData(ORPHAN_MODULE_FILES, null);
     project.putUserData(ORPHAN_MODULE_HANDLERS_COUNTER, null);

@@ -26,8 +26,7 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExceptionBreakpointProperties>
-                                         implements JavaBreakpointType<JavaExceptionBreakpointProperties> {
+public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExceptionBreakpointProperties> {
   public JavaExceptionBreakpointType() {
     super("java-exception", DebuggerBundle.message("exception.breakpoints.tab.title"));
   }
@@ -41,7 +40,7 @@ public class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<JavaExce
   @NotNull
   @Override
   public Icon getDisabledIcon() {
-    return AllIcons.Debugger.Db_exception_breakpoint;
+    return AllIcons.Debugger.Db_disabled_exception_breakpoint;
   }
 
   @NotNull

@@ -61,7 +61,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
           }
         }
         else {
-          if (qualifier instanceof PsiReferenceExpression &&
+          if (qualifier instanceof PsiReferenceExpression && member.getContainingClass() != null &&
               ((PsiReferenceExpression)qualifier).isReferenceTo(member.getContainingClass())) {
             return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, targetClass, qualifier, psiReference);  // change qualifier
           }
@@ -222,7 +222,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       refExpr.setQualifierExpression(null);
     }
     else if (!ImportsUtil.hasStaticImportOn(refExpr, member, false) || refExpr.getQualifierExpression() != null){
-      PsiElementFactory factory = JavaPsiFacade.getInstance(refExpr.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(refExpr.getProject());
       refExpr.setQualifierExpression(factory.createReferenceExpression(aClass));
     }
   }

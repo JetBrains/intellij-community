@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.navigation;
 
@@ -22,7 +8,7 @@ import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.LanguageStructureViewBuilder;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import gnu.trove.THashSet;
@@ -36,7 +22,7 @@ public class MethodUpDownUtil {
   }
 
   public static int[] getNavigationOffsets(PsiFile file, final int caretOffset) {
-    for(MethodNavigationOffsetProvider provider: Extensions.getExtensions(MethodNavigationOffsetProvider.EP_NAME)) {
+    for(MethodNavigationOffsetProvider provider: MethodNavigationOffsetProvider.EP_NAME.getExtensionList()) {
       final int[] offsets = provider.getMethodNavigationOffsets(file, caretOffset);
       if (offsets != null && offsets.length > 0) {
         return offsets;
@@ -48,7 +34,7 @@ public class MethodUpDownUtil {
     return offsetsFromElements(array);
   }
 
-  public static int[] offsetsFromElements(final Collection<PsiElement> array) {
+  public static int[] offsetsFromElements(final Collection<? extends PsiElement> array) {
     TIntArrayList offsets = new TIntArrayList(array.size());
     for (PsiElement element : array) {
       int offset = element.getTextOffset();
@@ -59,7 +45,7 @@ public class MethodUpDownUtil {
     return offsets.toNativeArray();
   }
 
-  private static void addNavigationElements(Collection<PsiElement> array, PsiFile element) {
+  private static void addNavigationElements(Collection<? super PsiElement> array, PsiFile element) {
     StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.INSTANCE.getStructureViewBuilder(element);
     if (structureViewBuilder instanceof TreeBasedStructureViewBuilder) {
       TreeBasedStructureViewBuilder builder = (TreeBasedStructureViewBuilder) structureViewBuilder;
@@ -68,12 +54,12 @@ public class MethodUpDownUtil {
         addStructureViewElements(model.getRoot(), array, element);
       }
       finally {
-        model.dispose();
+        Disposer.dispose(model);
       }
     }
   }
 
-  private static void addStructureViewElements(final TreeElement parent, final Collection<PsiElement> array, @NotNull PsiFile file) {
+  private static void addStructureViewElements(final TreeElement parent, final Collection<? super PsiElement> array, @NotNull PsiFile file) {
     for(TreeElement treeElement: parent.getChildren()) {
       Object value = ((StructureViewTreeElement)treeElement).getValue();
       if (value instanceof PsiElement) {

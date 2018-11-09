@@ -104,7 +104,7 @@ public class CollectClassMembersUtil {
                                    @NotNull Map<String, CandidateInfo> allFields,
                                    @NotNull Map<String, List<CandidateInfo>> allMethods,
                                    @NotNull Map<String, CandidateInfo> allInnerClasses,
-                                   @NotNull Set<PsiClass> visitedClasses,
+                                   @NotNull Set<? super PsiClass> visitedClasses,
                                    @NotNull PsiSubstitutor substitutor,
                                    boolean includeSynthetic) {
     PsiUtilCore.ensureValid(aClass);

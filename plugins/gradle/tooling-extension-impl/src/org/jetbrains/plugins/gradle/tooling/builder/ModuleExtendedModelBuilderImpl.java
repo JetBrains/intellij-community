@@ -28,6 +28,7 @@ import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.plugins.ide.idea.IdeaPlugin;
 import org.gradle.plugins.ide.idea.model.IdeaModel;
+import org.gradle.plugins.ide.idea.model.IdeaModule;
 import org.gradle.util.CollectionUtils;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -49,11 +50,13 @@ import java.util.*;
  * @deprecated to be removed in 2018.1
  *
  * @author Vladislav.Soroka
- * @since 11/5/13
  */
+@Deprecated
 public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
   private static final boolean is4OorBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
+  private static final boolean is22orBetter = GradleVersion.current().compareTo(GradleVersion.version("2.2")) >= 0;
+  public static final boolean is50OrBetter = GradleVersion.current().compareTo(GradleVersion.version("5.0")) >= 0;
 
   private static final String SOURCE_SETS_PROPERTY = "sourceSets";
   private static final String TEST_SRC_DIRS_PROPERTY = "testSrcDirs";
@@ -94,10 +97,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
     moduleVersionModel.setArtifacts(artifacts);
 
-    final Set<String> sourceDirectories = new HashSet<String>();
-    final Set<String> testDirectories = new HashSet<String>();
-    final Set<String> resourceDirectories = new HashSet<String>();
-    final Set<String> testResourceDirectories = new HashSet<String>();
+    final IdeaModuleDirectorySet directorySet = new IdeaModuleDirectorySet();
 
     final List<File> testClassesDirs = new ArrayList<File>();
     for (Task task : project.getTasks()) {
@@ -114,7 +114,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
           Object testSrcDirs = test.property(TEST_SRC_DIRS_PROPERTY);
           if (testSrcDirs instanceof Iterable) {
             for (Object dir : Iterable.class.cast(testSrcDirs)) {
-              addFilePath(testDirectories, dir);
+              addFilePath(directorySet.getTestDirectories(), dir);
             }
           }
         }
@@ -153,11 +153,11 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
           for (File javaSrcDir : sourceSet.getAllJava().getSrcDirs()) {
             boolean isTestDir = isTestDir(sourceSet, testClassesDirs);
-            addFilePath(isTestDir ? testDirectories : sourceDirectories, javaSrcDir);
+            addFilePath(isTestDir ? directorySet.getTestDirectories() : directorySet.getSourceDirectories(), javaSrcDir);
           }
           for (File resourcesSrcDir : sourceSet.getResources().getSrcDirs()) {
             boolean isTestDir = isTestDir(sourceSet, testClassesDirs);
-            addFilePath(isTestDir ? testResourceDirectories : resourceDirectories, resourcesSrcDir);
+            addFilePath(isTestDir ? directorySet.getTestResourceDirectories() : directorySet.getResourceDirectories(), resourcesSrcDir);
           }
         }
       }
@@ -166,48 +166,11 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     File projectDir = project.getProjectDir();
     IdeaContentRootImpl contentRoot = new IdeaContentRootImpl(projectDir);
 
-    final Set<String> ideaSourceDirectories = new HashSet<String>();
-    final Set<String> ideaTestDirectories = new HashSet<String>();
-    final Set<String> ideaGeneratedDirectories = new HashSet<String>();
-    final Set<File> excludeDirectories = new HashSet<File>();
 
-    enrichDataFromIdeaPlugin(project, excludeDirectories, ideaSourceDirectories, ideaTestDirectories, ideaGeneratedDirectories);
+    final IdeaModuleDirectorySet ideaPluginConfig = extractDataFromIdeaPlugin(project);
 
-    if (ideaSourceDirectories.isEmpty()) {
-      sourceDirectories.clear();
-      resourceDirectories.clear();
-    }
-    if (ideaTestDirectories.isEmpty()) {
-      testDirectories.clear();
-      testResourceDirectories.clear();
-    }
-
-    ideaSourceDirectories.removeAll(resourceDirectories);
-    sourceDirectories.removeAll(ideaTestDirectories);
-    sourceDirectories.addAll(ideaSourceDirectories);
-    ideaTestDirectories.removeAll(testResourceDirectories);
-    testDirectories.addAll(ideaTestDirectories);
-
-    // ensure disjoint directories with different type
-    resourceDirectories.removeAll(sourceDirectories);
-    testDirectories.removeAll(sourceDirectories);
-    testResourceDirectories.removeAll(testDirectories);
-
-    for (String javaDir : sourceDirectories) {
-      contentRoot.addSourceDirectory(new IdeaSourceDirectoryImpl(new File(javaDir), ideaGeneratedDirectories.contains(javaDir)));
-    }
-    for (String testDir : testDirectories) {
-      contentRoot.addTestDirectory(new IdeaSourceDirectoryImpl(new File(testDir), ideaGeneratedDirectories.contains(testDir)));
-    }
-    for (String resourceDir : resourceDirectories) {
-      contentRoot.addResourceDirectory(new IdeaSourceDirectoryImpl(new File(resourceDir)));
-    }
-    for (String testResourceDir : testResourceDirectories) {
-      contentRoot.addTestResourceDirectory(new IdeaSourceDirectoryImpl(new File(testResourceDir)));
-    }
-    for (File excludeDir : excludeDirectories) {
-      contentRoot.addExcludeDirectory(excludeDir);
-    }
+    directorySet.mergeFrom(ideaPluginConfig);
+    directorySet.fill(contentRoot);
 
     moduleVersionModel.setContentRoots(Collections.<ExtIdeaContentRoot>singleton(contentRoot));
     moduleVersionModel.setCompilerOutput(compilerOutput);
@@ -218,7 +181,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>();
     for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
       Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles();
-      artifactsByConfiguration.put(configurationEntry.getKey(), files);
+      artifactsByConfiguration.put(configurationEntry.getKey(), new LinkedHashSet<File>(files));
     }
     moduleVersionModel.setArtifactsByConfiguration(artifactsByConfiguration);
 
@@ -264,32 +227,142 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     }
   }
 
-  private static void enrichDataFromIdeaPlugin(Project project,
-                                               Set<File> excludeDirectories,
-                                               Set<String> javaDirectories,
-                                               Set<String> testDirectories,
-                                               Set<String> ideaGeneratedDirectories) {
+  private static IdeaModuleDirectorySet extractDataFromIdeaPlugin(Project project) {
+    final IdeaModuleDirectorySet result = new IdeaModuleDirectorySet();
 
-    IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
-    if (ideaPlugin == null) return;
-
-    IdeaModel ideaModel = ideaPlugin.getModel();
-    if (ideaModel == null || ideaModel.getModule() == null) return;
-
-    for (File excludeDir : ideaModel.getModule().getExcludeDirs()) {
-      excludeDirectories.add(excludeDir);
-    }
-    for (File file : ideaModel.getModule().getSourceDirs()) {
-      javaDirectories.add(file.getPath());
-    }
-    for (File file : ideaModel.getModule().getTestSourceDirs()) {
-      testDirectories.add(file.getPath());
+    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
+    if (ideaPlugin == null) {
+      return result;
     }
 
-    if(GradleVersion.current().compareTo(GradleVersion.version("2.2")) >=0) {
-      for (File file : ideaModel.getModule().getGeneratedSourceDirs()) {
-        ideaGeneratedDirectories.add(file.getPath());
+    final IdeaModel ideaModel = ideaPlugin.getModel();
+    if (ideaModel == null) {
+      return result;
+    }
+
+    final IdeaModule module = ideaModel.getModule();
+    if (module == null) {
+      return result;
+    }
+
+    result.getExcludedDirectories().addAll(module.getExcludeDirs());
+    for (File file : module.getSourceDirs()) {
+      result.getSourceDirectories().add(file.getPath());
+    }
+
+    for (File file : module.getTestSourceDirs()) {
+      result.getTestDirectories().add(file.getPath());
+    }
+
+    if (is50OrBetter) {
+      for (File file : module.getResourceDirs()) {
+        result.getResourceDirectories().add(file.getPath());
       }
+
+      for (File file : module.getTestResourceDirs()) {
+        result.getTestResourceDirectories().add(file.getPath());
+      }
+    }
+
+    if (is22orBetter) {
+      for (File file : module.getGeneratedSourceDirs()) {
+        result.getGeneratedSourceDirectories().add(file.getPath());
+      }
+    }
+
+    return result;
+  }
+}
+
+class IdeaModuleDirectorySet {
+  private final Set<String> sourceDirectories = new HashSet<String>();
+  private final Set<String> testDirectories = new HashSet<String>();
+  private final Set<String> resourceDirectories = new HashSet<String>();
+  private final Set<String> testResourceDirectories = new HashSet<String>();
+  private final Set<String> generatedSourceDirectories = new HashSet<String>();
+  private final Set<File> excludedDirectories = new HashSet<File>();
+
+  public Set<String> getSourceDirectories() {
+    return sourceDirectories;
+  }
+
+  public Set<String> getTestDirectories() {
+    return testDirectories;
+  }
+
+  public Set<String> getResourceDirectories() {
+    return resourceDirectories;
+  }
+
+  public Set<String> getTestResourceDirectories() {
+    return testResourceDirectories;
+  }
+
+  public Set<String> getGeneratedSourceDirectories() {
+    return generatedSourceDirectories;
+  }
+
+  public Set<File> getExcludedDirectories() {
+    return excludedDirectories;
+  }
+
+  public void mergeFrom(IdeaModuleDirectorySet other) {
+    if (ModuleExtendedModelBuilderImpl.is50OrBetter) {
+      if (other.getSourceDirectories().isEmpty()) {
+        sourceDirectories.clear();
+      }
+      if (other.getResourceDirectories().isEmpty()) {
+        resourceDirectories.clear();
+      }
+      if (other.getTestDirectories().isEmpty()) {
+        testDirectories.clear();
+      }
+      if (other.getTestResourceDirectories().isEmpty()) {
+        testResourceDirectories.clear();
+      }
+    } else {
+      if (other.getSourceDirectories().isEmpty()) {
+        sourceDirectories.clear();
+        resourceDirectories.clear();
+      }
+      if (other.getTestDirectories().isEmpty()) {
+        testDirectories.clear();
+        testResourceDirectories.clear();
+      }
+    }
+
+    final Set<String> otherSourceDirectories = new HashSet<String>(other.getSourceDirectories());
+    final Set<String> otherTestDirectories = new HashSet<String>(other.getTestDirectories());
+    otherSourceDirectories.removeAll(resourceDirectories);
+    sourceDirectories.removeAll(otherTestDirectories);
+    sourceDirectories.addAll(otherSourceDirectories);
+    otherTestDirectories.removeAll(testResourceDirectories);
+    testDirectories.addAll(otherTestDirectories);
+
+    // ensure disjoint directories with different type
+    resourceDirectories.removeAll(sourceDirectories);
+    testDirectories.removeAll(sourceDirectories);
+    testResourceDirectories.removeAll(testDirectories);
+
+    generatedSourceDirectories.addAll(other.getGeneratedSourceDirectories());
+    excludedDirectories.addAll(other.getExcludedDirectories());
+  }
+
+  public void fill(IdeaContentRootImpl contentRoot) {
+    for (String javaDir : sourceDirectories) {
+      contentRoot.addSourceDirectory(new IdeaSourceDirectoryImpl(new File(javaDir), generatedSourceDirectories.contains(javaDir)));
+    }
+    for (String testDir : testDirectories) {
+      contentRoot.addTestDirectory(new IdeaSourceDirectoryImpl(new File(testDir), generatedSourceDirectories.contains(testDir)));
+    }
+    for (String resourceDir : resourceDirectories) {
+      contentRoot.addResourceDirectory(new IdeaSourceDirectoryImpl(new File(resourceDir)));
+    }
+    for (String testResourceDir : testResourceDirectories) {
+      contentRoot.addTestResourceDirectory(new IdeaSourceDirectoryImpl(new File(testResourceDir)));
+    }
+    for (File excludeDir : excludedDirectories) {
+      contentRoot.addExcludeDirectory(excludeDir);
     }
   }
 }

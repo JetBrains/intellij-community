@@ -6,11 +6,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -18,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -28,12 +28,11 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.UIBundle;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,18 +42,16 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -132,7 +129,7 @@ public abstract class DialogWrapper {
   /**
    * The shared instance of default border for dialog's content pane.
    */
-  public static final Border ourDefaultBorder = new EmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
+  public static final Border ourDefaultBorder = new JBEmptyBorder(UIUtil.PANEL_REGULAR_INSETS);
 
   private float myHorizontalStretch = 1.0f;
   private float myVerticalStretch = 1.0f;
@@ -194,9 +191,6 @@ public abstract class DialogWrapper {
   private ErrorText myErrorText;
 
   private final Alarm myErrorTextAlarm = new Alarm();
-
-  public static final Color BALLOON_ERROR_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
-  public static final Color BALLOON_ERROR_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
 
   public static final Color BALLOON_WARNING_BORDER = new JBColor(new Color(0xcca869), new Color(0x4e452f));
   public static final Color BALLOON_WARNING_BACKGROUND = new JBColor(new Color(0xf9f4ee), new Color(0x594e32));
@@ -362,8 +356,9 @@ public abstract class DialogWrapper {
     UIUtil.invokeLaterIfNeeded(() -> IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable));
   }
 
+  @SuppressWarnings("WeakerAccess")
   protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
-    boolean updateNeeded = Registry.is("ide.inplace.errors.balloon") ?
+    boolean updateNeeded = Registry.is("ide.inplace.validation.tooltip") ?
                            !myInfo.equals(info) : !myErrorText.isTextSet(info);
 
     if (updateNeeded) {
@@ -371,7 +366,7 @@ public abstract class DialogWrapper {
         if (myDisposed) return;
         setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(info.isEmpty() || info.stream().noneMatch(info1 -> info1.disableOk));
+        getOKAction().setEnabled(info.isEmpty() || info.stream().allMatch(info1 -> info1.okEnabled));
       });
     }
   }
@@ -451,7 +446,8 @@ public abstract class DialogWrapper {
   }
 
   private static boolean isRemoveHelpButton() {
-    return SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration") ||
+    return !ApplicationInfo.contextHelpAvailable() ||
+           SystemInfo.isWindows && (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) && Registry.is("ide.win.frame.decoration") ||
            Registry.is("ide.remove.help.button.from.dialogs");
   }
 
@@ -464,19 +460,15 @@ public abstract class DialogWrapper {
    */
   protected JComponent createSouthPanel() {
     List<Action> actions = ContainerUtil.filter(createActions(), Condition.NOT_NULL);
-    List<Action> leftSideActions = newArrayList(createLeftSideActions());
+    List<Action> leftSideActions = ContainerUtil.filter(createLeftSideActions(), Condition.NOT_NULL);
 
-    if (!ApplicationInfo.contextHelpAvailable()) {
-      actions.remove(getHelpAction());
-    }
-
-    boolean hasHelpToMoveToLeftSide = false;
+    Action helpAction = getHelpAction();
+    boolean addHelpToLeftSide = false;
     if (isRemoveHelpButton()) {
-      actions.remove(getHelpAction());
+      actions.remove(helpAction);
     }
-    else if (isMoveHelpButtonLeft() && actions.contains(getHelpAction())) {
-      hasHelpToMoveToLeftSide = true;
-      actions.remove(getHelpAction());
+    else if (isMoveHelpButtonLeft() && actions.remove(helpAction) && !leftSideActions.contains(helpAction)) {
+      addHelpToLeftSide = true;
     }
 
     if (SystemInfo.isMac) {
@@ -493,16 +485,12 @@ public abstract class DialogWrapper {
         actions.add(getOKAction());
       }
 
-      // move cancel action to the left
+      // move cancel action to the left of OK action, if present, and to the leftmost position otherwise
       int cancelNdx = actions.indexOf(getCancelAction());
       if (cancelNdx > 0) {
         actions.remove(getCancelAction());
-        actions.add(0, getCancelAction());
+        actions.add(okNdx < 0 ? 0 : actions.size() - 1, getCancelAction());
       }
-    }
-    else if (UIUtil.isUnderGTKLookAndFeel() && actions.contains(getHelpAction())) {
-      leftSideActions.add(getHelpAction());
-      actions.remove(getHelpAction());
     }
 
     if (!UISettings.getShadowInstance().getAllowMergeButtons()) {
@@ -510,21 +498,20 @@ public abstract class DialogWrapper {
       leftSideActions = flattenOptionsActions(leftSideActions);
     }
 
-
     List<JButton> leftSideButtons = createButtons(leftSideActions);
     List<JButton> rightSideButtons = createButtons(actions);
 
+    int index = 0;
     myButtonMap.clear();
     for (JButton button : ContainerUtil.concat(leftSideButtons, rightSideButtons)) {
       myButtonMap.put(button.getAction(), button);
       if (button instanceof JBOptionButton) {
         myOptionsButtons.add((JBOptionButton)button);
       }
+      TouchbarDataKeys.putDialogButtonDescriptor(button, index++).setMainGroup(index >= leftSideButtons.size());
     }
 
-    myPeer.setTouchBarButtons(rightSideButtons);
-
-    return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
+    return createSouthPanel(leftSideButtons, rightSideButtons, addHelpToLeftSide);
   }
 
   @NotNull
@@ -582,7 +569,7 @@ public abstract class DialogWrapper {
   @NotNull
   private JPanel createSouthPanel(@NotNull List<JButton> leftSideButtons,
                                   @NotNull List<JButton> rightSideButtons,
-                                  boolean hasHelpToMoveToLeftSide) {
+                                  boolean addHelpToLeftSide) {
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       public Color getBackground() {
@@ -630,7 +617,7 @@ public abstract class DialogWrapper {
     }
 
     JComponent helpButton = null;
-    if (hasHelpToMoveToLeftSide) {
+    if (addHelpToLeftSide) {
       helpButton = createHelpButton(insets);
     }
 
@@ -672,16 +659,21 @@ public abstract class DialogWrapper {
     return myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible() ? myCheckBoxDoNotShowDialog : null;
   }
 
+  private final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
+
   @NotNull
-  protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
-    int hgap = JBUI.scale(UIUtil.isUnderWin10LookAndFeel() ? 10 : 6);
+  protected JPanel createButtonsPanel(@NotNull List<? extends JButton> buttons) {
     JPanel buttonsPanel = new NonOpaquePanel();
     buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
 
     for (int i = 0; i < buttons.size(); i++) {
-      buttonsPanel.add(buttons.get(i));
+      JComponent button = buttons.get(i);
+      Insets insets = button.getInsets();
+
+      buttonsPanel.add(button);
       if (i < buttons.size() - 1) {
-        buttonsPanel.add(Box.createRigidArea(JBUI.size(hgap, 0)));
+        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUI.scale(8);
+        buttonsPanel.add(Box.createRigidArea(new Dimension(gap, 0)));
       }
     }
     UIUtil.tagComponentAs(buttonsPanel, "DialogWrapper.ButtonsPanel");
@@ -772,7 +764,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private static Pair<Integer, String> extractMnemonic(@Nullable String text) {
+  public static Pair<Integer, String> extractMnemonic(@Nullable String text) {
     if (text == null) return Pair.create(0, null);
 
     int mnemonic = 0;
@@ -1057,10 +1049,9 @@ public abstract class DialogWrapper {
   @NotNull
   protected Action[] createActions() {
     Action helpAction = getHelpAction();
-
-    return helpAction == myHelpAction && getHelpId() == null
-           ? new Action[]{getOKAction(), getCancelAction()}
-           : new Action[]{getOKAction(), getCancelAction(), helpAction};
+    return helpAction == myHelpAction && getHelpId() == null ?
+           new Action[]{getOKAction(), getCancelAction()} :
+           new Action[]{getOKAction(), getCancelAction(), helpAction};
   }
 
   @NotNull
@@ -1288,19 +1279,26 @@ public abstract class DialogWrapper {
     JComponent centerSection = new JPanel(new BorderLayout());
     root.add(centerSection, BorderLayout.CENTER);
 
-    root.setBorder(createContentPaneBorder());
-
     final JComponent n = createNorthPanel();
     if (n != null) {
       centerSection.add(n, BorderLayout.NORTH);
     }
 
-    final JComponent c = createCenterPanel();
-    if (c != null) {
-      centerSection.add(c, BorderLayout.CENTER);
+    final JComponent centerPanel = createCenterPanel();
+    if (centerPanel != null) {
+      centerSection.add(centerPanel, BorderLayout.CENTER);
+    }
+
+    boolean isVisualPaddingCompensatedOnComponentLevel = centerPanel == null || centerPanel.getClientProperty("isVisualPaddingCompensatedOnComponentLevel") == null;
+    if (isVisualPaddingCompensatedOnComponentLevel) {
+      // see comment about visual paddings in the MigLayoutBuilder.build
+      root.setBorder(createContentPaneBorder());
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
+    if (!isVisualPaddingCompensatedOnComponentLevel) {
+      southSection.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
+    }
     root.add(southSection, BorderLayout.SOUTH);
 
     southSection.add(myErrorText, BorderLayout.CENTER);
@@ -1324,14 +1322,14 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  LayoutManager createRootLayout() {
+  protected LayoutManager createRootLayout() {
     return new BorderLayout();
   }
 
   private static void installEnterHook(JComponent root, Disposable disposable) {
     new DumbAwareAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         if (owner instanceof JButton && owner.isEnabled()) {
           ((JButton)owner).doClick();
@@ -1339,7 +1337,7 @@ public abstract class DialogWrapper {
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         e.getPresentation().setEnabled(owner instanceof JButton && owner.isEnabled());
       }
@@ -1394,14 +1392,17 @@ public abstract class DialogWrapper {
     }
   }
 
+  @Deprecated
   protected boolean isNorthStrictedToPreferredSize() {
     return true;
   }
 
+  @Deprecated
   protected boolean isCenterStrictedToPreferredSize() {
     return false;
   }
 
+  @Deprecated
   protected boolean isSouthStrictedToPreferredSize() {
     return true;
   }
@@ -1499,22 +1500,16 @@ public abstract class DialogWrapper {
     myOKAction.putValue(Action.MNEMONIC_KEY, c);
   }
 
-  /**
-   * @return the help identifier or null if no help is available.
-   */
-  @Nullable @NonNls
+  protected final void setOKButtonTooltip(String text) {
+    myOKAction.putValue(Action.SHORT_DESCRIPTION, text);
+  }
+
+  /** Returns the help identifier, or {@code null} if no help is available. */
+  @Nullable
   protected String getHelpId() {
     return null;
   }
 
-  /**
-   * Invoked by default implementation of "Help" action.
-   * Note that the method does nothing if "Help" action isn't enabled.
-   * <p/>
-   * The default implementation shows the help page with id returned
-   * by {@link #getHelpId()}. If that method returns null,
-   * a message box with message "no help available" is shown.
-   */
   protected void doHelpAction() {
     if (myHelpAction.isEnabled()) {
       String helpId = getHelpId();
@@ -1522,8 +1517,7 @@ public abstract class DialogWrapper {
         HelpManager.getInstance().invokeHelp(helpId);
       }
       else {
-        Messages.showMessageDialog(getContentPane(), UIBundle.message("there.is.no.help.for.this.dialog.error.message"),
-                                   UIBundle.message("no.help.available.dialog.title"), Messages.getInformationIcon());
+        LOG.error("null topic; dialog=" + this.getClass() + "; action=" + getHelpAction().getClass());
       }
     }
   }
@@ -1700,7 +1694,7 @@ public abstract class DialogWrapper {
       ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
     }
 
-    if (ApplicationInfo.contextHelpAvailable() && !isProgressDialog()) {
+    if (!(isRemoveHelpButton() || isProgressDialog())) {
       ActionListener helpAction = e -> doHelpAction();
       ActionUtil.registerForEveryKeyboardShortcut(getRootPane(), helpAction, CommonShortcuts.getContextHelp());
       rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
@@ -1774,17 +1768,27 @@ public abstract class DialogWrapper {
   }
 
   private void logCloseDialogEvent(int exitCode) {
-    final String className = getClass().getName();
-    if (StringUtil.isNotEmpty(className)) {
-      FeatureUsageUiEvents.INSTANCE.logCloseDialog(className, exitCode);
+    final String dialogId = getLoggedDialogId();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(dialogId, exitCode, getClass());
     }
   }
 
   private void logShowDialogEvent() {
-    final String className = getClass().getName();
-    if (StringUtil.isNotEmpty(className)) {
-      FeatureUsageUiEvents.INSTANCE.logShowDialog(className);
+    final String dialogId = getLoggedDialogId();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
     }
+  }
+
+  /**
+   * The ID will be recorded in user event log, it can be used to understand how often this dialog is used.
+   *
+   * @return null if we shouldn't record the dialog.
+   */
+  @Nullable
+  protected String getLoggedDialogId() {
+    return getClass().getName();
   }
 
   /**
@@ -1798,7 +1802,7 @@ public abstract class DialogWrapper {
      * @param name the action name (see {@link Action#NAME})
      */
     protected DialogWrapperAction(@NotNull String name) {
-      putValue(NAME, name);
+      super(name);
     }
 
     /**
@@ -1843,12 +1847,12 @@ public abstract class DialogWrapper {
           IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
 
-        if (!Registry.is("ide.inplace.errors.balloon")) {
+        if (!Registry.is("ide.inplace.validation.tooltip")) {
           DialogEarthquakeShaker.shake(getPeer().getWindow());
         }
 
         startTrackingValidation();
-        if(infoList.stream().anyMatch(info1 -> info1.disableOk)) return;
+        if(infoList.stream().anyMatch(info1 -> !info1.okEnabled)) return;
       }
       doOKAction();
     }
@@ -1861,7 +1865,7 @@ public abstract class DialogWrapper {
   private void recordAction(String name, AWTEvent event) {
     if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
       String shortcut = getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event));
-      ActionsCollector.getInstance().record(name + " " + shortcut);
+      ActionsCollector.getInstance().record(name + " " + shortcut, getClass());
     }
   }
 
@@ -1907,7 +1911,7 @@ public abstract class DialogWrapper {
 
   private class HelpAction extends AbstractAction {
     private HelpAction() {
-      putValue(NAME, CommonBundle.getHelpButtonText());
+      super(CommonBundle.getHelpButtonText());
     }
 
     @Override
@@ -1937,90 +1941,58 @@ public abstract class DialogWrapper {
   protected void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
     if (myInfo.equals(info)) return;
 
+    Application application = ApplicationManager.getApplication();
+    boolean headless = application != null && application.isHeadlessEnvironment();
+
     myErrorTextAlarm.cancelAllRequests();
-    SwingUtilities.invokeLater(() -> {
+    Runnable clearErrorRunnable = () -> {
       if (myErrorText != null) {
         myErrorText.clearError();
       }
-    });
-
-    List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
-    if (Registry.is("ide.inplace.errors.outline")) {
-      corrected.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
-            forEach(vi -> vi.component.putClientProperty("JComponent.outline", null));
+    };
+    if (headless) {
+      clearErrorRunnable.run();
+    }
+    else {
+      SwingUtilities.invokeLater(clearErrorRunnable);
     }
 
-    if (Registry.is("ide.inplace.errors.balloon")) {
-      corrected.stream().filter(vi -> vi.component != null).forEach(vi -> {
-        vi.component.putClientProperty("JComponent.error.balloon.builder", null);
-
-        Balloon balloon = (Balloon)vi.component.getClientProperty("JComponent.error.balloon");
-        if (balloon != null && !balloon.isDisposed()) {
-          balloon.hide();
-        }
-
-        Component fc = getFocusable(vi.component);
-        if (fc != null) {
-          for (FocusListener fl : fc.getFocusListeners()) {
-            if (fl instanceof ErrorFocusListener) {
-              fc.removeFocusListener(fl);
-            }
-          }
-        }
-      });
+    List<ValidationInfo> corrected = ContainerUtil.filter(myInfo, vi -> !info.contains(vi));
+    if (Registry.is("ide.inplace.validation.tooltip")) {
+      corrected.stream().filter(vi -> vi.component != null).
+        map(vi -> ComponentValidator.getInstance(vi.component)).
+        forEach(c -> c.ifPresent(vi -> vi.updateInfo(null)));
     }
 
     myInfo = info;
 
-    if (Registry.is("ide.inplace.errors.outline")) {
-      myInfo.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
-        forEach(vi -> vi.component.putClientProperty("JComponent.outline", "error"));
-    }
+    if (Registry.is("ide.inplace.validation.tooltip") && !myInfo.isEmpty()) {
+      myInfo.forEach(vi -> {
+        if (vi.component != null) {
+          ComponentValidator v = ComponentValidator.getInstance(vi.component).
+            orElseGet(() -> new ComponentValidator(getDisposable()).installOn(vi.component));
 
-    if (Registry.is("ide.inplace.errors.balloon") && !myInfo.isEmpty()) {
-      for (ValidationInfo vi : myInfo) {
-        Component fc = getFocusable(vi.component);
-        if (fc != null && fc.isFocusable()) {
-          if (vi.component.getClientProperty("JComponent.error.balloon.builder") == null) {
-            JLabel label = new JLabel();
-            label.setHorizontalAlignment(SwingConstants.LEADING);
-            setErrorTipText(vi.component, label, vi.message);
-
-            BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(label)
-              .setDisposable(getDisposable())
-              .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
-              .setPointerSize(new JBDimension(17, 6))
-              .setCornerToPointerDistance(JBUI.scale(30))
-              .setHideOnKeyOutside(false)
-              .setHideOnClickOutside(false)
-              .setHideOnAction(false)
-              .setBorderColor(BALLOON_ERROR_BORDER)
-              .setFillColor(BALLOON_ERROR_BACKGROUND)
-              .setHideOnFrameResize(false)
-              .setRequestFocus(false)
-              .setAnimationCycle(100)
-              .setShadow(true);
-
-            vi.component.putClientProperty("JComponent.error.balloon.builder", balloonBuilder);
-
-            ErrorFocusListener fl = new ErrorFocusListener(label, vi.message, vi.component);
-            if (fc.hasFocus()) {
-              fl.showErrorTip();
-            }
-
-            fc.addFocusListener(fl);
-            Disposer.register(getDisposable(), () -> fc.removeFocusListener(fl));
+          if (v != null) {
+            v.updateInfo(vi);
+            return;
           }
-        } else {
-          SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
         }
-      }
-    } else if (!myInfo.isEmpty()) {
-      myErrorTextAlarm.addRequest(() -> {
-        for (ValidationInfo vi : myInfo) {
+
+        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
+      });
+    }
+    else if (!myInfo.isEmpty()) {
+      Runnable updateErrorTextRunnable = () -> {
+        for (ValidationInfo vi: myInfo) {
           myErrorText.appendError(vi.message);
         }
-      }, 300, null);
+      };
+      if (headless) {
+        updateErrorTextRunnable.run();
+      }
+      else {
+        myErrorTextAlarm.addRequest(updateErrorTextRunnable, 300, null);
+      }
     }
   }
 
@@ -2028,24 +2000,7 @@ public abstract class DialogWrapper {
    * Check if component is in error state validation-wise
    */
   protected boolean hasErrors(@NotNull JComponent component) {
-    return myInfo.stream().anyMatch(i -> component.equals(i.component));
-  }
-
-  private void setErrorTipText(JComponent component, JLabel label, String text) {
-    Insets insets = UIManager.getInsets("Balloon.error.textInsets");
-    int oneLineWidth = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), text);
-    int textWidth = getRootPane().getWidth() - component.getX() - insets.left - insets.right - JBUI.scale(30);
-    if (textWidth < JBUI.scale(90)) textWidth = JBUI.scale(90);
-    if (textWidth > oneLineWidth) textWidth = oneLineWidth;
-
-    String htmlText = String.format("<html><div width=%d>%s</div></html>", textWidth, text);
-    label.setText(htmlText);
-  }
-
-  private Component getFocusable(Component source) {
-    return source instanceof JComboBox && !((JComboBox)source).isEditable() ?
-           source :
-           UIUtil.uiTraverser(source).filter(c -> c instanceof JTextComponent && c.isFocusable()).toList().stream().findFirst().orElse(null);
+    return myInfo.stream().anyMatch(i -> component.equals(i.component) && !i.warning);
   }
 
   private void updateSize() {
@@ -2103,13 +2058,15 @@ public abstract class DialogWrapper {
     }.start();
   }
 
+  public static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
+
   private class ErrorText extends JPanel {
     private final JLabel myLabel = new JLabel();
     private final List<String> errors = new ArrayList<>();
 
     private ErrorText(int horizontalAlignment) {
       setLayout(new BorderLayout());
-      myLabel.setBorder(JBUI.Borders.empty(16, 13));
+      myLabel.setBorder(createErrorTextBorder());
       myLabel.setHorizontalAlignment(horizontalAlignment);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
@@ -2118,6 +2075,18 @@ public abstract class DialogWrapper {
       pane.getViewport().setBackground(null);
       pane.setOpaque(false);
       add(pane, BorderLayout.CENTER);
+    }
+
+    private Border createErrorTextBorder() {
+      Border border = createContentPaneBorder();
+      Insets contentInsets = border != null ? border.getBorderInsets(null) : JBUI.emptyInsets();
+      Insets baseInsets = JBUI.insets(16, 13);
+
+      //noinspection UseDPIAwareBorders: Insets are already scaled, so use raw version.
+      return new EmptyBorder(baseInsets.top,
+                             baseInsets.left > contentInsets.left ? baseInsets.left - contentInsets.left : 0,
+                             baseInsets.bottom > contentInsets.bottom ? baseInsets.bottom - contentInsets.bottom : 0,
+                             baseInsets.right > contentInsets.right ? baseInsets.right - contentInsets.right : 0);
     }
 
     private void clearError() {
@@ -2131,7 +2100,7 @@ public abstract class DialogWrapper {
     private void appendError(String text) {
       errors.add(text);
       myLabel.setBounds(0, 0, 0, 0);
-      StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(JBColor.RED) + "'>");
+      StringBuilder sb = new StringBuilder("<html><font color='#" + ColorUtil.toHex(ERROR_FOREGROUND_COLOR) + "'>");
       errors.forEach(error -> sb.append("<left>").append(error).append("</left><br/>"));
       sb.append("</font></html>");
       myLabel.setText(sb.toString());
@@ -2300,90 +2269,6 @@ public abstract class DialogWrapper {
 
     private void setValidationInfo(@NotNull List<ValidationInfo> info) {
       this.info = info;
-    }
-  }
-
-  private static class ErrorTipTracker extends PositionTracker<Balloon> {
-    private final int y;
-
-    private ErrorTipTracker(JComponent component, int y) {
-      super(component);
-      this.y = y;
-    }
-
-    @Override public RelativePoint recalculateLocation(Balloon balloon) {
-      int width = getComponent().getWidth();
-      int delta = width < JBUI.scale(120) ? width / 2 : JBUI.scale(60);
-      return new RelativePoint(getComponent(), new Point(delta, y));
-    }
-  }
-
-  private class ErrorFocusListener implements FocusListener {
-    private final JLabel     label;
-    private final String     text;
-    private final JComponent component;
-
-    private ErrorFocusListener(JLabel label, String text, JComponent component) {
-      this.label = label;
-      this.text = text;
-      this.component = component;
-    }
-
-    @Override public void focusGained(FocusEvent e) {
-      Balloon b = (Balloon)component.getClientProperty("JComponent.error.balloon");
-      if (b == null || b.isDisposed()) {
-        showErrorTip();
-      }
-    }
-
-    @Override public void focusLost(FocusEvent e) {
-      Balloon b = (Balloon)component.getClientProperty("JComponent.error.balloon");
-      if (b != null && !b.isDisposed()) {
-        b.hide();
-      }
-    }
-
-    private void showErrorTip() {
-      BalloonBuilder balloonBuilder = (BalloonBuilder)component.getClientProperty("JComponent.error.balloon.builder");
-      if (balloonBuilder == null) return;
-
-      Balloon balloon = balloonBuilder.createBalloon();
-
-      ComponentListener rl = new ComponentAdapter() {
-        @Override public void componentResized(ComponentEvent e) {
-          if (!balloon.isDisposed()) {
-            setErrorTipText(component, label, text);
-            balloon.revalidate();
-          }
-        }
-      };
-
-      balloon.addListener(new JBPopupListener() {
-        @Override public void onClosed(LightweightWindowEvent event) {
-          JRootPane rootPane = getRootPane();
-          if (rootPane != null) {
-            rootPane.removeComponentListener(rl);
-          }
-
-          if (component.getClientProperty("JComponent.error.balloon") == event.asBalloon()) {
-            component.putClientProperty("JComponent.error.balloon", null);
-          }
-        }
-      });
-
-      getRootPane().addComponentListener(rl);
-
-      Point componentPos = SwingUtilities.convertPoint(component, 0, 0, getRootPane().getLayeredPane());
-      Dimension bSize = balloon.getPreferredSize();
-
-      Insets cInsets = component.getInsets();
-      int top =  cInsets != null ? cInsets.top : 0;
-      if (componentPos.y >= bSize.height + top) {
-        balloon.show(new ErrorTipTracker(component, 0), Balloon.Position.above);
-      } else {
-        balloon.show(new ErrorTipTracker(component, component.getHeight()), Balloon.Position.below);
-      }
-      component.putClientProperty("JComponent.error.balloon", balloon);
     }
   }
 

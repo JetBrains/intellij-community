@@ -51,6 +51,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -71,11 +72,9 @@ public final class ExecutionHandler {
     if (target == null) {
       return null;
     }
-    FutureResult<ProcessHandler> result = runBuildImpl((AntBuildFileBase)target.getModel().getBuildFile(),
-                                                       new String[]{target.getName()},
-                                                       null,
-                                                       dataContext,
-                                                       additionalProperties, antBuildListener, false);
+    FutureResult<ProcessHandler> result = runBuildImpl(
+      (AntBuildFileBase)target.getModel().getBuildFile(), target.getTargetNames(), null, dataContext, additionalProperties, antBuildListener, false
+    );
     if (result != null) {
       try {
         long l = System.currentTimeMillis();
@@ -92,11 +91,21 @@ public final class ExecutionHandler {
     return null;
   }
 
+
+  @Deprecated
+  public static void runBuild(final AntBuildFileBase buildFile,
+                              String[] targets,
+                              @Nullable final AntBuildMessageView buildMessageViewToReuse,
+                              final DataContext dataContext,
+                              List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
+    runBuild(buildFile, Arrays.asList(targets), buildMessageViewToReuse, dataContext, additionalProperties, antBuildListener);
+  }
+
   /**
    * @param antBuildListener should not be null. Use {@link com.intellij.lang.ant.config.AntBuildListener#NULL}
    */
   public static void runBuild(final AntBuildFileBase buildFile,
-                              String[] targets,
+                              List<String> targets,
                               @Nullable final AntBuildMessageView buildMessageViewToReuse,
                               final DataContext dataContext,
                               List<BuildFileProperty> additionalProperties, @NotNull final AntBuildListener antBuildListener) {
@@ -108,7 +117,7 @@ public final class ExecutionHandler {
    */
   @Nullable
   private static FutureResult<ProcessHandler> runBuildImpl(final AntBuildFileBase buildFile,
-                                                          String[] targets,
+                                                          List<String> targets,
                                                           @Nullable final AntBuildMessageView buildMessageViewToReuse,
                                                           final DataContext dataContext,
                                                           List<BuildFileProperty> additionalProperties,
@@ -130,7 +139,7 @@ public final class ExecutionHandler {
       messageView = prepareMessageView(buildMessageViewToReuse, buildFile, targets, additionalProperties);
       commandLine = builder.getCommandLine().toCommandLine();
       messageView.setBuildCommandLine(commandLine.getCommandLineString());
-      
+
       project.getMessageBus().syncPublisher(AntExecutionListener.TOPIC).beforeExecution(new AntBeforeExecutionEvent(buildFile, messageView));
     }
     catch (RunCanceledException e) {
@@ -165,6 +174,7 @@ public final class ExecutionHandler {
         listenerWrapper.buildFinished(AntBuildListener.ABORTED, 0);
       }
 
+      @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
           ProcessHandler handler = runBuild(indicator, messageView, buildFile, listenerWrapper, commandLine);
@@ -227,6 +237,7 @@ public final class ExecutionHandler {
     handler.addProcessListener(new ProcessAdapter() {
       private final StringBuilder myUnprocessedStdErr = new StringBuilder();
 
+      @Override
       public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
         if (outputType == ProcessOutputTypes.STDERR) {
           final String text = event.getText();
@@ -236,6 +247,7 @@ public final class ExecutionHandler {
         }
       }
 
+      @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         final long buildTime = System.currentTimeMillis() - startTime;
         checkCancelTask.cancel();
@@ -253,6 +265,7 @@ public final class ExecutionHandler {
             }
             if (!unprocessed.isEmpty()) {
               dispatcher.processOutput(new Printable() {
+                @Override
                 public void printOn(Printer printer) {
                   errorView.outputError(unprocessed, AntBuildMessageView.PRIORITY_ERR);
                 }
@@ -278,7 +291,7 @@ public final class ExecutionHandler {
     private final OSProcessHandler myProcessHandler;
     private volatile boolean myCanceled;
 
-    public CheckCancelTask(ProgressIndicator progressIndicator, OSProcessHandler process) {
+    CheckCancelTask(ProgressIndicator progressIndicator, OSProcessHandler process) {
       myProgressIndicator = progressIndicator;
       myProcessHandler = process;
     }
@@ -287,6 +300,7 @@ public final class ExecutionHandler {
       myCanceled = true;
     }
 
+    @Override
     public void run() {
       if (!myCanceled) {
         try {
@@ -306,7 +320,7 @@ public final class ExecutionHandler {
 
   private static AntBuildMessageView prepareMessageView(@Nullable AntBuildMessageView buildMessageViewToReuse,
                                                         AntBuildFileBase buildFile,
-                                                        String[] targets, List<BuildFileProperty> additionalProperties) throws RunCanceledException {
+                                                        List<String> targets, List<BuildFileProperty> additionalProperties) throws RunCanceledException {
     AntBuildMessageView messageView;
     if (buildMessageViewToReuse != null) {
       messageView = buildMessageViewToReuse;

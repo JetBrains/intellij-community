@@ -62,7 +62,7 @@ public class SpecialAnnotationsUtil {
   public static JPanel createSpecialAnnotationsListControl(final List<String> list,
                                                            final String borderTitle,
                                                            final boolean acceptPatterns,
-                                                           final Condition<PsiClass> isApplicable) {
+                                                           final Condition<? super PsiClass> isApplicable) {
     @SuppressWarnings("Convert2Diamond")
     SortedListModel<String> listModel = new SortedListModel<String>(Comparator.naturalOrder());
     for (String s : list) {
@@ -96,8 +96,8 @@ public class SpecialAnnotationsUtil {
 
   public static JPanel createSpecialAnnotationsListControl(final String borderTitle,
                                                            final boolean acceptPatterns,
-                                                           final Condition<PsiClass> isApplicable,
-                                                           final SortedListModel<String> listModel) {
+                                                           final Condition<? super PsiClass> isApplicable,
+                                                           final SortedListModel<? super String> listModel) {
     final JList injectionList = new JBList(listModel);
 
     injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -129,7 +129,7 @@ public class SpecialAnnotationsUtil {
         .addExtraAction(
           new AnActionButton(InspectionsBundle.message("special.annotations.list.annotation.pattern"), IconUtil.getAddPatternIcon()) {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               String selectedPattern = Messages.showInputDialog(InspectionsBundle.message("special.annotations.list.annotation.pattern"),
                                                                 InspectionsBundle.message("special.annotations.list.annotation.pattern"),
                                                                 Messages.getQuestionIcon());

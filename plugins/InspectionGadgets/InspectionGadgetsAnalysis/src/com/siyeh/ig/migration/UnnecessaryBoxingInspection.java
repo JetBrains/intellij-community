@@ -245,8 +245,15 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         boxingExpression = (PsiExpression)parent;
         parent = parent.getParent();
       }
-      if (parent instanceof PsiExpressionStatement || parent instanceof PsiReferenceExpression) {
+      if (parent instanceof PsiExpressionStatement ||
+          parent instanceof PsiReferenceExpression ||
+          parent instanceof PsiSynchronizedStatement) {
         return true;
+      }
+      else if (parent instanceof PsiVariable) {
+        PsiTypeElement typeElement = ((PsiVariable)parent).getTypeElement();
+        // Inferred type may change if boxing is removed; if it's possible
+        if (typeElement != null && typeElement.isInferredType()) return true;
       }
       else if (parent instanceof PsiTypeCastExpression) {
         final PsiTypeCastExpression castExpression = (PsiTypeCastExpression)parent;

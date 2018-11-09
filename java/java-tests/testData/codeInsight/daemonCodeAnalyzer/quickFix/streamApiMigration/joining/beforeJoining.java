@@ -11,6 +11,7 @@ public class Test {
         sb.append(s.trim());
       }
     }
-    return sb.length() == 0 ? null : sb.toString();
+    return sb.length() == 0 ? null : sb.toString//comment
+      ();
   }
 }

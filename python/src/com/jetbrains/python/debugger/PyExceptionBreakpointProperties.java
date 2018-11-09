@@ -76,6 +76,7 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     return myCondition;
   }
 
+  @Override
   public void setCondition(@Nullable String condition) {
     myCondition = condition;
   }
@@ -85,10 +86,12 @@ public class PyExceptionBreakpointProperties extends ExceptionBreakpointProperti
     return myLogExpression;
   }
 
+  @Override
   public void setLogExpression(@Nullable String logExpression) {
     myLogExpression = logExpression;
   }
 
+  @Override
   public String getExceptionBreakpointId() {
     return "python-" + myException;
   }

@@ -143,7 +143,7 @@ public class JavaFxAnnotator implements Annotator {
     private final ColorIcon myIcon;
     private final PsiElement myElement;
 
-    public ColorIconRenderer(ColorIcon icon, PsiElement element) {
+    ColorIconRenderer(ColorIcon icon, PsiElement element) {
       myIcon = icon;
       myElement = element;
     }
@@ -175,7 +175,7 @@ public class JavaFxAnnotator implements Annotator {
     public AnAction getClickAction() {
       return new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
           if (editor != null) {
             XmlChooseColorIntentionAction.chooseColor(editor.getComponent(), myElement);

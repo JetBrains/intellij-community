@@ -49,6 +49,7 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
     }
   }
 
+  @Override
   @Nullable
   public String getTooltip() {
     return getUserObject().getDescription();

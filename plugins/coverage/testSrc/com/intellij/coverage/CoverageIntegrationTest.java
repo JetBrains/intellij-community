@@ -15,6 +15,7 @@
  */
 package com.intellij.coverage;
 
+import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -32,6 +33,7 @@ import java.util.Map;
 /**
  * @author yole
  */
+@ExcludeFromTestDiscovery
 public class CoverageIntegrationTest extends ModuleTestCase {
   private static String getTestDataPath() {
     return PluginPathManager.getPluginHomePath("coverage") + "/testData/simple";
@@ -92,22 +94,27 @@ public class CoverageIntegrationTest extends ModuleTestCase {
     private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfo =
       new HashMap<>();
 
+    @Override
     public void annotateSourceDirectory(VirtualFile virtualFile, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, Module module) {
       myDirectoryCoverage.put(virtualFile, packageCoverageInfo);
     }
 
+    @Override
     public void annotateTestDirectory(VirtualFile virtualFile, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, Module module) {
       myDirectoryCoverage.put(virtualFile, packageCoverageInfo);
     }
 
+    @Override
     public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
       myPackageCoverage.put(packageQualifiedName, packageCoverageInfo);
     }
 
+    @Override
     public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo, boolean flatten) {
       (flatten ? myFlatPackageCoverage : myPackageCoverage).put(packageQualifiedName, packageCoverageInfo);
     }
 
+    @Override
     public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
       myClassCoverageInfo.put(classQualifiedName, classCoverageInfo);
     }

@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import org.junit.Test
 
 class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
@@ -11,15 +12,17 @@ class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
   fun createGradleAndConfigureKotlinJvmOldVersion1231() {
     KotlinTestProperties.kotlin_artifact_version = "1.2.31"
     testCreateGradleAndConfigureKotlin(
-      kotlinKind = KotlinKind.JVM,
-      project = kotlinLibs[KotlinKind.JVM]!!.gradleGProject,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
+      project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
       expectedFacet = FacetStructure(
         targetPlatform = TargetPlatform.JVM18,
         languageVersion = LanguageVersion.L12,
         apiVersion = LanguageVersion.L12,
         jvmOptions = FacetStructureJVM()
       ),
-      gradleOptions = BuildGradleOptions().build()
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName
+      )
     )
   }
 
@@ -28,15 +31,17 @@ class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
   fun createGradleAndConfigureKotlinJvmOldVersion1161() {
     KotlinTestProperties.kotlin_artifact_version = "1.1.61"
     testCreateGradleAndConfigureKotlin(
-      kotlinKind = KotlinKind.JVM,
-      project = kotlinLibs[KotlinKind.JVM]!!.gradleGProject,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
+      project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
       expectedFacet = FacetStructure(
         targetPlatform = TargetPlatform.JVM18,
         languageVersion = LanguageVersion.L11,
         apiVersion = LanguageVersion.L11,
         jvmOptions = FacetStructureJVM()
       ),
-      gradleOptions = BuildGradleOptions().build()
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName
+      )
     )
   }
 }

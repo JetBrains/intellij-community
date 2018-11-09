@@ -63,6 +63,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     myJavaDocPolicy = javaDocPolicy;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new ExtractSuperClassViewDescriptor(myTargetDirectory, myClass, myMemberInfos);
@@ -102,6 +103,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     return false;
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     PsiReference[] refs = ReferencesSearch.search(myClass, GlobalSearchScope.projectScope(myProject), false).toArray(
@@ -122,6 +124,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     try {
       final String superClassName = myClass.getName();
@@ -173,6 +176,7 @@ public abstract class ExtractSuperBaseProcessor extends TurnRefsToSuperProcessor
     }
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("extract.subclass.command");

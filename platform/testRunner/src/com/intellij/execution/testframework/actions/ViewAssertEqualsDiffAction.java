@@ -38,11 +38,13 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeViewAction, DumbAware {
   @NonNls public static final String ACTION_ID = "openAssertEqualsDiff";
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     if (!e.getPresentation().isVisible()) {
       return;
     }
@@ -55,14 +57,10 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
   public static boolean openDiff(DataContext context, @Nullable DiffHyperlink currentHyperlink) {
     final AbstractTestProxy testProxy = AbstractTestProxy.DATA_KEY.getData(context);
     final Project project = CommonDataKeys.PROJECT.getData(context);
-    if (testProxy != null) {
-      final List<DiffHyperlink> providers = collectAvailableProviders(TestTreeView.MODEL_DATA_KEY.getData(context));
-      int index = currentHyperlink != null ? providers.indexOf(currentHyperlink) : -1;
-
-      DiffHyperlink diffViewerProvider = testProxy.getDiffViewerProvider();
-      if (index == -1 && diffViewerProvider != null) index = providers.indexOf(diffViewerProvider);
-
-      new MyDiffWindow(project, providers, Math.max(0, index)).show();
+    if (testProxy != null && currentHyperlink == null) {
+      showDiff(testProxy,
+               TestTreeView.MODEL_DATA_KEY.getData(context),
+               (providers, index) -> new MyDiffWindow(project, providers, index).show());
       return true;
     }
     if (currentHyperlink != null) {
@@ -70,6 +68,17 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
       return true;
     }
     return false;
+  }
+
+  public static void showDiff(AbstractTestProxy testProxy,
+                              TestFrameworkRunningModel model,
+                              BiConsumer<? super List<DiffHyperlink>, ? super Integer> showFunction) {
+    final List<DiffHyperlink> providers = collectAvailableProviders(model);
+
+    DiffHyperlink diffViewerProvider = testProxy.getLeafDiffViewerProvider();
+    int index = diffViewerProvider != null ? providers.indexOf(diffViewerProvider) : -1;
+
+    showFunction.accept(providers, Math.max(0, index));
   }
 
   private static List<DiffHyperlink> collectAvailableProviders(TestFrameworkRunningModel model) {
@@ -84,18 +93,8 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     return providers;
   }
 
-  private static boolean hasDiffProvider(AbstractTestProxy root) {
-    DiffHyperlink provider = root.getDiffViewerProvider();
-    if (provider != null) return true;
-    if (root.isDefect()) {
-      for (AbstractTestProxy child : root.getChildren()) {
-        if (hasDiffProvider(child)) return true;
-      }
-    }
-    return false;
-  }
-
-  public void update(final AnActionEvent e) {
+  @Override
+  public void update(@NotNull final AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     if (e.getProject() == null) {
       presentation.setEnabledAndVisible(false);
@@ -104,7 +103,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     DataContext context = e.getDataContext();
     AbstractTestProxy test = AbstractTestProxy.DATA_KEY.getData(context);
     TestFrameworkRunningModel model = TestTreeView.MODEL_DATA_KEY.getData(context);
-    boolean visible = test != null && model != null && hasDiffProvider(model.getRoot());
+    boolean visible = test != null && model != null && test.getLeafDiffViewerProvider() != null;
 
     presentation.setEnabled(test != null);
     presentation.setVisible(visible);
@@ -114,11 +113,11 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     @NotNull private final List<DiffHyperlink> myRequests;
     private final int myIndex;
 
-    public MyDiffWindow(@Nullable Project project, @NotNull DiffHyperlink request) {
+    MyDiffWindow(@Nullable Project project, @NotNull DiffHyperlink request) {
       this(project, Collections.singletonList(request), 0);
     }
 
-    public MyDiffWindow(@Nullable Project project, @NotNull List<DiffHyperlink> requests, int index) {
+    MyDiffWindow(@Nullable Project project, @NotNull List<DiffHyperlink> requests, int index) {
       super(project, DiffDialogHints.DEFAULT);
       myRequests = requests;
       myIndex = index;
@@ -131,7 +130,7 @@ public class ViewAssertEqualsDiffAction extends AnAction implements TestTreeView
     }
 
     private class MyTestDiffRequestProcessor extends TestDiffRequestProcessor {
-      public MyTestDiffRequestProcessor(@Nullable Project project, @NotNull List<DiffHyperlink> requests, int index) {
+      MyTestDiffRequestProcessor(@Nullable Project project, @NotNull List<DiffHyperlink> requests, int index) {
         super(project, requests, index);
         putContextUserData(DiffUserDataKeys.DIALOG_GROUP_KEY, "#com.intellij.execution.junit2.states.ComparisonFailureState$DiffDialog");
       }

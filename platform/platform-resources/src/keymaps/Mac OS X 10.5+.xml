@@ -82,7 +82,6 @@
   <action id="EditorPreviousWordWithSelection">
     <keyboard-shortcut first-keystroke="alt shift LEFT"/>
   </action>
-  <action id="RunGc"/>
   <action id="RunClass"/>
 
   <action id="GotoBookmark0">
@@ -242,7 +241,6 @@
     <keyboard-shortcut first-keystroke="meta shift B"/>
     <keyboard-shortcut first-keystroke="control shift B"/>
     <mouse-shortcut keystroke="meta shift button1"/>
-    <mouse-shortcut keystroke="shift button2"/>
   </action>
 
   <action id="EditorJoinLines">
@@ -469,6 +467,10 @@
     <keyboard-shortcut first-keystroke="meta E"/>
   </action>
 
+  <action id="ChangesView.SetDefault">
+    <keyboard-shortcut first-keystroke="control SPACE" />
+  </action>
+
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="meta UP"/>
     <keyboard-shortcut first-keystroke="alt HOME"/>
@@ -498,6 +500,14 @@
     <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
     <keyboard-shortcut first-keystroke="control RIGHT"/>
   </action>
+  <action id="Diff.PrevChange">
+    <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
+    <keyboard-shortcut first-keystroke="control LEFT"/>
+  </action>
+  <action id="Diff.NextChange">
+    <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
+    <keyboard-shortcut first-keystroke="control RIGHT"/>
+  </action>
   <action id="EditorCodeBlockStart">
     <keyboard-shortcut first-keystroke="meta alt OPEN_BRACKET"/>
   </action>
@@ -522,11 +532,11 @@
   </action>
 
   <action id="NextProjectWindow">
-    <keyboard-shortcut first-keystroke="meta BACK_QUOTE"/>
+    <keyboard-shortcut first-keystroke="meta alt BACK_QUOTE"/>
   </action>
 
   <action id="PreviousProjectWindow">
-    <keyboard-shortcut first-keystroke="meta shift BACK_QUOTE"/>
+    <keyboard-shortcut first-keystroke="meta shift alt BACK_QUOTE"/>
   </action>
 
   <action id="EditorCutLineEnd">
@@ -618,5 +628,21 @@
 
   <action id="GotoPrevElementUnderCaretUsage">
     <keyboard-shortcut first-keystroke="ctrl alt UP"/>
+  </action>
+
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="alt shift F5"/>
+  </action>
+  <action id="ShowFilterPopup">
+    <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
+
+  <action id="SearchEverywhere.NavigateToNextGroup">
+    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="meta DOWN"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToPrevGroup">
+    <keyboard-shortcut first-keystroke="PAGE_UP"/>
+    <keyboard-shortcut first-keystroke="meta UP"/>
   </action>
 </keymap>

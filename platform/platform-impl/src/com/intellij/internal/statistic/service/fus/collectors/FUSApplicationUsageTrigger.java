@@ -2,8 +2,12 @@
 package com.intellij.internal.statistic.service.fus.collectors;
 
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.components.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 @State(name = "FUSApplicationUsageTrigger",
   storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
@@ -18,6 +22,11 @@ final public class FUSApplicationUsageTrigger extends AbstractUsageTrigger<Appli
       }
     }
     return null;
+  }
+
+  @Override
+  protected Map<String, Object> createEventLogData(@Nullable FUSUsageContext context) {
+    return StatisticsUtilKt.createData(null, context);
   }
 
   @Override

@@ -22,6 +22,7 @@ namespace local = ""
 		&	img.attrs.width?
 		&	img.attrs.usemap?
 		&	img.attrs.ismap?
+		&	img.attrs.decoding?
 		&	img.attrs.border? # obsolete
 		&	referrerpolicy?
 		&	embedded.content.attrs.crossorigin?
@@ -60,6 +61,13 @@ namespace local = ""
 		img.attrs.ismap =
 			attribute ismap {
 				w:string "ismap" | w:string ""
+			}
+		img.attrs.decoding =
+			attribute decoding {
+				(	string "sync"
+				|	string "async"
+				|	string "auto"
+				)
 			}
 		img.attrs.border =
 			attribute border {
@@ -129,7 +137,7 @@ namespace local = ""
 		&	embed.attrs.height?
 		&	embed.attrs.width?
 		&	embed.attrs.other*
-		&	(	common.attrs.aria.landmark.application
+		&	(	common.attrs.aria.role.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.img
 			|	common.attrs.aria.role.presentation
@@ -354,7 +362,7 @@ namespace local = ""
 		&	object.attrs.usemap?
 		&	object.attrs.name?
 		&	common-form.attrs.form?
-		&	(	common.attrs.aria.landmark.application
+		&	(	common.attrs.aria.role.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.img
 			|	common.attrs.aria.role.presentation
@@ -438,8 +446,9 @@ namespace local = ""
 		&	iframe.attrs.allowfullscreen?
 		&	iframe.attrs.allowpaymentrequest?
 		&	iframe.attrs.allowusermedia?
+		&	iframe.attrs.allow?
 		&	referrerpolicy?
-		&	(	common.attrs.aria.landmark.application
+		&	(	common.attrs.aria.role.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.img
 			|	common.attrs.aria.role.presentation
@@ -481,6 +490,10 @@ namespace local = ""
 			attribute allowusermedia {
 				w:string "allowusermedia" | w:string ""
 			} & v5only
+		iframe.attrs.allow =
+			attribute allow {
+				common.data.feature-policy
+			}
 	iframe.inner =
 		empty
 
@@ -534,8 +547,7 @@ namespace local = ""
 		&	shared-hyperlink.attrs.type?
 		&	area.attrs.shape?
 		&	(	common.attrs.aria.role.link
-			|	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
+			|	common.attrs.aria.implicit.link
 			)?
 		)
 		area.attrs.alt =

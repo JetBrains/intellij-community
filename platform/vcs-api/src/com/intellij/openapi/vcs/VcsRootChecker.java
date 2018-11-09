@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,9 +43,20 @@ public abstract class VcsRootChecker {
   public abstract VcsKey getSupportedVcs();
 
   /**
-   * Checks if the given path represents the VCS special directory, e.g. {@code .git}.
+   * Checks if the given directory looks like a VCS special directory, e.g. "{@code .git}".
+   * <br/><br/>
+   * This is a quick rough check. A more precise is done in {@link #isRoot(String)}.
    */
-  public boolean isVcsDir(@NotNull String path) {
+  public boolean isVcsDir(@NotNull String dirName) {
+    return false;
+  }
+
+  /**
+   * Check if the given directory is ignored in the given VCS root.
+   * Such situation can happen, when we detect a VCS root above the directory: in that case we should detect the root only if the directory
+   * is not ignored from that root (e.g. the root is the home directory, and the VCS is used for storing configs, ignoring everything else).
+   */
+  public boolean isIgnored(@NotNull VirtualFile root, @NotNull VirtualFile checkForIgnore) {
     return false;
   }
 }

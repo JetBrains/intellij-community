@@ -39,7 +39,7 @@ public class EnumConstantsUtil {
 
   public static PsiEnumConstant createEnumConstant(PsiClass enumClass, String constantName, PsiExpression initializerExpr) throws
                                                                                                                               IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(enumClass.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(enumClass.getProject());
     final String enumConstantText = initializerExpr != null ? constantName + "(" + initializerExpr.getText() + ")" : constantName;
     return elementFactory.createEnumConstantFromText(enumConstantText, enumClass);
   }

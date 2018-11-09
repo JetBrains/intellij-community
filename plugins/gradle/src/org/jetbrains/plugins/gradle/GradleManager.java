@@ -93,7 +93,6 @@ import static com.intellij.openapi.util.io.FileUtil.pathsEqual;
 
 /**
  * @author Denis Zhdanov
- * @since 4/10/13 1:19 PM
  */
 public class GradleManager
   implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, StartupActivity, ExternalSystemManager<
@@ -121,12 +120,12 @@ public class GradleManager
         // It's possible usecase when 'java' subsystem dependent plugins bundled with the non-java IDE using fat plugin distribution.
         // This approach can lead to unwanted/incompatible extensions to be loaded.
         // The workaround extensionsFilter should be removed when the IntelliJ java subsystem will become a regular plugin
-        // or those plugins will be fixed using the optional plugin dependency on 'org.jetbrains.plugins.gradle.java'
+        // or those plugins will be fixed using the optional plugin dependency on 'com.intellij.modules.gradle.java'
         boolean isJavaIde = ExternalSystemApiUtil.isJavaCompatibleIde();
-        if(!isJavaIde) {
+        if (!isJavaIde) {
           ExtensionPoint<GradleProjectResolverExtension> point =
             Extensions.getRootArea().getExtensionPoint(GradleProjectResolverExtension.EP_NAME);
-          if(point instanceof ExtensionPointImpl) {
+          if (point instanceof ExtensionPointImpl) {
             ((ExtensionPointImpl<GradleProjectResolverExtension>)point).removeUnloadableExtensions();
           }
         }
@@ -141,8 +140,8 @@ public class GradleManager
           isJavaIde || !javaIdeDependentExtensions.contains(ext.getClass().getName());
 
         Arrays.stream(GradleProjectResolverExtension.EP_NAME.getExtensions())
-              .filter(extensionsFilter)
-              .forEach(result::add);
+          .filter(extensionsFilter)
+          .forEach(result::add);
 
         ExternalSystemApiUtil.orderAwareSort(result);
         return result;
@@ -451,7 +450,6 @@ public class GradleManager
     GradleLocalSettings localSettings = GradleLocalSettings.getInstance(project);
     patchRecentTasks(adjustedPaths, localSettings);
     patchAvailableProjects(adjustedPaths, localSettings);
-    patchAvailableTasks(adjustedPaths, localSettings);
   }
 
   @Nullable
@@ -482,26 +480,6 @@ public class GradleManager
 
     settings.setLinkedProjectsSettings(correctedSettings);
     return adjustedPaths;
-  }
-
-  private static void patchAvailableTasks(@NotNull Map<String, String> adjustedPaths, @NotNull GradleLocalSettings localSettings) {
-    Map<String, Collection<ExternalTaskPojo>> adjustedAvailableTasks = ContainerUtilRt.newHashMap();
-    for (Map.Entry<String, Collection<ExternalTaskPojo>> entry : localSettings.getAvailableTasks().entrySet()) {
-      String newPath = adjustedPaths.get(entry.getKey());
-      if (newPath == null) {
-        adjustedAvailableTasks.put(entry.getKey(), entry.getValue());
-      }
-      else {
-        for (ExternalTaskPojo task : entry.getValue()) {
-          String newTaskPath = adjustedPaths.get(task.getLinkedExternalProjectPath());
-          if (newTaskPath != null) {
-            task.setLinkedExternalProjectPath(newTaskPath);
-          }
-        }
-        adjustedAvailableTasks.put(newPath, entry.getValue());
-      }
-    }
-    localSettings.setAvailableTasks(adjustedAvailableTasks);
   }
 
   private static void patchAvailableProjects(@NotNull Map<String, String> adjustedPaths, @NotNull GradleLocalSettings localSettings) {

@@ -48,8 +48,8 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     myShowDisabledActions = showDisabledActions;
   }
 
-  private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<AnAction> preselectActionCondition,
-                                                              @NotNull List<PopupFactoryImpl.ActionItem> items) {
+  private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<? super AnAction> preselectActionCondition,
+                                                              @NotNull List<? extends PopupFactoryImpl.ActionItem> items) {
     int defaultOptionIndex = 0;
     if (preselectActionCondition != null) {
       for (int i = 0; i < items.size(); i++) {
@@ -197,7 +197,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       ActionManager.getInstance(), modifiers);
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAware(action, event);
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
     }
   }
 
@@ -223,11 +223,6 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Override
   public MnemonicNavigationFilter<PopupFactoryImpl.ActionItem> getMnemonicNavigationFilter() {
     return this;
-  }
-
-  @Override
-  public boolean canBeHidden(final PopupFactoryImpl.ActionItem value) {
-    return true;
   }
 
   @Override

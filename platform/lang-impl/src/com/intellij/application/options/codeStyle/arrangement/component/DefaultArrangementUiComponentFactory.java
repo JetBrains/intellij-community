@@ -28,14 +28,13 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 3/12/13 2:23 PM
  */
 public class DefaultArrangementUiComponentFactory implements ArrangementUiComponent.Factory {
 
   @Nullable
   @Override
   public ArrangementUiComponent build(@NotNull StdArrangementTokenUiRole role,
-                                      @NotNull List<ArrangementSettingsToken> tokens,
+                                      @NotNull List<? extends ArrangementSettingsToken> tokens,
                                       @NotNull ArrangementColorsProvider colorsProvider,
                                       @NotNull ArrangementStandardSettingsManager settingsManager)
   {

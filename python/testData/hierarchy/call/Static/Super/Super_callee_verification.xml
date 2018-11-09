@@ -1,0 +1,5 @@
+<node text="SubclassTwo.a_method(self) (SubclassTwo in hierarchy.call.Static.Super.main)" base="true">
+  <node text="super.__init__(self, t, obj) (super in __builtin__)"/>
+  <node text="super.__init__(self, t) (super in __builtin__)"/>
+  <node text="SomeBaseClass.a_method(self) (SomeBaseClass in hierarchy.call.Static.Super.main)"/>
+</node>

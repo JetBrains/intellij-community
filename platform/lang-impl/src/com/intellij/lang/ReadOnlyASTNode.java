@@ -127,7 +127,7 @@ public abstract class ReadOnlyASTNode extends UserDataHolderBase implements ASTN
   }
 
   @Override
-  public void addLeaf(@NotNull IElementType leafType, CharSequence leafText, @Nullable ASTNode anchorBefore) {
+  public void addLeaf(@NotNull IElementType leafType, @NotNull CharSequence leafText, @Nullable ASTNode anchorBefore) {
     throw new UnsupportedOperationException();
   }
 

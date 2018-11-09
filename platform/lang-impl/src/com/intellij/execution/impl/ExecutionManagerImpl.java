@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.CommonBundle;
@@ -21,6 +7,7 @@ import com.intellij.execution.configuration.CompatibilityAwareRunProfile;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -83,13 +70,11 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
                                                                       @Nullable RunnerAndConfigurationSettings configuration) {
     ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, executor);
 
-    ProgramRunner runner =
-      RunnerRegistry.getInstance().getRunner(executor.getId(), configuration != null ? configuration.getConfiguration() : null);
+    ProgramRunner runner = ProgramRunnerUtil.getRunner(executor.getId(), configuration);
     if (runner == null && configuration != null) {
       LOG.error("Cannot find runner for " + configuration.getName());
     }
     else if (runner != null) {
-      assert configuration != null;
       builder.runnerAndSettings(runner, configuration);
     }
     return builder;
@@ -100,7 +85,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     return processHandler != null && !processHandler.isProcessTerminated();
   }
 
-  private static void start(@NotNull ExecutionEnvironment environment) {
+  private static void restart(@NotNull ExecutionEnvironment environment) {
     //start() can be called during restartRunProfile() after pretty long 'awaitTermination()' so we have to check if the project is still here
     if (environment.getProject().isDisposed()) return;
 
@@ -108,10 +93,11 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     ProgramRunnerUtil.executeConfiguration(environment, settings != null && settings.isEditBeforeRun(), true);
   }
 
-  private static boolean userApprovesStopForSameTypeConfigurations(Project project, String configName, int instancesCount) {
-    RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
-    final RunManagerConfig config = runManager.getConfig();
-    if (!config.isRestartRequiresConfirmation()) return true;
+  private static boolean userApprovesStopForSameTypeConfigurations(@NotNull  Project project, String configName, int instancesCount) {
+    final RunManagerConfig config = RunManagerImpl.getInstanceImpl(project).getConfig();
+    if (!config.isRestartRequiresConfirmation()) {
+      return true;
+    }
 
     DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
       @Override
@@ -248,10 +234,16 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
   }
 
   @NotNull
+  public static List<RunContentDescriptor> getAllDescriptors(@NotNull Project project) {
+    RunContentManager contentManager = ServiceManager.getServiceIfCreated(project, RunContentManager.class);
+    return contentManager == null ? Collections.emptyList() : contentManager.getAllDescriptors();
+  }
+
+  @NotNull
   @Override
   public ProcessHandler[] getRunningProcesses() {
     List<ProcessHandler> handlers = null;
-    for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
+    for (RunContentDescriptor descriptor : getAllDescriptors(myProject)) {
       ProcessHandler processHandler = descriptor.getProcessHandler();
       if (processHandler != null) {
         if (handlers == null) {
@@ -280,7 +272,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     }
 
     final RunConfiguration runConfiguration = (RunConfiguration)profile;
-    final List<BeforeRunTask> beforeRunTasks = RunManagerEx.getInstanceEx(myProject).getBeforeRunTasks(runConfiguration);
+    final List<BeforeRunTask<?>> beforeRunTasks = RunManagerImplKt.doGetBeforeRunTasks(runConfiguration);
     if (beforeRunTasks.isEmpty()) {
       startRunnable.run();
     }
@@ -289,6 +281,21 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
       final DataContext projectContext = context != null ? context : SimpleDataContext.getProjectContext(myProject);
       final long finalId = id;
       final Long executionSessionId = new Long(id);
+      Map<BeforeRunTask, Executor> runBeforeRunExecutorMap = Collections.synchronizedMap(new LinkedHashMap<>());
+      for (BeforeRunTask task : beforeRunTasks) {
+        @SuppressWarnings("unchecked")
+        BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
+        if (provider != null && task instanceof RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask) {
+          RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask runBeforeRun =
+            (RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)task;
+          RunnerAndConfigurationSettings settings = runBeforeRun.getSettings();
+          if (settings != null) {
+            runBeforeRunExecutorMap.put(task, RunManagerImpl.canRunConfiguration(settings, environment.getExecutor())
+                                              ? environment.getExecutor()
+                                              : DefaultRunExecutor.getRunExecutorInstance());
+          }
+        }
+      }
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         for (BeforeRunTask task : beforeRunTasks) {
           if (myProject.isDisposed()) {
@@ -300,7 +307,12 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
             LOG.warn("Cannot find BeforeRunTaskProvider for id='" + task.getProviderId() + "'");
             continue;
           }
-          ExecutionEnvironment taskEnvironment = new ExecutionEnvironmentBuilder(environment).contentToReuse(null).build();
+          ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(environment).contentToReuse(null);
+          Executor executor = runBeforeRunExecutorMap.get(task);
+          if (executor != null) {
+            builder.executor(executor);
+          }
+          ExecutionEnvironment taskEnvironment = builder.build();
           taskEnvironment.setExecutionId(finalId);
           EXECUTION_SESSION_ID_KEY.set(taskEnvironment, executionSessionId);
           if (!provider.executeTask(projectContext, runConfiguration, taskEnvironment, task)) {
@@ -351,7 +363,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
                                 @Nullable ProcessHandler processHandler) {
     ExecutionEnvironmentBuilder builder = createEnvironmentBuilder(project, executor, configuration);
     if (processHandler != null) {
-      for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
+      for (RunContentDescriptor descriptor : getAllDescriptors(project)) {
         if (descriptor.getProcessHandler() == processHandler) {
           builder.contentToReuse(descriptor);
           break;
@@ -374,12 +386,12 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     }
 
     RunContentDescriptor contentToReuse = environment.getContentToReuse();
-    final List<RunContentDescriptor> runningOfTheSameType = new SmartList<>();
-    if (configuration != null && configuration.isSingleton()) {
-      runningOfTheSameType.addAll(getRunningDescriptorsOfTheSameConfigType(configuration));
+    List<RunContentDescriptor> runningOfTheSameType = Collections.emptyList();
+    if (configuration != null && !configuration.getConfiguration().isAllowRunningInParallel()) {
+      runningOfTheSameType = getRunningDescriptors(it -> configuration == it);
     }
     else if (isProcessRunning(contentToReuse)) {
-      runningOfTheSameType.add(contentToReuse);
+      runningOfTheSameType = Collections.singletonList(contentToReuse);
     }
 
     List<RunContentDescriptor> runningToStop = ContainerUtil.concat(runningOfTheSameType, runningIncompatible);
@@ -407,6 +419,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     }
     myAwaitingRunProfiles.put(environment.getRunProfile(), environment);
 
+    List<RunContentDescriptor> finalRunningOfTheSameType = runningOfTheSameType;
     awaitTermination(new Runnable() {
       @Override
       public void run() {
@@ -420,7 +433,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
           return;
         }
 
-        for (RunContentDescriptor descriptor : runningOfTheSameType) {
+        for (RunContentDescriptor descriptor : finalRunningOfTheSameType) {
           ProcessHandler processHandler = descriptor.getProcessHandler();
           if (processHandler != null && !processHandler.isProcessTerminated()) {
             awaitTermination(this, 100);
@@ -428,7 +441,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
           }
         }
         myAwaitingRunProfiles.remove(environment.getRunProfile());
-        start(environment);
+        restart(environment);
       }
     }, 50);
   }
@@ -440,11 +453,6 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
     else {
       myAwaitingTerminationAlarm.addRequest(request, delayMillis);
     }
-  }
-
-  @NotNull
-  private List<RunContentDescriptor> getRunningDescriptorsOfTheSameConfigType(@NotNull final RunnerAndConfigurationSettings configurationAndSettings) {
-    return getRunningDescriptors(runningConfigurationAndSettings -> configurationAndSettings == runningConfigurationAndSettings);
   }
 
   @NotNull

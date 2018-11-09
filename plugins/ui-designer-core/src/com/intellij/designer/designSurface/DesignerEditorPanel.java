@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.*;
@@ -30,7 +16,6 @@ import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyTableTab;
 import com.intellij.designer.propertyTable.TablePanelActionPolicy;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -56,7 +41,6 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.FixedHashMap;
 import com.intellij.util.containers.IntArrayList;
@@ -254,6 +238,7 @@ public abstract class DesignerEditorPanel extends JPanel
     return content;
   }
 
+  @Override
   public final ThreeComponentsSplitter getContentSplitter() {
     return myContentSplitter;
   }
@@ -365,9 +350,7 @@ public abstract class DesignerEditorPanel extends JPanel
       showErrorPage(info);
     }
     if (info.myShowLog) {
-      LOG.error(LogMessageEx.createEvent(info.myDisplayMessage,
-                                         info.myMessage + "\n" + ExceptionUtil.getThrowableText(info.myThrowable),
-                                         getErrorAttachments(info)));
+      LOG.error(message, e, getErrorAttachments(info));
     }
   }
 
@@ -416,6 +399,7 @@ public abstract class DesignerEditorPanel extends JPanel
 
       if (message.myQuickFix != null) {
         warnLabel.addHyperlinkListener(new HyperlinkListener() {
+          @Override
           public void hyperlinkUpdate(final HyperlinkEvent e) {
             if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
               message.myQuickFix.run();
@@ -617,7 +601,7 @@ public abstract class DesignerEditorPanel extends JPanel
     return getSelectionState(mySurfaceArea.getSelection());
   }
 
-  protected static int[][] getSelectionState(List<RadComponent> selection) {
+  protected static int[][] getSelectionState(List<? extends RadComponent> selection) {
     int[][] selectionState = new int[selection.size()][];
 
     for (int i = 0; i < selectionState.length; i++) {
@@ -678,7 +662,7 @@ public abstract class DesignerEditorPanel extends JPanel
     mySelectionState = null;
   }
 
-  protected static void pathToComponent(List<RadComponent> components, RadComponent component, int[] path, int index) {
+  protected static void pathToComponent(List<? super RadComponent> components, RadComponent component, int[] path, int index) {
     if (index == path.length) {
       components.add(component);
     }
@@ -763,7 +747,7 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     return myActionPanel.getData(dataId);
   }
 
@@ -795,6 +779,7 @@ public abstract class DesignerEditorPanel extends JPanel
     return null;
   }
 
+  @Override
   @Nullable
   public RadComponent getRootComponent() {
     return myRootComponent;
@@ -932,6 +917,7 @@ public abstract class DesignerEditorPanel extends JPanel
       return DesignerEditorPanel.this.getRootSelectionDecorator();
     }
 
+    @Override
     @Nullable
     public EditOperation processRootOperation(OperationContext context) {
       return DesignerEditorPanel.this.processRootOperation(context);
@@ -1033,6 +1019,7 @@ public abstract class DesignerEditorPanel extends JPanel
   }
 
   private final class MyLayeredPane extends JBLayeredPane implements Scrollable {
+    @Override
     public void doLayout() {
       for (int i = getComponentCount() - 1; i >= 0; i--) {
         Component component = getComponent(i);
@@ -1040,10 +1027,12 @@ public abstract class DesignerEditorPanel extends JPanel
       }
     }
 
+    @Override
     public Dimension getMinimumSize() {
       return getPreferredSize();
     }
 
+    @Override
     public Dimension getPreferredSize() {
       Rectangle bounds = myScrollPane.getViewport().getBounds();
       Dimension size = getSceneSize(this);
@@ -1054,14 +1043,17 @@ public abstract class DesignerEditorPanel extends JPanel
       return size;
     }
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
       return getPreferredSize();
     }
 
+    @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
       return 10;
     }
 
+    @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
       if (orientation == SwingConstants.HORIZONTAL) {
         return visibleRect.width - 10;
@@ -1069,10 +1061,12 @@ public abstract class DesignerEditorPanel extends JPanel
       return visibleRect.height - 10;
     }
 
+    @Override
     public boolean getScrollableTracksViewportWidth() {
       return false;
     }
 
+    @Override
     public boolean getScrollableTracksViewportHeight() {
       return false;
     }
@@ -1083,7 +1077,7 @@ public abstract class DesignerEditorPanel extends JPanel
     private String myTitle;
     private boolean myIsAdded;
 
-    public FixableMessageAction() {
+    FixableMessageAction() {
       myActionPanel.getActionGroup().add(myActionGroup);
 
       Presentation presentation = getTemplatePresentation();
@@ -1120,12 +1114,12 @@ public abstract class DesignerEditorPanel extends JPanel
           final AnAction[] defaultAction = new AnAction[1];
           DefaultActionGroup popupGroup = new DefaultActionGroup() {
             @Override
-            public boolean canBePerformed(DataContext context) {
+            public boolean canBePerformed(@NotNull DataContext context) {
               return true;
             }
 
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
               defaultAction[0].actionPerformed(e);
             }
           };
@@ -1135,7 +1129,7 @@ public abstract class DesignerEditorPanel extends JPanel
           if (message.myQuickFix != null && (message.myLinkText.length() > 0 || message.myAfterLinkText.length() > 0)) {
             AnAction popupAction = new AnAction() {
               @Override
-              public void actionPerformed(AnActionEvent e) {
+              public void actionPerformed(@NotNull AnActionEvent e) {
                 message.myQuickFix.run();
               }
             };
@@ -1147,7 +1141,7 @@ public abstract class DesignerEditorPanel extends JPanel
             for (final Pair<String, Runnable> pair : message.myAdditionalFixes) {
               AnAction popupAction = new AnAction() {
                 @Override
-                public void actionPerformed(AnActionEvent e) {
+                public void actionPerformed(@NotNull AnActionEvent e) {
                   pair.second.run();
                 }
               };

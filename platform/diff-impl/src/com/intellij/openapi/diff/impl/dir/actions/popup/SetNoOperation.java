@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -28,7 +29,7 @@ import javax.swing.*;
  */
 public class SetNoOperation extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DirDiffTableModel model = SetOperationToBase.getModel(e);
     final JTable table = SetOperationToBase.getTable(e);
     assert model != null && table != null;
@@ -39,7 +40,7 @@ public class SetNoOperation extends DumbAwareAction {
   }
 
   @Override
-  public final void update(AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     final DirDiffTableModel model = SetOperationToBase.getModel(e);
     final JTable table = SetOperationToBase.getTable(e);
     if (table != null && model != null && model.isOperationsEnabled()) {

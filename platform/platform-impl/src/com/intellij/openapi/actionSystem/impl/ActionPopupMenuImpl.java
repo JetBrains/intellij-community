@@ -35,7 +35,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
   private final MyMenu myMenu;
   private final ActionManagerImpl myManager;
 
-  private Getter<DataContext> myDataContextProvider;
+  private Getter<? extends DataContext> myDataContextProvider;
   private MessageBusConnection myConnection;
 
   private IdeFrame myFrame;
@@ -64,7 +64,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
     return myMenu.myGroup;
   }
 
-  public void setDataContextProvider(@Nullable Getter<DataContext> dataContextProvider) {
+  public void setDataContextProvider(@Nullable Getter<? extends DataContext> dataContextProvider) {
     myDataContextProvider = dataContextProvider;
   }
 
@@ -85,7 +85,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
     private DataContext myContext;
     private final PresentationFactory myPresentationFactory;
 
-    public MyMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
+    MyMenu(String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
       myPlace = place;
       myGroup = group;
       myPresentationFactory = factory != null ? factory : new MenuItemPresentationFactory();
@@ -95,7 +95,6 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
     @Override
     public void show(final Component component, int x, int y) {
       if (!component.isShowing()) {
-        //noinspection HardCodedStringLiteral
         throw new IllegalArgumentException("component must be shown on the screen");
       }
 
@@ -107,7 +106,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
 
       myContext = myDataContextProvider != null ? myDataContextProvider.get() : DataManager.getInstance().getDataContext(component, x2, y2);
-      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, false, LaterInvocator.isInModalContext());
+      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, false, LaterInvocator.isInModalContext(), false);
       if (getComponentCount() == 0) {
         return;
       }
@@ -154,14 +153,14 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
         MyMenu.this.removeAll();
         Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().getDisableMnemonics(), myPresentationFactory, myContext, myPlace, false,
-                       false, LaterInvocator.isInModalContext());
+                       false, LaterInvocator.isInModalContext(), false);
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
     }
   }
 
   @Override
-  public void applicationDeactivated(IdeFrame ideFrame) {
+  public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
     if (myFrame == ideFrame) {
       myMenu.setVisible(false);
     }

@@ -63,22 +63,9 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
 
     @Override
-    public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, boolean includeXmlProblems) {
-      return Collections.emptyList();
-    }
-
-    @Override
     public List<DomElementProblemDescriptor> getProblems(final DomElement domElement,
                                                          final boolean includeXmlProblems,
                                                          final boolean withChildren) {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
-                                                         final boolean includeXmlProblems,
-                                                         final boolean withChildren,
-                                                         HighlightSeverity minSeverity) {
       return Collections.emptyList();
     }
 
@@ -261,7 +248,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return null;
   }
 
-  @Nullable public <T extends DomElement>  DomElementsInspection<T> getMockInspection(DomFileElement<T> root) {
+  @Nullable public <T extends DomElement>  DomElementsInspection<T> getMockInspection(DomFileElement<? extends T> root) {
     if (root.getFileDescription().isAutomaticHighlightingEnabled()) {
       return new MockAnnotatingDomInspection<>(root.getRootElementClass());
     }
@@ -272,7 +259,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     return null;
   }
 
-  private static boolean areInspectionsFinished(DomElementsProblemsHolderImpl holder, final List<DomElementsInspection> suitableInspections) {
+  private static boolean areInspectionsFinished(DomElementsProblemsHolderImpl holder, final List<? extends DomElementsInspection> suitableInspections) {
     for (final DomElementsInspection inspection : suitableInspections) {
       if (!holder.isInspectionCompleted(inspection)) {
         return false;

@@ -55,7 +55,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   }
 
   private PsiElement[] doInvokeDialog(Project project, PsiDirectory directory) {
-    myDialog = new NewActionDialog(project);
+    myDialog = new NewActionDialog(project, directory);
     try {
       myDialog.show();
       if (myDialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {

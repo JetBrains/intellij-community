@@ -110,6 +110,7 @@ public class OptionDescription implements Comparable{
     return result;
   }
 
+  @Override
   public int compareTo(final Object o) {
     final OptionDescription description = ((OptionDescription)o);
     if (Comparing.strEqual(myHit, description.getHit())){

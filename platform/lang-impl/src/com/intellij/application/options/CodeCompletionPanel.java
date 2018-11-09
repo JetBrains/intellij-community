@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options;
 
@@ -32,13 +18,16 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
+import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 public class CodeCompletionPanel {
   JPanel myPanel;
@@ -62,23 +51,25 @@ public class CodeCompletionPanel {
   private JBRadioButton myAllLetters;
   private JBLabel myBasicShortcut;
   private JBLabel mySmartShortcut;
-  private JBLabel myDocComment;
+  private JPanel myCbOnCodeCompletionPanel;
+  private JPanel myCbOnSmartTypeCompletionPanel;
 
-  public CodeCompletionPanel() {
+  private JPanel myAddonPanel;
+
+  public CodeCompletionPanel(List<? extends JComponent> addons) {
     ChangeListener updateCaseCheckboxes = __ -> {
       myFirstLetterOnly.setEnabled(myCbMatchCase.isSelected());
       myAllLetters.setEnabled(myCbMatchCase.isSelected());
     };
     myCbMatchCase.addChangeListener(updateCaseCheckboxes);
     updateCaseCheckboxes.stateChanged(null);
-    
+
     ActionManager actionManager = ActionManager.getInstance();
     myBasicShortcut.setText(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_CODE_COMPLETION)));
     mySmartShortcut.setText(KeymapUtil.getFirstKeyboardShortcutText(actionManager.getAction(IdeActions.ACTION_SMART_TYPE_COMPLETION)));
 
     myBasicShortcut.setForeground(JBColor.GRAY);
     mySmartShortcut.setForeground(JBColor.GRAY);
-    myDocComment.setForeground(JBColor.GRAY);
 
     myCbAutocompletion.addActionListener(
      new ActionListener() {
@@ -108,10 +99,20 @@ public class CodeCompletionPanel {
      }
    );
 
-    hideOption(myCbOnSmartTypeCompletion, OptionId.COMPLETION_SMART_TYPE);
-    hideOption(myCbOnCodeCompletion, OptionId.AUTOCOMPLETE_ON_BASIC_CODE_COMPLETION);
-    if(!myCbOnSmartTypeCompletion.isVisible() && !myCbOnCodeCompletion.isVisible())
+    hideOption(myCbOnSmartTypeCompletionPanel, OptionId.COMPLETION_SMART_TYPE);
+    hideOption(myCbOnCodeCompletionPanel, OptionId.AUTOCOMPLETE_ON_BASIC_CODE_COMPLETION);
+    if(!myCbOnSmartTypeCompletionPanel.isVisible() && !myCbOnCodeCompletionPanel.isVisible())
       myAutoInsertLabel.setVisible(false);
+
+    for (JComponent c : addons) {
+      myAddonPanel
+          .add(c, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.NORTHWEST,
+              GridBagConstraints.NONE, JBUI.insetsBottom(15), 0, 0));
+    }
+
+    if (addons.isEmpty()) {
+      myAddonPanel.setVisible(false);
+    }
 
     reset();
   }
@@ -158,8 +159,8 @@ public class CodeCompletionPanel {
 
     myCbAutocompletion.setSelected(codeInsightSettings.AUTO_POPUP_COMPLETION_LOOKUP);
     myCbSorting.setSelected(UISettings.getInstance().getSortLookupElementsLexicographically());
-    
-    myCbAutocompletion.setText(ApplicationBundle.message("editbox.auto.complete") + 
+
+    myCbAutocompletion.setText(ApplicationBundle.message("editbox.auto.complete") +
                                (PowerSaveMode.isEnabled() ? " (not available in Power Save mode)" : ""));
   }
 
@@ -180,9 +181,9 @@ public class CodeCompletionPanel {
 
     codeInsightSettings.PARAMETER_INFO_DELAY = getIntegerValue(myParameterInfoDelayField.getText());
     codeInsightSettings.JAVADOC_INFO_DELAY = getIntegerValue(myAutopopupJavaDocField.getText());
-    
+
     codeInsightSettings.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = myCbCompleteFunctionWithParameters.isSelected();
-    
+
     UISettings.getInstance().setSortLookupElementsLexicographically(myCbSorting.isSelected());
 
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
@@ -229,7 +230,7 @@ public class CodeCompletionPanel {
   @MagicConstant(intValues = {CodeInsightSettings.ALL, CodeInsightSettings.NONE, CodeInsightSettings.FIRST_LETTER})
   private int getCaseSensitiveValue() {
     if (!myCbMatchCase.isSelected()) return CodeInsightSettings.NONE;
-    
+
     return myAllLetters.isSelected() ? CodeInsightSettings.ALL : CodeInsightSettings.FIRST_LETTER;
   }
 

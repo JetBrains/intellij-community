@@ -48,7 +48,7 @@ class VcsPreviewPanel implements PreviewPanel {
 
   private final EditorEx myEditor;
 
-  public VcsPreviewPanel() {
+  VcsPreviewPanel() {
     DocumentImpl document = new DocumentImpl("", true);
     myEditor = (EditorEx)EditorFactory.getInstance().createViewer(document);
     myEditor.getGutterComponentEx().setForceShowRightFreePaintersArea(true);
@@ -123,7 +123,7 @@ class VcsPreviewPanel implements PreviewPanel {
   }
 
   private void addHighlighter(@NotNull Range range, @NotNull ColorKey colorKey) {
-    RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, myEditor.getMarkupModel());
+    RangeHighlighter highlighter = LineStatusMarkerRenderer.createTooltipRangeHighlighter(range, myEditor.getMarkupModel());
     highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
       @Override
       public void paint(Editor editor, Graphics g, Rectangle r) {
@@ -131,13 +131,19 @@ class VcsPreviewPanel implements PreviewPanel {
       }
 
       @Override
-      public boolean canDoAction(MouseEvent e) {
+      public boolean canDoAction(@NotNull MouseEvent e) {
         return LineStatusMarkerRenderer.isInsideMarkerArea(e);
       }
 
       @Override
-      public void doAction(Editor editor, MouseEvent e) {
+      public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
         myDispatcher.getMulticaster().selectionInPreviewChanged(colorKey.getExternalName());
+      }
+
+      @NotNull
+      @Override
+      public String getAccessibleName() {
+        return "VCS marker: changed line";
       }
     });
   }
@@ -155,7 +161,7 @@ class VcsPreviewPanel implements PreviewPanel {
     @NotNull private final List<Color> myBackgroundColors;
     @NotNull private final List<Integer> myAnchorIndexes;
 
-    public MyTextAnnotationGutterProvider(@NotNull List<Color> backgroundColors, @NotNull List<Integer> anchorIndexes) {
+    MyTextAnnotationGutterProvider(@NotNull List<Color> backgroundColors, @NotNull List<Integer> anchorIndexes) {
       myBackgroundColors = backgroundColors;
       myAnchorIndexes = anchorIndexes;
     }

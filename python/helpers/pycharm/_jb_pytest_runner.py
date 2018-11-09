@@ -13,7 +13,7 @@ if __name__ == '__main__':
     path, targets, additional_args = jb_start_tests()
     sys.argv += additional_args
     joined_targets = jb_patch_separator(targets, fs_glue="/", python_glue="::", fs_to_python_glue=".py::")
-    # When file is launched in py.test it should be file.py: you can't provide it as bare module
+    # When file is launched in pytest it should be file.py: you can't provide it as bare module
     joined_targets = [t + ".py" if ":" not in t else t for t in joined_targets]
     sys.argv += [path] if path else joined_targets
 
@@ -27,5 +27,5 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     if JB_DISABLE_BUFFERING and "-s" not in args:
         args += ["-s"]
-    jb_doc_args("py.test", args)
+    jb_doc_args("pytest", args)
     pytest.main(args, plugins_to_load)

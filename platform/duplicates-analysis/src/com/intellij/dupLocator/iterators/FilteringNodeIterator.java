@@ -28,10 +28,12 @@ public class FilteringNodeIterator extends NodeIterator {
     advanceToNext();
   }
 
+  @Override
   public boolean hasNext() {
     return delegate.hasNext() && !filter.accepts(delegate.current());
   }
 
+  @Override
   public void rewind(int number) {
     while(number > 0) {
       delegate.rewind();
@@ -40,20 +42,24 @@ public class FilteringNodeIterator extends NodeIterator {
     }
   }
 
+  @Override
   public PsiElement current() {
     return delegate.current();
   }
 
+  @Override
   public void advance() {
     delegate.advance();
     advanceToNext();
   }
 
+  @Override
   public void rewind() {
     delegate.rewind();
     rewindToPrevious();
   }
 
+  @Override
   public void reset() {
     delegate.reset();
     advanceToNext();

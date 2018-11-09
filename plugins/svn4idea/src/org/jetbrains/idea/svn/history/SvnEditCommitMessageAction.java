@@ -1,13 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -32,9 +32,9 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
-public class SvnEditCommitMessageAction extends AnAction {
+public class SvnEditCommitMessageAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dc = e.getDataContext();
     final ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dc);
     final boolean enabled = lists != null && lists.length == 1 && lists[0] instanceof SvnChangeList;
@@ -47,7 +47,7 @@ public class SvnEditCommitMessageAction extends AnAction {
     askAndEditRevision(svnList.getNumber(), svnList.getComment(), svnList.getLocation(), project, listener, false);
   }
 
-  public static void askAndEditRevision(final long number, final String oldComment, final SvnRepositoryLocation location, Project project, Consumer<String> listener, final boolean fromVersionControl) {
+  public static void askAndEditRevision(final long number, final String oldComment, final SvnRepositoryLocation location, Project project, Consumer<? super String> listener, final boolean fromVersionControl) {
     final SvnEditCommitMessageDialog dialog = new SvnEditCommitMessageDialog(project, number, oldComment);
     dialog.show();
     if (DialogWrapper.OK_EXIT_CODE == dialog.getExitCode()) {
@@ -58,7 +58,7 @@ public class SvnEditCommitMessageAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final DataContext dc = e.getDataContext();
     final ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dc);
     final boolean enabled = lists != null && lists.length == 1 && lists[0] instanceof SvnChangeList;
@@ -93,7 +93,7 @@ public class SvnEditCommitMessageAction extends AnAction {
     private final String myNewMessage;
     private final SvnRepositoryLocation myLocation;
     private final long myNumber;
-    private final Consumer<String> myListener;
+    private final Consumer<? super String> myListener;
     private final boolean myFromVersionControl;
     private VcsException myException;
     private final SvnVcs myVcs;
@@ -102,7 +102,7 @@ public class SvnEditCommitMessageAction extends AnAction {
                     final String newMessage,
                     final SvnRepositoryLocation location,
                     final long number,
-                    Consumer<String> listener,
+                    Consumer<? super String> listener,
                     boolean fromVersionControl) {
       super(project, "Edit Revision Comment");
       myNewMessage = newMessage;

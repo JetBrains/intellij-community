@@ -33,6 +33,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,11 +66,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     mySearchInNonJavaFiles = searchInNonJavaFiles;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     return new InlineViewDescriptor(myClass);
   }
 
+  @Override
   @NotNull
   public UsageInfo[] findUsages() {
     if (myInlineThisOnly) {
@@ -138,6 +141,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
     MultiMap<PsiElement, String> conflicts = getConflicts(refUsages.get());
     if (!conflicts.isEmpty()) {
@@ -149,6 +153,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   public MultiMap<PsiElement, String> getConflicts(final UsageInfo[] usages) {
     final MultiMap<PsiElement, String> result = new MultiMap<>();
     ReferencedElementsCollector collector = new ReferencedElementsCollector() {
+      @Override
       protected void checkAddMember(@NotNull final PsiMember member) {
         if (PsiTreeUtil.isAncestor(myClass, member, false)) {
           return;
@@ -213,6 +218,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return result;
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     final PsiClassType superType = getSuperType(myClass);
     LOG.assertTrue(superType != null);
@@ -223,7 +229,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       if (element instanceof PsiNewExpression) {
         newExpressions.add((PsiNewExpression)element);
       }
-      else if (element.getParent() instanceof PsiNewExpression) {
+      else if (element != null && element.getParent() instanceof PsiNewExpression) {
         newExpressions.add((PsiNewExpression) element.getParent());
       }
       else {
@@ -267,13 +273,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   private void replaceNewOrType(final PsiNewExpression psiNewExpression, final PsiClassType superType) {
     try {
-      if (psiNewExpression.getArrayDimensions().length == 0 && psiNewExpression.getArrayInitializer() == null) {
+      if (!ExpressionUtils.isArrayCreationExpression(psiNewExpression)) {
         new InlineToAnonymousConstructorProcessor(myClass, psiNewExpression, superType).run();
       }
       else {
         PsiClass target = superType.resolve();
         assert target != null : superType;
-        PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
         PsiJavaCodeReferenceElement element = factory.createClassReferenceElement(target);
         PsiJavaCodeReferenceElement reference = psiNewExpression.getClassReference();
         assert reference != null : psiNewExpression;
@@ -286,7 +292,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   }
 
   private void replaceWithSuperType(final PsiTypeElement typeElement, final PsiClassType superType) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
     PsiClassType psiType = (PsiClassType) typeElement.getType();
     PsiClassType.ClassResolveResult classResolveResult = psiType.resolveGenerics();
     PsiType substType = classResolveResult.getSubstitutor().substitute(superType);
@@ -302,7 +308,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   @Nullable
   public static PsiClassType getSuperType(final PsiClass aClass) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 
     PsiClassType superType;
     PsiClass superClass = aClass.getSuperClass();
@@ -326,6 +332,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return superType;
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());

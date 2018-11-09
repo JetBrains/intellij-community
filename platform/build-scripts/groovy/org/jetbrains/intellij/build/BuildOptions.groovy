@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -39,7 +25,7 @@ class BuildOptions {
   static final String OS_MAC = "mac"
   static final String OS_ALL = "all"
   /**
-   * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#pluginModulesToPublish non-bundled plugins}
+   * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#setPluginModulesToPublish non-bundled plugins}
    * will be built.
    */
   static final String OS_NONE = "none"
@@ -82,9 +68,21 @@ class BuildOptions {
   boolean buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
 
   /**
+   * Image for snap package creation. Default is "snapcore/snapcraft:stable", but can be modified mostly due to problems
+   * with new versions of snapcraft.
+   */
+  String snapDockerImage = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable")
+
+  /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.
    */
   String pathToCompiledClassesArchive = System.getProperty("intellij.build.compiled.classes.archive")
+
+  /**
+   * Path to a metadata file containing urls with compiled classes of the project modules inside.
+   * Metadata is a {@linkplain org.jetbrains.intellij.build.impl.CompilationPartsMetadata} serialized into json format
+   */
+  String pathToCompiledClassesArchivesMetadata = System.getProperty("intellij.build.compiled.classes.archives.metadata")
 
   /**
    * If {@code true} the project modules will be compiled incrementally
@@ -115,4 +113,14 @@ class BuildOptions {
    */
   boolean isInDevelopmentMode = SystemProperties.getBooleanProperty("intellij.build.dev.mode",
                                                                     System.getProperty("teamcity.buildType.id") == null)
+
+  /**
+   * Specifies JRE version to be bundled with distributions, 8 by default.
+   */
+  int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "8").toInteger()
+
+  /**
+   * Specifies JRE build to be bundled with distributions. If {@code null} then jdkBuild from gradle.properties will be used.
+   */
+  String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
 }

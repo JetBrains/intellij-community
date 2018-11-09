@@ -12,7 +12,7 @@ import org.jetbrains.debugger.sourcemap.SourceFileResolver
 abstract class FileUrlMapper {
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<FileUrlMapper>("com.jetbrains.fileUrlMapper")
+    val EP_NAME: ExtensionPointName<FileUrlMapper> = ExtensionPointName.create<FileUrlMapper>("com.jetbrains.fileUrlMapper")
   }
 
   open fun getUrls(file: VirtualFile, project: Project, currentAuthority: String?): List<Url> = emptyList()

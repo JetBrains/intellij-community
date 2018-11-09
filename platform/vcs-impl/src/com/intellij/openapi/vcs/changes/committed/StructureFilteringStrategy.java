@@ -55,6 +55,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     return VcsBundle.message("filter.structure.name");
   }
 
+  @Override
   @Nullable
   public JComponent getFilterUI() {
     if (myUI == null) {
@@ -63,6 +64,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     return myUI.getComponent();
   }
 
+  @Override
   public void setFilterBase(List<CommittedChangeList> changeLists) {
     // todo cycle here
     if (myUI == null) {
@@ -72,22 +74,27 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     myUI.append(changeLists);
   }
 
+  @Override
   public void addChangeListener(ChangeListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void removeChangeListener(ChangeListener listener) {
     myListeners.remove(listener);
   }
 
+  @Override
   public void resetFilterBase() {
     myUI.reset();
   }
 
+  @Override
   public void appendFilterBase(List<CommittedChangeList> changeLists) {
     myUI.append(changeLists);
   }
 
+  @Override
   @NotNull
   public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
     if (mySelection.size() == 0) {
@@ -121,11 +128,12 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     private final Set<FilePath> myFilePaths = new HashSet<>();
     private TreeState myState;
 
-    public MyUI() {
+    MyUI() {
       myStructureTree = new Tree();
       myStructureTree.setRootVisible(false);
       myStructureTree.setShowsRootHandles(true);
       myStructureTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+        @Override
         public void valueChanged(final TreeSelectionEvent e) {
           final List<FilePath> filePaths = new ArrayList<>(mySelection);
 
@@ -178,7 +186,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     public void reset() {
       myFilePaths.clear();
       myState = TreeState.createOn(myStructureTree, (DefaultMutableTreeNode)myStructureTree.getModel().getRoot());
-      myStructureTree.setModel(TreeModelBuilder.buildEmpty(myProject));
+      myStructureTree.setModel(TreeModelBuilder.buildEmpty());
     }
 
     public void append(final List<CommittedChangeList> changeLists) {

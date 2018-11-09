@@ -38,7 +38,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.docstrings.*;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,11 +99,12 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     final Document doc = editor.getDocument();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
     final PsiElement element = file.findElementAt(offset);
+    final PsiElement prevElement = offset > 0 ? file.findElementAt(offset - 1) : null;
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     if (codeInsightSettings.JAVADOC_STUB_ON_ENTER) {
       PsiElement comment = element;
       if (comment == null && offset != 0) {
-        comment = file.findElementAt(offset - 1);
+        comment = prevElement;
       }
       int expectedStringStart = editor.getCaretModel().getOffset() - 3; // """ or '''
       if (comment != null) {
@@ -120,60 +120,59 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       return Result.Continue;
     }
 
+    final ASTNode node = element.getNode();
     PsiElement elementParent = element.getParent();
-    if (element.getNode().getElementType() == PyTokenTypes.LPAR) elementParent = elementParent.getParent();
+    if (node.getElementType() == PyTokenTypes.LPAR) elementParent = elementParent.getParent();
     if (elementParent instanceof PyParenthesizedExpression || elementParent instanceof PyGeneratorExpression) return Result.Continue;
 
-    if (offset > 0 && !(PyTokenTypes.STRING_NODES.contains(element.getNode().getElementType()))) {
-      final PsiElement prevElement = file.findElementAt(offset - 1);
-      if (prevElement == element) return Result.Continue;
-    }
-
-    if (PyTokenTypes.TRIPLE_NODES.contains(element.getNode().getElementType()) ||
-        element.getNode().getElementType() == PyTokenTypes.DOCSTRING) {
+    final PyStringElement stringElement = PsiTreeUtil.getParentOfType(element, PyStringElement.class, false);
+    if (stringElement == null && prevElement == element) {
       return Result.Continue;
     }
-
-    final PsiElement prevElement = file.findElementAt(offset - 1);
-    PyStringLiteralExpression string = PsiTreeUtil.findElementOfClassAtOffset(file, offset, PyStringLiteralExpression.class, false);
-
-    if (string != null && prevElement != null && PyTokenTypes.STRING_NODES.contains(prevElement.getNode().getElementType())
-        && string.getTextOffset() < offset && !(element.getNode() instanceof PsiWhiteSpace)) {
-      final String stringText = element.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
-      if (string.getTextOffset() + prefixLength >= offset) {
+    
+    if (stringElement != null && (!stringElement.isFormatted() || node.getElementType() == PyTokenTypes.FSTRING_TEXT)) {
+      if (stringElement.isTripleQuoted() || node.getElementType() == PyTokenTypes.DOCSTRING) {
         return Result.Continue;
       }
-      final String pref = element.getText().substring(0, prefixLength);
-      final String quote = element.getText().substring(prefixLength, prefixLength + 1);
-      final boolean nextIsBackslash = "\\".equals(doc.getText(TextRange.create(offset - 1, offset)));
-      final boolean isEscapedQuote = quote.equals(doc.getText(TextRange.create(offset, offset + 1))) && nextIsBackslash;
-      final boolean isEscapedBackslash = "\\".equals(doc.getText(TextRange.create(offset-2, offset - 1))) && nextIsBackslash;
-      if (nextIsBackslash && !isEscapedQuote && !isEscapedBackslash) return Result.Continue;
-
-      final StringBuilder replacementString = new StringBuilder();
-      myPostprocessShift = prefixLength + quote.length();
-
-      if (PsiTreeUtil.getParentOfType(string, IMPLICIT_WRAP_CLASSES) != null) {
-        replacementString.append(quote).append(pref).append(quote);
-        doc.insertString(offset, replacementString);
-        caretOffset.set(caretOffset.get() + 1);
-        return Result.Continue;
-      }
-      else {
-        if (isEscapedQuote) {
-          replacementString.append(quote);
-          caretOffset.set(caretOffset.get() + 1);
+      if (prevElement != null && PsiTreeUtil.isAncestor(stringElement, prevElement, false)) {
+        
+        if (stringElement.getTextOffset() + stringElement.getPrefixLength() >= offset) {
+          return Result.Continue;
         }
-        replacementString.append(quote).append(" \\").append(pref);
-        if (!isEscapedQuote)
-          replacementString.append(quote);
-        doc.insertString(offset, replacementString.toString());
-        caretOffset.set(caretOffset.get() + 3);
-        return Result.Continue;
+        final String pref = stringElement.getPrefix();
+        final String quote = stringElement.getQuote();
+
+        // Don't split in the middle of an escape sequence
+        final boolean nextIsBackslash = "\\".equals(doc.getText(TextRange.from(offset - 1, 1)));
+        final boolean isEscapedQuote = quote.equals(doc.getText(TextRange.from(offset, 1))) && nextIsBackslash;
+        final boolean isEscapedBackslash = "\\".equals(doc.getText(TextRange.from(offset - 2, 1))) && nextIsBackslash;
+        if (nextIsBackslash && !isEscapedQuote && !isEscapedBackslash) return Result.Continue;
+
+        myPostprocessShift = pref.length() + quote.length();
+
+        if (PsiTreeUtil.getParentOfType(stringElement, IMPLICIT_WRAP_CLASSES) != null) {
+          final StringBuilder replacementString = new StringBuilder();
+          replacementString.append(quote).append(pref).append(quote);
+          doc.insertString(offset, replacementString);
+          caretOffset.set(caretOffset.get() + 1);
+          return Result.Continue;
+        }
+        else {
+          final StringBuilder replacementString = new StringBuilder();
+          if (isEscapedQuote) {
+            replacementString.append(quote);
+            caretOffset.set(caretOffset.get() + 1);
+          }
+          replacementString.append(quote).append(" \\").append(pref);
+          if (!isEscapedQuote) {
+            replacementString.append(quote);
+          }
+          doc.insertString(offset, replacementString);
+          caretOffset.set(caretOffset.get() + 3);
+          return Result.Continue;
+        }
       }
     }
-
 
     if (!PyCodeInsightSettings.getInstance().INSERT_BACKSLASH_ON_WRAP) {
       return Result.Continue;
@@ -212,6 +211,10 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   }
 
   public static boolean needInsertBackslash(ASTNode nodeAtCaret, boolean autoWrapInProgress) {
+    if (PsiTreeUtil.getParentOfType(nodeAtCaret.getPsi(), PyFStringFragment.class) != null) {
+      return false;
+    }
+    
     PsiElement statementBefore = findStatementBeforeCaret(nodeAtCaret);
     PsiElement statementAfter = findStatementAfterCaret(nodeAtCaret);
     if (statementBefore != statementAfter) {  // Enter pressed at statement break
@@ -385,7 +388,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
           final TextRange lineRange = TextRange.create(document.getLineStartOffset(lineNum - 1), document.getLineEndOffset(lineNum - 1));
           final Matcher matcher = GoogleCodeStyleDocString.SECTION_HEADER.matcher(document.getText(lineRange));
           if (matcher.matches() && SectionBasedDocString.isValidSectionTitle(matcher.group(1))) {
-            document.insertString(offset, GoogleCodeStyleDocStringBuilder.getDefaultSectionIndent(file.getProject()));
+            document.insertString(offset, GoogleCodeStyleDocStringBuilder.getDefaultSectionIndent(file));
             editor.getCaretModel().moveCaretRelatively(2, 0, false, false, false);
           }
         }
@@ -412,7 +415,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (pyString != null) {
 
       String nodeText = element.getText();
-      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(nodeText);
       nodeText = nodeText.substring(prefixLength);
 
       final String literalText = pyString.getText();

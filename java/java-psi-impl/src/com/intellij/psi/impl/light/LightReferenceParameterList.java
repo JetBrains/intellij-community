@@ -48,6 +48,7 @@ public class LightReferenceParameterList extends LightElement implements PsiRefe
     return buffer.toString();
   }
 
+  @Override
   public String toString() {
     return "PsiReferenceParameterList";
   }

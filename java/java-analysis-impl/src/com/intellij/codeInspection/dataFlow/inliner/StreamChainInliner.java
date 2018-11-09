@@ -15,17 +15,17 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +48,9 @@ public class StreamChainInliner implements CallInliner {
   private static final CallMatcher MATCH_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "anyMatch", "allMatch",
                                                                  "noneMatch").parameterCount(1);
   private static final CallMatcher SUM_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "sum", "count").parameterCount(0);
+  private static final CallMatcher TO_ARRAY_TERMINAL = anyOf(
+    instanceCall(JAVA_UTIL_STREAM_STREAM, "toArray").parameterCount(0),
+    instanceCall(JAVA_UTIL_STREAM_STREAM, "toArray").parameterTypes("java.util.function.IntFunction"));
   private static final CallMatcher OPTIONAL_TERMINAL =
     anyOf(instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max").parameterCount(0),
           instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "reduce").parameterCount(1),
@@ -116,6 +119,7 @@ public class StreamChainInliner implements CallInliner {
     .register(SUM_TERMINAL, SumTerminalStep::new)
     .register(MIN_MAX_TERMINAL, MinMaxTerminalStep::new)
     .register(OPTIONAL_TERMINAL, OptionalTerminalStep::new)
+    .register(TO_ARRAY_TERMINAL, ToArrayStep::new)
     .register(COLLECT_TERMINAL, StreamChainInliner::createTerminalFromCollector);
 
   private static final Step NULL_TERMINAL_STEP = new Step(null, null, null) {
@@ -162,8 +166,10 @@ public class StreamChainInliner implements CallInliner {
         myNext.pushResult(builder);
       }
       else {
-        builder.push(builder.getFactory()
-                       .createTypeValue(myCall.getType(), DfaPsiUtil.getElementNullability(myCall.getType(), myCall.resolveMethod())));
+        DfaValue resultValue =
+          builder.getFactory().createTypeValue(myCall.getType(),
+                                               DfaPsiUtil.getElementNullability(myCall.getType(), myCall.resolveMethod()));
+        builder.push(resultValue, myCall);
       }
     }
 
@@ -213,7 +219,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     void pushResult(CFGBuilder builder) {
-      builder.push(myResult);
+      builder.push(myResult, myCall);
     }
   }
 
@@ -239,7 +245,8 @@ public class StreamChainInliner implements CallInliner {
       if (!(type instanceof PsiPrimitiveType)) {
         type = PsiPrimitiveType.getUnboxedType(type);
       }
-      builder.push(builder.getFactory().getConstFactory().createDefault(Objects.requireNonNull(type)));
+      builder.push(builder.getFactory().getConstFactory().createDefault(Objects.requireNonNull(type)))
+        .boxUnbox(myCall, type, myCall.getType());
     }
 
     @Override
@@ -255,17 +262,19 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
-      builder.push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), false));
     }
 
     @Override
     void iteration(CFGBuilder builder) {
-      DfaValue presentOptional = builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true);
+      DfaValue presentOptional = DfaOptionalSupport.getOptionalValue(builder.getFactory(), true);
       if (myFunction != null) {
         builder.push(myResult)
                .push(presentOptional)
                .ifCondition(JavaTokenType.INSTANCEOF_KEYWORD)
-                .push(builder.getFactory().getFactValue(DfaFactType.CAN_BE_NULL, false)).swap().invokeFunction(2, myFunction, Nullness.NOT_NULL)
+                 .push(builder.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL))
+                 .swap()
+                 .invokeFunction(2, myFunction, Nullability.NOT_NULL)
                .end();
       }
       builder.assign(myResult, presentOptional).splice(2);
@@ -282,7 +291,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
-      builder.push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false));
+      builder.push(DfaOptionalSupport.getOptionalValue(builder.getFactory(), false));
     }
 
     @Override
@@ -294,7 +303,7 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       myComparatorModel.invoke(builder);
-      builder.assignAndPop(myResult, builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true));
+      builder.assignAndPop(myResult, DfaOptionalSupport.getOptionalValue(builder.getFactory(), true));
     }
 
     @Override
@@ -349,7 +358,7 @@ public class StreamChainInliner implements CallInliner {
     @Override
     void iteration(CFGBuilder builder) {
       builder
-        .invokeFunction(1, myFunction, myNext.expectNotNull() ? Nullness.NOT_NULL : Nullness.UNKNOWN)
+        .invokeFunction(1, myFunction, myNext.expectNotNull() ? Nullability.NOT_NULL : Nullability.UNKNOWN)
         .assignTo(builder.createTempVariable(StreamApiUtil.getStreamElementType(myCall.getType())))
         .chain(myNext::iteration);
     }
@@ -406,7 +415,7 @@ public class StreamChainInliner implements CallInliner {
     void before(CFGBuilder builder) {
       if (myStreamSource == null) {
         PsiExpression arg = myCall.getArgumentList().getExpressions()[0];
-        builder.pushExpression(arg).checkNotNull(arg, NullabilityProblemKind.passingNullableToNotNullParameter).pop();
+        builder.evaluateFunction(arg);
       }
       super.before(builder);
     }
@@ -417,13 +426,16 @@ public class StreamChainInliner implements CallInliner {
         builder.assignTo(myParameter).pop();
         buildStreamCFG(builder, myChain, myStreamSource);
       } else {
+        PsiExpression arg = myCall.getArgumentList().getExpressions()[0];
         PsiType outType = StreamApiUtil.getStreamElementType(myCall.getType());
-        builder.pop()
-               .pushUnknown()
-               .ifConditionIs(true)
-                 .doWhileUnknown()
-                   .push(builder.getFactory().createTypeValue(outType, Nullness.UNKNOWN))
-                   .chain(myNext::iteration)
+        builder.invokeFunction(1, arg, Nullability.NULLABLE)
+               .ifNotNull()
+                 .pushUnknown()
+                 .ifConditionIs(true)
+                   .doWhileUnknown()
+                     .push(builder.getFactory().createTypeValue(outType, Nullability.UNKNOWN))
+                     .chain(myNext::iteration)
+                   .end()
                  .end()
                .end();
       }
@@ -529,12 +541,15 @@ public class StreamChainInliner implements CallInliner {
     @Override
     protected void pushInitialValue(CFGBuilder builder) {
       if (myFunction != null) {
-        builder.invokeFunction(0, myFunction, Nullness.NOT_NULL);
+        builder.invokeFunction(0, myFunction, Nullability.NOT_NULL);
       }
       else {
-        DfaValue value = builder.getFactory().createTypeValue(myCall.getType(), Nullness.NOT_NULL);
+        DfaValueFactory factory = builder.getFactory();
+        DfaValue value = factory.createTypeValue(myCall.getType(), Nullability.NOT_NULL);
         if (myImmutable) {
-          value = builder.getFactory().withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+          value = factory.withFact(value, DfaFactType.MUTABILITY, Mutability.UNMODIFIABLE);
+        } else {
+          value = factory.withFact(value, DfaFactType.LOCALITY, true);
         }
         builder.push(value);
       }
@@ -555,7 +570,25 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     boolean expectNotNull() {
-      return myImmutable;
+      if (myImmutable) return true;
+      PsiType collectionType = ExpectedTypeUtils.findExpectedType(myCall, false);
+      PsiType itemType = JavaGenericsUtil.getCollectionItemType(collectionType, myCall.getResolveScope());
+      return DfaPsiUtil.getTypeNullability(itemType) == Nullability.NOT_NULL;
+    }
+  }
+
+  static class ToArrayStep extends ToCollectionStep {
+    ToArrayStep(@NotNull PsiMethodCallExpression call) {
+      super(call, ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()), false);
+    }
+
+    @Override
+    protected void pushInitialValue(CFGBuilder builder) {
+      if (myFunction == null) {
+        super.pushInitialValue(builder);
+      } else {
+        builder.pushUnknown().invokeFunction(1, myFunction, Nullability.NOT_NULL);
+      }
     }
   }
 
@@ -591,13 +624,13 @@ public class StreamChainInliner implements CallInliner {
       // Null values are not tolerated
       // Null keys are not tolerated for immutable maps
       builder.dup()
-             .invokeFunction(1, myKeyExtractor, myImmutable ? Nullness.NOT_NULL : Nullness.NULLABLE)
+             .invokeFunction(1, myKeyExtractor, myImmutable ? Nullability.NOT_NULL : Nullability.NULLABLE)
              .pop()
-             .invokeFunction(1, myValueExtractor, Nullness.NOT_NULL);
+             .invokeFunction(1, myValueExtractor, Nullability.NOT_NULL);
       if (myMerger != null) {
         builder.pushUnknown()
                .ifConditionIs(true)
-               .push(builder.getFactory().getFactValue(DfaFactType.CAN_BE_NULL, false))
+               .push(builder.getFactory().getFactValue(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL))
                .invokeFunction(2, myMerger)
                .end();
       }
@@ -627,7 +660,7 @@ public class StreamChainInliner implements CallInliner {
            .ifConditionIs(true)
            .chain(b -> buildStreamCFG(b, firstStep, originalQualifier))
            .end()
-           .push(builder.getFactory().createTypeValue(call.getType(), Nullness.NOT_NULL));
+           .push(builder.getFactory().createTypeValue(call.getType(), Nullability.NOT_NULL), call);
     return true;
   }
 
@@ -684,8 +717,10 @@ public class StreamChainInliner implements CallInliner {
     }
     if (single) {
       // exactly single element
+      PsiExpression arg = sourceCall.getArgumentList().getExpressions()[0];
       builder
-        .pushExpression(sourceCall.getArgumentList().getExpressions()[0])
+        .pushExpression(arg)
+        .boxUnbox(arg, inType)
         .chain(firstStep::before)
         .chain(firstStep::iteration);
       return;

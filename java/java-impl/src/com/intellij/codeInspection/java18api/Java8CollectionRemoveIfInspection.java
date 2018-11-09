@@ -14,15 +14,15 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
@@ -73,7 +73,6 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
       }
 
       private void registerProblem(PsiLoopStatement statement, PsiJavaToken endToken) {
-        //noinspection DialogTitleCapitalization
         holder.registerProblem(statement, new TextRange(0, endToken.getTextOffset() - statement.getTextOffset() + 1),
                                QuickFixBundle.message("java.8.collection.removeif.inspection.description"),
                                new ReplaceWithRemoveIfQuickFix());
@@ -88,6 +87,9 @@ public class Java8CollectionRemoveIfInspection extends AbstractBaseJavaLocalInsp
         if (!(thenStatement instanceof PsiExpressionStatement)) return null;
         if (!declaration.isIteratorMethodCall(((PsiExpressionStatement)thenStatement).getExpression(), "remove")) return null;
         if (!LambdaGenerationUtil.canBeUncheckedLambda(condition)) return null;
+        PsiReferenceExpression iterable = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprDown(declaration.getIterable()), PsiReferenceExpression.class);
+        PsiVariable iterableVariable = iterable != null ? ObjectUtils.tryCast(iterable.resolve(), PsiVariable.class) : null;
+        if (iterableVariable != null && VariableAccessUtils.variableIsUsed(iterableVariable, condition)) return null;
         return condition;
       }
 

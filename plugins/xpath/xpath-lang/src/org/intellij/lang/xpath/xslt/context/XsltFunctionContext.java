@@ -212,6 +212,7 @@ public class XsltFunctionContext extends DefaultFunctionContext {
     return ContainerUtil.union(XSLT_FUNCTIONS, super.createFunctionMap(contextType));
   }
 
+  @Override
   public boolean allowsExtensions() {
     return true;
   }

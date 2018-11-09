@@ -19,15 +19,15 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.beans.Introspector;
 import java.lang.reflect.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public class BeanBinding extends NotNullDeserializeBinding {
   private static final Map<Class, List<MutableAccessor>> ourAccessorCache = ContainerUtil.createConcurrentSoftValueMap();
 
   private final String myTagName;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private Binding[] myBindings;
+  protected Binding[] myBindings;
 
   protected final Class<?> myBeanClass;
 
@@ -43,8 +43,9 @@ public class BeanBinding extends NotNullDeserializeBinding {
     assert !StringUtil.isEmptyOrSpaces(myTagName) : "Bean name is empty: " + beanClass;
   }
 
+  @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   @Override
-  public synchronized void init(@NotNull Type originalType, @NotNull Serializer serializer) {
+  public final synchronized void init(@NotNull Type originalType, @NotNull Serializer serializer) {
     assert myBindings == null;
 
     Property classAnnotation = myBeanClass.getAnnotation(Property.class);
@@ -60,11 +61,11 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @Override
   @Nullable
-  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
+  public final Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
     return serializeInto(o, context == null ? null : new Element(myTagName), filter);
   }
 
-  public Element serialize(@NotNull Object object, boolean createElementIfEmpty, @Nullable SerializationFilter filter) {
+  public final Element serialize(@NotNull Object object, boolean createElementIfEmpty, @Nullable SerializationFilter filter) {
     return serializeInto(object, createElementIfEmpty ? new Element(myTagName) : null, filter);
   }
 
@@ -76,38 +77,49 @@ public class BeanBinding extends NotNullDeserializeBinding {
         continue;
       }
 
-      Property property = accessor.getAnnotation(Property.class);
-      if (property == null || !property.alwaysWrite()) {
-        if (filter != null) {
-          if (filter instanceof SkipDefaultsSerializationFilter) {
-            if (((SkipDefaultsSerializationFilter)filter).equal(binding, o)) {
-              continue;
-            }
-          }
-          else if (!filter.accepts(accessor, o)) {
-            continue;
+      element = serializePropertyInto(binding, o, element, filter, true);
+    }
+    return element;
+  }
+
+  @Nullable
+  protected final Element serializePropertyInto(@NotNull Binding binding,
+                                                @NotNull Object o,
+                                                @Nullable Element element,
+                                                @Nullable SerializationFilter filter,
+                                                boolean isFilterPropertyItself) {
+    Accessor accessor = binding.getAccessor();
+    Property property = accessor.getAnnotation(Property.class);
+    if (property == null || !property.alwaysWrite()) {
+      if (filter != null && isFilterPropertyItself) {
+        if (filter instanceof SkipDefaultsSerializationFilter) {
+          if (((SkipDefaultsSerializationFilter)filter).equal(binding, o)) {
+            return element;
           }
         }
-
-        //todo: optimize. Cache it.
-        if (property != null && property.filter() != SerializationFilter.class &&
-            !ReflectionUtil.newInstance(property.filter()).accepts(accessor, o)) {
-          continue;
+        else if (!filter.accepts(accessor, o)) {
+          return element;
         }
       }
 
-      if (element == null) {
-        element = new Element(myTagName);
+      //todo: optimize. Cache it.
+      if (property != null && property.filter() != SerializationFilter.class &&
+          !ReflectionUtil.newInstance(property.filter()).accepts(accessor, o)) {
+        return element;
       }
+    }
 
-      Object node = binding.serialize(o, element, filter);
-      if (node != null) {
-        if (node instanceof org.jdom.Attribute) {
-          element.setAttribute((org.jdom.Attribute)node);
-        }
-        else {
-          addContent(element, node);
-        }
+    if (element == null) {
+      element = new Element(myTagName);
+    }
+
+    Object node = binding.serialize(o, element, filter);
+    if (node != null) {
+      if (node instanceof org.jdom.Attribute) {
+        element.setAttribute((org.jdom.Attribute)node);
+      }
+      else {
+        addContent(element, node);
       }
     }
     return element;
@@ -121,7 +133,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return instance;
   }
 
-  boolean equalByFields(@NotNull Object currentValue, @NotNull Object defaultValue, @NotNull SkipDefaultsSerializationFilter filter) {
+  final boolean equalByFields(@NotNull Object currentValue, @NotNull Object defaultValue, @NotNull SkipDefaultsSerializationFilter filter) {
     for (Binding binding : myBindings) {
       Accessor accessor = binding.getAccessor();
       if (!filter.equal(binding, accessor.read(currentValue), accessor.read(defaultValue))) {
@@ -132,7 +144,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  public TObjectFloatHashMap<String> computeBindingWeights(@NotNull LinkedHashSet<String> accessorNameTracker) {
+  public final TObjectFloatHashMap<String> computeBindingWeights(@NotNull LinkedHashSet<String> accessorNameTracker) {
     TObjectFloatHashMap<String> weights = new TObjectFloatHashMap<String>(accessorNameTracker.size());
     float weight = 0;
     float step = (float)myBindings.length / (float)accessorNameTracker.size();
@@ -153,7 +165,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     return weights;
   }
 
-  public void sortBindings(@NotNull final TObjectFloatHashMap<String> weights) {
+  public final void sortBindings(@NotNull final TObjectFloatHashMap<? super String> weights) {
     Arrays.sort(myBindings, new Comparator<Binding>() {
       @Override
       public int compare(@NotNull Binding o1, @NotNull Binding o2) {
@@ -166,11 +178,11 @@ public class BeanBinding extends NotNullDeserializeBinding {
     });
   }
 
-  public void deserializeInto(@NotNull Object result, @NotNull Element element) {
+  public final void deserializeInto(@NotNull Object result, @NotNull Element element) {
     deserializeInto(result, element, null);
   }
 
-  public void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<String> accessorNameTracker) {
+  public final void deserializeInto(@NotNull Object result, @NotNull Element element, @Nullable Set<? super String> accessorNameTracker) {
     nextAttribute:
     for (org.jdom.Attribute attribute : element.getAttributes()) {
       if (StringUtil.isEmpty(attribute.getNamespaceURI())) {
@@ -237,7 +249,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @Override
-  public boolean isBoundTo(@NotNull Element element) {
+  public final boolean isBoundTo(@NotNull Element element) {
     return element.getName().equals(myTagName);
   }
 
@@ -269,7 +281,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
   }
 
   @NotNull
-  static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
+  public static List<MutableAccessor> getAccessors(@NotNull Class<?> aClass) {
     List<MutableAccessor> accessors = ourAccessorCache.get(aClass);
     if (accessors != null) {
       return accessors;
@@ -306,23 +318,38 @@ public class BeanBinding extends NotNullDeserializeBinding {
       }
     }
 
+    if (accessors.isEmpty() && !isAssertBindings(aClass)) {
+      LOG.warn("no accessors for " + aClass);
+    }
+
     ourAccessorCache.put(aClass, accessors);
 
     return accessors;
+  }
+
+  private static boolean isAssertBindings(@NotNull Class<?> aClass) {
+    do {
+      Property property = aClass.getAnnotation(Property.class);
+      if (property != null && !property.assertIfNoBindings()) {
+        return true;
+      }
+    }
+    while ((aClass = aClass.getSuperclass()) != null);
+    return false;
   }
 
   private static class NameAndIsSetter {
     final String name;
     final boolean isSetter;
 
-    public NameAndIsSetter(String name, boolean isSetter) {
+    private NameAndIsSetter(String name, boolean isSetter) {
       this.name = name;
       this.isSetter = isSetter;
     }
   }
 
   @NotNull
-  private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
+  private static Map<String, Couple<Method>> collectPropertyAccessors(@NotNull Class<?> aClass, @NotNull List<? super MutableAccessor> accessors) {
     final Map<String, Couple<Method>> candidates = new TreeMap<String, Couple<Method>>(); // (name,(getter,setter))
     for (Method method : aClass.getMethods()) {
       if (!Modifier.isPublic(method.getModifiers())) {
@@ -392,7 +419,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
            object.getAnnotation(AbstractCollection.class) != null;
   }
 
-  private static void collectFieldAccessors(@NotNull Class<?> aClass, @NotNull List<MutableAccessor> accessors) {
+  private static void collectFieldAccessors(@NotNull Class<?> aClass, @NotNull List<? super MutableAccessor> accessors) {
     Class<?> currentClass = aClass;
     do {
       for (Field field : currentClass.getDeclaredFields()) {
@@ -446,6 +473,10 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
     int suffixIndex = part.indexOf('$');
     if (suffixIndex > 0) {
+      // ignore special kotlin properties
+      if (part.endsWith("$annotations")) {
+        return null;
+      }
       // see XmlSerializerTest.internalVar
       part = part.substring(0, suffixIndex);
     }
@@ -458,24 +489,29 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
   @NotNull
   private static Binding createBinding(@NotNull MutableAccessor accessor, @NotNull Serializer serializer, @NotNull Property.Style propertyStyle) {
-    Binding binding = serializer.getBinding(accessor);
-    if (binding instanceof JDOMElementBinding) {
-      return binding;
-    }
-
     Attribute attribute = accessor.getAnnotation(Attribute.class);
     if (attribute != null) {
       return new AttributeBinding(accessor, attribute);
     }
 
-    Tag tag = accessor.getAnnotation(Tag.class);
-    if (tag != null) {
-      return new TagBinding(accessor, tag);
-    }
-
     Text text = accessor.getAnnotation(Text.class);
     if (text != null) {
       return new TextBinding(accessor);
+    }
+
+    OptionTag optionTag = accessor.getAnnotation(OptionTag.class);
+    if (optionTag != null && optionTag.converter() != Converter.class) {
+      return new OptionTagBinding(accessor, optionTag);
+    }
+
+    Binding binding = serializer.getBinding(accessor);
+    if (binding instanceof JDOMElementBinding) {
+      return binding;
+    }
+
+    Tag tag = accessor.getAnnotation(Tag.class);
+    if (tag != null) {
+      return new TagBinding(accessor, tag);
     }
 
     if (binding instanceof CompactCollectionBinding) {
@@ -504,8 +540,6 @@ public class BeanBinding extends NotNullDeserializeBinding {
     if (xCollection != null && (!xCollection.propertyElementName().isEmpty() || xCollection.style() == XCollection.Style.v2)) {
       return new TagBinding(accessor, xCollection.propertyElementName());
     }
-
-    OptionTag optionTag = accessor.getAnnotation(OptionTag.class);
 
     if (optionTag == null) {
       XMap xMap = accessor.getAnnotation(XMap.class);

@@ -16,7 +16,6 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.util.text.StringUtil;
 import junit.framework.TestCase;
 
 public class VersionCompareTest extends TestCase {
@@ -143,6 +142,11 @@ public class VersionCompareTest extends TestCase {
   public void testBashPlugin() {
     assertTrue(compareVersions("1.1beta16", "1.1beta8") > 0);
     assertTrue(compareVersions("1.5.0.142-beta2", "1.5.0.142-beta1") > 0);
+  }
+
+  public void testKotlinPlugin() {
+    ascending("1.3-M2", "1.3.0-rc");
+    ascending("1.3-M2", "1.3.0-dev");
   }
 }
 

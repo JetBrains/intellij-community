@@ -22,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.GlobalMenuLinux;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
@@ -124,7 +125,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       ((JDialog)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     }
 
-    UIUtil.decorateFrame(((RootPaneContainer)frame).getRootPane());
+    UIUtil.decorateWindowHeader(((RootPaneContainer)frame).getRootPane());
 
     final WindowAdapter focusListener = new WindowAdapter() {
       @Override
@@ -274,7 +275,7 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
@@ -351,20 +352,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       FrameState.setFrameStateListener(this);
       setGlassPane(new IdeGlassPaneImpl(getRootPane(), true));
 
-      boolean setMenuOnFrame = SystemInfo.isMac;
-
-      if (SystemInfo.isLinux) {
-        final String desktop = System.getenv("XDG_CURRENT_DESKTOP");
-        if ("Unity".equals(desktop) || "Unity:Unity7".equals(desktop)) {
-         try {
-           Class.forName("com.jarego.jayatana.Agent");
-           setMenuOnFrame = true;
-         }
-         catch (ClassNotFoundException e) {
-           // ignore
-         }
-       }
-      }
+      final boolean setMenuOnFrame = SystemInfo.isMac || GlobalMenuLinux.isAvailable();
 
       if (setMenuOnFrame) {
         setJMenuBar(new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance()));
@@ -436,7 +424,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (IdeFrame.KEY.getName().equals(dataId)) {
         return this;
       }
@@ -519,7 +507,7 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (IdeFrame.KEY.getName().equals(dataId)) {
         return this;
       }
@@ -544,7 +532,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   private class MyProjectManagerListener implements ProjectManagerListener {
     @Override
-    public void projectClosing(Project project) {
+    public void projectClosing(@NotNull Project project) {
       if (project == myProject) {
         close();
       }

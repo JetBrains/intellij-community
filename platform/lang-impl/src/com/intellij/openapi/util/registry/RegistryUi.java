@@ -1,27 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -51,6 +35,7 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Kirill Kalishev
@@ -164,11 +149,11 @@ public class RegistryUi implements Disposable {
   private class RevertAction extends AnAction {
 
     private RevertAction() {
-      new ShadowAction(this, ActionManager.getInstance().getAction("EditorDelete"), myTable);
+      new ShadowAction(this, ActionManager.getInstance().getAction("EditorDelete"), myTable, RegistryUi.this);
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!myTable.isEditing() && myTable.getSelectedRow() >= 0);
       e.getPresentation().setText("Revert to Default");
       e.getPresentation().setIcon(AllIcons.General.Reset);
@@ -180,7 +165,7 @@ public class RegistryUi implements Disposable {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final RegistryValue rv = myModel.getRegistryValue(myTable.getSelectedRow());
       rv.resetToDefault();
       myModel.fireTableCellUpdated(myTable.getSelectedRow(), 0);
@@ -192,18 +177,18 @@ public class RegistryUi implements Disposable {
 
   private class EditAction extends AnAction {
     private EditAction() {
-      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE), myTable);
+      new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE), myTable, RegistryUi.this);
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!myTable.isEditing() && myTable.getSelectedRow() >= 0);
       e.getPresentation().setText("Edit");
       e.getPresentation().setIcon(AllIcons.Actions.EditSource);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       startEditingAtSelection();
     }
   }
@@ -217,12 +202,16 @@ public class RegistryUi implements Disposable {
     }
   }
 
+
   private static class MyTableModel extends AbstractTableModel {
 
     private final List<RegistryValue> myAll;
 
     private MyTableModel() {
       myAll = Registry.getAll();
+      myAll.addAll(Experiments.EP_NAME.getExtensionList().stream()
+                     .map(ExperimentalFeatureRegistryValueWrapper::new)
+                     .collect(Collectors.toList()));
       final List<String> recent = getRecent();
 
       Collections.sort(myAll, (o1, o2) -> {
@@ -515,7 +504,7 @@ public class RegistryUi implements Disposable {
   }
 
   private class RestoreDefaultsAction extends AbstractAction {
-    public RestoreDefaultsAction() {
+    RestoreDefaultsAction() {
       super("Restore Defaults");
     }
 

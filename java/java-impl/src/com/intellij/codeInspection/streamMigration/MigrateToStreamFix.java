@@ -15,26 +15,18 @@
  */
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.SimplifyStreamApiCallChainsInspection;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.StreamSource;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLoopStatement;
 import com.intellij.psi.PsiStatement;
-import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 class MigrateToStreamFix implements LocalQuickFix {
   private final BaseStreamApiMigration myMigration;
 
@@ -49,7 +41,6 @@ class MigrateToStreamFix implements LocalQuickFix {
     return "Replace with "+myMigration.getReplacement();
   }
 
-  @SuppressWarnings("DialogTitleCapitalization")
   @NotNull
   @Override
   public String getFamilyName() {
@@ -67,14 +58,14 @@ class MigrateToStreamFix implements LocalQuickFix {
     PsiElement result = myMigration.migrate(project, body, tb);
     if (result == null) return;
     tb.operations().forEach(StreamApiMigrationInspection.Operation::cleanUp);
-    simplifyAndFormat(project, result);
+    simplify(project, result);
   }
 
-  static void simplifyAndFormat(@NotNull Project project, PsiElement result) {
+  static void simplify(@NotNull Project project, PsiElement result) {
     if (result == null) return;
     LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
-    PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
-    result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result);
-    CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
+    RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(result);
+    result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result, true);
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
   }
 }

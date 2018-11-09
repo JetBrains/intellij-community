@@ -49,7 +49,7 @@ public class IgnoreWhiteSpacesAction extends DiffPanelComboBoxAction<ComparisonP
   private static class IgnoringPolicyAction extends DiffPanelAction {
     private final ComparisonPolicy myPolicy;
 
-    public IgnoringPolicyAction(String text, ComparisonPolicy policy) {
+    IgnoringPolicyAction(String text, ComparisonPolicy policy) {
       super(text);
       myPolicy = policy;
     }

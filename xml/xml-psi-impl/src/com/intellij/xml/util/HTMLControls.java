@@ -50,19 +50,20 @@ public class HTMLControls {
     return ourControls;
   }
 
-  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private static Control[] loadControls() {
     Element element;
     try {
       // use temporary bytes stream because otherwise inputStreamSkippingBOM will fail
       // on ZipFileInputStream used in jar files
-      final InputStream stream = HTMLControls.class.getResourceAsStream("HtmlControls.xml");
-      final byte[] bytes = FileUtilRt.loadBytes(stream);
-      stream.close();
-      final UnsyncByteArrayInputStream bytesStream = new UnsyncByteArrayInputStream(bytes);
-      element = loadElement(CharsetToolkit.inputStreamSkippingBOM(bytesStream));
-      bytesStream.close();
-    } catch (Exception e) {
+      final byte[] bytes;
+      try (final InputStream stream = HTMLControls.class.getResourceAsStream("HtmlControls.xml")) {
+        bytes = FileUtilRt.loadBytes(stream);
+      }
+      try (final UnsyncByteArrayInputStream bytesStream = new UnsyncByteArrayInputStream(bytes)) {
+        element = loadElement(CharsetToolkit.inputStreamSkippingBOM(bytesStream));
+      }
+    }
+    catch (Exception e) {
       LOG.error(e);
       return new Control[0];
     }

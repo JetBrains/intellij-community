@@ -31,5 +31,5 @@ public interface HighlightVisitor {
   @NotNull
   HighlightVisitor clone();
   @Deprecated
-  int order();
+  default int order() { return -1; }
 }

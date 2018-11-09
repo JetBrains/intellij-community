@@ -2,20 +2,19 @@
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.*;
+import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
+import com.intellij.util.indexing.impl.MapIndexStorage;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.io.*;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
 
-public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList, DiscoveredTestsIndex.UsedMethods> {
+public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList, UsedSources> {
   protected DiscoveredTestsIndex(@NotNull File file) throws IOException {
     super(INDEX_EXTENSION, new MyIndexStorage(file), new MyForwardIndex() {
 
@@ -24,24 +23,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
       public PersistentMap<Integer, Collection<Integer>> createMap() throws IOException {
         return IndexStorageManager.getInstance().createForwardIndexStorage(
           ID.create("test.discovery.forward.idx"),
-          new DataExternalizer<Collection<Integer>>() {
-            @Override
-            public void save(@NotNull DataOutput out,
-                             Collection<Integer> value)
-              throws IOException {
-              DataInputOutputUtilRt.writeSeq(out, value,
-                                             i -> EnumeratorIntegerDescriptor.INSTANCE
-                                               .save(out, i));
-            }
-
-            @Override
-            public Collection<Integer> read(@NotNull DataInput in)
-              throws IOException {
-              return DataInputOutputUtilRt
-                .readSeq(in, () -> EnumeratorIntegerDescriptor.INSTANCE
-                  .read(in));
-            }
-          }, new File(file, "forward.idx"));
+          new IntCollectionDataExternalizer(), new File(file, "forward.idx"));
       }
     });
   }
@@ -52,7 +34,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
   }
 
   @Override
-  protected void requestRebuild(Throwable e) {
+  protected void requestRebuild(@NotNull Throwable e) {
     //TODO index corrupted
   }
 
@@ -71,7 +53,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
     }
   }
 
-  private static final IndexExtension<Integer, TIntArrayList, UsedMethods> INDEX_EXTENSION = new IndexExtension<Integer, TIntArrayList, UsedMethods>() {
+  private static final IndexExtension<Integer, TIntArrayList, UsedSources> INDEX_EXTENSION = new IndexExtension<Integer, TIntArrayList, UsedSources>() {
     @NotNull
     @Override
     public IndexId<Integer, TIntArrayList> getName() {
@@ -80,7 +62,7 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
 
     @NotNull
     @Override
-    public DataIndexer<Integer, TIntArrayList, UsedMethods> getIndexer() {return inputData -> inputData.myTestUsedMethods;}
+    public DataIndexer<Integer, TIntArrayList, UsedSources> getIndexer() {return inputData -> inputData.myUsedMethods;}
 
     @NotNull
     @Override
@@ -109,10 +91,5 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
     public boolean containsDataFrom(int testId) throws IOException {
       return getInput(testId) != null;
     }
-  }
-
-  static class UsedMethods {
-    private final Map<Integer, TIntArrayList> myTestUsedMethods;
-    UsedMethods(Map<Integer, TIntArrayList> methods) {myTestUsedMethods = methods;}
   }
 }

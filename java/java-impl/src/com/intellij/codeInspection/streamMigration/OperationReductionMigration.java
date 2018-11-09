@@ -84,7 +84,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     private final String myOperation;
 
 
-    public ReductionOperation(IElementType compoundAssignmentOp,
+    ReductionOperation(IElementType compoundAssignmentOp,
                               Predicate<PsiExpression> initializerReplaceCondition,
                               Predicate<PsiVariable> accumulatorRestriction,
                               String identity,

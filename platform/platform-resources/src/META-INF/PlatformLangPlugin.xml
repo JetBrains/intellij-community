@@ -24,8 +24,6 @@
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.RecentDirectoryProjectsManagerEx"/>
 
-    <applicationService serviceInterface="com.intellij.packageDependencies.DependenciesVisitorFactory"
-                        serviceImplementation="com.intellij.packageDependencies.DependenciesVisitorFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.TargetElementUtil"
@@ -77,9 +75,6 @@
     <projectConfigurable groupId="editor" groupWeight="160" displayName="Inspections" id="Errors" provider="com.intellij.profile.codeInspection.ui.ErrorsConfigurableProviderImpl" order="before preferences.intentionPowerPack"/>
     <projectConfigurable groupId="appearance" groupWeight="111" instance="com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable" id="project.scopes" key="scopes.display.name" bundle="messages.IdeBundle" />
 
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectImporterCheckoutListener"/>
     <checkoutCompletedListener implementation="com.intellij.openapi.vcs.checkout.PlatformProjectCheckoutListener" id="PlatformProjectCheckoutListener"/>
 
   </extensions>

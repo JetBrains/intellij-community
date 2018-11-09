@@ -18,6 +18,7 @@ package org.jetbrains.git4idea.ssh;
 import com.intellij.ide.XmlRpcServer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import gnu.trove.THashMap;
 import org.apache.commons.codec.DecoderException;
@@ -55,7 +56,8 @@ public abstract class GitXmlRpcHandlerService<T> {
   @NotNull private final String myHandlerName;
   @NotNull private final Class<? extends GitExternalApp> myScriptMainClass;
 
-  @Nullable private File myScriptPath;
+  @Nullable private File myBatchScriptPath;
+  @Nullable private File myShellScriptPath;
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
 
   @NotNull private final THashMap<UUID, T> handlers = new THashMap<>();
@@ -79,6 +81,11 @@ public abstract class GitXmlRpcHandlerService<T> {
     return BuiltInServerManager.getInstance().waitForStart().getPort();
   }
 
+  @NotNull
+  public File getScriptPath() throws IOException {
+    return getScriptPath(SystemInfo.isWindows);
+  }
+
   /**
    * Get file to the script service
    *
@@ -86,16 +93,24 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @throws IOException if script cannot be generated
    */
   @NotNull
-  public File getScriptPath() throws IOException {
+  public File getScriptPath(boolean useBatchFile) throws IOException {
     ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix, myScriptMainClass);
     generator.addClasses(XmlRpcClientLite.class, DecoderException.class, FileUtilRt.class);
     customizeScriptGenerator(generator);
 
     synchronized (SCRIPT_FILE_LOCK) {
-      if (myScriptPath == null || !myScriptPath.exists()) {
-        myScriptPath = generator.generate();
+      if (useBatchFile) {
+        if (myBatchScriptPath == null || !myBatchScriptPath.exists()) {
+          myBatchScriptPath = generator.generate(useBatchFile);
+        }
+        return myBatchScriptPath;
       }
-      return myScriptPath;
+      else {
+        if (myShellScriptPath == null || !myShellScriptPath.exists()) {
+          myShellScriptPath = generator.generate(useBatchFile);
+        }
+        return myShellScriptPath;
+      }
     }
   }
 
@@ -111,6 +126,7 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @param parentDisposable a disposable to unregister the handler if it doesn't get unregistered manually
    * @return an identifier to pass to the environment variable
    */
+  @NotNull
   public UUID registerHandler(@NotNull T handler, @NotNull Disposable parentDisposable) {
     synchronized (HANDLERS_LOCK) {
       XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();

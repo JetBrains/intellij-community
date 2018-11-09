@@ -25,18 +25,36 @@ import com.intellij.openapi.util.text.StringUtil.isWhiteSpace
 import java.util.*
 
 fun isPunctuation(c: Char): Boolean {
-  if (c == '_') return false
-  val b = c.toInt()
+  return isPunctuation(c.toInt())
+}
+
+fun isPunctuation(b: Int): Boolean {
+  if (b == 95) return false // exclude '_'
   return b >= 33 && b <= 47 || // !"#$%&'()*+,-./
          b >= 58 && b <= 64 || // :;<=>?@
          b >= 91 && b <= 96 || // [\]^_`
          b >= 123 && b <= 126  // {|}~
 }
 
-fun isAlpha(c: Char): Boolean {
-  return !isWhiteSpace(c) && !isPunctuation(c)
+fun isAlpha(c: Int): Boolean {
+  if (c < 128 && isWhiteSpace(c.toChar())) return false
+  return !isPunctuation(c)
 }
 
+fun isContinuousScript(c: Int): Boolean {
+  if (c < 128) return false
+  if (Character.isDigit(c)) return false
+
+  if (!Character.isBmpCodePoint(c)) return true
+  if (Character.isIdeographic(c)) return true
+  if (!Character.isAlphabetic(c)) return true
+
+  val script = Character.UnicodeScript.of(c)
+  return script == Character.UnicodeScript.HIRAGANA ||
+         script == Character.UnicodeScript.KATAKANA ||
+         script == Character.UnicodeScript.THAI ||
+         script == Character.UnicodeScript.JAVANESE
+}
 
 fun trim(text: CharSequence, start: Int, end: Int): IntPair {
   return trim(start, end,

@@ -171,8 +171,8 @@ public class CommonRefactoringUtil {
 
   private static boolean checkReadOnlyStatus(Collection<? extends PsiElement> elements,
                                              boolean recursively,
-                                             Collection<VirtualFile> readonly,
-                                             Collection<VirtualFile> failed) {
+                                             Collection<? super VirtualFile> readonly,
+                                             Collection<? super VirtualFile> failed) {
     boolean seenNonWritablePsiFilesWithoutVirtualFile = false;
 
     for (PsiElement element : elements) {
@@ -231,7 +231,7 @@ public class CommonRefactoringUtil {
     return seenNonWritablePsiFilesWithoutVirtualFile;
   }
 
-  public static void collectReadOnlyFiles(@NotNull VirtualFile vFile, @NotNull final Collection<VirtualFile> list) {
+  public static void collectReadOnlyFiles(@NotNull VirtualFile vFile, @NotNull final Collection<? super VirtualFile> list) {
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
 
     VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {

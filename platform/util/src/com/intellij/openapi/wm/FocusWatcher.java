@@ -176,7 +176,7 @@ public class FocusWatcher implements ContainerListener,FocusListener{
    * this method each time one of the populated  component gains focus. All "temporary" focus
    * event are ignored.
    *
-   * @param component currenly focused component. The component can be {@code null}
+   * @param component currently focused component. The component can be {@code null}
    * @param cause
    */
   protected void focusedComponentChanged(Component component, @Nullable final AWTEvent cause){}

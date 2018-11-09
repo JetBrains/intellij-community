@@ -82,13 +82,10 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
   @Override
   public ASTNode findChildByRole(int role) {
     LOG.assertTrue(ChildRole.isUnique(role));
-    switch (role) {
-      default:
-        return null;
-
-      case ChildRole.OPERATION_SIGN:
-        return findChildByType(OUR_OPERATIONS_BIT_SET);
+    if (role == ChildRole.OPERATION_SIGN) {
+      return findChildByType(OUR_OPERATIONS_BIT_SET);
     }
+    return null;
   }
 
   @Override
@@ -134,6 +131,7 @@ public class PsiPolyadicExpressionImpl extends ExpressionPsiElement implements P
     super.clearCaches();
   }
 
+  @Override
   public String toString() {
     return "PsiPolyadicExpression: " + getText();
   }

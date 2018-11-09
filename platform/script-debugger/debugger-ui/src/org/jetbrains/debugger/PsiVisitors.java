@@ -34,7 +34,7 @@ public final class PsiVisitors {
   /**
    * Read action will be taken automatically
    */
-  public static <RESULT> RESULT visit(@NotNull XSourcePosition position, @NotNull Project project, @NotNull Visitor<RESULT> visitor, RESULT defaultResult) {
+  public static <RESULT> RESULT visit(@NotNull XSourcePosition position, @NotNull Project project, @NotNull Visitor<? extends RESULT> visitor, RESULT defaultResult) {
     return ReadAction.compute(()->{
       Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
       PsiFile file = document == null || document.getTextLength() == 0 ? null : PsiDocumentManager.getInstance(project).getPsiFile(document);

@@ -43,41 +43,19 @@ public class IOUtils {
 
   public static void putInputStreamToFile(InputStream src, File file) throws IOException {
     FileUtil.ensureCanCreateFile(file);
-    copyStreamToStream(src, new FileOutputStream(file), true);
+    doCopyStreamToStream(src, new FileOutputStream(file));
   }
 
   public static void copyStreamToStream(InputStream src, OutputStream dst) throws IOException {
-    copyStreamToStream(src, dst, true);
+    doCopyStreamToStream(src, dst);
   }
 
-  public static void copyStreamToStream(InputStream src, OutputStream dst, boolean close_streams) throws IOException {
-    BufferedInputStream bis = null;
-    BufferedOutputStream bos = null;
-    try {
-      bis = new BufferedInputStream(src);
-      bos = new BufferedOutputStream(dst);
+  private static void doCopyStreamToStream(InputStream src, OutputStream dst) throws IOException {
+    try (
+      BufferedInputStream bis = new BufferedInputStream(src);
+      BufferedOutputStream bos = new BufferedOutputStream(dst)) {
       FileUtil.copy(bis, bos);
       bos.flush();
-    }
-    finally {
-      if (close_streams) {
-        try {
-          if (bis != null) {
-            bis.close();
-          }
-        }
-        catch (IOException ignore) {
-        }
-        finally {
-          try {
-            if (bos != null) {
-              bos.close();
-            }
-          }
-          catch (IOException ignore) {
-          }
-        }
-      }
     }
   }
 }

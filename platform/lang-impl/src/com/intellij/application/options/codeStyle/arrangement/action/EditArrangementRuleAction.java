@@ -22,10 +22,10 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.IconUtil;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 10/29/12 11:01 AM
  */
 public class EditArrangementRuleAction extends AbstractArrangementRuleAction implements DumbAware, Toggleable {
 
@@ -37,13 +37,13 @@ public class EditArrangementRuleAction extends AbstractArrangementRuleAction imp
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     ArrangementMatchingRulesControl control = getRulesControl(e);
     e.getPresentation().setEnabled(control != null && control.getSelectedModelRows().size() == 1);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     ArrangementMatchingRulesControl control = getRulesControl(e);
     if (control == null) {
       return;

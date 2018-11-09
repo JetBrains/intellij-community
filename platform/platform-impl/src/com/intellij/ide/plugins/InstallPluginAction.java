@@ -24,6 +24,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.net.IOExceptionDialog;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -47,7 +48,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
     boolean enabled = (selection != null);
@@ -78,7 +79,7 @@ public class InstallPluginAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     install(null);
   }
 
@@ -92,6 +93,10 @@ public class InstallPluginAction extends AnAction implements DumbAware {
 
   public void install(@Nullable final Runnable onSuccess, @Nullable final Runnable cleanup, boolean confirmed) {
     IdeaPluginDescriptor[] selection = getPluginTable().getSelectedObjects();
+
+    if (!PluginManagerMain.checkThirdPartyPluginsAllowed(Arrays.asList(selection))) {
+      return;
+    }
 
     if (confirmed || userConfirm(selection)) {
       final List<PluginNode> list = new ArrayList<>();

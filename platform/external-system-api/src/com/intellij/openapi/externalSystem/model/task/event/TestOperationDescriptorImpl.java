@@ -19,7 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/16/2015
  */
 public class TestOperationDescriptorImpl extends OperationDescriptorImpl implements TestOperationDescriptor {
   private static final long serialVersionUID = 1L;

@@ -34,9 +34,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class CreateDomElementAction<T extends DomElement> extends SimpleCodeInsightAction {
 
-  private final Class<T> myContextClass;
+  private final Class<? extends T> myContextClass;
 
-  public CreateDomElementAction(Class<T> contextClass) {
+  public CreateDomElementAction(Class<? extends T> contextClass) {
     myContextClass = contextClass;
   }
 

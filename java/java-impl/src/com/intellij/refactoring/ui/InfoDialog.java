@@ -42,11 +42,13 @@ public class InfoDialog extends DialogWrapper{
     setOKButtonText(RefactoringBundle.message("ok.button"));
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     return new Action[]{getOKAction()};
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel();
     panel.setBorder(BorderFactory.createEtchedBorder());
@@ -74,6 +76,7 @@ public class InfoDialog extends DialogWrapper{
     isToShowInFuture = true;
     myShowInFutureCheckBox.addActionListener(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent event) {
           isToShowInFuture = !myShowInFutureCheckBox.isSelected();
         }

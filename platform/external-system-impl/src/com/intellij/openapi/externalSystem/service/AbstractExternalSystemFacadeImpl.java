@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Denis Zhdanov
- * @since 8/8/11 12:51 PM
  */
 public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends RemoteServer
   implements RemoteExternalSystemFacade<S>
@@ -81,7 +80,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     }
   }
 
-  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings({"unchecked", "UseOfSystemOutOrSystemErr"})
   private <I extends RemoteExternalSystemService<S>, C extends I> I getService(@NotNull Class<I> interfaceClass,
                                                                                @NotNull final C impl)
     throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException
@@ -131,7 +130,7 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
    * @throws ClassNotFoundException   in case of incorrect assumptions about server class interface
    * @throws RemoteException
    */
-  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed", "UseOfSystemOutOrSystemErr"})
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed", "UseOfSystemOutOrSystemErr"})
   protected abstract  <I extends RemoteExternalSystemService<S>, C extends I> I createService(@NotNull Class<I> interfaceClass,
                                                                                               @NotNull final C impl)
   throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException;

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.openapi.project.Project;
@@ -18,7 +18,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
   private static final ID<String, Void> NAME = ID.create("java.auto.module.name");
 
   private final FileBasedIndex.InputFilter myFilter =
-    file -> file.isDirectory() && file.getParent() == null && "jar".equalsIgnoreCase(file.getExtension());
+    file -> file.isDirectory() && file.getParent() == null && "jar".equalsIgnoreCase(file.getExtension()) && JavaModuleNameIndex.descriptorFile(file) == null;
 
   private final DataIndexer<String, Void, FileContent> myIndexer =
     data -> singletonMap(LightJavaModule.moduleName(data.getFile()), null);
@@ -31,7 +31,7 @@ public class JavaAutoModuleNameIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 1 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 2 : 0);
+    return 2 + (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping ? 2 : 0);
   }
 
   @NotNull

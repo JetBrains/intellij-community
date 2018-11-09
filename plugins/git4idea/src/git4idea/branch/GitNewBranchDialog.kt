@@ -26,7 +26,7 @@ import java.awt.BorderLayout
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 
-internal data class GitNewBranchOptions(val name: String, @get:JvmName("shouldCheckout") val checkout: Boolean)
+data class GitNewBranchOptions(val name: String, @get:JvmName("shouldCheckout") val checkout: Boolean)
 
 internal class GitNewBranchDialog(project: Project, dialogTitle: String, initialName: String?, validator: GitNewBranchNameValidator) :
   InputDialog(project, "New branch name:", dialogTitle, null, initialName, validator) {

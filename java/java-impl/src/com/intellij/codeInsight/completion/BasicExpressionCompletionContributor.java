@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BasicExpressionCompletionContributor {
 
-  private static void addKeyword(final Consumer<LookupElement> result, final PsiElement element, final String s) {
+  private static void addKeyword(final Consumer<? super LookupElement> result, final PsiElement element, final String s) {
     result.consume(createKeywordLookupItem(element, s));
   }
 
@@ -35,7 +35,7 @@ public class BasicExpressionCompletionContributor {
   }
 
   public static void fillCompletionVariants(JavaSmartCompletionParameters parameters,
-                                            final Consumer<LookupElement> result,
+                                            final Consumer<? super LookupElement> result,
                                             PrefixMatcher matcher) {
     final PsiElement element = parameters.getPosition();
     if (JavaKeywordCompletion.isAfterTypeDot(element)) {
@@ -77,7 +77,7 @@ public class BasicExpressionCompletionContributor {
 
   }
 
-  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<LookupElement> consumer) {
+  public static void processDataflowExpressionTypes(PsiElement position, @Nullable PsiType expectedType, final PrefixMatcher matcher, Consumer<? super LookupElement> consumer) {
     final PsiExpression context = PsiTreeUtil.getParentOfType(position, PsiExpression.class);
     if (context == null) return;
 

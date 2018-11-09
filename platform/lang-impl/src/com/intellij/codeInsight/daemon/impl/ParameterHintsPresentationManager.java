@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.hints.HintWidthAdjustment;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 public class ParameterHintsPresentationManager implements Disposable {
@@ -38,6 +40,11 @@ public class ParameterHintsPresentationManager implements Disposable {
   private ParameterHintsPresentationManager() {
   }
 
+  public List<Inlay> getParameterHintsInRange(@NotNull Editor editor, int startOffset, int endOffset) {
+    //noinspection unchecked
+    return (List)editor.getInlayModel().getInlineElementsInRange(startOffset, endOffset, MyRenderer.class);
+  }
+
   public boolean isParameterHint(@NotNull Inlay inlay) {
     return inlay.getRenderer() instanceof MyRenderer;
   }
@@ -47,8 +54,9 @@ public class ParameterHintsPresentationManager implements Disposable {
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
   }
 
-  public Inlay addHint(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, @NotNull String hintText, boolean useAnimation) {
-    MyRenderer renderer = new MyRenderer(editor, hintText, useAnimation);
+  public Inlay addHint(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, @NotNull String hintText,
+                       @Nullable HintWidthAdjustment widthAdjuster, boolean useAnimation) {
+    MyRenderer renderer = new MyRenderer(editor, hintText, widthAdjuster, useAnimation);
     Inlay inlay = editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, renderer);
     if (inlay != null) {
       if (useAnimation) scheduleRendererUpdate(editor, inlay);
@@ -58,15 +66,16 @@ public class ParameterHintsPresentationManager implements Disposable {
 
   public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint, boolean useAnimation) {
     if (useAnimation) {
-      updateRenderer(editor, hint, null);
+      updateRenderer(editor, hint, null, null,true);
     }
     else {
       Disposer.dispose(hint);  
     }
   }
 
-  public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText) {
-    updateRenderer(editor, hint, newText);
+  public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText, @Nullable HintWidthAdjustment widthAdjuster,
+                          boolean useAnimation) {
+    updateRenderer(editor, hint, newText, widthAdjuster, useAnimation);
   }
 
   public void setHighlighted(@NotNull Inlay hint, boolean highlighted) {
@@ -101,11 +110,12 @@ public class ParameterHintsPresentationManager implements Disposable {
     return renderer.current;
   }
 
-  private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
+  private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText, HintWidthAdjustment widthAdjuster,
+                              boolean useAnimation) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
-    renderer.update(editor, newText, true);
+    renderer.update(editor, newText, widthAdjuster, useAnimation);
     hint.updateSize();
-    scheduleRendererUpdate(editor, hint);
+    if (useAnimation) scheduleRendererUpdate(editor, hint);
   }
 
   @Override
@@ -140,13 +150,13 @@ public class ParameterHintsPresentationManager implements Disposable {
     private boolean highlighted;
     private boolean current;
 
-    private MyRenderer(Editor editor, String text, boolean animated) {
+    private MyRenderer(Editor editor, String text, HintWidthAdjustment widthAdjustment, boolean animated) {
       super(text);
-      updateState(editor, text, animated);
+      updateState(editor, text, widthAdjustment, animated);
     }
 
-    public void update(Editor editor, String newText, boolean animated) {
-      updateState(editor, newText, animated);
+    public void update(Editor editor, String newText, HintWidthAdjustment widthAdjustment, boolean animated) {
+      updateState(editor, newText, widthAdjustment, animated);
     }
 
     @Nullable
@@ -163,11 +173,12 @@ public class ParameterHintsPresentationManager implements Disposable {
 
     @Nullable
     @Override
-    public String getContextMenuGroupId() {
+    public String getContextMenuGroupId(@NotNull Inlay inlay) {
       return "ParameterNameHints";
     }
 
-    private void updateState(Editor editor, String text, boolean animated) {
+    private void updateState(Editor editor, String text, HintWidthAdjustment widthAdjustment, boolean animated) {
+      setWidthAdjustment(widthAdjustment);
       FontMetrics metrics = getFontMetrics(editor).getMetrics();
       startWidth = doCalcWidth(getText(), metrics);
       setText(text);
@@ -181,8 +192,8 @@ public class ParameterHintsPresentationManager implements Disposable {
     }
 
     @Override
-    public int calcWidthInPixels(@NotNull Editor editor) {
-      int endWidth = super.calcWidthInPixels(editor);
+    public int calcWidthInPixels(@NotNull Inlay inlay) {
+      int endWidth = super.calcWidthInPixels(inlay);
       return step <= steps ? Math.max(1, startWidth + (endWidth - startWidth) / steps * step) : endWidth;
     }
   }
@@ -206,7 +217,7 @@ public class ParameterHintsPresentationManager implements Disposable {
           if (!renderer.nextStep()) {
             it.remove();
           }
-          if (renderer.calcWidthInPixels(myEditor) == 0) {
+          if (renderer.calcWidthInPixels(inlay) == 0) {
             Disposer.dispose(inlay);
           }
           else {

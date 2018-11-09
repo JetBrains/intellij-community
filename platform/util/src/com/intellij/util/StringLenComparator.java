@@ -37,7 +37,7 @@ public class StringLenComparator implements Comparator<String> {
 
   @Override
   public int compare(final String o1, final String o2) {
-    final int revertor = myAscending ? 1 : -1;
-    return (o1.length() == o2.length()) ? 0 : (revertor * ((o1.length() < o2.length()) ? -1 : 1));
+    int k = myAscending ? 1 : -1;
+    return (o1.length() == o2.length()) ? 0 : (k * ((o1.length() < o2.length()) ? -1 : 1));
   }
 }

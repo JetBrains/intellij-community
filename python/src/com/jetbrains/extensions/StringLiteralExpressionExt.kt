@@ -31,4 +31,4 @@ fun StringLiteralExpression.getCalleeIfArgument(argumentPosition: Int, argumentN
 /**
  * @see getCalleeIfArgument
  */
-fun StringLiteralExpression.getCalleeIfArgument(argument: FunctionParameter) = this.getCalleeIfArgument(argument.position, argument.name)
+fun StringLiteralExpression.getCalleeIfArgument(argument: FunctionParameter): PyExpression? = this.getCalleeIfArgument(argument.position, argument.name)

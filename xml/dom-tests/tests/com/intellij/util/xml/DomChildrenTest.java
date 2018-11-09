@@ -104,12 +104,12 @@ public class DomChildrenTest extends DomTestCase {
       element.addAbstractElement(MyFooConcreteElement.class);
       element.addAbstractElement(MyFooConcreteElement.class, 1);
       element.addAbstractElement(2, MyBarConcreteElement.class);
-      Class[] classes = new Class[]{MyBarConcreteElement.class, MyFooConcreteElement.class, MyBarConcreteElement.class,
+      Class[] classes = {MyBarConcreteElement.class, MyFooConcreteElement.class, MyBarConcreteElement.class,
         MyFooConcreteElement.class, MyFooConcreteElement.class};
       final List<MyAbstractElement> abstractElements = element.getAbstractElements();
       for (int i = 0; i < abstractElements.size(); i++) {
         MyAbstractElement abstractElement = abstractElements.get(i);
-        assertTrue(String.valueOf(i) + " " + abstractElement.getClass(), classes[i].isInstance(abstractElement));
+        assertTrue(i + " " + abstractElement.getClass(), classes[i].isInstance(abstractElement));
         assertEquals(String.valueOf(i), classes[i].getName(), abstractElement.getXmlTag().getAttributeValue("foo"));
       }
     }

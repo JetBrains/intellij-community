@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -23,26 +24,27 @@ public class VcsToolbarLabelAction extends DumbAwareAction implements CustomComp
   private static final String DEFAULT_LABEL = "VCS:";
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);
     Project project = e.getProject();
     e.getPresentation().setVisible(project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     //do nothing
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     return new VcsToolbarLabel()
       .withFont(JBUI.Fonts.toolbarFont())
       .withBorder(JBUI.Borders.empty(0, 6, 0, 5));
   }
 
   private static class VcsToolbarLabel extends JBLabel {
-    public VcsToolbarLabel() {
+    VcsToolbarLabel() {
       super(DEFAULT_LABEL);
     }
 
@@ -57,7 +59,7 @@ public class VcsToolbarLabelAction extends DumbAwareAction implements CustomComp
     String name = DEFAULT_LABEL;
     if (project != null) {
       AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-      List<String> ids = Arrays.stream(vcss).map(vcs -> vcs.getDisplayName()).distinct().collect(Collectors.toList());
+      List<String> ids = Arrays.stream(vcss).map(vcs -> vcs.getShortName()).distinct().collect(Collectors.toList());
       if (ids.size() == 1) {
         name = ids.get(0) + ":";
       }

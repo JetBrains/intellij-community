@@ -32,11 +32,13 @@ public abstract class FacetTypeRegistry {
   /**
    * @deprecated register {@code facetType} as an extension instead
    */
+  @Deprecated
   public abstract void registerFacetType(FacetType facetType);
 
   /**
    * @deprecated register {@code facetType} as an extension instead
    */
+  @Deprecated
   public abstract void unregisterFacetType(FacetType facetType);
 
   @NotNull

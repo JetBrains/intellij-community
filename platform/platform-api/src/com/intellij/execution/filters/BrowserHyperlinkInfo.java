@@ -28,6 +28,7 @@ public class BrowserHyperlinkInfo implements HyperlinkInfo {
     myUrl = url;
   }
 
+  @Override
   public void navigate(Project project) {
     BrowserUtil.browse(myUrl);
   }

@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.net.MalformedURLException;
@@ -15,7 +16,7 @@ import java.net.URL;
 public class DeadlockWithCertificateDialogAction extends AnAction {
   public static final String SELF_SIGNED_SERVER_URL = "https://self-signed.certificates-tests.labs.intellij.net";
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     ApplicationManager.getApplication().invokeLater(() -> {
       URL location = null;
       try {

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +28,13 @@ public abstract class BaseActionRunnable<T> {
 
   protected abstract void run(@NotNull Result<T> result) throws Throwable;
 
+  /**
+   * @deprecated use {@link ReadAction#run(ThrowableRunnable)}
+   * or {@link WriteAction#run(ThrowableRunnable)}
+   * or {@link com.intellij.openapi.command.WriteCommandAction#runWriteCommandAction(Project, Runnable)}
+   * or similar
+   */
+  @Deprecated
   @NotNull
   public abstract RunResult<T> execute();
 
@@ -41,10 +49,9 @@ public abstract class BaseActionRunnable<T> {
     return execute();
   }
 
-  //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link ApplicationManager#getApplication()} (to be removed in IDEA 2018) */
+  @Deprecated
   protected Application getApplication() {
     return ApplicationManager.getApplication();
   }
-  //</editor-fold>
 }

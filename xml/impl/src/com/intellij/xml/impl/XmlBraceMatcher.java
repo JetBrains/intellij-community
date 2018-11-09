@@ -177,14 +177,11 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
 
   @Override
   public boolean isStrictTagMatching(final FileType fileType, final int braceGroupId) {
-    switch(braceGroupId){
-      case XML_TAG_TOKEN_GROUP:
-        // Other xml languages may have nonbalanced tag names
-        return isStrictTagMatchingForFileType(fileType);
-
-      default:
-        return false;
+    if (braceGroupId == XML_TAG_TOKEN_GROUP) {
+      // Other xml languages may have nonbalanced tag names
+      return isStrictTagMatchingForFileType(fileType);
     }
+    return false;
   }
 
   protected boolean isStrictTagMatchingForFileType(final FileType fileType) {
@@ -194,12 +191,7 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
 
   @Override
   public boolean areTagsCaseSensitive(final FileType fileType, final int braceGroupId) {
-    switch(braceGroupId){
-      case XML_TAG_TOKEN_GROUP:
-        return fileType == StdFileTypes.XML;
-      default:
-        return false;
-    }
+    return braceGroupId == XML_TAG_TOKEN_GROUP && fileType == StdFileTypes.XML;
   }
 
   private static boolean findEndTagStart(HighlighterIterator iterator) {

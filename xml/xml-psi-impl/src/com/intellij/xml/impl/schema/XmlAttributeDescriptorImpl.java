@@ -64,12 +64,6 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
     myUse = myTag.getAttributeValue("use");
   }
 
-  @NotNull
-  @Override
-  public Object[] getDependences(){
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
   @Override
   public boolean isRequired() {
     return REQUIRED_ATTR_VALUE.equals(myUse);
@@ -184,5 +178,11 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
   @Override
   public String toString() {
     return getName();
+  }
+
+  @NotNull
+  @Override
+  public Object[] getDependencies() {
+    return new Object[] { getDeclaration() };
   }
 }

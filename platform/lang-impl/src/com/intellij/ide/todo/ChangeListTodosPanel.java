@@ -16,7 +16,6 @@
 
 package com.intellij.ide.todo;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -41,12 +40,12 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
     @Override
     public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
       rebuildWithAlarm(myAlarm);
-      AppUIUtil.invokeOnEdt(() -> setDisplayName(IdeBundle.message("changelist.todo.title", newDefaultList.getName())));
+      AppUIUtil.invokeOnEdt(() -> setDisplayName(TodoView.getTabNameForChangeList(newDefaultList.getName())));
     }
 
     @Override
     public void changeListRenamed(final ChangeList list, final String oldName) {
-      AppUIUtil.invokeOnEdt(() -> setDisplayName(IdeBundle.message("changelist.todo.title", list.getName())));
+      AppUIUtil.invokeOnEdt(() -> setDisplayName(TodoView.getTabNameForChangeList(list.getName())));
     }
 
     @Override

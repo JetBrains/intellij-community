@@ -34,6 +34,7 @@ import java.util.List;
  */
 public class AntMultiPathStringConverter extends Converter<List<File>> implements CustomReferenceConverter<List<File>> {
 
+  @Override
   public List<File> fromString(@Nullable @NonNls String s, ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
@@ -57,6 +58,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
               myBaseDir = antProject != null? antProject.getProjectBasedirPath() : null;
             }
 
+            @Override
             public String compute() {
               return myBaseDir;
             }
@@ -81,6 +83,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
     return project;
   }
 
+  @Override
   public String toString(@Nullable List<File> files, ConvertContext context) {
     final GenericAttributeValue attribValue = context.getInvocationElement().getParentOfType(GenericAttributeValue.class, false);
     if (attribValue == null) {
@@ -89,6 +92,7 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
     return attribValue.getRawText();
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(GenericDomValue<List<File>> genericDomValue, PsiElement element, ConvertContext context) {
     final GenericAttributeValue attributeValue = (GenericAttributeValue)genericDomValue;

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -29,7 +30,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
-import java.util.HashSet;
 
 import java.util.*;
 
@@ -54,6 +54,7 @@ public class OptimizeImportsRefactoringHelper implements RefactoringHelper<Set<P
     CodeStyleManager.getInstance(project).performActionWithFormatterDisabled(
       (Runnable)() -> PsiDocumentManager.getInstance(project).commitAllDocuments());
 
+    DumbService.getInstance(project).completeJustSubmittedTasks();
     final List<SmartPsiElementPointer<PsiImportStatementBase>> redundants = new ArrayList<>();
     final Runnable findRedundantImports = () -> ReadAction.run(() -> {
       final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
@@ -104,7 +105,7 @@ class OptimizeImportsTask implements SequentialTask {
   private int myCount;
   private final Map<PsiFile, Set<String>> myDuplicates = new HashMap<>();
 
-  public OptimizeImportsTask(SequentialModalProgressTask progressTask, Collection<SmartPsiElementPointer<PsiImportStatementBase>> pointers) {
+  OptimizeImportsTask(SequentialModalProgressTask progressTask, Collection<SmartPsiElementPointer<PsiImportStatementBase>> pointers) {
     myTask = progressTask;
     myTotal = pointers.size();
     myPointers = pointers.iterator();

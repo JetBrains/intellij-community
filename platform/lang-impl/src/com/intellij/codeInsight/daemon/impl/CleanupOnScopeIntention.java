@@ -22,11 +22,13 @@ import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.actions.CleanupIntention;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 public class CleanupOnScopeIntention extends CleanupIntention {
   public static final CleanupOnScopeIntention INSTANCE = new CleanupOnScopeIntention();
@@ -44,11 +46,9 @@ public class CleanupOnScopeIntention extends CleanupIntention {
     }
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
-      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
-      project,
-      analysisScope,
-      module,
-      true, AnalysisUIOptions.getInstance(project), file);
+      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), project, BaseAnalysisActionDialog.standardItems(
+      project, analysisScope, module, file),
+      AnalysisUIOptions.getInstance(project), true, ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE));
     if (!dlg.showAndGet()) {
       return null;
     }

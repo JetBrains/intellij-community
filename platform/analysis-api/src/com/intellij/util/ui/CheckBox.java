@@ -1,18 +1,4 @@
-/*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -21,57 +7,25 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
+import java.awt.event.ItemEvent;
 
 public class CheckBox extends JCheckBox {
 
-    public CheckBox(@NotNull String label,
-                    @NotNull InspectionProfileEntry owner,
-                    @NonNls String property) {
-      this(label, (Object)owner, property);
-    }
+  public CheckBox(@NotNull String label, @NotNull InspectionProfileEntry owner, @NonNls String property) {
+    this(label, (Object)owner, property);
+  }
 
   /**
-   * @param property field must be non-private (or ensure that it won't be scrambled in other means)
+   * @param property field must be non-private (or ensure that it won't be scrambled by other means)
    */
-    public CheckBox(@NotNull String label,
-                    @NotNull Object owner,
-                    @NonNls String property) {
-        super(label, getPropertyValue(owner, property));
-        final ButtonModel model = getModel();
-        final SingleCheckboxChangeListener listener =
-                new SingleCheckboxChangeListener(owner, property, model);
-        model.addChangeListener(listener);
-    }
+  public CheckBox(@NotNull String label, @NotNull Object owner, @NonNls String property) {
+    super(label, getPropertyValue(owner, property));
+    addItemListener(e -> ReflectionUtil.setField(owner.getClass(), owner, boolean.class, property, e.getStateChange() == ItemEvent.SELECTED));
+  }
 
-    private static boolean getPropertyValue(Object owner,
-                                            String property) {
-      return ReflectionUtil.getField(owner.getClass(), owner, boolean.class, property);
-    }
-
-    private static class SingleCheckboxChangeListener
-            implements ChangeListener {
-
-        private final Object owner;
-        private final String property;
-        private final ButtonModel model;
-
-        SingleCheckboxChangeListener(Object owner,
-                                     String property, ButtonModel model) {
-            this.owner = owner;
-            this.property = property;
-            this.model = model;
-        }
-
-        public void stateChanged(ChangeEvent e) {
-            setPropertyValue(owner, property, model.isSelected());
-        }
-
-        private static void setPropertyValue(Object owner,
-                                             String property,
-                                             boolean selected) {
-          ReflectionUtil.setField(owner.getClass(), owner, boolean.class, property, selected);
-        }
-    }
+  private static boolean getPropertyValue(Object owner, String property) {
+    final Boolean value = ReflectionUtil.getField(owner.getClass(), owner, boolean.class, property);
+    assert value != null;
+    return value;
+  }
 }

@@ -76,7 +76,7 @@ class RunConfigurationNode extends AbstractTreeNode<Pair<RunnerAndConfigurationS
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     RunnerAndConfigurationSettings configurationSettings = getConfigurationSettings();
     //noinspection ConstantConditions
     boolean isStored = RunManager.getInstance(getProject()).hasSettings(configurationSettings);

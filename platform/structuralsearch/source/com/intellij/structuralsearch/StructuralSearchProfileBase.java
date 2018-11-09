@@ -28,7 +28,6 @@ import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
-import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NotNull;
@@ -205,8 +204,8 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   public void checkReplacementPattern(Project project, ReplaceOptions options) {}
 
   @Override
-  public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
-    return new DocumentBasedReplaceHandler(context.getProject());
+  public StructuralReplaceHandler getReplaceHandler(@NotNull Project project, @NotNull ReplaceOptions replaceOptionss) {
+    return new DocumentBasedReplaceHandler(project);
   }
 
   @NotNull
@@ -352,6 +351,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
         myGlobalVisitor.handle(element);
         final MatchingHandler handler = pattern.getHandler(element);
         handler.setFilter(new NodeFilter() {
+          @Override
           public boolean accepts(PsiElement other) {
             return canBePatternVariableValue(other);
           }
@@ -556,7 +556,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   private static class MySubstitutionHandler extends SubstitutionHandler {
     final Set<PsiElement> myExceptedNodes;
 
-    public MySubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
+    MySubstitutionHandler(String name, boolean target, int minOccurs, int maxOccurs, boolean greedy) {
       super(name, target, minOccurs, maxOccurs, greedy);
       myExceptedNodes = new HashSet<>();
     }

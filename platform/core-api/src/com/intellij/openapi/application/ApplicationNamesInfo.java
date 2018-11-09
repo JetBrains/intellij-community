@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +26,7 @@ public class ApplicationNamesInfo {
   private final String myEditionName;
   private final String myScriptName;
   private final String myDefaultLauncherName;
+  private final String myMotto;
 
   private static class ApplicationNamesInfoHolder {
     private static final ApplicationNamesInfo ourInstance = new ApplicationNamesInfo();
@@ -55,14 +41,14 @@ public class ApplicationNamesInfo {
   private ApplicationNamesInfo() {
     String resource = "/idea/" + getComponentName() + ".xml";
     try {
-      Document doc = JDOMUtil.loadDocument(ApplicationNamesInfo.class, resource);
-      Element rootElement = doc.getRootElement();
+      Element rootElement = JDOMUtil.load(ApplicationNamesInfo.class, resource);
       Element names = rootElement.getChild("names", rootElement.getNamespace());
       myProductName = names.getAttributeValue("product");
       myFullProductName = names.getAttributeValue("fullname", myProductName);
       myEditionName = names.getAttributeValue("edition");
       myScriptName = names.getAttributeValue("script");
       myDefaultLauncherName = names.getAttributeValue("default-launcher-name", myScriptName);
+      myMotto = names.getAttributeValue("motto", "The Drive to Develop");
     }
     catch (Exception e) {
       throw new RuntimeException("Cannot load resource: " + resource, e);
@@ -131,5 +117,12 @@ public class ApplicationNamesInfo {
    */
   public String getDefaultLauncherName() {
     return myDefaultLauncherName;
+  }
+
+  /**
+   * Returns motto of the product. Used as a comment for the command-line launcher.
+   */
+  public @NotNull String getMotto() {
+    return myMotto;
   }
 }

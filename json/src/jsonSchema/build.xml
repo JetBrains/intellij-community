@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project name="JSON Schemas Update" default="update_schemas">
+<project name="JSON Schemas Update" default="ALL">
   <property name="idea.project.home" value="${basedir}/../../../../"/>
 
   <macrodef name="get_schema">
@@ -10,6 +10,7 @@
       <get src="@{fromUrl}"
            dest="@{toFile}" />
       <local name="baseUrl"/>
+      <fixcrlf file="@{toFile}"/>
       <property name="baseUrl" value="@{fromUrl}" />
       <script language="javascript"><![CDATA[
         var url = new java.net.URL(project.getProperty("baseUrl"));
@@ -34,6 +35,39 @@
                 toFile="${idea.project.home}/contrib/tslint/resources/tslintJsonSchema/tslint-schema.json" />
   </target>
 
+  <target name="webpack4">
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/WebpackOptions.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpack-schema4.json" />
+  </target>
+
+  <target name="webpack4plugins">
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/BannerPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/BannerPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/DllPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/DllPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/DllReferencePlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/DllReferencePlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/HashedModuleIdsPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/HashedModuleIdsPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/LoaderOptionsPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/LoaderOptionsPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/SourceMapDevToolPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/SourceMapDevToolPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/WatchIgnorePlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/WatchIgnorePlugin.json" />
+
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/debug/ProfilingPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/debug/ProfilingPlugin.json" />
+
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/optimize/AggressiveSplittingPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/optimize/AggressiveSplittingPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/optimize/LimitChunkCountPlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/optimize/LimitChunkCountPlugin.json" />
+    <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/optimize/MinChunkSizePlugin.json"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/optimize/MinChunkSizePlugin.json" />
+
+  </target>
+
   <target name="nodejs">
     <get_schema fromUrl="http://json.schemastore.org/package"
                 toFile="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json" />
@@ -50,7 +84,7 @@
                    replace="&quot;stylelint&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/stylelintrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
     <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
                    match="&quot;publishConfig&quot;"
-                   replace="&quot;jest&quot; : {&quot;type&quot;: &quot;object&quot;, &quot;$ref&quot;: &quot;https://facebook.github.io/jest/docs/configuration.html#&quot;},${line.separator}  &quot;publishConfig&quot;" />
+                   replace="&quot;jest&quot; : {&quot;type&quot;: &quot;object&quot;, &quot;$ref&quot;: &quot;https://facebook.github.io/jest/docs/configuration.html!#&quot;},${line.separator}  &quot;publishConfig&quot;" />
     <replaceregexp file="${idea.project.home}/plugins/NodeJS/src/com/jetbrains/nodejs/packageJson/packageJsonSchema.json"
                    match="&quot;publishConfig&quot;"
                    replace="&quot;jshintConfig&quot; : {&quot;$ref&quot;: &quot;http://json.schemastore.org/jshintrc#&quot;},${line.separator}  &quot;publishConfig&quot;" />
@@ -62,9 +96,10 @@
   <target name="js_schemas">
     <get_schema fromUrl="http://json.schemastore.org/babelrc"
                 toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.babelrc-schema.json" />
-    <!-- stylelint schema is buggy - we modified it manually to get better results -->
-    <!--<get_schema fromUrl="http://json.schemastore.org/stylelintrc"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.stylelintrc-schema.json" />-->
+    <get_schema fromUrl="http://json.schemastore.org/stylelintrc"
+                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.stylelintrc-schema.json" />
+    <replaceregexp file="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.stylelintrc-schema.json"
+                   match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/stylelintrc&quot;,${line.separator}&#9;&quot;definitions&quot;" />
     <get_schema fromUrl="http://json.schemastore.org/jsconfig"
                 toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/jsconfig-schema.json" />
     <get_schema fromUrl="http://json.schemastore.org/tsconfig"
@@ -74,11 +109,10 @@
     <get_schema fromUrl="http://json.schemastore.org/typings"
                 toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/typings-schema.json" />
 
-    <!-- eslintrc schema is buggy - only manual updates -->
-    <!--<get_schema fromUrl="http://json.schemastore.org/eslintrc"
+    <get_schema fromUrl="http://json.schemastore.org/eslintrc"
                 toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.eslintrc-schema.json" />
     <replaceregexp file="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/.eslintrc-schema.json"
-                   match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/eslintrc&quot;,${line.separator}  &quot;definitions&quot;" />-->
+                   match="&quot;definitions&quot;" replace="&quot;id&quot;: &quot;http://json.schemastore.org/eslintrc&quot;,${line.separator}  &quot;definitions&quot;" />
   </target>
 
   <target name="ALL">
@@ -86,5 +120,7 @@
     <antcall target="prettier" />
     <antcall target="tslint" />
     <antcall target="nodejs" />
+    <antcall target="webpack4" />
+    <antcall target="webpack4plugins" />
   </target>
 </project>

@@ -6,16 +6,22 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Set;
 
-// this service connects to jetbrains.com resources and requests actual info about running statistics services
-// 1. url: where to post statistics data.
-// 2. white-list-service: WhiteListService url: this service returns approved UsagesCollectors(groups)
-// 3. permitted: true/false. statistics could be stopped remotely. if false UsageCollectors won't be started
+/**
+ * This service connects to jetbrains.com resources and requests actual info about running statistics services
+ * <ul>
+ * <li> url: where to post statistics data.
+ * <li> white-list-service: WhiteListService url: this service returns approved UsagesCollectors(groups)
+ * <li> permitted: true/false. statistics could be stopped remotely. if false UsageCollectors won't be started
+ * </ul>
+ */
 public class FUStatisticsSettingsService extends StatisticsConnectionService {
   private static final String APPROVED_GROUPS_SERVICE = "white-list-service";
+  private static final String DICTIONARY_SERVICE = "dictionary-service";
   public  static FUStatisticsSettingsService getInstance() {return  new FUStatisticsSettingsService();}
 
   private FUStatisticsSettingsService() {
@@ -25,7 +31,7 @@ public class FUStatisticsSettingsService extends StatisticsConnectionService {
   @NotNull
   @Override
   public String[] getAttributeNames() {
-    return ArrayUtil.mergeArrays(super.getAttributeNames(), APPROVED_GROUPS_SERVICE);
+    return ArrayUtil.mergeArrays(super.getAttributeNames(), APPROVED_GROUPS_SERVICE, DICTIONARY_SERVICE);
   }
 
   @NotNull
@@ -35,6 +41,11 @@ public class FUStatisticsSettingsService extends StatisticsConnectionService {
       return Collections.emptySet();
     }
     return FUStatisticsWhiteListGroupsService.getApprovedGroups(getProductRelatedUrl(approvedGroupsServiceUrl));
+  }
+
+  @Nullable
+  public String getDictionaryServiceUrl() {
+    return getSettingValue(DICTIONARY_SERVICE);
   }
 
   @NotNull

@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -80,7 +79,7 @@ public class ParametersFolder {
     return false;
   }
 
-  public void foldParameterUsagesInBody(@NotNull List<VariableData> datum, PsiElement[] elements, SearchScope scope) {
+  public void foldParameterUsagesInBody(@NotNull List<? extends VariableData> datum, PsiElement[] elements, SearchScope scope) {
     Map<VariableData, Set<PsiExpression>> equivalentExpressions = new LinkedHashMap<>();
     for (VariableData data : datum) {
       if (myDeleted.contains(data.variable)) continue;
@@ -216,6 +215,7 @@ public class ParametersFolder {
   private List<PsiExpression> getMentionedExpressions(PsiVariable var, LocalSearchScope scope, final List<? extends PsiVariable> inputVariables) {
     if (myMentionedInExpressions.containsKey(var)) return myMentionedInExpressions.get(var);
     final PsiElement[] scopeElements = scope.getScope();
+
     List<PsiExpression> expressions = null;
     for (PsiReference reference : ReferencesSearch.search(var, scope)) {
       PsiElement expression = reference.getElement();
@@ -282,7 +282,7 @@ public class ParametersFolder {
 
   private static boolean isAncestor(PsiElement expression, PsiElement[] scopeElements) {
     for (PsiElement scopeElement : scopeElements) {
-      if (PsiTreeUtil.isAncestor(expression, scopeElement, true)) {
+      if (PsiTreeUtil.isAncestor(expression, scopeElement, false)) {
         return true;
       }
     }
@@ -354,7 +354,7 @@ public class ParametersFolder {
     if (psiExpression != null) {
       final PsiExpression expression = findEquivalent(psiExpression, element);
       if (expression != null) {
-        expression.putUserData(DuplicatesFinder.PARAMETER, Pair.create(data.variable, expression.getType()));
+        expression.putUserData(DuplicatesFinder.PARAMETER, new DuplicatesFinder.Parameter(data.variable, expression.getType(), true));
         return true;
       }
     }

@@ -185,7 +185,7 @@ public final class PyToxTest extends PyEnvTestCase {
         protected void checkTestResults(@NotNull final PyAbstractTestProcessRunner<PyToxConfiguration> runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
           Assert.assertThat("Wrong sys.argv", stdout, Matchers.containsString("['spam.py', 'arg1']"));
         }
 
@@ -222,7 +222,7 @@ public final class PyToxTest extends PyEnvTestCase {
         protected void checkTestResults(@NotNull final PyAbstractTestProcessRunner<PyToxConfiguration> runner,
                                         @NotNull final String stdout,
                                         @NotNull final String stderr,
-                                        @NotNull final String all) {
+                                        @NotNull final String all, int exitCode) {
           final Set<String> environments = runner.getTestProxy().getChildren().stream().map(t -> t.getName()).collect(Collectors.toSet());
           assertThat(environments)
             .describedAs("Wrong environments launched")
@@ -273,7 +273,7 @@ public final class PyToxTest extends PyEnvTestCase {
     protected void checkTestResults(@NotNull final MyTestProcessRunner runner,
                                     @NotNull final String stdout,
                                     @NotNull final String stderr,
-                                    @NotNull final String all) {
+                                    @NotNull final String all, int exitCode) {
 
       final Set<String> expectedInterpreters =
         myInterpreters.entrySet().stream()

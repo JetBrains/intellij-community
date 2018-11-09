@@ -51,7 +51,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
   }
 
   @Override
-  public Stub buildStubTree(FileContent fileContent) {
+  public Stub buildStubTree(@NotNull FileContent fileContent) {
     PsiFile psiFile = fileContent.getPsiFile();
     if (!(psiFile instanceof XmlFile)) return null;
 

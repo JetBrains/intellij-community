@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring;
 
@@ -33,7 +19,6 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -42,7 +27,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -72,7 +56,6 @@ import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,7 +73,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   private RefactoringTransaction myTransaction;
   private boolean myIsPreviewUsages;
-  protected Runnable myPrepareSuccessfulSwingThreadCallback = EmptyRunnable.INSTANCE;
+  protected Runnable myPrepareSuccessfulSwingThreadCallback;
 
   protected BaseRefactoringProcessor(@NotNull Project project) {
     this(project, null);
@@ -183,9 +166,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final Ref<Boolean> refProcessCanceled = new Ref<>();
     final Ref<Boolean> anyException = new Ref<>();
 
+    DumbService.getInstance(myProject).completeJustSubmittedTasks();
+
     final Runnable findUsagesRunnable = () -> {
       try {
-        refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(this::findUsages));
+        refUsages.set(ReadAction.compute(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {
         refErrorLanguage.set(e.getElementLanguage());
@@ -320,7 +305,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return UndoConfirmationPolicy.DEFAULT;
@@ -449,7 +433,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       myTransaction = listenerManager.startTransaction();
       final Map<RefactoringHelper, Object> preparedData = new LinkedHashMap<>();
       final Runnable prepareHelpersRunnable = () -> {
-        for (final RefactoringHelper helper : Extensions.getExtensions(RefactoringHelper.EP_NAME)) {
+        for (final RefactoringHelper helper : RefactoringHelper.EP_NAME.getExtensionList()) {
           Object operation = ReadAction.compute(() -> helper.prepareOperation(writableUsageInfos));
           preparedData.put(helper, operation);
         }
@@ -577,17 +561,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       this.messages = messages;
     }
 
-    @TestOnly
-    public static void setTestIgnore(boolean myIgnore) {
-      myTestIgnore = myIgnore;
-    }
-
     public static boolean isTestIgnore() {
       return myTestIgnore;
     }
 
     @TestOnly
-    public static <T extends Throwable> void withIgnoredConflicts(ThrowableRunnable<T> r) throws T {
+    public static <T extends Throwable> void withIgnoredConflicts(@NotNull ThrowableRunnable<T> r) throws T {
       try {
         myTestIgnore = true;
         r.run();
@@ -665,7 +644,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   protected String getRefactoringId() {
     return null;
   }
-  
+
   @NotNull
   protected ConflictsDialog createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, @Nullable final UsageInfo[] usages) {
     return new ConflictsDialog(myProject, conflicts, usages == null ? null : (Runnable)() -> execute(usages), false, true);

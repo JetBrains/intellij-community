@@ -796,11 +796,6 @@ public class PagedFileStorage implements Forceable {
     private final ReentrantLock myLock;
     private final StorageLock myStorageLock;
 
-    @Deprecated
-    public StorageLockContext(StorageLock lock) {
-      this(lock, true);
-    }
-
     private StorageLockContext(StorageLock lock, boolean checkAccess) {
       myLock = new ReentrantLock();
       myStorageLock = lock;

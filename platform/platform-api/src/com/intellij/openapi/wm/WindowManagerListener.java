@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.wm;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 public interface WindowManagerListener extends EventListener {
-  void frameCreated(final IdeFrame frame);
-  void beforeFrameReleased(final IdeFrame frame);
+  void frameCreated(@NotNull IdeFrame frame);
+  void beforeFrameReleased(@NotNull IdeFrame frame);
 }

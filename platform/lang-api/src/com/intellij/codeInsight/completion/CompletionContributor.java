@@ -165,6 +165,7 @@ public abstract class CompletionContributor {
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    * @return text to be shown at the bottom of lookup list
    */
+  @Deprecated
   @Nullable
   public String advertise(@NotNull CompletionParameters parameters) {
     return null;
@@ -188,8 +189,10 @@ public abstract class CompletionContributor {
   }
 
   /**
-   * Allow autoPopup to appear after custom symbol
+   * Don't use this method, because {@code position} can come from uncommitted PSI and be totally unrelated to the code being currently in the document/editor.
+   * Please consider using {@link com.intellij.codeInsight.editorActions.TypedHandlerDelegate#checkAutoPopup} instead.
    */
+  @Deprecated
   public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
     return false;
   }

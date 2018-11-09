@@ -2,22 +2,22 @@
 package com.intellij.ui.layout
 
 import com.intellij.CommonBundle
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.JBIntSpinner
-import com.intellij.ui.components.CheckBox
-import com.intellij.ui.components.JBPasswordField
-import com.intellij.ui.components.RadioButton
+import com.intellij.ui.components.*
 import java.awt.Dimension
+import java.awt.GridLayout
 import javax.swing.*
 
 fun labelRowShouldNotGrow(): JPanel {
   return panel {
-    row("Create Android module") { CheckBox("Android module name:")() }
+    row("Create Android module") { CheckBox("FooBar module name foo")() }
     row("Android module name:") { JTextField("input")() }
   }
 }
 
-fun makeSecondColumnSmaller(): JPanel {
+fun secondColumnSmallerPanel(): JPanel {
   val selectForkButton = JButton("Select Other Fork")
 
   val branchCombobox = ComboBox<String>()
@@ -25,22 +25,18 @@ fun makeSecondColumnSmaller(): JPanel {
 
   val titleTextField = JTextField()
 
-  val descriptionTextArea = JTextArea()
-
   val panel = panel {
     row("Base fork:") {
       JComboBox<String>(arrayOf())(growX, CCFlags.pushX)
       selectForkButton(growX)
     }
     row("Base branch:") {
-      cell {
-        branchCombobox(growX, pushX)
-        diffButton(growX)
-      }
+      branchCombobox(growX, pushX)
+      diffButton(growX)
     }
     row("Title:") { titleTextField() }
     row("Description:") {
-      scrollPane(descriptionTextArea)
+      scrollPane(JTextArea())
     }
   }
 
@@ -65,6 +61,22 @@ fun visualPaddingsPanelOnlyComboBox(): JPanel {
 fun visualPaddingsPanelOnlyButton(): JPanel {
   return panel {
     row("Button:") { button("label", growX) {} }
+  }
+}
+
+@Suppress("unused")
+fun visualPaddingsPanelOnlyLabeledScrollPane(): JPanel {
+  return panel {
+    row("Description:") {
+      scrollPane(JTextArea())
+    }
+  }
+}
+
+@Suppress("unused")
+fun visualPaddingsPanelOnlyTextField(): JPanel {
+  return panel {
+    row("Text field:") { JTextField("text")() }
   }
 }
 
@@ -101,6 +113,18 @@ fun visualPaddingsPanel(): JPanel {
   }
 }
 
+fun fieldWithGear(): JPanel {
+  return panel {
+    row("Database:") {
+      JTextField()()
+      gearButton()
+    }
+    row("Master Password:") {
+      JBPasswordField()()
+    }
+  }
+}
+
 fun alignFieldsInTheNestedGrid(): JPanel {
   return panel {
     buttonGroup {
@@ -108,7 +132,7 @@ fun alignFieldsInTheNestedGrid(): JPanel {
         RadioButton("In KeePass")()
         row("Database:") {
           JTextField()()
-            gearButton()
+          gearButton()
         }
         row("Master Password:") {
           JBPasswordField()(comment = "Stored using weak encryption.")
@@ -130,6 +154,18 @@ fun noteRowInTheDialog(): JPanel {
   }
 }
 
+fun jbTextField(): JPanel {
+  val passwordField = JBPasswordField()
+  return panel {
+    noteRow("Enter credentials for bitbucket.org")
+    row("Username:") { JTextField("develar")() }
+    row("Password:") { passwordField() }
+    row {
+      JBCheckBox(CommonBundle.message("checkbox.remember.password"), true)()
+    }
+  }
+}
+
 fun cellPanel(): JPanel {
   return panel {
     row("Repository:") {
@@ -141,6 +177,98 @@ fun cellPanel(): JPanel {
     row {
       // need some pushx/grow component to test label cell grow policy if there is cell with several components
       scrollPane(JTextArea())
+    }
+  }
+}
+
+fun commentAndPanel(): JPanel {
+  return panel {
+    row("Repository:") {
+      cell {
+        checkBox("Auto Sync", comment = "Use File -> Settings Repository... to configure")
+      }
+    }
+    row {
+      panel("Foo", JScrollPane(JTextArea()))
+    }
+  }
+}
+
+fun createLafTestPanel(): JPanel {
+  val spacing = createIntelliJSpacingConfiguration()
+  val panel = JPanel(GridLayout(0, 1, spacing.horizontalGap, spacing.verticalGap))
+  panel.add(JTextField("text"))
+  panel.add(JPasswordField("secret"))
+  panel.add(ComboBox<String>(arrayOf("one", "two")))
+
+  val field = ComboBox<String>(arrayOf("one", "two"))
+  field.isEditable = true
+  panel.add(field)
+
+  panel.add(JButton("label"))
+  panel.add(CheckBox("enabled"))
+  panel.add(JRadioButton("label"))
+  panel.add(JBIntSpinner(0, 0, 7))
+  panel.add(textFieldWithHistoryWithBrowseButton(null, "File", FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()))
+
+  return panel
+}
+
+fun withVerticalButtons(): JPanel {
+  return panel {
+    row {
+      label("<html>Merging branch <b>foo</b> into <b>bar</b>")
+    }
+    row {
+      scrollPane(JTextArea(), pushX)
+
+      cell(isVerticalFlow = true) {
+        button("Accept Yours", growX) {}
+        button("Accept Theirs", growX) {}
+        button("Merge ...", growX) {}
+      }
+    }
+  }
+}
+
+fun titledRows(): JPanel {
+  return panel {
+    titledRow("Async Profiler") {
+      row { browserLink("Async profiler README.md", "https://github.com/jvm-profiling-tools/async-profiler") }
+      row("Agent path:") { textFieldWithBrowseButton("", comment = "If field is empty bundled agent will be used") }
+      row("Agent options:") { textFieldWithBrowseButton("", comment = "Don't add output format (collapsed is used) or output file options") }
+    }
+    titledRow("Java Flight Recorder") {
+      row("JRE home:") {
+        textFieldWithBrowseButton("", comment = "At least OracleJRE 9 or OpenJRE 11 is required to import dump")
+      }
+    }
+  }
+}
+
+fun spannedCheckbox(): JPanel {
+  return panel {
+    buttonGroup {
+      row {
+        RadioButton("In KeePass")()
+        row("Database:") {
+          // comment can lead to broken layout, so, test it
+          JTextField("test")(comment = "Stored using weak encryption. It is recommended to store on encrypted volume for additional security.")
+        }
+
+        row {
+          cell {
+            checkBox("Protect master password using PGP key")
+            val comboBox = ComboBox(arrayOf("Foo", "Bar"))
+            comboBox.isVisible = false
+            comboBox(growPolicy = GrowPolicy.MEDIUM_TEXT)
+          }
+        }
+      }
+
+      row {
+        RadioButton("Do not save, forget passwords after restart")()
+      }
     }
   }
 }

@@ -1,24 +1,58 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.statistic.beans.UsageDescriptor
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
 import java.util.*
+
+fun getProjectId(project: Project): String {
+  return project.getProjectCacheFileName(false, ".").hashCode().toString()
+}
+
+fun createData(project: Project?, context: FUSUsageContext?): Map<String, Any> {
+  if (project == null && context == null) return Collections.emptyMap()
+
+  val data = ContainerUtil.newHashMap<String, Any>()
+  if (context != null) {
+    data.putAll(context.data)
+  }
+
+  if (project != null) {
+    data["project"] = getProjectId(project)
+  }
+  return data
+}
+
+fun mergeWithEventData(data: Map<String, Any>, context: FUSUsageContext?, value : Int): Map<String, Any> {
+  if (context == null && value == 1) return data
+
+  val newData = ContainerUtil.newHashMap<String, Any>()
+  newData.putAll(data)
+
+  if (value != 1) {
+    newData["value"] = value
+  }
+
+  context?.let {
+    for (datum in it.data) {
+      newData["event_" + datum.key] = datum.value
+    }
+  }
+  return newData
+}
+
+fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
+  val plugin = PluginManager.getPlugin(pluginId)
+  return plugin == null || plugin.isBundled || PluginManagerMain.isDevelopedByJetBrains(plugin.vendor)
+}
 
 /**
  * Constructs a proper UsageDescriptor for a boolean value,
@@ -91,7 +125,7 @@ fun getCountingUsage(key: String, value: Int): UsageDescriptor {
   return UsageDescriptor("$key.$stepName+", 1)
 }
 
-private val kilo = 1000
+private const val kilo = 1000
 private val mega = kilo * kilo
 
 private fun humanize(number: Int): String {

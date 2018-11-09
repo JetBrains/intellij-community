@@ -43,7 +43,8 @@ public class JavaNextParameterHandler extends EditorActionHandler {
           int next = CharArrayUtil.shiftForward(text, offset, " \t");
           PsiExpressionList list = (PsiExpressionList)exprList;
           int actualParameterCount = list.getExpressionCount();
-          int lastParamStart = actualParameterCount == 0 ? list.getTextOffset() + 1 : list.getExpressions()[actualParameterCount - 1].getTextOffset();
+          int lastParamStart = actualParameterCount == 0 ? list.getTextOffset() + 1
+                                                         : list.getExpressions()[actualParameterCount - 1].getTextRange().getStartOffset();
           if (next >= lastParamStart) {
             int prev = CharArrayUtil.shiftBackward(text, lastParamStart - 1, " \t");
             char prevChar = prev >= 0 && prev < editor.getDocument().getTextLength() ? text

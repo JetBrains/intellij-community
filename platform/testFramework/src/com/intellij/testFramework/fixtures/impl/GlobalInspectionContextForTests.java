@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class GlobalInspectionContextForTests extends GlobalInspectionContextImpl {
   private volatile boolean myFinished;
 
-  public GlobalInspectionContextForTests(@NotNull Project project, @NotNull NotNullLazyValue<ContentManager> contentManager) {
+  public GlobalInspectionContextForTests(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project, contentManager);
   }
 

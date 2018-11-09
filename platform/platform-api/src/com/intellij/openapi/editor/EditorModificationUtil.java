@@ -50,12 +50,7 @@ public class EditorModificationUtil {
   }
 
   public static void deleteSelectedTextForAllCarets(@NotNull final Editor editor) {
-    editor.getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        deleteSelectedText(editor);
-      }
-    });
+    editor.getCaretModel().runForEachCaret(__ -> deleteSelectedText(editor));
   }
 
   public static void zeroWidthBlockSelectionAtCaretColumn(final Editor editor, final int startLine, final int endLine) {
@@ -129,7 +124,7 @@ public class EditorModificationUtil {
     return offset;
   }
 
-  public static void pasteTransferableAsBlock(Editor editor, @Nullable Producer<Transferable> producer) {
+  public static void pasteTransferableAsBlock(Editor editor, @Nullable Producer<? extends Transferable> producer) {
     Transferable content = getTransferable(producer);
     if (content == null) return;
     String text = getStringContent(content);
@@ -154,7 +149,7 @@ public class EditorModificationUtil {
   }
 
   @Nullable
-  public static Transferable getContentsToPasteToEditor(@Nullable Producer<Transferable> producer) {
+  public static Transferable getContentsToPasteToEditor(@Nullable Producer<? extends Transferable> producer) {
     if (producer == null) {
       CopyPasteManager manager = CopyPasteManager.getInstance();
       return manager.areDataFlavorsAvailable(DataFlavor.stringFlavor) ? manager.getContents() : null;
@@ -177,7 +172,7 @@ public class EditorModificationUtil {
     return null;
   }
 
-  private static Transferable getTransferable(Producer<Transferable> producer) {
+  private static Transferable getTransferable(Producer<? extends Transferable> producer) {
     Transferable content = null;
     if (producer != null) {
       content = producer.produce();
@@ -309,22 +304,12 @@ public class EditorModificationUtil {
   public static void typeInStringAtCaretHonorMultipleCarets(final Editor editor, @NotNull final String str, final boolean toProcessOverwriteMode, final int caretShift)
     throws ReadOnlyFragmentModificationException
   {
-    editor.getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        insertStringAtCaretNoScrolling(editor, str, toProcessOverwriteMode, true, caretShift);
-      }
-    });
+    editor.getCaretModel().runForEachCaret(__ -> insertStringAtCaretNoScrolling(editor, str, toProcessOverwriteMode, true, caretShift));
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   public static void moveAllCaretsRelatively(@NotNull Editor editor, final int caretShift) {
-    editor.getCaretModel().runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        caret.moveToOffset(caret.getOffset() + caretShift);
-      }
-    });
+    editor.getCaretModel().runForEachCaret(caret -> caret.moveToOffset(caret.getOffset() + caretShift));
   }
 
   public static void moveCaretRelatively(@NotNull Editor editor, final int caretShift) {

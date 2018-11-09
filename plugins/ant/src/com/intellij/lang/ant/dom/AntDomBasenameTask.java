@@ -31,6 +31,7 @@ public abstract class AntDomBasenameTask extends AntDomPropertyDefiningTask {
   @Attribute("suffix")
   public abstract GenericAttributeValue<String> getSuffix();
 
+  @Override
   protected String calcPropertyValue(String propertyName) {
     final PsiFileSystemItem item = getFile().getValue();
     if (item != null) {

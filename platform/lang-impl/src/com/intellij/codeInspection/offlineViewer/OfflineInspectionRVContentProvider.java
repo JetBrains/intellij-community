@@ -64,7 +64,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
                                               @NotNull InspectionTreeNode parentNode,
                                               boolean showStructure,
                                               boolean groupBySeverity, @NotNull final Map<String, Set<RefEntity>> contents,
-                                              @NotNull Function<RefEntity, CommonProblemDescriptor[]> problems) {
+                                              @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems) {
     InspectionToolWrapper toolWrapper = toolNode.getToolWrapper();
     final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, toolWrapper);
     if (filteredContent != null && !filteredContent.values().isEmpty()) {

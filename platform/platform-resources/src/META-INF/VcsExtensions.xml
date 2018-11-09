@@ -1,5 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.intellij.openapi.vcs.changes.patch.PatchClipboardTracker"/>
     <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
                         serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>
 
@@ -35,6 +36,12 @@
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCache"
                     serviceImplementation="com.intellij.openapi.vcs.contentAnnotation.ContentAnnotationCacheImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGenerator"
+                    serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"
+                        serviceImplementation="com.intellij.openapi.vcs.changes.IgnoredFileGeneratorImpl$IgnoredFileRootStore"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.ProjectConfigurationFilesProcessor"
+                    serviceImplementation="com.intellij.openapi.vcs.ProjectConfigurationFilesProcessorImpl"/>
 
     <daemon.intentionActionFilter implementation="com.intellij.vcs.commit.BaseCommitMessageInspection$EmptyIntentionActionFilter"/>
 
@@ -53,6 +60,8 @@
     <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider implementation="com.intellij.openapi.vcs.history.actions.CreatePatchFromDirectoryAction"/>
 
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.history.actions.ShowDiffWithLocalFromTableHistoryAction"/>
+
+    <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.impl.DiffRepoWithLocalAction"/>
 
     <openapi.vcs.history.actions.ShowDiffAfterWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction" order="last"/>
     <openapi.vcs.history.actions.ShowDiffBeforeWithLocalAction.ExtensionProvider implementation="com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction$ShowDiffBeforeWithLocalAction" order="last"/>
@@ -76,6 +85,7 @@
     <changesGroupingPolicy key="directory" id="directory"
                            implementationClass="com.intellij.openapi.vcs.changes.ui.DirectoryChangesGroupingPolicy$Factory"/>
 
+    <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.ReformatCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.RearrangeCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.OptimizeOptionsCheckinHandlerFactory"/>
@@ -120,8 +130,14 @@
     <openapi.vcs.actions.AnnotateToggleAction.Provider implementation="com.intellij.openapi.vcs.actions.AnnotateDiffViewerAction$Provider" order="first"/>
 
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory"/>
-    <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider" order="last"/>
-    <ignoredFileProvider implementation="com.intellij.configurationStore.vcs.StoreIgnoredFileProvider"/>
+
+    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
+    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
+    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectImporterCheckoutListener"/>
+
+    <ignoredFileProvider id="VCS.DefaultIgnoredFileProvider" implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider" order="first"/>
+    <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ProjectExcludesIgnoredFileProvider" order="after VCS.DefaultIgnoredFileProvider"/>
+    <nonProjectFileWritingAccessExtension implementation="com.intellij.openapi.vcs.changes.IgnoredFileWritingAccessExtension"/>
   </extensions>
 </idea-plugin>
 

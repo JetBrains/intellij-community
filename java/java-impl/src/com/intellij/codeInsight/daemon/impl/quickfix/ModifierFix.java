@@ -4,6 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -111,7 +112,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                              @NotNull PsiElement endElement) {
     final PsiModifierList myModifierList = (PsiModifierList)startElement;
     PsiVariable variable = myVariable == null ? null : myVariable.getElement();
-    return myModifierList.getManager().isInProject(myModifierList) &&
+    return ScratchFileService.isInProjectOrScratch(myModifierList) &&
            myModifierList.hasExplicitModifier(myModifier) != myShouldHave &&
            (variable == null || variable.isValid());
   }
@@ -164,7 +165,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
           @Override
           public boolean execute(@NotNull PsiMethod inheritor) {
             PsiModifierList list = inheritor.getModifierList();
-            if (inheritor.getManager().isInProject(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
+            if (ScratchFileService.isInProjectOrScratch(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
               modifierLists.add(list);
             }
             return true;
@@ -192,8 +193,8 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     ApplicationManager.getApplication().runWriteAction(() -> {
       changeModifierList(modifierList);
       if (myShouldHave && owner instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)owner;
         if (PsiModifier.ABSTRACT.equals(myModifier)) {
-          final PsiMethod method = (PsiMethod)owner;
           final PsiClass aClass = method.getContainingClass();
           if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
             PsiModifierList classModifierList = aClass.getModifierList();
@@ -203,11 +204,20 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
           }
         }
         else if (PsiModifier.PUBLIC.equals(myModifier) &&
-                 ((PsiMethod)owner).getBody() != null &&
-                 !((PsiMethod)owner).hasModifierProperty(PsiModifier.STATIC)) {
-          PsiClass containingClass = ((PsiMethod)owner).getContainingClass();
+                 method.getBody() != null &&
+                 !method.hasModifierProperty(PsiModifier.STATIC)) {
+          PsiClass containingClass = method.getContainingClass();
           if (containingClass != null && containingClass.isInterface()) {
             modifierList.setModifierProperty(PsiModifier.DEFAULT, true);
+          }
+        }
+        else if (PsiModifier.STATIC.equals(myModifier)) {
+          if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
+            modifierList.setModifierProperty(PsiModifier.DEFAULT, false);
+          }
+          else if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+            PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, false);
+            CreateFromUsageUtils.setupMethodBody(method);
           }
         }
       }

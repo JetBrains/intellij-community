@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.editor.panels.code;
 
 import com.intellij.icons.AllIcons;
@@ -72,6 +73,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     return myCodeSourcePanel.getEditor();
   }
 
+  @Override
   public void addPromptPanel(@NotNull final JComponent parent, Integer promptNumber,
                              @NotNull final IpnbEditorUtil.PromptType promptType,
                              @NotNull final JComponent component) {
@@ -103,6 +105,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     });
   }
 
+  @Override
   public void dispose() {
     removeAll();
     myLastAddedPanel = null;
@@ -118,7 +121,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     final JPanel myToggleBar;
     final JPanel myOutputComponent;
 
-    public HideableOutputPanel() {
+    HideableOutputPanel() {
       super(true);
       myToggleBar = createToggleBar(this);
       myOutputComponent = createOutputPanel();
@@ -216,7 +219,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
 
   private JPanel createToggleBar(OnePixelSplitter splitter) {
     final JPanel panel = new JPanel(new BorderLayout());
-    final JLabel label = new JLabel(AllIcons.Actions.Down);
+    final JLabel label = new JLabel(AllIcons.General.ArrowDown);
     panel.setBackground(IpnbEditorUtil.getBackground());
     label.setBackground(IpnbEditorUtil.getBackground());
     panel.add(label, BorderLayout.CENTER);
@@ -378,7 +381,7 @@ public class IpnbCodePanel extends IpnbEditablePanel<JComponent, IpnbCodeCell> {
     return getText(from, myCodeSourcePanel.getEditor().getDocument().getTextLength());
   }
 
-  @SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
+  @SuppressWarnings({"CloneDoesntCallSuperClone"})
   @Override
   protected Object clone() {
     return new IpnbCodePanel(myProject, myParent, (IpnbCodeCell)myCell.clone());

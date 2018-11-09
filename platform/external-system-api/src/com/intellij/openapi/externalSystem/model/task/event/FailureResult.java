@@ -19,7 +19,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/1/2015
  */
 public interface FailureResult extends OperationResult {
   List<? extends Failure> getFailures();

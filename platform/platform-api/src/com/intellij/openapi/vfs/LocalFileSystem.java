@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +17,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @NonNls public static final String PROTOCOL = StandardFileSystems.FILE_PROTOCOL;
   @NonNls public static final String PROTOCOL_PREFIX = StandardFileSystems.FILE_PROTOCOL_PREFIX;
 
-  @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
   private static class LocalFileSystemHolder {
     private static final LocalFileSystem ourInstance = (LocalFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);
   }
@@ -119,7 +117,4 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * @param handler the handler instance.
    */
   public abstract void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
-
-  /** @deprecated use {@link VfsUtilCore#visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2019) */
-  public abstract boolean processCachedFilesInSubtree(@NotNull VirtualFile file, @NotNull Processor<VirtualFile> processor);
 }

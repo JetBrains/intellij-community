@@ -1,13 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageView;
@@ -66,8 +63,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
       rules.add(DirectoryGroupingRule.getInstance(project));
     }
     if (usageViewSettings.isGroupByFileStructure()) {
-      FileStructureGroupRuleProvider[] providers = Extensions.getExtensions(FileStructureGroupRuleProvider.EP_NAME);
-      for (FileStructureGroupRuleProvider ruleProvider : providers) {
+      for (FileStructureGroupRuleProvider ruleProvider : FileStructureGroupRuleProvider.EP_NAME.getExtensionList()) {
         ContainerUtil.addIfNotNull(rules, ruleProvider.getUsageGroupingRule(project, usageViewSettings));
       }
     }
@@ -80,7 +76,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
 
   @Override
   @NotNull
-  public AnAction[] createGroupingActions(UsageView view) {
+  public AnAction[] createGroupingActions(@NotNull UsageView view) {
     UsageViewImpl impl = (UsageViewImpl)view;
     JComponent component = impl.getComponent();
 
@@ -101,7 +97,7 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProvider 
     if (view.getPresentation().isUsageTypeFilteringAvailable()) {
       GroupByUsageTypeAction groupByUsageTypeAction = new GroupByUsageTypeAction(impl);
       groupByUsageTypeAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_T, InputEvent.CTRL_DOWN_MASK)), component, impl);
-      
+
       ContainerUtil.addIfNotNull(result, groupByUsageTypeAction);
       ContainerUtil.addIfNotNull(result, groupByScopeAction);
       ContainerUtil.addIfNotNull(result, groupByModuleTypeAction);

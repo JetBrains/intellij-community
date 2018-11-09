@@ -9,14 +9,16 @@ YAML file
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML key value
-            PsiElement(scalar key)('propertyOne:')
+            PsiElement(scalar key)('propertyOne')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('bla bla')
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML key value
-            PsiElement(scalar key)('propertyWithOneSequence:')
+            PsiElement(scalar key)('propertyWithOneSequence')
+            PsiElement(:)(':')
             PsiElement(Eol)('\n')
             PsiElement(indent)('        ')
             YAML sequence
@@ -28,7 +30,8 @@ YAML file
           PsiElement(Eol)('\n')
           PsiElement(indent)('    ')
           YAML key value
-            PsiElement(scalar key)('nextPropertyWithOneSequence:')
+            PsiElement(scalar key)('nextPropertyWithOneSequence')
+            PsiElement(:)(':')
             PsiElement(Eol)('\n')
             PsiElement(indent)('        ')
             YAML sequence

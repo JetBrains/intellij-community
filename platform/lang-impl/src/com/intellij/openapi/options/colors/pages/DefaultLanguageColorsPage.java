@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -74,6 +75,16 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     TAG_HIGHLIGHTING_MAP.put("tag", DefaultLanguageHighlighterColors.MARKUP_TAG);
     TAG_HIGHLIGHTING_MAP.put("attribute", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
     TAG_HIGHLIGHTING_MAP.put("entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
+    TAG_HIGHLIGHTING_MAP.put("reassigned_parameter", DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER);
+    TAG_HIGHLIGHTING_MAP.put("reassigned_local", DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE);
+  }
+
+  @NonNls private static final Map<String, TextAttributesKey> INLINE_ELEMENTS = new HashMap<>();
+
+  static {
+    INLINE_ELEMENTS.put("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
+    INLINE_ELEMENTS.put("parameter_hint_highlighted", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED);
+    INLINE_ELEMENTS.put("parameter_hint_current", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -126,6 +137,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.local.variable"), DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
     new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.reassigned.local.variable"), DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE),
+    new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.global.variable"), DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.function.declaration"), DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
@@ -133,6 +146,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       OptionsBundle.message("options.language.defaults.function.call"), DefaultLanguageHighlighterColors.FUNCTION_CALL),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.parameter"), DefaultLanguageHighlighterColors.PARAMETER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.reassigned.parameter"), DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.interface.name"), DefaultLanguageHighlighterColors.INTERFACE_NAME),
     new AttributesDescriptor(
@@ -204,7 +219,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       "Global <global_var>variable</global_var>\n" +
       "<doc_comment>/** \n" +
       " * Doc comment\n" +
-      " * <doc_tag>@tag</doc_tag> <doc_markup><code>Markup</code></doc_markup>" +
+      " * <doc_tag>@tag</doc_tag> <doc_markup><code></doc_markup><doc_tag_value>Markup</doc_tag_value><doc_markup></code></doc_markup>" +
       RainbowHighlighter.generatePaletteExample("\n * ") + "\n" +
       " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter1</doc_tag_value> documentation\n" +
       " * <doc_tag>@param</doc_tag> <doc_tag_value>parameter2</doc_tag_value> documentation\n" +
@@ -213,6 +228,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       " */</doc_comment>\n" +
       "Function <func_decl>declaration</func_decl> (<param>parameter1</param> <param>parameter2</param> <param>parameter3</param> <param>parameter4</param>)\n" +
       "    Local <local_var>variable1</local_var> <local_var>variable2</local_var> <local_var>variable3</local_var> <local_var>variable4</local_var>\n" +
+      "    Reassigned local <reassigned_local>variable</reassigned_local>\n" +
+      "    Reassigned <reassigned_parameter>parameter</reassigned_parameter>\n" +
       "Function <func_call>call</func_call>(" +
       "<parameter_hint p:>0, <parameter_hint param:>1, <parameter_hint parameterName:>2" +
       ")\n" +
@@ -234,6 +251,12 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
   @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return TAG_HIGHLIGHTING_MAP;
+  }
+
+  @Nullable
+  @Override
+  public Map<String, TextAttributesKey> getAdditionalInlineElementToDescriptorMap() {
+    return INLINE_ELEMENTS;
   }
 
   @NotNull

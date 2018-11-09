@@ -52,7 +52,6 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -73,8 +72,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -95,7 +94,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   private final boolean myShowLibraryContents;
   private boolean mySelectSearchByNameTab = false;
 
-  public TreeFileChooserDialog(final Project project,
+  public TreeFileChooserDialog(@NotNull Project project,
                                String title,
                                @Nullable final PsiFile initialFile,
                                @Nullable FileType fileType,
@@ -140,8 +139,9 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         return true;
       }
 
+      @NotNull
       @Override
-      public Object[] getChildElements(final Object element) {
+      public Object[] getChildElements(@NotNull final Object element) {
         return filterFiles(super.getChildElements(element));
       }
 
@@ -215,7 +215,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     if (myInitialFile != null) {
       name = myInitialFile.getName();
     }
-    PsiElement context = myInitialFile == null ? null : myInitialFile;
+    PsiElement context = myInitialFile;
     myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoFileModel(), name, true, context) {
       @Override
       protected void close(final boolean isOk) {
@@ -370,10 +370,6 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       return null;
     }
 
-    @Override
-    public char getCheckBoxMnemonic() {
-      return 0;
-    }
 
     @Override
     public String getNotInMessage() {

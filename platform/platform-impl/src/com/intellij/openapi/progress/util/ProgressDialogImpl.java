@@ -191,7 +191,8 @@ class ProgressDialogImpl implements ProgressDialog {
     }
   }
 
-  void cancel() {
+  @Override
+  public void cancel() {
     setCancelButtonEnabledASAP(false);
   }
 

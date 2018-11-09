@@ -38,7 +38,7 @@ public interface NamespaceContext {
     @Nullable
     PsiElement resolve(String prefix, XmlElement context);
 
-    IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName);
+    IntentionAction[] getUnresolvedNamespaceFixes(@NotNull PsiReference reference, String localName);
 
     @Nullable
     String getDefaultNamespace(XmlElement context);

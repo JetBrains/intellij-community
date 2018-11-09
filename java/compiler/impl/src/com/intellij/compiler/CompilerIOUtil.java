@@ -20,11 +20,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class CompilerIOUtil {
-  private final static ThreadLocal<byte[]> myBuffer = new ThreadLocal<byte[]>() {
-    protected byte[] initialValue() {
-      return new byte[1024];
-    }
-  };
+  private final static ThreadLocal<byte[]> myBuffer = ThreadLocal.withInitial(() -> new byte[1024]);
 
   private CompilerIOUtil() {}
 

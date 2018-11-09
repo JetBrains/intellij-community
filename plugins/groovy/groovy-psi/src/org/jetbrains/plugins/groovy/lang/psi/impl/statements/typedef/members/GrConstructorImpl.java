@@ -39,6 +39,7 @@ public class GrConstructorImpl extends GrMethodBaseImpl implements GrMethod {
     super(stub, GroovyElementTypes.CONSTRUCTOR_DEFINITION);
   }
 
+  @Override
   public String toString() {
     return "Constructor";
   }

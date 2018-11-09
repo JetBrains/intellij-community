@@ -1,8 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.compiler;
 
 import com.intellij.dupLocator.util.NodeFilter;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.StructuralSearchProfile;
@@ -32,22 +32,17 @@ public class GlobalCompilingVisitor {
   @NonNls private static final String SUBSTITUTION_PATTERN_STR = "\\b(__\\$_\\w+)\\b";
   private static final Pattern ourSubstitutionPattern = Pattern.compile(SUBSTITUTION_PATTERN_STR);
   private static final Set<String> ourReservedWords = new HashSet<>(Arrays.asList(MODIFIER_ANNOTATION_NAME, INSTANCE_MODIFIER_NAME));
+  private static final NodeFilter ourFilter = LexicalNodesFilter.getInstance();
 
   static {
-    for (StructuralSearchProfile profile : Extensions.getExtensions(StructuralSearchProfile.EP_NAME)) {
+    for (StructuralSearchProfile profile : StructuralSearchProfile.EP_NAME.getExtensionList()) {
       ourReservedWords.addAll(profile.getReservedWords());
     }
   }
 
-  private static final Pattern ourAlternativePattern = Pattern.compile("^\\((.+)\\)$");
-  @NonNls private static final String WORD_SEARCH_PATTERN_STR = ".*?\\b(.+?)\\b.*?";
-  static final Pattern ourWordSearchPattern = Pattern.compile(WORD_SEARCH_PATTERN_STR);
   private CompileContext context;
   private final List<PsiElement> myLexicalNodes = new SmartList<>();
-
   private int myCodeBlockLevel;
-
-  private static final NodeFilter ourFilter = LexicalNodesFilter.getInstance();
 
   public static NodeFilter getFilter() {
     return ourFilter;
@@ -201,11 +196,12 @@ public class GlobalCompilingVisitor {
         buf.insert(0, "[\"']");
         buf.append("[\"']");
       }
-      buf.append("$");
     }
 
     if (!handlers.isEmpty()) {
-      return hasLiteralContent ? new LiteralWithSubstitutionHandler(buf.toString(), handlers) : handler;
+      return hasLiteralContent
+             ? new LiteralWithSubstitutionHandler(buf.toString(), handlers, context.getOptions().isCaseSensitiveMatch())
+             : handler;
     }
 
     return null;
@@ -244,68 +240,12 @@ public class GlobalCompilingVisitor {
   }
 
   public void processTokenizedName(String name, boolean skipComments, GlobalCompilingVisitor.OccurenceKind kind) {
-    WordTokenizer tokenizer = new WordTokenizer(name);
-    for (Iterator<String> i = tokenizer.iterator(); i.hasNext();) {
-      String nextToken = i.next();
-      if (skipComments &&
-          (nextToken.equals("/*") || nextToken.equals("/**") || nextToken.equals("*/") || nextToken.equals("*") || nextToken.equals("//"))
-        ) {
-        continue;
-      }
-
-      Matcher matcher = ourAlternativePattern.matcher(nextToken);
-      if (matcher.matches()) {
-        StringTokenizer alternatives = new StringTokenizer(matcher.group(1), "|");
-        while (alternatives.hasMoreTokens()) {
-          addFilesToSearchForGivenWord(alternatives.nextToken(), !alternatives.hasMoreTokens(), kind, getContext());
-        }
-      }
-      else {
-        addFilesToSearchForGivenWord(nextToken, true, kind, getContext());
-      }
+    for (String word : StringUtil.getWordsInStringLongestFirst(name)) {
+      addFilesToSearchForGivenWord(word, true, kind, getContext());
     }
   }
 
   public enum OccurenceKind {
     LITERAL, COMMENT, CODE, TEXT
-  }
-
-  private static class WordTokenizer {
-    private final List<String> myWords = new SmartList<>();
-
-    WordTokenizer(String text) {
-      final StringTokenizer tokenizer = new StringTokenizer(text);
-      Matcher matcher = null;
-
-      while (tokenizer.hasMoreTokens()) {
-        String nextToken = tokenizer.nextToken();
-        if (matcher == null) {
-          matcher = ourWordSearchPattern.matcher(nextToken);
-        }
-        else {
-          matcher.reset(nextToken);
-        }
-
-        nextToken = (matcher.matches()) ? matcher.group(1) : nextToken;
-        int lastWordStart = 0;
-        int i;
-        for (i = 0; i < nextToken.length(); ++i) {
-          if (!Character.isJavaIdentifierStart(nextToken.charAt(i))) {
-            if (i != lastWordStart) {
-              myWords.add(nextToken.substring(lastWordStart, i));
-            }
-            lastWordStart = i + 1;
-          }
-        }
-
-        if (i != lastWordStart) {
-          myWords.add(nextToken.substring(lastWordStart, i));
-        }
-      }
-    }
-
-    Iterator<String> iterator() {
-      return myWords.iterator();
-    }
   }
 }

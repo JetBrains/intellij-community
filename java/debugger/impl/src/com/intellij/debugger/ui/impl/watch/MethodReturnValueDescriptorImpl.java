@@ -36,6 +36,7 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl {
     myMethod = method;
   }
 
+  @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     return getValue();
   }
@@ -45,11 +46,13 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl {
     return myMethod;
   }
 
+  @Override
   public String getName() {
     return NodeRendererSettings.getInstance().getClassRenderer().renderTypeName(myMethod.declaringType().name()) + "." +
            DebuggerUtilsEx.methodNameWithArguments(myMethod);
   }
 
+  @Override
   public Type getType() {
     Type type = super.getType();
     if (type == null) {
@@ -62,10 +65,12 @@ public class MethodReturnValueDescriptorImpl extends ValueDescriptorImpl {
     return type;
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     return null;
   }
 
+  @Override
   public boolean canSetValue() {
     return false;
   }

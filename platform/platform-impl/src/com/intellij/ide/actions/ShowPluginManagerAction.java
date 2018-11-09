@@ -19,22 +19,21 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.ide.plugins.PluginManagerUISettings;
+import com.intellij.ide.plugins.PluginManagerConfigurableProxy;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 public class ShowPluginManagerAction extends AnAction implements DumbAware {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    final PluginManagerConfigurable configurable = new PluginManagerConfigurable(PluginManagerUISettings.getInstance());
-    ShowSettingsUtil.getInstance().editConfigurable(component, configurable);
+    ShowSettingsUtil.getInstance().editConfigurable(component, new PluginManagerConfigurableProxy());
   }
 }

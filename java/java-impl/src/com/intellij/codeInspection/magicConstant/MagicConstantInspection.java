@@ -7,6 +7,8 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
@@ -16,12 +18,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -33,8 +34,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
+import com.siyeh.ig.callMatcher.CallMapper;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
+import one.util.streamex.Joining;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -42,10 +47,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Key<Boolean> NO_ANNOTATIONS_FOUND = Key.create("REPORTED_NO_ANNOTATIONS_FOUND");
+
+  private static final CallMapper<AllowedValues> SPECIAL_CASES = new CallMapper<AllowedValues>()
+    .register(CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
+              MagicConstantInspection::getCalendarGetValues);
 
   @Nls
   @NotNull
@@ -136,9 +148,11 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
           }
         }
         else if (l instanceof PsiMethodCallExpression) {
-          PsiMethod method = ((PsiMethodCallExpression)l).resolveMethod();
+          PsiMethodCallExpression call = (PsiMethodCallExpression)l;
+          PsiMethod method = call.resolveMethod();
           if (method != null) {
             checkExpression(r, method, method.getReturnType(), holder);
+            checkExpression(r, holder, SPECIAL_CASES.mapFirst(call));
           }
         }
       }
@@ -152,6 +166,8 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static void checkAnnotationsJarAttached(@NotNull PsiFile file, @NotNull ProblemsHolder holder) {
+    if (file.getViewProvider() instanceof InjectedFileViewProvider) return;
+
     final Project project = file.getProject();
     if (!holder.isOnTheFly()) {
       final Boolean found = project.getUserData(NO_ANNOTATIONS_FOUND);
@@ -204,6 +220,12 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
                                       @Nullable PsiType type,
                                       @NotNull ProblemsHolder holder) {
     AllowedValues allowed = getAllowedValues(owner, type, null);
+    checkExpression(expression, holder, allowed);
+  }
+
+  private static void checkExpression(@NotNull PsiExpression expression,
+                                      @NotNull ProblemsHolder holder,
+                                      AllowedValues allowed) {
     if (allowed == null) return;
     PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(expression, null);
     if (scope == null) scope = expression;
@@ -213,10 +235,12 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static void checkCall(@NotNull PsiCallExpression methodCall, @NotNull ProblemsHolder holder) {
+    PsiExpressionList argumentList = methodCall.getArgumentList();
+    if (argumentList == null) return;
     PsiMethod method = methodCall.resolveMethod();
     if (method == null) return;
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    PsiExpression[] arguments = methodCall.getArgumentList().getExpressions();
+    PsiExpression[] arguments = argumentList.getExpressions();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
       AllowedValues values = getAllowedValues(parameter, parameter.getType(), null);
@@ -285,17 +309,8 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     }
 
     boolean isSubsetOf(@NotNull AllowedValues other, @NotNull PsiManager manager) {
-      for (PsiAnnotationMemberValue value : values) {
-        boolean found = false;
-        for (PsiAnnotationMemberValue otherValue : other.values) {
-          if (same(value, otherValue, manager)) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) return false;
-      }
-      return true;
+      return Arrays.stream(values).allMatch(
+        value -> Arrays.stream(other.values).anyMatch(otherValue -> same(value, otherValue, manager)));
     }
   }
 
@@ -384,7 +399,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   @Nullable
-  static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<PsiClass> visited) {
+  static AllowedValues getAllowedValues(@NotNull PsiModifierListOwner element, @Nullable PsiType type, @Nullable Set<? super PsiClass> visited) {
     PsiManager manager = element.getManager();
     for (PsiAnnotation annotation : getAllAnnotations(element)) {
       if (type != null && MagicConstant.class.getName().equals(annotation.getQualifiedName())) {
@@ -406,10 +421,40 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     return parseBeanInfo(element, manager);
   }
 
+  private static AllowedValues getCalendarGetValues(PsiMethodCallExpression call) {
+    Integer argument = tryCast(ExpressionUtils.computeConstantExpression(call.getArgumentList().getExpressions()[0]), Integer.class);
+    PsiMethod method = call.resolveMethod();
+    if (method == null || argument == null) return null;
+    return CachedValuesManager.getCachedValue(method, () -> {
+      final String[] days = {"SUNDAY", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"};
+      final String[] months = {"JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY",
+        "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"};
+      final String[] amPm = {"AM", "PM"};
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
+      Function<String[], AllowedValues> converter = strings -> {
+        String expression = StreamEx.of(strings)
+                              .map((CommonClassNames.JAVA_UTIL_CALENDAR + ".")::concat).joining(",", "{", "}");
+        PsiArrayInitializerExpression initializer = (PsiArrayInitializerExpression)factory.createExpressionFromText(expression, method);
+        return new AllowedValues(initializer.getInitializers(), false);
+      };
+      Map<Integer, AllowedValues> map = new HashMap<>();
+      map.put(Calendar.DAY_OF_WEEK, converter.apply(days));
+      map.put(Calendar.MONTH, converter.apply(months));
+      map.put(Calendar.AM_PM, converter.apply(amPm));
+      return CachedValueProvider.Result.create(map, method);
+    }).get(argument);
+  }
+
   @NotNull
   private static PsiAnnotation[] getAllAnnotations(@NotNull PsiModifierListOwner element) {
-    return CachedValuesManager.getCachedValue(element, () ->
-      CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(element, true, null, false),
+    PsiModifierListOwner realElement;
+    if (element instanceof PsiCompiledElement && element.getNavigationElement() instanceof PsiModifierListOwner) {
+      realElement = (PsiModifierListOwner)element.getNavigationElement();
+    } else {
+      realElement = element;
+    }
+    return CachedValuesManager.getCachedValue(realElement, () ->
+      CachedValueProvider.Result.create(AnnotationUtil.getAllAnnotations(realElement, true, null, false),
                                         PsiModificationTracker.MODIFICATION_COUNT));
   }
 
@@ -492,12 +537,8 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static boolean containsBeanInfoText(@NotNull PsiFile file) {
-    return CachedValuesManager.getCachedValue(file, () -> {
-      Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME,
-                                                                                      new IdIndexEntry("beaninfo", true),
-                                                                                      GlobalSearchScope.fileScope(file));
-      return CachedValueProvider.Result.create(!files.isEmpty(), file);
-    });
+    return CachedValuesManager.getCachedValue(file, () ->
+      CachedValueProvider.Result.create(IdIndex.hasIdentifierInFile(file, "beaninfo"), file));
   }
 
   private static PsiType getType(@NotNull PsiModifierListOwner element) {
@@ -516,17 +557,17 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static void registerProblem(@NotNull PsiExpression argument, @NotNull AllowedValues allowedValues, @NotNull ProblemsHolder holder) {
-    String values = StringUtil.join(allowedValues.values,
-                                    value -> {
-                                      if (value instanceof PsiReferenceExpression) {
-                                        PsiElement resolved = ((PsiReferenceExpression)value).resolve();
-                                        if (resolved instanceof PsiVariable) {
-                                          return PsiFormatUtil.formatVariable((PsiVariable)resolved, PsiFormatUtilBase.SHOW_NAME |
-                                                                                                     PsiFormatUtilBase.SHOW_CONTAINING_CLASS, PsiSubstitutor.EMPTY);
-                                        }
-                                      }
-                                      return value.getText();
-                                    }, ", ");
+    Function<PsiAnnotationMemberValue, String> formatter = value -> {
+      if (value instanceof PsiReferenceExpression) {
+        PsiElement resolved = ((PsiReferenceExpression)value).resolve();
+        if (resolved instanceof PsiVariable) {
+          return PsiFormatUtil.formatVariable((PsiVariable)resolved,
+                                              PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS, PsiSubstitutor.EMPTY);
+        }
+      }
+      return value.getText();
+    };
+    String values = StreamEx.of(allowedValues.values).map(formatter).collect(Joining.with(", ").cutAfterDelimiter().maxCodePoints(100));
     String message = "Should be one of: " + values + (allowedValues.canBeOred ? " or their combination" : "");
     holder.registerProblem(argument, message, suggestMagicConstant(argument, allowedValues));
   }
@@ -651,17 +692,21 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     }
 
     PsiElement resolved = null;
+    AllowedValues allowedForRef = null;
     if (expression instanceof PsiReference) {
       resolved = ((PsiReference)expression).resolve();
     }
-    else if (expression instanceof PsiCallExpression) {
+    else if (expression instanceof PsiMethodCallExpression) {
+      allowedForRef = SPECIAL_CASES.mapFirst((PsiMethodCallExpression)expression);
       resolved = ((PsiCallExpression)expression).resolveMethod();
     }
 
-    AllowedValues allowedForRef;
-    if (resolved instanceof PsiModifierListOwner &&
-        (allowedForRef = getAllowedValues((PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), null)) != null &&
-        allowedForRef.isSubsetOf(allowedValues, manager)) return true;
+    if (allowedForRef == null && resolved instanceof PsiModifierListOwner) {
+      allowedForRef = getAllowedValues((PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), null);
+    }
+    if (allowedForRef != null && allowedForRef.isSubsetOf(allowedValues, manager)) {
+      return true;
+    }
 
     return PsiType.NULL.equals(expression.getType());
   }
@@ -694,9 +739,9 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
       return Comparing.equal(((PsiLiteralExpression)e1).getValue(), ((PsiLiteralExpression)e2).getValue());
     }
     if (e1 instanceof PsiPrefixExpression && e2 instanceof PsiPrefixExpression && ((PsiPrefixExpression)e1).getOperationTokenType() == ((PsiPrefixExpression)e2).getOperationTokenType()) {
-      PsiExpression loperand = ((PsiPrefixExpression)e1).getOperand();
-      PsiExpression roperand = ((PsiPrefixExpression)e2).getOperand();
-      return loperand != null && roperand != null && same(loperand, roperand, manager);
+      PsiExpression lOperand = ((PsiPrefixExpression)e1).getOperand();
+      PsiExpression rOperand = ((PsiPrefixExpression)e2).getOperand();
+      return lOperand != null && rOperand != null && same(lOperand, rOperand, manager);
     }
     if (e1 instanceof PsiReference && e2 instanceof PsiReference) {
       e1 = ((PsiReference)e1).resolve();
@@ -708,17 +753,17 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   static boolean processValuesFlownTo(@NotNull final PsiExpression argument,
                                       @NotNull PsiElement scope,
                                       @NotNull PsiManager manager,
-                                      @NotNull final Processor<PsiExpression> processor) {
+                                      @NotNull final Processor<? super PsiExpression> processor) {
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.dataFlowToThis = true;
     params.scope = new AnalysisScope(new LocalSearchScope(scope), manager.getProject());
 
     SliceRootNode rootNode = new SliceRootNode(manager.getProject(), new DuplicateMap(), LanguageSlicing.getProvider(argument).createRootUsage(argument, params));
 
-    Collection<? extends AbstractTreeNode> children = rootNode.getChildren().iterator().next().getChildren();
+    Collection<? extends AbstractTreeNode> children = ProgressManager.getInstance().runProcess(() -> rootNode.getChildren().iterator().next().getChildren(), new ProgressIndicatorBase());
     for (AbstractTreeNode child : children) {
       SliceUsage usage = (SliceUsage)child.getValue();
-      PsiElement element = usage.getElement();
+      PsiElement element = usage != null ? usage.getElement() : null;
       if (element instanceof PsiExpression && !processor.process((PsiExpression)element)) return false;
     }
 
@@ -744,7 +789,8 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     @NotNull
     @Override
     public String getText() {
-      List<String> names = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).map(PsiElement::getText).collect(Collectors.toList());
+      List<String> names = myMemberValuePointers.stream().map(SmartPsiElementPointer::getElement).filter(Objects::nonNull)
+                                                .map(PsiElement::getText).collect(Collectors.toList());
       String expression = StringUtil.join(names, " | ");
       return "Replace with '" + expression + "'";
     }

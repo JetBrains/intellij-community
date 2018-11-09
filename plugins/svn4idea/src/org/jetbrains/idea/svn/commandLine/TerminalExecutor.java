@@ -103,7 +103,7 @@ public class TerminalExecutor extends CommandExecutor {
   @NotNull
   protected Process createProcess(@NotNull List<String> parameters) throws ExecutionException {
     try {
-      return ((PtyCommandLine)myCommandLine).startProcessWithPty(parameters, false);
+      return ((PtyCommandLine)myCommandLine).withConsoleMode(false).startProcessWithPty(parameters);
     }
     catch (IOException e) {
       throw new ExecutionException(e);

@@ -20,7 +20,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public interface ExternalProjectDependency extends ExternalDependency {
 

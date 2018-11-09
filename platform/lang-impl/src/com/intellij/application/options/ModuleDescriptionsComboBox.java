@@ -121,11 +121,11 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
   private static class ModuleDescriptionListCellRenderer extends ListCellRendererWrapper<ModuleDescription> {
     private final String myEmptySelectionText;
 
-    public ModuleDescriptionListCellRenderer() {
+    ModuleDescriptionListCellRenderer() {
       this("[none]");
     }
 
-    public ModuleDescriptionListCellRenderer(@NotNull String emptySelectionText) {
+    ModuleDescriptionListCellRenderer(@NotNull String emptySelectionText) {
       myEmptySelectionText = emptySelectionText;
     }
 

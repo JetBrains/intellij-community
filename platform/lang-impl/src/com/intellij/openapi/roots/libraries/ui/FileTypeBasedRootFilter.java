@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  * @deprecated use {@link DescendentBasedRootFilter#createFileTypeBasedFilter(OrderRootType, boolean, FileType, String)} instead
  */
+@Deprecated
 public class FileTypeBasedRootFilter extends RootFilter {
   private final FileType myFileType;
   private final RootFilter myDelegate;

@@ -35,6 +35,7 @@ public class ClassArrayConverterImpl extends ClassArrayConverter {
     REFERENCE_PROVIDER.setAllowEmpty(true);
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue genericDomValue, final PsiElement element, final ConvertContext context) {
     final String s = genericDomValue.getStringValue();
@@ -64,7 +65,7 @@ public class ClassArrayConverterImpl extends ClassArrayConverter {
     return PsiReference.EMPTY_ARRAY;
   }
 
-  private static void createReference(final PsiElement element, final String s, final int offset, List<PsiReference> list) {
+  private static void createReference(final PsiElement element, final String s, final int offset, List<? super PsiReference> list) {
     final PsiReference[] references = REFERENCE_PROVIDER.getReferencesByString(s, element, offset);
     //noinspection ManualArrayToCollectionCopy
     for (PsiReference ref: references) {

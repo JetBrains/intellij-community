@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.*;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -60,9 +61,24 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
-    setText(QuickFixBundle.message("create.constructor.matching.super"));
-    return true;
+    if (!myClass.isValid() || !ScratchFileService.isInProjectOrScratch(myClass)) return false;
+    PsiClass base = myClass.getSuperClass();
+    if (base == null) return false;
+    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(base, myClass, PsiSubstitutor.EMPTY);
+    for (PsiMethod baseConstructor: base.getConstructors()) {
+      if (PsiUtil.isAccessible(baseConstructor, myClass, null)) {
+        PsiMethod derived = GenerateMembersUtil.substituteGenericMethod(baseConstructor, substitutor, myClass);
+        String className = myClass.getName();
+        LOG.assertTrue(className != null);
+        derived.setName(className);
+        if (myClass.findMethodBySignature(derived, false) == null) {
+          setText(QuickFixBundle.message("create.constructor.matching.super"));
+          return true;
+        }
+      }
+    }
+    return false;
+    
   }
 
   @Override
@@ -111,7 +127,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
       () -> {
         try {
           if (targetClass.getLBrace() == null) {
-            PsiClass psiClass = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory().createClass("X");
+            PsiClass psiClass = JavaPsiFacade.getElementFactory(targetClass.getProject()).createClass("X");
             targetClass.addRangeAfter(psiClass.getLBrace(), psiClass.getRBrace(), targetClass.getLastChild());
           }
           JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);

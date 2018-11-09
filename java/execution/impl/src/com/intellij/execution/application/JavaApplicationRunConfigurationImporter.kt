@@ -3,9 +3,11 @@
  */
 package com.intellij.execution.application
 
+import com.intellij.execution.ShortenCommandLine
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter
 import com.intellij.openapi.project.Project
@@ -28,6 +30,15 @@ class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
     consumeIfCast(cfg["jvmArgs"], String::class.java) { runConfiguration.vmParameters = it  }
     consumeIfCast(cfg["programParameters"], String::class.java) { runConfiguration.programParameters = it }
     consumeIfCast(cfg["envs"], Map::class.java) { runConfiguration.envs = it as MutableMap<String, String> }
+    consumeIfCast(cfg["workingDirectory"], String::class.java) { runConfiguration.workingDirectory = it }
+
+    consumeIfCast(cfg["shortenCommandLine"], String::class.java) {
+      try {
+        runConfiguration.shortenCommandLine = ShortenCommandLine.valueOf(it)
+      } catch (e: IllegalArgumentException) {
+        LOG.warn("Illegal value of 'shortenCommandLine': $it", e)
+      }
+    }
   }
 
   override fun canImport(typeName: String): Boolean = typeName == "application"
@@ -36,4 +47,8 @@ class JavaApplicationRunConfigurationImporter : RunConfigurationImporter {
     ConfigurationTypeUtil.findConfigurationType<ApplicationConfigurationType>(
       ApplicationConfigurationType::class.java)
       .configurationFactories[0]
+
+  companion object {
+    val LOG = Logger.getInstance(JavaApplicationRunConfigurationImporter::class.java)
+  }
 }

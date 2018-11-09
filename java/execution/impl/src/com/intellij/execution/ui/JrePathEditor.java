@@ -158,7 +158,7 @@ public class JrePathEditor extends LabeledComponent<ComboboxWithBrowseButton> im
     StatusText text = myComboboxEditor.getEmptyText();
     text.clear();
     text.appendText(DEFAULT_JRE_TEXT, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    text.appendText(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
+    text.appendText(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
   private JreComboBoxItem findOrAddCustomJre(@NotNull String pathOrName) {
@@ -188,7 +188,7 @@ public class JrePathEditor extends LabeledComponent<ComboboxWithBrowseButton> im
   private static class SdkAsJreItem implements JreComboBoxItem {
     private final Sdk mySdk;
 
-    public SdkAsJreItem(Sdk sdk) {
+    SdkAsJreItem(Sdk sdk) {
       mySdk = sdk;
     }
 
@@ -216,7 +216,7 @@ public class JrePathEditor extends LabeledComponent<ComboboxWithBrowseButton> im
   static class CustomJreItem implements JreComboBoxItem {
     private final String myPath;
 
-    public CustomJreItem(String path) {
+    CustomJreItem(String path) {
       myPath = path;
     }
 

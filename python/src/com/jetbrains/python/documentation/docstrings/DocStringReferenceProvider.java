@@ -32,9 +32,7 @@ import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author yole
@@ -58,23 +56,31 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
         StructuredDocString docString = DocStringUtil.parse(text, element);
         if (docString instanceof TagBasedDocString) {
           final TagBasedDocString taggedDocString = (TagBasedDocString)docString;
+          final Set<TextRange> nameReferenceRanges = new HashSet<>();
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments(TagBasedDocString.PARAM_TAGS),
+                                            nameReferenceRanges,
                                             ReferenceType.PARAMETER));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments(TagBasedDocString.PARAM_TYPE_TAGS),
+                                            nameReferenceRanges,
                                             ReferenceType.PARAMETER_TYPE));
           result.addAll(referencesFromNames(expr, offset, docString,
-                                            docString.getKeywordArgumentSubstrings(), ReferenceType.KEYWORD));
+                                            docString.getKeywordArgumentSubstrings(),
+                                            nameReferenceRanges,
+                                            ReferenceType.KEYWORD));
 
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("var"),
+                                            nameReferenceRanges,
                                             ReferenceType.VARIABLE));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("cvar"),
+                                            nameReferenceRanges,
                                             ReferenceType.CLASS_VARIABLE));
           result.addAll(referencesFromNames(expr, offset, docString,
                                             taggedDocString.getTagArguments("ivar"),
+                                            nameReferenceRanges,
                                             ReferenceType.INSTANCE_VARIABLE));
           result.addAll(returnTypes(element, docString, offset));
         }
@@ -107,11 +113,12 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
                                                         int offset,
                                                         @NotNull StructuredDocString docString,
                                                         @NotNull List<Substring> paramNames,
+                                                        @NotNull Set<TextRange> nameReferenceRanges,
                                                         @NotNull ReferenceType refType) {
     List<PsiReference> result = new ArrayList<>();
     for (Substring name : paramNames) {
       final String s = name.toString();
-      if (PyNames.isIdentifier(s)) {
+      if (PyNames.isIdentifier(s) && nameReferenceRanges.add(name.getTextRange())) {
         final TextRange range = name.getTextRange().shiftRight(offset);
         result.add(new DocStringParameterReference(element, range, refType));
       }

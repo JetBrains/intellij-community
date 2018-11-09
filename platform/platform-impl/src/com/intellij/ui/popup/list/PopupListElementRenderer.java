@@ -70,8 +70,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     panel.add(myTextLabel, BorderLayout.CENTER);
     myShortcutLabel = new JLabel();
     myShortcutLabel.setBorder(JBUI.Borders.emptyRight(3));
-    Color color = UIManager.getColor("MenuItem.acceleratorForeground");
-    myShortcutLabel.setForeground(color);
+    myShortcutLabel.setForeground(UIManager.getColor("MenuItem.acceleratorForeground"));
     panel.add(myShortcutLabel, BorderLayout.EAST);
     return layoutComponent(panel);
   }

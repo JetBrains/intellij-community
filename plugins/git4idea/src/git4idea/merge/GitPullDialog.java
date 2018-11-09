@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.icons.AllIcons;
@@ -80,6 +66,7 @@ public class GitPullDialog extends DialogWrapper {
 
     GitUIUtil.setupRootChooser(myProject, roots, defaultRoot, myGitRoot, myCurrentBranch);
     myGitRoot.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         updateRemotes();
       }
@@ -95,6 +82,7 @@ public class GitPullDialog extends DialogWrapper {
       }
     });
     final ElementsChooser.ElementsMarkListener<String> listener = new ElementsChooser.ElementsMarkListener<String>() {
+      @Override
       public void elementMarkChanged(final String element, final boolean isMarked) {
         validateDialog();
       }
@@ -112,6 +100,7 @@ public class GitPullDialog extends DialogWrapper {
     myGetBranchesButton.setIcon(AllIcons.Actions.Refresh);
     myGetBranchesButton.setEnabled(myRemote.getItemCount() >= 1);
     myGetBranchesButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         GitRemote selectedItem = (GitRemote)myRemote.getSelectedItem();
         Collection<String> remoteBranches = selectedItem != null ? getRemoteBranches(selectedItem) : null;
@@ -328,6 +317,7 @@ public class GitPullDialog extends DialogWrapper {
     myBranchChooser = new ElementsChooser<>(true);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

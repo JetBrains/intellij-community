@@ -84,7 +84,12 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
         if (e.getCause() instanceof InterruptedException) {
           throw e;
         }
-        LOG.error(e);
+        if (context.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
+          LOG.debug(e);
+        }
+        else {
+          LOG.warn(e);
+        }
         throw new EvaluateException("Internal error, see logs for more details");
       }
     }

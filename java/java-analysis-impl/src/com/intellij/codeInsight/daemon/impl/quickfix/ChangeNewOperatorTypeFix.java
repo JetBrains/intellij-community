@@ -6,6 +6,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -48,7 +50,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myType.isValid()
            && myExpression.isValid()
-           && myExpression.getManager().isInProject(myExpression)
+           && ScratchFileService.isInProjectOrScratch(myExpression)
            && !TypeConversionUtil.isPrimitiveAndNotNull(myType)
            && (myType instanceof PsiArrayType || myExpression.getArgumentList() != null)
       ;
@@ -61,7 +63,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
 
   private static void changeNewOperatorType(PsiNewExpression originalExpression, PsiType toType, final Editor editor) throws IncorrectOperationException {
     PsiNewExpression newExpression;
-    PsiElementFactory factory = JavaPsiFacade.getInstance(originalExpression.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(originalExpression.getProject());
     int caretOffset;
     TextRange selection;
     CommentTracker commentTracker = new CommentTracker();
@@ -105,7 +107,8 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
       newExpression.getArgumentList().replace(commentTracker.markUnchanged(argumentList));
       if (anonymousClass == null) { //just to prevent useless inference
         if (PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, originalExpression, toType)) {
-          final PsiElement paramList = PsiDiamondTypeUtil.replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
+          final PsiElement paramList = RemoveRedundantTypeArgumentsUtil
+            .replaceExplicitWithDiamond(newExpression.getClassOrAnonymousClassReference().getParameterList());
           newExpression = PsiTreeUtil.getParentOfType(paramList, PsiNewExpression.class);
         }
       }
@@ -157,7 +160,7 @@ public class ChangeNewOperatorTypeFix implements IntentionAction {
         if (lClass != null) {
           PsiSubstitutor substitutor = getInheritorSubstitutorForNewExpression(lClass, rClass, lResolveResult.getSubstitutor(), expression);
           if (substitutor != null) {
-            newType = JavaPsiFacade.getInstance(lClass.getProject()).getElementFactory().createType(rClass, substitutor);
+            newType = JavaPsiFacade.getElementFactory(lClass.getProject()).createType(rClass, substitutor);
           }
         }
       }

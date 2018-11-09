@@ -986,6 +986,17 @@ public class Py3TypeTest extends PyTestCase {
     doTest("Union[float, int]", "expr = round(True, 1)");
   }
 
+  // PY-29665
+  public void testRawBytesLiteral() {
+   doTest("bytes", "expr = rb'raw bytes'");
+   doTest("bytes", "expr = br'raw bytes'");
+  }
+
+  public void testFStringLiteralType() {
+    doTest("str",
+           "expr = f'foo'");
+  }
+
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);

@@ -53,10 +53,10 @@ interface UForEachExpression : ULoopExpression {
     visitor.afterVisitForEachExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitForEachExpression(this, data)
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     append("for (")
     append(variable.name)
     append(" : ")
@@ -65,5 +65,5 @@ interface UForEachExpression : ULoopExpression {
     append(body.asRenderString())
   }
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

@@ -4,39 +4,75 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
+import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * @author oleg
  */
 public class YAMLUtil {
+  public static final FileBasedIndex.InputFilter YAML_INPUT_FILTER =
+    new DefaultFileTypeSpecificInputFilter(YAMLLanguage.INSTANCE.getAssociatedFileType());
 
+  private static final TokenSet BLANK_LINE_ELEMENTS = TokenSet.andNot(YAMLElementTypes.BLANK_ELEMENTS, YAMLElementTypes.EOL_ELEMENTS);
+
+
+  @Deprecated
   @NotNull
   public static String getFullKey(final YAMLKeyValue yamlKeyValue) {
+    String fullPath = getConfigFullName(yamlKeyValue);
+    return StringUtil.notNullize(StringUtil.substringAfter(fullPath, "."));
+  }
+
+  /**
+   * This method return flattened key path (consist of ancestors until document).
+   * </p>
+   * YAML are frequently used in configure files. Access to child keys are preformed by dot separator.
+   * <pre>{@code
+   *  top:
+   *    next:
+   *      list:
+   *        - needKey: value
+   * }</pre>
+   * Flattened {@code needKey} is {@code top.next.list[0].needKey}
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public static String getConfigFullName(@NotNull YAMLPsiElement target) {
     final StringBuilder builder = new StringBuilder();
-    YAMLKeyValue element = yamlKeyValue;
-    PsiElement parent;
-    while (element!=null &&
-           (parent = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, YAMLDocument.class)) instanceof YAMLKeyValue){
-      if (builder.length()>0){
-        builder.insert(0, '.');
+    PsiElement element = target;
+    while (element != null) {
+      PsiElement parent = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, YAMLSequenceItem.class);
+      if (element instanceof YAMLKeyValue) {
+        builder.insert(0, ((YAMLKeyValue)element).getKeyText());
+        if (parent != null) {
+          builder.insert(0, '.');
+        }
       }
-      builder.insert(0, element.getKeyText());
-      element = (YAMLKeyValue) parent;
+      else if (element instanceof YAMLSequenceItem) {
+        builder.insert(0, "[" + ((YAMLSequenceItem)element).getItemIndex() + "]");
+      }
+      element = parent;
     }
     return builder.toString();
   }
-  
+
   @NotNull
   public static Collection<YAMLKeyValue> getTopLevelKeys(final YAMLFile file) {
     final YAMLValue topLevelValue = file.getDocuments().get(0).getTopLevelValue();
@@ -269,13 +305,16 @@ public class YAMLUtil {
     return 0;
   }
   
-  public static int getIndentToThisElement(@NotNull final PsiElement element) {
+  public static int getIndentToThisElement(@NotNull PsiElement element) {
+    if (element instanceof YAMLBlockMappingImpl) {
+      element = ((YAMLBlockMappingImpl)element).getFirstKeyValue();
+    }
     int offset = element.getTextOffset();
 
     PsiElement currentElement = element;
     while (currentElement != null) {
       final IElementType type = currentElement.getNode().getElementType();
-      if (type == YAMLTokenTypes.EOL) {
+      if (YAMLElementTypes.EOL_ELEMENTS.contains(type)) {
         return offset - currentElement.getTextOffset() - 1;
       }
 
@@ -284,5 +323,39 @@ public class YAMLUtil {
     return offset;
   }
 
-  
+  /**
+   * Deletes surrounding whitespace contextually. First attempts to delete {@link YAMLTokenTypes#COMMENT}s on the same line and
+   * {@link YAMLElementTypes#SPACE_ELEMENTS} forward, otherwise it will delete {@link YAMLElementTypes#SPACE_ELEMENTS} backward.
+   * <p>
+   * This is useful for maintaining consistent formatting.
+   * <p>
+   * E.g.,
+   * <pre>{@code
+   * foo:
+   *   bar: value1 # Same line comment
+   *   # Next line comment
+   *   baz: value2
+   * }</pre>
+   * becomes
+   * <pre>{@code
+   * foo:
+   *   bar: value1 # Next line comment
+   *   baz: value2
+   * }</pre>
+   */
+  public static void deleteSurroundingWhitespace(@NotNull final PsiElement element) {
+    if (element.getNextSibling() != null) {
+      deleteElementsOfType(element::getNextSibling, BLANK_LINE_ELEMENTS);
+      deleteElementsOfType(element::getNextSibling, YAMLElementTypes.SPACE_ELEMENTS);
+    }
+    else {
+      deleteElementsOfType(element::getPrevSibling, YAMLElementTypes.SPACE_ELEMENTS);
+    }
+  }
+
+  private static void deleteElementsOfType(@NotNull final Supplier<PsiElement> element, @NotNull final TokenSet types) {
+    while (element.get() != null && types.contains(PsiUtilCore.getElementType(element.get()))) {
+      element.get().delete();
+    }
+  }
 }

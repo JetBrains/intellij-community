@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.RepositoryImpl;
@@ -36,6 +22,8 @@ import java.util.Collection;
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.progress.util.BackgroundTaskUtil.syncPublisher;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.util.containers.ContainerUtil.newHashMap;
+import static com.intellij.util.containers.ContainerUtil.newLinkedHashSet;
 
 public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
 
@@ -181,6 +169,12 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     return myInfo.getBranchTrackInfos();
   }
 
+  @Nullable
+  @Override
+  public GitBranchTrackInfo getBranchTrackInfo(@NotNull String localBranchName) {
+    return myInfo.getBranchTrackInfosMap().get(localBranchName);
+  }
+
   @Override
   public boolean isRebaseInProgress() {
     return getState() == State.REBASING;
@@ -215,8 +209,9 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
     sw.report();
-    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), remotes,
-                           state.getLocalBranches(), state.getRemoteBranches(), trackInfos, submodules, hooksInfo, isShallow);
+    return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), newLinkedHashSet(remotes),
+                           newHashMap(state.getLocalBranches()), newHashMap(state.getRemoteBranches()), newLinkedHashSet(trackInfos),
+                           submodules, hooksInfo, isShallow);
   }
 
   @NotNull

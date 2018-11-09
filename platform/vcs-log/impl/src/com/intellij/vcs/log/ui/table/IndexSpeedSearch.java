@@ -51,16 +51,17 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
     addChangeListener(evt -> {
       if (evt.getPropertyName().equals(ENTERED_PREFIX_PROPERTY_NAME)) {
         String newValue = (String)evt.getNewValue();
-        if (newValue != null) {
+        IndexDataGetter dataGetter = myIndex.getDataGetter();
+        if (newValue != null && dataGetter != null) {
           String oldValue = (String)evt.getOldValue();
           Collection<VcsUser> usersToExamine = myUserRegistry.getUsers();
-          if (oldValue != null && newValue.contains(oldValue) && myMatchedUsers != null) {
+          if (oldValue != null && myMatchedUsers != null && newValue.contains(oldValue)) {
             if (myMatchedUsers.isEmpty()) return;
             usersToExamine = myMatchedUsers;
           }
           myMatchedUsers = ContainerUtil.filter(usersToExamine,
                                                 user -> compare(VcsUserUtil.getShortPresentation(user), newValue));
-          myMatchedByUserCommits = myIndex.filter(Collections.singletonList(new SimpleVcsLogUserFilter(myMatchedUsers)));
+          myMatchedByUserCommits = dataGetter.filter(Collections.singletonList(new SimpleVcsLogUserFilter(myMatchedUsers)));
         }
         else {
           myMatchedByUserCommits = null;
@@ -115,7 +116,7 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
   private static class SimpleVcsLogUserFilter implements VcsLogUserFilter {
     @NotNull private final Collection<VcsUser> myMatchedUsers;
 
-    public SimpleVcsLogUserFilter(@NotNull Collection<VcsUser> matchedUsers) {
+    SimpleVcsLogUserFilter(@NotNull Collection<VcsUser> matchedUsers) {
       myMatchedUsers = matchedUsers;
     }
 

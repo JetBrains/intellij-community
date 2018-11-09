@@ -17,10 +17,14 @@ import static com.intellij.util.xmlb.XmlSerializer.deserialize;
 public class JpsMavenModelSerializationExtension extends JpsModelSerializerExtension {
   private static final String PRODUCTION_ON_TEST_ATTRIBUTE = "production-on-test";
   private static final String MAVEN_MODULE_ATTRIBUTE = "org.jetbrains.idea.maven.project.MavenProjectsManager.isMavenModule";
+  private static final String MAVEN_SYSTEM_ID = "Maven";
 
   @Override
   public void loadModuleOptions(@NotNull JpsModule module, @NotNull Element rootElement) {
-    if (Boolean.parseBoolean(rootElement.getAttributeValue(MAVEN_MODULE_ATTRIBUTE))) {
+    boolean isMavenModule = Boolean.parseBoolean(rootElement.getAttributeValue(MAVEN_MODULE_ATTRIBUTE)) ||
+                            rootElement.getChildren().stream()
+                                       .anyMatch(element -> MAVEN_SYSTEM_ID.equals(element.getAttributeValue("externalSystem")));
+    if (isMavenModule) {
       JpsMavenModuleExtension extension = JpsMavenExtensionService.getInstance().getOrCreateExtension(module);
       Element component = JDomSerializationUtil.findComponent(rootElement, MavenAnnotationProcessorsModel.COMPONENT_NAME);
       if (component != null) {

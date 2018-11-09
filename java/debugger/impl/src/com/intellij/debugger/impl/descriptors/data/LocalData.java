@@ -14,6 +14,7 @@ public class LocalData extends DescriptorData<LocalVariableDescriptorImpl>{
     myLocalVariable = localVariable;
   }
 
+  @Override
   protected LocalVariableDescriptorImpl createDescriptorImpl(@NotNull Project project) {
     return new LocalVariableDescriptorImpl(project, myLocalVariable);
   }
@@ -28,6 +29,7 @@ public class LocalData extends DescriptorData<LocalVariableDescriptorImpl>{
     return myLocalVariable.hashCode();
   }
 
+  @Override
   public DisplayKey<LocalVariableDescriptorImpl> getDisplayKey() {
     return new SimpleDisplayKey<>(myLocalVariable.typeName() + "#" + myLocalVariable.name());
   }

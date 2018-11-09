@@ -794,7 +794,7 @@ public class ExprProcessor implements CodeConstants {
     return res;
   }
 
-  public static TextBuffer listToJava(List<Exprent> lst, int indent, BytecodeMappingTracer tracer) {
+  public static TextBuffer listToJava(List<? extends Exprent> lst, int indent, BytecodeMappingTracer tracer) {
     if (lst == null || lst.isEmpty()) {
       return new TextBuffer();
     }

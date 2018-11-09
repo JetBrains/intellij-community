@@ -4,10 +4,10 @@ package com.intellij.configurationStore
 import com.intellij.openapi.components.*
 import com.intellij.util.messages.Topic
 
-val STORAGE_TOPIC = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
+val STORAGE_TOPIC: Topic<StorageManagerListener> = Topic("STORAGE_LISTENER", StorageManagerListener::class.java, Topic.BroadcastDirection.TO_PARENT)
 
 interface StateStorageManager {
-  val macroSubstitutor: TrackingPathMacroSubstitutor?
+  val macroSubstitutor: PathMacroSubstitutor?
     get() = null
 
   val componentManager: ComponentManager?
@@ -26,22 +26,9 @@ interface StateStorageManager {
    */
   fun rename(path: String, newName: String)
 
-  fun startExternalization(): ExternalizationSession?
-
   fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation): StateStorage?
 
   fun expandMacros(path: String): String
-
-  interface ExternalizationSession {
-    fun setState(storageSpecs: List<Storage>, component: Any, componentName: String, state: Any)
-
-    fun setStateInOldStorage(component: Any, componentName: String, state: Any)
-
-    /**
-     * return empty list if nothing to save
-     */
-    fun createSaveSessions(): List<StateStorage.SaveSession>
-  }
 }
 
 interface StorageCreator {

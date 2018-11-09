@@ -40,7 +40,6 @@ import java.util.Set;
  * {@link AbstractProjectResolverExtension} provides dummy implementation of Gradle project resolver.
  *
  * @author Vladislav.Soroka
- * @since 10/14/13
  */
 @Order(ExternalSystemConstants.UNORDERED)
 public abstract class AbstractProjectResolverExtension implements GradleProjectResolverExtension {

@@ -41,7 +41,7 @@ public class IpnbUnresolvedReferenceSkipper implements PyUnresolvedReferenceSkip
     private final PyImportedNameDefiner myImportNameDefiner;
     boolean used = false;
 
-    public MyVisitor(PyImportedNameDefiner importNameDefiner) {
+    MyVisitor(PyImportedNameDefiner importNameDefiner) {
       myImportNameDefiner = importNameDefiner;
     }
 

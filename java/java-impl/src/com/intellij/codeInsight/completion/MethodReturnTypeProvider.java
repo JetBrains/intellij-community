@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
@@ -43,13 +44,13 @@ class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> 
 
   @Override
   protected void addCompletions(@NotNull CompletionParameters parameters,
-                                ProcessingContext context,
+                                @NotNull ProcessingContext context,
                                 @NotNull final CompletionResultSet result) {
     addProbableReturnTypes(parameters, result);
     
   }
 
-  static void addProbableReturnTypes(@NotNull CompletionParameters parameters, final Consumer<LookupElement> consumer) {
+  static void addProbableReturnTypes(@NotNull CompletionParameters parameters, final Consumer<? super LookupElement> consumer) {
     final PsiElement position = parameters.getPosition();
     PsiMethod method = PsiTreeUtil.getParentOfType(position, PsiMethod.class);
     assert method != null;
@@ -60,7 +61,7 @@ class MethodReturnTypeProvider extends CompletionProvider<CompletionParameters> 
       @Nullable
       @Override
       public PsiType visitType(PsiType type) {
-        if (!(type instanceof PsiPrimitiveType) && myProcessed.add(type)) {
+        if (!(type instanceof PsiPrimitiveType) && PsiTypesUtil.isDenotableType(type, position) && myProcessed.add(type)) {
           int priority = type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? 1 : 1000 - myProcessed.size();
           consumer.consume(PrioritizedLookupElement.withPriority(PsiTypeLookupItem.createLookupItem(type, position), priority));
         }

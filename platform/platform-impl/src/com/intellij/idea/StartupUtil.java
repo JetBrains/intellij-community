@@ -58,13 +58,6 @@ public class StartupUtil {
 
   private StartupUtil() { }
 
-  public static boolean shouldShowSplash(final String[] args) {
-    if ("true".equals(System.getProperty(NO_SPLASH))) {
-      return false;
-    }
-    return !Arrays.asList(args).contains(NO_SPLASH);
-  }
-
   public static synchronized void addExternalInstanceListener(@Nullable Consumer<List<String>> consumer) {
     // method called by app after startup
     if (ourSocketLock != null) {
@@ -101,6 +94,7 @@ public class StartupUtil {
 
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
+    System.setProperty("com.jetbrains.suppressWindowRaise", "true");
     try {
       org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
       if (!root.getAllAppenders().hasMoreElements()) {
@@ -373,9 +367,8 @@ public class StartupUtil {
       IdeaWin32.isAvailable();  // logging is done there
     }
 
-    if (SystemInfo.isWindows) {
-      // WinP should not unpack .dll files into parent directory
-      System.setProperty("winp.unpack.dll.to.parent.dir", "false");
+    if (SystemInfo.isWindows && System.getProperty("winp.folder.preferred") == null) {
+      System.setProperty("winp.folder.preferred", ideTempDir.getPath());
     }
   }
 
@@ -386,7 +379,7 @@ public class StartupUtil {
 
     ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
     ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
-    String buildDate = new SimpleDateFormat("dd MMM yyyy HH:ss", Locale.US).format(appInfo.getBuildDate().getTime());
+    String buildDate = new SimpleDateFormat("dd MMM yyyy HH:mm", Locale.US).format(appInfo.getBuildDate().getTime());
     log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild().asString() + ", " + buildDate + ")");
     log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ", " + SystemInfo.OS_ARCH + ")");
     log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");

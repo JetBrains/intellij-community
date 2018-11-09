@@ -59,7 +59,7 @@ public class PatternPackageReferenceSet extends PackageReferenceSet {
     return super.resolvePackageName(context, packageName);
   }
 
-  protected boolean processSubPackages(final PsiPackage pkg, final Processor<PsiPackage> processor) {
+  protected boolean processSubPackages(final PsiPackage pkg, final Processor<? super PsiPackage> processor) {
     for (final PsiPackage aPackage : pkg.getSubPackages(getResolveScope())) {
       if (!processor.process(aPackage)) return false;
       if (!processSubPackages(aPackage, processor)) return false;

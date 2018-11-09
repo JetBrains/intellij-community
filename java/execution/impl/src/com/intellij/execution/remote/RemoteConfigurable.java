@@ -11,12 +11,15 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
-import com.intellij.ui.components.fields.IntegerField;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -120,22 +123,52 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     abstract String getLaunchCommandLine(RemoteConnection connection);
   }
 
+  private static final int MIN_PORT_VALUE = 0;
+  private static final int MAX_PORT_VALUE = 0xFFFF;
+
   private final JPanel          mainPanel;
   private final JTextArea       myArgsArea = new JTextArea();
   private final JComboBox<Mode> myModeCombo = new ComboBox<>(Mode.values());
+  private final JBCheckBox      myAutoRestart = new JBCheckBox("Auto restart");
   private final JComboBox<Transport> myTransportCombo = new ComboBox<>(Transport.values());
 
   private final ConfigurationModuleSelector myModuleSelector;
 
   private final JTextField myHostName = new JTextField();
   private final JTextField myAddress = new JTextField();
-  private final IntegerField myPort = new IntegerField("&Port:", 0, 0xFFFF);
+  private final JTextField myPort = new JTextField(Integer.toString(MAX_PORT_VALUE));
 
   public RemoteConfigurable(Project project) {
     myTransportCombo.setSelectedItem(Transport.SOCKET);
 
-    myPort.setValue(myPort.getMaxValue());
     myPort.setMinimumSize(myPort.getPreferredSize());
+    new ComponentValidator(project).withValidator(v -> {
+      String pt = myPort.getText();
+      if (StringUtil.isNotEmpty(pt)) {
+        try {
+          int portValue = Integer.parseInt(pt);
+          if (portValue >= MIN_PORT_VALUE && portValue <= MAX_PORT_VALUE) {
+            v.updateInfo(null);
+          }
+          else {
+            v.updateInfo(new ValidationInfo("Incorrect port range. Set value between 0 and 65535", myPort));
+          }
+        }
+        catch (NumberFormatException nfe) {
+          v.updateInfo(new ValidationInfo("Port value should be a number between 0 and 65535", myPort));
+        }
+      }
+      else {
+        v.updateInfo(null);
+      }
+    }).installOn(myPort);
+
+    myPort.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(@NotNull DocumentEvent e) {
+        ComponentValidator.getInstance(myPort).ifPresent(v -> v.revalidate());
+      }
+    });
 
     GridBagConstraints gc = new GridBagConstraints(0, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, GridBagConstraints.NONE,
                                                    JBUI.insets(4, 0, 0, 8), 0, 0);
@@ -166,10 +199,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     gc.gridx = 0;
     gc.gridy++;
-    gc.gridwidth = 5;
+    gc.gridwidth = 6;
     gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.weightx = 0;
     gc.insets = JBUI.insetsTop(10);
 
     mainPanel.add(UI.PanelFactory.panel(myArgsArea).withLabel("&Command line arguments for remote JVM:").
@@ -182,10 +214,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     gc.gridx = 0;
     gc.gridy++;
-    gc.gridwidth = 5;
+    gc.gridwidth = 6;
     gc.weightx = 1.0;
     gc.fill = GridBagConstraints.HORIZONTAL;
-    gc.weightx = 0;
     gc.insets = JBUI.insetsTop(21);
     mainPanel.add(UI.PanelFactory.panel(myModuleCombo).withLabel("Use &module classpath:").
       withComment("First search for sources of the debugged classes in the selected module classpath").createPanel(), gc);
@@ -198,7 +229,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     DocumentListener textUpdateListener = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         updateArgsText(ddl.getChosenItem());
       }
     };
@@ -212,6 +243,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   }
 
   private void updateArgsText(@NotNull JDKVersionItem vi) {
+    myAutoRestart.setVisible(myModeCombo.getSelectedItem() == Mode.LISTEN);
     boolean useSockets = myTransportCombo.getSelectedItem() == Transport.SOCKET;
 
     RemoteConnection connection = new RemoteConnection(useSockets, myHostName.getText().trim(),
@@ -225,6 +257,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   @Override
   protected void resetEditorFrom(@NotNull RemoteConfiguration rc) {
     myModeCombo.setSelectedItem(rc.SERVER_MODE ? Mode.LISTEN : Mode.ATTACH);
+    myAutoRestart.setSelected(rc.AUTO_RESTART);
 
     if (SystemInfo.isWindows) {
       myTransportCombo.setSelectedItem(rc.USE_SOCKET_TRANSPORT ? Transport.SOCKET : Transport.SHMEM);
@@ -237,7 +270,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
       rc.USE_SOCKET_TRANSPORT = true;
 
       myHostName.setText(rc.HOST);
-      myPort.setValue(Integer.parseInt(rc.PORT));
+      myPort.setText(rc.PORT);
     }
 
     myModuleSelector.reset(rc);
@@ -262,10 +295,11 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     rc.USE_SOCKET_TRANSPORT = myTransportCombo.getSelectedItem() == Transport.SOCKET;
     if (rc.USE_SOCKET_TRANSPORT) {
-      myPort.validateContent();
+      ComponentValidator.getInstance(myPort).ifPresent(v -> v.revalidate());
     }
 
     rc.SERVER_MODE = myModeCombo.getSelectedItem() == Mode.LISTEN;
+    rc.AUTO_RESTART = myAutoRestart.isVisible() && myAutoRestart.isSelected();
     myModuleSelector.applyTo(rc);
   }
 
@@ -288,8 +322,9 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     JLabel modeLabel = createLabelFor("&Debugger mode:", myModeCombo);
     JLabel transportLabel = createLabelFor("&Transport:", myTransportCombo);
     JLabel hostLabel = createLabelFor("&Host:", myHostName);
-    JLabel portLabel = createLabelFor(myPort.getValueName(), myPort);
+    JLabel portLabel = createLabelFor("&Port:", myPort);
 
+    gc.gridwidth = 2;
     panel.add(modeLabel, gc);
 
     gc.gridx += 2;
@@ -298,9 +333,16 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     panel.add(myModeCombo, gc);
 
     gc.gridx++;
-    gc.weightx = 1.0;
     gc.gridwidth = 2;
-    gc.fill = GridBagConstraints.REMAINDER;
+    gc.fill = GridBagConstraints.NONE;
+    gc.insets = JBUI.insets(4, 20, 0, 8);
+    panel.add(myAutoRestart, gc);
+
+    gc.gridx += 2;
+    gc.gridwidth = 1;
+    gc.weightx = 1.0;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.insets = JBUI.emptyInsets();
     panel.add(new JPanel(), gc);
 
     if (SystemInfo.isWindows) {
@@ -379,6 +421,12 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     gc.gridx++;
     gc.insets = JBUI.insetsTop(4);
     panel.add(myPort, gc);
+
+    gc.gridx++;
+    gc.weightx = 1.0;
+    gc.fill = GridBagConstraints.HORIZONTAL;
+    gc.insets = JBUI.emptyInsets();
+    panel.add(new JPanel(), gc);
 
     return panel;
   }

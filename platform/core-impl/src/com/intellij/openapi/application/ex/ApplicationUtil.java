@@ -72,7 +72,7 @@ public class ApplicationUtil {
       }
 
       try {
-        future.get(200, TimeUnit.MILLISECONDS);
+        future.get(25, TimeUnit.MILLISECONDS);
         ExceptionUtil.rethrowAll(error.get());
         return result.get();
       }

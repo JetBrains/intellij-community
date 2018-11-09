@@ -562,6 +562,12 @@
   <action id="NextDiff">
     <keyboard-shortcut first-keystroke="F7"/>
   </action>
+  <action id="Diff.PrevChange">
+    <keyboard-shortcut first-keystroke="alt LEFT"/>
+  </action>
+  <action id="Diff.NextChange">
+    <keyboard-shortcut first-keystroke="alt RIGHT"/>
+  </action>
   <action id="Diff.FocusOppositePane">
     <keyboard-shortcut first-keystroke="control TAB"/>
   </action>
@@ -627,7 +633,6 @@
   <action id="EditorScrollToCenter">
     <keyboard-shortcut first-keystroke="control M"/>
   </action>
-  <action id="RunGc"/>
   <action id="$Redo">
     <keyboard-shortcut first-keystroke="control shift Z"/>
     <keyboard-shortcut first-keystroke="alt shift BACK_SPACE"/>
@@ -712,6 +717,9 @@
   </action>
   <action id="XDebugger.NewWatch">
     <keyboard-shortcut first-keystroke="INSERT"/>
+  </action>
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="control alt F5"/>
   </action>
   <action id="Debugger.EditTypeSource">
     <keyboard-shortcut first-keystroke="shift F4"/>
@@ -1077,6 +1085,15 @@
     <keyboard-shortcut first-keystroke="Shift F6"/>
   </action>
 
+  <action id="ChangesView.SetDefault">
+    <keyboard-shortcut first-keystroke="control SPACE" />
+  </action>
+
+  <action id="ChangesView.Rename">
+    <keyboard-shortcut first-keystroke="F2" />
+    <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
+
   <action id="DirDiffMenu.SynchronizeDiff">
     <keyboard-shortcut first-keystroke="ENTER"/>
   </action>
@@ -1090,5 +1107,36 @@
 
   <action id="BraceOrQuoteOut">
     <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
+
+  <action id="EditorFocusGutter">
+    <keyboard-shortcut first-keystroke="alt shift 6" second-keystroke="F"/>
+  </action>
+  <action id="EditorShowGutterIconTooltip">
+    <keyboard-shortcut first-keystroke="alt shift 6" second-keystroke="T"/>
+  </action>
+  <action id="ShowFilterPopup">
+    <keyboard-shortcut first-keystroke="control alt F"/>
+  </action>
+
+  <action id="SearchEverywhere.NextTab">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
+  <action id="SearchEverywhere.PrevTab">
+    <keyboard-shortcut first-keystroke="shift TAB"/>
+  </action>
+  <action id="SearchEverywhere.CompleteCommand">
+    <keyboard-shortcut first-keystroke="TAB"/>
+  </action>
+  <action id="SearchEverywhere.SelectItem">
+    <keyboard-shortcut first-keystroke="Enter"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToNextGroup">
+    <keyboard-shortcut first-keystroke="PAGE_DOWN"/>
+    <keyboard-shortcut first-keystroke="control DOWN"/>
+  </action>
+  <action id="SearchEverywhere.NavigateToPrevGroup">
+    <keyboard-shortcut first-keystroke="PAGE_UP"/>
+    <keyboard-shortcut first-keystroke="control UP"/>
   </action>
 </keymap>

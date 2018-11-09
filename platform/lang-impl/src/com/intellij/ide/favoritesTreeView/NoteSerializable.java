@@ -37,7 +37,7 @@ public class NoteSerializable implements WorkingSetSerializable<NoteNode, NoteNo
   public void serializeMe(NoteNode t, StringBuilder oos) throws IOException {
     oos.append(StringUtil.escapeXml(t.getText()));
     oos.append("<>");
-    oos.append(String.valueOf(t.isReadonly()));
+    oos.append(t.isReadonly());
     oos.append("<>");
   }
 

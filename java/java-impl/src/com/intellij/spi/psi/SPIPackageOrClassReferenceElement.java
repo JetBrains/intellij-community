@@ -22,7 +22,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.spi.SPIFileType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +51,7 @@ public class SPIPackageOrClassReferenceElement extends ASTWrapperPsiElement impl
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     final SPIClassProvidersElementList firstChild =
       (SPIClassProvidersElementList)PsiFileFactory.getInstance(getProject())
         .createFileFromText("spi_dummy", SPIFileType.INSTANCE, newElementName).getFirstChild();
@@ -92,7 +91,7 @@ public class SPIPackageOrClassReferenceElement extends ASTWrapperPsiElement impl
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     if (element instanceof PsiPackage) {
       return getText().equals(((PsiPackage)element).getQualifiedName());
     } else if (element instanceof PsiClass) {
@@ -109,11 +108,5 @@ public class SPIPackageOrClassReferenceElement extends ASTWrapperPsiElement impl
   @Override
   public PsiReference getReference() {
     return this;
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 }

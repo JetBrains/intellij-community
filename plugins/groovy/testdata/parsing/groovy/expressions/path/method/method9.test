@@ -9,14 +9,9 @@ Groovy script
       PsiElement(identifier)('foo')
     Arguments
       PsiElement(()('(')
-      PsiErrorElement:Expression expected
-        <empty list>
+      PsiErrorElement:<expression> expected, got '#'
+        PsiElement(wrong token)('#')
       PsiElement(wrong token)('#')
-      PsiErrorElement:Expression expected
-        <empty list>
-      PsiElement(wrong token)('#')
-      PsiErrorElement:Expression expected
-        <empty list>
       PsiElement(wrong token)('#')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')
@@ -27,12 +22,9 @@ Groovy script
         Literal
           PsiElement(Integer)('2')
       PsiElement(,)(',')
-      PsiErrorElement:Expression expected
-        <empty list>
       PsiWhiteSpace(' ')
-      PsiElement(wrong token)('#')
-      PsiErrorElement:Expression expected
-        <empty list>
+      PsiErrorElement:<expression> expected, got '#'
+        PsiElement(wrong token)('#')
       PsiElement(wrong token)('#')
       PsiElement(,)(',')
       PsiWhiteSpace(' ')

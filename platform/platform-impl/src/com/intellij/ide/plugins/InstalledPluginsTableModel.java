@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
  * @author stathik
- * @since Dec 26, 2003
  */
 public class InstalledPluginsTableModel extends PluginTableModel {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
@@ -233,7 +232,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
 
   private class EnabledPluginInfo extends ColumnInfo<IdeaPluginDescriptor, Boolean> {
 
-    public EnabledPluginInfo() {
+    EnabledPluginInfo() {
       super(/*IdeBundle.message("plugin.manager.enable.column.title")*/"");
     }
 
@@ -374,7 +373,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
   }
 
   private class MyPluginManagerColumnInfo extends PluginManagerColumnInfo {
-    public MyPluginManagerColumnInfo() {
+    MyPluginManagerColumnInfo() {
       super(PluginManagerColumnInfo.COLUMN_NAME, InstalledPluginsTableModel.this);
     }
 

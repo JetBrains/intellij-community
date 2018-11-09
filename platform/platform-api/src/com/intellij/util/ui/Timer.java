@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @deprecated use {@link JobScheduler#getScheduler()} instead
  */
+@Deprecated
 public abstract class Timer implements Disposable, Runnable  {
   private final int mySpan;
 
@@ -126,14 +127,6 @@ public abstract class Timer implements Disposable, Runnable  {
     }
   }
 
-  public final void delay(int length) {
-    synchronized (LOCK) {
-      if (isDisposed() || !isRunning()) return;
-      myState = TimerState.pausing;
-      queue(this, length);
-    }
-  }
-
   public final void resume() {
     synchronized (LOCK) {
       if (isDisposed() || isRunning()) return;
@@ -156,7 +149,7 @@ public abstract class Timer implements Disposable, Runnable  {
     }
   }
 
-  public boolean isRunning() {
+  private boolean isRunning() {
     synchronized (LOCK) {
       return myState == TimerState.running || myState == TimerState.initialSleep || myState == TimerState.restarting;
     }
@@ -177,12 +170,8 @@ public abstract class Timer implements Disposable, Runnable  {
     myFuture = schedule;
   }
 
-  public ScheduledFuture<?> getFuture() {
-    return myFuture;
-  }
-
   private static void queue(Timer timer, int span) {
-    final ScheduledFuture<?> future = timer.getFuture();
+    final ScheduledFuture<?> future = timer.myFuture;
     if (future != null) {
       future.cancel(true);
     }

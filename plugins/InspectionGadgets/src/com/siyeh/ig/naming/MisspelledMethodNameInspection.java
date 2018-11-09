@@ -16,13 +16,27 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiMethod;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
+import com.siyeh.ig.psiutils.MethodUtils;
+import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Map;
 
-public class MisspelledMethodNameInspection extends MisspelledMethodNameInspectionBase {
+public class MisspelledMethodNameInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreIfMethodIsOverride = true;
 
   @Override
   public JComponent createOptionsPanel() {
@@ -33,5 +47,74 @@ public class MisspelledMethodNameInspection extends MisspelledMethodNameInspecti
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix((String)infos[0]);
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("method.names.differ.only.by.case.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message("method.names.differ.only.by.case.problem.descriptor", infos[0]);
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new MethodNamesDifferOnlyByCaseVisitor();
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  private class MethodNamesDifferOnlyByCaseVisitor extends BaseInspectionVisitor {
+    @Override
+    public void visitClass(PsiClass aClass) {
+      super.visitClass(aClass);
+      PsiMethod[] methods = aClass.getAllMethods();
+      Map<String, PsiMethod> methodNames = new THashMap<>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      Map<PsiIdentifier, String> errorNames = new THashMap<>();
+      for (PsiMethod method : methods) {
+        ProgressManager.checkCanceled();
+        if (method.isConstructor()) continue;
+        if (ignoreIfMethodIsOverride && MethodUtils.hasSuper(method)) {
+          continue;
+        }
+
+        String name = method.getName();
+        PsiMethod existing = methodNames.get(name);
+        if (existing == null) {
+          methodNames.put(name, method);
+        }
+        else {
+          PsiClass methodClass = method.getContainingClass();
+          PsiClass existingMethodClass = existing.getContainingClass();
+          String existingName = existing.getName();
+          if (!name.equals(existingName)) {
+            if (existingMethodClass == aClass) {
+              PsiIdentifier identifier = existing.getNameIdentifier();
+              if (identifier != null) {
+                errorNames.put(identifier, name);
+              }
+            }
+            if (methodClass == aClass) {
+              PsiIdentifier identifier = method.getNameIdentifier();
+              if (identifier != null) {
+                errorNames.put(identifier, existingName);
+              }
+            }
+          }
+        }
+      }
+      for (Map.Entry<PsiIdentifier, String> entry : errorNames.entrySet()) {
+        PsiIdentifier identifier = entry.getKey();
+        String otherName = entry.getValue();
+        registerError(identifier, otherName);
+      }
+    }
   }
 }

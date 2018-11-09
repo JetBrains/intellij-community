@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea;
 
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.VcsBackgroundTask;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -55,23 +39,26 @@ public class HgVFSListener extends VcsVFSListener {
     dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
+  @NotNull
   @Override
   protected String getAddTitle() {
     return HgVcsMessages.message("hg4idea.add.title");
   }
 
+  @NotNull
   @Override
   protected String getSingleFileAddTitle() {
     return HgVcsMessages.message("hg4idea.add.single.title");
   }
 
+  @NotNull
   @Override
   protected String getSingleFileAddPromptTemplate() {
     return HgVcsMessages.message("hg4idea.add.body");
   }
 
   @Override
-  protected void executeAdd(final List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
     // if a file is copied from another repository, then 'hg add' should be used instead of 'hg copy'.
     // Thus here we remove such files from the copyFromMap.
     for (Iterator<Map.Entry<VirtualFile, VirtualFile>> it = copyFromMap.entrySet().iterator(); it.hasNext(); ) {
@@ -103,7 +90,7 @@ public class HgVFSListener extends VcsVFSListener {
           Collection<VirtualFile> untrackedForRepo = new HgStatusCommand.Builder(false).unknown(true).removed(true).build(myProject)
             .getFiles(repo, new ArrayList<>(files));
           untrackedFiles.addAll(untrackedForRepo);
-          List<VirtualFile> ignoredForRepo = files.stream().filter(file -> !untrackedForRepo.contains(file)).collect(Collectors.toList());
+          List<VirtualFile> ignoredForRepo = ContainerUtil.filter(files, file -> !untrackedForRepo.contains(file));
           getIgnoreRepoHolder(repo).addFiles(ignoredForRepo);
         }
         addedFiles.retainAll(untrackedFiles);
@@ -131,7 +118,7 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
+  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
     (new Task.ConditionalModal(myProject,
                                HgVcsMessages.message("hg4idea.add.progress"),
                                false,
@@ -187,6 +174,7 @@ public class HgVFSListener extends VcsVFSListener {
     }).queue();
   }
 
+  @NotNull
   @Override
   protected String getDeleteTitle() {
     return HgVcsMessages.message("hg4idea.remove.multiple.title");
@@ -202,13 +190,15 @@ public class HgVFSListener extends VcsVFSListener {
     return HgVcsMessages.message("hg4idea.remove.single.body");
   }
 
+  @NotNull
   @Override
-  protected VcsDeleteType needConfirmDeletion(final VirtualFile file) {
+  protected VcsDeleteType needConfirmDeletion(@NotNull final VirtualFile file) {
     return ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFiles().contains(file)
            ? VcsDeleteType.IGNORE
            : VcsDeleteType.CONFIRM;
   }
 
+  @Override
   protected void executeDelete() {
     final List<FilePath> filesToDelete = new ArrayList<>(myDeletedWithoutConfirmFiles);
     final List<FilePath> filesToConfirmDeletion = new ArrayList<>(myDeletedFiles);
@@ -283,7 +273,7 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performDeletion( final List<FilePath> filesToDelete) {
+  protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
     final ArrayList<HgFile> deletes = new ArrayList<>();
     for (FilePath file : filesToDelete) {
       if (file.isDirectory()) {
@@ -306,11 +296,12 @@ public class HgVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected void performMoveRename(List<MovedFileInfo> movedFiles) {
+  protected void performMoveRename(@NotNull List<MovedFileInfo> movedFiles) {
     (new VcsBackgroundTask<MovedFileInfo>(myProject,
                                         HgVcsMessages.message("hg4idea.move.progress"),
                                         VcsConfiguration.getInstance(myProject).getAddRemoveOption(),
                                         movedFiles) {
+      @Override
       protected void process(final MovedFileInfo file) {
         final FilePath source = VcsUtil.getFilePath(file.myOldPath);
         final FilePath target = VcsUtil.getFilePath(file.myNewPath);

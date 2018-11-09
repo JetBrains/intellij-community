@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.build;
 
 import com.intellij.icons.AllIcons;
@@ -49,14 +35,14 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
   }
 
   static {
-    FRAMES[0] = AllIcons.Process.State.GreyProgr_1;
-    FRAMES[1] = AllIcons.Process.State.GreyProgr_2;
-    FRAMES[2] = AllIcons.Process.State.GreyProgr_3;
-    FRAMES[3] = AllIcons.Process.State.GreyProgr_4;
-    FRAMES[4] = AllIcons.Process.State.GreyProgr_5;
-    FRAMES[5] = AllIcons.Process.State.GreyProgr_6;
-    FRAMES[6] = AllIcons.Process.State.GreyProgr_7;
-    FRAMES[7] = AllIcons.Process.State.GreyProgr_8;
+    FRAMES[0] = AllIcons.Process.Step_1;
+    FRAMES[1] = AllIcons.Process.Step_2;
+    FRAMES[2] = AllIcons.Process.Step_3;
+    FRAMES[3] = AllIcons.Process.Step_4;
+    FRAMES[4] = AllIcons.Process.Step_5;
+    FRAMES[5] = AllIcons.Process.Step_6;
+    FRAMES[6] = AllIcons.Process.Step_7;
+    FRAMES[7] = AllIcons.Process.Step_8;
   }
 
   public static int getCurrentFrameIndex() {
@@ -67,6 +53,7 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
     return FRAMES[getCurrentFrameIndex()];
   }
 
+  @Override
   public void run() {
     if (!myNodes.isEmpty()) {
       final long time = System.currentTimeMillis();
@@ -93,13 +80,14 @@ public class ExecutionNodeProgressAnimator implements Runnable, Disposable {
 
     // running nodes likely will not receive stop event yet after stop build event
     for (ExecutionNode node : myNodes) {
-      node.setIconProvider(() -> AllIcons.Process.State.YellowStr);
+      node.setIconProvider(() -> AllIcons.RunConfigurations.TestIgnored);
       node.setEndTime(System.currentTimeMillis());
     }
     myNodes.clear();
     cancelAlarm();
   }
 
+  @Override
   public void dispose() {
     myTreeView = null;
     myNodes.clear();

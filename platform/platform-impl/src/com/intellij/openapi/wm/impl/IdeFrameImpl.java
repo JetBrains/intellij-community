@@ -30,6 +30,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.win32.WindowsElevationUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
@@ -41,6 +42,7 @@ import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
@@ -56,6 +58,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -83,7 +86,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   public IdeFrameImpl(ActionManagerEx actionManager, DataManager dataManager, Application application) {
     super(ApplicationNamesInfo.getInstance().getFullProductName());
 
-    myRootPane = createRootPane(actionManager, dataManager, application);
+    myRootPane = createRootPane(actionManager, dataManager);
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     LafManager.getInstance().addLafManagerListener(myLafListener = src -> setBackground(UIUtil.getPanelBackground()));
@@ -95,7 +98,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     setSize(size);
     setLocationRelativeTo(null);
 
-    if (Registry.is("suppress.focus.stealing") && !ApplicationManagerEx.getApplicationEx().isActive()) {
+    if (Registry.is("suppress.focus.stealing") &&
+        Registry.is("suppress.focus.stealing.auto.request.focus") &&
+        !ApplicationManagerEx.getApplicationEx().isActive()) {
       setAutoRequestFocus(false);
     }
 
@@ -137,8 +142,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     MouseGestureManager.getInstance().add(this);
 
     myFrameDecorator = IdeFrameDecorator.decorate(this);
-
-    IdeMenuBar.installAppMenuIfNeeded(this);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicyExt()    {
       @Override
@@ -212,8 +215,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     PowerSupplyKit.checkPowerSupply();
   }
 
-  protected IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager, Application application) {
-    return new IdeRootPane(actionManager, dataManager, application, this);
+  protected IdeRootPane createRootPane(ActionManagerEx actionManager, DataManager dataManager) {
+    return new IdeRootPane(actionManager, dataManager, this);
   }
 
   @NotNull
@@ -314,20 +317,26 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     updateTitle(this, myTitle, myFileTitle, myCurrentFile);
   }
 
+  public static String getElevationSuffix() {
+    return WindowsElevationUtil.isUnderElevation() ? " (Administrator)" : "";
+  }
+
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
     if (ourUpdatingTitle) return;
 
     try {
       ourUpdatingTitle = true;
 
-      frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
+      if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
+        frame.getRootPane().putClientProperty("Window.documentFile", currentFile);
+      }
 
       Builder builder = new Builder().append(title).append(fileTitle);
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
-        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
+        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion() + getElevationSuffix());
       }
       else if (!SystemInfo.isMac || builder.isEmpty()) {
-        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
+        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + getElevationSuffix());
       }
       frame.setTitle(builder.toString());
     }
@@ -369,7 +378,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   }
 
   @Override
-  public Object getData(final String dataId) {
+  public Object getData(@NotNull final String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       if (myProject != null) {
         return myProject.isInitialized() ? myProject : null;
@@ -438,36 +447,37 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     }
   }
 
+  private final Set<String> widgetIDs = ContainerUtil.newHashSet();
+  private void addWidget(StatusBar statusBar, StatusBarWidget widget, String anchor) {
+    if (!widgetIDs.add(widget.ID())) {
+      LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
+      return;
+    }
+    statusBar.addWidget(widget, anchor);
+  }
+
   private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
     final StatusBar statusBar = getStatusBar();
+    addWidget(statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
+    addWidget(statusBar, new LineSeparatorPanel(project), StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL));
+    addWidget(statusBar, new ColumnSelectionModePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
+    addWidget(statusBar, new ToggleReadOnlyAttributePanel(project),
+              StatusBar.Anchors.after(StatusBar.StandardWidgets.COLUMN_SELECTION_MODE_PANEL));
 
-    final PositionPanel positionPanel = new PositionPanel(project);
-    statusBar.addWidget(positionPanel, "before " + IdeMessagePanel.FATAL_ERROR);
-
-    final IdeNotificationArea notificationArea = new IdeNotificationArea();
-    statusBar.addWidget(notificationArea, "before " + IdeMessagePanel.FATAL_ERROR);
-
-    final EncodingPanel encodingPanel = new EncodingPanel(project);
-    statusBar.addWidget(encodingPanel, "after Position");
-
-    final LineSeparatorPanel lineSeparatorPanel = new LineSeparatorPanel(project);
-    statusBar.addWidget(lineSeparatorPanel, "before " + encodingPanel.ID());
-
-    final ToggleReadOnlyAttributePanel readOnlyAttributePanel = new ToggleReadOnlyAttributePanel(project);
-
-    final InsertOverwritePanel insertOverwritePanel = new InsertOverwritePanel(project);
-    statusBar.addWidget(insertOverwritePanel, "after Encoding");
-    statusBar.addWidget(readOnlyAttributePanel, "after InsertOverwrite");
+    for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensions()) {
+      StatusBarWidget widget = widgetProvider.getWidget(project);
+      if (widget == null) continue;
+      addWidget(statusBar, widget, widgetProvider.getAnchor());
+    }
 
     Disposer.register(project, () -> {
-      statusBar.removeWidget(encodingPanel.ID());
-      statusBar.removeWidget(lineSeparatorPanel.ID());
-      statusBar.removeWidget(positionPanel.ID());
-      statusBar.removeWidget(notificationArea.ID());
-      statusBar.removeWidget(readOnlyAttributePanel.ID());
-      statusBar.removeWidget(insertOverwritePanel.ID());
+      for (String widgetID: widgetIDs) {
+        statusBar.removeWidget(widgetID);
+      }
+      widgetIDs.clear();
 
-      //noinspection deprecation
       ((StatusBarEx)statusBar).removeCustomIndicationComponents();
     });
   }
@@ -533,7 +543,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
   @Override
   public void paint(@NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
-    //noinspection Since15
     super.paint(g);
     if (IdeRootPane.isFrameDecorated() && !isInFullScreen()) {
       final BufferedImage shadow = ourShadowPainter.createShadow(getRootPane(), getWidth(), getHeight());

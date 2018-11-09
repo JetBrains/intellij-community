@@ -71,7 +71,7 @@ public class GroovyDslAnnotator implements Annotator, DumbAware {
   private static class ActivateFix implements IntentionAction {
     private final VirtualFile myVfile;
 
-    public ActivateFix(VirtualFile vfile) {
+    ActivateFix(VirtualFile vfile) {
       myVfile = vfile;
     }
 
@@ -84,7 +84,6 @@ public class GroovyDslAnnotator implements Annotator, DumbAware {
     @Override
     @NotNull
     public String getFamilyName() {
-      //noinspection DialogTitleCapitalization
       return "Activate DSL Descriptor";
     }
 

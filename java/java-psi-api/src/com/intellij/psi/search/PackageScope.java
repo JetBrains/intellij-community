@@ -37,9 +37,9 @@ public class PackageScope extends GlobalSearchScope {
   private final PsiPackage myPackage;
   private final boolean myIncludeSubpackages;
   private final boolean myIncludeLibraries;
-  protected final boolean myPartOfPackagePrefix;
-  protected final String myPackageQualifiedName;
-  protected final String myPackageQNamePrefix;
+  private final boolean myPartOfPackagePrefix;
+  private final String myPackageQualifiedName;
+  private final String myPackageQNamePrefix;
 
   public PackageScope(@NotNull PsiPackage aPackage, boolean includeSubpackages, final boolean includeLibraries) {
     super(aPackage.getProject());
@@ -80,11 +80,6 @@ public class PackageScope extends GlobalSearchScope {
   }
 
   @Override
-  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return 0;
-  }
-
-  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return true;
   }
@@ -94,6 +89,7 @@ public class PackageScope extends GlobalSearchScope {
     return myIncludeLibraries;
   }
 
+  @Override
   public String toString() {
     //noinspection HardCodedStringLiteral
     return "package scope: " + myPackage +

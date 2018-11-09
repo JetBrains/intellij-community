@@ -67,7 +67,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   protected void applyFix(@NotNull final Project project,
                           @NotNull final GlobalInspectionContextImpl context,
                           @NotNull final CommonProblemDescriptor[] descriptors,
-                          @NotNull final Set<PsiElement> ignoredElements) {
+                          @NotNull final Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
       final List<PsiElement> collectedElementsToIgnore = new ArrayList<>();
       final Runnable refreshViews = () -> {
@@ -117,7 +117,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   protected void performFixesInBatch(@NotNull Project project,
                                      @NotNull List<CommonProblemDescriptor[]> descriptors,
                                      @NotNull GlobalInspectionContextImpl context,
-                                     Set<PsiElement> ignoredElements) {
+                                     Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
       applyFix(project, context, BatchModeDescriptorsUtil.flattenDescriptors(descriptors), ignoredElements);
     }
@@ -126,7 +126,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     }
   }
 
-  private void ignore(@NotNull Collection<PsiElement> ignoredElements,
+  private void ignore(@NotNull Collection<? super PsiElement> ignoredElements,
                       @NotNull CommonProblemDescriptor descriptor,
                       boolean hasFix,
                       @NotNull GlobalInspectionContextImpl context) {

@@ -18,11 +18,18 @@ package org.jetbrains.plugins.github.api.data;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.mandatory.RestModel;
 
+//example/GithubRepoDetailed.json
 @RestModel
 @SuppressWarnings("UnusedDeclaration")
-public class GithubRepoDetailed extends GithubRepo {
+public class GithubRepoDetailed extends GithubRepoWithPermissions {
+  private Boolean allowSquashMerge;
+  private Boolean allowMergeCommit;
+  private Boolean allowRebaseMerge;
+  private GithubOrg organization;
   private GithubRepo parent;
   private GithubRepo source;
+  private Integer networkCount;
+  private Integer subscribersCount;
 
   @Nullable
   public GithubRepo getParent() {

@@ -52,7 +52,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     this(project, Arrays.asList(modules), Collections.emptyList(), includeDependentModules, includeRuntimeDependencies);
   }
 
-  public ModuleCompileScope(Project project, final Collection<Module> modules, Collection<String> includedUnloadedModules, boolean includeDependentModules, boolean includeRuntimeDeps) {
+  public ModuleCompileScope(Project project, final Collection<? extends Module> modules, Collection<String> includedUnloadedModules, boolean includeDependentModules, boolean includeRuntimeDeps) {
     myProject = project;
     myIncludedUnloadedModules = includedUnloadedModules;
     myScopeModules = new HashSet<>();
@@ -74,6 +74,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     myModules = ModuleManager.getInstance(myProject).getModules();
   }
 
+  @Override
   @NotNull
   public Module[] getAffectedModules() {
     return myScopeModules.toArray(Module.EMPTY_ARRAY);
@@ -85,6 +86,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     return Collections.unmodifiableCollection(myIncludedUnloadedModules);
   }
 
+  @Override
   protected FileIndex[] getFileIndices() {
     final FileIndex[] indices = new FileIndex[myScopeModules.size()];
     int idx = 0;
@@ -94,6 +96,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
     return indices;
   }
 
+  @Override
   public boolean belongs(final String url) {
     if (myScopeModules.isEmpty() && myIncludedUnloadedModules.isEmpty()) {
       return false; // optimization

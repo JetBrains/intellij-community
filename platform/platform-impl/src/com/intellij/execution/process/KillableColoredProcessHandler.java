@@ -56,7 +56,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
   }
 
   /** @deprecated use {@link #KillableColoredProcessHandler(GeneralCommandLine, boolean)} (to be removed in IDEA 17) */
-  @SuppressWarnings("unused")
+  @Deprecated
   public static KillableColoredProcessHandler create(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     return new KillableColoredProcessHandler(commandLine, true);
   }

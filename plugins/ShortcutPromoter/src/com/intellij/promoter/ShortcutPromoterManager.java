@@ -1,6 +1,7 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.promoter;
 
-import com.intellij.openapi.Disposable;
+import com.intellij.application.Topics;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,7 +26,7 @@ import java.util.Map;
   name = "ShortcutPromoterManager",
   storages = @Storage(value = "promoter.xml", roamingType = RoamingType.PER_OS)
 )
-public class ShortcutPromoterManager implements Disposable, AnActionListener, PersistentStateComponent<Element>, ApplicationComponent {
+public class ShortcutPromoterManager implements AnActionListener, PersistentStateComponent<Element>, BaseComponent {
   private final Map<String, PromoterState> myState = new LinkedHashMap<>();
   private final Map<String, ShortcutPromoterEP> myExtensions = new THashMap<>();
 
@@ -34,19 +35,15 @@ public class ShortcutPromoterManager implements Disposable, AnActionListener, Pe
     myExtensions.clear();
     myState.clear();
 
-    for (ShortcutPromoterEP ep : ShortcutPromoterEP.EP_NAME.getExtensions()) {
+    for (ShortcutPromoterEP ep : ShortcutPromoterEP.EP_NAME.getExtensionList()) {
       myExtensions.put(ep.actionId, ep);
     }
-    ActionManager.getInstance().addAnActionListener(this);
+
+    Topics.subscribe(AnActionListener.TOPIC, null, this);
   }
 
   @Override
-  public void dispose() {
-    ActionManager.getInstance().removeAnActionListener(this);
-  }
-
-  @Override
-  public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+  public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
     final InputEvent input = event.getInputEvent();
     if (input instanceof MouseEvent) {
       final String id = ActionManager.getInstance().getId(action);

@@ -42,7 +42,6 @@ import static org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider
 
 /**
  * @author zolotov
- * @since 9/20/13
  */
 public class TestDataReferenceContributor extends PsiReferenceContributor {
   @Override
@@ -83,7 +82,7 @@ public class TestDataReferenceContributor extends PsiReferenceContributor {
   }
 
   private static class TestDataReferenceSet extends FileReferenceSet {
-    public TestDataReferenceSet(@NotNull String str,
+    TestDataReferenceSet(@NotNull String str,
                                 @NotNull PsiElement element,
                                 int startInElement,
                                 @Nullable PsiReferenceProvider provider,

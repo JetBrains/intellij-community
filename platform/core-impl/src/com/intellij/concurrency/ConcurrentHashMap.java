@@ -27,6 +27,7 @@ import com.intellij.util.containers.ThreadLocalRandom;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Generated;
 import java.io.ObjectStreamField;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
@@ -47,6 +48,7 @@ import java.util.stream.Stream;
 // Null keys are NOT allowed
 // Null values are NOT allowed
 // NOT serializable
+@Generated("to turn off inspections")
 
 /**
  * A hash table supporting full concurrency of retrievals and
@@ -818,7 +820,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     /**
      * Creates a new, empty map with the default initial table size (16).
      */
-    public ConcurrentHashMap() {
+    ConcurrentHashMap() {
       this(DEFAULT_CAPACITY, LOAD_FACTOR);
     }
 
@@ -832,7 +834,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * @throws IllegalArgumentException if the initial capacity of
      * elements is negative
      */
-    public ConcurrentHashMap(int initialCapacity) {
+    ConcurrentHashMap(int initialCapacity) {
       this(initialCapacity, LOAD_FACTOR);
     }
 
@@ -841,7 +843,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @param m the map
      */
-    public ConcurrentHashMap(Map<? extends K, ? extends V> m) {
+    ConcurrentHashMap(Map<? extends K, ? extends V> m) {
       this(DEFAULT_CAPACITY);
         putAll(m);
     }
@@ -861,7 +863,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      *
      * @since 1.6
      */
-    public ConcurrentHashMap(int initialCapacity, float loadFactor) {
+    ConcurrentHashMap(int initialCapacity, float loadFactor) {
         this(initialCapacity, loadFactor, 1);
     }
 
@@ -883,7 +885,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
      * negative or the load factor or concurrencyLevel are
      * nonpositive
      */
-    public ConcurrentHashMap(int initialCapacity,
+    ConcurrentHashMap(int initialCapacity,
                              float loadFactor, int concurrencyLevel) {
         this(initialCapacity, loadFactor,concurrencyLevel, THIS);
     }
@@ -899,7 +901,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
       throw new IncorrectOperationException();
     }
   };
-  public ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentHashMap(int initialCapacity, float loadFactor, int concurrencyLevel, @NotNull TObjectHashingStrategy<K> hashingStrategy) {
     if (!(loadFactor > 0.0f) || initialCapacity < 0 || concurrencyLevel <= 0) {
       throw new IllegalArgumentException();
     }
@@ -914,7 +916,7 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
     this.hashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
   }
 
-  public ConcurrentHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
+  ConcurrentHashMap(@NotNull TObjectHashingStrategy<K> hashingStrategy) {
     this(DEFAULT_CAPACITY, LOAD_FACTOR, NCPU, hashingStrategy);
   }
     // Original (since JDK1.2) Map methods
@@ -5270,7 +5272,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     ReduceKeysTask<K,V>
                         t = (ReduceKeysTask<K,V>)c,
                         s = t.rights;
@@ -5318,7 +5319,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     ReduceValuesTask<K,V>
                         t = (ReduceValuesTask<K,V>)c,
                         s = t.rights;
@@ -5364,7 +5364,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     ReduceEntriesTask<K,V>
                         t = (ReduceEntriesTask<K,V>)c,
                         s = t.rights;
@@ -5418,7 +5417,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceKeysTask<K,V,U>
                         t = (MapReduceKeysTask<K,V,U>)c,
                         s = t.rights;
@@ -5472,7 +5470,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceValuesTask<K,V,U>
                         t = (MapReduceValuesTask<K,V,U>)c,
                         s = t.rights;
@@ -5526,7 +5523,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceEntriesTask<K,V,U>
                         t = (MapReduceEntriesTask<K,V,U>)c,
                         s = t.rights;
@@ -5580,7 +5576,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceMappingsTask<K,V,U>
                         t = (MapReduceMappingsTask<K,V,U>)c,
                         s = t.rights;
@@ -5633,7 +5628,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceKeysToDoubleTask<K,V>
                         t = (MapReduceKeysToDoubleTask<K,V>)c,
                         s = t.rights;
@@ -5683,7 +5677,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceValuesToDoubleTask<K,V>
                         t = (MapReduceValuesToDoubleTask<K,V>)c,
                         s = t.rights;
@@ -5733,7 +5726,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceEntriesToDoubleTask<K,V>
                         t = (MapReduceEntriesToDoubleTask<K,V>)c,
                         s = t.rights;
@@ -5783,7 +5775,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceMappingsToDoubleTask<K,V>
                         t = (MapReduceMappingsToDoubleTask<K,V>)c,
                         s = t.rights;
@@ -5833,7 +5824,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceKeysToLongTask<K,V>
                         t = (MapReduceKeysToLongTask<K,V>)c,
                         s = t.rights;
@@ -5883,7 +5873,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceValuesToLongTask<K,V>
                         t = (MapReduceValuesToLongTask<K,V>)c,
                         s = t.rights;
@@ -5933,7 +5922,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceEntriesToLongTask<K,V>
                         t = (MapReduceEntriesToLongTask<K,V>)c,
                         s = t.rights;
@@ -5983,7 +5971,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceMappingsToLongTask<K,V>
                         t = (MapReduceMappingsToLongTask<K,V>)c,
                         s = t.rights;
@@ -6033,7 +6020,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceKeysToIntTask<K,V>
                         t = (MapReduceKeysToIntTask<K,V>)c,
                         s = t.rights;
@@ -6083,7 +6069,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceValuesToIntTask<K,V>
                         t = (MapReduceValuesToIntTask<K,V>)c,
                         s = t.rights;
@@ -6133,7 +6118,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceEntriesToIntTask<K,V>
                         t = (MapReduceEntriesToIntTask<K,V>)c,
                         s = t.rights;
@@ -6183,7 +6167,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
                 result = r;
                 CountedCompleter<?> c;
                 for (c = firstComplete(); c != null; c = c.nextComplete()) {
-                    @SuppressWarnings("unchecked")
                     MapReduceMappingsToIntTask<K,V>
                         t = (MapReduceMappingsToIntTask<K,V>)c,
                         s = t.rights;

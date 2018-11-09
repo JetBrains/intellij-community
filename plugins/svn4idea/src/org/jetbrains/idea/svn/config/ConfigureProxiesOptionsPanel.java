@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -61,6 +47,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
    *
    * @see org.jetbrains.idea.svn.config.RepositoryUrlsListener#onListChanged(java.util.List)
    */
+  @Override
   public void onListChanged(final List<String> urls) {
     final String value = (String) myRepositoriesList.getSelectedValue();
     myRepositoriesList.removeAll();
@@ -99,7 +86,7 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   public ConfigureProxiesOptionsPanel(final Runnable validator, final TestConnectionPerformer testConnectionPerformer) {
     myValidator = validator;
     myTestConnectionPerformer = testConnectionPerformer;
-    
+
     myComponent2Key = new HashMap<>();
     myKey2Component = new HashMap<>();
     fillMappings();
@@ -163,9 +150,11 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   private class UrlsSetter implements FocusListener {
+    @Override
     public void focusGained(final FocusEvent e) {
     }
 
+    @Override
     public void focusLost(final FocusEvent e) {
       repositoryUrlsRecalculation();
     }
@@ -182,8 +171,10 @@ public class ConfigureProxiesOptionsPanel implements RepositoryUrlsListener {
   }
 
   private class NumericFieldsValidator implements FocusListener {
+    @Override
     public void focusGained(final FocusEvent e) {
     }
+    @Override
     public void focusLost(final FocusEvent e) {
       myValidator.run();
     }

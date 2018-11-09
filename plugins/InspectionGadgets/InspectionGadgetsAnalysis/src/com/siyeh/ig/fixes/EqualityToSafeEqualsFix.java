@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.fixes;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
@@ -45,7 +45,7 @@ public class EqualityToSafeEqualsFix extends InspectionGadgetsFix {
 
   @Nullable
   public static EqualityToSafeEqualsFix buildFix(PsiBinaryExpression expression) {
-    if (NullnessUtil.getExpressionNullness(expression.getLOperand()) == Nullness.NOT_NULL) return null;
+    if (NullabilityUtil.getExpressionNullability(expression.getLOperand()) == Nullability.NOT_NULL) return null;
     return new EqualityToSafeEqualsFix(JavaTokenType.NE.equals(expression.getOperationTokenType()));
   }
 

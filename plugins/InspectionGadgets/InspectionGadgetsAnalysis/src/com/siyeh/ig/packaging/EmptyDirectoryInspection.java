@@ -121,7 +121,7 @@ public class EmptyDirectoryInspection extends BaseGlobalInspection {
     private final String url;
     private final String name;
 
-    public EmptyPackageFix(String url, String name) {
+    EmptyPackageFix(String url, String name) {
       this.url = url;
       this.name = name;
     }

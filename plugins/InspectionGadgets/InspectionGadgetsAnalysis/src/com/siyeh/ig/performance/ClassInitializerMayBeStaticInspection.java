@@ -20,8 +20,6 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -86,14 +84,15 @@ public class ClassInitializerMayBeStaticInspection extends BaseInspection {
         return;
       }
 
-      final MethodReferenceVisitor visitor =
-        new MethodReferenceVisitor(initializer);
-      initializer.accept(visitor);
-      if (!visitor.areReferencesStaticallyAccessible()) {
-        return;
-      }
+      if (dependsOnInstanceMembers(initializer)) return;
 
       registerClassInitializerError(initializer);
     }
+  }
+
+  public static boolean dependsOnInstanceMembers(PsiClassInitializer initializer) {
+    final MethodReferenceVisitor visitor = new MethodReferenceVisitor(initializer);
+    initializer.accept(visitor);
+    return !visitor.areReferencesStaticallyAccessible();
   }
 }

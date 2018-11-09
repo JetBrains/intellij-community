@@ -82,7 +82,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     performForContext(e.getDataContext(), true);
   }
 
@@ -92,23 +92,9 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    if (project == null) {
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-
-    DataContext dataContext = e.getDataContext();
-    Editor editor = getEditor(dataContext);
-
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    element = getElement(project, file, editor, element);
-
-    PsiFile containingFile = element != null ? element.getContainingFile() : file;
-    boolean enabled = !(containingFile == null || !containingFile.getViewProvider().isPhysical());
-    e.getPresentation().setEnabled(enabled);
+    e.getPresentation().setEnabled(project != null);
   }
 
 
@@ -211,7 +197,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  ImplementationSearcher createImplementationsSearcher() {
+  protected ImplementationSearcher createImplementationsSearcher() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new ImplementationSearcher() {
         @Override
@@ -363,7 +349,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   @NotNull
-  static PsiElement[] getSelfAndImplementations(Editor editor,
+  protected static PsiElement[] getSelfAndImplementations(Editor editor,
                                                 @NotNull PsiElement element,
                                                 @NotNull ImplementationSearcher handler,
                                                 final boolean includeSelfAlways) {
@@ -419,7 +405,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     private ImplementationViewComponent myComponent;
     private PsiElement myElement;
 
-    public ImplementationViewComponentUpdater(ImplementationViewComponent component, PsiElement element) {
+    ImplementationViewComponentUpdater(ImplementationViewComponent component, PsiElement element) {
       myComponent = component;
       myElement = element;
     }
@@ -430,7 +416,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     }
 
     @Override
-    public void replaceModel(@NotNull List<PsiElement> data) {
+    public void replaceModel(@NotNull List<? extends PsiElement> data) {
       final PsiElement[] elements = myComponent.getElements();
       final int includeSelfIdx = myElement instanceof PomTargetPsiElement ? 0 : 1;
       final int startIdx = elements.length - includeSelfIdx;

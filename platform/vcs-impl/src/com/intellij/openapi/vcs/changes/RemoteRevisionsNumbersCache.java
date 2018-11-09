@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,7 +28,7 @@ import java.util.*;
  */
 public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.RemoteRevisionsNumbersCache");
-  
+
   // every hour (time unit to check for server commits)
   // default, actual in settings
   private static final long ourRottenPeriod = 3600 * 1000;
@@ -170,26 +156,24 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   }
 
   @Override
-  public void plus(final Pair<String, AbstractVcs> pair) {
+  public void changeUpdated(@NotNull String path, @NotNull AbstractVcs vcs) {
     // does not support
-    if (pair.getSecond().getDiffProvider() == null) return;
+    if (vcs.getDiffProvider() == null) return;
 
-    final String key = pair.getFirst();
-    final AbstractVcs newVcs = pair.getSecond();
-
-    final VirtualFile root = getRootForPath(key);
+    final VirtualFile root = getRootForPath(path);
     if (root == null) return;
 
-    final VcsRoot vcsRoot = new VcsRoot(newVcs, root);
+    final VcsRoot vcsRoot = new VcsRoot(vcs, root);
 
     synchronized (myLock) {
-      final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(key);
+      final Pair<VcsRoot, VcsRevisionNumber> value = myData.get(path);
       if (value == null) {
         final LazyRefreshingSelfQueue<String> queue = getQueue(vcsRoot);
-        myData.put(key, Pair.create(vcsRoot, NOT_LOADED));
-        queue.addRequest(key);
-      } else if (! value.getFirst().equals(vcsRoot)) {
-        switchVcs(value.getFirst(), vcsRoot, key);
+        myData.put(path, Pair.create(vcsRoot, NOT_LOADED));
+        queue.addRequest(path);
+      }
+      else if (!value.getFirst().equals(vcsRoot)) {
+        switchVcs(value.getFirst(), vcsRoot, path);
       }
     }
   }
@@ -217,19 +201,18 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   }
 
   @Override
-  public void minus(Pair<String, AbstractVcs> pair) {
+  public void changeRemoved(@NotNull String path, @NotNull AbstractVcs vcs) {
     // does not support
-    if (pair.getSecond().getDiffProvider() == null) return;
-    final VirtualFile root = getRootForPath(pair.getFirst());
+    if (vcs.getDiffProvider() == null) return;
+    final VirtualFile root = getRootForPath(path);
     if (root == null) return;
 
     final LazyRefreshingSelfQueue<String> queue;
-    final String key = pair.getFirst();
     synchronized (myLock) {
-      queue = getQueue(new VcsRoot(pair.getSecond(), root));
-      myData.remove(key);
+      queue = getQueue(new VcsRoot(vcs, root));
+      myData.remove(path);
     }
-    queue.forceRemove(key);
+    queue.forceRemove(path);
   }
 
   // +-
@@ -250,7 +233,7 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   private class MyUpdater implements Consumer<String> {
     private final VcsRoot myVcsRoot;
 
-    public MyUpdater(final VcsRoot vcsRoot) {
+    MyUpdater(final VcsRoot vcsRoot) {
       myVcsRoot = vcsRoot;
     }
 
@@ -287,12 +270,13 @@ public class RemoteRevisionsNumbersCache implements ChangesOnServerTracker {
   private class MyShouldUpdateChecker implements Computable<Boolean> {
     private final VcsRoot myVcsRoot;
 
-    public MyShouldUpdateChecker(final VcsRoot vcsRoot) {
+    MyShouldUpdateChecker(final VcsRoot vcsRoot) {
       myVcsRoot = vcsRoot;
     }
 
     // Check if currently cached vcs root latest revision is less than latest vcs root revision
     // => update should be performed in this case
+    @Override
     public Boolean compute() {
       final AbstractVcs vcs = myVcsRoot.getVcs();
       // won't be called in parallel for same vcs -> just synchronized map is ok

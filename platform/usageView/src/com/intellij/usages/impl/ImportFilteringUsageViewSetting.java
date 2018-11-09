@@ -8,16 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-@State(
-  name = "ImportFilteringUsageViewSetting",
-  storages = {
-    @Storage("usageView.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "ImportFilteringUsageViewSetting", storages = @Storage("usageView.xml"))
 public class ImportFilteringUsageViewSetting implements PersistentStateComponent<ImportFilteringUsageViewSetting> {
   public static ImportFilteringUsageViewSetting getInstance() {
     return ServiceManager.getService(ImportFilteringUsageViewSetting.class);

@@ -10,9 +10,9 @@ import java.util.List;
 
 public class AssertExprent extends Exprent {
 
-  private final List<Exprent> parameters;
+  private final List<? extends Exprent> parameters;
 
-  public AssertExprent(List<Exprent> parameters) {
+  public AssertExprent(List<? extends Exprent> parameters) {
     super(EXPRENT_ASSERT);
     this.parameters = parameters;
   }

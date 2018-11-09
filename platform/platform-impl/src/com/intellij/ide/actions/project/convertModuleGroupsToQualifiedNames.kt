@@ -41,6 +41,7 @@ import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Action
 import javax.swing.JCheckBox
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWrapper(project) {
@@ -70,7 +71,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       setupHighlighting(it)
     }, MonospaceEditorCustomization.getInstance()))
     document.addDocumentListener(object: DocumentListener {
-      override fun documentChanged(event: DocumentEvent?) {
+      override fun documentChanged(event: DocumentEvent) {
         modified = true
       }
     }, disposable)
@@ -105,7 +106,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
       .addToBottom(recordPreviousNames)
   }
 
-  override fun getPreferredFocusedComponent() = editorArea.focusTarget
+  override fun getPreferredFocusedComponent(): JComponent = editorArea.focusTarget
 
   private fun generateLineExtension(line: Int): Collection<LineExtensionInfo> {
     val lineText = document.charsSequence.subSequence(document.getLineStartOffset(line), document.getLineEndOffset(line)).toString()
@@ -153,7 +154,7 @@ class ConvertModuleGroupsToQualifiedNamesDialog(val project: Project) : DialogWr
         }
       }
     }
-    
+
     super.doCancelAction()
   }
 

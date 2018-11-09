@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author egor
  */
 public class XCopyWatchAction extends XWatchesTreeActionBase {
+  @Override
   protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {
     return !getSelectedNodes(tree, XValueNodeImpl.class).isEmpty();
   }

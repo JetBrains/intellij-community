@@ -36,12 +36,12 @@ interface UParenthesizedExpression : UExpression {
     visitor.afterVisitParenthesizedExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitParenthesizedExpression(this, data)
 
-  override fun evaluate() = expression.evaluate()
+  override fun evaluate(): Any? = expression.evaluate()
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
-  override fun asRenderString() = '(' + expression.asRenderString() + ')'
+  override fun asRenderString(): String = '(' + expression.asRenderString() + ')'
 }

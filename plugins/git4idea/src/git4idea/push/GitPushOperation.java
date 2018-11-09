@@ -385,7 +385,7 @@ public class GitPushOperation {
 
     String spec = sourceBranch.getFullName() + ":" + targetBranch.getNameForRemoteOperations();
     GitRemote remote = targetBranch.getRemote();
-    GitPushParamsImpl params = new GitPushParamsImpl(remote, spec, myForce, setUpstream, mySkipHook, tagMode);
+    GitPushParamsImpl params = new GitPushParamsImpl(remote, spec, myForce, setUpstream, mySkipHook, tagMode, Collections.emptyList());
 
     GitCommandResult res;
     if (myPushProcessCustomization != null) {

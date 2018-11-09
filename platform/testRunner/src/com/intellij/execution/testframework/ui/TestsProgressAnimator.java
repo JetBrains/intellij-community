@@ -18,6 +18,7 @@ package com.intellij.execution.testframework.ui;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nullable;
@@ -33,24 +34,32 @@ public class TestsProgressAnimator implements Runnable, Disposable {
 
   private long myLastInvocationTime = -1;
 
-  private Alarm myAlarm;
-  private AbstractTestProxy myCurrentTestCase;
-  private AbstractTestTreeBuilder myTreeBuilder;
+  private final Alarm myAlarm = new Alarm();
+  private volatile AbstractTestProxy myCurrentTestCase;
+  private final AbstractTestTreeBuilderBase myTreeBuilder;
 
+  /**
+   * To be deleted when AbstractTreeBuilder would be completely eliminated
+   */
+  @Deprecated
   public TestsProgressAnimator(AbstractTestTreeBuilder builder) {
+    this((AbstractTestTreeBuilderBase)builder);
+  }
+
+  public TestsProgressAnimator(AbstractTestTreeBuilderBase builder) {
     Disposer.register(builder, this);
-    init(builder);
+    myTreeBuilder = builder;
   }
 
   static {
-    FRAMES[0] = AllIcons.RunConfigurations.TestInProgress1;
-    FRAMES[1] = AllIcons.RunConfigurations.TestInProgress2;
-    FRAMES[2] = AllIcons.RunConfigurations.TestInProgress3;
-    FRAMES[3] = AllIcons.RunConfigurations.TestInProgress4;
-    FRAMES[4] = AllIcons.RunConfigurations.TestInProgress5;
-    FRAMES[5] = AllIcons.RunConfigurations.TestInProgress6;
-    FRAMES[6] = AllIcons.RunConfigurations.TestInProgress7;
-    FRAMES[7] = AllIcons.RunConfigurations.TestInProgress8;
+    FRAMES[0] = AllIcons.Process.Step_1;
+    FRAMES[1] = AllIcons.Process.Step_2;
+    FRAMES[2] = AllIcons.Process.Step_3;
+    FRAMES[3] = AllIcons.Process.Step_4;
+    FRAMES[4] = AllIcons.Process.Step_5;
+    FRAMES[5] = AllIcons.Process.Step_6;
+    FRAMES[6] = AllIcons.Process.Step_7;
+    FRAMES[7] = AllIcons.Process.Step_8;
   }
 
   public static int getCurrentFrameIndex() {
@@ -61,19 +70,11 @@ public class TestsProgressAnimator implements Runnable, Disposable {
     return FRAMES[getCurrentFrameIndex()];
   }
 
-  /**
-   * Initializes animator: creates alarm and sets tree builder
-   * @param treeBuilder tree builder
-   */
-  protected void init(final AbstractTestTreeBuilder treeBuilder) {
-    myAlarm = new Alarm();
-    myTreeBuilder = treeBuilder;
-  }
-
   public AbstractTestProxy getCurrentTestCase() {
     return myCurrentTestCase;
   }
 
+  @Override
   public void run() {
     if (myCurrentTestCase != null) {
       final long time = System.currentTimeMillis();
@@ -87,43 +88,36 @@ public class TestsProgressAnimator implements Runnable, Disposable {
     scheduleRepaint();
   }
 
+  //called from output reader thread
   public void setCurrentTestCase(@Nullable final AbstractTestProxy currentTestCase) {
     myCurrentTestCase = currentTestCase;
     scheduleRepaint();
   }
 
   public void stopMovie() {
-    repaintSubTree();
-    setCurrentTestCase(null);
-    cancelAlarm();
-  }
-
-
-  public void dispose() {
-    myTreeBuilder = null;
     myCurrentTestCase = null;
-    cancelAlarm();
+    myAlarm.cancelAllRequests();
   }
 
-  private void cancelAlarm() {
-    if (myAlarm != null) {
-      myAlarm.cancelAllRequests();
-      myAlarm = null;
-    }
+
+  @Override
+  public synchronized void dispose() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myCurrentTestCase = null;
+    Disposer.dispose(myAlarm);
   }
 
   private void repaintSubTree() {
-    if (myTreeBuilder != null && myCurrentTestCase != null) {
-      myTreeBuilder.repaintWithParents(myCurrentTestCase);
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    AbstractTestProxy testProxy = myCurrentTestCase;
+    if (testProxy != null) {
+      myTreeBuilder.repaintWithParents(testProxy);
     }
   }
 
-  private void scheduleRepaint() {
-    if (myAlarm == null) {
-      return;
-    }
+  private synchronized void scheduleRepaint() {
     myAlarm.cancelAllRequests();
-    if (myCurrentTestCase != null) {
+    if (myCurrentTestCase != null && !myAlarm.isDisposed()) {
       myAlarm.addRequest(this, FRAME_TIME);
     }
   }

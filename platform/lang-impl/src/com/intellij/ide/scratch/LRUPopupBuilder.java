@@ -61,7 +61,7 @@ public abstract class LRUPopupBuilder<T> {
   private final Map<T, Pair<String, Icon>> myPresentations = ContainerUtil.newIdentityHashMap();
 
   private T mySelection;
-  private Consumer<T> myOnChosen;
+  private Consumer<? super T> myOnChosen;
   private Comparator<? super T> myComparator;
   private Iterable<? extends T> myItemsIterable;
   private JBIterable<T> myExtraItems = JBIterable.empty();
@@ -69,7 +69,7 @@ public abstract class LRUPopupBuilder<T> {
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @NotNull String title,
-                                           @NotNull Iterable<VirtualFile> files,
+                                           @NotNull Iterable<? extends VirtualFile> files,
                                            @NotNull PerFileMappings<Language> mappings) {
     VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from(files).toList());
     Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.getFileSystem().isCaseSensitive()));
@@ -88,7 +88,7 @@ public abstract class LRUPopupBuilder<T> {
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @Nullable Language selection,
-                                           @NotNull Consumer<Language> onChosen) {
+                                           @NotNull Consumer<? super Language> onChosen) {
     return forFileLanguages(project, "Languages", selection, onChosen);
   }
 
@@ -96,7 +96,7 @@ public abstract class LRUPopupBuilder<T> {
   public static ListPopup forFileLanguages(@NotNull Project project,
                                            @NotNull String title,
                                            @Nullable Language selection,
-                                           @NotNull Consumer<Language> onChosen) {
+                                           @NotNull Consumer<? super Language> onChosen) {
     return languagePopupBuilder(project, title).
       forValues(LanguageUtil.getFileLanguages()).
       withSelection(selection).
@@ -154,7 +154,7 @@ public abstract class LRUPopupBuilder<T> {
   }
 
   @NotNull
-  public LRUPopupBuilder<T> onChosen(@Nullable Consumer<T> consumer) {
+  public LRUPopupBuilder<T> onChosen(@Nullable Consumer<? super T> consumer) {
     myOnChosen = consumer;
     return this;
   }

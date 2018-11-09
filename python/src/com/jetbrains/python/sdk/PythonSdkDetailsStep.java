@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -38,22 +25,24 @@ import java.util.List;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Nullable private final DialogWrapper myShowAll;
-  private final Project myProject;
+  @Nullable private final Project myProject;
+  @Nullable private final Module myModule;
   private final Sdk[] myExistingSdks;
-  private final NullableConsumer<Sdk> mySdkAddedCallback;
+  private final NullableConsumer<? super Sdk> mySdkAddedCallback;
 
   private static final String ADD = PyBundle.message("sdk.details.step.add");
   private static final String ALL = PyBundle.message("sdk.details.step.show.all");
   @Nullable private String myNewProjectPath;
 
   public static void show(@Nullable final Project project,
+                          @Nullable final Module module,
                           @NotNull final Sdk[] existingSdks,
                           @Nullable final DialogWrapper showAllDialog,
                           @NotNull JComponent ownerComponent,
                           @NotNull final Point popupPoint,
                           @Nullable String newProjectPath,
-                          @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
-    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, showAllDialog, existingSdks, sdkAddedCallback);
+                          @NotNull final NullableConsumer<? super Sdk> sdkAddedCallback) {
+    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, module, showAllDialog, existingSdks, sdkAddedCallback);
     if (showAllDialog == null) {
       sdkHomesStep.createLocalSdk();
     }
@@ -65,11 +54,13 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   public PythonSdkDetailsStep(@Nullable final Project project,
+                              @Nullable final Module module,
                               @Nullable final DialogWrapper showAllDialog,
                               @NotNull final Sdk[] existingSdks,
-                              @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
+                              @NotNull final NullableConsumer<? super Sdk> sdkAddedCallback) {
     super(null, getAvailableOptions(showAllDialog != null));
     myProject = project;
+    myModule = module;
     myShowAll = showAllDialog;
     myExistingSdks = existingSdks;
     mySdkAddedCallback = sdkAddedCallback;
@@ -103,14 +94,9 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   private void createLocalSdk() {
     final Project project = myNewProjectPath != null ? null : myProject;
-    final PyAddSdkDialog dialog = PyAddSdkDialog.create(project, Arrays.asList(myExistingSdks), myNewProjectPath);
+    final PyAddSdkDialog dialog = PyAddSdkDialog.create(project, myModule, Arrays.asList(myExistingSdks), myNewProjectPath);
     final Sdk sdk = dialog.showAndGet() ? dialog.getOrCreateSdk() : null;
     mySdkAddedCallback.consume(sdk);
-  }
-
-  @Override
-  public boolean canBeHidden(String value) {
-    return true;
   }
 
   @Override

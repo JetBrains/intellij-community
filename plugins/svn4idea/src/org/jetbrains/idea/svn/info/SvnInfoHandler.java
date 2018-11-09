@@ -22,14 +22,14 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnInfoHandler extends DefaultHandler {
   @Nullable private final File myBase;
-  private final Consumer<org.jetbrains.idea.svn.info.Info> myInfoConsumer;
+  private final Consumer<? super org.jetbrains.idea.svn.info.Info> myInfoConsumer;
   private final Map<File, org.jetbrains.idea.svn.info.Info> myResultsMap;
   private SvnInfoStructure myPending;
   private final Map<String, Getter<ElementHandlerBase>> myElementsMap;
   private final List<ElementHandlerBase> myParseStack;
   private final StringBuilder mySb;
 
-  public SvnInfoHandler(@Nullable File base, final Consumer<org.jetbrains.idea.svn.info.Info> infoConsumer) {
+  public SvnInfoHandler(@Nullable File base, final Consumer<? super org.jetbrains.idea.svn.info.Info> infoConsumer) {
     myBase = base;
     myInfoConsumer = infoConsumer;
     myPending = createPending();
@@ -357,8 +357,7 @@ public class SvnInfoHandler extends DefaultHandler {
     protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
       final String revision = attributes.getValue("revision");
       try {
-        final long number = Long.parseLong(revision);
-        structure.myCommittedRevision = number;
+        structure.myCommittedRevision = Long.parseLong(revision);
       } catch (NumberFormatException e) {
         throw new SAXException(e);
       }
@@ -510,8 +509,7 @@ public class SvnInfoHandler extends DefaultHandler {
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
       try {
-        final long number = Long.parseLong(s);
-        structure.myCopyFromRevision = number;
+        structure.myCopyFromRevision = Long.parseLong(s);
       } catch (NumberFormatException e) {
         throw new SAXException(e);
       }
@@ -706,8 +704,7 @@ public class SvnInfoHandler extends DefaultHandler {
       final String revision = attributes.getValue("revision");
       assertSAX(! StringUtil.isEmptyOrSpaces(revision));
       try {
-        final long number = Long.parseLong(revision);
-        structure.myRevision = number;
+        structure.myRevision = Long.parseLong(revision);
       } catch (NumberFormatException e) {
         structure.myRevision = -1;
         //throw new SAXException(e);

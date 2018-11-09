@@ -16,17 +16,18 @@
 package com.intellij.util.containers;
 
 import com.intellij.testFramework.Timings;
-import com.intellij.util.ConcurrencyUtil;
 import junit.framework.TestCase;
+
+import java.util.stream.IntStream;
 
 public class ConcurrentBitSetTest extends TestCase {
   public void test() {
     ConcurrentBitSet bitSet = new ConcurrentBitSet();
     final ConcurrentBitSet emptySet = new ConcurrentBitSet();
-    int N = 3000;
     assertEquals(0, bitSet.nextClearBit(0));
     assertEquals(bitSet, emptySet);
-    for (int i=0; i<N;i++) {
+    int N = 3000;
+    for (int i = 0; i < N; i++) {
       assertEquals(-1, bitSet.nextSetBit(i));
       assertEquals(i, bitSet.nextClearBit(i));
       assertFalse(bitSet.get(i));
@@ -71,45 +72,31 @@ public class ConcurrentBitSetTest extends TestCase {
     assertEquals(bitSet, emptySet);
   }
 
-  public void testStress() {
+  public void testStressFineGrainedSmallSet() {
     final ConcurrentBitSet bitSet = new ConcurrentBitSet();
-    int N = Timings.adjustAccordingToMySpeed(100, true);
+    // must be even
+    int N = Timings.adjustAccordingToMySpeed(100_000, true) / 2 * 2;
     final int L = 100;
-
-    Thread[] threads = new Thread[N];
-    for (int i=0; i<N;i++) {
-      Thread thread = new Thread(() -> {
-        for (int i1 = 0; i1 < 10_000; i1++) {
-          for (int j = 0; j < L; j++) {
-            bitSet.flip(j);
-          }
-        }
-      }, "conc bit set");
-      threads[i] = thread;
-      thread.start();
-    }
-    ConcurrencyUtil.joinAll(threads);
+    IntStream.range(0, N).parallel().forEach(__-> {
+      for (int j = 0; j < L; j++) {
+        bitSet.flip(j);
+      }
+    });
 
     assertEquals(-1, bitSet.nextSetBit(0));
   }
-  public void testStress2_Performance() {
-    final ConcurrentBitSet bitSet = new ConcurrentBitSet();
-    int N = Timings.adjustAccordingToMySpeed(10, true);
-    final int L = 1_000_000;
 
-    Thread[] threads = new Thread[N];
-    for (int i=0; i<N;i++) {
-      Thread thread = new Thread(() -> {
-        for (int i1 = 0; i1 < 100; i1++) {
-          for (int j = 0; j < L; j++) {
-            bitSet.flip(j);
-          }
-        }
-      }, "conc bit stress");
-      threads[i] = thread;
-      thread.start();
-    }
-    ConcurrencyUtil.joinAll(threads);
+  public void testStressCoarseGrainedBigSet() {
+    final ConcurrentBitSet bitSet = new ConcurrentBitSet();
+    // must be even
+    int N = Timings.adjustAccordingToMySpeed(1_000, true) / 2 * 2;
+    final int L = 100_000;
+
+    IntStream.range(0,N).parallel().forEach(__-> {
+      for (int j = 0; j < L; j++) {
+        bitSet.flip(j);
+      }
+    });
 
     assertEquals(-1, bitSet.nextSetBit(0));
   }

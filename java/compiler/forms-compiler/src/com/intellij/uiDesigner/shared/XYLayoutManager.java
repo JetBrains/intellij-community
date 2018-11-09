@@ -23,26 +23,31 @@ public class XYLayoutManager extends AbstractLayout {
   public XYLayoutManager(){
   }
 
+  @Override
   public Dimension maximumLayoutSize(final Container target){
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Dimension preferredLayoutSize(final Container parent){
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public Dimension minimumLayoutSize(final Container parent){
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void layoutContainer(final Container parent){
     throw new UnsupportedOperationException();
   }
-  
+
   public void setPreferredSize(final Dimension size){
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public final void invalidateLayout(final Container target){
   }
 }

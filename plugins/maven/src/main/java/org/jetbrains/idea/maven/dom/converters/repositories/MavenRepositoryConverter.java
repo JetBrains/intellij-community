@@ -41,6 +41,7 @@ import java.util.Collections;
 public abstract class MavenRepositoryConverter extends ResolvingConverter<String> {
 
   public static class Id extends MavenRepositoryConverter {
+    @Override
     @NotNull
     public Collection<String> getVariants(final ConvertContext context) {
       Module module = context.getModule();
@@ -59,6 +60,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
   }
 
   public static class Name extends MavenRepositoryConverter {
+    @Override
     @NotNull
     public Collection<String> getVariants(final ConvertContext context) {
       Module module = context.getModule();
@@ -100,6 +102,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
     return null;
   }
 
+  @Override
   public String fromString(@Nullable @NonNls final String s, final ConvertContext context) {
     return s;
   }

@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.reference;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * A node in the reference graph corresponding to the implicit constructor of a Java class.
  *
@@ -22,4 +24,8 @@ package com.intellij.codeInspection.reference;
  * @since 6.0
  */
 public interface RefImplicitConstructor extends RefMethod {
+  @NotNull
+  default RefClass getOwnerClass() {
+    throw new UnsupportedOperationException();
+  }
 }

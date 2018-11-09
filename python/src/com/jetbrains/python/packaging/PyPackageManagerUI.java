@@ -68,7 +68,7 @@ public class PyPackageManagerUI {
     ProgressManager.getInstance().run(new InstallManagementTask(myProject, mySdk, myListener));
   }
 
-  public void install(@NotNull final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
+  public void install(@Nullable final List<PyRequirement> requirements, @NotNull final List<String> extraArgs) {
     ProgressManager.getInstance().run(new InstallTask(myProject, mySdk, requirements, extraArgs, myListener));
   }
 
@@ -126,7 +126,7 @@ public class PyPackageManagerUI {
     Map<String, Set<PyPackage>> dependentPackages = new HashMap<>();
     for (PyPackage pkg : packages) {
       final Set<PyPackage> dependents = PyPackageManager.getInstance(sdk).getDependents(pkg);
-      if (dependents != null && !dependents.isEmpty()) {
+      if (!dependents.isEmpty()) {
         for (PyPackage dependent : dependents) {
           if (!packages.contains(dependent)) {
             dependentPackages.put(pkg.getName(), dependents);
@@ -143,7 +143,7 @@ public class PyPackageManagerUI {
     @NotNull protected final Sdk mySdk;
     @Nullable protected final Listener myListener;
 
-    public PackagingTask(@Nullable Project project, @NotNull Sdk sdk, @NotNull String title, @Nullable Listener listener) {
+    PackagingTask(@Nullable Project project, @NotNull Sdk sdk, @NotNull String title, @Nullable Listener listener) {
       super(project, title);
       mySdk = sdk;
       myListener = listener;
@@ -215,7 +215,7 @@ public class PyPackageManagerUI {
 
     private static class PackagingNotification extends Notification{
 
-      public PackagingNotification(@NotNull String groupDisplayId,
+      PackagingNotification(@NotNull String groupDisplayId,
                                    @NotNull String title,
                                    @NotNull String content,
                                    @NotNull NotificationType type, @Nullable NotificationListener listener) {
@@ -225,12 +225,12 @@ public class PyPackageManagerUI {
   }
 
   private static class InstallTask extends PackagingTask {
-    @NotNull private final List<PyRequirement> myRequirements;
+    @Nullable private final List<PyRequirement> myRequirements;
     @NotNull private final List<String> myExtraArgs;
 
-    public InstallTask(@Nullable Project project,
+    InstallTask(@Nullable Project project,
                        @NotNull Sdk sdk,
-                       @NotNull List<PyRequirement> requirements,
+                       @Nullable List<PyRequirement> requirements,
                        @NotNull List<String> extraArgs,
                        @Nullable Listener listener) {
       super(project, sdk, "Installing packages", listener);
@@ -242,27 +242,42 @@ public class PyPackageManagerUI {
     @Override
     protected List<ExecutionException> runTask(@NotNull ProgressIndicator indicator) {
       final List<ExecutionException> exceptions = new ArrayList<>();
-      final int size = myRequirements.size();
       final PyPackageManager manager = PyPackageManagers.getInstance().forSdk(mySdk);
-      for (int i = 0; i < size; i++) {
-        final PyRequirement requirement = myRequirements.get(i);
-        indicator.setText(String.format("Installing package '%s'...", requirement));
-        if (i == 0) {
-          indicator.setIndeterminate(true);
-        }
-        else {
-          indicator.setIndeterminate(false);
-          indicator.setFraction((double)i / size);
-        }
+      if (myRequirements == null) {
+        indicator.setText("Installing packages...");
+        indicator.setIndeterminate(true);
         try {
-          manager.install(Collections.singletonList(requirement), myExtraArgs);
+          manager.install(null, myExtraArgs);
         }
         catch (RunCanceledByUserException e) {
           exceptions.add(e);
-          break;
         }
         catch (ExecutionException e) {
           exceptions.add(e);
+        }
+      }
+      else {
+        final int size = myRequirements.size();
+        for (int i = 0; i < size; i++) {
+          final PyRequirement requirement = myRequirements.get(i);
+          indicator.setText(String.format("Installing package '%s'...", requirement.getPresentableText()));
+          if (i == 0) {
+            indicator.setIndeterminate(true);
+          }
+          else {
+            indicator.setIndeterminate(false);
+            indicator.setFraction((double)i / size);
+          }
+          try {
+            manager.install(Collections.singletonList(requirement), myExtraArgs);
+          }
+          catch (RunCanceledByUserException e) {
+            exceptions.add(e);
+            break;
+          }
+          catch (ExecutionException e) {
+            exceptions.add(e);
+          }
         }
       }
       manager.refresh();
@@ -278,7 +293,9 @@ public class PyPackageManagerUI {
     @NotNull
     @Override
     protected String getSuccessDescription() {
-      return "Installed packages: " + PyPackageUtil.requirementsToString(myRequirements);
+      return myRequirements != null ?
+             "Installed packages: " + PyPackageUtil.requirementsToString(myRequirements) :
+             "Installed all requirements";
     }
 
     @NotNull
@@ -290,7 +307,7 @@ public class PyPackageManagerUI {
 
   private static class InstallManagementTask extends InstallTask {
 
-    public InstallManagementTask(@Nullable Project project,
+    InstallManagementTask(@Nullable Project project,
                                  @NotNull Sdk sdk,
                                  @Nullable Listener listener) {
       super(project, sdk, Collections.emptyList(), Collections.emptyList(), listener);
@@ -323,7 +340,7 @@ public class PyPackageManagerUI {
   private static class UninstallTask extends PackagingTask {
     @NotNull private final List<PyPackage> myPackages;
 
-    public UninstallTask(@Nullable Project project,
+    UninstallTask(@Nullable Project project,
                          @NotNull Sdk sdk,
                          @Nullable Listener listener,
                          @NotNull List<PyPackage> packages) {

@@ -41,7 +41,8 @@ public final class ArgumentxRequest extends AbstractRequest {
 	 * Get the request String that will be passed to the server
 	 * @return the request String
 	 */
-	public String getRequestString() {
+	@Override
+        public String getRequestString() {
 		return "Argumentx " + argument + "\n";
 	}
 }

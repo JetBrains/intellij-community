@@ -31,17 +31,20 @@ public class ThisDescriptorImpl extends ValueDescriptorImpl{
     super(project);
   }
 
+  @Override
   public Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
     return evaluationContext != null ? evaluationContext.computeThisObject() : null;
   }
 
+  @Override
   public String getName() {
     //noinspection HardCodedStringLiteral
-    return "this"; 
+    return "this";
   }
 
+  @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
       return elementFactory.createExpressionFromText("this", null);
     }
@@ -50,6 +53,7 @@ public class ThisDescriptorImpl extends ValueDescriptorImpl{
     }
   }
 
+  @Override
   public boolean canSetValue() {
     return false;
   }

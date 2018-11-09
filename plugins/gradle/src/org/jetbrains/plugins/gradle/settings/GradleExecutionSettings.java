@@ -26,7 +26,6 @@ import java.util.List;
 
 /**
  * @author Denis Zhdanov
- * @since 4/9/13 1:50 PM
  */
 public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
@@ -138,6 +137,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
    * @return VM options to use for the gradle daemon process (if any)
    * @deprecated use {@link #getVmOptions()}
    */
+  @Deprecated
   @Nullable
   public String getDaemonVmOptions() {
     return ParametersListUtil.join(ContainerUtilRt.newArrayList(getVmOptions()));

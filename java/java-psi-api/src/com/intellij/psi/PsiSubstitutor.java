@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyWithDefaultValue;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,19 +51,22 @@ public interface PsiSubstitutor {
    * @return the mapping for the type parameter, or {@code null} for a raw type.
    */
   @Nullable
+  @Contract(pure = true)
   PsiType substitute(@NotNull PsiTypeParameter typeParameter);
 
   /**
    * Substitutes type parameters occurring in {@code type} with their values.
-   * If value for type parameter is <code>null<code>, appropriate erasure is returned.
+   * If value for type parameter is {@code null}, appropriate erasure is returned.
    *
    * @param type the type to substitute the type parameters for.
    * @return the result of the substitution.
    */
+  @Contract(pure = true)
   PsiType substitute(@Nullable PsiType type);
 
   //Should be used with great care, be sure to prevent infinite recursion that could arise
   // from the use of recursively bounded type parameters
+  @Contract(pure = true)
   PsiType substituteWithBoundsPromotion(@NotNull PsiTypeParameter typeParameter);
 
   /**
@@ -74,6 +78,7 @@ public interface PsiSubstitutor {
    * @return the new substitutor instance.
    */
   @NotNull
+  @Contract(pure = true)
   PsiSubstitutor put(@NotNull PsiTypeParameter classParameter, PsiType mapping);
 
   /**
@@ -85,6 +90,7 @@ public interface PsiSubstitutor {
    * @return the new substitutor instance.
    */
   @NotNull
+  @Contract(pure = true)
   PsiSubstitutor putAll(@NotNull PsiClass parentClass, PsiType[] mappings);
 
   /**
@@ -95,6 +101,7 @@ public interface PsiSubstitutor {
    * @return the new substitutor instance.
    */
   @NotNull
+  @Contract(pure = true)
   PsiSubstitutor putAll(@NotNull PsiSubstitutor another);
 
   /**
@@ -103,6 +110,7 @@ public interface PsiSubstitutor {
    * @return the substitution map instance.
    */
   @NotNull
+  @Contract(pure = true)
   Map<PsiTypeParameter, PsiType> getSubstitutionMap();
 
   /**
@@ -111,6 +119,7 @@ public interface PsiSubstitutor {
    * @return true if all types are valid, false otherwise.
    * @see PsiType#isValid()
    */
+  @Contract(pure = true)
   boolean isValid();
 
   /**

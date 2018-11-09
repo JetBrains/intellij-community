@@ -23,8 +23,8 @@ import com.intellij.patterns.ElementPatternCondition
 import com.intellij.patterns.InitialPatternCondition
 import com.intellij.util.ProcessingContext
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.ULiteralExpression
-import org.jetbrains.uast.psiLanguageInjectionHost
 import org.jetbrains.uast.toUElement
 
 fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: (UElement, ProcessingContext) -> Boolean,
@@ -48,30 +48,28 @@ abstract class UastReferenceProvider {
 
   abstract fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference>
 
+  open fun acceptsTarget(target: PsiElement): Boolean = true
 }
 
-abstract class UastLiteralReferenceProvider : UastReferenceProvider() {
-
-  override val supportedUElementTypes: List<Class<out UElement>> = listOf(ULiteralExpression::class.java)
-
-  override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
-    val uLiteral = element as? ULiteralExpression ?: return PsiReference.EMPTY_ARRAY
-    val host = uLiteral.psiLanguageInjectionHost ?: return PsiReference.EMPTY_ARRAY
-    return getReferencesByULiteral(uLiteral, host, context)
-  }
-
-  abstract fun getReferencesByULiteral(uLiteral: ULiteralExpression,
-                                       host: PsiLanguageInjectionHost,
-                                       context: ProcessingContext): Array<PsiReference>
-
-}
-
-fun uastLiteralReferenceProvider(provider: (ULiteralExpression, PsiLanguageInjectionHost) -> Array<PsiReference>) =
+/**
+ * NOTE: Consider using [uastInjectionHostReferenceProvider] instead.
+ * @see org.jetbrains.uast.sourceInjectionHost
+ * @see UastLiteralReferenceProvider
+ */
+fun uastLiteralReferenceProvider(provider: (ULiteralExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastLiteralReferenceProvider =
   object : UastLiteralReferenceProvider() {
 
     override fun getReferencesByULiteral(uLiteral: ULiteralExpression,
                                          host: PsiLanguageInjectionHost,
                                          context: ProcessingContext): Array<PsiReference> = provider(uLiteral, host)
+  }
+
+fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastInjectionHostReferenceProvider =
+  object : UastInjectionHostReferenceProvider() {
+
+    override fun getReferencesForInjectionHost(uExpression: UExpression,
+                                               host: PsiLanguageInjectionHost,
+                                               context: ProcessingContext): Array<PsiReference> = provider(uExpression, host)
   }
 
 private val cachedUElement = Key.create<UElement>("UastReferenceRegistrar.cachedUElement")
@@ -105,11 +103,16 @@ private class UastPatternAdapter(
   override fun getCondition(): ElementPatternCondition<PsiElement> = condition
 }
 
+fun ElementPattern<out UElement>.asPsiPattern(vararg supportedUElementTypes: Class<out UElement>): ElementPattern<PsiElement> = UastPatternAdapter(
+  this::accepts,
+  if (supportedUElementTypes.isNotEmpty()) supportedUElementTypes.toList() else listOf(UElement::class.java)
+)
+
 private class UastReferenceProviderAdapter(val provider: UastReferenceProvider) : PsiReferenceProvider() {
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
     val uElement = getOrCreateCachedElement(element, context, provider.supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY
     return provider.getReferencesByElement(uElement, context)
   }
 
-  override fun acceptsTarget(target: PsiElement): Boolean = true
+  override fun acceptsTarget(target: PsiElement): Boolean = provider.acceptsTarget(target)
 }

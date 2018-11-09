@@ -30,7 +30,7 @@ class DebugProcessListener extends ProcessAdapter {
   private final Project myProject;
   private final int myPort;
 
-  public DebugProcessListener(Project project, int port) {
+  DebugProcessListener(Project project, int port) {
     myProject = project;
     myPort = port;
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.CompositePack
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class MovePackagingElementAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final boolean b = isEnabled();
     e.getPresentation().setEnabled(b);
     e.getPresentation().setText(getTemplatePresentation().getText() + " (disabled if elements are sorted)");
@@ -68,7 +69,7 @@ public class MovePackagingElementAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final PackagingElementNode<?> node = myLayoutTreeComponent.getSelection().getNodeIfSingle();
     if (node == null) return;
     final CompositePackagingElementNode parent = node.getParentNode();

@@ -48,17 +48,19 @@ public class GitRebaseUpdater extends GitUpdater {
   private final GitRebaser myRebaser;
   private final ChangeListManager myChangeListManager;
   private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final GitBranchPair myBranchPair;
 
   public GitRebaseUpdater(@NotNull Project project,
                           @NotNull Git git,
                           @NotNull GitRepository repository,
-                          @NotNull GitBranchPair branchAndTracked,
+                          @NotNull GitBranchPair branchPair,
                           @NotNull ProgressIndicator progressIndicator,
                           @NotNull UpdatedFiles updatedFiles) {
-    super(project, git, repository, branchAndTracked, progressIndicator, updatedFiles);
+    super(project, git, repository, progressIndicator, updatedFiles);
     myRebaser = new GitRebaser(myProject, git, myProgressIndicator);
     myChangeListManager = ChangeListManager.getInstance(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
+    myBranchPair = branchPair;
   }
 
   @Override
@@ -89,6 +91,11 @@ public class GitRebaseUpdater extends GitUpdater {
     myRebaser.abortRebase(myRoot);
     myProgressIndicator.setText2("Refreshing files for the root " + myRoot.getPath());
     myRoot.refresh(false, true);
+  }
+
+  @NotNull
+  GitBranchPair getSourceAndTarget() {
+    return myBranchPair;
   }
 
   @Override
@@ -127,8 +134,7 @@ public class GitRebaseUpdater extends GitUpdater {
       VcsNotifier.getInstance(myProject).
         notifyMinorWarning("Couldn't collect the updated files info",
                            String.format("Update of %s was successful, but we couldn't collect the updated changes because of an error",
-                                         myRoot), null
-        );
+                                         myRoot));
     }
     return result.success();
   }

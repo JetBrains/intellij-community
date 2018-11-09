@@ -22,12 +22,12 @@ public abstract class ActionManagerEx extends ActionManager {
   @NotNull
   public abstract ActionToolbar createActionToolbar(String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
 
-  public abstract void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
+  public abstract void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event);
 
-  public abstract void fireAfterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
+  public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event);
 
 
-  public abstract void fireBeforeEditorTyping(char c, DataContext dataContext);
+  public abstract void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext);
 
   /**
    * For logging purposes
@@ -77,7 +77,7 @@ public abstract class ActionManagerEx extends ActionManager {
   @NotNull
   public abstract String[] getPluginActions(@NotNull PluginId pluginId);
 
-  public abstract void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event);
+  public abstract void queueActionPerformedEvent(@NotNull AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event);
 
   public abstract boolean isActionPopupStackEmpty();
 

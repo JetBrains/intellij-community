@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.JdomKt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.Converter;
@@ -36,10 +35,7 @@ import java.util.*;
 
 @State(
   name = "TemplateSettings",
-  storages = {
-    @Storage("templates.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  },
+  storages = @Storage("templates.xml"),
   additionalExportFile = TemplateSettings.TEMPLATES_DIR_PATH
 )
 public class TemplateSettings implements PersistentStateComponent<TemplateSettings.State> {
@@ -97,7 +93,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   private State myState = new State();
 
   static final class ShortcutConverter extends Converter<Character> {
-    @Nullable
+    @NotNull
     @Override
     public Character fromString(@NotNull String shortcut) {
       return TAB.equals(shortcut) ? TAB_CHAR :
@@ -203,12 +199,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
       @Override
       public void reloaded(@NotNull SchemeManager<TemplateGroup> schemeManager, @NotNull Collection<? extends TemplateGroup> groups) {
-        for (TemplateGroup group : groups) {
-          for (TemplateImpl template : group.getElements()) {
-            addTemplateImpl(template);
-          }
-        }
-        loadDefaultLiveTemplates();
+        doLoadTemplates(groups);
       }
 
       @NotNull
@@ -254,13 +245,6 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
 
       @Override
-      public void initScheme(@NotNull final TemplateGroup scheme) {
-        for (TemplateImpl template : scheme.getElements()) {
-          addTemplateImpl(template);
-        }
-      }
-
-      @Override
       public void onSchemeAdded(@NotNull final TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           addTemplateImpl(template);
@@ -275,12 +259,15 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
       }
     });
 
-    for (TemplateGroup group : mySchemeManager.loadSchemes()) {
+    doLoadTemplates(mySchemeManager.loadSchemes());
+  }
+
+  private void doLoadTemplates(@NotNull Collection<? extends TemplateGroup> groups) {
+    for (TemplateGroup group : groups) {
       for (TemplateImpl template : group.getElements()) {
         addTemplateImpl(template);
       }
     }
-
     loadDefaultLiveTemplates();
   }
 
@@ -358,7 +345,8 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     myState.defaultShortcut = defaultShortcutChar;
   }
 
-  public Collection<TemplateImpl> getTemplates(@NonNls String key) {
+  @NotNull
+  public Collection<TemplateImpl> getTemplates(@NotNull String key) {
     return myTemplates.get(key);
   }
 
@@ -466,7 +454,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   private void loadDefaultLiveTemplates() {
     try {
-      for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensions()) {
+      for (DefaultLiveTemplatesProvider provider : DefaultLiveTemplatesProvider.EP_NAME.getExtensionList()) {
         for (String defTemplate : provider.getDefaultLiveTemplateFiles()) {
           readDefTemplate(provider, defTemplate, true);
         }
@@ -487,10 +475,10 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     }
   }
 
-  private void readDefTemplate(DefaultLiveTemplatesProvider provider, String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
+  private void readDefTemplate(@NotNull DefaultLiveTemplatesProvider provider, @NotNull String defTemplate, boolean registerTemplate) throws JDOMException, InvalidDataException, IOException {
     InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, defTemplate);
     if (inputStream != null) {
-      TemplateGroup group = readTemplateFile(JdomKt.loadElement(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
+      TemplateGroup group = readTemplateFile(JDOMUtil.load(inputStream), getDefaultTemplateName(defTemplate), true, registerTemplate, provider.getClass().getClassLoader());
       if (group != null && group.getReplace() != null) {
         for (TemplateImpl template : myTemplates.get(group.getReplace())) {
           removeTemplate(template);
@@ -689,8 +677,13 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return mySchemeManager.getAllSchemes();
   }
 
-  public List<TemplateImpl> collectMatchingCandidates(String key, @Nullable Character shortcutChar, boolean hasArgument) {
+  @NotNull
+  public List<TemplateImpl> collectMatchingCandidates(@NotNull String key, @Nullable Character shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
+    if (templates.isEmpty()) {
+      return Collections.emptyList();
+    }
+
     List<TemplateImpl> candidates = new ArrayList<>();
     for (TemplateImpl template : templates) {
       if (template.isDeactivated()) {

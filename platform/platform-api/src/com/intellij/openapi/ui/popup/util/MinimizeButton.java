@@ -22,8 +22,6 @@ import com.intellij.openapi.ui.popup.IconButton;
 public class MinimizeButton extends IconButton {
 
   public MinimizeButton(final String tooltip) {
-    super(tooltip, AllIcons.General.HideToolWindow,
-          AllIcons.General.HideToolWindow,
-          AllIcons.General.HideToolWindowInactive);
+      super(tooltip, AllIcons.General.HideToolWindow);
   }
 }

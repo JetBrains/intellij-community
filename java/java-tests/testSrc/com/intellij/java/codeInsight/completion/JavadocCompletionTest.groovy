@@ -27,8 +27,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
 import com.intellij.psi.PsiReferenceProvider
-import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
@@ -37,12 +35,10 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.NotNull
-
 /**
  * @author mike
  */
 class JavadocCompletionTest extends LightFixtureCompletionTestCase {
-  private CodeStyleSettings settings
   private JavaCodeStyleSettings javaSettings
 
   @Override
@@ -53,15 +49,8 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected void setUp() {
     super.setUp()
-    settings = CodeStyleSettingsManager.getSettings(getProject())
-    javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class)
+    javaSettings = JavaCodeStyleSettings.getInstance(getProject())
     myFixture.enableInspections(new JavaDocLocalInspection())
-  }
-
-  @Override
-  protected void tearDown() {
-    javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
-    super.tearDown()
   }
 
   void testNamesInPackage() {

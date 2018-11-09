@@ -36,6 +36,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
    * UI resources
    */
   private JPanel myPanel;
+  private JCheckBox myMultiLineCheckBox;
   private JBTable myPatternsTable;
   private JBTable myFiltersTable;
   protected final List<TodoPattern> myPatterns;
@@ -86,12 +87,14 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
     // This method is always invoked before close configuration dialog or leave "ToDo" page.
     // So it's a good place to commit all changes.
     stopEditing();
-    return arePatternsModified() || areFiltersModified();
+    return TodoConfiguration.getInstance().isMultiLine() != myMultiLineCheckBox.isSelected() ||
+           arePatternsModified() || areFiltersModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
     stopEditing();
+    TodoConfiguration.getInstance().setMultiLine(myMultiLineCheckBox.isSelected());
     if (arePatternsModified()) {
       TodoPattern[] patterns = myPatterns.toArray(new TodoPattern[0]);
       TodoConfiguration.getInstance().setTodoPatterns(patterns);
@@ -114,6 +117,8 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
 
   @Override
   public JComponent createComponent() {
+    myMultiLineCheckBox = new JCheckBox(IdeBundle.message("label.todo.multiline"));
+
     myPatternsTable = new JBTable(myPatternsModel);
     myPatternsTable.getEmptyText().setText(IdeBundle.message("text.todo.no.patterns"));
     TableColumn typeColumn = myPatternsTable.getColumnModel().getColumn(0);
@@ -263,8 +268,11 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
       }
     }.installOn(myFiltersTable);
 
-    myPanel = FormBuilder.createFormBuilder().addComponentFillVertically(patternsPanel, 0)
-      .addComponentFillVertically(filtersPanel, 0).getPanel();
+    myPanel = FormBuilder.createFormBuilder()
+                         .addComponent(myMultiLineCheckBox)
+                         .addComponentFillVertically(patternsPanel, 0)
+                         .addComponentFillVertically(filtersPanel, 0)
+                         .getPanel();
     return myPanel;
   }
 
@@ -342,6 +350,7 @@ public class TodoConfigurable implements SearchableConfigurable, Configurable.No
 
   @Override
   public void reset() {
+    myMultiLineCheckBox.setSelected(TodoConfiguration.getInstance().isMultiLine());
     // Patterns
     myPatterns.clear();
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();

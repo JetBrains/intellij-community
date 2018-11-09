@@ -14,7 +14,7 @@ public class HtmlLinkUtil {
   @NonNls public static final String LINK = "link";
 
   public static void processLinks(@NotNull final XmlFile xhtmlFile,
-                                  @NotNull Processor<XmlTag> tagProcessor) {
+                                  @NotNull Processor<? super XmlTag> tagProcessor) {
     final XmlDocument doc = HtmlUtil.getRealXmlDocument(xhtmlFile.getDocument());
     if (doc == null) return;
 
@@ -30,7 +30,7 @@ public class HtmlLinkUtil {
   }
 
   public static void findLinkStylesheets(@NotNull final XmlTag tag,
-                                         @NotNull Processor<XmlTag> tagProcessor) {
+                                         @NotNull Processor<? super XmlTag> tagProcessor) {
     processInjectedContent(tag, tagProcessor);
 
     for (XmlTag subTag : tag.getSubTags()) {
@@ -43,7 +43,7 @@ public class HtmlLinkUtil {
   }
 
   public static void processInjectedContent(final XmlTag element,
-                                            @NotNull final Processor<XmlTag> tagProcessor) {
+                                            @NotNull final Processor<? super XmlTag> tagProcessor) {
     final PsiLanguageInjectionHost.InjectedPsiVisitor injectedPsiVisitor = (injectedPsi, places) -> {
       if (injectedPsi instanceof XmlFile) {
         final XmlDocument injectedDocument = ((XmlFile)injectedPsi).getDocument();

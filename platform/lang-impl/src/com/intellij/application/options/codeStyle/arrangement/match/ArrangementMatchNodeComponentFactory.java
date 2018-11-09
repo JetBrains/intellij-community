@@ -38,7 +38,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 8/10/12 2:53 PM
  */
 public class ArrangementMatchNodeComponentFactory {
 

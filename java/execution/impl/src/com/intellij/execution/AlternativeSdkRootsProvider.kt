@@ -47,7 +47,7 @@ class AlternativeSdkRootsProvider : AdditionalLibraryRootsProvider() {
     @JvmStatic
     fun reindexIfNeeded(project: Project) {
       if (!Registry.`is`("index.run.configuration.jre")) return
-      val provider = AdditionalLibraryRootsProvider.EP_NAME.findExtension(AlternativeSdkRootsProvider::class.java)
+      val provider = AdditionalLibraryRootsProvider.EP_NAME.findExtension(AlternativeSdkRootsProvider::class.java)!!
       val additionalProjectLibraries = provider.getAdditionalProjectLibraries(project)
       if (additionalProjectLibraries != storedLibs) {
         storedLibs.clear()

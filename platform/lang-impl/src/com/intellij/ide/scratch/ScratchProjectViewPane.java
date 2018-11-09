@@ -14,9 +14,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -69,6 +71,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     });
   }
 
+  @NotNull
   @Override
   public String getTitle() {
     return "Scratches";
@@ -80,11 +83,13 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return ID;
   }
 
+  @NotNull
   @Override
   public Icon getIcon() {
     return AllIcons.Scope.Scratches;
   }
 
+  @NotNull
   @Override
   protected ProjectAbstractTreeStructureBase createStructure() {
     return new MyTreeStructure(myProject);
@@ -93,11 +98,6 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   @Override
   public int getWeight() {
     return 11;
-  }
-
-  @Override
-  protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
-    return null;
   }
 
   private static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
@@ -116,6 +116,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
   }
 
+  @NotNull
   @Override
   public SelectInTarget createSelectInTarget() {
     return new ProjectViewSelectInTarget(myProject) {
@@ -147,19 +148,13 @@ public class ScratchProjectViewPane extends ProjectViewPane {
   }
 
   @Nullable
-  @Override
-  protected PsiElement getPSIElement(@Nullable Object element) {
-    return element instanceof RootType ? getDirectory(myProject, (RootType)element) : super.getPSIElement(element);
-  }
-
-  @Nullable
-  static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
+  private static PsiDirectory getDirectory(@NotNull Project project, @NotNull RootType rootId) {
     VirtualFile virtualFile = getVirtualFile(rootId);
     return virtualFile == null ? null : PsiManager.getInstance(project).findDirectory(virtualFile);
   }
 
   @Nullable
-  static VirtualFile getVirtualFile(@NotNull RootType rootId) {
+  private static VirtualFile getVirtualFile(@NotNull RootType rootId) {
     String path = ScratchFileService.getInstance().getRootPath(rootId);
     return LocalFileSystem.getInstance().findFileByPath(path);
   }
@@ -169,7 +164,12 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return !isScratchesMergedIntoProjectTab();
   }
 
-  public static class MyStructureProvider implements TreeStructureProvider {
+  @NotNull
+  public static AbstractTreeNode createRootNode(@NotNull Project project, @NotNull ViewSettings settings) {
+    return new MyProjectNode(project, settings);
+  }
+
+  public static class MyStructureProvider implements TreeStructureProvider, DumbAware {
     @NotNull
     @Override
     public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
@@ -177,27 +177,38 @@ public class ScratchProjectViewPane extends ProjectViewPane {
                                                ViewSettings settings) {
       Project project = parent instanceof ProjectViewProjectNode? parent.getProject() : null;
       if (project != null && isScratchesMergedIntoProjectTab()) {
-        children.add(new MyProjectNode(project, settings));
+        ArrayList<AbstractTreeNode> list = new ArrayList<>(children.size() + 1);
+        list.addAll(children);
+        list.add(createRootNode(project, settings));
+        return list;
       }
       return children;
     }
 
     @Nullable
     @Override
-    public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
+    public Object getData(@NotNull Collection<AbstractTreeNode> selected, @NotNull String dataId) {
+      if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
+        AbstractTreeNode single = JBIterable.from(selected).single();
+        if (single instanceof MyRootNode) {
+          VirtualFile file = ((MyRootNode)single).getVirtualFile();
+          Project project = single.getProject();
+          return file == null || project == null ? null : PsiManager.getInstance(project).findDirectory(file);
+        }
+      }
       return null;
     }
   }
 
   private static class MyTreeStructure extends ProjectTreeStructure {
 
-    MyTreeStructure(final Project project) {
+    MyTreeStructure(@NotNull Project project) {
       super(project, ID);
     }
 
     @Override
-    protected AbstractTreeNode createRoot(Project project, ViewSettings settings) {
-      return new MyProjectNode(project, settings);
+    protected AbstractTreeNode createRoot(@NotNull Project project, @NotNull ViewSettings settings) {
+      return createRootNode(project, settings);
     }
 
     @Nullable
@@ -231,7 +242,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       presentation.setPresentableText(getValue());
       presentation.setIcon(AllIcons.Scope.Scratches);
     }
@@ -247,7 +258,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
   private static class MyRootNode extends ProjectViewNode<RootType> implements PsiFileSystemItemFilter {
 
-    MyRootNode(Project project, RootType type, ViewSettings settings) {
+    MyRootNode(Project project, @NotNull RootType type, ViewSettings settings) {
       super(project, type, settings);
     }
 
@@ -287,7 +298,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       presentation.setIcon(AllIcons.Nodes.Folder);
       presentation.setPresentableText(getRootType().getDisplayName());
     }
@@ -335,7 +346,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
               }
 
               @Override
-              protected void updateImpl(PresentationData data) {
+              protected void updateImpl(@NotNull PresentationData data) {
                 super.updateImpl(data);
                 customizePresentation(this, data);
               }
@@ -352,7 +363,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
               }
 
               @Override
-              protected void updateImpl(PresentationData data) {
+              protected void updateImpl(@NotNull PresentationData data) {
                 super.updateImpl(data);
                 customizePresentation(this, data);
               }

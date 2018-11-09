@@ -17,7 +17,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -196,7 +195,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     }
 
     @Override
-    public void modelChanged(PomModelEvent event) {
+    public void modelChanged(@NotNull PomModelEvent event) {
       final PomChangeSet changeSet = event.getChangeSet(myAspect);
       if(changeSet == null) return;
       myBuffer.append(changeSet);
@@ -204,7 +203,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     }
 
     @Override
-    public boolean isAspectChangeInteresting(PomModelAspect aspect) {
+    public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
       return aspect == myAspect;
     }
 

@@ -8,7 +8,7 @@ import com.siyeh.ig.LightInspectionTestCase;
  */
 public class AssignmentToMethodParameterInspectionTest extends LightInspectionTestCase {
 
-  public void testAssigmentToMethodParameterMissesCompoundAssign() {
+  public void testAssignmentToMethodParameterMissesCompoundAssign() {
     myFixture.enableInspections(new AssignmentToMethodParameterInspection());
     doTest();
   }

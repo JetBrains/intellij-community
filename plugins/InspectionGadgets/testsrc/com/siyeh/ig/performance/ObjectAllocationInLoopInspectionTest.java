@@ -16,7 +16,9 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -25,6 +27,12 @@ public class ObjectAllocationInLoopInspectionTest extends LightInspectionTestCas
   @Override
   protected InspectionProfileEntry getInspection() {
     return new ObjectAllocationInLoopInspection();
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9;
   }
 
   public void testObjectAllocationInLoop() { doTest(); }

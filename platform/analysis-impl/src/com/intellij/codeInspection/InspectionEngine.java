@@ -47,7 +47,7 @@ public class InspectionEngine {
                                                                  @NotNull ProblemsHolder holder,
                                                                  boolean isOnTheFly,
                                                                  @NotNull LocalInspectionToolSession session,
-                                                                 @NotNull List<PsiElement> elements,
+                                                                 @NotNull List<? extends PsiElement> elements,
                                                                  @NotNull Set<String> elementDialectIds,
                                                                  @Nullable("null means all accepted") Set<String> dialectIdsSpecifiedForTool) {
     PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
@@ -64,7 +64,7 @@ public class InspectionEngine {
     return visitor;
   }
 
-  public static void acceptElements(@NotNull List<PsiElement> elements,
+  public static void acceptElements(@NotNull List<? extends PsiElement> elements,
                                     @NotNull PsiElementVisitor elementVisitor,
                                     @NotNull Set<String> elementDialectIds,
                                     @Nullable("null means all accepted") Set<String> dialectIdsSpecifiedForTool) {
@@ -90,7 +90,7 @@ public class InspectionEngine {
   }
 
   @NotNull
-  private static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionToolWrapper> toolWrappers,
+  private static List<ProblemDescriptor> inspect(@NotNull final List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                  @NotNull final PsiFile file,
                                                  @NotNull final InspectionManager iManager,
                                                  @NotNull final ProgressIndicator indicator) {
@@ -106,7 +106,7 @@ public class InspectionEngine {
   // public for Upsource
   // returns map (toolName -> problem descriptors)
   @NotNull
-  public static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull final List<LocalInspectionToolWrapper> toolWrappers,
+  public static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull final List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                                @NotNull final PsiFile file,
                                                                @NotNull final InspectionManager iManager,
                                                                final boolean isOnTheFly,
@@ -126,12 +126,12 @@ public class InspectionEngine {
 
   // returns map tool.shortName -> list of descriptors found
   @NotNull
-  static Map<String, List<ProblemDescriptor>> inspectElements(@NotNull List<LocalInspectionToolWrapper> toolWrappers,
+  static Map<String, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
                                                               @NotNull final PsiFile file,
                                                               @NotNull final InspectionManager iManager,
                                                               final boolean isOnTheFly,
                                                               @NotNull ProgressIndicator indicator,
-                                                              @NotNull final List<PsiElement> elements,
+                                                              @NotNull final List<? extends PsiElement> elements,
                                                               @NotNull final Set<String> elementDialectIds) {
     TextRange range = file.getTextRange();
     final LocalInspectionToolSession session = new LocalInspectionToolSession(file, range.getStartOffset(), range.getEndOffset());
@@ -198,7 +198,7 @@ public class InspectionEngine {
             @Override
             public void addProblemElement(@Nullable RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
               if (!(refEntity instanceof RefElement)) return;
-              PsiElement element = ((RefElement)refEntity).getElement();
+              PsiElement element = ((RefElement)refEntity).getPsiElement();
               convertToProblemDescriptors(element, commonProblemDescriptors, descriptors);
             }
 
@@ -239,7 +239,7 @@ public class InspectionEngine {
 
   private static void convertToProblemDescriptors(@NotNull PsiElement element,
                                                   @NotNull CommonProblemDescriptor[] commonProblemDescriptors,
-                                                  @NotNull List<ProblemDescriptor> descriptors) {
+                                                  @NotNull List<? super ProblemDescriptor> descriptors) {
     for (CommonProblemDescriptor common : commonProblemDescriptors) {
       if (common instanceof ProblemDescriptor) {
         descriptors.add((ProblemDescriptor)common);
@@ -255,7 +255,7 @@ public class InspectionEngine {
 
   // returns map tool -> set of languages and dialects for that tool specified in plugin.xml
   @NotNull
-  public static Map<LocalInspectionToolWrapper, Set<String>> getToolsToSpecifiedLanguages(@NotNull List<LocalInspectionToolWrapper> toolWrappers) {
+  public static Map<LocalInspectionToolWrapper, Set<String>> getToolsToSpecifiedLanguages(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers) {
     Map<LocalInspectionToolWrapper, Set<String>> toolToLanguages = new THashMap<>();
     for (LocalInspectionToolWrapper wrapper : toolWrappers) {
       ProgressManager.checkCanceled();
@@ -305,7 +305,7 @@ public class InspectionEngine {
   }
 
   @NotNull
-  public static Set<String> calcElementDialectIds(@NotNull List<PsiElement> inside, @NotNull List<PsiElement> outside) {
+  public static Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> inside, @NotNull List<? extends PsiElement> outside) {
     Set<String> dialectIds = new SmartHashSet<>();
     Set<Language> processedLanguages = new SmartHashSet<>();
     addDialects(inside, processedLanguages, dialectIds);
@@ -314,16 +314,16 @@ public class InspectionEngine {
   }
 
   @NotNull
-  public static Set<String> calcElementDialectIds(@NotNull List<PsiElement> elements) {
+  public static Set<String> calcElementDialectIds(@NotNull List<? extends PsiElement> elements) {
     Set<String> dialectIds = new SmartHashSet<>();
     Set<Language> processedLanguages = new SmartHashSet<>();
     addDialects(elements, processedLanguages, dialectIds);
     return dialectIds;
   }
 
-  private static void addDialects(@NotNull List<PsiElement> elements,
-                                  @NotNull Set<Language> outProcessedLanguages,
-                                  @NotNull Set<String> outDialectIds) {
+  private static void addDialects(@NotNull List<? extends PsiElement> elements,
+                                  @NotNull Set<? super Language> outProcessedLanguages,
+                                  @NotNull Set<? super String> outDialectIds) {
     for (PsiElement element : elements) {
       Language language = element.getLanguage();
       outDialectIds.add(language.getID());

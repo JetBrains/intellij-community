@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -102,7 +103,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
   @Override
   protected PsiElement getElement() {
     final PsiMethodCallExpression call = getMethodCall();
-    if (call == null || !call.getManager().isInProject(call)) return null;
+    if (call == null || !ScratchFileService.isInProjectOrScratch(call)) return null;
     return call;
   }
 
@@ -209,18 +210,18 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return method;
   }
 
-  public static void doCreate(PsiClass targetClass, PsiMethod method, List<Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
+  public static void doCreate(PsiClass targetClass, PsiMethod method, List<? extends Pair<PsiExpression, PsiType>> arguments, PsiSubstitutor substitutor,
                               ExpectedTypeInfo[] expectedTypes, @Nullable PsiElement context) {
     doCreate(targetClass, method, shouldBeAbstractImpl(null, targetClass), arguments, substitutor, expectedTypes, context);
   }
 
   public static void doCreate(PsiClass targetClass,
-                               PsiMethod method,
-                               boolean shouldBeAbstract,
-                               List<Pair<PsiExpression, PsiType>> arguments,
-                               PsiSubstitutor substitutor,
-                               ExpectedTypeInfo[] expectedTypes,
-                               @Nullable final PsiElement context) {
+                              PsiMethod method,
+                              boolean shouldBeAbstract,
+                              List<? extends Pair<PsiExpression, PsiType>> arguments,
+                              PsiSubstitutor substitutor,
+                              ExpectedTypeInfo[] expectedTypes,
+                              @Nullable final PsiElement context) {
 
     method = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(method);
 
@@ -237,7 +238,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
     final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
     if (returnTypeElement != null) {
-      new GuessTypeParameters(project, JavaPsiFacade.getInstance(project).getElementFactory(), builder, substitutor)
+      new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor)
         .setupTypeElement(returnTypeElement, expectedTypes, context, targetClass);
     }
     PsiCodeBlock body = method.getBody();
@@ -256,7 +257,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     if (!shouldBeAbstract) {
       startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
           if (brokenOff) return;
           WriteCommandAction.runWriteCommandAction(project, () -> {
             PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());

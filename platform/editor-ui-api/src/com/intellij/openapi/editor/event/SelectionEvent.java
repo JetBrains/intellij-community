@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import java.util.EventObject;
 
 public class SelectionEvent extends EventObject {
-  private static final TextRange[] EMPTY_RANGES = new TextRange[0];
   private final Pair<TextRange[], TextRange> myOldRanges;
   private final Pair<TextRange[], TextRange> myNewRanges;
 
@@ -70,7 +69,7 @@ public class SelectionEvent extends EventObject {
 
   private static Pair<TextRange[], TextRange> getRanges(int[] starts, int[] ends) {
     if (starts.length == 0) {
-      return Pair.create(EMPTY_RANGES, TextRange.EMPTY_RANGE);
+      return Pair.create(TextRange.EMPTY_ARRAY, TextRange.EMPTY_RANGE);
     }
     final TextRange[] ranges = new TextRange[starts.length];
     int startOffset = Integer.MAX_VALUE;

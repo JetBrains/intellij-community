@@ -280,7 +280,10 @@ public abstract class AbstractListBuilder {
     final Object[] children = getChildren(parentElement);
     myModel.removeAllElements();
     if (shouldAddTopElement()) {
-      myModel.addElement(new TopLevelNode(myProject, parentElement.getValue()));
+      Object value = parentElement.getValue();
+      if (value != null) {
+        myModel.addElement(new TopLevelNode(myProject, value));
+      }
     }
 
     for (Object aChildren : children) {
@@ -372,7 +375,10 @@ public abstract class AbstractListBuilder {
 
     if (shouldAddTopElement()) {
       final List elems = new ArrayList();
-      elems.add(new TopLevelNode(myProject, parentDescriptor.getValue()));
+      Object value = parentDescriptor.getValue();
+      if (value != null) {
+        elems.add(new TopLevelNode(myProject, value));
+      }
       elems.addAll(resultDescriptors);
       myModel.replaceElements(elems);
     }
@@ -389,7 +395,7 @@ public abstract class AbstractListBuilder {
     public final Object myLeadSelection;
     public final int myLeadSelectionIndex;
 
-    public SelectionInfo(final ArrayList<Object> selectedObjects, final int leadSelectionIndex, final Object leadSelection) {
+    SelectionInfo(final ArrayList<Object> selectedObjects, final int leadSelectionIndex, final Object leadSelection) {
       myLeadSelection = leadSelection;
       myLeadSelectionIndex = leadSelectionIndex;
       mySelectedObjects = selectedObjects;

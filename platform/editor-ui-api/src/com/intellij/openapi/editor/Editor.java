@@ -309,6 +309,20 @@ public interface Editor extends UserDataHolder {
   }
 
   /**
+   * @since 2018.3
+   */
+  default int visualLineToY(int visualLine) {
+    return visualPositionToXY(new VisualPosition(visualLine, 0)).y;
+  }
+
+  /**
+   * @since 2018.3
+   */
+  default int yToVisualLine(int y) {
+    return xyToVisualPosition(new Point(0, y)).line;
+  }
+
+  /**
    * Adds a listener for receiving notifications about mouse clicks in the editor and
    * the mouse entering/exiting the editor.
    *

@@ -23,12 +23,11 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +41,8 @@ import java.util.*;
  * @author gregsh
  */
 public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T>, Disposable {
-
-  private final TreeMap<VirtualFile, T> myMappings = new TreeMap<>(
-    (f1, f2) -> Comparing.compare(f1 == null ? null : f1.getUrl(), f2 == null ? null : f2.getUrl()));
+  private List<PerFileMappingState> myDeferredMappings;
+  private final Map<VirtualFile, T> myMappings = ContainerUtil.newHashMap();
 
   public PerFileMappingsBase() {
     installDeleteUndo();
@@ -66,13 +64,14 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Override
   public Map<VirtualFile, T> getMappings() {
     synchronized (myMappings) {
+      ensureStateLoaded();
       cleanup();
       return Collections.unmodifiableMap(myMappings);
     }
   }
 
   private void cleanup() {
-    for (Iterator<VirtualFile> i = myMappings.keySet().iterator(); i.hasNext();) {
+    for (Iterator<VirtualFile> i = myMappings.keySet().iterator(); i.hasNext(); ) {
       VirtualFile file = i.next();
       if (file != null /* PROJECT, top-level */ && !file.isValid()) {
         i.remove();
@@ -84,40 +83,39 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Nullable
   public T getMapping(@Nullable VirtualFile file) {
     T t = getConfiguredMapping(file);
-    return t == null? getDefaultMapping(file) : t;
+    return t == null ? getDefaultMapping(file) : t;
   }
 
   @Nullable
   public T getConfiguredMapping(@Nullable VirtualFile file) {
     FilePropertyPusher<T> pusher = getFilePropertyPusher();
-    return getMappingInner(file, myMappings, pusher == null ? null : pusher.getFileDataKey());
+    return getMappingInner(file, pusher == null ? null : pusher.getFileDataKey());
   }
 
   @Nullable
-  protected T getMappingInner(@Nullable VirtualFile file, @Nullable Map<VirtualFile, T> mappings, @Nullable Key<T> pusherKey) {
+  private T getMappingInner(@Nullable VirtualFile file, @Nullable Key<T> pusherKey) {
     if (file instanceof VirtualFileWindow) {
-      final VirtualFileWindow window = (VirtualFileWindow)file;
+      VirtualFileWindow window = (VirtualFileWindow)file;
       file = window.getDelegate();
     }
     VirtualFile originalFile = file instanceof LightVirtualFile ? ((LightVirtualFile)file).getOriginalFile() : null;
     if (Comparing.equal(originalFile, file)) originalFile = null;
 
     if (file != null) {
-      final T pushedValue = pusherKey == null? null : file.getUserData(pusherKey);
+      T pushedValue = pusherKey == null ? null : file.getUserData(pusherKey);
       if (pushedValue != null) return pushedValue;
     }
     if (originalFile != null) {
-      final T pushedValue = pusherKey == null? null : originalFile.getUserData(pusherKey);
+      T pushedValue = pusherKey == null ? null : originalFile.getUserData(pusherKey);
       if (pushedValue != null) return pushedValue;
     }
-    if (mappings == null) return null;
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (mappings) {
-      T t = getMappingForHierarchy(file, mappings);
+    synchronized (myMappings) {
+      ensureStateLoaded();
+      T t = getMappingForHierarchy(file, myMappings);
       if (t != null) return t;
-      t = getMappingForHierarchy(originalFile, mappings);
+      t = getMappingForHierarchy(originalFile, myMappings);
       if (t != null) return t;
-      return getNotInHierarchy(originalFile != null ? originalFile : file, mappings);
+      return getNotInHierarchy(originalFile != null ? originalFile : file, myMappings);
     }
   }
 
@@ -148,14 +146,16 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Nullable
   public T getImmediateMapping(@Nullable VirtualFile file) {
     synchronized (myMappings) {
+      ensureStateLoaded();
       return myMappings.get(file);
     }
   }
 
   @Override
-  public void setMappings(@NotNull final Map<VirtualFile, T> mappings) {
+  public void setMappings(@NotNull Map<VirtualFile, T> mappings) {
     Collection<VirtualFile> oldFiles;
     synchronized (myMappings) {
+      myDeferredMappings = null;
       oldFiles = ContainerUtil.newArrayList(myMappings.keySet());
       myMappings.clear();
       myMappings.putAll(mappings);
@@ -165,13 +165,15 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     handleMappingChange(mappings.keySet(), oldFiles, project != null && !project.isDefault());
   }
 
-  public void setMapping(@Nullable final VirtualFile file, @Nullable T dialect) {
+  @Override
+  public void setMapping(@Nullable VirtualFile file, @Nullable T value) {
     synchronized (myMappings) {
-      if (dialect == null) {
+      ensureStateLoaded();
+      if (value == null) {
         myMappings.remove(file);
       }
       else {
-        myMappings.put(file, dialect);
+        myMappings.put(file, value);
       }
     }
     List<VirtualFile> files = ContainerUtil.createMaybeSingletonList(file);
@@ -191,7 +193,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
       }
     }
     if (shouldReparseFiles()) {
-      Project[] projects = project == null ? ProjectManager.getInstance().getOpenProjects() : new Project[] { project };
+      Project[] projects = project == null ? ProjectManager.getInstance().getOpenProjects() : new Project[]{project};
       for (Project p : projects) {
         PsiDocumentManager.getInstance(p).reparseFiles(files, includeOpenFiles);
       }
@@ -206,21 +208,27 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @Override
   public Element getState() {
     synchronized (myMappings) {
+      if (myDeferredMappings != null) {
+        //noinspection deprecation
+        return PerFileMappingState.write(myDeferredMappings, getValueAttribute());
+      }
+
       cleanup();
-      final Element element = new Element("x");
-      final List<VirtualFile> files = new ArrayList<>(myMappings.keySet());
+      Element element = new Element("x");
+      List<VirtualFile> files = new ArrayList<>(myMappings.keySet());
       Collections.sort(files, (o1, o2) -> {
         if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
         return o1.getPath().compareTo(o2.getPath());
       });
       for (VirtualFile file : files) {
-        T dialect = myMappings.get(file);
-        String value = dialect == null ? null : serialize(dialect);
-        if (value == null) continue;
+        T value = myMappings.get(file);
+        String valueStr = value == null ? null : serialize(value);
+        if (valueStr == null) continue;
         Element child = new Element("file");
         element.addContent(child);
         child.setAttribute("url", file == null ? "PROJECT" : file.getUrl());
-        child.setAttribute(getValueAttribute(), value);
+        //noinspection deprecation
+        child.setAttribute(getValueAttribute(), valueStr);
       }
       return element;
     }
@@ -231,35 +239,57 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     return null;
   }
 
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
+  @Deprecated
+  // better to not override
   protected String getValueAttribute() {
     return "value";
   }
 
   @Override
-  public void loadState(@NotNull final Element state) {
+  public void loadState(@NotNull Element element) {
+    // read not under lock
+    @SuppressWarnings("deprecation")
+    List<PerFileMappingState> list = PerFileMappingState.read(element, getValueAttribute());
     synchronized (myMappings) {
-      final THashMap<String, T> dialectMap = new THashMap<>();
-      for (T dialect : getAvailableValues()) {
-        String key = serialize(dialect);
+      if (list.isEmpty()) {
+        myMappings.clear();
+        myDeferredMappings = null;
+      }
+      else {
+        myDeferredMappings = list;
+      }
+    }
+  }
+
+  private void ensureStateLoaded() {
+    synchronized (myMappings) {
+      List<PerFileMappingState> state = myDeferredMappings;
+      if (state == null) {
+        return;
+      }
+
+      myDeferredMappings = null;
+      THashMap<String, T> valuesMap = new THashMap<>();
+      for (T value : getAvailableValues()) {
+        String key = serialize(value);
         if (key != null) {
-          dialectMap.put(key, dialect);
+          valuesMap.put(key, value);
         }
       }
       myMappings.clear();
-      final List<Element> files = state.getChildren("file");
-      for (Element fileElement : files) {
-        String url = fileElement.getAttributeValue("url");
-        if (url == null) continue;
-        String dialectID = fileElement.getAttributeValue(getValueAttribute());
+      for (PerFileMappingState entry : state) {
+        String url = entry.getUrl();
+        String valueStr = entry.getValue();
         VirtualFile file = "PROJECT".equals(url) ? null : VirtualFileManager.getInstance().findFileByUrl(url);
-        T dialect = dialectMap.get(dialectID);
-        if (dialect == null) {
-          dialect = handleUnknownMapping(file, dialectID);
-          if (dialect == null) continue;
+        T value = valuesMap.get(valueStr);
+        if (value == null) {
+          value = handleUnknownMapping(file, valueStr);
+          if (value == null) continue;
         }
         if (file != null || url.equals("PROJECT")) {
-          myMappings.put(file, dialect);
+          myMappings.put(file, value);
         }
       }
     }
@@ -268,6 +298,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
   @TestOnly
   public void cleanupForNextTest() {
     synchronized (myMappings) {
+      myDeferredMappings = null;
       myMappings.clear();
     }
   }
@@ -278,6 +309,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
 
   public boolean hasMappings() {
     synchronized (myMappings) {
+      ensureStateLoaded();
       return !myMappings.isEmpty();
     }
   }
@@ -286,9 +318,8 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     Application app = ApplicationManager.getApplication();
     if (app == null) return;
     app.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      
       WeakReference<MyUndoableAction> lastAction;
-      
+
       @Override
       public void before(@NotNull List<? extends VFileEvent> events) {
         if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) return;
@@ -297,10 +328,8 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
 
         MyUndoableAction action = createUndoableAction(events);
         if (action == null) return;
-        
         action.doRemove(action.removed);
         lastAction = new WeakReference<>(action);
-        
         UndoManager.getInstance(project).undoableActionPerformed(action);
       }
 
@@ -315,42 +344,35 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
 
       @Nullable
       MyUndoableAction createUndoableAction(@NotNull List<? extends VFileEvent> events) {
+        // NOTE: VFS handles renames, so the code for RENAME events is deleted (see history)
+        List<? extends VFileEvent> eventsFiltered = JBIterable.from(events).filter(VFileDeleteEvent.class).toList();
+        if (eventsFiltered.isEmpty()) return null;
+
         Map<String, T> removed = ContainerUtil.newHashMap();
         Map<String, T> added = ContainerUtil.newHashMap();
+        NavigableSet<VirtualFile> navSet = null;
 
-        for (VFileEvent event : events) {
-          String newName = null;
-          if (event instanceof VFilePropertyChangeEvent) {
-            VFilePropertyChangeEvent propEvent = (VFilePropertyChangeEvent)event;
-            String prop = propEvent.getPropertyName();
-            if (VirtualFile.PROP_NAME.equals(prop)) {
-              // todo VFS handles renames, uncomment for string-based mappings 
-              //Object v0 = propEvent.getOldValue();
-              //Object v1 = propEvent.getNewValue();
-              //if (!Comparing.equal(v0, v1)) newName = (String)v1;
-            }
-          }
-          if (newName == null && !(event instanceof VFileDeleteEvent)) continue;
-          VirtualFile file = event.getFile();
-          if (file == null) continue;
-          synchronized (myMappings) {
+        synchronized (myMappings) {
+          ensureStateLoaded();
+          for (VFileEvent event : eventsFiltered) {
+            VirtualFile file = event.getFile();
+            if (file == null) continue;
             String fileUrl = file.getUrl();
             if (!file.isDirectory()) {
               T m = myMappings.get(file);
               if (m != null) removed.put(fileUrl, m);
-              if (newName != null) {
-                added.put(PathUtil.getParentPath(fileUrl) + "/" + newName, m);
-              }
             }
             else {
-              for (VirtualFile child : myMappings.navigableKeySet().tailSet(file)) {
+              if (navSet == null) {
+                navSet = new TreeSet<>(
+                  (f1, f2) -> Comparing.compare(f1 == null ? null : f1.getUrl(), f2 == null ? null : f2.getUrl()));
+                navSet.addAll(myMappings.keySet());
+              }
+              for (VirtualFile child : navSet.tailSet(file)) {
                 if (!VfsUtilCore.isAncestor(file, child, false)) break;
                 String childUrl = child.getUrl();
                 T m = myMappings.get(child);
                 removed.put(childUrl, m);
-                if (newName != null) {
-                  added.put(PathUtil.getParentPath(fileUrl) + "/" + newName + childUrl.substring(fileUrl.length()), m);
-                }
               }
             }
           }
@@ -364,7 +386,7 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
     final Map<String, T> added;
     final Map<String, T> removed;
 
-    public MyUndoableAction(Map<String, T> added, Map<String, T> removed) {
+    MyUndoableAction(Map<String, T> added, Map<String, T> removed) {
       this.added = added;
       this.removed = removed;
     }

@@ -453,7 +453,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       myThrowCancelOnMeetPathCreation = throwCancelOnMeetPathCreation;
     }
 
-    public MyLogEntryHandler(SvnVcs vcs, Url url,
+    MyLogEntryHandler(SvnVcs vcs, Url url,
                              final Revision pegRevision,
                              String lastPath,
                              final ThrowableConsumer<VcsFileRevision, SvnBindException> result,
@@ -576,7 +576,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   private static class RepositoryLogEntryHandler extends MyLogEntryHandler {
-    public RepositoryLogEntryHandler(final SvnVcs vcs, Url url,
+    RepositoryLogEntryHandler(final SvnVcs vcs, Url url,
                                      final Revision pegRevision,
                                      String lastPath,
                                      final ThrowableConsumer<VcsFileRevision, SvnBindException> result,
@@ -797,7 +797,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       }
     };
 
-    public CopyFromColumnInfo() {
+    CopyFromColumnInfo() {
       super(SvnBundle.message("copy.column.title"));
     }
 

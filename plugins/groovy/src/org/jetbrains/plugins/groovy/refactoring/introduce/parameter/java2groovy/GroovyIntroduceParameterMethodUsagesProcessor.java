@@ -26,9 +26,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParameterListOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -88,7 +88,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
 
     PsiMethod method = PsiTreeUtil.getParentOfType(argList, PsiMethod.class);
 
-    GrClosureSignature signature = GrClosureSignatureUtil.createSignature(callExpression);
+    GrSignature signature = GrClosureSignatureUtil.createSignature(callExpression);
     if (signature == null) signature = GrClosureSignatureUtil.createSignature(data.getMethodToSearchFor(), PsiSubstitutor.EMPTY);
 
     final GrClosureSignatureUtil.ArgInfo<PsiElement>[] actualArgs = GrClosureSignatureUtil
@@ -242,7 +242,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
   }
 
   @NotNull
-  public static GrParameter addParameter(@NotNull GrParametersOwner parametersOwner,
+  public static GrParameter addParameter(@NotNull GrParameterListOwner parametersOwner,
                                          @Nullable MethodJavaDocHelper javaDocHelper,
                                          @NotNull PsiType forcedType,
                                          @NotNull String parameterName,
@@ -271,7 +271,7 @@ public class GroovyIntroduceParameterMethodUsagesProcessor implements IntroduceP
   }
 
   @Nullable
-  private static PsiParameter getAnchorParameter(GrParametersOwner parametersOwner) {
+  private static PsiParameter getAnchorParameter(GrParameterListOwner parametersOwner) {
     PsiParameterList parameterList = parametersOwner.getParameterList();
     final PsiParameter anchorParameter;
     final PsiParameter[] parameters = parameterList.getParameters();

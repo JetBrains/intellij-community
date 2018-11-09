@@ -23,7 +23,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 10/31/12 5:04 PM
  */
 public class ArrangementRuleIndexControl extends JPanel {
 

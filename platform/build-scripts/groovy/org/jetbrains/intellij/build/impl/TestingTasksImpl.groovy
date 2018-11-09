@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
@@ -13,6 +12,10 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
@@ -45,7 +48,8 @@ class TestingTasksImpl extends TestingTasks {
 
     def compilationTasks = CompilationTasks.create(context)
     def runConfigurations = options.testConfigurations?.split(";")?.collect { String name ->
-      JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
+      def file = JUnitRunConfigurationProperties.findRunConfiguration(context.paths.projectHome, name, context.messages)
+      JUnitRunConfigurationProperties.loadRunConfiguration(file, context.messages)
     }
     if (runConfigurations != null) {
       compilationTasks.compileModules(["intellij.tools.testsBootstrap"], ["intellij.platform.buildScripts"] + runConfigurations.collect { it.moduleName })
@@ -159,6 +163,14 @@ class TestingTasksImpl extends TestingTasks {
       if (agentJar == null) context.messages.error("Can't find the agent in $testDiscovery library, but test discovery capturing enabled.")
 
       additionalJvmOptions.add("-javaagent:${agentJar.absolutePath}" as String)
+
+      def excludeRoots = new LinkedHashSet<String>()
+      context.projectModel.global.getLibraryCollection()
+        .getLibraries(JpsJavaSdkType.INSTANCE)
+        .each { excludeRoots.add(it.getProperties().getHomePath()) }
+      excludeRoots.add(context.paths.buildOutputRoot)
+      excludeRoots.add("$context.paths.projectHome/out".toString())
+
       additionalSystemProperties.putAll(
         [
           "test.discovery.listener"                 : "com.intellij.TestDiscoveryBasicListener",
@@ -166,6 +178,8 @@ class TestingTasksImpl extends TestingTasks {
           "org.jetbrains.instrumentation.trace.file": getTestDiscoveryTraceFilePath(),
           "test.discovery.include.class.patterns"   : options.testDiscoveryIncludePatterns,
           "test.discovery.exclude.class.patterns"   : options.testDiscoveryExcludePatterns,
+          "test.discovery.affected.roots"           : FileUtilRt.toSystemDependentName(context.paths.projectHome),
+          "test.discovery.excluded.roots"           : excludeRoots.collect { FileUtilRt.toSystemDependentName(it) }.join(";"),
         ] as Map<String, String>)
     }
   }
@@ -199,13 +213,14 @@ class TestingTasksImpl extends TestingTasks {
             'teamcity-build-project-name'      : System.getenv('TEAMCITY_PROJECT_NAME'),
             'branch'                           : System.getProperty('intellij.platform.vcs.branch') ?: 'master',
             'project'                          : 'intellij',
+            'checkout-root-prefix'             : System.getProperty("intellij.build.test.discovery.checkout.root.prefix"),
           ])
         }
         catch (Exception e) {
           context.messages.error(e.message, e)
         }
       }
-      context.messages.buildStatus("Run with Test Discovery, {build.status.text}")
+      context.messages.buildStatus("With Discovery, {build.status.text}")
     }
   }
 
@@ -218,7 +233,13 @@ class TestingTasksImpl extends TestingTasks {
     def testObject = System.getProperty("teamcity.remote-debug.junit.type")
     def junitClass = System.getProperty("teamcity.remote-debug.junit.class")
     if (testObject != "class") {
-      context.messages.error("Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'")
+      def message = "Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '$testObject'"
+      if (testObject == "method") {
+        context.messages.warning(message)
+        context.messages.warning("Launching all test methods in the class $junitClass")
+      } else {
+        context.messages.error(message)
+      }
     }
     if (junitClass == null) {
       context.messages.error("Remote debugging supports debugging all test methods in a class for now, but target class isn't specified")
@@ -238,6 +259,14 @@ class TestingTasksImpl extends TestingTasks {
                                List<String> additionalJvmOptions, Map<String, String> additionalSystemProperties, Map<String, String> envVariables, boolean remoteDebugging) {
     List<String> testsClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule(mainModule), true)
     List<String> bootstrapClasspath = context.getModuleRuntimeClasspath(context.findRequiredModule("intellij.tools.testsBootstrap"), false)
+
+    if (additionalJvmOptions.contains("-Djava.system.class.loader=com.intellij.util.lang.UrlClassLoader")) {
+      def utilModule = context.findRequiredModule("intellij.platform.util")
+      JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(utilModule).recursively().withoutSdk().includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
+      def utilClasspath = enumerator.classes().roots.collect { it.absolutePath }
+      bootstrapClasspath.addAll(utilClasspath - bootstrapClasspath)
+    }
+
     def classpathFile = new File("$context.paths.temp/junit.classpath")
     FileUtilRt.createParentDirs(classpathFile)
     classpathFile.text = testsClasspath.findAll({ new File(it).exists() }).join('\n')
@@ -283,6 +312,7 @@ class TestingTasksImpl extends TestingTasks {
       "java.io.tmpdir"                         : tempDir,
       "teamcity.build.tempDir"                 : tempDir,
       "teamcity.tests.recentlyFailedTests.file": System.getProperty("teamcity.tests.recentlyFailedTests.file"),
+      "teamcity.build.branch.is_default"       : System.getProperty("teamcity.build.branch.is_default"),
       "jna.nosys"                              : "true",
       "file.encoding"                          : "UTF-8",
       "io.netty.leakDetectionLevel"            : "PARANOID",
@@ -393,8 +423,8 @@ class TestingTasksImpl extends TestingTasks {
         formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
       }
 
-      //if it is Windows OS, test classpath may exceed the maximum command line, so we need to wrap a classpath in a jar
-      if (SystemInfo.isWindows && !isBootstrapSuiteDefault()) {
+      //test classpath may exceed the maximum command line, so we need to wrap a classpath in a jar
+      if (!isBootstrapSuiteDefault()) {
         def classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), bootstrapClasspath)
         classpath {
           pathelement(location: classpathJarFile.path)

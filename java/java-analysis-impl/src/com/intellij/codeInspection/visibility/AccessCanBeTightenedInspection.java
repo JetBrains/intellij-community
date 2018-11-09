@@ -7,10 +7,13 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.ClassUtil;
@@ -69,7 +72,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
     private final ProblemsHolder myHolder;
     private final UnusedDeclarationInspectionBase myDeadCodeInspection;
 
-    public MyVisitor(@NotNull ProblemsHolder holder) {
+    MyVisitor(@NotNull ProblemsHolder holder) {
       myHolder = holder;
       myDeadCodeInspection = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
     }
@@ -175,18 +178,13 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       final PsiFile memberFile = member.getContainingFile();
       Project project = memberFile.getProject();
 
-      int minLevel = PsiUtil.ACCESS_LEVEL_PRIVATE;
+      int level = myVisibilityInspection.getMinVisibilityLevel(member);
+      int minLevel = Math.max(PsiUtil.ACCESS_LEVEL_PRIVATE, level);
       boolean entryPoint = myDeadCodeInspection.isEntryPoint(member) || 
                            member instanceof PsiField && (UnusedSymbolUtil.isImplicitWrite((PsiVariable)member) || UnusedSymbolUtil.isImplicitRead((PsiVariable)member));
-      if (entryPoint) {
-        int level = myVisibilityInspection.getMinVisibilityLevel(member);
-        if (level <= 0) {
-          log(member.getName() +" is entry point");
-          return currentLevel;
-        }
-        else {
-          minLevel = level;
-        }
+      if (entryPoint && level <= 0) {
+        log(member.getName() + " is entry point");
+        return currentLevel;
       }
 
       final PsiPackage memberPackage = getPackage(memberFile);
@@ -283,7 +281,10 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
       PsiPackage qualifierPackage = resolvedQualifier == null ? null : getPackage(resolvedQualifier);
       PsiPackage aPackage = getPackage(file);
 
-      if (samePackages(memberPackage, aPackage) && (qualifierPackage == null || samePackages(qualifierPackage, aPackage))) {
+      if (samePackage(memberPackage, aPackage)
+          && (qualifierPackage == null || samePackage(qualifierPackage, aPackage))
+          // java 9 will dislike split packages
+          && sameModule(member.getContainingFile(), file)) {
         return suggestPackageLocal(member);
       }
 
@@ -305,7 +306,7 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
     private boolean calledOnInheritor(@NotNull PsiElement element, PsiClass memberClass) {
       PsiExpression qualifier = getQualifier(element);
       if (qualifier == null) {
-        PsiClass enclosingInstance = InheritanceUtil.findEnclosingInstanceInScope(memberClass, element, Condition.TRUE, true);
+        PsiClass enclosingInstance = InheritanceUtil.findEnclosingInstanceInScope(memberClass, element, Conditions.alwaysTrue(), true);
         return enclosingInstance != null && enclosingInstance != memberClass;
       }
       PsiClass qClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
@@ -320,9 +321,23 @@ class AccessCanBeTightenedInspection extends AbstractBaseJavaLocalInspectionTool
     return directory == null ? null : JavaDirectoryService.getInstance().getPackage(directory);
   }
 
-  private static boolean samePackages(PsiPackage package1, PsiPackage package2) {
+  private static boolean samePackage(PsiPackage package1, PsiPackage package2) {
     return package2 == package1 ||
         package2 != null && package1 != null && Comparing.strEqual(package2.getQualifiedName(), package1.getQualifiedName());
+  }
+
+  private static boolean sameModule(PsiFile file1, PsiFile file2) {
+    if (file1 == file2) return true;
+    if (file1 == null || file2 == null) return false;
+
+    VirtualFile virtualFile1 = file1.getVirtualFile();
+    VirtualFile virtualFile2 = file2.getVirtualFile();
+    if (virtualFile1 == null || virtualFile2 == null) return virtualFile1 == virtualFile2;
+
+    Module module1 = ProjectRootManager.getInstance(file1.getProject()).getFileIndex().getModuleForFile(virtualFile1);
+    Module module2 = ProjectRootManager.getInstance(file2.getProject()).getFileIndex().getModuleForFile(virtualFile2);
+
+    return module1 == module2;
   }
 
   private static PsiExpression getQualifier(@NotNull PsiElement element) {

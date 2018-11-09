@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.surroundWith;
 /**
  * Provides the shouldFail() { ... }  surround with. It follows a Template Method pattern. 
  * @author Hamlet D'Arcy
- * @since 03.02.2009
  */
 public class ShouldFailWithTypeStatementsSurrounder extends GroovySimpleManyStatementsSurrounder {
 

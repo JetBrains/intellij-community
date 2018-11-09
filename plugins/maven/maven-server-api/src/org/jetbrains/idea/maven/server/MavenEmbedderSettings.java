@@ -22,7 +22,6 @@ import java.io.Serializable;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/18/2016
  */
 public class MavenEmbedderSettings implements Serializable {
   @NotNull

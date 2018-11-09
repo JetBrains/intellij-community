@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.codeInsight.editorActions.EnterHandler;
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
@@ -31,55 +32,92 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
+  private static final String WHITESPACE = " \t";
+
   @Override
-  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
-                                @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
+  public Result preprocessEnter(@NotNull final PsiFile file,
+                                @NotNull final Editor editor,
+                                @NotNull final Ref<Integer> caretOffsetRef,
+                                @NotNull final Ref<Integer> caretAdvance,
+                                @NotNull final DataContext dataContext,
+                                final EditorActionHandler originalHandler) {
     final Language language = EnterHandler.getLanguage(dataContext);
     if (language == null) return Result.Continue;
+
     final Commenter languageCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
     final CodeDocumentationAwareCommenter commenter = languageCommenter instanceof CodeDocumentationAwareCommenter
                                                       ? (CodeDocumentationAwareCommenter)languageCommenter : null;
     if (commenter == null) return Result.Continue;
+
     int caretOffset = caretOffsetRef.get().intValue();
-    if (isInLineComment(editor, caretOffset, commenter)) {
-        Document document = editor.getDocument();
-        CharSequence text = document.getText();
-        final int offset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
-        if (offset < document.getTextLength() && text.charAt(offset) != '\n') {
-          String prefix = commenter.getLineCommentPrefix();
-          assert prefix != null : "Line Comment type is set but Line Comment Prefix is null!";
-          if (!StringUtil.startsWith(text, offset, prefix)) {
-            if (text.charAt(caretOffset) != ' ' && !prefix.endsWith(" ")) {
-              prefix += " ";
-            }
-            document.insertString(caretOffset, prefix);
-            return Result.Default;
-          }
-          else {
-            int afterPrefix = offset + prefix.length();
-            if (afterPrefix < document.getTextLength() && text.charAt(afterPrefix) != ' ') {
-              document.insertString(afterPrefix, " ");
-              //caretAdvance.set(0);
-            }
-            caretOffsetRef.set(offset);
-          }
-          return Result.Default;
-        }
+    int lineCommentStartOffset = getLineCommentStartOffset(editor, caretOffset, commenter);
+    if (lineCommentStartOffset < 0) return Result.Continue;
+
+    Document document = editor.getDocument();
+    CharSequence text = document.getImmutableCharSequence();
+    final int offset = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
+    if (offset >= document.getTextLength() || text.charAt(offset) == '\n') return Result.Continue;
+
+    String prefix = commenter.getLineCommentPrefix();
+    assert prefix != null : "Line Comment type is set but Line Comment Prefix is null!";
+    String prefixTrimmed = prefix.trim();
+
+    int beforeCommentOffset = CharArrayUtil.shiftBackward(text, lineCommentStartOffset - 1, WHITESPACE);
+    boolean onlyCommentInCaretLine = beforeCommentOffset < 0 || text.charAt(beforeCommentOffset) == '\n';
+
+    CharSequence spacing = " ";
+    if (StringUtil.startsWith(text, offset, prefix)) {
+      int afterPrefix = offset + prefixTrimmed.length();
+      if (afterPrefix < document.getTextLength() && text.charAt(afterPrefix) != ' ') {
+        document.insertString(afterPrefix, spacing);
+      }
+      caretOffsetRef.set(offset);
     }
-    return Result.Continue;
+    else {
+      if (onlyCommentInCaretLine) {
+        int indentStart = lineCommentStartOffset + prefix.trim().length();
+        int indentEnd = CharArrayUtil.shiftForward(text, indentStart, WHITESPACE);
+        CharSequence currentLineSpacing = text.subSequence(indentStart, indentEnd);
+        if (TodoConfiguration.getInstance().isMultiLine() &&
+            isTodoText(text, lineCommentStartOffset, caretOffset) &&
+            isTodoText(text, lineCommentStartOffset, DocumentUtil.getLineEndOffset(lineCommentStartOffset, document))) {
+          spacing = currentLineSpacing + " ";
+        }
+        else if (currentLineSpacing.length() > 0) {
+          spacing = currentLineSpacing;
+        }
+        int textStart = CharArrayUtil.shiftForward(text, caretOffset, WHITESPACE);
+        document.deleteString(caretOffset, textStart);
+      }
+      else {
+        if (text.charAt(caretOffset) == ' ') spacing = "";
+      }
+      document.insertString(caretOffset, prefixTrimmed + spacing);
+    }
+
+    if (onlyCommentInCaretLine) {
+      caretAdvance.set(prefixTrimmed.length() + spacing.length());
+    }
+    return Result.DefaultForceIndent;
   }
-  
-  private static boolean isInLineComment(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
-    if (offset < 1) return false;
+
+  private static int getLineCommentStartOffset(@NotNull Editor editor, int offset, @NotNull CodeDocumentationAwareCommenter commenter) {
+    if (offset < 1) return -1;
     EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
     HighlighterIterator iterator = highlighter.createIterator(offset - 1);
     String prefix = commenter.getLineCommentPrefix();
-    return iterator.getTokenType() == commenter.getLineCommentTokenType() 
-           && (iterator.getStart() + (prefix == null ?  0 : prefix.length())) <= offset;
+    return iterator.getTokenType() == commenter.getLineCommentTokenType() &&
+           (iterator.getStart() + (prefix == null ? 0 : prefix.length())) <= offset ? iterator.getStart() : -1;
+  }
+
+  private static boolean isTodoText(@NotNull CharSequence text, int startOffset, int endOffset) {
+    CharSequence input = text.subSequence(startOffset, endOffset);
+    return ContainerUtil.exists(TodoConfiguration.getInstance().getTodoPatterns(), pattern -> pattern.getPattern().matcher(input).find());
   }
 }

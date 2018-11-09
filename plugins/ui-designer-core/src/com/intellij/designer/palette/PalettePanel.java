@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ScrollPaneFactory;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -85,7 +86,7 @@ public class PalettePanel extends JPanel implements DataProvider, PaletteToolWin
 
     new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         clearActiveItem();
       }
     }.registerCustomShortcutSet(CommonShortcuts.ESCAPE, scrollPane);
@@ -211,7 +212,7 @@ public class PalettePanel extends JPanel implements DataProvider, PaletteToolWin
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.FILE_EDITOR.is(dataId) && myDesigner != null) {
       return myDesigner.getEditor();
     }

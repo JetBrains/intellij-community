@@ -33,7 +33,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
   private final ConcurrentMap<KeyReference<K, V>, V> myMap; // hashing strategy must be canonical, we compute corresponding hash codes using our own myHashingStrategy
   @NotNull
-  private final TObjectHashingStrategy<K> myHashingStrategy;
+  private final TObjectHashingStrategy<? super K> myHashingStrategy;
 
   interface KeyReference<K, V> {
     K get();
@@ -42,13 +42,15 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     V getValue();
 
     // MUST work even with gced references for the code in processQueue to work
+    @Override
     boolean equals(Object o);
 
+    @Override
     int hashCode();
   }
 
   @NotNull
-  abstract KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<K> hashingStrategy);
+  abstract KeyReference<K, V> createKeyReference(@NotNull K key, @NotNull V value, @NotNull TObjectHashingStrategy<? super K> hashingStrategy);
 
   private static final HardKey NULL_KEY = new HardKey() {
     @Override
@@ -83,7 +85,8 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     return processed;
   }
   private static final float LOAD_FACTOR = 0.75f;
-  private static final int DEFAULT_CAPACITY = 16;
+  static final int DEFAULT_CAPACITY = 16;
+  static final int DEFAULT_CONCURRENCY_LEVEL = Math.min(Runtime.getRuntime().availableProcessors(), 4);
 
   ConcurrentRefHashMap() {
     this(DEFAULT_CAPACITY);
@@ -106,18 +109,18 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   };
   private ConcurrentRefHashMap(int initialCapacity, float loadFactor) {
     //noinspection unchecked
-    this(initialCapacity, loadFactor, 4, THIS);
+    this(initialCapacity, loadFactor, DEFAULT_CONCURRENCY_LEVEL, THIS);
   }
 
-  ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<K> hashingStrategy) {
-    this(DEFAULT_CAPACITY, LOAD_FACTOR, 2, hashingStrategy);
+  ConcurrentRefHashMap(@NotNull final TObjectHashingStrategy<? super K> hashingStrategy) {
+    this(DEFAULT_CAPACITY, LOAD_FACTOR, DEFAULT_CONCURRENCY_LEVEL, hashingStrategy);
   }
 
   ConcurrentRefHashMap(int initialCapacity,
-                              float loadFactor,
-                              int concurrencyLevel,
-                              @NotNull TObjectHashingStrategy<K> hashingStrategy) {
-    myHashingStrategy = hashingStrategy == THIS ? this : hashingStrategy;
+                       float loadFactor,
+                       int concurrencyLevel,
+                       @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
+    myHashingStrategy = hashingStrategy == THIS ? (TObjectHashingStrategy)this : hashingStrategy;
     myMap = ContainerUtil.newConcurrentMap(initialCapacity, loadFactor, concurrencyLevel);
   }
 
@@ -171,6 +174,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       return o.equals(this); // see com.intellij.util.containers.ConcurrentSoftHashMap.SoftKey or com.intellij.util.containers.ConcurrentWeakHashMap.WeakKey
     }
 
+    @Override
     public int hashCode() {
       return myHash;
     }
@@ -259,12 +263,14 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       return o1 == null ? o2 == null : o1.equals(o2);
     }
 
+    @Override
     public boolean equals(Object o) {
       if (!(o instanceof Map.Entry)) return false;
       Map.Entry e = (Map.Entry)o;
       return valEquals(key, e.getKey()) && valEquals(getValue(), e.getValue());
     }
 
+    @Override
     public int hashCode() {
       Object v;
       return (key == null ? 0 : key.hashCode()) ^ ((v = getValue()) == null ? 0 : v.hashCode());
@@ -347,6 +353,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       return toRemove;
     }
 
+    @Override
     public int hashCode() {
       int h = 0;
       for (Object aHashEntrySet : hashEntrySet) {

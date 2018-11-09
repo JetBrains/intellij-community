@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.collect.Lists;
+import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
@@ -46,12 +33,16 @@ public class TerminalSettingsPanel {
   private JBCheckBox myPasteOnMiddleButtonCheckBox;
   private JBCheckBox myCopyOnSelectionCheckBox;
   private JBCheckBox myOverrideIdeShortcuts;
+
   private JBCheckBox myShellIntegration;
   private TextFieldWithBrowseButton myStartDirectoryField;
   private JPanel myProjectSettingsPanel;
   private JPanel myGlobalSettingsPanel;
   private JPanel myConfigurablesPanel;
   private JBCheckBox myHighlightHyperlinks;
+
+  private EnvironmentVariablesTextFieldWithBrowseButton myEnvVarField;
+
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
 
@@ -84,7 +75,7 @@ public class TerminalSettingsPanel {
 
     myShellPathField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         myShellPathField
           .getTextField().setForeground(StringUtil.equals(myShellPathField.getText(), myProjectOptionsProvider.getDefaultShellPath()) ?
                                         getDefaultValueColor() : getChangedValueColor());
@@ -93,7 +84,7 @@ public class TerminalSettingsPanel {
 
     myStartDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         myStartDirectoryField
           .getTextField()
           .setForeground(StringUtil.equals(myStartDirectoryField.getText(), myProjectOptionsProvider.getDefaultStartingDirectory()) ?
@@ -127,7 +118,9 @@ public class TerminalSettingsPanel {
            || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.overrideIdeShortcuts())
            || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration())
            || (myHighlightHyperlinks.isSelected() != myOptionsProvider.highlightHyperlinks()) ||
-           myConfigurables.stream().anyMatch(c -> c.isModified());
+           myConfigurables.stream().anyMatch(c -> c.isModified())
+           || !Comparing.equal(myEnvVarField.getEnvs(), myOptionsProvider.getUserSpecifiedEnvs())
+           || (myEnvVarField.isPassParentEnvs() != myOptionsProvider.passParentEnvs());
   }
 
   public void apply() {
@@ -150,6 +143,8 @@ public class TerminalSettingsPanel {
         //pass
       }
     });
+    myOptionsProvider.setUserSpecifiedEnvs(myEnvVarField.getEnvs());
+    myOptionsProvider.setPassParentEnvs(myEnvVarField.isPassParentEnvs());
   }
 
   public void reset() {
@@ -165,6 +160,8 @@ public class TerminalSettingsPanel {
     myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
     myHighlightHyperlinks.setSelected(myOptionsProvider.highlightHyperlinks());
     myConfigurables.forEach(c -> c.reset());
+    myEnvVarField.setEnvs(myOptionsProvider.getUserSpecifiedEnvs());
+    myEnvVarField.setPassParentEnvs(myOptionsProvider.passParentEnvs());
   }
 
   public Color getDefaultValueColor() {

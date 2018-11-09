@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Pattern
 import javax.swing.Icon
 
-fun VariableView(variable: Variable, context: VariableContext) = VariableView(variable.name, variable, context)
+fun VariableView(variable: Variable, context: VariableContext): VariableView = VariableView(variable.name, variable, context)
 
 class VariableView(override val variableName: String, private val variable: Variable, private val context: VariableContext) : XNamedValue(variableName), VariableContext {
   @Volatile private var value: Value? = null
@@ -34,12 +34,12 @@ class VariableView(override val variableName: String, private val variable: Vari
   @Volatile private var remainingChildren: List<Variable>? = null
   @Volatile private var remainingChildrenOffset: Int = 0
 
-  override fun watchableAsEvaluationExpression() = context.watchableAsEvaluationExpression()
+  override fun watchableAsEvaluationExpression(): Boolean = context.watchableAsEvaluationExpression()
 
   override val viewSupport: DebuggerViewSupport
     get() = context.viewSupport
 
-  override val parent = context
+  override val parent: VariableContext = context
 
   override val memberFilter: Promise<MemberFilter>
     get() = context.viewSupport.getMemberFilter(this)
@@ -118,7 +118,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
       ValueType.BOOLEAN, ValueType.NULL, ValueType.UNDEFINED -> node.setPresentation(icon, XKeywordValuePresentation(value.valueString!!), false)
 
-      ValueType.NUMBER -> node.setPresentation(icon, createNumberPresentation(value.valueString!!), false)
+      ValueType.NUMBER, ValueType.BIGINT  -> node.setPresentation(icon, createNumberPresentation(value.valueString!!), false)
 
       ValueType.STRING -> {
         node.setPresentation(icon, XStringValuePresentation(value.valueString!!), false)
@@ -215,7 +215,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
 
     var functionValue = value as? FunctionValue
-    if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
+    if (functionValue != null && (functionValue.hasScopes() == ThreeState.NO)) {
       functionValue = null
     }
 
@@ -226,7 +226,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
     if (functionValue != null) {
       // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-      node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren)
+      node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren && remainingChildren == null)
     }
   }
 
@@ -311,9 +311,10 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
   }
 
-  fun getValue() = variable.value
+  fun getValue(): Value? = variable.value
 
-  override fun canNavigateToSource() = value is FunctionValue || viewSupport.canNavigateToSource(variable, context)
+  override fun canNavigateToSource(): Boolean = value is FunctionValue && value?.valueString?.contains("[native code]") != true
+                                                || viewSupport.canNavigateToSource(variable, context)
 
   override fun computeSourcePosition(navigatable: XNavigatable) {
     if (value is FunctionValue) {
@@ -324,7 +325,7 @@ class VariableView(override val variableName: String, private val variable: Vari
               navigatable.setSourcePosition(it?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
                 object : XSourcePositionWrapper(it) {
                   override fun createNavigatable(project: Project): Navigatable {
-                    return PsiVisitors.visit(myPosition, project) { position, element, positionOffset, document ->
+                    return PsiVisitors.visit(myPosition, project) { _, element, _, _ ->
                       // element will be "open paren", but we should navigate to function name,
                       // we cannot use specific PSI type here (like JSFunction), so, we try to find reference expression (i.e. name expression)
                       var referenceCandidate: PsiElement? = element
@@ -361,7 +362,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
   }
 
-  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback) = viewSupport.computeInlineDebuggerData(variableName, variable, context, callback)
+  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback): ThreeState = viewSupport.computeInlineDebuggerData(variableName, variable, context, callback)
 
   override fun getEvaluationExpression(): String? {
     if (!watchableAsEvaluationExpression()) {
@@ -487,4 +488,4 @@ private class ArrayPresentation(length: Int, className: String?) : XValuePresent
   }
 }
 
-private val PROTOTYPE_PROP = "__proto__"
+private const val PROTOTYPE_PROP = "__proto__"

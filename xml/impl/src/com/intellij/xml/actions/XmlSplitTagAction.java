@@ -109,7 +109,7 @@ public class XmlSplitTagAction implements IntentionAction {
     final StringBuilder attrsWoId = new StringBuilder();
     for (XmlAttribute attribute : xmlTag.getAttributes()) {
       if (!HtmlUtil.ID_ATTRIBUTE_NAME.equals(attribute.getName())) {
-        attrsWoId.append(attribute.getName()).append("=\"").append(attribute.getValue()).append("\" ");
+        attrsWoId.append(attribute.getText()).append(" ");
       }
     }
     return attrsWoId.length() == 0 ? "" : " " + attrsWoId.toString();

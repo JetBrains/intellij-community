@@ -87,10 +87,14 @@ public class LibraryEditingUtil {
     final Set<Library> result = new HashSet<>(orderEntries.length);
     for (OrderEntry orderEntry : orderEntries) {
       if (orderEntry instanceof LibraryOrderEntry && orderEntry.isValid()) {
-        final LibraryImpl library = (LibraryImpl)((LibraryOrderEntry)orderEntry).getLibrary();
-        if (library != null) {
-          final Library source = library.getSource();
+        final Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
+        if (library == null) continue;
+
+        if (library instanceof LibraryImpl) {
+          final Library source = ((LibraryImpl)library).getSource();
           result.add(source != null ? source : library);
+        } else {
+          result.add(library);
         }
       }
     }
@@ -169,7 +173,7 @@ public class LibraryEditingUtil {
   }
 
   public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
-                                                                    final ParameterizedRunnable<LibraryType> action) {
+                                                                    final ParameterizedRunnable<? super LibraryType> action) {
     return new BaseListPopupStep<LibraryType>(IdeBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
           @NotNull
           @Override

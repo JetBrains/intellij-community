@@ -64,10 +64,6 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
     return null;
   }
 
-  @Override
-  public char getCheckBoxMnemonic() {
-    return 0;
-  }
 
   @Override
   public boolean loadInitialCheckBoxState() {

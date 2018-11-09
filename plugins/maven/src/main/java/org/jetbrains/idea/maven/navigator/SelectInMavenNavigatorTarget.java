@@ -48,6 +48,7 @@ public class SelectInMavenNavigatorTarget implements SelectInTarget {
     return module == null ? null : manager.findProject(module);
   }
 
+  @Override
   public String getToolWindowId() {
     return MavenProjectsNavigator.TOOL_WINDOW_ID;
   }
@@ -62,6 +63,7 @@ public class SelectInMavenNavigatorTarget implements SelectInTarget {
     return null;
   }
 
+  @Override
   public float getWeight() {
     return 20;
   }

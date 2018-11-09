@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -113,62 +111,77 @@ public abstract class AbstractPythonLegacyTestRunConfiguration<T extends Abstrac
     JDOMExternalizerUtil.writeField(element, "USE_PATTERN", String.valueOf(usePattern));
   }
 
+  @Override
   public AbstractPythonRunConfigurationParams getBaseParams() {
     return this;
   }
 
+  @Override
   public String getClassName() {
     return myClassName;
   }
 
+  @Override
   public void setClassName(String className) {
     myClassName = className;
   }
 
+  @Override
   public String getFolderName() {
     return myFolderName;
   }
 
+  @Override
   public void setFolderName(String folderName) {
     myFolderName = folderName;
   }
 
+  @Override
   public String getScriptName() {
     return myScriptName;
   }
 
+  @Override
   public void setScriptName(@NotNull String scriptName) {
     myScriptName = scriptName;
   }
 
+  @Override
   public String getMethodName() {
     return myMethodName;
   }
 
+  @Override
   public void setMethodName(String methodName) {
     myMethodName = methodName;
   }
 
+  @Override
   public TestType getTestType() {
     return myTestType;
   }
 
+  @Override
   public void setTestType(TestType testType) {
     myTestType = testType;
   }
 
+  @Override
   public String getPattern() {
     return myPattern;
   }
 
+  @Override
   public void setPattern(String pattern) {
     myPattern = pattern;
   }
 
+  @Override
   public boolean usePattern() {
     return usePattern;
   }
 
+  @Override
   public void usePattern(boolean usePattern) {
     this.usePattern = usePattern;
   }

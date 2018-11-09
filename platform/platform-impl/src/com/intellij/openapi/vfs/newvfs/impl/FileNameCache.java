@@ -28,9 +28,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public class FileNameCache {
-  @SuppressWarnings("unchecked") private final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] ourNameCache =
-    new IntSLRUCache[16];
 
+  @SuppressWarnings("unchecked") private  final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] ourNameCache = new IntSLRUCache[16];
   private final FSRecords myFSRecords;
 
   public FileNameCache(final FSRecords records) {
@@ -55,7 +54,7 @@ public class FileNameCache {
       throw new RuntimeException("VFS name enumerator corrupted");
     }
 
-    CharSequence rawName = ByteArrayCharSequence.convertToBytesIfAsciiString(name);
+    CharSequence rawName = ByteArrayCharSequence.convertToBytesIfPossible(name);
     IntObjectLinkedMap.MapEntry<CharSequence> entry = new IntObjectLinkedMap.MapEntry<>(id, rawName);
     IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>> cache = ourNameCache[stripe];
     //noinspection SynchronizationOnLocalVariableOrMethodParameter

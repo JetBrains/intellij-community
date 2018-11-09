@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -49,7 +50,7 @@ public class SaveAsTemplateAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(SaveAsTemplateAction.class);
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = Objects.requireNonNull(CommonDataKeys.EDITOR.getData(dataContext));
     PsiFile file = Objects.requireNonNull(CommonDataKeys.PSI_FILE.getData(dataContext));
@@ -156,7 +157,7 @@ public class SaveAsTemplateAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);

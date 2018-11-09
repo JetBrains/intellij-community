@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Max Medvedev
- * @since 8/23/13
  */
 public interface ClassSearcher {
   @Nullable

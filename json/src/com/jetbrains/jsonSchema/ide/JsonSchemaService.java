@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.ide;
 
-
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
@@ -26,7 +25,8 @@ public interface JsonSchemaService {
 
   static boolean isSchemaFile(@NotNull PsiFile psiFile) {
     final VirtualFile file = psiFile.getViewProvider().getVirtualFile();
-    return Impl.get(psiFile.getProject()).isSchemaFile(file);
+    JsonSchemaService service = Impl.get(psiFile.getProject());
+    return service.isSchemaFile(file) && service.isApplicableToFile(file);
   }
 
   boolean isSchemaFile(@NotNull VirtualFile file);
@@ -41,6 +41,9 @@ public interface JsonSchemaService {
   void unregisterRemoteUpdateCallback(Runnable callback);
   void registerResetAction(Runnable action);
   void unregisterResetAction(Runnable action);
+
+  void registerReference(String ref);
+  boolean possiblyHasReference(String ref);
 
   void triggerUpdateRemote();
 
@@ -61,6 +64,8 @@ public interface JsonSchemaService {
   ModificationTracker getAnySchemaChangeTracker();
 
   List<JsonSchemaInfo> getAllUserVisibleSchemas();
+
+  boolean isApplicableToFile(@Nullable VirtualFile file);
 
   @NotNull
   static String normalizeId(@NotNull String id) {

@@ -8,9 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-/**
- * @author Tagir Valeev
- */
 public class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Set<String> INTERESTING_NAMES = ContainerUtil.set("fill", "binarySearch", "equals", "mismatch");
 

@@ -74,7 +74,7 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
 
-    public ProblematicWhitespaceVisitor(ProblemsHolder holder, boolean isOnTheFly) {
+    ProblematicWhitespaceVisitor(ProblemsHolder holder, boolean isOnTheFly) {
       myHolder = holder;
       myIsOnTheFly = isOnTheFly;
     }

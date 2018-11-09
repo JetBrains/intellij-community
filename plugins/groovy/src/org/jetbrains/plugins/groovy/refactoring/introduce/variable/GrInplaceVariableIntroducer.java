@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -96,7 +95,6 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
           if (variable != null) {
             finalListener.perform(myCanBeFinalCb.isSelected(), variable);
           }
-          ;
         });
       }
     });

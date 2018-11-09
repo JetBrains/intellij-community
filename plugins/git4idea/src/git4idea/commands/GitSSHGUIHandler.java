@@ -46,10 +46,14 @@ import static com.intellij.credentialStore.CredentialAttributesKt.*;
 public class GitSSHGUIHandler {
   @Nullable private final Project myProject;
   private final boolean myIgnoreAuthenticationRequest;
+  @NotNull private final GitAuthenticationGate myAuthenticationGate;
 
-  GitSSHGUIHandler(@Nullable Project project, boolean ignoreAuthenticationRequest) {
+  GitSSHGUIHandler(@Nullable Project project,
+                   @NotNull GitAuthenticationGate authenticationGate,
+                   boolean ignoreAuthenticationRequest) {
     myProject = project;
     myIgnoreAuthenticationRequest = ignoreAuthenticationRequest;
+    myAuthenticationGate = authenticationGate;
   }
 
   public boolean verifyServerHostKey(final String hostname,
@@ -57,33 +61,47 @@ public class GitSSHGUIHandler {
                                      final String serverHostKeyAlgorithm,
                                      final String fingerprint,
                                      final boolean isNew) {
-    final String message;
-    if (isNew) {
-      message = GitBundle.message("ssh.new.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
-    }
-    else {
-      message = GitBundle.message("ssh.changed.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
-    }
-    final AtomicBoolean rc = new AtomicBoolean();
-    ApplicationManager.getApplication().invokeAndWait(
-      () -> rc.set(Messages.YES == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null)),
-      ModalityState.any());
-    return rc.get();
+    return myAuthenticationGate.waitAndCompute(() -> {
+      final String message;
+      if (isNew) {
+        message = GitBundle.message("ssh.new.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
+      }
+      else {
+        message = GitBundle.message("ssh.changed.host.key", hostname, port, fingerprint, serverHostKeyAlgorithm);
+      }
+      final AtomicBoolean rc = new AtomicBoolean();
+      ApplicationManager.getApplication().invokeAndWait(
+        () -> rc.set(Messages.YES == Messages.showYesNoDialog(myProject, message, GitBundle.getString("ssh.confirm.key.titile"), null)),
+        ModalityState.any());
+      return rc.get();
+    });
   }
 
   @Nullable
   public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
-    String error = processLastError(resetPassword, lastError);
+    return myAuthenticationGate.waitAndCompute(() -> {
+      String error = processLastError(resetPassword, lastError);
+      return askPassphrase(myProject, keyPath, resetPassword, myIgnoreAuthenticationRequest, error);
+    });
+  }
+
+  @Nullable
+  static String askPassphrase(@Nullable Project project,
+                              @NotNull String keyPath,
+                              boolean resetPassword,
+                              boolean ignoreAuthenticationRequest,
+                              @Nullable String lastError) {
     CredentialAttributes oldAttributes = oldCredentialAttributes("PASSPHRASE:" + keyPath);
     CredentialAttributes newAttributes = passphraseCredentialAttributes(keyPath);
     Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
     if (credentials != null && !resetPassword) {
-      return credentials.getPasswordAsString();
+      String password = credentials.getPasswordAsString();
+      if (password != null && !password.isEmpty()) return password;
     }
-    if (myIgnoreAuthenticationRequest) return null;
-    return CredentialPromptDialog.askPassword(myProject, GitBundle.getString("ssh.ask.passphrase.title"),
-                                              "Password for the SSH key \"" + PathUtil.getFileName(keyPath) + "\":",
-                                              newAttributes, resetPassword, error);
+    if (ignoreAuthenticationRequest) return null;
+    return CredentialPromptDialog.askPassword(project, GitBundle.getString("ssh.ask.passphrase.title"),
+                                              GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
+                                              newAttributes, true, lastError);
   }
 
   @NotNull
@@ -139,7 +157,7 @@ public class GitSSHGUIHandler {
    * @param lastError   the last error
    * @return replies to the challenges
    */
-  @SuppressWarnings({"UseOfObsoleteCollectionType", "unchecked"})
+  @SuppressWarnings({"UseOfObsoleteCollectionType"})
   public Vector<String> replyToChallenge(final String username,
                                          final String name,
                                          final String instruction,
@@ -148,40 +166,54 @@ public class GitSSHGUIHandler {
                                          final Vector<Boolean> echo,
                                          final String lastError) {
     if (myIgnoreAuthenticationRequest) return null;
-    final AtomicReference<Vector<String>> rc = new AtomicReference<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      showError(lastError);
-      GitSSHKeyboardInteractiveDialog dialog =
-        new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
-      if (dialog.showAndGet()) {
-        rc.set(dialog.getResults());
-      }
-    }, ModalityState.any());
-    return rc.get();
+    return myAuthenticationGate.waitAndCompute(() -> {
+      final AtomicReference<Vector<String>> rc = new AtomicReference<>();
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        showError(lastError);
+        GitSSHKeyboardInteractiveDialog dialog =
+          new GitSSHKeyboardInteractiveDialog(name, numPrompts, instruction, prompt, echo, username);
+        if (dialog.showAndGet()) {
+          rc.set(dialog.getResults());
+        }
+      }, ModalityState.any());
+      return rc.get();
+    });
   }
 
   /**
    * Ask password
    *
-   * @param username      a user name
+   * @param username      a user name (ex: "user@host:port" string)
    * @param resetPassword true if the previous password supplied to the service was incorrect
    * @param lastError     the previous error  @return a password or null if dialog was cancelled.
    */
   @Nullable
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
-    String error = processLastError(resetPassword, lastError);
+    return myAuthenticationGate.waitAndCompute(() -> {
+      String error = processLastError(resetPassword, lastError);
+      return askPassword(myProject, username, resetPassword, myIgnoreAuthenticationRequest, error);
+    });
+  }
+
+  @Nullable
+  static String askPassword(@Nullable Project project,
+                            @NotNull String username,
+                            boolean resetPassword,
+                            boolean ignoreAuthenticationRequest,
+                            @Nullable String error) {
     CredentialAttributes oldAttributes = oldCredentialAttributes("PASSWORD:" + username);
     CredentialAttributes newAttributes = passwordCredentialAttributes(username);
     Credentials credentials = getAndMigrateCredentials(oldAttributes, newAttributes);
-    if (credentials != null) {
-      return credentials.getPasswordAsString();
+    if (credentials != null && !resetPassword) {
+      String password = credentials.getPasswordAsString();
+      if (password != null) return password;
     }
-    if (myIgnoreAuthenticationRequest) return null;
-    return CredentialPromptDialog.askPassword(myProject,
+    if (ignoreAuthenticationRequest) return null;
+    return CredentialPromptDialog.askPassword(project,
                                               GitBundle.getString("ssh.password.title"),
                                               GitBundle.message("ssh.password.message", username),
                                               newAttributes,
-                                              resetPassword,
+                                              true,
                                               error);
   }
 
@@ -244,7 +276,7 @@ public class GitSSHGUIHandler {
      */
     private final String myUserName;
 
-    public GitSSHKeyboardInteractiveDialog(String name,
+    GitSSHKeyboardInteractiveDialog(String name,
                                            final int numPrompts,
                                            final String instruction,
                                            final Vector<String> prompt,
@@ -256,7 +288,7 @@ public class GitSSHGUIHandler {
       myPrompt = prompt;
       myEcho = echo;
       myUserName = userName;
-      setTitle(GitBundle.message("ssh.keyboard.interactive.title", name));
+      setTitle(GitBundle.message("ssh.keyboard.interactive.title") + ": " + name);
       init();
       setResizable(true);
       setModal(true);

@@ -59,13 +59,20 @@ class TreeBasedEvaluator(
     return resultCache[expression]?.value
   }
 
-  override fun evaluate(expression: UExpression, state: UEvaluationState?): UValue {
+  override fun evaluate(expression: UExpression, state: UEvaluationState?): UValue = getEvaluationInfo(expression, state).value
+
+  private fun getEvaluationInfo(expression: UExpression, state: UEvaluationState? = null): UEvaluationInfo {
     if (state == null) {
       val result = resultCache[expression]
-      if (result != null) return result.value
+      if (result != null) return result
     }
     val inputState = state ?: inputStateCache[expression] ?: expression.createEmptyState()
-    return expression.accept(this, inputState).value
+    return expression.accept(this, inputState)
+  }
+
+  override fun evaluateVariableByReference(variableReference: UReferenceExpression, state: UEvaluationState?): UValue {
+    val target = variableReference.resolveToUElement() as? UVariable ?: return UUndeterminedValue
+    return getEvaluationInfo(variableReference, state).state[target]
   }
 
   // ----------------------- //
@@ -646,7 +653,7 @@ class TreeBasedEvaluator(
   }
 }
 
-fun Any?.toConstant(node: ULiteralExpression? = null) = when (this) {
+fun Any?.toConstant(node: ULiteralExpression? = null): UValueBase = when (this) {
   null -> UNullConstant
   is Float -> UFloatConstant.create(this.toDouble(), UNumericType.FLOAT, node)
   is Double -> UFloatConstant.create(this, UNumericType.DOUBLE, node)

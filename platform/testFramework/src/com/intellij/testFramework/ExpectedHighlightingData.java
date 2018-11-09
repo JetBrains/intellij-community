@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.CommonBundle;
@@ -30,8 +16,11 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -47,8 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.reflect.Field;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -92,7 +81,7 @@ public class ExpectedHighlightingData {
   private final Map<String, ExpectedHighlightingSet> myHighlightingTypes = new LinkedHashMap<>();
   private final Map<RangeMarker, LineMarkerInfo> myLineMarkerInfos = new THashMap<>();
   private final Document myDocument;
-  @SuppressWarnings("StatefulEp") private final PsiFile myFile;
+  private final PsiFile myFile;
   private final String myText;
   private boolean myIgnoreExtraHighlighting;
 
@@ -136,7 +125,7 @@ public class ExpectedHighlightingData {
     registerHighlightingType(INJECT_MARKER, new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, false));
     registerHighlightingType(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, false));
     registerHighlightingType(SYMBOL_NAME_MARKER, new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
-    for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
+    for (SeveritiesProvider provider : SeveritiesProvider.EP_NAME.getExtensionList()) {
       for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
         HighlightSeverity severity = type.getSeverity(null);
         registerHighlightingType(severity.getName(), new ExpectedHighlightingSet(severity, false, true));
@@ -151,7 +140,7 @@ public class ExpectedHighlightingData {
   }
 
   public void init() {
-    WriteCommandAction.writeCommandAction(null).run(() -> {
+    WriteCommandAction.runWriteCommandAction(null, () -> {
       extractExpectedLineMarkerSet(myDocument);
       extractExpectedHighlightsSet(myDocument);
       refreshLineMarkers();
@@ -369,7 +358,7 @@ public class ExpectedHighlightingData {
     return (HighlightInfoType)field.get(null);
   }
 
-  public void checkLineMarkers(@NotNull Collection<LineMarkerInfo> markerInfos, @NotNull String text) {
+  public void checkLineMarkers(@NotNull Collection<? extends LineMarkerInfo> markerInfos, @NotNull String text) {
     String fileName = myFile == null ? "" : myFile.getName() + ": ";
     StringBuilder failMessage = new StringBuilder();
 
@@ -396,7 +385,7 @@ public class ExpectedHighlightingData {
     }
   }
 
-  private static boolean containsLineMarker(LineMarkerInfo info, Collection<LineMarkerInfo> where) {
+  private static boolean containsLineMarker(LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
     String infoTooltip = info.getLineMarkerTooltip();
     for (LineMarkerInfo markerInfo : where) {
       String markerInfoTooltip;
@@ -539,7 +528,7 @@ public class ExpectedHighlightingData {
   }
 
   private static int[] composeText(StringBuilder sb,
-                                   List<Pair<String, HighlightInfo>> list, int index,
+                                   List<? extends Pair<String, HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
                                    boolean showAttributesKeys) {
     int i = index;
@@ -577,7 +566,7 @@ public class ExpectedHighlightingData {
     return new int[]{i, endPos};
   }
 
-  private static boolean infosContainsExpectedInfo(Collection<HighlightInfo> infos, HighlightInfo expectedInfo) {
+  private static boolean infosContainsExpectedInfo(Collection<? extends HighlightInfo> infos, HighlightInfo expectedInfo) {
     for (HighlightInfo info : infos) {
       if (infoEquals(expectedInfo, info)) {
         return true;
@@ -618,22 +607,24 @@ public class ExpectedHighlightingData {
   }
 
   private static String rangeString(String text, int startOffset, int endOffset) {
-    int startLine = StringUtil.offsetToLineNumber(text, startOffset);
-    int endLine = StringUtil.offsetToLineNumber(text, endOffset);
-    int startCol = startOffset - StringUtil.lineColToOffset(text, startLine, 0);
-    int endCol = endOffset - StringUtil.lineColToOffset(text, endLine, 0);
-    if (startLine == endLine) {
-      return String.format("(%d:%d/%d)", startLine + 1, startCol + 1, endCol - startCol);
+    LineColumn start = StringUtil.offsetToLineColumn(text, startOffset);
+    assert start != null: "textLength = " + text.length() + ", startOffset = " + startOffset;
+
+    LineColumn end = StringUtil.offsetToLineColumn(text, endOffset);
+    assert end != null : "textLength = " + text.length() + ", endOffset = " + endOffset;
+
+    if (start.line == end.line) {
+      return String.format("(%d:%d/%d)", start.line + 1, start.column + 1, end.column - start.column);
     }
     else {
-      return String.format("(%d:%d..%d:%d)", startLine + 1, endLine + 1, startCol + 1, endCol + 1);
+      return String.format("(%d:%d..%d:%d)", start.line + 1, end.line + 1, start.column + 1, end.column + 1);
     }
   }
 
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final String myTooltip;
 
-    public MyLineMarkerInfo(PsiElement element, TextRange range, int updatePass, GutterIconRenderer.Alignment alignment, String tooltip) {
+    MyLineMarkerInfo(PsiElement element, TextRange range, int updatePass, GutterIconRenderer.Alignment alignment, String tooltip) {
       super(element, range, null, updatePass, null, null, alignment);
       myTooltip = tooltip;
     }

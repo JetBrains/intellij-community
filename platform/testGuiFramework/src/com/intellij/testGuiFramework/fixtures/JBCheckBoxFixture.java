@@ -71,7 +71,7 @@ public class JBCheckBoxFixture extends JComponentFixture<JBCheckBoxFixture, JBCh
 
   public static JBCheckBoxFixture findWithGenericTypeMatcher(@NotNull GenericTypeMatcher matcher, @Nullable Container root, @NotNull Robot robot, boolean waitUntilFound) {
     if (waitUntilFound) {
-      Component component = GuiTestUtil.waitUntilFound(robot, root, matcher);
+      Component component = GuiTestUtil.INSTANCE.waitUntilFound(robot, root, matcher);
       assert (component instanceof JBCheckBox);
       return new JBCheckBoxFixture(JBCheckBoxFixture.class, robot, (JBCheckBox)component);
     } else {

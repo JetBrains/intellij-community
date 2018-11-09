@@ -28,7 +28,6 @@ import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/4/14
  */
 public class MessageCounter {
 

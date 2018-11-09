@@ -5,7 +5,9 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.IntentionsUI;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
@@ -26,6 +28,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -74,7 +77,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       return;
     }
 
-    showIntentionHint(project, editor, file, intentions);
+    editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    Editor finalEditor = editor;
+    PsiFile finalFile = file;
+    editor.getScrollingModel().runActionOnScrollingFinished(() -> showIntentionHint(project, finalEditor, finalFile, intentions));
   }
 
   // added for override into Rider
@@ -100,7 +106,6 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     int offset = editor.getCaretModel().getOffset();
     PsiElement psiElement = psiFile.findElementAt(offset);
-    boolean inProject = psiFile.getManager().isInProject(psiFile);
     try {
       Project project = psiFile.getProject();
       if (action instanceof IntentionActionDelegate) action = ((IntentionActionDelegate)action).getDelegate();
@@ -116,7 +121,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       }
       
       if (action instanceof PsiElementBaseIntentionAction) {
-        if (!inProject || psiElement == null || !((PsiElementBaseIntentionAction)action).isAvailable(project, editor, psiElement)) return false;
+        PsiElementBaseIntentionAction psiAction = (PsiElementBaseIntentionAction)action;
+        if (psiElement == null || !psiAction.checkFile(psiFile) || !psiAction.isAvailable(project, editor, psiElement)) return false;
       }
       else if (!action.isAvailable(project, editor, psiFile)) {
         return false;
@@ -129,7 +135,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   @Nullable
-  public static Pair<PsiFile,Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile, @NotNull Editor hostEditor, @NotNull PairProcessor<PsiFile, Editor> predicate) {
+  public static Pair<PsiFile,Editor> chooseBetweenHostAndInjected(@NotNull PsiFile hostFile, @NotNull Editor hostEditor, @NotNull PairProcessor<? super PsiFile, ? super Editor> predicate) {
     Editor editorToApply = null;
     PsiFile fileToApply = null;
 
@@ -182,7 +188,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
   private static void checkPsiTextConsistency(@NotNull PsiFile hostFile) {
-    if (Registry.is("ide.check.psi.text.consistency") ||
+    if (Registry.is("ide.check.stub.text.consistency") ||
         ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
       if (hostFile.isValid()) {
         StubTextInconsistencyException.checkStubTextConsistency(hostFile);
@@ -206,9 +212,10 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   }
 
 
-  static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
-                                                   @Nullable Editor hostEditor,
-                                                   @NotNull IntentionAction action) {
+  @Nullable
+  public static Pair<PsiFile, Editor> chooseFileForAction(@NotNull PsiFile hostFile,
+                                                          @Nullable Editor hostEditor,
+                                                          @NotNull IntentionAction action) {
     return hostEditor == null ? Pair.create(hostFile, null) :
            chooseBetweenHostAndInjected(hostFile, hostEditor, (psiFile, editor) -> availableFor(psiFile, editor, action));
   }

@@ -14,7 +14,7 @@
           <size top="10" left="10" bottom="10" right="10"/>
         </border>
         <children>
-          <grid id="29421" binding="myAdditionalPanel" layout-manager="GridLayoutManager" row-count="5" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="29421" binding="myAdditionalPanel" layout-manager="GridLayoutManager" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="10" left="0" bottom="0" right="0"/>
             <constraints border-constraint="Center"/>
             <properties/>
@@ -22,7 +22,7 @@
             <children>
               <vspacer id="d36da">
                 <constraints>
-                  <grid row="4" column="2" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="3" column="2" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
               <component id="e151" class="javax.swing.JLabel" binding="myDepthLabel">
@@ -42,18 +42,9 @@
                   <text value="&amp;Force update"/>
                 </properties>
               </component>
-              <component id="e86c1" class="javax.swing.JCheckBox" binding="myLockOnDemand" custom-create="true">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="3" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="action.Subversion.update.use.locks.on.demand.text"/>
-                  <toolTipText resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="action.Subversion.update.use.locks.on.demand.description"/>
-                </properties>
-              </component>
               <component id="8409d" class="javax.swing.JCheckBox" binding="myIgnoreExternalsCheckBox" default-binding="true">
                 <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text value="Ignore &amp;Externals"/>

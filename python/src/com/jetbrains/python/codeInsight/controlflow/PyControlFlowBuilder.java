@@ -868,9 +868,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
           PsiTreeUtil.getParentOfType(element, PyRaiseStatement.class) != null) {
         myBuilder.addPendingEdge(node, instruction);
       }
-      else {
-        myBuilder.addPendingEdge(pendingScope, instruction);
-      }
+      myBuilder.addPendingEdge(pendingScope, instruction);
     });
   }
 

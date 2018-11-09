@@ -20,7 +20,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -79,16 +78,19 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return PsiUtilEx.isStringOrCharacterLiteral(psiElement);
   }
 
+  @Override
   @NotNull
   public String getId() {
     return JAVA_SUPPORT_ID;
   }
 
+  @Override
   @NotNull
   public Class[] getPatternClasses() {
     return new Class[] { PsiJavaPatterns.class };
   }
 
+  @Override
   public Configurable[] createSettings(final Project project, final Configuration configuration) {
     return new Configurable[]{new AdvancedSettingsUI(project, configuration)};
   }
@@ -106,11 +108,13 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return compiled ? null : super.findCommentInjection(host, commentRef);
   }
 
+  @Override
   public boolean addInjectionInPlace(final Language language, final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     return doInjectInJava(psiElement.getProject(), psiElement, psiElement, language.getID());
   }
 
+  @Override
   public boolean removeInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<>();
@@ -130,10 +134,11 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
                                                                          newInjection.setPlaceEnabled(placeText, false);
                                                                          return InjectorUtils.canBeRemoved(newInjection)? null : newInjection;
                                                                        });
-    configuration.replaceInjectionsWithUndo(project, newInjections, originalInjections, annotations);
+    configuration.replaceInjectionsWithUndo(project, host.getContainingFile(), newInjections, originalInjections, annotations);
     return true;
   }
 
+  @Override
   public boolean editInjectionInPlace(final PsiLanguageInjectionHost psiElement) {
     if (!isMine(psiElement)) return false;
     final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap = new HashMap<>();
@@ -153,7 +158,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       newInjection.mergeOriginalPlacesFrom(copy, false);
       newInjection.mergeOriginalPlacesFrom(originalInjection, true);
       configuration.replaceInjectionsWithUndo(
-        project, Collections.singletonList(newInjection), Collections.singletonList(originalInjection), Collections.<PsiAnnotation>emptyList());
+        project, psiElement.getContainingFile(), Collections.singletonList(newInjection), Collections.singletonList(originalInjection),
+        Collections.<PsiAnnotation>emptyList());
     }
     return true;
 
@@ -178,6 +184,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return null;
   }
 
+  @Override
   public BaseInjection createInjection(final Element element) {
     return new BaseInjection(JAVA_SUPPORT_ID);
   }
@@ -241,7 +248,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
                                                 @Nullable final PsiModifierListOwner modifierListOwner,
                                                 @NotNull final PsiLanguageInjectionHost host,
                                                 final String languageId,
-                                                Processor<PsiLanguageInjectionHost> annotationFixer) {
+                                                Processor<? super PsiLanguageInjectionHost> annotationFixer) {
     final boolean addAnnotation = isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))
                                   && PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)
                                   && modifierListOwner.getModifierList() != null;
@@ -294,10 +301,21 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     assert containingClass != null;
     final PsiModifierList classModifiers = containingClass.getModifierList();
     if (classModifiers != null && (classModifiers.hasModifierProperty(PsiModifier.PRIVATE) || classModifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL))) {
-      return doAddLanguageAnnotation(project, parameterIndex >= 0? psiMethod.getParameterList().getParameters()[parameterIndex] : psiMethod,
+      return doAddLanguageAnnotation(project, parameterIndex >= 0 ? psiMethod.getParameterList().getParameters()[parameterIndex] : psiMethod,
                                      host, languageId);
     }
 
+    final MethodParameterInjection injection = makeParameterInjection(psiMethod, parameterIndex, languageId);
+    doEditInjection(project, injection, host.getContainingFile(), psiMethod);
+    return true;
+  }
+
+  @NotNull
+  public static MethodParameterInjection makeParameterInjection(@NotNull PsiMethod psiMethod,
+                                                                int parameterIndex,
+                                                                @NotNull String languageId) {
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    assert containingClass != null;
     final String className = containingClass.getQualifiedName();
     assert className != null;
     final MethodParameterInjection injection = new MethodParameterInjection();
@@ -312,8 +330,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     }
     injection.setMethodInfos(Collections.singletonList(info));
     injection.generatePlaces();
-    doEditInjection(project, injection, psiMethod);
-    return true;
+    return injection;
   }
 
   static int findParameterIndex(final PsiElement target, final PsiExpressionList parent) {
@@ -362,7 +379,10 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     return null;
   }
 
-  private static void doEditInjection(final Project project, final MethodParameterInjection template, final PsiMethod contextMethod) {
+  private static void doEditInjection(final Project project,
+                                      final MethodParameterInjection template,
+                                      PsiFile psiFile,
+                                      final PsiMethod contextMethod) {
     final Configuration configuration = InjectorUtils.getEditableInstance(project);
     final BaseInjection baseTemplate = new BaseInjection(template.getSupportId()).copyFrom(template);
     final MethodParameterInjection allMethodParameterInjection = createFrom(project, baseTemplate, contextMethod, true);
@@ -379,10 +399,11 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       originalCopy.setPlaceEnabled(currentPlace.getText(), true);
       methodParameterInjection = createFrom(project, originalCopy, contextMethod, false);
     }
-    mergePlacesAndAddToConfiguration(project, configuration, methodParameterInjection, originalInjection);
+    mergePlacesAndAddToConfiguration(project, psiFile, configuration, methodParameterInjection, originalInjection);
   }
 
   private static void mergePlacesAndAddToConfiguration(@NotNull Project project,
+                                                       @Nullable PsiFile psiFile,
                                                        @NotNull Configuration configuration,
                                                        @NotNull MethodParameterInjection injection,
                                                        @Nullable BaseInjection originalInjection) {
@@ -391,7 +412,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       newInjection.mergeOriginalPlacesFrom(originalInjection, true);
     }
     configuration.replaceInjectionsWithUndo(
-      project, Collections.singletonList(newInjection),
+      project, psiFile, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
       Collections.emptyList());
   }
@@ -400,7 +421,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
                                         Configuration configuration,
                                         JavaLanguageInjectionSupport support,
                                         final HashMap<BaseInjection, Pair<PsiMethod, Integer>> injectionsMap,
-                                        final ArrayList<PsiElement> annotations) {
+                                        final ArrayList<? super PsiElement> annotations) {
     new ConcatenationInjector.InjectionProcessor(configuration, support, host) {
 
       @Override
@@ -518,11 +539,11 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   @Override
-  public AnAction[] createAddActions(final Project project, final Consumer<BaseInjection> consumer) {
+  public AnAction[] createAddActions(final Project project, final Consumer<? super BaseInjection> consumer) {
     return new AnAction[] {
       new AnAction("Java Parameter", null, PlatformIcons.PARAMETER_ICON) {
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           final BaseInjection injection = showInjectionUI(project, new MethodParameterInjection());
           if (injection != null) consumer.consume(injection);
         }
@@ -531,14 +552,14 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   @Override
-  public AnAction createEditAction(final Project project, final Factory<BaseInjection> producer) {
+  public AnAction createEditAction(final Project project, final Factory<? extends BaseInjection> producer) {
     return new AnAction() {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final BaseInjection originalInjection = producer.create();
         final MethodParameterInjection injection = createFrom(project, originalInjection, null, false);
         if (injection != null) {
-          final boolean mergeEnabled = !project.isInitialized() || 
+          final boolean mergeEnabled = !project.isInitialized() ||
             JavaPsiFacade.getInstance(project).findClass(injection.getClassName(), GlobalSearchScope.allScope(project)) == null;
           final BaseInjection newInjection = showInjectionUI(project, injection);
           if (newInjection != null) {
@@ -547,7 +568,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
           }
         }
         else {
-          createDefaultEditAction(project, producer).actionPerformed(null);
+          perform(project, producer);
         }
       }
     };
@@ -559,7 +580,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     final Matcher matcher = ourPresentationPattern.matcher(injection.getDisplayName());
     if (matcher.matches()) {
       presentation.append(matcher.group(1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      presentation.append(matcher.group(2), isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES);
+      presentation.append(matcher.group(2), isSelected ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
     }
     else {
       super.setupPresentation(injection, presentation, isSelected);

@@ -24,6 +24,7 @@ import java.awt.*;
  * @author maxim
  * @deprecated use InsertHandler
  */
+@Deprecated
 public interface LookupValueWithUIHint extends PresentableLookupValue {
   @Nullable
   String getTypeHint();

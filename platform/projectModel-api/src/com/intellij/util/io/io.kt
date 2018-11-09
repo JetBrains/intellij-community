@@ -80,13 +80,19 @@ class CharSequenceBackedByChars : CharArrayCharSequence {
   }
 }
 
-fun ByteBuffer.toByteArray(): ByteArray {
+fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
   if (hasArray()) {
     val offset = arrayOffset()
-    if (offset == 0 && array().size == limit()) {
-      return array()
+    val array = array()
+    if (offset == 0 && array.size == limit()) {
+      return array
     }
-    return Arrays.copyOfRange(array(), offset, offset + limit())
+
+    val result = array.copyOfRange(offset, offset + limit())
+    if (isClear) {
+      array.fill(0)
+    }
+    return result
   }
 
   val bytes = ByteArray(limit())
@@ -94,6 +100,6 @@ fun ByteBuffer.toByteArray(): ByteArray {
   return bytes
 }
 
-fun String.encodeUrlQueryParameter() = URLEncoder.encode(this, Charsets.UTF_8.name())!!
+fun String.encodeUrlQueryParameter(): String = URLEncoder.encode(this, Charsets.UTF_8.name())!!
 
 fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)

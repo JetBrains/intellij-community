@@ -112,6 +112,7 @@ public class PsiArrayAccessExpressionImpl extends ExpressionPsiElement implement
     }
   }
 
+  @Override
   public String toString() {
     return "PsiArrayAccessExpression:" + getText();
   }

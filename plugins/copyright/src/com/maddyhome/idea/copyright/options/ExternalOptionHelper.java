@@ -62,7 +62,7 @@ public class ExternalOptionHelper {
     }
   }
 
-  public static void extractNoticeAndKeyword(Element valueElement, List<CopyrightProfile> profiles) {
+  public static void extractNoticeAndKeyword(Element valueElement, List<? super CopyrightProfile> profiles) {
     CopyrightProfile profile = new CopyrightProfile();
     boolean extract = false;
     for (Object l : valueElement.getChildren("LanguageOptions")) {
@@ -76,7 +76,7 @@ public class ExternalOptionHelper {
     if (extract) profiles.add(profile);
   }
 
-  public static void extractNewNoticeAndKeyword(Element valueElement, List<CopyrightProfile> profiles) {
+  public static void extractNewNoticeAndKeyword(Element valueElement, List<? super CopyrightProfile> profiles) {
     CopyrightProfile profile = new CopyrightProfile();
     boolean extract = false;
     for (Object l : valueElement.getChildren("option")) {

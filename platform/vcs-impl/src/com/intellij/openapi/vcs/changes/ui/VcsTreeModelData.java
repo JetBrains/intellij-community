@@ -130,7 +130,7 @@ public abstract class VcsTreeModelData {
 
 
   private static class EmptyData extends VcsTreeModelData {
-    public EmptyData() {
+    EmptyData() {
     }
 
     @NotNull
@@ -143,7 +143,7 @@ public abstract class VcsTreeModelData {
   private static class AllUnderData extends VcsTreeModelData {
     @NotNull private final ChangesBrowserNode<?> myNode;
 
-    public AllUnderData(@NotNull ChangesBrowserNode<?> node) {
+    AllUnderData(@NotNull ChangesBrowserNode<?> node) {
       myNode = node;
     }
 
@@ -157,7 +157,7 @@ public abstract class VcsTreeModelData {
   private static class SelectedData extends VcsTreeModelData {
     @NotNull private final JTree myTree;
 
-    public SelectedData(@NotNull JTree tree) {
+    SelectedData(@NotNull JTree tree) {
       myTree = tree;
     }
 
@@ -177,7 +177,7 @@ public abstract class VcsTreeModelData {
   private static class ExactlySelectedData extends VcsTreeModelData {
     @NotNull private final JTree myTree;
 
-    public ExactlySelectedData(@NotNull JTree tree) {
+    ExactlySelectedData(@NotNull JTree tree) {
       myTree = tree;
     }
 
@@ -195,7 +195,7 @@ public abstract class VcsTreeModelData {
     @NotNull private final JTree myTree;
     @NotNull private final Object myTag;
 
-    public SelectedTagData(@NotNull JTree tree, @NotNull Object tag) {
+    SelectedTagData(@NotNull JTree tree, @NotNull Object tag) {
       myTree = tree;
       myTag = tag;
     }
@@ -222,7 +222,7 @@ public abstract class VcsTreeModelData {
     @NotNull private final ChangesTree myTree;
     @NotNull private final ChangesBrowserNode<?> myNode;
 
-    public IncludedUnderData(@NotNull ChangesTree tree, @NotNull ChangesBrowserNode<?> node) {
+    IncludedUnderData(@NotNull ChangesTree tree, @NotNull ChangesBrowserNode<?> node) {
       myTree = tree;
       myNode = node;
     }
@@ -237,7 +237,7 @@ public abstract class VcsTreeModelData {
 
 
   @NotNull
-  public static ListSelection<Object> getListSelection(@NotNull JTree tree) {
+  public static ListSelection<Object> getListSelectionOrAll(@NotNull JTree tree) {
     List<Object> entries = selected(tree).userObjects();
     Object selection = ContainerUtil.getFirstItem(entries);
 
@@ -254,7 +254,7 @@ public abstract class VcsTreeModelData {
 
 
   @Nullable
-  public static Object getData(@Nullable Project project, @NotNull JTree tree, String dataId) {
+  public static Object getData(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId)) {
       Change[] changes = mapToChange(selected(tree)).toArray(Change[]::new);
       if (changes.length != 0) return changes;
@@ -265,7 +265,7 @@ public abstract class VcsTreeModelData {
       return mapToChange(selected(tree)).toArray(Change[]::new);
     }
     else if (VcsDataKeys.CHANGES_SELECTION.is(dataId)) {
-      return getListSelection(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class));
+      return getListSelectionOrAll(tree).map(entry -> ObjectUtils.tryCast(entry, Change.class));
     }
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       return mapToChange(exactlySelected(tree)).limit(1).toArray(Change[]::new);

@@ -205,7 +205,7 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     private final String myName;
     private final Map<OrderRootType, String []> myRoots;
 
-    public Lib(final String name, final Map<OrderRootType, String[]> roots) {
+    Lib(final String name, final Map<OrderRootType, String[]> roots) {
       myName = name;
       myRoots = roots;
     }

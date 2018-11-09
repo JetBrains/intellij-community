@@ -34,7 +34,6 @@ public class YamlIntegerType extends YamlScalarType {
       if (!myQuotedValuesAllowed && scalarValue instanceof YAMLQuotedText) {
         throw new NumberFormatException("no quoted values allowed");
       }
-      //noinspection ResultOfMethodCallIgnored
       Integer.parseInt(scalarValue.getTextValue());
     }
     catch (NumberFormatException e) {

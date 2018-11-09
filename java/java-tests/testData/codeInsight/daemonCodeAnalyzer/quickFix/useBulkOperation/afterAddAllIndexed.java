@@ -6,6 +6,6 @@ public class Collect {
 
   void collectNames(List<Person> persons){
     List<Person> names = new ArrayList<>();
-      names.addAll(persons);
+      (names).addAll(persons);
   }
 }

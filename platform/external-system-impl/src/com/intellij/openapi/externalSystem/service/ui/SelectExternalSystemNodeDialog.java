@@ -46,7 +46,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 4/15/2015
  */
 public class SelectExternalSystemNodeDialog extends DialogWrapper {
 
@@ -83,12 +82,12 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     final ExternalProjectsView projectsView = ExternalProjectsManagerImpl.getInstance(project).getExternalProjectsView(systemId);
     if(projectsView != null) {
       final ExternalProjectsStructure treeStructure = new ExternalProjectsStructure(project, myTree) {
-        @SuppressWarnings("unchecked")
         @Override
         protected Class<? extends ExternalSystemNode>[] getVisibleNodesClasses() {
           return nodeClasses;
         }
 
+        @NotNull
         @Override
         public Object getRootElement() {
           Object rootElement = super.getRootElement();
@@ -135,6 +134,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
       if (mySelector != null) {
         final SimpleNode[] selection = new SimpleNode[]{null};
         treeStructure.accept(new SimpleNodeVisitor() {
+          @Override
           public boolean accept(SimpleNode each) {
             if (!mySelector.shouldSelect(each)) return false;
             selection[0] = each;
@@ -167,6 +167,7 @@ public class SelectExternalSystemNodeDialog extends DialogWrapper {
     return myTree.getNodeFor(myTree.getSelectionPath());
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     final JScrollPane pane = ScrollPaneFactory.createScrollPane(myTree);

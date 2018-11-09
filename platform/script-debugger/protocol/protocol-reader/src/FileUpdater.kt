@@ -11,8 +11,8 @@ import java.util.*
  * calls {@link #update()}.
  */
 class FileUpdater(private val file: Path) {
-  val builder = StringBuilder()
-  val out = TextOutput(builder)
+  val builder: StringBuilder = StringBuilder()
+  val out: TextOutput = TextOutput(builder)
 
   fun update() {
     if (builder.length == 0) {

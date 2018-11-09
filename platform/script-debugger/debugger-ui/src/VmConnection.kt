@@ -22,7 +22,7 @@ abstract class VmConnection<T : Vm> : Disposable {
 
   private val stateRef = AtomicReference(ConnectionState(ConnectionStatus.NOT_CONNECTED))
 
-  open protected val dispatcher: EventDispatcher<DebugEventListener> = EventDispatcher.create(DebugEventListener::class.java)
+  protected open val dispatcher: EventDispatcher<DebugEventListener> = EventDispatcher.create(DebugEventListener::class.java)
   private val connectionDispatcher = ContainerUtil.createLockFreeCopyOnWriteList<(ConnectionState) -> Unit>()
 
   @Volatile var vm: T? = null
@@ -71,7 +71,7 @@ abstract class VmConnection<T : Vm> : Disposable {
     get() = dispatcher.multicaster
 
   protected open fun startProcessing() {
-    opened.setResult(vm!!)
+    vm?.let { opened.setResult(it) }
   }
 
   fun close(message: String?, status: ConnectionStatus) {

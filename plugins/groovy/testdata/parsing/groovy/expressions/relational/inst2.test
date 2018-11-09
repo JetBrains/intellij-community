@@ -7,8 +7,8 @@ Groovy script
       PsiElement(identifier)('a')
     PsiWhiteSpace(' ')
     PsiElement(instanceof)('instanceof')
-    PsiErrorElement:Type specification expected
+    PsiElement(new line)('\n')
+    PsiErrorElement:<type> expected, got '3'
       <empty list>
-  PsiElement(new line)('\n')
   Literal
     PsiElement(Integer)('3')

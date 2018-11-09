@@ -63,6 +63,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -82,21 +83,20 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
-import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
 
 public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   public static final String TEMPORARILY_FOCUSABLE_COMPONENT_KEY = "ChooseByNameBase.TemporarilyFocusableComponent";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ChooseByNameBase");
-  protected final Project myProject;
+  @Nullable protected final Project myProject;
   protected final ChooseByNameModel myModel;
   protected ChooseByNameItemProvider myProvider;
   protected final String myInitialText;
-  private boolean mySearchInAnyPlace = false;
+  private boolean mySearchInAnyPlace;
 
   protected Component myPreviouslyFocusedComponent;
   private boolean myInitialized;
@@ -184,7 +184,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   /**
    * @param initialText initial text which will be in the lookup text field
    */
-  protected ChooseByNameBase(Project project,
+  protected ChooseByNameBase(@Nullable Project project,
                              @NotNull ChooseByNameModel model,
                              @NotNull ChooseByNameItemProvider provider,
                              String initialText,
@@ -251,7 +251,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     return myModel;
   }
 
-  public class JPanelProvider extends JPanel implements DataProvider {
+  public class JPanelProvider extends JPanel implements DataProvider, QuickSearchComponent {
     private JBPopup myHint = null;
     private boolean myFocusRequested = false;
 
@@ -259,7 +259,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (PlatformDataKeys.SEARCH_INPUT_TEXT.is(dataId)) {
         return myTextField.getText();
       }
@@ -300,6 +300,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       return null;
     }
 
+    @Override
     public void registerHint(JBPopup h) {
       if (myHint != null && myHint.isVisible() && myHint != h) {
         myHint.cancel();
@@ -320,8 +321,14 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
       myFocusRequested = true;
     }
 
+    @Override
     public void unregisterHint() {
       myHint = null;
+    }
+
+    @Override
+    public Component asComponent() {
+      return this;
     }
 
     public void hideHint() {
@@ -532,7 +539,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     myTextField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         SelectionPolicy toSelect = currentChosenInfo != null && currentChosenInfo.hasSamePattern(ChooseByNameBase.this)
                                    ? PreserveSelection.INSTANCE : SelectMostRelevant.INSTANCE;
         rebuildList(toSelect, myRebuildDelay, ModalityState.current(), null);
@@ -632,7 +639,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     ListCellRenderer modelRenderer = myModel.getListCellRenderer();
     //noinspection unchecked
-    myList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> disableTreeLoading(
+    myList.setCellRenderer((list, value, index, isSelected, cellHasFocus) -> AstLoadingFilter.disallowTreeLoading(
       () -> modelRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     ));
     myList.setVisibleRowCount(16);
@@ -641,6 +648,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(@NotNull ListSelectionEvent e) {
+        if (checkDisposed()) {
+          return;
+        }
+
         chosenElementMightChange();
         updateDocumentation();
 
@@ -1092,7 +1103,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     private MyTextField() {
       super(40);
       // Set UI and border for Darcula and all except Win10, Mac and GTK
-      if (!UIUtil.isUnderGTKLookAndFeel() && !UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
+      if (!UIUtil.isUnderDefaultMacTheme() && !UIUtil.isUnderWin10LookAndFeel()) {
         if (!(getUI() instanceof DarculaTextFieldUI)) {
           setUI(DarculaTextFieldUI.createUI(this));
         }
@@ -1128,7 +1139,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     @Override
-    public void calcData(final DataKey key, @NotNull final DataSink sink) {
+    public void calcData(@NotNull final DataKey key, @NotNull final DataSink sink) {
       if (LangDataKeys.POSITION_ADJUSTER_POPUP.equals(key)) {
         if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
           sink.put(key, myDropdownPopup);
@@ -1335,7 +1346,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
     @Override
     public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
-      if (DumbService.isDumbAware(myModel)) return super.runBackgroundProcess(indicator);
+      if (myProject == null || DumbService.isDumbAware(myModel)) return super.runBackgroundProcess(indicator);
 
       return DumbService.getInstance(myProject).runReadActionInSmartMode(() -> performInReadAction(indicator));
     }
@@ -1343,7 +1354,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     @Nullable
     @Override
     public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-      if (myProject != null && myProject.isDisposed()) return null;
+      if (isProjectDisposed()) return null;
 
       Set<Object> elements = Collections.synchronizedSet(new LinkedHashSet<>());
       scheduleIncrementalListUpdate(elements, 0);
@@ -1367,6 +1378,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     }
 
     private void scheduleIncrementalListUpdate(Set<Object> elements, int lastCount) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) return;
       myUpdateListAlarm.addRequest(() -> {
         if (myCalcElementsThread != this || !myProgress.isRunning()) return;
 
@@ -1416,7 +1428,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     public void onCanceled(@NotNull ProgressIndicator indicator) {
       LOG.assertTrue(myCalcElementsThread == this, myCalcElementsThread);
 
-      if (!myProject.isDisposed() && !checkDisposed()) {
+      if (!isProjectDisposed() && !checkDisposed()) {
         new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, mySelectionPolicy).scheduleThread();
       }
     }
@@ -1474,6 +1486,10 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   }
 
+  private boolean isProjectDisposed() {
+    return myProject != null && myProject.isDisposed();
+  }
+
   @NotNull
   private static String patternToLowerCase(String pattern) {
     return pattern.toLowerCase(Locale.US);
@@ -1525,7 +1541,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   private static final String ACTION_NAME = "Show All in View";
 
   private abstract class ShowFindUsagesAction extends DumbAwareAction {
-    public ShowFindUsagesAction() {
+    ShowFindUsagesAction() {
       super(ACTION_NAME, ACTION_NAME, AllIcons.General.Pin_tab);
     }
 
@@ -1678,12 +1694,12 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
 
   private class MyCopyReferenceAction extends DumbAwareAction {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTextField.getSelectedText() == null && getChosenElement() instanceof PsiElement);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       CopyReferenceAction.doCopy((PsiElement)getChosenElement(), myProject);
     }
   }

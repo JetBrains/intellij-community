@@ -12,7 +12,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -219,7 +218,7 @@ public class PropertyUtilBase {
   }
 
   @Nullable
-  public static PsiMethod findPropertyGetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
+  public static PsiMethod findPropertyGetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<? extends PsiMethod> methods) {
     while (methods.hasNext()) {
       PsiMethod method = methods.next();
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
@@ -237,7 +236,7 @@ public class PropertyUtilBase {
   }
 
   @Nullable
-  public static PsiMethod findPropertySetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<PsiMethod> methods) {
+  public static PsiMethod findPropertySetterWithType(String propertyName, boolean isStatic, PsiType type, Iterator<? extends PsiMethod> methods) {
     while (methods.hasNext()) {
       PsiMethod method = methods.next();
       if (method.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
@@ -276,7 +275,6 @@ public class PropertyUtilBase {
   }
 
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean hasGetterName(final PsiMethod method) {
     if (method == null) return false;
 
@@ -341,7 +339,6 @@ public class PropertyUtilBase {
   }
 
 
-  @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isSimplePropertySetter(@Nullable PsiMethod method) {
     if (method == null) return false;
 
@@ -450,7 +447,7 @@ public class PropertyUtilBase {
    */
   @NotNull
   public static PsiMethod generateGetterPrototype(@NotNull PsiField field) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
     Project project = field.getProject();
     String name = field.getName();
     String getName = suggestGetterName(field);
@@ -497,7 +494,7 @@ public class PropertyUtilBase {
   public static PsiMethod generateSetterPrototype(@NotNull PsiField field, @NotNull PsiClass containingClass, boolean returnSelf) {
     Project project = field.getProject();
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(field.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
 
     String name = field.getName();
     boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
@@ -542,12 +539,6 @@ public class PropertyUtilBase {
     Objects.requireNonNull(setMethod.getBody()).replace(body);
     setMethod = (PsiMethod)CodeStyleManager.getInstance(project).reformat(setMethod);
     return setMethod;
-  }
-
-  /** @deprecated use {@link NullableNotNullManager#copyNullableOrNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
-  public static void annotateWithNullableStuff(@NotNull PsiModifierListOwner field,
-                                               @NotNull PsiModifierListOwner listOwner) throws IncorrectOperationException {
-    NullableNotNullManager.getInstance(field.getProject()).copyNullableOrNotNullAnnotation(field, listOwner);
   }
 
   @Nullable

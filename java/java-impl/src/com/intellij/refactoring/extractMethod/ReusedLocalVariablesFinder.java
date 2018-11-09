@@ -33,7 +33,8 @@ public class ReusedLocalVariablesFinder {
 
   public static List<ReusedLocalVariable> findReusedLocalVariables(@NotNull PsiElement fragmentStart,
                                                                    @NotNull PsiElement fragmentEnd,
-                                                                   @NotNull Set<PsiLocalVariable> ignoreVariables) {
+                                                                   @NotNull Set<PsiLocalVariable> ignoreVariables,
+                                                                   @NotNull InputVariables inputVariables) {
     List<PsiLocalVariable> declaredVariables = getDeclaredVariables(fragmentStart, fragmentEnd, ignoreVariables);
     if (declaredVariables.isEmpty()) {
       return Collections.emptyList();
@@ -50,7 +51,7 @@ public class ReusedLocalVariablesFinder {
     }
 
     List<ReusedLocalVariable> result = new ArrayList<>();
-    Set<String> tempNames = new HashSet<>();
+    Set<String> tempNames = new HashSet<>(ContainerUtil.map(inputVariables.getInputVariables(), data -> data.name));
     for (PsiLocalVariable variable : reusedVariables) {
       String name = variable.getName();
       if (name == null) {

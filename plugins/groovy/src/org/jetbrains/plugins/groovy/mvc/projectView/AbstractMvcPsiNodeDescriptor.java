@@ -22,11 +22,9 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +53,7 @@ public abstract class AbstractMvcPsiNodeDescriptor extends BasePsiNode<PsiElemen
   private final int myWeight;
 
   protected AbstractMvcPsiNodeDescriptor(@NotNull final Module module,
-                                         @Nullable final ViewSettings viewSettings,
+                                         final ViewSettings viewSettings,
                                          @NotNull final PsiElement nodeId, int weight) {
     super(module.getProject(), nodeId, viewSettings);
     myModule = module;
@@ -90,17 +88,8 @@ public abstract class AbstractMvcPsiNodeDescriptor extends BasePsiNode<PsiElemen
     return myModule;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getVirtualFile() {
-    if (!isValid()) {
-      return null;
-    }
-    return PsiUtilCore.getVirtualFile(extractPsiFromValue());
-  }
-
-  @Override
-  protected void updateImpl(final PresentationData data) {
+  protected void updateImpl(@NotNull final PresentationData data) {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement instanceof NavigationItem) {
       final ItemPresentation presentation = ((NavigationItem)psiElement).getPresentation();

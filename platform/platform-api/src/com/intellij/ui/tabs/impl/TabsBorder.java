@@ -17,8 +17,9 @@ package com.intellij.ui.tabs.impl;
 
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.JBTabsPresentation;
-import com.intellij.ui.tabs.TabsUtil;
+import com.intellij.util.ui.JBUI;
 
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class TabsBorder {
@@ -75,7 +76,8 @@ public class TabsBorder {
 
     if (myTabs.isEditorTabs()) {
       // it seems like all of the borders should be defined in splitters. this is wrong, but I just can not fix it right now :(
-      myEffectiveBorder = new Insets(myPosition == JBTabsPosition.top ? TabsUtil.TABS_BORDER : 0, 0, 0, 0);
+      Border tabBorder = JBUI.CurrentTheme.ToolWindow.tabBorder();
+      myEffectiveBorder = new Insets(myPosition == JBTabsPosition.top ? tabBorder.getBorderInsets(null).top : 0, 0, 0, 0);
     }
     else {
       myEffectiveBorder = new Insets(

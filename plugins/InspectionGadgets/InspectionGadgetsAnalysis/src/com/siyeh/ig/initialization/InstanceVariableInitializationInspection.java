@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -93,6 +93,9 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
       if (field.getInitializer() != null) {
         return;
       }
+      if (NullableNotNullManager.isNullable(field)) {
+        return;
+      }
       if (m_ignorePrimitives) {
         final PsiType fieldType = field.getType();
         if (ClassUtils.isPrimitive(fieldType)) {
@@ -103,9 +106,7 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
       if (aClass == null) {
         return;
       }
-      final ImplicitUsageProvider[] implicitUsageProviders =
-        Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-      for (ImplicitUsageProvider provider : implicitUsageProviders) {
+      for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
         if (provider.isImplicitWrite(field)) {
           return;
         }

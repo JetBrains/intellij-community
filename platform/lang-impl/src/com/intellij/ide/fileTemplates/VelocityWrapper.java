@@ -20,6 +20,7 @@ import org.apache.velocity.runtime.resource.Resource;
 import org.apache.velocity.runtime.resource.ResourceManager;
 import org.apache.velocity.runtime.resource.ResourceManagerImpl;
 import org.apache.velocity.runtime.resource.loader.ResourceLoader;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -96,11 +97,12 @@ class VelocityWrapper {
     }
   }
 
-  static SimpleNode parse(Reader reader, String templateName) throws ParseException {
+  @NotNull
+  static SimpleNode parse(@NotNull Reader reader, @NotNull String templateName) throws ParseException {
     return RuntimeSingleton.parse(reader, templateName);
   }
 
-  static boolean evaluate(@Nullable Project project, Context context, Writer writer, String templateContent)
+  static boolean evaluate(@Nullable Project project, Context context, @NotNull Writer writer, String templateContent)
     throws ParseErrorException, MethodInvocationException, ResourceNotFoundException {
     try {
       ourTemplateManager.set(project == null ? FileTemplateManager.getDefaultInstance() : FileTemplateManager.getInstance(project));

@@ -79,6 +79,8 @@ public class GeneralCommandLineTest {
     " \" ^ \" \" ^ ^\" ^^^ ",
     " \" ^ &< >( \" ) @ ^ | \" ",
     " < \" > ",
+    "\\<\"\\>\\",
+    "\\<\"\\>",
     "*",
     "\\*",
     "\"*\"",
@@ -350,24 +352,34 @@ public class GeneralCommandLineTest {
   }
 
   @Test(timeout = 60000)
-  public void hackyEnvMap() {
-    Map<String, String> env = createCommandLine().getEnvironment();
-
+  public void hackyEnvMap() throws Exception {
     //noinspection ConstantConditions
-    env.putAll(null);
+    createCommandLine().getEnvironment().putAll(null);
 
-    try {
-      env.put("key1", null);
-      fail("null values should be rejected");
+    checkEnvVar("", "-", "empty keys should be rejected");
+    checkEnvVar("a\0b", "-", "keys with '\\0' should be rejected");
+    checkEnvVar("a=b", "-", "keys with '=' should be rejected");
+    if (SystemInfo.isWindows) {
+      GeneralCommandLine commandLine = createCommandLine("find");
+      commandLine.getEnvironment().put("=wtf", "-");
+      commandLine.createProcess().waitFor();
     }
-    catch (AssertionError ignored) { }
+    else {
+      checkEnvVar("=wtf", "-", "keys with '=' should be rejected");
+    }
 
+    checkEnvVar("key1", null, "null values should be rejected");
+    checkEnvVar("key1", "a\0b", "values with '\\0' should be rejected");
+  }
+
+  private void checkEnvVar(String name, String value, String message) throws ExecutionException, InterruptedException {
+    GeneralCommandLine commandLine = createCommandLine(SystemInfo.isWindows ? "find" : "echo");
+    commandLine.getEnvironment().put(name, value);
     try {
-      Map<String, String> indirect = newHashMap(pair("key2", null));
-      env.putAll(indirect);
-      fail("null values should be rejected");
+      commandLine.createProcess().waitFor();
+      fail(message);
     }
-    catch (AssertionError ignored) { }
+    catch (IllegalEnvVarException ignored) { }
   }
 
   @Test(timeout = 60000)
@@ -391,14 +403,6 @@ public class GeneralCommandLineTest {
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ENV);
     checkEnvPassing(command, testEnv, true);
     checkEnvPassing(command, testEnv, false);
-  }
-
-  @Test(timeout = 60000)
-  public void emptyEnvironmentPassing() throws Exception {
-    Map<String, String> env = newHashMap(pair("a", "b"), pair("", "c"));
-    Map<String, String> expected = newHashMap(pair("a", "b"));
-    Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ENV);
-    checkEnvPassing(command, env, expected, false);
   }
 
   @Test
@@ -492,20 +496,13 @@ public class GeneralCommandLineTest {
   private void checkEnvPassing(Pair<GeneralCommandLine, File> command,
                                Map<String, String> testEnv,
                                boolean passParentEnv) throws ExecutionException, IOException {
-    checkEnvPassing(command, testEnv, testEnv, passParentEnv);
-  }
-
-  private void checkEnvPassing(Pair<GeneralCommandLine, File> command,
-                               Map<String, String> testEnv,
-                               Map<String, String> expectedOutputEnv,
-                               boolean passParentEnv) throws ExecutionException, IOException {
     command.first.withEnvironment(testEnv);
     command.first.withParentEnvironmentType(passParentEnv ? ParentEnvironmentType.SYSTEM : ParentEnvironmentType.NONE);
     String output = execHelper(command);
 
     Set<String> lines = ContainerUtil.newHashSet(StringUtil.convertLineSeparators(output).split("\n"));
 
-    for (Map.Entry<String, String> entry : expectedOutputEnv.entrySet()) {
+    for (Map.Entry<String, String> entry : testEnv.entrySet()) {
       String str = CommandTestHelper.format(entry);
       assertTrue("\"" + str + "\" should be in " + lines,
                  lines.contains(str));

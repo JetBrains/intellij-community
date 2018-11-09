@@ -1,10 +1,12 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalJavaInspectionContext;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
@@ -12,6 +14,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -19,14 +22,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -36,6 +38,7 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -60,6 +63,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -152,9 +156,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public void exportResults(@NotNull final Element parentNode,
+  public void exportResults(@NotNull Consumer<Element> resultConsumer,
                             @NotNull RefEntity refEntity,
-                            @NotNull Predicate<CommonProblemDescriptor> excludedDescriptions) {
+                            @NotNull Predicate<? super CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
     final RefFilter filter = getFilter();
     if (!myFixedElements.containsKey(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
@@ -164,13 +168,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (!compareVisibilities(refElement, getTool().getSharedLocalInspectionTool())) return;
       if (skipEntryPoints(refElement)) return;
 
-      Element element = refEntity.getRefManager().export(refEntity, parentNode, -1);
+      Element element = refEntity.getRefManager().export(refEntity, -1);
       if (element == null) return;
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
       final HighlightSeverity severity = getSeverity(refElement);
-      final String attributeKey =
-        getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      final String attributeKey = HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
       problemClassElement.setAttribute("severity", severity.myName);
       problemClassElement.setAttribute("attribute_key", attributeKey);
 
@@ -192,8 +195,9 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       DeadHTMLComposer.appendProblemSynopsis((RefElement)refEntity, buf);
       descriptionElement.addContent(buf.toString());
       element.addContent(descriptionElement);
+      resultConsumer.accept(element);
     }
-    super.exportResults(parentNode, refEntity, excludedDescriptions);
+    super.exportResults(resultConsumer, refEntity, excludedDescriptions);
   }
 
   @NotNull
@@ -241,7 +245,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
             return false;
           }
           return true;
-        }).map(e -> e.getElement())
+        }).map(e -> e.getPsiElement())
           .filter(e -> e != null)
           .toArray(PsiElement[]::new);
         SafeDeleteHandler.invoke(project, elements, false,
@@ -267,7 +271,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       if (e.getPresentation().isEnabledAndVisible()) {
         final RefEntity[] elements = getInvoker(e).getTree().getSelectedElements();
@@ -305,7 +309,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       List<RefElement> deletedRefs = new ArrayList<>(1);
       final RefFilter filter = getFilter();
       for (RefEntity refElement : refElements) {
-        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
+        PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
         if (psiElement == null) continue;
         if (filter.getElementProblemCount((RefJavaElement)refElement) == 0) continue;
 
@@ -442,6 +446,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     };
   }
 
+  @Override
   public boolean isProblemResolved(@Nullable RefEntity entity) {
     return myFixedElements.containsKey(entity);
   }
@@ -488,8 +493,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       if (methodVisibility != null &&
           //todo store in the graph
           tool.isIgnoreAccessors()) {
-        final PsiModifierListOwner listOwner = ((RefMethod)element).getElement();
-        if (listOwner instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)listOwner)) {
+        final PsiElement psi = element.getPsiElement();
+        if (psi instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)psi)) {
           return null;
         }
       }
@@ -529,7 +534,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     if (refEntity instanceof RefElement) {
       final CommonProblemDescriptor[] descriptors = getProblemElements().get(refEntity);
       if (descriptors != null) {
-        final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getElement());
+        final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getPsiElement());
         List<CommonProblemDescriptor> foreignDescriptors = new ArrayList<>();
         for (CommonProblemDescriptor descriptor : descriptors) {
           if (descriptor instanceof ProblemDescriptor) {
@@ -539,7 +544,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
               return element;
             });
             if (problemElement == psiElement ||
-                problemElement instanceof PsiParameter && ((PsiParameter)problemElement).getDeclarationScope() == psiElement) continue;
+                problemElement instanceof PsiParameter &&
+                ReadAction.compute(() -> ((PsiParameter)problemElement).getDeclarationScope()) == psiElement) continue;
           }
           foreignDescriptors.add(descriptor);
         }
@@ -653,8 +659,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
           vFile = VfsUtil.findFileByURL(url);
         }
         if (vFile != null) {
-          final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, vFile, offset);
-          FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+          Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(project, vFile, offset);
+          descriptor.navigate(true);
         }
       }
     });

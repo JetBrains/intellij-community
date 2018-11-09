@@ -227,7 +227,7 @@ public abstract class InspectionRVContentProvider {
                                                            final boolean showStructure,
                                                            boolean groupBySeverity,
                                                            @NotNull Map<String, Set<RefEntity>> contents,
-                                                           @NotNull Function<RefEntity, CommonProblemDescriptor[]> problems);
+                                                           @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems);
 
   protected abstract void appendDescriptor(@NotNull GlobalInspectionContextImpl context,
                                            @NotNull InspectionToolWrapper toolWrapper,
@@ -243,9 +243,9 @@ public abstract class InspectionRVContentProvider {
                                @NotNull Map<String, Set<T>> packageContents,
                                final boolean canPackageRepeat,
                                @NotNull InspectionToolWrapper toolWrapper,
-                               @NotNull Function<T, RefEntityContainer<?>> computeContainer,
+                               @NotNull Function<? super T, ? extends RefEntityContainer<?>> computeContainer,
                                final boolean showStructure,
-                               final UnaryOperator<InspectionTreeNode> createdNodesConsumer) {
+                               final UnaryOperator<? super InspectionTreeNode> createdNodesConsumer) {
     final Map<String, Map<String, InspectionPackageNode>> module2PackageMap = new HashMap<>();
     boolean supportStructure = showStructure;
     final MultiMap<InspectionPackageNode, RefEntityContainer<?>> packageDescriptors = new MultiMap<>();
@@ -429,7 +429,7 @@ public abstract class InspectionRVContentProvider {
     }
   }
 
-  @SuppressWarnings({"ConstantConditions"}) //class cast suppression
+  //class cast suppression
   public static InspectionTreeNode merge(InspectionTreeNode child, InspectionTreeNode parent, boolean merge) {
     return ReadAction.compute(() -> {
       if (merge) {

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.util.net.ssl.CertificateManager;
 import com.intellij.util.net.ssl.CertificateWarningDialog;
+import org.jetbrains.annotations.NotNull;
 
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -21,7 +22,7 @@ public class ShowCertificateInfoAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     try {
       CertificateManager manager = CertificateManager.getInstance();
       List<X509Certificate> certificates = manager.getCustomTrustManager().getCertificates();

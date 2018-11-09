@@ -22,7 +22,6 @@ import java.util.Map;
 
 /**
  * @author Denis Zhdanov
- * @since 19.12.2012
  */
 public class FoldingHandler implements RichTextHandler {
   @Override

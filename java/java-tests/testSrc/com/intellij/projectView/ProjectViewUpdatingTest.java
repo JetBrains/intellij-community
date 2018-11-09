@@ -279,6 +279,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     PsiFile containingFile = aClass.getContainingFile();
     PsiDirectory directory = containingFile.getContainingDirectory();
     pane.select(aClass, containingFile.getVirtualFile(), true);
+    PlatformTestUtil.waitWhileBusy(tree);
     Point viewPosition = ((JViewport)tree.getParent()).getViewPosition();
     for (int i=0;i<100;i++) {
       JavaDirectoryService.getInstance().createClass(directory, "A" + i);
@@ -293,7 +294,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     String myName;
     List<NodeWrapper> myChildren = new ArrayList<>();
 
-    public NodeWrapper(final Project project, final String value) {
+    NodeWrapper(final Project project, final String value) {
       super(project, new Object());
       myName = value;
     }
@@ -305,7 +306,7 @@ public class ProjectViewUpdatingTest extends BaseProjectViewTestCase {
     }
 
     @Override
-    protected void update(final PresentationData presentation) {
+    protected void update(@NotNull final PresentationData presentation) {
       presentation.setPresentableText(myName);
     }
 

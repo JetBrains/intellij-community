@@ -85,7 +85,7 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     init();
   }
 
-  public LibraryOrderEntryImpl(@NotNull String name,
+  LibraryOrderEntryImpl(@NotNull String name,
                                @NotNull String level,
                                @NotNull RootModelImpl rootModel,
                                @NotNull ProjectRootManagerImpl projectRootManager) {

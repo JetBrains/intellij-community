@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,8 +79,7 @@ public class XmlSerializer {
 
   public static void deserializeInto(@NotNull Object bean, @NotNull Element element) {
     try {
-      Class<?> clazz = bean.getClass();
-      ((BeanBinding)XmlSerializerImpl.serializer.getClassBinding(clazz)).deserializeInto(bean, element);
+      getBeanBinding(bean).deserializeInto(bean, element);
     }
     catch (XmlSerializationException e) {
       throw e;
@@ -101,6 +87,15 @@ public class XmlSerializer {
     catch (Exception e) {
       throw new XmlSerializationException(e);
     }
+  }
+
+  /**
+   * Use only if it is a hot spot, otherwise use {@link #deserializeInto(Object, Element)} or {@link #serializeInto(Object, Element)}.
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public static BeanBinding getBeanBinding(@NotNull Object bean) {
+    return (BeanBinding)XmlSerializerImpl.serializer.getClassBinding(bean.getClass());
   }
 
   public static void serializeInto(final Object bean, final Element element) {
@@ -112,9 +107,7 @@ public class XmlSerializer {
       filter = TRUE_FILTER;
     }
     try {
-      Binding binding = XmlSerializerImpl.serializer.getBinding(bean.getClass());
-      assert binding instanceof BeanBinding;
-      ((BeanBinding)binding).serializeInto(bean, element, filter);
+      getBeanBinding(bean).serializeInto(bean, element, filter);
     }
     catch (XmlSerializationException e) {
       throw e;

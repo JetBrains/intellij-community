@@ -58,17 +58,17 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
   }
 
   @Override
-  protected String getPanelDisplayName(List<DependenciesBuilder> builders) {
+  protected String getPanelDisplayName(List<? extends DependenciesBuilder> builders) {
     return getPanelDisplayName(getForwardScope(builders));
   }
 
-  private static AnalysisScope getForwardScope(List<DependenciesBuilder> builders) {
+  private static AnalysisScope getForwardScope(List<? extends DependenciesBuilder> builders) {
     final DependenciesBuilder builder = builders.get(0);
     return builder instanceof BackwardDependenciesBuilder ? ((BackwardDependenciesBuilder)builder).getForwardScope() : builder.getScope();
   }
 
   @Override
-  protected boolean shouldShowDependenciesPanel(List<DependenciesBuilder> builders) {
+  protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
     for (DependenciesBuilder builder : builders) {
       for (Set<PsiFile> files : builder.getDependencies().values()) {
         if (!files.isEmpty()) {

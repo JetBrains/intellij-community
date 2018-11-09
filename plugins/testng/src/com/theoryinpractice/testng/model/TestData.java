@@ -9,6 +9,7 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -100,7 +101,7 @@ public class TestData implements Cloneable
   }
 
   public void setWorkingDirectory(String value) {
-    WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+    WORKING_DIRECTORY = StringUtil.isEmptyOrSpaces(value) ? "" : FileUtilRt.toSystemIndependentName(value.trim());
   }
 
   public String getWorkingDirectory() {

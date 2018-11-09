@@ -15,11 +15,10 @@
  */
 package org.intellij.lang.xpath.xslt.util;
 
-import org.intellij.lang.xpath.psi.impl.ResolveUtil;
-import org.intellij.lang.xpath.xslt.XsltSupport;
-
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import org.intellij.lang.xpath.psi.impl.ResolveUtil;
+import org.intellij.lang.xpath.xslt.XsltSupport;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,7 +30,6 @@ public class ParamMatcher extends BaseMatcher {
     private final String myName;
     private final Set<String> myExcludedNames;
 
-    @SuppressWarnings({"unchecked"})
     public ParamMatcher(XmlTag parent, String name) {
         myRoot = parent;
         myName = name;
@@ -44,10 +42,12 @@ public class ParamMatcher extends BaseMatcher {
         myExcludedNames = new HashSet<>(Arrays.asList(excludedNames));
     }
 
+    @Override
     public XmlTag getRoot() {
         return myRoot;
     }
 
+    @Override
     protected boolean matches(XmlTag tag) {
         if (isApplicable(tag)) {
             final XmlAttribute attribute = tag.getAttribute("name", null);
@@ -67,6 +67,7 @@ public class ParamMatcher extends BaseMatcher {
         return (myName == null || myName.equals(value)) && !myExcludedNames.contains(value);
     }
 
+    @Override
     @SuppressWarnings({"CallToSimpleGetterFromWithinClass"})
     public ResolveUtil.Matcher variantMatcher() {
         return new ParamMatcher(getRoot(), null);

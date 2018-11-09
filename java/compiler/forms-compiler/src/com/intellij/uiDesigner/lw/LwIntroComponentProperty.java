@@ -26,6 +26,7 @@ public class LwIntroComponentProperty extends LwIntrospectedProperty {
     super(name, propertyClassName);
   }
 
+  @Override
   public Object read(Element element) throws Exception {
     return LwXmlReader.getRequiredString(element, UIFormXmlConstants.ATTRIBUTE_VALUE);
   }

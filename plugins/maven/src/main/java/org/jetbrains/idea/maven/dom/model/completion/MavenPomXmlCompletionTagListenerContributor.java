@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.model.completion;
 
 import com.google.common.collect.ImmutableSet;
@@ -12,7 +13,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Consumer;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomManager;
@@ -53,7 +53,7 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
         LookupElement decorator =
           LookupElementDecorator.withInsertHandler(lookupElement, new InsertHandler<LookupElementDecorator<LookupElement>>() {
             @Override
-            public void handleInsert(final InsertionContext context, LookupElementDecorator<LookupElement> item) {
+            public void handleInsert(@NotNull final InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
               lookupElement.handleInsert(context);
 
               Object object = lookupElement.getObject();

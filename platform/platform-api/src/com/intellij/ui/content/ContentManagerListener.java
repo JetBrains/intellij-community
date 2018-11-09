@@ -15,11 +15,13 @@
  */
 package com.intellij.ui.content;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.EventListener;
 
 public interface ContentManagerListener extends EventListener{
-  void contentAdded(ContentManagerEvent event);
-  void contentRemoved(ContentManagerEvent event);
-  void contentRemoveQuery(ContentManagerEvent event);
-  void selectionChanged(ContentManagerEvent event);
+  void contentAdded(@NotNull ContentManagerEvent event);
+  void contentRemoved(@NotNull ContentManagerEvent event);
+  void contentRemoveQuery(@NotNull ContentManagerEvent event);
+  void selectionChanged(@NotNull ContentManagerEvent event);
 }

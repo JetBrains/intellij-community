@@ -65,6 +65,7 @@ public class ModuleUtil extends ModuleUtilCore {
   }
 
   /** @deprecated use {@link ModuleType#get(Module)} instead (to be removed in IDEA 2019) */
+  @Deprecated
   public static ModuleType getModuleType(@NotNull Module module) {
     return ModuleType.get(module);
   }

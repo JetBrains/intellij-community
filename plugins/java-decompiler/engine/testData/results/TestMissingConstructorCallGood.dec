@@ -1,0 +1,59 @@
+package pkg;
+
+public class TestMissingConstructorCallGood {
+   private TestMissingConstructorCallGood(Object var1) {
+   }// 16
+
+   private TestMissingConstructorCallGood() {
+      System.out.println("Nobody will see what we do here!");// 22 23 24
+      this((Object)null);// 27 28
+   }// 29
+
+   public static void main(String... var0) {
+      try {
+         new TestMissingConstructorCallGood();
+      } catch (Throwable var2) {// 45
+      }
+
+   }// 47
+}
+
+class 'pkg/TestMissingConstructorCallGood' {
+   method '<init> (Ljava/lang/Object;)V' {
+      4      4
+   }
+
+   method '<init> ()V' {
+      0      7
+      3      7
+      5      7
+      9      8
+      a      8
+      d      9
+   }
+
+   method 'main ([Ljava/lang/String;)V' {
+      b      14
+      c      17
+   }
+}
+
+Lines mapping:
+16 <-> 5
+22 <-> 8
+23 <-> 8
+24 <-> 8
+27 <-> 9
+28 <-> 9
+29 <-> 10
+45 <-> 15
+47 <-> 18
+Not mapped:
+14
+15
+26
+36
+37
+38
+39
+41

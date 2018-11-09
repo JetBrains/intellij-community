@@ -15,8 +15,8 @@
  */
 package com.intellij.refactoring.convertToInstanceMethod;
 
-import com.intellij.usageView.UsageInfo;
 import com.intellij.psi.PsiReference;
+import com.intellij.usageView.UsageInfo;
 
 /**
  * @author dsl
@@ -28,6 +28,7 @@ class JavaDocUsageInfo extends UsageInfo {
     myReference = ref;
   }
 
+  @Override
   public PsiReference getReference() {
     return myReference;
   }

@@ -15,10 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -65,7 +65,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     if (referenceName == null) return false;
 
     PsiManager manager = file.getManager();
-    if (!myUnresolvedReference.isValid() || !manager.isInProject(myUnresolvedReference)) return false;
+    if (!myUnresolvedReference.isValid() || !ScratchFileService.isInProjectOrScratch(myUnresolvedReference)) return false;
 
     PsiElement container = PsiTreeUtil.getParentOfType(myUnresolvedReference, PsiCodeBlock.class, PsiClass.class);
     if (!(container instanceof PsiCodeBlock)) return false;
@@ -106,7 +106,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
                        : myUnresolvedReference;
 
     while(child.getParent() != commonParent) child = child.getParent();
-    PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createStatementFromText("int i = 0", null);
+    PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText("int i = 0", null);
     PsiVariable variable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(myOutOfScopeVariable);
     if (variable.getInitializer() != null) {
       variable.getInitializer().delete();
@@ -127,7 +127,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     //Leave initializer assignment
     PsiExpression initializer = myOutOfScopeVariable.getInitializer();
     if (initializer != null) {
-      PsiExpressionStatement assignment = (PsiExpressionStatement)JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createStatementFromText(myOutOfScopeVariable
+      PsiExpressionStatement assignment = (PsiExpressionStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText(myOutOfScopeVariable
         .getName() + "= e;", null);
       ((PsiAssignmentExpression)assignment.getExpression()).getRExpression().replace(initializer);
       assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(manager.getProject()).reformat(assignment);
@@ -149,14 +149,12 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     if (HighlightControlFlowUtil.checkVariableInitializedBeforeUsage(myUnresolvedReference, addedVar, new THashMap<>(), file) != null) {
       initialize(addedVar);
     }
-
-    DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor);
   }
 
   private static void initialize(final PsiLocalVariable variable) throws IncorrectOperationException {
     PsiType type = variable.getType();
     String init = PsiTypesUtil.getDefaultValueOfType(type);
-    PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
     PsiExpression initializer = factory.createExpressionFromText(init, variable);
     variable.setInitializer(initializer);
   }

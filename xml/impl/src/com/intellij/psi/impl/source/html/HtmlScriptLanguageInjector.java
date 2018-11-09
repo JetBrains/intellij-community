@@ -47,6 +47,9 @@ public class HtmlScriptLanguageInjector implements MultiHostInjector {
       return null;
     }
     String mimeType = xmlTag.getAttributeValue("type");
+    if (mimeType != null && mimeType.endsWith("+json")) {
+      mimeType = "application/json";
+    }
     Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
     return !languages.isEmpty() ? languages.iterator().next() : Language.ANY;
   }

@@ -1,0 +1,15 @@
+0(1) element: null
+1(2) element: PyWithStatement
+2(3) READ ACCESS: context_manager
+3(4) element: PyIfStatement
+4(5,9) READ ACCESS: c
+5(6) element: PyStatementList. Condition: c:true
+6(7) ASSERTTYPE ACCESS: c
+7(8) element: PyRaiseStatement
+8(12,14) READ ACCESS: ValueError
+9(10) element: PyAssignmentStatement
+10(11) READ ACCESS: c
+11(12) WRITE ACCESS: val
+12(13) element: PyPrintStatement
+13(14) READ ACCESS: val
+14() element: null

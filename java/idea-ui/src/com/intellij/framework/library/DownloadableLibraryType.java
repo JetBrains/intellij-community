@@ -15,6 +15,7 @@
  */
 package com.intellij.framework.library;
 
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
@@ -32,15 +33,34 @@ import java.util.List;
  * @author nik
  */
 public abstract class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
-  protected final Icon myIcon;
+  private final Icon myIcon;
   private final String myLibraryCategoryName;
   private final DownloadableLibraryDescription myLibraryDescription;
 
+  /**
+   * Creates instance of library type. You also <strong>must</strong> override {@link #getLibraryTypeIcon()} method and return non-null value
+   * from it.
+   * @param libraryCategoryName presentable description of the library type
+   * @param libraryTypeId unique id of the library type, used for serialization
+   * @param groupId name of directory on https://frameworks.jetbrains.com site which contains information about available library versions
+   * @param localUrls URLs of xml files containing information about the library versions (see /contrib/osmorc/src/org/osmorc/facet/osgi.core.xml for example)
+   */
+  protected DownloadableLibraryType(@NotNull String libraryCategoryName,
+                               @NotNull String libraryTypeId,
+                               @NotNull String groupId,
+                               @NotNull URL... localUrls) {
+    this(libraryCategoryName, libraryTypeId, groupId, null, localUrls);
+  }
+
+  /**
+   * @deprecated use {@link #DownloadableLibraryType(String, String, String, URL...)} instead and override {@link #getLibraryTypeIcon()}
+   */
+  @Deprecated
   public DownloadableLibraryType(@NotNull String libraryCategoryName,
-                                          @NotNull String libraryTypeId,
-                                          @NotNull String groupId,
-                                          @NotNull Icon icon,
-                                          @NotNull URL... localUrls) {
+                                 @NotNull String libraryTypeId,
+                                 @NotNull String groupId,
+                                 @Nullable Icon icon,
+                                 @NotNull URL... localUrls) {
     super(new PersistentLibraryKind<LibraryVersionProperties>(libraryTypeId) {
       @NotNull
       @Override
@@ -95,8 +115,17 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   }
 
   @NotNull
-  public Icon getIcon() {
+  public Icon getLibraryTypeIcon() {
+    if (myIcon == null) {
+      throw PluginManagerCore.createPluginException("'DownloadableLibraryType::getLibraryTypeIcon' isn't overriden or returns 'null' in " + getClass().getName(), null, getClass());
+    }
     return myIcon;
+  }
+
+  @Override
+  @NotNull
+  public Icon getIcon(LibraryVersionProperties properties) {
+    return getLibraryTypeIcon();
   }
 
   protected abstract String[] getDetectionClassNames();

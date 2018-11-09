@@ -73,9 +73,9 @@ public class PsiChangeTracker {
     return result;
   }
 
-  private static <T extends PsiElement> Map<T, FileStatus> calculateStatuses(List<T> elements,
-                                                                             List<T> oldElements,
-                                                                             Map<T, FileStatus> result, PsiFilter<T> filter) {
+  private static <T extends PsiElement> Map<T, FileStatus> calculateStatuses(List<? extends T> elements,
+                                                                             List<? extends T> oldElements,
+                                                                             Map<T, FileStatus> result, PsiFilter<? super T> filter) {
     for (T element : elements) {
       T e = null;
       for (T oldElement : oldElements) {

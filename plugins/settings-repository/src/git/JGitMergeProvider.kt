@@ -62,7 +62,7 @@ class JGitMergeProvider<T>(private val repository: Repository, private val confl
     repository.writePath(file.path, bytes, size)
   }
 
-  override fun isBinary(file: VirtualFile) = file.fileType.isBinary
+  override fun isBinary(file: VirtualFile): Boolean = file.fileType.isBinary
 
   override fun loadRevisions(file: VirtualFile): MergeData {
     val path = file.path

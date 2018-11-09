@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffContext;
@@ -93,7 +79,7 @@ public class AnnotateDiffViewerAction {
   }
 
   @Nullable
-  private static EventData collectEventData(AnActionEvent e) {
+  private static EventData collectEventData(@NotNull AnActionEvent e) {
     DiffViewerBase viewer = getViewer(e);
     if (viewer == null) return null;
     if (viewer.getProject() == null) return null;
@@ -109,7 +95,7 @@ public class AnnotateDiffViewerAction {
   }
 
   @Nullable
-  private static DiffViewerBase getViewer(AnActionEvent e) {
+  private static DiffViewerBase getViewer(@NotNull AnActionEvent e) {
     DiffViewerBase diffViewer = ObjectUtils.tryCast(e.getData(DiffDataKeys.DIFF_VIEWER), DiffViewerBase.class);
     if (diffViewer != null) return diffViewer;
 
@@ -119,7 +105,7 @@ public class AnnotateDiffViewerAction {
     return null;
   }
 
-  private static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(@NotNull AnActionEvent e) {
     EventData data = collectEventData(e);
     if (data == null) return false;
 
@@ -127,12 +113,12 @@ public class AnnotateDiffViewerAction {
     return data.annotator.createAnnotationsLoader() != null;
   }
 
-  private static boolean isSuspended(AnActionEvent e) {
+  private static boolean isSuspended(@NotNull AnActionEvent e) {
     EventData data = collectEventData(e);
     return data != null && data.annotator.getBackgroundableLock().isLocked();
   }
 
-  private static boolean isAnnotated(AnActionEvent e) {
+  private static boolean isAnnotated(@NotNull AnActionEvent e) {
     EventData data = collectEventData(e);
     assert data != null;
     return data.annotator.isAnnotationShown();
@@ -142,8 +128,7 @@ public class AnnotateDiffViewerAction {
     EventData data = collectEventData(e);
     assert data != null;
 
-    boolean annotationShown = data.annotator.isAnnotationShown();
-    if (annotationShown) {
+    if (!selected) {
       data.annotator.hideAnnotation();
     }
     else {
@@ -289,8 +274,9 @@ public class AnnotateDiffViewerAction {
         revisionNumber == VcsRevisionNumber.NULL) {
       return null;
     }
-    final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
+    AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     if (!(annotationProvider instanceof AnnotationProviderEx)) return null;
+    if (!((AnnotationProviderEx)annotationProvider).isAnnotationValid(path, revisionNumber)) return null;
 
     return new FileAnnotationLoader(vcs) {
       @Override
@@ -313,7 +299,7 @@ public class AnnotateDiffViewerAction {
   private static class MyDiffViewerListener extends DiffViewerListener {
     @NotNull private final DiffViewerBase myViewer;
 
-    public MyDiffViewerListener(@NotNull DiffViewerBase viewer) {
+    MyDiffViewerListener(@NotNull DiffViewerBase viewer) {
       myViewer = viewer;
     }
 
@@ -384,7 +370,7 @@ public class AnnotateDiffViewerAction {
     @Override
     public void showAnnotation(@NotNull TwosideTextDiffViewer viewer, @NotNull Side side, @NotNull AnnotationData data) {
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, null, data.annotation, data.vcs);
+      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, data.annotation, data.vcs);
     }
 
     @Override
@@ -417,7 +403,7 @@ public class AnnotateDiffViewerAction {
     public void showAnnotation(@NotNull OnesideTextDiffViewer viewer, @NotNull Side side, @NotNull AnnotationData data) {
       if (side != viewer.getSide()) return;
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, null, data.annotation, data.vcs);
+      AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, data.annotation, data.vcs);
     }
 
     @Override
@@ -451,7 +437,7 @@ public class AnnotateDiffViewerAction {
       if (side != viewer.getMasterSide()) return;
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
       UnifiedUpToDateLineNumberProvider lineNumberProvider = new UnifiedUpToDateLineNumberProvider(viewer, side);
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, null, data.annotation, data.vcs, lineNumberProvider);
+      AnnotateToggleAction.doAnnotate(viewer.getEditor(), project, data.annotation, data.vcs, lineNumberProvider);
     }
 
     @Override
@@ -465,7 +451,7 @@ public class AnnotateDiffViewerAction {
     @NotNull private final Side mySide;
     @NotNull private final UpToDateLineNumberProvider myLocalChangesProvider;
 
-    public UnifiedUpToDateLineNumberProvider(@NotNull UnifiedDiffViewer viewer, @NotNull Side side) {
+    UnifiedUpToDateLineNumberProvider(@NotNull UnifiedDiffViewer viewer, @NotNull Side side) {
       myViewer = viewer;
       mySide = side;
       myLocalChangesProvider = new UpToDateLineNumberProviderImpl(myViewer.getDocument(mySide), viewer.getProject());
@@ -525,7 +511,7 @@ public class AnnotateDiffViewerAction {
     @Override
     public void showAnnotation(@NotNull ThreesideTextDiffViewerEx viewer, @NotNull ThreeSide side, @NotNull AnnotationData data) {
       Project project = ObjectUtils.assertNotNull(viewer.getProject());
-      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, null, data.annotation, data.vcs);
+      AnnotateToggleAction.doAnnotate(viewer.getEditor(side), project, data.annotation, data.vcs);
     }
 
     @Override
@@ -624,6 +610,7 @@ public class AnnotateDiffViewerAction {
           return createTwosideAnnotationsLoader(project, viewer.getRequest(), side);
         }
 
+        @Override
         @NotNull
         public BackgroundableActionLock getBackgroundableLock() {
           return BackgroundableActionLock.getLock(viewer.getProject(), VcsBackgroundableActions.ANNOTATE, viewer, side);
@@ -712,6 +699,7 @@ public class AnnotateDiffViewerAction {
           return createThreesideAnnotationsLoader(project, viewer.getRequest(), side);
         }
 
+        @Override
         @NotNull
         public BackgroundableActionLock getBackgroundableLock() {
           return BackgroundableActionLock.getLock(viewer.getProject(), VcsBackgroundableActions.ANNOTATE, viewer, side);
@@ -755,7 +743,7 @@ public class AnnotateDiffViewerAction {
     @Nullable private VcsException myException;
     @Nullable private FileAnnotation myResult;
 
-    public FileAnnotationLoader(@NotNull AbstractVcs vcs) {
+    FileAnnotationLoader(@NotNull AbstractVcs vcs) {
       myVcs = vcs;
     }
 
@@ -785,7 +773,7 @@ public class AnnotateDiffViewerAction {
     @NotNull public final AbstractVcs vcs;
     @NotNull public final FileAnnotation annotation;
 
-    public AnnotationData(@NotNull AbstractVcs vcs, @NotNull FileAnnotation annotation) {
+    AnnotationData(@NotNull AbstractVcs vcs, @NotNull FileAnnotation annotation) {
       this.vcs = vcs;
       this.annotation = annotation;
     }
@@ -795,7 +783,7 @@ public class AnnotateDiffViewerAction {
     @NotNull public final DiffViewerBase viewer;
     @NotNull public final ViewerAnnotator annotator;
 
-    public EventData(@NotNull DiffViewerBase viewer, @NotNull ViewerAnnotator annotator) {
+    EventData(@NotNull DiffViewerBase viewer, @NotNull ViewerAnnotator annotator) {
       this.viewer = viewer;
       this.annotator = annotator;
     }
@@ -808,7 +796,7 @@ public class AnnotateDiffViewerAction {
     }
 
     @Override
-    public boolean isSuspended(AnActionEvent e) {
+    public boolean isSuspended(@NotNull AnActionEvent e) {
       return AnnotateDiffViewerAction.isSuspended(e);
     }
 
@@ -818,7 +806,7 @@ public class AnnotateDiffViewerAction {
     }
 
     @Override
-    public void perform(AnActionEvent e, boolean selected) {
+    public void perform(@NotNull AnActionEvent e, boolean selected) {
       AnnotateDiffViewerAction.perform(e, selected);
     }
   }

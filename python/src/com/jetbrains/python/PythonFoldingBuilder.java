@@ -138,25 +138,27 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
   }
 
   private static void foldStatementList(ASTNode node, List<FoldingDescriptor> descriptors) {
-    IElementType elType = node.getTreeParent().getElementType();
-    if (elType == PyElementTypes.FUNCTION_DECLARATION
-        || elType == PyElementTypes.CLASS_DECLARATION
-        || ifFoldBlocks(node, elType)) {
-      ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
-      if (colon != null && colon.getStartOffset() + 1 < node.getTextRange().getEndOffset() - 1) {
+    final TextRange nodeRange = node.getTextRange();
+    if (nodeRange.isEmpty()) {
+      return;
+    }
+
+    final IElementType elType = node.getTreeParent().getElementType();
+    if (elType == PyElementTypes.FUNCTION_DECLARATION || elType == PyElementTypes.CLASS_DECLARATION || ifFoldBlocks(node, elType)) {
+      final ASTNode colon = node.getTreeParent().findChildByType(PyTokenTypes.COLON);
+      final int nodeEnd = nodeRange.getEndOffset();
+      if (colon != null && nodeEnd - (colon.getStartOffset() + 1) > 1) {
         final CharSequence chars = node.getChars();
-        int nodeStart = node.getTextRange().getStartOffset();
-        int endOffset = node.getTextRange().getEndOffset();
-        while(endOffset > colon.getStartOffset()+2 && endOffset > nodeStart && Character.isWhitespace(chars.charAt(endOffset - nodeStart - 1))) {
-          endOffset--;
+        final int nodeStart = nodeRange.getStartOffset();
+        final int foldStart = colon.getStartOffset() + 1;
+        int foldEnd = nodeEnd;
+        while (foldEnd > Math.max(nodeStart, foldStart + 1) && Character.isWhitespace(chars.charAt(foldEnd - nodeStart - 1))) {
+          foldEnd--;
         }
-        descriptors.add(new FoldingDescriptor(node, new TextRange(colon.getStartOffset() + 1, endOffset)));
+        descriptors.add(new FoldingDescriptor(node, new TextRange(foldStart, foldEnd)));
       }
-      else {
-        TextRange range = node.getTextRange();
-        if (range.getStartOffset() < range.getEndOffset() - 1) { // only for ranges at least 1 char wide
-          descriptors.add(new FoldingDescriptor(node, range));
-        }
+      else if (nodeRange.getLength() > 1) { // only for ranges at least 1 char wide
+        descriptors.add(new FoldingDescriptor(node, nodeRange));
       }
     }
   }

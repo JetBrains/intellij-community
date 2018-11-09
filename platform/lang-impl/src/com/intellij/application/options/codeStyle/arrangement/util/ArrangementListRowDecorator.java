@@ -41,7 +41,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 10/31/12 5:00 PM
  */
 public class ArrangementListRowDecorator extends JPanel implements ArrangementUiComponent {
 

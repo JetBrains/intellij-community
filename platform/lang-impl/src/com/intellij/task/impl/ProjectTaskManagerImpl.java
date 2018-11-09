@@ -44,7 +44,6 @@ import static java.util.stream.Collectors.groupingBy;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/11/2016
  */
 public class ProjectTaskManagerImpl extends ProjectTaskManager {
 
@@ -140,7 +139,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
     Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
       Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
         groupingBy(aTask -> stream(getTaskRunners())
-          .filter(runner -> runner.canRun(aTask))
+          .filter(runner -> runner.canRun(myProject, aTask))
           .findFirst()
           .orElse(myDummyTaskRunner))
       );
@@ -191,7 +190,7 @@ public class ProjectTaskManagerImpl extends ProjectTaskManager {
   }
 
   private static void visitTasks(@NotNull Collection<? extends ProjectTask> tasks,
-                                 @NotNull Consumer<Collection<? extends ProjectTask>> consumer) {
+                                 @NotNull Consumer<? super Collection<? extends ProjectTask>> consumer) {
     for (ProjectTask child : tasks) {
       Collection<? extends ProjectTask> taskDependencies;
       if (child instanceof AbstractProjectTask) {

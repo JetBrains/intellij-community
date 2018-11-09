@@ -123,10 +123,11 @@ public class RelativePoint extends UserDataHolderBase {
     return new MouseEvent(myComponent, 0, 0, 0, myPointOnComponent.x, myPointOnComponent.y, 1, false); 
   }
 
+  @Override
   @NotNull
   public String toString() {
     //noinspection HardCodedStringLiteral
-    return getPoint() + " on " + getComponent().toString();
+    return getPoint() + " on " + getComponent();
   }
 
   @NotNull

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates.github;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.Producer;
+import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +17,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
-import java.util.concurrent.Callable;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
@@ -64,7 +49,7 @@ public class ZipUtil {
     @NotNull String progressTitle,
     @NotNull final File zipArchive,
     @NotNull final File extractToDir,
-    @Nullable final NullableFunction<String, String> pathConvertor,
+    @Nullable final NullableFunction<? super String, String> pathConvertor,
     final boolean unwrapSingleTopLevelFolder) throws GeneratorException
   {
     final Outcome<Boolean> outcome = DownloadUtil.provideDataWithProgressSynchronously(
@@ -78,7 +63,6 @@ public class ZipUtil {
     );
     Boolean result = outcome.get();
     if (result == null) {
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
       Exception e = outcome.getException();
       if (e != null) {
         throw new GeneratorException("Unpacking failed, downloaded archive is broken");
@@ -103,22 +87,18 @@ public class ZipUtil {
   public static void unzip(@Nullable ProgressIndicator progress,
                            @NotNull File targetDir,
                            @NotNull File zipArchive,
-                           @Nullable NullableFunction<String, String> pathConvertor,
+                           @Nullable NullableFunction<? super String, String> pathConvertor,
                            @Nullable ContentProcessor contentProcessor,
                            boolean unwrapSingleTopLevelFolder) throws IOException {
     File unzipToDir = getUnzipToDir(progress, targetDir, unwrapSingleTopLevelFolder);
-    ZipFile zipFile = new ZipFile(zipArchive, ZipFile.OPEN_READ);
-    try {
+    try (ZipFile zipFile = new ZipFile(zipArchive, ZipFile.OPEN_READ)) {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
         ZipEntry entry = entries.nextElement();
-        InputStream entryContentStream = zipFile.getInputStream(entry);
-        unzipEntryToDir(progress, entry, entryContentStream, unzipToDir, pathConvertor, contentProcessor);
-        entryContentStream.close();
+        try (InputStream entryContentStream = zipFile.getInputStream(entry)) {
+          unzipEntryToDir(progress, entry, entryContentStream, unzipToDir, pathConvertor, contentProcessor);
+        }
       }
-    }
-    finally {
-      zipFile.close();
     }
     doUnwrapSingleTopLevelFolder(unwrapSingleTopLevelFolder, unzipToDir, targetDir);
   }
@@ -126,7 +106,7 @@ public class ZipUtil {
   public static void unzip(@Nullable ProgressIndicator progress,
                            @NotNull File targetDir,
                            @NotNull ZipInputStream stream,
-                           @Nullable NullableFunction<String, String> pathConvertor,
+                           @Nullable NullableFunction<? super String, String> pathConvertor,
                            @Nullable ContentProcessor contentProcessor,
                            boolean unwrapSingleTopLevelFolder) throws IOException {
     File unzipToDir = getUnzipToDir(progress, targetDir, unwrapSingleTopLevelFolder);
@@ -160,7 +140,7 @@ public class ZipUtil {
                                       @NotNull final ZipEntry zipEntry,
                                       @NotNull final InputStream entryContentStream,
                                       @NotNull final File extractToDir,
-                                      @Nullable NullableFunction<String, String> pathConvertor,
+                                      @Nullable NullableFunction<? super String, String> pathConvertor,
                                       @Nullable ContentProcessor contentProcessor) throws IOException {
     String relativeExtractPath = createRelativeExtractPath(zipEntry);
     if (pathConvertor != null) {
@@ -170,7 +150,7 @@ public class ZipUtil {
         return;
       }
     }
-    File child = new File(extractToDir, relativeExtractPath);
+    File child = Decompressor.entryFile(extractToDir, relativeExtractPath);
     File dir = zipEntry.isDirectory() ? child : child.getParentFile();
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException("Unable to create dir: '" + dir + "'!");
@@ -182,12 +162,8 @@ public class ZipUtil {
       progress.setText("Extracting " + relativeExtractPath + " ...");
     }
     if (contentProcessor == null) {
-      FileOutputStream fileOutputStream = new FileOutputStream(child);
-      try {
+      try (FileOutputStream fileOutputStream = new FileOutputStream(child)) {
         FileUtil.copy(entryContentStream, fileOutputStream);
-      }
-      finally {
-        fileOutputStream.close();
       }
     }
     else {

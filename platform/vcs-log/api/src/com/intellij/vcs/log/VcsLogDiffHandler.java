@@ -16,6 +16,7 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,4 +52,14 @@ public interface VcsLogDiffHandler {
   void showDiffWithLocal(@NotNull VirtualFile root,
                          @Nullable FilePath revisionPath,
                          @NotNull Hash hash, @NotNull FilePath localPath);
+
+  /**
+   * Create a ContentRevision for specified path and commit.
+   *
+   * @param filePath file path to create content revision for.
+   * @param hash     hash of the revision.
+   * @return content revision.
+   */
+  @NotNull
+  ContentRevision createContentRevision(@NotNull FilePath filePath, @NotNull Hash hash);
 }

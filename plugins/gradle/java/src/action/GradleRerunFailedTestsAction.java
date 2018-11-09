@@ -43,7 +43,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/10/2016
  */
 public class GradleRerunFailedTestsAction extends JavaRerunFailedTestsAction {
   public GradleRerunFailedTestsAction(GradleTestsExecutionConsole consoleView) {

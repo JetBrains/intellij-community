@@ -71,6 +71,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
 
   private void installCheckBoxesListeners() {
     final ActionListener filterListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateAllEnabled(e);
       }
@@ -106,7 +107,7 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     myNumBefore.setText(settings.CHANGE_BEFORE);
     myNumAfter.setText(settings.CHANGE_AFTER);
   }
-  
+
   public void saveValues(T settings) {
     myDateFilterComponent.saveValues(settings);
     settings.USE_CHANGE_BEFORE_FILTER = myUseNumBeforeFilter.isSelected();
@@ -121,17 +122,20 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     myUseNumAfterFilter.addActionListener(filterListener);
   }
 
+  @Override
   public T getSettings() {
     saveValues(mySettings);
     return mySettings;
   }
 
+  @Override
   public void setSettings(T settings) {
     mySettings = settings;
     initValues(settings);
     updateAllEnabled(null);
   }
 
+  @Override
   public String validateInput() {
     if (myUseNumAfterFilter.isSelected()) {
       try {
@@ -152,13 +156,15 @@ public abstract class StandardVersionFilterComponent<T extends ChangeBrowserSett
     return myDateFilterComponent.validateInput();
   }
 
+  @Override
   public void updateEnabledControls() {
     updateAllEnabled(null);
   }
 
+  @Override
   public String getDimensionServiceKey() {
     return getClass().getName();
   }
 }
 
-  
+

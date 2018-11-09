@@ -60,7 +60,7 @@ public class RemoteAgentReflectiveProxyFactory extends RemoteAgentProxyFactoryBa
     private final ClassLoader myTargetClassLoader;
     private final ClassLoader mySourceClassLoader;
 
-    public ReflectiveInvocationHandler(Object target, ClassLoader targetClassLoader, ClassLoader sourceClassLoader) {
+    ReflectiveInvocationHandler(Object target, ClassLoader targetClassLoader, ClassLoader sourceClassLoader) {
       myTarget = target;
       myTargetClassLoader = targetClassLoader;
       mySourceClassLoader = sourceClassLoader;
@@ -106,7 +106,7 @@ public class RemoteAgentReflectiveProxyFactory extends RemoteAgentProxyFactoryBa
 
     private final Object myMirrorValue;
 
-    public Mirror(Class<?> type, Object value, ClassLoader classLoader, ClassLoader mirrorClassLoader) throws ClassNotFoundException {
+    Mirror(Class<?> type, Object value, ClassLoader classLoader, ClassLoader mirrorClassLoader) throws ClassNotFoundException {
       if (type.isArray()) {
         Class<?> componentType = type.getComponentType();
         Mirror componentMirror = new Mirror(componentType, null, classLoader, mirrorClassLoader);

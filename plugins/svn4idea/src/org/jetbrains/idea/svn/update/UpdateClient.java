@@ -11,8 +11,6 @@ public interface UpdateClient extends SvnClient {
   long doUpdate(File path, Revision revision, Depth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
     throws SvnBindException;
 
-  void setUpdateLocksOnDemand(boolean locksOnDemand);
-
   long doSwitch(File path,
                 Url url,
                 Revision pegRevision,

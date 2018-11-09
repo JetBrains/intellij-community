@@ -77,7 +77,7 @@ public class MavenArtifactIndex {
 
 
 
-  public static MavenArtifactIndex build(@NotNull List<MavenArtifact> dependencies) {
+  public static MavenArtifactIndex build(@NotNull List<? extends MavenArtifact> dependencies) {
     if (dependencies.isEmpty()) return EMPTY_INDEX;
 
     Map<String, Map<String, List<MavenArtifact>>> map = new HashMap<>();

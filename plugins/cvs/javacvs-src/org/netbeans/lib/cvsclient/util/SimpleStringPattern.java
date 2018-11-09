@@ -42,7 +42,8 @@ public final class SimpleStringPattern
 	/**
 	 * Returns whether the specified string matches this pattern.
 	 */
-	public boolean doesMatch(String string) {
+	@Override
+        public boolean doesMatch(String string) {
 		int index = 0;
 		SubPattern subPattern = null;
 		for (SubPattern subPattern1 : subPatterns) {
@@ -130,11 +131,12 @@ public final class SimpleStringPattern
 	}
 
 	private static class MatchExactSubPattern extends SubPattern {
-		public MatchExactSubPattern(String match) {
+		MatchExactSubPattern(String match) {
 			super(match);
 		}
 
-		public int doesMatch(String string, int index) {
+		@Override
+                public int doesMatch(String string, int index) {
 			if (!string.startsWith(match, index)) {
 				return -1;
 			}
@@ -151,7 +153,8 @@ public final class SimpleStringPattern
 			super(match);
 		}
 
-		public int doesMatch(String string, int index) {
+		@Override
+                public int doesMatch(String string, int index) {
 			final int matchIndex = string.indexOf(match, index);
 			if (matchIndex < 0) {
 				return -1;
@@ -159,7 +162,8 @@ public final class SimpleStringPattern
 			return matchIndex + match.length();
 		}
 
-		public boolean checkEnding(String string) {
+		@Override
+                public boolean checkEnding(String string) {
 			return string.endsWith(match);
 		}
 
@@ -173,7 +177,8 @@ public final class SimpleStringPattern
 			super(match);
 		}
 
-		public int doesMatch(String string, int index) {
+		@Override
+                public int doesMatch(String string, int index) {
 			index++;
 			if (string.length() < index) {
 				return -1;

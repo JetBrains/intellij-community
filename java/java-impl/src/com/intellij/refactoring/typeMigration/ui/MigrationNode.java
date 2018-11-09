@@ -38,13 +38,13 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
   private final TypeMigrationLabeler myLabeler;
   private final PsiType myMigrationType;
   private final HashMap<TypeMigrationUsageInfo, Set<MigrationNode>> myProcessed;
-  private final HashSet<TypeMigrationUsageInfo> myParents;
+  private final HashSet<? extends TypeMigrationUsageInfo> myParents;
 
   public MigrationNode(final Project project,
                        final TypeMigrationUsageInfo info,
                        final PsiType migrationType,
                        final TypeMigrationLabeler labeler,
-                       final HashSet<TypeMigrationUsageInfo> parents,
+                       final HashSet<? extends TypeMigrationUsageInfo> parents,
                        final HashMap<TypeMigrationUsageInfo, Set<MigrationNode>> processed) {
     super(project, info);
     myLabeler = labeler;
@@ -70,11 +70,12 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
     return myInfo;
   }
 
+  @Override
   @NotNull
   public Collection<? extends AbstractTreeNode> getChildren() {
     if (myCachedChildren == null) {
       myCachedChildren = new ArrayList<>();
-      
+
       final PsiElement element = myInfo.getElement();
       if (element != null) {
         try {
@@ -113,10 +114,12 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
     return myCachedChildren != null;
   }
 
-  protected void update(final PresentationData presentation) {
+  @Override
+  protected void update(@NotNull final PresentationData presentation) {
 
   }
 
+  @Override
   public MigrationNode getDuplicate() {
     return myDuplicatedNode;
   }

@@ -30,6 +30,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,13 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated Please use {@link com.intellij.psi.impl.PsiElementBase} as a base class
+ * or one of its descendants, e.g. {@link ASTWrapperPsiElement}, as suggested in a
+ * <a href="https://www.jetbrains.org/intellij/sdk/docs/tutorials/custom_language_support/grammar_and_parser.html">tutorial</a>
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.2")
 public abstract class PsiElementBase extends ElementBase implements NavigatablePsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.PsiElementBase");
 

@@ -127,6 +127,17 @@ public class TroveUtil {
     });
   }
 
+  public static void addAll(@NotNull TIntHashSet where, @NotNull Collection<Integer> what) {
+    what.forEach(value -> where.add(value));
+  }
+
+  public static <V> void putAll(@NotNull TIntObjectHashMap<? super V> where, @NotNull TIntObjectHashMap<? extends V> what) {
+    what.forEachEntry((index, value) -> {
+      where.put(index, value);
+      return true;
+    });
+  }
+
   @NotNull
   public static IntStream stream(@NotNull TIntHashSet set) {
     TIntIterator it = set.iterator();
@@ -134,12 +145,25 @@ public class TroveUtil {
   }
 
   @NotNull
-  public static <T> List<T> map(@NotNull TIntHashSet set, @NotNull IntFunction<T> function) {
+  public static <T> List<T> map(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
     return stream(set).mapToObj(function).collect(Collectors.toList());
   }
 
   @NotNull
-  public static <T> TIntHashSet map2IntSet(@NotNull Collection<T> set, @NotNull ToIntFunction<T> function) {
+  public static <T> TIntObjectHashMap<T> map2MapNotNull(@NotNull TIntHashSet set, @NotNull IntFunction<? extends T> function) {
+    TIntObjectHashMap<T> result = new TIntObjectHashMap<>();
+    set.forEach(it -> {
+      T value = function.apply(it);
+      if (value != null) {
+        result.put(it, value);
+      }
+      return true;
+    });
+    return result;
+  }
+
+  @NotNull
+  public static <T> TIntHashSet map2IntSet(@NotNull Collection<? extends T> set, @NotNull ToIntFunction<? super T> function) {
     TIntHashSet result = new TIntHashSet();
     for (T t : set) {
       result.add(function.applyAsInt(t));
@@ -149,7 +173,7 @@ public class TroveUtil {
 
   public static void processBatches(@NotNull IntStream stream,
                                     int batchSize,
-                                    @NotNull ThrowableConsumer<TIntHashSet, VcsException> consumer)
+                                    @NotNull ThrowableConsumer<? super TIntHashSet, ? extends VcsException> consumer)
     throws VcsException {
     Ref<TIntHashSet> batch = new Ref<>(new TIntHashSet());
     Ref<VcsException> exception = new Ref<>();
@@ -189,7 +213,7 @@ public class TroveUtil {
     return commits;
   }
 
-  public static <T> void add(@NotNull Map<T, TIntHashSet> targetMap, @NotNull T key, int value) {
+  public static <T> void add(@NotNull Map<? super T, TIntHashSet> targetMap, @NotNull T key, int value) {
     TIntHashSet set = targetMap.get(key);
     if (set == null) {
       set = new TIntHashSet();

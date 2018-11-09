@@ -15,22 +15,15 @@
  */
 package com.intellij.execution.testframework.sm.runner.states;
 
-import com.intellij.execution.testframework.CompositePrintable;
-import com.intellij.execution.testframework.Printer;
-import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import org.jetbrains.annotations.NonNls;
-
 /**
  * @author Roman Chernyatchik
  */
 public abstract class SuiteFinishedState extends AbstractState {
-  @NonNls private static final String EMPTY_SUITE_TEXT = SMTestsRunnerBundle.message("sm.test.runner.states.suite.is.empty");
-
   //This states are common for all instances and doesn't contains
   //instance-specific information
 
   public static SuiteFinishedState PASSED_SUITE = new SuiteFinishedState() {
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.PASSED_INDEX;
     }
@@ -47,6 +40,7 @@ public abstract class SuiteFinishedState extends AbstractState {
       return true;
     }
 
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.FAILED_INDEX;
     }
@@ -64,6 +58,7 @@ public abstract class SuiteFinishedState extends AbstractState {
       return true;
     }
 
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.IGNORED_INDEX;
     }
@@ -81,6 +76,7 @@ public abstract class SuiteFinishedState extends AbstractState {
       return true;
     }
 
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.ERROR_INDEX;
     }
@@ -90,21 +86,6 @@ public abstract class SuiteFinishedState extends AbstractState {
       //noinspection HardCodedStringLiteral
       return "ERROR SUITE";
     }
-  };
-
-  /**
-   * Finished empty leaf test suite
-   */
-  public static SuiteFinishedState EMPTY_LEAF_SUITE = new EmptySuite() {
-
-    @Override
-    public void printOn(final Printer printer) {
-      super.printOn(printer);
-
-      final String msg = EMPTY_SUITE_TEXT + CompositePrintable.NEW_LINE;
-      printer.print(msg, ConsoleViewContentType.SYSTEM_OUTPUT);
-    }
-
   };
 
   /**
@@ -121,6 +102,7 @@ public abstract class SuiteFinishedState extends AbstractState {
       return false;
     }
 
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.COMPLETE_INDEX;
     }
@@ -135,22 +117,27 @@ public abstract class SuiteFinishedState extends AbstractState {
   private SuiteFinishedState() {
   }
 
+  @Override
   public boolean isInProgress() {
     return false;
   }
 
+  @Override
   public boolean isDefect() {
     return false;
   }
 
+  @Override
   public boolean wasLaunched() {
     return true;
   }
 
+  @Override
   public boolean isFinal() {
     return true;
   }
 
+  @Override
   public boolean wasTerminated() {
     return false;
   }
@@ -162,6 +149,7 @@ public abstract class SuiteFinishedState extends AbstractState {
       return false;
     }
 
+    @Override
     public Magnitude getMagnitude() {
       return Magnitude.COMPLETE_INDEX;
     }

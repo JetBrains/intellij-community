@@ -6,7 +6,7 @@ Groovy script
       Literal
         PsiElement(Integer)('27')
       PsiWhiteSpace(' ')
-      ASTWrapperPsiElement(<<)
+      ASTWrapperPsiElement(LEFT_SHIFT_SIGN)
         PsiElement(<)('<')
         PsiElement(<)('<')
       PsiWhiteSpace(' ')

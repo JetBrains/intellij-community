@@ -14,7 +14,7 @@ Groovy script
       Reference element
         PsiElement(identifier)('B')
       PsiElement(,)(',')
-      PsiErrorElement:Identifier expected
+      PsiErrorElement:<type> expected, got '{'
         <empty list>
     Implements clause
       <empty list>

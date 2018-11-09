@@ -41,7 +41,7 @@ import java.util.List;
 class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   private final StructureConfigurableContext myContext;
 
-  public AddLibraryDependencyAction(ClasspathPanel classpathPanel, final int index, final String title,
+  AddLibraryDependencyAction(ClasspathPanel classpathPanel, final int index, final String title,
                                     final StructureConfigurableContext context) {
     super(classpathPanel, index, title, PlatformIcons.LIBRARY_ICON);
     myContext = context;

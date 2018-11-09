@@ -271,7 +271,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     generateExceptionJumps(element, ExceptionUtil.collectUnhandledExceptions(element, element.getParent()));
   }
 
-  private void generateExceptionJumps(@NotNull PsiElement element, Collection<PsiClassType> unhandledExceptions) {
+  private void generateExceptionJumps(@NotNull PsiElement element, Collection<? extends PsiClassType> unhandledExceptions) {
     for (PsiClassType unhandledException : unhandledExceptions) {
       ProgressManager.checkCanceled();
       generateThrow(unhandledException, element);
@@ -917,7 +917,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
-  private void addThrowInstructions(@NotNull List<PsiElement> blocks) {
+  private void addThrowInstructions(@NotNull List<? extends PsiElement> blocks) {
     PsiElement element;
     if (blocks.isEmpty() || blocks.get(0) == null) {
       ThrowToInstruction instruction = new ThrowToInstruction(0);
@@ -1324,6 +1324,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     myStartStatementStack.pushStatement(rExpr == null ? expression : rExpr, false);
     myEndStatementStack.pushStatement(rExpr == null ? expression : rExpr, false);
 
+    boolean generatedWriteInstruction = false;
     PsiExpression lExpr = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
     if (lExpr instanceof PsiReferenceExpression) {
       PsiVariable variable = getUsedVariable((PsiReferenceExpression)lExpr);
@@ -1344,6 +1345,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           rExpr.accept(this);
         }
         generateWriteInstruction(variable);
+        generatedWriteInstruction = true;
 
         if (myAssignmentTargetsAreElements) finishElement(lExpr);
       }
@@ -1376,6 +1378,8 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         rExpr.accept(this);
       }
     }
+    //each statement should contain at least one instruction in order to getElement(offset) work
+    if (!generatedWriteInstruction) emitEmptyInstruction();
 
     myStartStatementStack.popStatement();
     myEndStatementStack.popStatement();
@@ -1566,7 +1570,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     emitEmptyInstruction();
 
     //generate jumps to all handled exception handlers
-    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent(), true));
+    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent()));
 
     finishElement(expression);
   }
@@ -1582,7 +1586,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       child.accept(this);
     }
     //generate jumps to all handled exception handlers
-    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent(), true));
+    generateExceptionJumps(expression, ExceptionUtil.getUnhandledExceptions(expression, expression.getParent()));
 
     if (pc == myCurrentFlow.getSize()) {
       // generate at least one instruction for constructor call
@@ -1710,7 +1714,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(aClass);
   }
 
-  private void addUsedVariables(@NotNull List<PsiVariable> array, @NotNull PsiElement scope) {
+  private void addUsedVariables(@NotNull List<? super PsiVariable> array, @NotNull PsiElement scope) {
     if (scope instanceof PsiReferenceExpression) {
       PsiVariable variable = getUsedVariable((PsiReferenceExpression)scope);
       if (variable != null) {
@@ -1747,7 +1751,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     private final PsiElement myElement;
     private final List<CallInstruction> myCalls;
 
-    public FinallyBlockSubroutine(@NotNull PsiElement element) {
+    FinallyBlockSubroutine(@NotNull PsiElement element) {
       myElement = element;
       myCalls = new ArrayList<>();
     }

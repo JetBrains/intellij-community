@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +48,7 @@ public abstract class CodeStyleFacade {
    * @param offset the caret offset in the editor.
    * @return the indent string (containing of tabs and/or white spaces), or null if it
    *         was not possible to calculate the indent.
-   * @deprecated Use {@link #getLineIndent(Editor, Language, int)} instead.
+   * @deprecated Use {@link #getLineIndent(Editor, Language, int, boolean)} instead.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
   @Nullable
@@ -75,38 +76,53 @@ public abstract class CodeStyleFacade {
   }
 
   /**
-   * @deprecated Use CodeStyle.getIndentSize(psiFile) instead.
+   * @deprecated Use {@link com.intellij.application.options.CodeStyle#getIndentSize(com.intellij.psi.PsiFile)} instead.
    */
+  @Deprecated
   public abstract int getIndentSize(FileType fileType);
 
   /**
-   * @deprecated
+   * Calculates the spacing (in columns) for joined lines at given offset after join lines or smart backspace actions.
+   * If there is a suitable {@code LineIndentProvider} for the language,
+   * it will be used to calculate the spacing. Otherwise, if
+   * {@code allowDocCommit} flag is true, the method will use formatter on committed document.
+   *
+   * @param editor   The editor for which the spacing must be returned.
+   * @param language Context language
+   * @param offset   Offset in the editor after the indent in the second joining line.
+   * @param allowDocCommit Allow calculation using committed document.
+   *                       <p>
+   *                         <b>NOTE: </b> Committing the document may be slow an cause performance issues on large files.
+   * @return non-negative spacing between end- and start-line tokens after the join.
    */
-  public abstract boolean isSmartTabs(final FileType fileType);
+  @ApiStatus.Experimental
+  public abstract int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit);
 
   /**
    * @deprecated Use {@code getRightMargin(Language)} method of {@code CodeStyle.getSettings(PsiFile)} or
    *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
    */
+  @Deprecated
   public abstract int getRightMargin(Language language);
 
   /**
    * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).TAB_SIZE}. See {@code CodeStyle for more information}
    */
+  @Deprecated
   public abstract int getTabSize(final FileType fileType);
 
   /**
    * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).USE_TAB_CHARACTER}. See {@code CodeStyle for more information}
    */
+  @Deprecated
   public abstract boolean useTabCharacter(final FileType fileType);
 
   /**
    * @deprecated Use {@code getLineSeparator()} method of {@code CodeStyle.getSettings(PsiFile)} or
    *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
    */
+  @Deprecated
   public abstract String getLineSeparator();
-
-  public abstract boolean projectUsesOwnSettings();
 
   public abstract boolean isUnsuitableCodeStyleConfigurable(Configurable c);
 }

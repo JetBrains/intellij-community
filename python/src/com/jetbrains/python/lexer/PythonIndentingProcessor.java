@@ -20,8 +20,11 @@ import com.intellij.lexer.FlexLexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,9 +38,12 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   protected boolean myLineHasSignificantTokens;
   protected int myLastNewLineIndent = -1;
   private int myCurrentNewLineIndent = 0;
+  
   protected List<PendingToken> myTokenQueue = new ArrayList<>();
   private int myLineBreakBeforeFirstCommentIndex = -1;
   protected boolean myProcessSpecialTokensPending = false;
+
+  private final Stack<String> myFStringStack = new Stack<>();
 
   private static final boolean DUMP_TOKENS = false;
   private final TokenSet RECOVERY_TOKENS = PythonDialectsTokenSetProvider.INSTANCE.getUnbalancedBracesRecoveryTokens();
@@ -82,7 +88,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   private static class PendingCommentToken extends PendingToken {
     private final int myIndent;
 
-    public PendingCommentToken(IElementType type, int start, int end, int indent) {
+    PendingCommentToken(IElementType type, int start, int end, int indent) {
       super(type, start, end);
       myIndent = indent;
     }
@@ -103,6 +109,11 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
 
   protected int getBaseTokenEnd() {
     return super.getTokenEnd();
+  }
+
+  @NotNull
+  private String getBaseTokenText() {
+    return getBufferSequence().subSequence(getBaseTokenStart(), getBaseTokenEnd()).toString();
   }
 
   private boolean isBaseAt(IElementType tokenType) {
@@ -179,6 +190,25 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   protected void advanceBase() {
     super.advance();
     checkSignificantTokens();
+    checkFString();
+  }
+
+  private void checkFString() {
+    final String tokenText = getBaseTokenText();
+    if (isBaseAt(PyTokenTypes.FSTRING_START)) {
+      final int prefixLength = PyStringLiteralUtil.getPrefixLength(tokenText);
+      final String openingQuotes = tokenText.substring(prefixLength);
+      assert !openingQuotes.isEmpty();
+      myFStringStack.push(openingQuotes);
+    }
+    else if (isBaseAt(PyTokenTypes.FSTRING_END)) {
+      while (!myFStringStack.isEmpty()) {
+        final String lastOpeningQuotes = myFStringStack.pop();
+        if (lastOpeningQuotes.equals(tokenText)) {
+          break;
+        }
+      }
+    }
   }
 
   protected void pushToken(IElementType type, int start, int end) {
@@ -205,6 +235,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
     adjustBraceLevel();
     myLineHasSignificantTokens = false;
     checkSignificantTokens();
+    checkFString();
     if (isBaseAt(PyTokenTypes.SPACE)) {
       processIndent(0, PyTokenTypes.SPACE);
     }
@@ -311,9 +342,14 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   protected void processLineBreak(int startPos) {
-    if (myBraceLevel == 0) {
-      if (myLineHasSignificantTokens) {
+    // See https://www.python.org/dev/peps/pep-0498/#expression-evaluation
+    final boolean allFStringsAreTripleQuoted = ContainerUtil.and(myFStringStack, quotes -> quotes.length() == 3);
+    final boolean insideImplicitFragmentParentheses = !myFStringStack.isEmpty() && allFStringsAreTripleQuoted;
+    final boolean shouldTerminateFStrings = !myFStringStack.isEmpty() && !allFStringsAreTripleQuoted;
+    if ((myBraceLevel == 0 && !insideImplicitFragmentParentheses) || shouldTerminateFStrings) {
+      if (myLineHasSignificantTokens || shouldTerminateFStrings) {
         pushToken(PyTokenTypes.STATEMENT_BREAK, startPos, startPos);
+        myFStringStack.clear();
       }
       myLineHasSignificantTokens = false;
       advanceBase();

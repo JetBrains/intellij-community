@@ -29,6 +29,7 @@ public class JavaModuleIndexImpl extends JpsElementBase<JavaModuleIndexImpl> imp
     myExcludes = excludes;
   }
 
+  @Override
   @NotNull
   public JavaModuleIndexImpl createCopy() {
     JavaModuleIndexImpl copy = new JavaModuleIndexImpl(myExcludes);
@@ -36,6 +37,7 @@ public class JavaModuleIndexImpl extends JpsElementBase<JavaModuleIndexImpl> imp
     return copy;
   }
 
+  @Override
   public void applyChanges(@NotNull JavaModuleIndexImpl modified) {
     // not supported
   }

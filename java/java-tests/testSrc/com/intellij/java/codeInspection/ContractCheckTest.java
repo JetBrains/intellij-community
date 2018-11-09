@@ -37,6 +37,7 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   public void testDelegationWithUnknownArgument() { doTest(); }
   public void testEqualsUnknownValue() { doTest(); }
   public void testMissingFail() { doTest(); }
+  public void testInheritedContract() { doTest(); }
   public void testExceptionWhenDeclaredNotNull() { doTest(); }
   public void testCheckSuperContract() { doTest(); }
   public void testNestedCallsMayThrow() { doTest(); }
@@ -51,4 +52,7 @@ public class ContractCheckTest extends LightCodeInsightFixtureTestCase {
   public void testUnknownIfCondition() { doTest(); }
   public void testCallingNotNullMethod() { doTest(); }
   public void testMutationSignatureProblems() { doTest(); }
+  public void testNewThisParam() { doTest(); }
+  public void testConditionsConflict() { doTest(); }
+  public void testWrongFailSuggestion() { doTest(); }
 }

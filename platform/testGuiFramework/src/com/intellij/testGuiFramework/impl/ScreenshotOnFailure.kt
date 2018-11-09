@@ -16,10 +16,10 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.testGuiFramework.framework.IdeTestApplication
+import com.intellij.testGuiFramework.framework.GuiTestPaths
+import com.intellij.testGuiFramework.util.ScreenshotTaker
 import org.fest.swing.core.BasicComponentPrinter
 import org.fest.swing.exception.ComponentLookupException
-import org.fest.swing.image.ScreenshotTaker
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import java.io.ByteArrayOutputStream
@@ -32,30 +32,19 @@ class ScreenshotOnFailure: TestWatcher() {
 
   override fun failed(throwable: Throwable?, description: Description?) {
     val screenshotName = "${description!!.testClass.simpleName}.${description.methodName}"
-    takeScreenshotOnFailure(throwable!!, screenshotName)
+    takeScreenshot(screenshotName, throwable)
   }
 
   companion object {
     private val LOG = Logger.getInstance(ScreenshotOnFailure::class.java)
     private val myScreenshotTaker = ScreenshotTaker()
 
-    fun takeScreenshotOnFailure(t: Throwable, screenshotName: String) {
-
+    fun takeScreenshot(screenshotName: String, t: Throwable? = null) {
       try {
         val file = getOrCreateScreenshotFile(screenshotName)
         if (t is ComponentLookupException) LOG.error("${getHierarchy()} \n caused by:", t)
-        myScreenshotTaker.saveDesktopAsPng(file.path)
-        LOG.info("Screenshot: $file")
-      }
-      catch (e: Exception) {
-        LOG.error("Screenshot failed. ${e.message}")
-      }
-    }
-
-    fun takeScreenshot(screenshotName: String) {
-      try {
-        val file = getOrCreateScreenshotFile(screenshotName)
-        myScreenshotTaker.saveDesktopAsPng(file.path)
+        myScreenshotTaker.safeTakeScreenshotAndSave(file)
+        println("Screenshot saved to $file")
         LOG.info("Screenshot: $file")
       }
       catch (e: Exception) {
@@ -64,9 +53,9 @@ class ScreenshotOnFailure: TestWatcher() {
     }
 
     private fun getOrCreateScreenshotFile(screenshotName: String): File {
-      var file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.png")
+      var file = File(GuiTestPaths.failedTestScreenshotDir, "$screenshotName.jpg")
       if (file.exists())
-        file = File(IdeTestApplication.getFailedTestScreenshotDirPath(), "$screenshotName.${getDateAndTime()}.png")
+        file = File(GuiTestPaths.failedTestScreenshotDir, "$screenshotName.${getDateAndTime()}.jpg")
       file.delete()
       return file
     }

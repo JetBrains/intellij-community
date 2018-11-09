@@ -28,7 +28,6 @@ import java.util.List;
  * Implementations of this interface are expected to provide correct {@link #equals(Object)} & {@link #hashCode()} implementations.
  * 
  * @author Denis Zhdanov
- * @since 9/17/12 11:51 AM
  */
 public interface ArrangementSettings extends Cloneable {
 
@@ -42,6 +41,7 @@ public interface ArrangementSettings extends Cloneable {
    * @deprecated collect match rules from {@link #getSections()}
    * @return
    */
+  @Deprecated
   @NotNull
   List<? extends ArrangementMatchRule> getRules();
 

@@ -5,14 +5,12 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -61,7 +59,18 @@ public class QuickFixWrapper implements IntentionAction, PriorityAction {
     PsiElement psiElement = myDescriptor.getPsiElement();
     if (psiElement == null || !psiElement.isValid()) return false;
     final LocalQuickFix fix = getFix();
-    return !(fix instanceof IntentionAction) || ((IntentionAction)fix).isAvailable(project, editor, file);
+    if (!(fix instanceof ElementAwareLocalQuickFix)) {
+      return true;
+    }
+    int offset = editor.getCaretModel().getOffset();
+    if (myDescriptor instanceof ProblemDescriptorBase) {
+      TextRange range = ((ProblemDescriptorBase)myDescriptor).getTextRange();
+      if (range != null && range.getEndOffset() == offset) {
+        offset--;
+      }
+    }
+    PsiElement element = file.findElementAt(offset);
+    return element == null || ((ElementAwareLocalQuickFix)fix).isAvailable(project, myDescriptor, element);
   }
 
   @Override

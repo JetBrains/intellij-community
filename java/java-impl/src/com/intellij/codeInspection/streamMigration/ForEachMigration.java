@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInspection.streamMigration.CollectMigration.getAddedElementType;
 
-/**
- * @author Tagir Valeev
- */
 class ForEachMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(ForEachMigration.class);
 

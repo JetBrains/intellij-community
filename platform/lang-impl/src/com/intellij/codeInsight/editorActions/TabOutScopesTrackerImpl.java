@@ -119,7 +119,7 @@ public class TabOutScopesTrackerImpl implements TabOutScopesTracker {
     }
 
     @Override
-    public void beforeDocumentChange(DocumentEvent event) {
+    public void beforeDocumentChange(@NotNull DocumentEvent event) {
       List<RangeMarker> scopes = getCurrentScopes(false);
       if (scopes == null) return;
       int caretOffset = myEditor.getCaretModel().getOffset();

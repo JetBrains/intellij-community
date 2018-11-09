@@ -65,7 +65,8 @@ public class SvnRevisionPanel extends JPanel {
 
     myRevisionField.getTextField().setColumns(10);
     myRevisionField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         notifyChangeListeners();
       }
     });
@@ -74,7 +75,7 @@ public class SvnRevisionPanel extends JPanel {
   private void chooseRevision() {
     if (myProject != null && myUrlProvider != null) {
       try {
-        SvnRepositoryLocation location = new SvnRepositoryLocation(myUrlProvider.compute().toString());
+        SvnRepositoryLocation location = new SvnRepositoryLocation(myUrlProvider.compute());
         SvnChangeList version = SvnSelectRevisionUtil.chooseCommittedChangeList(myProject, location, myRoot);
         if (version != null) {
           myRevisionField.setText(String.valueOf(version.getNumber()));

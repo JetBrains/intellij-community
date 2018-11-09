@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListOwner;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
+import com.intellij.openapi.vcs.changes.LogicalLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -43,6 +44,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
   public static final Object LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
 
+  protected static final int CONFLICTS_SORT_WEIGHT = 0;
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
   protected static final int CHANGE_LIST_SORT_WEIGHT = 2;
   protected static final int REPOSITORY_SORT_WEIGHT = 3;
@@ -65,20 +67,45 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   private boolean myHelper;
   @NotNull private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
-  protected ChangesBrowserNode(Object userObject) {
+  protected ChangesBrowserNode(T userObject) {
     super(userObject);
     myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   @NotNull
-  public static ChangesBrowserNode createRoot(@NotNull Project project) {
-    ChangesBrowserNode root = create(project, ROOT_NODE_VALUE);
+  public static ChangesBrowserNode createRoot() {
+    ChangesBrowserNode root = createObject(ROOT_NODE_VALUE);
     root.markAsHelperNode();
     return root;
   }
 
   @NotNull
-  public static ChangesBrowserNode create(@NotNull LocallyDeletedChange change) {
+  public static ChangesBrowserNode createChange(@Nullable Project project, @NotNull Change userObject) {
+    return new ChangesBrowserChangeNode(project, userObject, null);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createFile(@Nullable Project project, @NotNull VirtualFile userObject) {
+    return new ChangesBrowserFileNode(project, userObject);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createFilePath(@NotNull FilePath userObject) {
+    return new ChangesBrowserFilePathNode(userObject);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createLogicallyLocked(@Nullable Project project, @NotNull VirtualFile file, @NotNull LogicalLock lock) {
+    return new ChangesBrowserLogicallyLockedFile(project, file, lock);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createLockedFolders(@NotNull Project project) {
+    return new ChangesBrowserLockedFoldersNode(project, LOCKED_FOLDERS_TAG);
+  }
+
+  @NotNull
+  public static ChangesBrowserNode createLocallyDeleted(@NotNull LocallyDeletedChange change) {
     return new ChangesBrowserLocallyDeletedNode(change);
   }
 
@@ -88,9 +115,15 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   }
 
   @NotNull
+  public static ChangesBrowserNode createObject(@NotNull Object userObject) {
+    return new ChangesBrowserNode<>(userObject);
+  }
+
+  @Deprecated
+  @NotNull
   public static ChangesBrowserNode create(@NotNull Project project, @NotNull Object userObject) {
     if (userObject instanceof Change) {
-      return new ChangesBrowserChangeNode(project, (Change) userObject, null);
+      return new ChangesBrowserChangeNode(project, (Change)userObject, null);
     }
     if (userObject instanceof VirtualFile) {
       return new ChangesBrowserFileNode(project, (VirtualFile) userObject);
@@ -104,7 +137,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     if (userObject instanceof ChangesBrowserLogicallyLockedFile) {
       return (ChangesBrowserNode) userObject;
     }
-    return new ChangesBrowserNode(userObject);
+    return new ChangesBrowserNode<>(userObject);
   }
 
   @Override
@@ -328,7 +361,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   private static class Tag {
     @NotNull private final String myKey;
 
-    public Tag(@NotNull String key) {
+    Tag(@NotNull String key) {
       myKey = key;
     }
 

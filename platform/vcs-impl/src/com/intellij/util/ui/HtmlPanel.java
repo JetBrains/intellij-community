@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -109,7 +108,7 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     Document document = getDocument();
     if (document instanceof HTMLDocument) {
       StyleSheet styleSheet = ((HTMLDocument)document).getStyleSheet();
-      String linkColor = "#" + ColorUtil.toHex(JBColor.link());
+      String linkColor = "#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor());
       styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}");
     }
   }

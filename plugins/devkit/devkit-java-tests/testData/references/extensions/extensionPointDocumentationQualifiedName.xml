@@ -1,0 +1,17 @@
+<idea-plugin>
+
+    <id>foo</id>
+
+    <extensionPoints>
+        <extensionPoint qualifiedName="com.my.bar" interface="bar.MyExtensionPoint">
+          <with attribute="attributeName" implements="java.lang.String"/>
+          <with tag="tagName" implements="java.lang.Integer"/>
+        </extensionPoint>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="com">
+
+        <my.b<caret>ar/>
+    </extensions>
+
+</idea-plugin>

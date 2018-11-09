@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -60,6 +61,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -93,16 +95,18 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     super(project);
     myInnerClassName = innerClassName;
     myExtractProcessor = new MyExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, innerClassName, HelpID.EXTRACT_METHOD_OBJECT);
-    myElementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myElementFactory = JavaPsiFacade.getElementFactory(project);
     myStyleSettings = editor != null ? CodeStyle.getSettings(editor) :
                       CodeStyle.getSettings(elements[0].getContainingFile());
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull final UsageInfo[] usages) {
     return new ExtractMethodObjectViewDescriptor(getMethod());
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     final ArrayList<UsageInfo> result = new ArrayList<>();
@@ -152,6 +156,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
+  @Override
   public void performRefactoring(@NotNull final UsageInfo[] usages) {
     try {
       if (isCreateInnerClass()) {
@@ -373,7 +378,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
     for (PsiLocalVariable var : vars) {
       final String fieldName = var2FieldNames.get(var.getName());
-      for (PsiReference reference : ReferencesSearch.search(var)) {
+      for (PsiReference reference : ReferencesSearch.search(var, var.getUseScope())) {
         reference.handleElementRename(fieldName);
       }
     }
@@ -527,6 +532,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return "";
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return REFACTORING_NAME;
@@ -622,7 +628,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       parameterList.add(parm);
 
       final PsiField field = createField(parm, constructor, parameterModifierList.hasModifierProperty(PsiModifier.FINAL));
-      for (PsiReference reference : ReferencesSearch.search(parameter)) {
+      for (PsiReference reference : ReferencesSearch.search(parameter, parameter.getUseScope())) {
         reference.handleElementRename(field.getName());
       }
     }
@@ -641,9 +647,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
       final PsiModifierList modifierList = field.getModifierList();
       LOG.assertTrue(modifierList != null);
-      final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-      if (manager.isNullable(parameter, false)) {
-        modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + manager.getDefaultNullable(), field), null);
+      if (NullableNotNullManager.isNullable(parameter)) {
+        final String annotationName = NullableNotNullManager.getInstance(myProject).getDefaultNullable();
+        modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + annotationName, field), null);
       }
       modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
@@ -721,7 +727,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   public PsiClass getInnerClass() {
     return myInnerClass;
   }
-  
+
   protected boolean isFoldingApplicable() {
     return true;
   }
@@ -746,6 +752,18 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
                                         String helpId) {
       super(project, editor, elements, forcedReturnType, refactoringName, initialMethodName, helpId);
 
+    }
+
+    @Override
+    protected void initDuplicates(@Nullable Set<TextRange> textRanges) {
+      myDuplicates = Optional.ofNullable(getExactDuplicatesFinder())
+                             .map(finder -> finder.findDuplicates(myTargetClass))
+                             .orElse(new ArrayList<>());
+    }
+
+    @Override
+    public boolean initParametrizedDuplicates(boolean showDialog) {
+      return false;
     }
 
     @Override
@@ -853,8 +871,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           PsiStatement st = null;
           final String pureName = getPureName(variable);
           final int varIdxInOutput = ArrayUtil.find(myOutputVariables, variable);
-          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null 
-                                    ? GenerateMembersUtil.suggestGetterName(myOutputFields[varIdxInOutput]) 
+          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null
+                                    ? GenerateMembersUtil.suggestGetterName(myOutputFields[varIdxInOutput])
                                     : GenerateMembersUtil.suggestGetterName(pureName, variable.getType(), myProject);
           if (isDeclaredInside(variable)) {
             st = myElementFactory.createStatementFromText(

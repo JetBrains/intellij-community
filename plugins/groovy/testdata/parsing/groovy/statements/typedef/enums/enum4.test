@@ -45,7 +45,7 @@ Groovy script
             PsiElement(,)(',')
             PsiWhiteSpace(' ')
             Literal
-              PsiElement(Gstring)('"bar"')
+              PsiElement(double quoted string)('"bar"')
             PsiElement())(')')
           PsiWhiteSpace(' ')
           Enum constant initializer
@@ -67,8 +67,8 @@ Groovy script
               PsiElement(new line)('\n  ')
               PsiElement(})('}')
         PsiElement(,)(',')
+        PsiElement(new line)('\n\n  ')
         Enumeration constant
-          PsiElement(new line)('\n\n  ')
           Modifiers
             Annotation
               PsiElement(@)('@')
@@ -82,7 +82,7 @@ Groovy script
           Arguments
             PsiElement(()('(')
             Literal
-              PsiElement(Gstring)('"foo"')
+              PsiElement(double quoted string)('"foo"')
             PsiElement(,)(',')
             PsiWhiteSpace(' ')
             Typecast expression

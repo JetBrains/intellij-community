@@ -68,7 +68,7 @@ public class LambdaAsyncMethodFilter extends BasicStepMethodFilter {
   private static class LambdaInstanceBreakpoint extends StepIntoBreakpoint {
     private final long myLambdaId;
 
-    public LambdaInstanceBreakpoint(@NotNull Project project,
+    LambdaInstanceBreakpoint(@NotNull Project project,
                                     long lambdaId,
                                     @NotNull SourcePosition pos,
                                     @NotNull BreakpointStepMethodFilter filter) {

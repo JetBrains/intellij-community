@@ -45,7 +45,7 @@ import java.util.List;
  * @author cdr
  */
 public class OrderEntryTest extends DaemonAnalyzerTestCase {
-  @NonNls private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/quickFix/orderEntry/";
+  @NonNls public static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/quickFix/orderEntry/";
 
   @Override
   protected void setUpProject() throws Exception {
@@ -74,9 +74,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     }
   }
 
-  private void doTest(String fileName) {
-    String testFullPath = BASE_PATH + fileName;
-
+  private void doTest(String fileName, boolean performAction) {
     VirtualFile root = ModuleRootManager.getInstance(myModule).getContentRoots()[0].getParent();
     configureByExistingFile(root.findFileByRelativePath(fileName));
     VirtualFile virtualFile = getFile().getVirtualFile();
@@ -84,7 +82,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     Collection<HighlightInfo> infosBefore = highlightErrors();
     final IntentionAction action = findActionAndCheck(actionHint, infosBefore);
 
-    if(action != null) {
+    if(action != null && performAction) {
       String text = action.getText();
       WriteCommandAction.runWriteCommandAction(null, () -> action.invoke(getProject(), getEditor(), getFile()));
 
@@ -93,7 +91,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
       Collection<HighlightInfo> infosAfter = highlightErrors();
       final IntentionAction afterAction = findActionWithText(text);
       if (afterAction != null) {
-        fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
+        fail("Action '" + text + "' is still available after its invocation in test " + BASE_PATH + fileName);
       }
       assertTrue(infosBefore.size() > infosAfter.size());
     }
@@ -111,11 +109,11 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
 
   public void testAddDependency() {
     removeModule();
-    doTest("B/src/y/AddDependency.java");
+    doTest("B/src/y/AddDependency.java", true);
   }
 
   public void testAddAmbiguousDependency() {
-    doTest("B/src/y/AddAmbiguous.java");
+    doTest("B/src/y/AddAmbiguous.java", true);
   }
 
   private void removeModule() {
@@ -126,7 +124,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddLibrary() {
-    doTest("B/src/y/AddLibrary.java");
+    doTest("B/src/y/AddLibrary.java", true);
   }
 
   public void testAddCircularDependency() {
@@ -136,7 +134,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     removeModule();
 
     try {
-      doTest("B/src/y/AddDependency.java");
+      doTest("B/src/y/AddDependency.java", true);
       fail("user should have been warned");
     }
     catch (RuntimeException e) {
@@ -149,19 +147,19 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddJunit() {
-    doTest("A/src/x/DoTest.java");
+    doTest("A/src/x/DoTest.java", false);
   }
 
   public void testAddJunit4() {
-    doTest("A/src/x/DoTest4.java");
+    doTest("A/src/x/DoTest4.java", false);
   }
 
   public void testAddJunit4inJunit() {
-    doTest("A/src/x/DoTest4junit.java");
+    doTest("A/src/x/DoTest4junit.java", false);
   }
 
   public void testExistingJunit() {
-    doTest("B/src/y/AddExistingJunit.java");
+    doTest("B/src/y/AddExistingJunit.java", true);
   }
 
   private void removeLibs() {

@@ -38,6 +38,7 @@ public class SafeDeleteFieldWriteReference extends SafeDeleteReferenceUsageInfo 
                             && ((PsiExpressionStatement) parent).getExpression() == expression;
   }
 
+  @Override
   public void deleteElement() throws IncorrectOperationException {
     myExpression.getParent().delete();
   }

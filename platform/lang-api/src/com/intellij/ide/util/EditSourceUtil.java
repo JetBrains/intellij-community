@@ -28,13 +28,10 @@ import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Function;
 
 public class EditSourceUtil {
   private EditSourceUtil() { }
@@ -66,13 +63,7 @@ public class EditSourceUtil {
   }
 
   private static PsiElement getNavigatableOriginalElement(@NotNull PsiElement element) {
-    final List<? extends PsiElement> originalElements = collectAllOriginalElements(element);
-    for (PsiElement original: originalElements) {
-      if (canNavigate(original)) {
-        return original;
-      }
-    }
-    return null;
+    return processAllOriginalElements(element, original -> canNavigate(original) ? original : null);
   }
 
   public static boolean canNavigate(PsiElement element) {
@@ -97,21 +88,13 @@ public class EditSourceUtil {
   /**
    * Collect original elements from all filters.
    */
-  @NotNull
-  private static List<? extends PsiElement> collectAllOriginalElements(@NotNull PsiElement element) {
-    List<PsiElement> result = null;
+  private static PsiElement processAllOriginalElements(@NotNull PsiElement element, @NotNull Function<? super PsiElement, ? extends PsiElement> processor) {
     for (GeneratedSourcesFilter filter : GeneratedSourcesFilter.EP_NAME.getExtensions()) {
-      result = addAll(filter.getOriginalElements(element), result);
+      for (PsiElement originalElement: filter.getOriginalElements(element)) {
+        PsiElement apply = processor.apply(originalElement);
+        if (apply != null) return apply;
+      }
     }
-    return ObjectUtils.notNull(result, Collections.<PsiElement>emptyList());
-  }
-
-  @NotNull
-  private static <T> List<T> addAll(@NotNull List<? extends T> elements, List<T> result) {
-    if (result == null) {
-      return ContainerUtil.newArrayList(elements);
-    }
-    result.addAll(elements);
-    return result;
+    return null;
   }
 }

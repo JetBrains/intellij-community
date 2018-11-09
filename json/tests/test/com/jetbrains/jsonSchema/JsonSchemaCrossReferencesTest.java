@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,6 +13,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -23,10 +25,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
-import com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
+import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.schemaFile.TestJsonSchemaMappingsProjectConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -109,10 +110,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void doCheck() {
+      public void doCheck() throws Exception {
         final VirtualFile moduleFile = getProject().getBaseDir().findChild(myModuleDir);
         assertNotNull(moduleFile);
-        checkSchemaCompletion(moduleFile, "basePropertiesSchema.json");
+        checkSchemaCompletion(moduleFile, "basePropertiesSchema.json", false);
       }
     });
   }
@@ -144,15 +145,15 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       }
 
       @Override
-      public void doCheck() {
+      public void doCheck() throws Exception {
         final VirtualFile moduleFile = getProject().getBaseDir().findChild(myModuleDir);
         assertNotNull(moduleFile);
-        checkSchemaCompletion(moduleFile, "baseSchema.json");
+        checkSchemaCompletion(moduleFile, "baseSchema.json", true);
       }
     });
   }
 
-  private void checkSchemaCompletion(VirtualFile moduleFile, final String fileName) {
+  private void checkSchemaCompletion(VirtualFile moduleFile, final String fileName, boolean delayAfterUpdate) throws InterruptedException {
     doHighlighting();
     complete();
     assertStringItems("\"one\"", "\"two\"");
@@ -168,12 +169,16 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       document.replaceString(start, start + str.length(), "\"enum\": [\"one1\", \"two1\"]");
-
       fileDocumentManager.saveAllDocuments();
     });
     LookupImpl lookup = getActiveLookup();
     if (lookup != null) lookup.hide();
     JsonSchemaService.Impl.get(getProject()).reset();
+
+    if (delayAfterUpdate) {
+      // give time for vfs callbacks to finish
+      Thread.sleep(400);
+    }
 
     doHighlighting();
     complete();
@@ -191,12 +196,15 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
     skeleton(new Callback() {
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        int offset = getCaretOffset();
         final PsiReference referenceAt = myFile.findReferenceAt(offset);
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("\"baseEnum\"", resolve.getText());
+        Assert.assertEquals("{\n" +
+                            "      \"type\": \"string\",\n" +
+                            "      \"enum\": [\"one\", \"two\"]\n" +
+                            "    }", resolve.getText());
       }
 
       @Override
@@ -248,12 +256,16 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        int offset = getCaretOffset();
         final PsiReference referenceAt = myFile.findReferenceAt(offset);
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("\"enum\"", resolve.getText());
+        Assert.assertTrue(StringUtil.equalsIgnoreWhitespaces("{\n" +
+                            "            \"type\": \"array\",\n" +
+                            "            \"minItems\": 1,\n" +
+                            "            \"uniqueItems\": true\n" +
+                            "        }", resolve.getText()));
       }
     });
   }
@@ -279,20 +291,8 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-        PsiElement element = myFile.findElementAt(offset);
-        boolean found = false;
-        while (element.getTextRange().contains(offset)) {
-          if (JsonSchemaReferenceContributor.PROPERTY_NAME_PATTERN.accepts(element)) {
-            found = true;
-            break;
-          }
-          element = element.getParent();
-        }
-        Assert.assertTrue(found);
-        final PsiReference referenceAt = myFile.findReferenceAt(offset);
-        Assert.assertNotNull(referenceAt);
-        final PsiElement resolve = referenceAt.resolve();
+        int offset = getCaretOffset();
+        final PsiElement resolve = GotoDeclarationAction.findTargetElement(getProject(), myEditor, offset);
         Assert.assertNotNull(resolve);
         Assert.assertEquals("basePropertiesSchema.json", resolve.getContainingFile().getName());
         Assert.assertEquals("\"baseEnum\"", resolve.getText());
@@ -318,13 +318,13 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        int offset = getCaretOffset();
         final PsiReference referenceAt = myFile.findReferenceAt(offset);
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
         Assert.assertEquals("definitionsSchema.json", resolve.getContainingFile().getName());
-        Assert.assertEquals("\"findMe\"", resolve.getText());
+        Assert.assertEquals("{\"type\": \"object\"}", resolve.getText());
       }
     });
   }
@@ -349,7 +349,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        int offset = getCaretOffset();
         final PsiReference referenceAt = myFile.findReferenceAt(offset);
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
@@ -379,9 +379,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final String text = myFile.getText();
         final int indexOf = text.indexOf("dependencies");
         assertTrue(indexOf > 0);
-        final PsiReference referenceAt = myFile.findReferenceAt(indexOf);
-        Assert.assertNotNull(referenceAt);
-        final PsiElement resolve = referenceAt.resolve();
+        final PsiElement resolve = GotoDeclarationAction.findTargetElement(getProject(), myEditor, indexOf);
         Assert.assertNotNull(resolve);
         Assert.assertEquals("packageJsonSchema.json", resolve.getContainingFile().getName());
         Assert.assertEquals("\"dependencies\"", resolve.getText());
@@ -406,10 +404,8 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-        final PsiReference referenceAt = myFile.findReferenceAt(offset);
-        Assert.assertNotNull(referenceAt);
-        final PsiElement resolve = referenceAt.resolve();
+        int offset = getCaretOffset();
+        final PsiElement resolve = GotoDeclarationAction.findTargetElement(getProject(), myEditor, offset);
         Assert.assertNotNull(resolve);
         Assert.assertEquals("nestedDefinitionsSchema.json", resolve.getContainingFile().getName());
         Assert.assertEquals("\"definitions\"", resolve.getText());
@@ -436,10 +432,8 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-        final PsiReference referenceAt = myFile.findReferenceAt(offset);
-        Assert.assertNotNull(referenceAt);
-        final PsiElement resolve = referenceAt.resolve();
+        int offset = getCaretOffset();
+        final PsiElement resolve = GotoDeclarationAction.findTargetElement(getProject(), myEditor, offset);
         Assert.assertNotNull(resolve);
         Assert.assertEquals("nestedAllOfOneOfDefinitionsSchema.json", resolve.getContainingFile().getName());
         Assert.assertEquals("\"begriff\"", resolve.getText());
@@ -466,10 +460,8 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-        final PsiReference referenceAt = myFile.findReferenceAt(offset);
-        Assert.assertNotNull(referenceAt);
-        final PsiElement resolve = referenceAt.resolve();
+        int offset = getCaretOffset();
+        final PsiElement resolve = GotoDeclarationAction.findTargetElement(getProject(), myEditor, offset);
         Assert.assertNotNull(resolve);
         Assert.assertEquals("baseSchema.json", resolve.getContainingFile().getName());
         Assert.assertEquals("\"findMe\"", resolve.getText());
@@ -544,12 +536,14 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
+        int offset = getCaretOffset();
         final PsiReference referenceAt = myFile.findReferenceAt(offset);
         Assert.assertNotNull(referenceAt);
         final PsiElement resolve = referenceAt.resolve();
         Assert.assertNotNull(resolve);
-        Assert.assertEquals("\"findDefinition\"", resolve.getText());
+        Assert.assertEquals("{\n" +
+                            "      \"enum\": [1,4,8]\n" +
+                            "    }", resolve.getText());
         final PsiElement parent = resolve.getParent();
         Assert.assertTrue(parent instanceof JsonProperty);
         final JsonValue value = ((JsonProperty)parent).getValue();
@@ -604,10 +598,8 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-        final PsiReference referenceAt = myFile.findReferenceAt(offset);
-        Assert.assertNotNull(referenceAt);
-        final PsiElement resolve = referenceAt.resolve();
+        int offset = getCaretOffset();
+        final PsiElement resolve = GotoDeclarationAction.findTargetElement(getProject(), myEditor, offset);
         Assert.assertNotNull(resolve);
         Assert.assertEquals("\"properties\"", resolve.getText());
         final PsiElement parent = resolve.getParent();
@@ -642,7 +634,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       final JsonStringLiteral literal = ObjectUtils.tryCast(ref.getValue(), JsonStringLiteral.class);
       Assert.assertNotNull(literal);
 
-      final PsiReference reference = psi.findReferenceAt(literal.getTextRange().getStartOffset() + 1);
+      final PsiReference reference = psi.findReferenceAt(literal.getTextRange().getEndOffset() - 1);
       Assert.assertNotNull(reference);
       String positiveOrNonNegative = ((JsonSchemaProjectSelfProviderFactory.MyJsonSchemaFileProvider)provider).isSchemaV4()
         ? "positiveInteger"
@@ -650,7 +642,10 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
       Assert.assertEquals("#/definitions/" + positiveOrNonNegative, reference.getCanonicalText());
       final PsiElement resolve = reference.resolve();
       Assert.assertNotNull(resolve);
-      Assert.assertEquals("\"" + positiveOrNonNegative + "\"", resolve.getText());
+      Assert.assertTrue(StringUtil.equalsIgnoreWhitespaces("{\n" +
+                          "            \"type\": \"integer\",\n" +
+                          "            \"minimum\": 0\n" +
+                          "        }", resolve.getText()));
       Assert.assertTrue(resolve.getParent() instanceof JsonProperty);
       Assert.assertEquals(positiveOrNonNegative, ((JsonProperty)resolve.getParent()).getName());
     }
@@ -673,26 +668,30 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        final String midia = "midia";
-        checkNavigationTo(midia, JsonSchemaObject.DEFINITIONS);
+        final String midia = "{\n" +
+                             "      \"properties\": {\n" +
+                             "        \"mittel\" : {\n" +
+                             "          \"type\": [\"integer\", \"boolean\"],\n" +
+                             "          \"description\": \"this is found!\",\n" +
+                             "          \"enum\": [1,2, false]\n" +
+                             "        }\n" +
+                             "      }\n" +
+                             "    }";
+        checkNavigationTo(midia, "midia", getCaretOffset(), JsonSchemaObject.DEFINITIONS, true);
       }
     });
   }
 
-  private void checkNavigationTo(@NotNull String name, @NotNull String base) {
-    int offset = myEditor.getCaretModel().getPrimaryCaret().getOffset();
-    final PsiElement element = myFile.findElementAt(offset);
-    Assert.assertNotNull(element);
-
-    checkNavigationTo(name, offset, base);
+  private int getCaretOffset() {
+    return myEditor.getCaretModel().getPrimaryCaret().getOffset();
   }
 
-  private void checkNavigationTo(@NotNull String name, int offset, @NotNull String base) {
-    final PsiReference referenceAt = myFile.findReferenceAt(offset);
-    Assert.assertNotNull(referenceAt);
-    final PsiElement resolve = referenceAt.resolve();
+  private void checkNavigationTo(@NotNull String resolvedText, @NotNull String name, int offset, @NotNull String base, boolean isReference) {
+    final PsiElement resolve = isReference
+                               ? myFile.findReferenceAt(offset).resolve()
+                               : GotoDeclarationAction.findTargetElement(getProject(), myEditor, offset);
     Assert.assertNotNull(resolve);
-    Assert.assertEquals("\"" + name + "\"", resolve.getText());
+    Assert.assertEquals(resolvedText, resolve.getText());
     final PsiElement parent = resolve.getParent();
     Assert.assertTrue(parent instanceof JsonProperty);
     Assert.assertEquals(name, ((JsonProperty)parent).getName());
@@ -717,7 +716,9 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkNavigationTo("all", JsonSchemaObject.DEFINITIONS);
+        checkNavigationTo("{\n" +
+                          "      \"$ref\": \"#/definitions/one\"\n" +
+                          "    }", "all", getCaretOffset(), JsonSchemaObject.DEFINITIONS, true);
       }
     });
   }
@@ -739,7 +740,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkNavigationTo("bbb", JsonSchemaObject.PROPERTIES);
+        checkNavigationTo("\"bbb\"", "bbb", getCaretOffset(), JsonSchemaObject.PROPERTIES, false);
       }
     });
   }
@@ -766,7 +767,18 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
         final List<JsonStringLiteral> list = strings.stream()
           .filter(expression -> expression.getText().contains("#/definitions")).collect(Collectors.toList());
         Assert.assertEquals(3, list.size());
-        list.forEach(literal -> checkNavigationTo("cycle.schema", literal.getTextRange().getStartOffset() + 1, JsonSchemaObject.DEFINITIONS));
+        list.forEach(literal -> checkNavigationTo("{\n" +
+                                                  "      \"type\": \"object\",\n" +
+                                                  "      \"properties\": {\n" +
+                                                  "        \"id\": {\n" +
+                                                  "          \"type\": \"string\"\n" +
+                                                  "        },\n" +
+                                                  "        \"range\": {\n" +
+                                                  "          \"type\": \"string\"\n" +
+                                                  "        }\n" +
+                                                  "      }\n" +
+                                                  "    }", "cycle.schema", literal.getTextRange().getEndOffset() - 1,
+                                                  JsonSchemaObject.DEFINITIONS, true));
       }
     });
   }
@@ -790,7 +802,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
 
       @Override
       public void doCheck() {
-        checkNavigationTo("id", JsonSchemaObject.PROPERTIES);
+        checkNavigationTo("\"id\"", "id", getCaretOffset(), JsonSchemaObject.PROPERTIES, false);
       }
     });
   }
@@ -865,10 +877,7 @@ public class JsonSchemaCrossReferencesTest extends JsonSchemaHeavyAbstractTest {
   }
 
   private void checkNavigationToSchemaVariant(@NotNull String name, int offset, @NotNull String parentPropertyName) {
-    final PsiReference referenceAt = myFile.findReferenceAt(offset);
-    Assert.assertNotNull(referenceAt);
-    final PsiElement resolve = referenceAt.resolve();
-    Assert.assertNotNull(resolve);
+    final PsiElement resolve = GotoDeclarationAction.findTargetElement(getProject(), myEditor, offset);
     Assert.assertEquals("\"" + name + "\"", resolve.getText());
     final PsiElement parent = resolve.getParent();
     Assert.assertTrue(parent instanceof JsonProperty);

@@ -25,4 +25,4 @@ internal abstract class ClassScope(val generator: DomainGenerator, val classCont
   abstract val typeDirection: TypeData.Direction
 }
 
-fun ItemDescriptor.Named.getName() = shortName ?: name()
+fun ItemDescriptor.Named.getName(): String = shortName ?: name()

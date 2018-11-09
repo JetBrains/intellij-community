@@ -71,11 +71,25 @@ public class MutabilityJdk {
     List<String> list3 = Collections.unmodifiableList(list2);
     if(<warning descr="Condition 'list1.isEmpty()' is always 'true'">list1.isEmpty()</warning>) System.out.println("ok");
     if(!list3.isEmpty()) return;
-    if(<warning descr="Condition '!list3.isEmpty()' is always 'false'">!<warning descr="Condition 'list3.isEmpty()' is always 'true'">list3.isEmpty()</warning></warning>) return;
+    if(<warning descr="Condition '!list3.isEmpty()' is always 'false'">!<warning descr="Result of 'list3.isEmpty()' is always 'true'">list3.isEmpty()</warning></warning>) return;
     list2.add("foo");
     // list1 size is not flushed (UNMODIFIABLE)
     if(<warning descr="Condition 'list1.isEmpty()' is always 'true'">list1.isEmpty()</warning>) System.out.println("ok");
     // list3 size is flushed (UNMODIFIABLE_VIEW)
     if(!list3.isEmpty()) return;
+  }
+
+  static class IncompleteCode {
+    <error descr="Variable 'list' might not have been initialized">final List<String> list</error>;
+
+    IncompleteCode() {
+      list = ((IncompleteCode)((<error descr="Expression expected">)</error><error descr="')' expected"><error descr="')' expected"><error descr="';' expected">b</error></error></error>ar()<error descr="';' expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">.</error><error descr="Cannot resolve method 'baz()'">baz</error>()<error descr="';' expected"><error descr="Unexpected token">)</error></error><error descr="Unexpected token">.</error><error descr="Cannot resolve symbol 'qux'">qux</error>;
+    }
+
+    static native Object bar();
+
+    void test() {
+      list.add("foo");
+    }
   }
 }

@@ -30,8 +30,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.IconUtil;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
@@ -54,7 +55,7 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
   @NotNull
   private final Icon myDelegateIcon;
   private volatile Icon myScaledDelegateIcon;
-  private Function<T, Icon> myEvaluator;
+  private Function<? super T, ? extends Icon> myEvaluator;
   private volatile boolean myIsScheduled;
   private T myParam;
   private static final Icon EMPTY_ICON = JBUI.scale(EmptyIcon.create(16));
@@ -64,11 +65,9 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
   private long myLastCalcTime;
   private long myLastTimeSpent;
 
-  private static final Executor ourIconsCalculatingExecutor = SequentialTaskExecutor
-    .createSequentialApplicationPoolExecutor("OurIconsCalculating Pool");
+  private static final Executor ourIconsCalculatingExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("OurIconsCalculating Pool");
 
   private final IconListener<T> myEvalListener;
-  private static final TransferToEDTQueue<Runnable> ourLaterInvocator = TransferToEDTQueue.createRunnableMerger("Deferred icon later invocator");
 
   private DeferredIconImpl(@NotNull DeferredIconImpl<T> icon) {
     super(icon);
@@ -87,16 +86,17 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
 
   @NotNull
   @Override
-  protected DeferredIconImpl<T> copy() {
+  public DeferredIconImpl<T> copy() {
     return new DeferredIconImpl<>(this);
   }
 
   @NotNull
   @Override
-  public Icon scale(float scale) {
-    if (getScale() != scale && myDelegateIcon instanceof ScalableIcon) {
-      myScaledDelegateIcon = ((ScalableIcon)myDelegateIcon).scale(scale);
-      super.scale(scale);
+  public DeferredIconImpl<T> scale(float scale) {
+    if (getScale() != scale) {
+      DeferredIconImpl<T> icon = super.scale(scale);
+      icon.myScaledDelegateIcon = IconUtil.scale(icon.myDelegateIcon, null, scale);
+      return icon;
     }
     return this;
   }
@@ -105,15 +105,15 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
     private static final boolean CHECK_CONSISTENCY = ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<T, Icon> evaluator, @NotNull IconListener<T> listener, boolean autoUpdatable) {
+  DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<? super T, ? extends Icon> evaluator, @NotNull IconListener<T> listener, boolean autoUpdatable) {
     this(baseIcon, param, true, evaluator, listener, autoUpdatable);
   }
 
-  public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<T, Icon> evaluator) {
+  public DeferredIconImpl(Icon baseIcon, T param, final boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator) {
     this(baseIcon, param, needReadAction, evaluator, null, false);
   }
 
-  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, @NotNull Function<T, Icon> evaluator, @Nullable IconListener<T> listener, boolean autoUpdatable) {
+  private DeferredIconImpl(Icon baseIcon, T param, boolean needReadAction, @NotNull Function<? super T, ? extends Icon> evaluator, @Nullable IconListener<T> listener, boolean autoUpdatable) {
     myParam = param;
     myDelegateIcon = nonNull(baseIcon);
     myScaledDelegateIcon = myDelegateIcon;
@@ -187,7 +187,7 @@ public class DeferredIconImpl<T> extends CachingScalableJBIcon<DeferredIconImpl<
       final boolean shouldRevalidate =
         Registry.is("ide.tree.deferred.icon.invalidates.cache") && myScaledDelegateIcon.getIconWidth() != oldWidth;
 
-      ourLaterInvocator.offer(() -> {
+      EdtExecutorService.getInstance().execute(() -> {
         setDone(result);
         if (equalIcons(result, myDelegateIcon)) return;
 

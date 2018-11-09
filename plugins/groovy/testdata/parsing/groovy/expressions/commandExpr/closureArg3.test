@@ -35,15 +35,12 @@ Groovy script
       PsiElement(})('}')
     PsiWhiteSpace(' ')
     Command arguments
-      Method call
-        Reference expression
-          PsiElement(identifier)('df')
-        Arguments
-          <empty list>
-        PsiElement(new line)('\n        ')
-        Closable block
-          PsiElement({)('{')
-          PsiWhiteSpace('\n\n')
-          Parameter list
-            <empty list>
-          PsiElement(})('}')
+      Reference expression
+        PsiElement(identifier)('df')
+  PsiElement(new line)('\n        ')
+  Closable block
+    PsiElement({)('{')
+    PsiWhiteSpace('\n\n')
+    Parameter list
+      <empty list>
+    PsiElement(})('}')

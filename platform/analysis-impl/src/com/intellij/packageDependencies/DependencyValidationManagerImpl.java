@@ -8,7 +8,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.*;
@@ -33,8 +33,7 @@ import java.util.Map;
   storages = @Storage(value = "scopes", stateSplitter = DependencyValidationManagerImpl.ScopesStateSplitter.class)
 )
 public class DependencyValidationManagerImpl extends DependencyValidationManager {
-  private static final NotNullLazyValue<Icon> ourSharedScopeIcon = new NotNullLazyValue<Icon>() {
-    @NotNull
+  private static final Icon ourSharedScopeIcon = new IconLoader.LazyIcon() {
     @Override
     protected Icon compute() {
       return new LayeredIcon(AllIcons.Ide.LocalScope, AllIcons.Nodes.Shared);
@@ -78,8 +77,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   public NamedScope getPredefinedScope(@NotNull String name) {
-    final CustomScopesProvider[] scopesProviders = CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject);
-    for (CustomScopesProvider scopesProvider : scopesProviders) {
+    for (CustomScopesProvider scopesProvider : CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getExtensions(myProject)) {
       final NamedScope scope = scopesProvider instanceof CustomScopesProviderEx
                                ? ((CustomScopesProviderEx)scopesProvider).getCustomScope(name)
                                : CustomScopesProviderEx.findPredefinedScope(name, scopesProvider.getFilteredScopes());
@@ -184,7 +182,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
 
   @Override
   public Icon getIcon() {
-    return ourSharedScopeIcon.getValue();
+    return ourSharedScopeIcon;
   }
 
   @Override
@@ -353,7 +351,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
     });
   }
 
-  private static void addScopesToList(@NotNull final List<Pair<NamedScope, NamedScopesHolder>> scopeList,
+  private static void addScopesToList(@NotNull final List<? super Pair<NamedScope, NamedScopesHolder>> scopeList,
                                       @NotNull final NamedScopesHolder holder) {
     for (NamedScope scope : holder.getScopes()) {
       scopeList.add(Pair.create(scope, holder));

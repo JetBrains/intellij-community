@@ -18,12 +18,13 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link Pair} (to be removed in IDEA 2018) */
+@Deprecated
 public class KeyValue<Key, Value> extends Pair<Key, Value> {
   public KeyValue(Key key, Value value) {
     super(key, value);
   }
 
-  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "deprecation"})
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   @NotNull
   public static <Key, Value> KeyValue<Key, Value> create(final Key key, final Value value) {
     return new KeyValue<Key, Value>(key, value);

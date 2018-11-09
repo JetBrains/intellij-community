@@ -57,10 +57,33 @@ interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
   val visibility: UastVisibility
     get() = UastVisibility[this]
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitDeclaration(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitDeclaration(this, data)
 }
 
-fun UElement.getContainingDeclaration() = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull()
+/**
+ * @since 2018.2
+ */
+interface UDeclarationEx : UDeclaration {
+  override val javaPsi: PsiModifierListOwner
+}
+
+/**
+ * @since 2018.3
+ */
+fun UElement?.getContainingDeclaration(): UDeclaration? = this?.withContainingElements?.drop(1)?.filterIsInstance<UDeclaration>()?.firstOrNull()
+
+fun <T : UElement> UElement?.getContainingDeclaration(cls: Class<out T>): T? {
+  val element = this?.withContainingElements?.drop(1)?.filterIsInstance<UDeclaration>()?.firstOrNull()
+  return if (element != null && cls.isInstance(element)) {
+    element as T
+  } else {
+    null
+  }
+}
+
+fun UDeclaration?.getAnchorPsi():PsiElement? {
+  return this?.uastAnchor?.sourcePsi
+}
 
 /**
  * A base interface for every [UElement] which have a name identifier. As analogy to [PsiNameIdentifierOwner]

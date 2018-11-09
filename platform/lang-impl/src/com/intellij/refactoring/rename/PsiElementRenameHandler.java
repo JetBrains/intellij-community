@@ -12,7 +12,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -64,7 +63,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiElement nameSuggestionContext = InjectedLanguageUtil.findElementAtNoCommit(file, editor.getCaretModel().getOffset());
-    invoke(element, project, nameSuggestionContext, editor);
+    invoke(element, project, nameSuggestionContext, editor, shouldCheckInProject());
   }
 
   @Override
@@ -79,18 +78,26 @@ public class PsiElementRenameHandler implements RenameHandler {
       rename(element, project, element, editor, newName);
     }
     else {
-      invoke(element, project, element, editor);
+      invoke(element, project, element, editor, shouldCheckInProject());
     }
   }
 
+  protected boolean shouldCheckInProject() {
+    return true;
+  }
+
   public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext, @Nullable Editor editor) {
+    invoke(element, project, nameSuggestionContext, editor, true);
+  }
+
+  public static void invoke(PsiElement element, Project project, PsiElement nameSuggestionContext, @Nullable Editor editor, boolean checkInProject) {
     if (element != null && !canRename(project, editor, element)) {
       return;
     }
 
     VirtualFile contextFile = PsiUtilCore.getVirtualFile(nameSuggestionContext);
 
-    if (nameSuggestionContext != null &&
+    if (checkInProject && nameSuggestionContext != null &&
         nameSuggestionContext.isPhysical() &&
         (contextFile == null || contextFile.getFileType() != ScratchFileType.INSTANCE) &&
         !PsiManager.getInstance(project).isInProject(nameSuggestionContext)) {
@@ -221,7 +228,7 @@ public class PsiElementRenameHandler implements RenameHandler {
 
   public static boolean isVetoed(PsiElement element) {
     if (element == null || element instanceof SyntheticElement) return true;
-    for(Condition<PsiElement> condition: Extensions.getExtensions(VETO_RENAME_CONDITION_EP)) {
+    for(Condition<PsiElement> condition: VETO_RENAME_CONDITION_EP.getExtensionList()) {
       if (condition.value(element)) return true;
     }
     return false;

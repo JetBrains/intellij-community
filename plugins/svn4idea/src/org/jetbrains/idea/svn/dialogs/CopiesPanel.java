@@ -422,10 +422,10 @@ public class CopiesPanel {
   }
 
   public static class OverrideEqualsWrapper<T> {
-    private final EqualityPolicy<T> myPolicy;
+    private final EqualityPolicy<? super T> myPolicy;
     private final T myT;
 
-    public OverrideEqualsWrapper(EqualityPolicy<T> policy, T t) {
+    public OverrideEqualsWrapper(EqualityPolicy<? super T> policy, T t) {
       myPolicy = policy;
       myT = t;
     }
@@ -515,7 +515,7 @@ public class CopiesPanel {
   private static class MyLinkLabel extends LinkLabel {
     private final int myHeight;
 
-    public MyLinkLabel(final int height, final String text, final LinkListener linkListener) {
+    MyLinkLabel(final int height, final String text, final LinkListener linkListener) {
       super(text, null, linkListener);
       myHeight = height;
     }

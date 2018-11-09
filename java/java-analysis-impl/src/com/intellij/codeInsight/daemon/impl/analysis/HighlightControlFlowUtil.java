@@ -21,15 +21,17 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.Stream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author cdr
- * @since Aug 8, 2002
  */
 public class HighlightControlFlowUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -122,7 +124,7 @@ public class HighlightControlFlowUtil {
     else {
       return false;
     }
-    if (isFieldInitializedInClassInitializer(field, isFieldStatic, Arrays.stream(initializers))) return true;
+    if (isFieldInitializedInClassInitializer(field, isFieldStatic, initializers)) return true;
     if (isFieldStatic) {
       return false;
     }
@@ -151,15 +153,15 @@ public class HighlightControlFlowUtil {
 
   private static boolean isFieldInitializedInClassInitializer(@NotNull PsiField field,
                                                               boolean isFieldStatic,
-                                                              @NotNull Stream<PsiClassInitializer> initializers) {
-    return initializers.anyMatch(initializer -> initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
-                                                && variableDefinitelyAssignedIn(field, initializer.getBody()));
+                                                              @NotNull PsiClassInitializer[] initializers) {
+    return ContainerUtil.find(initializers, initializer -> initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
+                                                           && variableDefinitelyAssignedIn(field, initializer.getBody())) != null;
   }
 
   private static boolean isFieldInitializedInOtherFieldInitializer(@NotNull PsiClass aClass,
                                                                    @NotNull PsiField field,
                                                                    final boolean fieldStatic,
-                                                                   @NotNull Condition<PsiField> condition) {
+                                                                   @NotNull Condition<? super PsiField> condition) {
     PsiField[] fields = aClass.getFields();
     for (PsiField psiField : fields) {
       if (psiField != field
@@ -333,7 +335,7 @@ public class HighlightControlFlowUtil {
             return null;
           }
           if (anotherField != null && !anotherField.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.STATIC) &&
-              isFieldInitializedInClassInitializer(field, true, Arrays.stream(aClass.getInitializers()))) {
+              isFieldInitializedInClassInitializer(field, true, aClass.getInitializers())) {
             return null;
           }
 
@@ -649,10 +651,8 @@ public class HighlightControlFlowUtil {
                                      @NotNull PsiField field,
                                      @NotNull PsiReferenceExpression reference,
                                      @NotNull PsiFile containingFile) {
-
     if (!containingFile.getManager().areElementsEquivalent(enclosingCtrOrInitializer.getContainingClass(), field.getContainingClass())) return false;
-    PsiExpression qualifierExpression = reference.getQualifierExpression();
-    return qualifierExpression == null || qualifierExpression instanceof PsiThisExpression;
+    return LocalsOrMyInstanceFieldsControlFlowPolicy.isLocalOrMyInstanceReference(reference);
   }
 
 
@@ -728,7 +728,7 @@ public class HighlightControlFlowUtil {
         }
         effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(scope));
         if (effectivelyFinal) {
-          return ReferencesSearch.search(variable).forEach(ref -> {
+          return ReferencesSearch.search(variable).allMatch(ref -> {
             PsiElement element = ref.getElement();
             if (element instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
               return !ControlFlowUtil.isVariableAssignedInLoop((PsiReferenceExpression)element, variable);

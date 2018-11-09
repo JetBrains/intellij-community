@@ -70,8 +70,9 @@ public class StaticImportMethodFix extends StaticImportMemberFix<PsiMethod> {
     return true;
   }
 
+  @Override
   @NotNull
-  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(List<PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
+  protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(List<? extends PsiMethod> methodsToImport, @NotNull Project project, Editor editor) {
     return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myMethodCall);
   }
 

@@ -29,6 +29,7 @@ public class SafeDeleteMemberCalleeUsageInfo extends SafeDeleteUsageInfo impleme
     myCallerMember = callerMember;
   }
 
+  @Override
   public void performRefactoring() throws IncorrectOperationException {
     final PsiMember callee = myCalledMember;
     if (callee != null && callee.isValid()) {

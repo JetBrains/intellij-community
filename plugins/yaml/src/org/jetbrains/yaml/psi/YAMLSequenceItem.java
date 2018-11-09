@@ -13,4 +13,6 @@ public interface YAMLSequenceItem extends YAMLPsiElement {
   YAMLValue getValue();
   @NotNull
   Collection<YAMLKeyValue> getKeysValues();
+
+  int getItemIndex();
 }

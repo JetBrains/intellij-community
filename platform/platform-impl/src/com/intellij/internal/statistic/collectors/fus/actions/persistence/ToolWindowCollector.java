@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -17,7 +18,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 @State(
-  name = "ToolWindowCollector",
+  name = "ToolWindowsCollector",
   storages = {
     @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED)
   }
@@ -28,21 +29,21 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
   }
 
   public void recordActivation(String toolWindowId) {
-    record(toolWindowId + " by Activation");
+    record(toolWindowId, "Activation");
   }
 
   //todo[kb] provide a proper way to track activations by clicks
   public void recordClick(String toolWindowId) {
-    record(toolWindowId + " by Click");
+    record(toolWindowId, "Click");
   }
 
-  private void record(String toolWindowId) {
+  private void record(@Nullable String toolWindowId, @NotNull String source) {
     if (toolWindowId == null) return;
     State state = getState();
     if (state == null) return;
 
-    String key = ConvertUsagesUtil.escapeDescriptorName(toolWindowId);
-    FeatureUsageLogger.INSTANCE.log("toolwindow-stats", key);
+    final String key = ConvertUsagesUtil.escapeDescriptorName(toolWindowId + " by " + source);
+    FeatureUsageLogger.INSTANCE.log("toolwindow", key, FUSUsageContext.OS_CONTEXT.getData());
     final Integer count = state.myValues.get(key);
     int value = count == null ? 1 : count + 1;
     state.myValues.put(key, value);

@@ -15,12 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -90,7 +91,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
                                  @NotNull PsiFile file,
                                  @NotNull PsiElement startElement,
                                  @NotNull PsiElement endElement) {
-        return startElement.getManager().isInProject(startElement) &&
+        return ScratchFileService.isInProjectOrScratch(startElement) &&
                PsiUtil.isLanguageLevel8OrHigher(startElement) && areConvertible(((PsiExpression) startElement).getType(), type);
       }
 
@@ -134,7 +135,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
     if (resolvedClass == null || !CommonClassNames.JAVA_UTIL_OPTIONAL.equals(resolvedClass.getQualifiedName())) return false;
 
     final Collection<PsiType> values = resolve.getSubstitutor().getSubstitutionMap().values();
-    if (values.size() == 0) return true;
+    if (values.isEmpty()) return true;
     if (values.size() > 1) return false;
     final PsiType optionalTypeParameter = ContainerUtil.getFirstItem(values);
     if (optionalTypeParameter == null) return false;
@@ -144,19 +145,8 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
   @NotNull
   private static PsiExpression getModifiedExpression(PsiExpression expression) {
     final Project project = expression.getProject();
-    PsiModifierListOwner toCheckNullability = null;
-    if (expression instanceof PsiMethodCallExpression) {
-      toCheckNullability = ((PsiMethodCallExpression)expression).resolveMethod();
-    }
-    else if (expression instanceof PsiReferenceExpression) {
-      final PsiElement resolved = ((PsiReferenceExpression)expression).resolve();
-      if (resolved instanceof PsiModifierListOwner) {
-        toCheckNullability = (PsiModifierListOwner)resolved;
-      }
-    }
-    final Nullness nullability = toCheckNullability == null ? Nullness.NOT_NULL : DfaPsiUtil
-      .getElementNullability(expression.getType(), toCheckNullability);
-    String methodName = nullability == Nullness.NOT_NULL ? "of" : "ofNullable";
+    final Nullability nullability = NullabilityUtil.getExpressionNullability(expression, true);
+    String methodName = nullability == Nullability.NOT_NULL ? "of" : "ofNullable";
     final String newExpressionText = CommonClassNames.JAVA_UTIL_OPTIONAL + "." + methodName + "(" + expression.getText() + ")";
     return JavaPsiFacade.getElementFactory(project).createExpressionFromText(newExpressionText, expression);
   }

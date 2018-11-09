@@ -124,7 +124,7 @@ public abstract class ListItemsDialogWrapper extends DialogWrapper {
   }
 
   public static void installListItemsDialogForTextField(@NotNull TextFieldWithBrowseButton uiField,
-                                                        @NotNull Producer<ListItemsDialogWrapper> createDialog) {
+                                                        @NotNull Producer<? extends ListItemsDialogWrapper> createDialog) {
     uiField.getTextField().setEditable(false);
     uiField.setButtonIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
     uiField.addActionListener(new ActionListener() {

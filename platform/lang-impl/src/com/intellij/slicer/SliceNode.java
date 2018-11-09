@@ -17,8 +17,8 @@ package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -46,17 +46,17 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   protected List<SliceNode> myCachedChildren;
   boolean dupNodeCalculated;
   protected SliceNode duplicate;
-  final DuplicateMap targetEqualUsages;
+  public final DuplicateMap targetEqualUsages;
   protected boolean changed;
   private int index; // my index in parent's mycachedchildren
 
-  protected SliceNode(@NotNull Project project, SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages) {
+  protected SliceNode(@NotNull Project project, @NotNull SliceUsage sliceUsage, @NotNull DuplicateMap targetEqualUsages) {
     super(project, sliceUsage);
     this.targetEqualUsages = targetEqualUsages;
   }
 
   @NotNull
-  SliceNode copy() {
+  public SliceNode copy() {
     SliceUsage newUsage = getValue().copy();
     SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages);
     newNode.dupNodeCalculated = dupNodeCalculated;
@@ -74,19 +74,11 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
 
       if (current == null) {
         ProgressIndicator indicator = new ProgressIndicatorBase();
-        indicator.start();
-
         Ref<List<SliceNode>> nodesRef = Ref.create();
-        try {
-          ProgressManager.getInstance().executeProcessUnderProgress(
-            () -> nodesRef.set(doGetChildren()), indicator);
-        }
-        finally {
-          indicator.stop();
-        }
-
+        ProgressManager.getInstance().runProcess(() -> nodesRef.set(doGetChildren()), indicator);
         nodes = nodesRef.get();
-      } else {
+      }
+      else {
         nodes = doGetChildren();
       }
 
@@ -94,30 +86,28 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
         myCachedChildren = nodes;
       }
       return nodes;
-    } catch (ProcessCanceledException pce) {
+    }
+    catch (ProcessCanceledException pce) {
       changed = true;
       throw pce;
     }
   }
 
   private List<SliceNode> doGetChildren() {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> {
-      final List<SliceNode> children = new ArrayList<>();
-      final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-      Processor<SliceUsage> processor = sliceUsage -> {
-        progress.checkCanceled();
-        SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
-        synchronized (children) {
-          node.index = children.size();
-          children.add(node);
-        }
-        return true;
-      };
+    final List<SliceNode> children = new ArrayList<>();
+    final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
+    Processor<SliceUsage> processor = sliceUsage -> {
+      progress.checkCanceled();
+      SliceNode node = new SliceNode(myProject, sliceUsage, targetEqualUsages);
+      synchronized (children) {
+        node.index = children.size();
+        children.add(node);
+      }
+      return true;
+    };
 
-      getValue().processChildren(processor);
-
-      return children;
-    });
+    ApplicationManagerEx.getApplicationEx().executeByImpatientReader(() -> getValue().processChildren(processor));
+    return children;
   }
 
   SliceNode getNext(List parentChildren) {
@@ -152,7 +142,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   @Override
-  protected void update(PresentationData presentation) {
+  protected void update(@NotNull PresentationData presentation) {
     if (presentation != null) {
       presentation.setChanged(presentation.isChanged() || changed);
       changed = false;

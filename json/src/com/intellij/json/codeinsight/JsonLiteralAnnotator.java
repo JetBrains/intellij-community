@@ -63,10 +63,9 @@ public class JsonLiteralAnnotator implements Annotator {
       for (Pair<TextRange, String> fragment: fragments) {
         for (JsonLiteralChecker checker: extensions) {
           if (!checker.isApplicable(element)) continue;
-          String error = checker.getErrorForStringFragment(fragment.getSecond());
+          Pair<TextRange, String> error = checker.getErrorForStringFragment(fragment, stringLiteral);
           if (error != null) {
-            final TextRange fragmentRange = fragment.getFirst();
-            holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), error);
+            holder.createErrorAnnotation(error.getFirst().shiftRight(elementOffset), error.second);
           }
         }
       }

@@ -51,8 +51,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -101,9 +101,9 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     emptyText.appendText("Search in repositories", SimpleTextAttributes.LINK_ATTRIBUTES, new BrowseRepoListener(null));
   }
 
-  private static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
-                                       @NotNull final Consumer<Pair<File, IdeaPluginDescriptor>> callback,
-                                       @Nullable final Component parent) {
+  public static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
+                                      @NotNull final Consumer<? super Pair<File, IdeaPluginDescriptor>> callback,
+                                      @Nullable final Component parent) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -124,7 +124,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
   private static boolean install(@NotNull InstalledPluginsTableModel model,
                                  @NotNull File file,
-                                 @NotNull Consumer<Pair<File, IdeaPluginDescriptor>> callback,
+                                 @NotNull Consumer<? super Pair<File, IdeaPluginDescriptor>> callback,
                                  @Nullable Component parent) {
     try {
       IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
@@ -283,7 +283,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     DataManager.registerDataProvider(table, new DataProvider() {
       @Nullable
       @Override
-      public Object getData(String dataId) {
+      public Object getData(@NotNull String dataId) {
         if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
           return copyProvider;
         }
@@ -419,7 +419,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   private class MyFilterEnabledAction extends ComboBoxAction implements DumbAware {
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setText(((InstalledPluginsTableModel)pluginsModel).getEnabledFilter());
     }
@@ -431,7 +431,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       for (final String enabledValue : InstalledPluginsTableModel.ENABLED_VALUES) {
         gr.add(new DumbAwareAction(enabledValue) {
           @Override
-          public void actionPerformed(AnActionEvent e) {
+          public void actionPerformed(@NotNull AnActionEvent e) {
             final IdeaPluginDescriptor[] selection = pluginTable.getSelectedObjects();
             final String filter = myFilter.getFilter().toLowerCase();
             ((InstalledPluginsTableModel)pluginsModel).setEnabledFilter(enabledValue, filter);
@@ -444,8 +444,9 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       return gr;
     }
 
+    @NotNull
     @Override
-    public JComponent createCustomComponent(Presentation presentation) {
+    public JComponent createCustomComponent(@NotNull Presentation presentation) {
       final JComponent component = super.createCustomComponent(presentation);
       final JPanel panel = new JPanel(new BorderLayout());
       panel.setOpaque(false);
@@ -465,7 +466,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
 
     private final String myVendor;
 
-    public BrowseRepoListener(String vendor) {
+    BrowseRepoListener(String vendor) {
       myVendor = vendor;
     }
 
@@ -501,7 +502,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       chooseAndInstall(new InstalledPluginsTableModel(), pair -> PluginManagerConfigurable.shutdownOrRestartApp(), null);
     }
   }

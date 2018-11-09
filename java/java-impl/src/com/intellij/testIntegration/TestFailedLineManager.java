@@ -38,11 +38,11 @@ public class TestFailedLineManager implements FileEditorManagerListener {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class);
     if (psiClass == null) return null;
     TestFramework framework = TestFrameworks.detectFramework(psiClass);
-    if (framework == null || !framework.isTestMethod(psiMethod)) return null;
+    if (framework == null || !framework.isTestMethod(psiMethod, false)) return null;
 
-    String url = "java:test://" + ClassUtil.getJVMClassName(psiClass) + "." + psiMethod.getName();
+    String url = "java:test://" + ClassUtil.getJVMClassName(psiClass) + "/" + psiMethod.getName();
     TestStateStorage.Record state = myStorage.getState(url);
-    if (state == null) return null;
+    if (state == null) return new TestInfo(null);
 
     VirtualFile file = psiMethod.getContainingFile().getVirtualFile();
     Map<String, TestInfo> map = myMap.get(file);
@@ -58,7 +58,7 @@ public class TestFailedLineManager implements FileEditorManagerListener {
     PsiMethod psiMethod = PsiTreeUtil.getParentOfType(call, PsiMethod.class);
     if (psiMethod == null) return null;
     TestInfo info = getTestInfo(psiMethod);
-    if (info == null) return null;
+    if (info == null || info.myRecord == null) return null;
     Document document = PsiDocumentManager.getInstance(call.getProject()).getDocument(call.getContainingFile());
     if (document == null) return null;
     if (info.myPointer != null) {

@@ -23,7 +23,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.module.impl.ModuleImpl;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -122,14 +121,14 @@ public abstract class ModuleTestCase extends IdeaTestCase {
   }
 
   @Nullable
-  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir, @Nullable final Consumer<Module> moduleConsumer) {
+  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir, @Nullable final Consumer<? super Module> moduleConsumer) {
     final Ref<Module> result = Ref.create();
 
     VfsUtilCore.visitChildrenRecursively(rootDir, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory() && file.getName().endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
-          ModuleImpl module = (ModuleImpl)loadModule(file);
+          Module module = loadModule(file);
           if (moduleConsumer != null) {
             moduleConsumer.consume(module);
           }

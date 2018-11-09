@@ -23,15 +23,14 @@ import java.util.List;
 
 public class ExpectedPatterns extends AbstractExpectedPatterns {
   private static final List PATTERNS = new ArrayList();
-
+  
   private static final String[] PATTERN_STRINGS = new String[]{
     "\nexpected: is \"(.*)\"\n\\s*got: \"(.*)\"\n",
     "\nexpected: is \"(.*)\"\n\\s*but: was \"(.*)\"",
     "\nexpected: (.*)\n\\s*got: (.*)",
     "expected same:<(.*)> was not:<(.*)>",
-    "expected:<(.*?)> but was:<(.*?)>",
     "\nexpected: \"(.*)\"\n\\s*but: was \"(.*)\"",
-    "expected: (.*)\\s*but: was (.*)",
+    "expected: (.*)\n\\s*but: was (.*)",
     "expected: (.*)\\s*but was: (.*)",
     "expecting:\\s*<(.*)> to be equal to:\\s*<(.*)>\\s*but was not"
   };
@@ -64,6 +63,7 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
     final String message = assertion.getMessage();
     if (message != null  && acceptedByThreshold(message.length())) {
       try {
+        
         return createExceptionNotification(message);
       }
       catch (Throwable ignored) {}
@@ -79,7 +79,11 @@ public class ExpectedPatterns extends AbstractExpectedPatterns {
   private static boolean isComparisonFailure(Class aClass) {
     if (aClass == null) return false;
     final String throwableClassName = aClass.getName();
-    if (throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) || throwableClassName.equals(ORG_JUNIT_COMPARISON_NAME)) return true;
+    if (throwableClassName.equals(JUNIT_FRAMEWORK_COMPARISON_NAME) || 
+        throwableClassName.equals(ORG_JUNIT_COMPARISON_NAME) || 
+        throwableClassName.equals(ComparisonFailureData.OPENTEST4J_ASSERTION)) {
+      return true;
+    }
     return isComparisonFailure(aClass.getSuperclass());
   }
 

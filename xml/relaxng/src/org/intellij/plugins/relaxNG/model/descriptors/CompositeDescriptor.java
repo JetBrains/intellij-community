@@ -25,9 +25,7 @@ import org.kohsuke.rngom.digested.DElementPattern;
 import org.kohsuke.rngom.digested.DPattern;
 
 import javax.xml.namespace.QName;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class CompositeDescriptor extends RngElementDescriptor {
   private final DElementPattern[] myPatterns;
@@ -60,7 +58,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
 
   @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
-    final List<XmlElementDescriptor> descriptors = new ArrayList<>(Arrays.asList(super.getElementsDescriptors(context)));
+    final Set<XmlElementDescriptor> descriptors = new LinkedHashSet<>(Arrays.asList(super.getElementsDescriptors(context)));
     for (DElementPattern pattern : myPatterns) {
       final List<DElementPattern> list = ChildElementFinder.find(2, pattern);
       descriptors.addAll(Arrays.asList(myNsDescriptor.convertElementDescriptors(list)));

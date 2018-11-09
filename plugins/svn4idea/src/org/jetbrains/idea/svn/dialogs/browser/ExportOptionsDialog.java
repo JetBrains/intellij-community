@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs.browser;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -42,6 +42,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     init();
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "svn4idea.export.options";
@@ -70,6 +71,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return (String) myEOLStyleBox.getSelectedItem();
   }
 
+  @Override
   @Nullable
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
@@ -152,6 +154,7 @@ public class ExportOptionsDialog extends DialogWrapper implements ActionListener
     return panel;
   }
 
+  @Override
   public void actionPerformed(ActionEvent e) {
     // choose directory here/
     FileChooserDescriptor fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor();

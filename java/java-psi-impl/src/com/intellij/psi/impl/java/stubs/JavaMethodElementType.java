@@ -51,9 +51,9 @@ import java.util.Set;
 /**
  * @author max
  */
-public abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
-  public static final String TYPE_PARAMETER_PSEUDO_NAME = "$TYPE_PARAMETER$";
-  public JavaMethodElementType(@NonNls final String name) {
+abstract class JavaMethodElementType extends JavaStubElementType<PsiMethodStub, PsiMethod> {
+  private static final String TYPE_PARAMETER_PSEUDO_NAME = "$TYPE_PARAMETER$";
+  JavaMethodElementType(@NonNls final String name) {
     super(name);
   }
 
@@ -67,13 +67,12 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     if (node instanceof AnnotationMethodElement) {
       return new PsiAnnotationMethodImpl(node);
     }
-    else {
-      return new PsiMethodImpl(node);
-    }
+    return new PsiMethodImpl(node);
   }
 
+  @NotNull
   @Override
-  public PsiMethodStub createStub(final LighterAST tree, final LighterASTNode node, final StubElement parentStub) {
+  public PsiMethodStub createStub(@NotNull final LighterAST tree, @NotNull final LighterASTNode node, @NotNull final StubElement parentStub) {
     String name = null;
     boolean isConstructor = true;
     boolean isVarArgs = false;
@@ -103,7 +102,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
         if (!params.isEmpty()) {
           final LighterASTNode pType = LightTreeUtil.firstChildOfType(tree, params.get(params.size() - 1), JavaElementType.TYPE);
           if (pType != null) {
-            isVarArgs = (LightTreeUtil.firstChildOfType(tree, pType, JavaTokenType.ELLIPSIS) != null);
+            isVarArgs = LightTreeUtil.firstChildOfType(tree, pType, JavaTokenType.ELLIPSIS) != null;
           }
         }
       }
@@ -118,7 +117,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     }
 
     TypeInfo typeInfo = isConstructor ? TypeInfo.createConstructorType() : TypeInfo.create(tree, node, parentStub);
-    boolean isAnno = (node.getTokenType() == JavaElementType.ANNOTATION_METHOD);
+    boolean isAnno = node.getTokenType() == JavaElementType.ANNOTATION_METHOD;
     byte flags = PsiMethodStubImpl.packFlags(isConstructor, isAnno, isVarArgs, isDeprecatedByComment, hasDeprecatedAnnotation, hasDocComment);
 
     return new PsiMethodStubImpl(parentStub, name, typeInfo, flags, defValueText);

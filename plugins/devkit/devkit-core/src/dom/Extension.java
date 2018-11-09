@@ -16,11 +16,17 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Presentation(typeName = "Extension")
 public interface Extension extends DomElement {
+
+  @NotNull
+  @Override
+  XmlTag getXmlTag();
 
   @NameValue
   @Required(value = false)

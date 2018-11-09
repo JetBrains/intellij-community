@@ -109,7 +109,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   @Override
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       T value = myGenericValue.getValue();
@@ -159,7 +159,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   @Override
-  public PsiElement handleElementRename(final String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull final String newElementName) throws IncorrectOperationException {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       ((ResolvingConverter)converter).handleElementRename(myGenericValue, getConvertContext(), newElementName);

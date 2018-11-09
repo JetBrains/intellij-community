@@ -21,6 +21,7 @@ import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.GenericReferenceProvider;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class GenericReference extends CachingReference implements EmptyResolveMessageProvider {
@@ -45,7 +46,7 @@ public abstract class GenericReference extends CachingReference implements Empty
 
   @Override
   @Nullable
-  public PsiElement handleElementRename(String string) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String string) throws IncorrectOperationException {
     final PsiElement element = getElement();
     if (element != null) {
       ElementManipulator<PsiElement> man = ElementManipulators.getManipulator(element);

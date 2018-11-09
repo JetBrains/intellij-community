@@ -23,7 +23,7 @@
 
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.java.ConcatenationInjector"/>
 
-    <psi.referenceContributor language="JAVA" implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
+    <psi.referenceContributor language="UAST" implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
     <projectService serviceInterface="org.intellij.plugins.intelliLang.inject.java.InjectionCache"
                     serviceImplementation="org.intellij.plugins.intelliLang.inject.java.InjectionCache"/>
   </extensions>

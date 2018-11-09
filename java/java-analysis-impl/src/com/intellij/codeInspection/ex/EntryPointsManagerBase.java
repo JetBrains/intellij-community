@@ -153,7 +153,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
   }
 
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
     Element element = new Element("state");
     writeExternal(element, myPersistentEntryPoints, ADDITIONAL_ANNOTATIONS);
@@ -174,7 +173,6 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     return element;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static void writeExternal(final Element element,
                                    final Map<String, SmartRefElementPointer> persistentEntryPoints,
                                    final JDOMExternalizableStringList additional_annotations) {
@@ -340,7 +338,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     ((RefElementImpl)anEntryPoint).setEntry(false);
 
     if (anEntryPoint.isPermanentEntry() && anEntryPoint.isValid()) {
-      final Project project = anEntryPoint.getElement().getProject();
+      final Project project = anEntryPoint.getPsiElement().getProject();
       final EntryPointsManager entryPointsManager = getInstance(project);
       if (this != entryPointsManager) {
         entryPointsManager.removeEntryPoint(anEntryPoint);
@@ -438,7 +436,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     myPatterns.addAll(manager.getPatterns());
   }
 
-  public static void convert(Element element, final Map<String, SmartRefElementPointer> persistentEntryPoints) {
+  static void convert(Element element, final Map<? super String, ? super SmartRefElementPointer> persistentEntryPoints) {
     List content = element.getChildren();
     for (final Object aContent : content) {
       Element entryElement = (Element)aContent;
@@ -536,7 +534,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
            AnnotationUtil.checkAnnotatedUsingPatterns(owner, getAdditionalAnnotations());
   }
 
-  private static boolean isAcceptedByPattern(@NotNull PsiClass element, String qualifiedName, ClassPattern pattern, Set<PsiClass> visited) {
+  private static boolean isAcceptedByPattern(@NotNull PsiClass element, String qualifiedName, ClassPattern pattern, Set<? super PsiClass> visited) {
     if (qualifiedName == null) {
       return false;
     }
@@ -648,7 +646,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     @Override
     @NotNull
     public String getText() {
-      return QuickFixBundle.message("fix.unused.symbol.injection.text", "fields", myQualifiedName);
+      return QuickFixBundle.message("fix.unused.symbol.injection.text",  myQualifiedName);
     }
 
     @Override

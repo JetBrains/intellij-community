@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +29,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,6 @@ import static com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters
 
 public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
 
-  @SuppressWarnings("ForLoopThatDoesntUseLoopVariable")
   @Override
   public String preprocessOnCopy(final PsiFile file, final int[] startOffsets, final int[] endOffsets, final String text) {
     // The main idea is to un-escape string/char literals content if necessary.
@@ -168,7 +167,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   protected String getLineBreaker(@NotNull PsiElement token) {
-    CommonCodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(token.getProject()).getCommonSettings(token.getLanguage());
+    CommonCodeStyleSettings codeStyleSettings = CodeStyle.getLanguageSettings(token.getContainingFile());
     return codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
   }
 

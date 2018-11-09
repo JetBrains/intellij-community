@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -40,7 +26,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -48,7 +33,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.List;
 
 public class LookupTypedHandler extends TypedActionHandlerBase {
 
@@ -115,13 +100,15 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       Document document = editor.getDocument();
       long modificationStamp = document.getModificationStamp();
 
-      if (!lookup.performGuardedChange(
-        () -> EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true))) {
+      if (!lookup.performGuardedChange(() -> {
+          lookup.fireBeforeAppendPrefix(charTyped);
+          EditorModificationUtil.typeInStringAtCaretHonorMultipleCarets(originalEditor, String.valueOf(charTyped), true);
+        })) {
         return true;
       }
       lookup.appendPrefix(charTyped);
       if (lookup.isStartCompletionWhenNothingMatches() && lookup.getItems().isEmpty()) {
-        final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+        final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
         if (completion != null) {
           completion.scheduleRestart();
         } else {
@@ -131,7 +118,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
 
       AutoHardWrapHandler.getInstance().wrapLineIfNecessary(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()), modificationStamp);
 
-      final CompletionProgressIndicator completion = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
+      final CompletionProgressIndicator completion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
       if (completion != null) {
         completion.prefixUpdated();
       }
@@ -184,9 +171,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
     if (filtersDecision != null) {
       return filtersDecision;
     }
-    throw new AssertionError("Typed char not handler by char filter: c=" + charTyped +
-                             "; prefix=" + lookup.getCurrentItem() +
-                             "; filters=" + Arrays.toString(getFilters()));
+    return CharFilter.Result.HIDE_LOOKUP;
   }
 
   @Nullable
@@ -207,7 +192,7 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
     return null;
   }
 
-  private static CharFilter[] getFilters() {
-    return Extensions.getExtensions(CharFilter.EP_NAME);
+  private static List<CharFilter> getFilters() {
+    return CharFilter.EP_NAME.getExtensionList();
   }
 }

@@ -5,7 +5,7 @@ YAML file
     YAML compound value
       YAML scalar text
         PsiElement(scalar text)('>')
-        PsiElement(Eol)('\n')
+        PsiElement(block scalar EOL)('\n')
         PsiElement(indent)('  ')
         PsiElement(scalar text)('foo')
         PsiElement(block scalar EOL)('\n')
@@ -30,6 +30,6 @@ YAML file
         PsiElement(block scalar EOL)('\n')
         PsiElement(indent)('  ')
         PsiElement(block scalar EOL)('\n')
-        PsiElement(indent)('  ')
-        PsiElement(block scalar EOL)('\n')
+      PsiElement(indent)('  ')
+      PsiElement(Eol)('\n')
       PsiElement(...)('...')

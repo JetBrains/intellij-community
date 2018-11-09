@@ -33,19 +33,19 @@ import java.util.List;
  * @author ven
  */
 public class ReferenceEditorWithBrowseButton extends ComponentWithBrowseButton<EditorTextField> implements TextAccessor {
-  private final Function<String, Document> myFactory;
+  private final Function<? super String, ? extends Document> myFactory;
   private final List<DocumentListener> myDocumentListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
                                          final Project project,
-                                         final Function<String, Document> factory,
+                                         final Function<? super String, ? extends Document> factory,
                                          String text) {
     this(browseActionListener, new EditorTextField(factory.fun(text), project, StdFileTypes.JAVA), factory);
   }
 
   public ReferenceEditorWithBrowseButton(final ActionListener browseActionListener,
                                          final EditorTextField editorTextField,
-                                         final Function<String, Document> factory) {
+                                         final Function<? super String, ? extends Document> factory) {
     super(editorTextField, browseActionListener);
     myFactory = factory;
   }

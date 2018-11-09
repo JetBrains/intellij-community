@@ -37,7 +37,7 @@ public class DomReferencesTest extends DomHardCoreTestCase {
     final XmlTag tag = element.getXmlTag();
     final DomMetaData metaData = assertInstanceOf(tag.getMetaData(), DomMetaData.class);
     assertEquals(tag, metaData.getDeclaration());
-    assertOrderedEquals(metaData.getDependences(), DomUtil.getFileElement(element), tag);
+    assertOrderedEquals(metaData.getDependencies(), DomUtil.getFileElement(element), tag);
     assertEquals("A", metaData.getName());
     assertEquals("A", metaData.getName(null));
 

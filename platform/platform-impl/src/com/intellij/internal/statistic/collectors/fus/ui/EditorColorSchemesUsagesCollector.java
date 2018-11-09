@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.collectors.fus.ui;
 
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
@@ -84,4 +85,9 @@ public class EditorColorSchemesUsagesCollector extends ApplicationUsagesCollecto
     return "statistics.ui.editor.color.schemes";
   }
 
+  @Nullable
+  @Override
+  public FUSUsageContext getContext() {
+    return FUSUsageContext.OS_CONTEXT;
+  }
 }

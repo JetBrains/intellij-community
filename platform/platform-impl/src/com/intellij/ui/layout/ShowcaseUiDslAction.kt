@@ -20,7 +20,7 @@ internal class ShowcaseUiDslAction : DumbAwareAction() {
       }
     }
 
-    tabs.addTab(TabInfo(makeSecondColumnSmaller()).setText("Second Column Smaller"))
+    tabs.addTab(TabInfo(secondColumnSmallerPanel()).setText("Second Column Smaller"))
 
     val dialog = dialog("UI DSL Showcase", tabs)
     Disposer.register(dialog.disposable, disposable)

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -9,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/1/11 1:30 PM
  */
 public class ProjectData extends AbstractNamedData implements ExternalConfigPathAware, Identifiable {
 
@@ -56,6 +56,7 @@ public class ProjectData extends AbstractNamedData implements ExternalConfigPath
     myIdeProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
   }
 
+  @Override
   @NotNull
   public String getLinkedExternalProjectPath() {
     return myLinkedExternalProjectPath;

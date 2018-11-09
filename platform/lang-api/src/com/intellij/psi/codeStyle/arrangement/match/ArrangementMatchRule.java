@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:07 AM
  */
 public class ArrangementMatchRule {
 

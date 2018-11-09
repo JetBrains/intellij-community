@@ -52,7 +52,7 @@ class RecursionWeigher extends LookupElementWeigher {
   private final boolean myDelegate;
   private final CompletionType myCompletionType;
 
-  public RecursionWeigher(PsiElement position,
+  RecursionWeigher(PsiElement position,
                           CompletionType completionType,
                           @NotNull PsiReferenceExpression reference,
                           @Nullable PsiMethodCallExpression expression,

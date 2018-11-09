@@ -1,26 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiNameValuePair;
-import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.stubs.EmptyStub;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +15,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
-  implements GrAnnotationArgumentList, StubBasedPsiElement<EmptyStub> {
+  implements GrAnnotationArgumentList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {
 
   private static final Logger LOG = Logger.getInstance(GrAnnotationArgumentListImpl.class);
 
@@ -46,10 +32,11 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitAnnotationArgumentList(this);
   }
 
+  @Override
   public String toString() {
     return "Annotation arguments";
   }
@@ -94,5 +81,11 @@ public class GrAnnotationArgumentListImpl extends GrStubElementBase<EmptyStub>
     }
 
     return super.addInternal(first, last, anchor, before);
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getAttributes());
   }
 }

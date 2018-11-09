@@ -74,6 +74,7 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     return "artifact.output." + BuildProperties.convertName(artifact.getName());
   }
 
+  @Override
   public String getArtifactOutputProperty(@NotNull Artifact artifact) {
     if (shouldBuildIntoTempDirectory(artifact)) {
       return "artifact.temp.output." + BuildProperties.convertName(artifact.getName());
@@ -102,22 +103,27 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     return "artifact." + BuildProperties.convertName(artifactName);
   }
 
+  @Override
   public String getSubstitutedPath(String path) {
     return GenerationUtils.toRelativePath(path, VfsUtil.virtualToIoFile(myProject.getBaseDir()), BuildProperties.getProjectBaseDirProperty(), myGenerationOptions);
   }
 
+  @Override
   public void runBeforeCurrentArtifact(Generator generator) {
     myBeforeCurrentArtifact.add(generator);
   }
 
+  @Override
   public void runBeforeBuild(Generator generator) {
     myBeforeBuildGenerators.add(generator);
   }
 
+  @Override
   public void runAfterBuild(Generator generator) {
     myAfterBuildGenerators.add(generator);
   }
 
+  @Override
   public String createNewTempFileProperty(String basePropertyName, String fileName) {
     String tempFileName = fileName;
     int i = 1;
@@ -148,6 +154,7 @@ public class ArtifactAntGenerationContextImpl implements ArtifactAntGenerationCo
     return generators;
   }
 
+  @Override
   public String getModuleOutputPath(String moduleName) {
     return BuildProperties.getOutputPathProperty(moduleName);
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.io.FileNotFoundException;
@@ -29,7 +30,7 @@ import java.io.FileNotFoundException;
 public class ExportToHTMLAction extends AnAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
@@ -45,7 +46,7 @@ public class ExportToHTMLAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);

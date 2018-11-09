@@ -82,7 +82,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
   }
 
   @Override
-  public void updateLayoutLater(@Nullable final List<UsageInfo> infos) {
+  public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
     PsiElement element = infos == null ? null : getElementToSliceOn(infos);
     if (myBrowser instanceof Disposable) {
       Disposer.dispose((Disposable)myBrowser);
@@ -128,7 +128,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
     return browser;
   }
 
-  private static PsiElement getElementToSliceOn(@NotNull List<UsageInfo> infos) {
+  private static PsiElement getElementToSliceOn(@NotNull List<? extends UsageInfo> infos) {
     UsageInfo info = infos.get(0);
     return info.getElement();
   }

@@ -138,6 +138,9 @@ public class ParametersListUtil {
     parameterString = parameterString.trim();
 
     final ArrayList<String> params = ContainerUtilRt.newArrayList();
+    if (parameterString.isEmpty()) {
+      return params;
+    }
     final StringBuilder token = new StringBuilder(128);
     boolean inQuotes = false;
     boolean escapedQuote = false;

@@ -47,13 +47,14 @@ import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.PathUtil;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.util.io.Compressor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM31RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.MavenArtifactResolvedM3RtMarker;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -65,7 +66,6 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.io.*;
 import java.util.*;
-import java.util.zip.ZipOutputStream;
 
 import static org.jetbrains.idea.maven.server.MavenServerManager.verifyMavenSdkRequirements;
 
@@ -241,20 +241,14 @@ public class MavenExternalParameters {
     }
 
     // it's a classes directory, we are in development mode.
-    File tempFile = FileUtil.createTempFile("idea-", "-artifactResolver.jar");
-    tempFile.deleteOnExit();
+    File tempFile = FileUtil.createTempFile("idea-", "-artifactResolver.jar", true);
 
-    ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(tempFile));
-    try {
-      ZipUtil.addDirToZipRecursively(zipOutput, null, classDirOrJar, "", null, null);
+    try (Compressor zip = new Compressor.Zip(tempFile)) {
+      zip.addDirectory(classDirOrJar);
 
-      File m2Module = new File(PathUtil.getJarPathForClass(MavenModuleMap.class));
-
+      String m2Module = PathUtil.getJarPathForClass(MavenModuleMap.class);
       String commonClassesPath = MavenModuleMap.class.getPackage().getName().replace('.', '/');
-      ZipUtil.addDirToZipRecursively(zipOutput, null, new File(m2Module, commonClassesPath), commonClassesPath, null, null);
-    }
-    finally {
-      zipOutput.close();
+      zip.addDirectory(commonClassesPath, new File(m2Module, commonClassesPath));
     }
 
     return tempFile.getAbsolutePath();
@@ -405,7 +399,7 @@ public class MavenExternalParameters {
       parametersList.add(goal);
     }
 
-    if (parameters.getPomFileName() != null) {
+    if (parameters.getPomFileName() != null && !FileUtil.namesEqual(MavenConstants.POM_XML, parameters.getPomFileName())) {
       parametersList.add("-f");
       parametersList.add(parameters.getPomFileName());
     }
@@ -582,7 +576,7 @@ public class MavenExternalParameters {
 
     private final Project myProject;
 
-    public ProjectSettingsOpenerExecutionException(final String s, Project project) {
+    ProjectSettingsOpenerExecutionException(final String s, Project project) {
       super(s);
       myProject = project;
     }
@@ -597,7 +591,7 @@ public class MavenExternalParameters {
 
     private final Project myProject;
 
-    public ProjectJdkSettingsOpenerExecutionException(final String s, Project project) {
+    ProjectJdkSettingsOpenerExecutionException(final String s, Project project) {
       super(s);
       myProject = project;
     }
@@ -612,7 +606,7 @@ public class MavenExternalParameters {
 
     private final MavenRunConfiguration myRunConfiguration;
 
-    public RunConfigurationOpenerExecutionException(final String s, MavenRunConfiguration runConfiguration) {
+    RunConfigurationOpenerExecutionException(final String s, MavenRunConfiguration runConfiguration) {
       super(s);
       myRunConfiguration = runConfiguration;
     }
@@ -628,7 +622,7 @@ public class MavenExternalParameters {
   private static abstract class WithHyperlinkExecutionException extends ExecutionException
     implements HyperlinkListener, NotificationListener {
 
-    public WithHyperlinkExecutionException(String s) {
+    WithHyperlinkExecutionException(String s) {
       super(s);
     }
 

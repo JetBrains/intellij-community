@@ -34,42 +34,52 @@ public interface UpdateSettings {
   boolean getMakeNewFilesReadOnly();
 
   UpdateSettings DONT_MAKE_ANY_CHANGES = new UpdateSettings(){
+    @Override
     public boolean getPruneEmptyDirectories() {
       return false;
     }
 
+    @Override
     public String getBranch1ToMergeWith() {
       return null;
     }
 
+    @Override
     public boolean getResetAllSticky() {
       return false;
     }
 
+    @Override
     public boolean getDontMakeAnyChanges() {
       return true;
     }
 
+    @Override
     public String getBranch2ToMergeWith() {
       return null;
     }
 
+    @Override
     public boolean getCreateDirectories() {
       return true;
     }
 
+    @Override
     public boolean getCleanCopy() {
       return false;
     }
 
+    @Override
     public KeywordSubstitution getKeywordSubstitution() {
       return null;
     }
 
+    @Override
     public boolean getMakeNewFilesReadOnly() {
       return false;
     }
 
+    @Override
     public RevisionOrDate getRevisionOrDate() {
       return RevisionOrDate.EMPTY;
     }

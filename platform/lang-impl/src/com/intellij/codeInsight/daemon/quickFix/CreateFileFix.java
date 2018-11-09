@@ -54,6 +54,8 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private long myIsAvailableTimeStamp;
   private static final int REFRESH_INTERVAL = 1000;
 
+  // invoked from other module
+  @SuppressWarnings("WeakerAccess")
   public CreateFileFix(boolean isDirectory,
                        @NotNull String newFileName,
                        @NotNull PsiDirectory directory,
@@ -143,7 +145,7 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
         String newFileName = myNewFileName;
         String newDirectories = null;
         if (myNewFileName.contains("/")) {
-          int pos = myNewFileName.lastIndexOf("/");
+          int pos = myNewFileName.lastIndexOf('/');
           newFileName = myNewFileName.substring(pos + 1);
           newDirectories = myNewFileName.substring(0, pos);
         }

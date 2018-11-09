@@ -23,9 +23,11 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
 import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.history.FileHistoryUi;
-import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -48,6 +50,7 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
       super(true);
     }
   }
+
   @Override
   public boolean isActive(@NotNull AnActionEvent e) {
     return e.getData(VcsLogInternalDataKeys.FILE_HISTORY_UI) != null;
@@ -69,15 +72,16 @@ public class CreatePatchFromHistoryActionProvider implements AnActionExtensionPr
     e.getPresentation().setEnabled(!selectedCommits.isEmpty() && commitMessage != null);
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    VcsLogUtil.triggerUsage(e);
+    VcsLogUsageTriggerCollector.triggerUsage(e);
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     FileHistoryUi ui = e.getRequiredData(VcsLogInternalDataKeys.FILE_HISTORY_UI);
     String commitMessage = e.getRequiredData(VcsDataKeys.PRESET_COMMIT_MESSAGE);
 
     ui.getVcsLog().requestSelectedDetails(detailsList -> {
-      List<Change> changes = ui.collectChanges(detailsList, false);
+      List<Change> changes = VcsLogUtil.collectChanges(detailsList, VcsFullCommitDetails::getChanges);
       CreatePatchFromChangesAction.createPatch(project, commitMessage, changes, mySilentClipboard);
     });
   }

@@ -16,6 +16,7 @@
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -23,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,12 +49,12 @@ public class FindUIHelper implements Disposable {
   }
 
   private FindUI getOrCreateUI() {
-    boolean newInstanceRequired = myUI instanceof FindPopupPanel && !Registry.is("ide.find.as.popup") ||
-                                  myUI instanceof FindDialog && Registry.is("ide.find.as.popup") ||
+    boolean newInstanceRequired = myUI instanceof FindPopupPanel && !showAsPopup() ||
+                                  myUI instanceof FindDialog && showAsPopup() ||
                                   myUI == null;
     if (newInstanceRequired) {
       JComponent component;
-      if (Registry.is("ide.find.as.popup")) {
+      if (showAsPopup()) {
         FindPopupPanel panel = new FindPopupPanel(this);
         component = panel;
         myUI = panel;
@@ -66,16 +68,28 @@ public class FindUIHelper implements Disposable {
       registerAction("ReplaceInPath", true, component, myUI);
       registerAction("FindInPath", false, component, myUI);
       Disposer.register(myUI.getDisposable(), this);
+    } else {
+      IdeEventQueue.getInstance().flushDelayedKeyEvents();
     }
     return myUI;
+  }
+
+  private static boolean showAsPopup() {
+    return Registry.is("ide.find.as.popup") && SystemInfo.isJetBrainsJvm;
   }
 
   private void registerAction(String actionName, boolean replace, JComponent component, FindUI ui) {
     AnAction action = ActionManager.getInstance().getAction(actionName);
     new AnAction() {
       @Override
+      public boolean isDumbAware() {
+        return action.isDumbAware();
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         ui.saveSettings();
+        myModel.copyFrom(FindManager.getInstance(myProject).getFindInProjectModel());
         FindUtil.initStringToFindWithSelection(myModel, e.getData(CommonDataKeys.EDITOR));
         myModel.setReplaceState(replace);
         ui.initByModel();

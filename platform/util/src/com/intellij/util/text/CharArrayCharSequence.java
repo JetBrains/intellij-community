@@ -73,6 +73,7 @@ public class CharArrayCharSequence implements CharSequenceBackedByArray, CharSeq
     System.arraycopy(myChars, myStart, dst, dstOffset, length());
   }
 
+  @Override
   public boolean equals(Object anObject) {
     if (this == anObject) {
       return true;

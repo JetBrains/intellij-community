@@ -4,28 +4,46 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.openapi.diagnostic.Logger
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.Extensions
 import java.io.File
 import java.util.*
 
 private val LOG = Logger.getInstance("#com.intellij.internal.statistic.eventLog.FeatureUsageEventLogger")
-private val EP_NAME = ExtensionPointName.create<FeatureUsageEventLogger>("com.intellij.statistic.eventLog.featureUsageEventLogger")
+private val EP_NAME = ExtensionPointName.create<FeatureUsageEventLoggerProvider>("com.intellij.statistic.eventLog.fusEventLoggerProvider")
 
 interface FeatureUsageEventLogger {
 
-  fun log(recorderId: String, action: String)
+  fun log(recorderId: String, action: String, isState: Boolean)
 
-  fun log(recorderId: String, action: String, data: Map<String, Any>)
+  fun log(recorderId: String, action: String, data: Map<String, Any>, isState: Boolean)
 
   fun getLogFiles(): List<File>
 
 }
 
-class FeatureUsageEmptyEventLogger : FeatureUsageEventLogger {
+interface FeatureUsageEventLoggerProvider {
+  fun isEnabled() : Boolean
 
-  override fun log(recorderId: String, action: String) {
+  fun createLogger() : FeatureUsageEventLogger
+}
+
+class FeatureUsageEmptyEventLoggerProvider : FeatureUsageEventLoggerProvider {
+
+  override fun isEnabled() : Boolean {
+    return false
   }
 
-  override fun log(recorderId: String, action: String, data: Map<String, Any>) {
+  override fun createLogger() : FeatureUsageEventLogger {
+    return FeatureUsageEmptyEventLogger()
+  }
+}
+
+class FeatureUsageEmptyEventLogger : FeatureUsageEventLogger {
+
+  override fun log(recorderId: String, action: String, isState: Boolean) {
+  }
+
+  override fun log(recorderId: String, action: String, data: Map<String, Any>, isState: Boolean) {
   }
 
   override fun getLogFiles(): List<File> {
@@ -33,14 +51,16 @@ class FeatureUsageEmptyEventLogger : FeatureUsageEventLogger {
   }
 }
 
-fun getLogger(): FeatureUsageEventLogger {
-  val extensions = EP_NAME.extensions
-  if (extensions.isEmpty()) {
-    LOG.warn("Cannot find feature usage event logger (" + Arrays.asList<FeatureUsageEventLogger>(*extensions) + ")")
-    return FeatureUsageEmptyEventLogger()
+fun getLoggerProvider(): FeatureUsageEventLoggerProvider {
+  if (Extensions.getRootArea().hasExtensionPoint(EP_NAME.name)) {
+    val extensions = EP_NAME.extensions
+    if (extensions.isEmpty()) {
+      LOG.warn("Cannot find feature usage event logger")
+    }
+    else if (extensions.size > 1) {
+      LOG.warn("Too many feature usage loggers registered (" + Arrays.asList<FeatureUsageEventLoggerProvider>(*extensions) + ")")
+    }
+    return extensions[0]
   }
-  else if (extensions.size > 1) {
-    LOG.warn("Too many php remote interpreter managers registered (" + Arrays.asList<FeatureUsageEventLogger>(*extensions) + ")")
-  }
-  return extensions[0]
+  return FeatureUsageEmptyEventLoggerProvider()
 }

@@ -28,7 +28,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
-const val NOTIFICATION_GROUP_ID = "Load Error"
+const val NOTIFICATION_GROUP_ID: String = "Load Error"
 
 @TestOnly
 var DEBUG_LOG: String? = null
@@ -105,8 +105,7 @@ private fun collect(componentManager: ComponentManager,
                     unknownMacros: MutableSet<String>,
                     substitutorToStore: MutableMap<TrackingPathMacroSubstitutor, IComponentStore>) {
   val store = componentManager.stateStore
-  val substitutor = store.storageManager.macroSubstitutor ?: return
-
+  val substitutor = store.storageManager.macroSubstitutor as? TrackingPathMacroSubstitutor ?: return
   val macros = substitutor.getUnknownMacros(null)
   if (macros.isEmpty()) {
     return

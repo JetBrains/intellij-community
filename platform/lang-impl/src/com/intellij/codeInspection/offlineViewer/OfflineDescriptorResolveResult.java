@@ -44,18 +44,18 @@ class OfflineDescriptorResolveResult {
   private final CommonProblemDescriptor myResolvedDescriptor;
   private volatile boolean myExcluded;
 
-  public OfflineDescriptorResolveResult(RefEntity resolvedEntity, CommonProblemDescriptor resolvedDescriptor) {
+  private OfflineDescriptorResolveResult(RefEntity resolvedEntity, CommonProblemDescriptor resolvedDescriptor) {
     myResolvedEntity = resolvedEntity;
     myResolvedDescriptor = resolvedDescriptor;
   }
 
   @Nullable
-  public RefEntity getResolvedEntity() {
+  RefEntity getResolvedEntity() {
     return myResolvedEntity;
   }
 
   @Nullable
-  public CommonProblemDescriptor getResolvedDescriptor() {
+  CommonProblemDescriptor getResolvedDescriptor() {
     return myResolvedDescriptor;
   }
 
@@ -97,7 +97,7 @@ class OfflineDescriptorResolveResult {
     final InspectionManager inspectionManager = InspectionManager.getInstance(presentation.getContext().getProject());
     final OfflineProblemDescriptor offlineProblemDescriptor = offlineDescriptor;
     if (element instanceof RefElement) {
-      final PsiElement psiElement = ((RefElement)element).getElement();
+      final PsiElement psiElement = ((RefElement)element).getPsiElement();
       if (psiElement != null) {
         ProblemDescriptor descriptor = ProgressManager.getInstance().runProcess(
           () -> runLocalTool(psiElement,
@@ -163,7 +163,7 @@ class OfflineDescriptorResolveResult {
       int curIdx = 0;
       for (ProblemDescriptor descriptor : list) {
         final PsiNamedElement member = BatchModeDescriptorsUtil.getContainerElement(descriptor.getPsiElement(), localTool, context);
-        if (psiElement instanceof PsiFile || member != null && member.equals(psiElement)) {
+        if (psiElement instanceof PsiFile || psiElement.equals(member)) {
           if (curIdx == idx) {
             return descriptor;
           }
@@ -202,7 +202,7 @@ class OfflineDescriptorResolveResult {
     return fixes.isEmpty() ? null : fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  private static void addFix(@NotNull CommonProblemDescriptor descriptor, final List<LocalQuickFix> fixes, String hint, InspectionToolPresentation presentation) {
+  private static void addFix(@NotNull CommonProblemDescriptor descriptor, final List<? super LocalQuickFix> fixes, String hint, InspectionToolPresentation presentation) {
     final IntentionAction intentionAction = presentation.findQuickFixes(descriptor, hint);
     if (intentionAction instanceof QuickFixWrapper) {
       fixes.add(((QuickFixWrapper)intentionAction).getFix());

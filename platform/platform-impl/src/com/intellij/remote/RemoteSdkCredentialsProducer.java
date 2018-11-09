@@ -41,6 +41,7 @@ public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
    * @throws ExecutionException
    * @deprecated
    */
+  @Deprecated
   T getRemoteSdkCredentials(boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException;
 
   T getRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction) throws InterruptedException, ExecutionException;
@@ -52,6 +53,7 @@ public interface RemoteSdkCredentialsProducer<T extends RemoteSdkCredentials> {
    * @param remoteSdkCredentialsConsumer
    * @deprecated
    */
+  @Deprecated
   void produceRemoteSdkCredentials(boolean allowSynchronousInteraction, Consumer<T> remoteSdkCredentialsConsumer);
 
   void produceRemoteSdkCredentials(@Nullable Project project, boolean allowSynchronousInteraction, Consumer<T> remoteSdkCredentialsConsumer);

@@ -65,13 +65,16 @@ public class HgChangeProvider implements ChangeProvider {
     myVcsKey = vcsKey;
   }
 
+  @Override
   public boolean isModifiedDocumentTrackingRequired() {
     return true;
   }
 
+  @Override
   public void doCleanup(List<VirtualFile> files) {
   }
 
+  @Override
   public void getChanges(@NotNull VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder,
                          @NotNull ProgressIndicator progress, @NotNull ChangeListManagerGate addGate) {
     if (myProject.isDisposed()) return;

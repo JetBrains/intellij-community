@@ -14,14 +14,15 @@
  *****************************************************************************/
 package org.netbeans.lib.cvsclient.command.remove;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.IRequestProcessor;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.AbstractCommand;
 import org.netbeans.lib.cvsclient.command.CommandException;
 import org.netbeans.lib.cvsclient.command.ICvsFiles;
 import org.netbeans.lib.cvsclient.command.IOCommandException;
+import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.event.ICvsListener;
 import org.netbeans.lib.cvsclient.event.ICvsListenerRegistry;
 import org.netbeans.lib.cvsclient.event.IEventSender;
@@ -31,7 +32,6 @@ import org.netbeans.lib.cvsclient.progress.sending.FileStateRequestsProgressHand
 import org.netbeans.lib.cvsclient.request.CommandRequest;
 import org.netbeans.lib.cvsclient.request.Requests;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.io.IOException;
 
@@ -52,6 +52,7 @@ public final class RemoveCommand extends AbstractCommand {
 
   // Implemented ============================================================
 
+  @Override
   public boolean execute(IRequestProcessor requestProcessor,
                          IEventSender eventSender,
                          ICvsListenerRegistry listenerRegistry,
@@ -80,6 +81,7 @@ public final class RemoveCommand extends AbstractCommand {
     }
   }
 
+  @Override
   protected void addRequestForFile(FileObject fileObject,
                                    Entry entry,
                                    boolean fileExists,
@@ -101,6 +103,7 @@ public final class RemoveCommand extends AbstractCommand {
     super.addRequestForFile(fileObject, entry, fileExists, requests, clientEnvironment);
   }
 
+  @Override
   public String getCvsCommandLine() {
     @NonNls final StringBuffer cvsCommandLine = new StringBuffer("remove ");
     cvsCommandLine.append(getCvsArguments());
@@ -108,6 +111,7 @@ public final class RemoveCommand extends AbstractCommand {
     return cvsCommandLine.toString();
   }
 
+  @Override
   public void resetCvsCommand() {
     super.resetCvsCommand();
     setRecursive(false);

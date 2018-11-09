@@ -32,6 +32,7 @@ public class PackageNameReferenceEditorCombo extends ReferenceEditorComboWithBro
                                          final String recentsKey, final String chooserTitle) {
     super(null, text, project, false, recentsKey);
     addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final PackageChooserDialog chooser = new PackageChooserDialog(chooserTitle, project);
         chooser.selectPackage(getText());

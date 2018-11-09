@@ -15,7 +15,9 @@
  */
 package git4idea.commands;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.http.GitAskPassApp;
 import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
@@ -49,8 +51,8 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
    */
   @NotNull
   public abstract GitHttpAuthenticator createAuthenticator(@NotNull Project project,
-                                                           @NotNull GitCommand command,
                                                            @NotNull Collection<String> urls,
+                                                           @NotNull GitAuthenticationGate authenticationGate,
                                                            boolean ignoreAuthenticationRequest);
 
   /**
@@ -60,14 +62,53 @@ public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttp
     @NotNull
     @Override
     public String askUsername(String token, @NotNull String url) {
-      return getHandler(UUID.fromString(token)).askUsername(url);
+      return getDefaultValueIfCancelled(() -> getHandler(UUID.fromString(token)).askUsername(url), "");
     }
 
     @NotNull
     @Override
     public String askPassword(String token, @NotNull String url) {
-      return getHandler(UUID.fromString(token)).askPassword(url);
+      return getDefaultValueIfCancelled(() -> getHandler(UUID.fromString(token)).askPassword(url), "");
     }
   }
 
+  @NotNull
+  public static <T> T getDefaultValueIfCancelled(@NotNull Computable<? extends T> operation, @NotNull T defaultValue) {
+    try {
+      return operation.compute();
+    }
+    catch (ProcessCanceledException pce) {
+      return defaultValue;
+    }
+  }
+
+  /**
+   * NOOP handler providing empty values for credentials
+   */
+  protected static final GitHttpAuthenticator STUB_AUTHENTICATOR = new GitHttpAuthenticator() {
+    @NotNull
+    @Override
+    public String askPassword(@NotNull String url) {
+      return "";
+    }
+
+    @NotNull
+    @Override
+    public String askUsername(@NotNull String url) {
+      return "";
+    }
+
+    @Override
+    public void saveAuthData() {
+    }
+
+    @Override
+    public void forgetPassword() {
+    }
+
+    @Override
+    public boolean wasCancelled() {
+      return false;
+    }
+  };
 }

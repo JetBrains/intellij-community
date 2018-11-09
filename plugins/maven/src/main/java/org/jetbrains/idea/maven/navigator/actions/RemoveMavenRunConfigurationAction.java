@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
 /**
@@ -32,6 +33,7 @@ public class RemoveMavenRunConfigurationAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
+    MavenActionsUsagesCollector.trigger(project, this, e);
     RunnerAndConfigurationSettings settings = MavenDataKeys.RUN_CONFIGURATION.getData(e.getDataContext());
 
     assert settings != null && project != null;

@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.EditorPlace;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
-import java.util.HashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 
 public class FontSizeSynchronizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.FontSizeSynchronizer");
@@ -45,15 +32,17 @@ public class FontSizeSynchronizer {
     myEditors.remove(editor);
   }
 
-  public static void attachTo(ArrayList<EditorPlace> editorPlaces) {
+  public static void attachTo(ArrayList<? extends EditorPlace> editorPlaces) {
     final FontSizeSynchronizer synchronizer = new FontSizeSynchronizer();
     for (EditorPlace editorPlace : editorPlaces) {
       editorPlace.addListener(new EditorPlace.EditorListener() {
-        public void onEditorCreated(EditorPlace place) {
+        @Override
+        public void onEditorCreated(@NotNull EditorPlace place) {
           synchronizer.synchronize((EditorEx)place.getEditor());
         }
 
-        public void onEditorReleased(Editor releasedEditor) {
+        @Override
+        public void onEditorReleased(@NotNull Editor releasedEditor) {
           synchronizer.stopSynchronize((EditorEx)releasedEditor);
         }
       });
@@ -65,6 +54,7 @@ public class FontSizeSynchronizer {
 
   private class MyFontSizeListener implements PropertyChangeListener {
     private boolean myDuringUpdate = false;
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (myDuringUpdate) return;
       if (!EditorEx.PROP_FONT_SIZE.equals(evt.getPropertyName())) return;

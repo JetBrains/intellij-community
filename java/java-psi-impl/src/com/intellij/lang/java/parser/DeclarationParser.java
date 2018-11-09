@@ -78,7 +78,6 @@ public class DeclarationParser {
     refParser.parseReferenceList(builder, JavaTokenType.EXTENDS_KEYWORD, JavaElementType.EXTENDS_LIST, JavaTokenType.COMMA);
     refParser.parseReferenceList(builder, JavaTokenType.IMPLEMENTS_KEYWORD, JavaElementType.IMPLEMENTS_LIST, JavaTokenType.COMMA);
 
-    //noinspection Duplicates
     if (builder.getTokenType() != JavaTokenType.LBRACE) {
       final PsiBuilder.Marker error = builder.mark();
       while (BEFORE_LBRACE_ELEMENTS_SET.contains(builder.getTokenType())) {
@@ -187,7 +186,6 @@ public class DeclarationParser {
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == null || tokenType == JavaTokenType.RBRACE) break;
 
-      //noinspection Duplicates
       if (tokenType == JavaTokenType.SEMICOLON) {
         if (invalidElements != null) {
           invalidElements.error(JavaErrorMessages.message("unexpected.token"));
@@ -903,23 +901,18 @@ public class DeclarationParser {
   private PsiBuilder.Marker doParseAnnotationValue(PsiBuilder builder) {
     PsiBuilder.Marker result;
 
-    final IElementType tokenType = builder.getTokenType();
+    IElementType tokenType = builder.getTokenType();
     if (tokenType == JavaTokenType.AT) {
       result = parseAnnotation(builder);
     }
     else if (tokenType == JavaTokenType.LBRACE) {
-      result = parseAnnotationArrayInitializer(builder);
+      result = myParser.getExpressionParser().parseArrayInitializer(
+        builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER, this::doParseAnnotationValue, "expected.value");
     }
     else {
       result = myParser.getExpressionParser().parseConditional(builder);
     }
 
     return result;
-  }
-
-  @NotNull
-  private PsiBuilder.Marker parseAnnotationArrayInitializer(PsiBuilder builder) {
-    return myParser.getExpressionParser().parseArrayInitializer(builder, JavaElementType.ANNOTATION_ARRAY_INITIALIZER,
-                                                                builder1 -> doParseAnnotationValue(builder1) != null, "expected.value");
   }
 }

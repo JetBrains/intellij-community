@@ -3,8 +3,10 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -146,11 +148,17 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
       PsiExpression condition = ifStatement.getCondition();
       String simplified = JavaPsiMathUtil.simplifyComparison(condition, ct);
       if (simplified != null) {
-        ct.replaceAndRestoreComments(condition, simplified);
+        condition = (PsiExpression)ct.replaceAndRestoreComments(condition, simplified);
+        ct = new CommentTracker();
+      }
+      if (Boolean.TRUE.equals(DfaUtil.evaluateCondition(condition))) {
+        PsiStatement nakedSubListClear = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+        assert nakedSubListClear != null;
+        ct.replaceAndRestoreComments(ifStatement, nakedSubListClear);
       }
     }
 
-    public Pair<String, String> getStartEnd(PsiLoopStatement loopStatement, CommentTracker ct) {
+    public Couple<String> getStartEnd(PsiLoopStatement loopStatement, CommentTracker ct) {
       if (loopStatement instanceof PsiForStatement) {
         CountingLoop loop = CountingLoop.from((PsiForStatement)loopStatement);
         if (loop == null) return null;
@@ -164,7 +172,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
           start = ct.text(loop.getInitializer());
           end = loop.isIncluding() ? JavaPsiMathUtil.add(loop.getBound(), 1, ct) : ct.text(loop.getBound());
         }
-        return Pair.create(start, end);
+        return Couple.of(start, end);
       }
       if (loopStatement instanceof PsiWhileStatement) {
         PsiBinaryExpression condition =
@@ -196,7 +204,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
           default:
             return null;
         }
-        return Pair.create(start, end);
+        return Couple.of(start, end);
       }
       return null;
     }

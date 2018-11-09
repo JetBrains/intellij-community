@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 7/13/12 11:43 AM
  */
 public class ShowQuickDocAtPinnedWindowFromTooltipAction extends AbstractDocumentationTooltipAction {
 

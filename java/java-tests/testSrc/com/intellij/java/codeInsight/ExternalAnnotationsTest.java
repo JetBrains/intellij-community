@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -55,12 +54,11 @@ public class ExternalAnnotationsTest extends UsefulTestCase {
   
     myProject = myFixture.getProject();
 
-    CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = true;
+    JavaCodeStyleSettings.getInstance(myProject).USE_EXTERNAL_ANNOTATIONS = true;
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS = false;
     try {
       myFixture.tearDown();
     }

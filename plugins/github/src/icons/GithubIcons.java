@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -23,11 +9,22 @@ import javax.swing.*;
  * NOTE THIS FILE IS AUTO-GENERATED
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
-public class GithubIcons {
+public final class GithubIcons {
   private static Icon load(String path) {
     return IconLoader.getIcon(path, GithubIcons.class);
   }
 
+  private static Icon load(String path, Class<?> clazz) {
+    return IconLoader.getIcon(path, clazz);
+  }
+
   public static final Icon DefaultAvatar_40 = load("/org/jetbrains/plugins/github/defaultAvatar_40.svg"); // 40x40
-  public static final Icon Github_icon = load("/org/jetbrains/plugins/github/github_icon.png"); // 16x16
+  public static final Icon PullRequestClosed = load("/org/jetbrains/plugins/github/pullRequestClosed.svg"); // 16x16
+  public static final Icon PullRequestOpen = load("/org/jetbrains/plugins/github/pullRequestOpen.svg"); // 16x16
+  public static final Icon PullRequestsToolWindow = load("/org/jetbrains/plugins/github/pullRequestsToolWindow.svg"); // 13x13
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Github_icon = load("/vcs/vendors/github.svg", com.intellij.icons.AllIcons.class);
 }

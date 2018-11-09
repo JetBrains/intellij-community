@@ -7,8 +7,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 
 
 public class ReplaceGetClassWithClassLiteralTest extends LightQuickFixParameterizedTestCase {
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/getClass2ClassLiteral";

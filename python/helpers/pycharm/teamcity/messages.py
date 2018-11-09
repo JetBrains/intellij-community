@@ -3,11 +3,10 @@ import sys
 import time
 
 
-
-
 if sys.version_info < (3, ):
     # Python 2
-    text_type = unicode  # flake8: noqa
+    # flake8: noqa
+    text_type = unicode
 else:
     # Python 3
     text_type = str
@@ -18,6 +17,7 @@ _localtime = time.localtime
 _strftime = time.strftime
 
 _quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", '[': '|[', ']': '|]'}
+
 
 def escape_value(value):
     return "".join(_quote.get(x, x) for x in value)
@@ -122,8 +122,12 @@ class TeamcityServiceMessages(object):
         import teamcity.context_managers as cm
         return cm.testSuite(self, name=name)
 
-    def testStarted(self, testName, captureStandardOutput=None, flowId=None):
-        self.message('testStarted', name=testName, captureStandardOutput=captureStandardOutput, flowId=flowId)
+    def testStarted(self, testName, captureStandardOutput=None, flowId=None, metainfo=None):
+        """
+
+        :param metainfo: Used to pass any payload from test runner to Intellij. See IDEA-176950
+        """
+        self.message('testStarted', name=testName, captureStandardOutput=captureStandardOutput, flowId=flowId, metainfo=metainfo)
 
     def testFinished(self, testName, testDuration=None, flowId=None):
         if testDuration is not None:
@@ -218,4 +222,3 @@ class TeamcityServiceMessages(object):
 
     def customMessage(self, text, status, errorDetails='', flowId=None):
         self.message('message', text=text, status=status, errorDetails=errorDetails, flowId=flowId)
-

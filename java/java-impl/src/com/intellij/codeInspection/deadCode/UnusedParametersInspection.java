@@ -20,6 +20,9 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UDeclaration;
+import org.jetbrains.uast.UElementKt;
+import org.jetbrains.uast.UParameter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +45,10 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
       if (!(refMethod.isStatic() || refMethod.isConstructor()) && !refMethod.getSuperMethods().isEmpty()) return null;
 
-      if ((refMethod.isAbstract() || refMethod.getOwnerClass().isInterface()) && refMethod.getDerivedMethods().isEmpty()) return null;
+      RefClass aClass = refMethod.getOwnerClass();
+      if (aClass != null && ((refMethod.isAbstract() || aClass.isInterface()) && refMethod.getDerivedMethods().isEmpty())) {
+        return null;
+      }
 
       if (refMethod.isAppMain()) return null;
 
@@ -52,15 +58,17 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
 
       if (refMethod.isEntry()) return null;
 
-      final PsiModifierListOwner element = refMethod.getElement();
+      UDeclaration uMethod = refMethod.getUastElement();
+      if (uMethod == null) return null;
+      final PsiElement element = uMethod.getJavaPsi();
       if (element != null && EntryPointsManager.getInstance(manager.getProject()).isEntryPoint(element)) return null;
 
       final List<ProblemDescriptor> result = new ArrayList<>();
       for (RefParameter refParameter : unusedParameters) {
-        final PsiParameter parameter = refParameter.getElement();
-        final PsiIdentifier psiIdentifier = parameter != null ? parameter.getNameIdentifier() : null;
-        if (psiIdentifier != null) {
-          result.add(manager.createProblemDescriptor(psiIdentifier,
+        UParameter parameter = refParameter.getUastElement();
+        PsiElement anchor = UElementKt.getSourcePsiElement(parameter.getUastAnchor());
+        if (anchor != null) {
+          result.add(manager.createProblemDescriptor(anchor,
                                                      InspectionsBundle.message(refMethod.isAbstract() ? "inspection.unused.parameter.composer" : "inspection.unused.parameter.composer1"),
                                                      new AcceptSuggested(globalContext.getRefManager(), processor, refParameter.getName()),
                                                      ProblemHighlightType.LIKE_UNUSED_SYMBOL, false));
@@ -71,6 +79,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return null;
   }
 
+  @Override
   protected boolean queryExternalUsagesRequests(@NotNull final RefManager manager, @NotNull final GlobalJavaInspectionContext globalContext,
                                                 @NotNull final ProblemDescriptionsProcessor processor) {
     final Project project = manager.getProject();
@@ -85,13 +94,13 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
       public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
-          final PsiModifierListOwner element = refMethod.getElement();
-          if (!refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
-            final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
-            if (unusedParameters.isEmpty()) return;
-            if (element instanceof PsiMethod) {
-              PsiMethod psiMethod = (PsiMethod)element;
-              PsiMethod[] derived = OverridingMethodsSearch.search(psiMethod).toArray(PsiMethod.EMPTY_ARRAY);
+          UDeclaration uastElement = refMethod.getUastElement();
+          if (uastElement != null) {
+            PsiMethod element = (PsiMethod) uastElement.getJavaPsi();
+            if (element != null && !refMethod.isStatic() && !refMethod.isConstructor() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
+              final ArrayList<RefParameter> unusedParameters = getUnusedParameters(refMethod);
+              if (unusedParameters.isEmpty()) return;
+              PsiMethod[] derived = OverridingMethodsSearch.search(element).toArray(PsiMethod.EMPTY_ARRAY);
               for (final RefParameter refParameter : unusedParameters) {
                 if (refMethod.isAbstract() && derived.length == 0) {
                   refParameter.parameterReferenced(false);
@@ -106,16 +115,16 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                       if (parameters.length < idx) continue;
                       PsiParameter psiParameter = parameters[idx];
                       ReferencesSearch.search(psiParameter, helper.getUseScope(psiParameter), false)
-                        .forEach(new PsiReferenceProcessorAdapter(
-                          new PsiReferenceProcessor() {
-                            @Override
-                            public boolean execute(PsiReference element) {
-                              refParameter.parameterReferenced(false);
-                              processor.ignoreElement(refMethod);
-                              found[0] = true;
-                              return false;
-                            }
-                          }));
+                                      .forEach(new PsiReferenceProcessorAdapter(
+                                        new PsiReferenceProcessor() {
+                                          @Override
+                                          public boolean execute(PsiReference element) {
+                                            refParameter.parameterReferenced(false);
+                                            processor.ignoreElement(refMethod);
+                                            found[0] = true;
+                                            return false;
+                                          }
+                                        }));
                     }
                   }
                 }
@@ -128,6 +137,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     return false;
   }
 
+  @Override
   public String getHint(@NotNull final QuickFix fix) {
     if (fix instanceof AcceptSuggested) {
       return ((AcceptSuggested)fix).getHint();
@@ -136,6 +146,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
   }
 
 
+  @Override
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     return new AcceptSuggested(null, null, hint);
@@ -178,7 +189,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
     private final String myHint;
     private final ProblemDescriptionsProcessor myProcessor;
 
-    public AcceptSuggested(@Nullable RefManager manager,
+    AcceptSuggested(@Nullable RefManager manager,
                            @Nullable ProblemDescriptionsProcessor processor,
                            final String hint) {
       myManager = manager;

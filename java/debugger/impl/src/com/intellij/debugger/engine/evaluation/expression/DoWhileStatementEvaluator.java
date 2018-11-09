@@ -32,10 +32,12 @@ public class DoWhileStatementEvaluator extends LoopEvaluator {
     myConditionEvaluator = DisableGC.create(conditionEvaluator);
   }
 
+  @Override
   public Modifier getModifier() {
     return myConditionEvaluator.getModifier();
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Object value = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
     while (true) {

@@ -68,6 +68,10 @@ public interface MergeVersion {
       myOriginalText = originalText;
     }
 
+    public String getOriginalText() {
+      return myOriginalText;
+    }
+
     @Override
     public Document createWorkingDocument(final Project project) {
       //TODO[ik]: do we really need to create copy here?
@@ -107,7 +111,7 @@ public interface MergeVersion {
     }
 
     @Nullable
-    public static Runnable prepareToReportChangedProjectFiles(@NotNull final Project project, @NotNull Collection<VirtualFile> files) {
+    public static Runnable prepareToReportChangedProjectFiles(@NotNull final Project project, @NotNull Collection<? extends VirtualFile> files) {
       final Set<VirtualFile> vfs = new THashSet<>();
       for (VirtualFile file : files) {
         if (file != null && !file.isDirectory()) {

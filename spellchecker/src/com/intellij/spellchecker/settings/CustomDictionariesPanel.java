@@ -2,8 +2,6 @@
 package com.intellij.spellchecker.settings;
 
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
@@ -28,7 +26,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
 import static com.intellij.ui.SimpleTextAttributes.GRAY_ATTRIBUTES;
@@ -39,7 +36,6 @@ public class CustomDictionariesPanel extends JPanel {
   private final SpellCheckerSettings mySettings;
   @NotNull private final SpellCheckerManager myManager;
   private final CustomDictionariesTableView myCustomDictionariesTableView;
-  @NotNull private final Project myProject;
   private final List<String> removedDictionaries = new ArrayList<>();
   private final List<String> defaultDictionaries;
 
@@ -51,7 +47,6 @@ public class CustomDictionariesPanel extends JPanel {
     myCustomDictionariesTableView = new CustomDictionariesTableView(new ArrayList<>(settings.getCustomDictionariesPaths()),
                                                                     defaultDictionaries,
                                                                     new ArrayList<>(settings.getDisabledDictionariesPaths()));
-    myProject = project;
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myCustomDictionariesTableView)
 
       .setAddActionName(SpellCheckerBundle.message("add.custom.dictionaries"))
@@ -72,12 +67,7 @@ public class CustomDictionariesPanel extends JPanel {
         removedDictionaries.addAll(myCustomDictionariesTableView.getSelectedObjects());
         TableUtil.removeSelectedItems(myCustomDictionariesTableView);
       })
-      .setRemoveActionUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          return !ContainerUtil.exists(myCustomDictionariesTableView.getSelectedObjects(), defaultDictionaries::contains);
-        }
-      })
+      .setRemoveActionUpdater(e -> !ContainerUtil.exists(myCustomDictionariesTableView.getSelectedObjects(), defaultDictionaries::contains))
 
       .setEditActionName(SpellCheckerBundle.message("edit.custom.dictionary"))
       .setEditAction(new AnActionButtonRunnable() {
@@ -189,6 +179,7 @@ public class CustomDictionariesPanel extends JPanel {
       return new TableCellRenderer() {
         final SimpleColoredComponent myLabel = new SimpleColoredComponent();
 
+        @Override
         public Component getTableCellRendererComponent(final JTable table,
                                                        final Object value,
                                                        final boolean isSelected,
@@ -203,7 +194,7 @@ public class CustomDictionariesPanel extends JPanel {
             type = SpellCheckerBundle.message("built.in.dictionary");
           }
           else {
-            final CustomDictionaryProvider provider = Stream.of(Extensions.getExtensions(CustomDictionaryProvider.EP_NAME))
+            final CustomDictionaryProvider provider = CustomDictionaryProvider.EP_NAME.getExtensionList().stream()
               .filter(dictionaryProvider -> dictionaryProvider.isApplicable((String)value))
               .findAny()
               .orElse(null);

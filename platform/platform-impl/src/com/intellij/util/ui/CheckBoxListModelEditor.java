@@ -38,9 +38,9 @@ import java.util.List;
 public class CheckBoxListModelEditor<T> {
   private final CheckBoxList<T> list;
   private final ToolbarDecorator toolbarDecorator;
-  private final Function<T, String> toNameConverter;
+  private final Function<? super T, String> toNameConverter;
 
-  public CheckBoxListModelEditor(@NotNull Function<T, String> toNameConverter, @NotNull String emptyText) {
+  public CheckBoxListModelEditor(@NotNull Function<? super T, String> toNameConverter, @NotNull String emptyText) {
     this.toNameConverter = toNameConverter;
     list = new CheckBoxList<>();
     list.setEmptyText(emptyText);
@@ -50,7 +50,7 @@ public class CheckBoxListModelEditor<T> {
   }
 
   @NotNull
-  public CheckBoxListModelEditor<T> editAction(final @NotNull Function<T, T> consumer) {
+  public CheckBoxListModelEditor<T> editAction(final @NotNull Function<? super T, ? extends T> consumer) {
     final Runnable action = () -> {
       T item = getSelectedItem();
       if (item != null) {
@@ -74,10 +74,10 @@ public class CheckBoxListModelEditor<T> {
   }
 
   @NotNull
-  public CheckBoxListModelEditor<T> copyAction(final @NotNull Consumer<T> consumer) {
+  public CheckBoxListModelEditor<T> copyAction(final @NotNull Consumer<? super T> consumer) {
     toolbarDecorator.addExtraAction(new ToolbarDecorator.ElementActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         int[] indices = list.getSelectedIndices();
         if (indices == null || indices.length == 0) {
           return;
@@ -127,14 +127,14 @@ public class CheckBoxListModelEditor<T> {
     return list;
   }
 
-  public void reset(@NotNull List<Pair<T, Boolean>> items) {
+  public void reset(@NotNull List<? extends Pair<T, Boolean>> items) {
     list.clear();
     for (Pair<T, Boolean> item : items) {
       list.addItem(item.first, toNameConverter.fun(item.first), item.second);
     }
   }
 
-  public boolean isModified(@NotNull List<Pair<T, Boolean>> oldItems) {
+  public boolean isModified(@NotNull List<? extends Pair<T, Boolean>> oldItems) {
     if (oldItems.size() != list.getItemsCount()) {
       return true;
     }

@@ -158,6 +158,10 @@
     <inspection_tool class="BeforeOrAfterIsPublicVoidNoArg" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="BindingAnnotationWithoutInject" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BooleanMethodIsAlwaysInverted" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="BoundedWildcard" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="REPORT_INVARIANT_CLASSES" value="false" />
+      <option name="REPORT_PRIVATE_METHODS" value="false" />
+    </inspection_tool>
     <inspection_tool class="BpmnConfigDomInspection" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="BuildoutUnresolvedPartInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="BusyWait" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -236,7 +240,7 @@
     </inspection_tool>
     <inspection_tool class="DuplicateCaseLabelJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="DuplicateCondition" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="ignoreMethodCalls" value="false" />
+      <option name="ignoreSideEffectConditions" value="true" />
     </inspection_tool>
     <inspection_tool class="DuplicatedBlockNamesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="EmptyStatementBody" enabled="true" level="WARNING" enabled_by_default="true">
@@ -482,12 +486,9 @@
       <scope name="runtime.classes" level="ERROR" enabled="true" />
     </inspection_tool>
     <inspection_tool class="LambdaUnfriendlyMethodOverload" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="LiftReturnOrAssignment" enabled="true" level="INFORMATION" enabled_by_default="true" />
     <inspection_tool class="LocalVariableName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
       <option name="namePattern" value="[a-z][A-Za-z\d_]*" />
-    </inspection_tool>
-    <inspection_tool class="LoggerInitializedWithForeignClass" enabled="false" level="WARNING" enabled_by_default="false">
-      <option name="loggerClassName" value="org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger" />
-      <option name="loggerFactoryMethodName" value="getLogger,getLogger,getLog,getLogger" />
     </inspection_tool>
     <inspection_tool class="LoopStatementThatDoesntLoopJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MakoArgumentListInspection" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -503,6 +504,11 @@
     <inspection_tool class="MinMaxValuesInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MinitestFrameworkSupportInspection" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MisorderedAssertEqualsParameters" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="MissingDeprecatedAnnotation" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="MissingOverrideAnnotation" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ignoreObjectMethods" value="true" />
+      <option name="ignoreAnonymousClassMethods" value="false" />
+    </inspection_tool>
     <inspection_tool class="MisspelledCompareTo" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MisspelledEquals" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="MisspelledHashcode" enabled="true" level="WARNING" enabled_by_default="true" />
@@ -565,16 +571,19 @@
     </inspection_tool>
     <inspection_tool class="PointlessBooleanExpressionJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="PointlessNullCheck" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="REPORT_CALLS" value="false" />
       <scope name="android" level="WARNING" enabled="false" />
+      <option name="REPORT_CALLS" value="false" />
+    </inspection_tool>
+    <inspection_tool class="PrivatePropertyName" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <option name="namePattern" value="([A-Z_][A-Z_\d]*)|(_?[a-z][A-Za-z\d]*)" />
     </inspection_tool>
     <inspection_tool class="ProtectedMemberInFinalClass" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PublicConstructorInNonPublicClass" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="PublicFieldAccessedInSynchronizedContext" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="Query_bound_parameters" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Query_index_required" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="Query_restricted" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="RedundantCast" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="IGNORE_ANNOTATED_METHODS" value="true" />
       <option name="IGNORE_SUSPICIOUS_METHOD_CALLS" value="true" />
     </inspection_tool>
     <inspection_tool class="RedundantSamConstructor" enabled="false" level="WEAK WARNING" enabled_by_default="false" />
@@ -791,6 +800,31 @@
         <constraint name="Instance" nameOfExprType="com\.intellij\.psi\.PsiAnnotationOwner" exprTypeWithinHierarchy="true" minCount="0" within="" contains="" />
         <constraint name="Parameter" minCount="0" maxCount="2147483647" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.exists" text="Files.exists($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.toFile().exists()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.notExists" text="Files.notExists($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="!$path$.toFile().exists()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.isDirectory" text="Files.isDirectory($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.toFile().isDirectory()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="nio.Files.isRegularFile" text="Files.isRegularFile($path$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$path$.toFile().isFile()">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="simplify to ContainerUtil.filter()" text="$l$.stream().filter($f$).collect(Collectors.toList())" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.containers.ContainerUtil.filter($l$, $f$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="l" within="" contains="" />
+        <constraint name="f" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="notNullize(s,&quot;&quot;) can be simplified" text="com.intellij.openapi.util.text.StringUtil.notNullize($s$, &quot;&quot;)" recursive="true" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.text.StringUtil.notNullize($s$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="s" within="" contains="" />
+      </replaceConfiguration>
     </inspection_tool>
     <inspection_tool class="SafeVarargsDetector" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SeamAnnotationIncorrectSignatureInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -899,8 +933,10 @@
     <inspection_tool class="UnnecessaryFullyQualifiedName" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Tests" level="WARNING" enabled="false">
         <option name="m_ignoreJavadoc" value="true" />
+        <option name="ignoreInModuleStatements" value="true" />
       </scope>
       <option name="m_ignoreJavadoc" value="true" />
+      <option name="ignoreInModuleStatements" value="true" />
     </inspection_tool>
     <inspection_tool class="UnnecessaryLabelJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UnnecessaryLabelOnBreakStatement" enabled="false" level="WARNING" enabled_by_default="false" />

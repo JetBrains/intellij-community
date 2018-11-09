@@ -82,7 +82,7 @@ public class ElementChooserImpl<T extends ChooserOption> implements ElementChoos
       .setItemChoosenCallback(() -> callBack.chosen(list.getSelectedValue()))
       .addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighters();
         }
       })

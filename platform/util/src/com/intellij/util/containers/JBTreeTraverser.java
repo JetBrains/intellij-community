@@ -22,20 +22,20 @@ import org.jetbrains.annotations.NotNull;
 public class JBTreeTraverser<T> extends FilteredTraverserBase<T, JBTreeTraverser<T>> {
 
   @NotNull
-  public static <T> JBTreeTraverser<T> from(@NotNull Function<T, ? extends Iterable<? extends T>> treeStructure) {
+  public static <T> JBTreeTraverser<T> from(@NotNull Function<? super T, ? extends Iterable<? extends T>> treeStructure) {
     return new JBTreeTraverser<T>(treeStructure);
   }
 
   @NotNull
-  public static <T> JBTreeTraverser<T> of(@NotNull Function<T, T[]> treeStructure) {
+  public static <T> JBTreeTraverser<T> of(@NotNull Function<? super T, T[]> treeStructure) {
     return new JBTreeTraverser<T>(Functions.compose(treeStructure, Functions.<T>wrapArray()));
   }
 
-  public JBTreeTraverser(Function<T, ? extends Iterable<? extends T>> treeStructure) {
+  public JBTreeTraverser(Function<? super T, ? extends Iterable<? extends T>> treeStructure) {
     super(null, treeStructure);
   }
 
-  protected JBTreeTraverser(Meta<T> meta, Function<T, ? extends Iterable<? extends T>> treeStructure) {
+  protected JBTreeTraverser(Meta<T> meta, Function<? super T, ? extends Iterable<? extends T>> treeStructure) {
     super(meta, treeStructure);
   }
 

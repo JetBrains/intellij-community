@@ -21,6 +21,7 @@ public class UpdateConfigurable implements Configurable {
     myFiles = files;
   }
 
+  @Override
   public String getDisplayName() {
     return CvsBundle.getCvsDisplayName();
   }
@@ -30,6 +31,7 @@ public class UpdateConfigurable implements Configurable {
     return "reference.versionControl.cvs.options";
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new UpdateOptionsPanel(myProject, myFiles);
     return myPanel.getPanel();
@@ -40,14 +42,17 @@ public class UpdateConfigurable implements Configurable {
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myPanel.apply();
   }
 
+  @Override
   public void reset() {
     myPanel.reset();
   }
 
+  @Override
   public void disposeUIResources() {
     myPanel = null;
   }

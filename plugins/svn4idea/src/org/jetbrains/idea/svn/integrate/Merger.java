@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -38,7 +38,7 @@ public class Merger implements IMerger {
   private MergeChunk myMergeChunk;
 
   public Merger(final SvnVcs vcs,
-                final List<CommittedChangeList> changeLists,
+                final List<? extends CommittedChangeList> changeLists,
                 final File target,
                 final UpdateEventHandler handler,
                 final Url currentBranchUrl,
@@ -47,7 +47,7 @@ public class Merger implements IMerger {
   }
 
   public Merger(@NotNull SvnVcs vcs,
-                final List<CommittedChangeList> changeLists,
+                final List<? extends CommittedChangeList> changeLists,
                 final File target,
                 final UpdateEventHandler handler,
                 final Url currentBranchUrl,
@@ -70,10 +70,12 @@ public class Merger implements IMerger {
     myGroupSequentialChangeLists = groupSequentialChangeLists;
   }
 
+  @Override
   public boolean hasNext() {
     return isInBounds(getNextChunkStart());
   }
 
+  @Override
   public void mergeNext() throws VcsException {
     myMergeChunk = getNextChunk();
 
@@ -125,7 +127,7 @@ public class Merger implements IMerger {
 
   public static void appendComment(@NotNull StringBuilder builder,
                                    @NotNull String branch,
-                                   @NotNull Iterable<CommittedChangeList> changeLists) {
+                                   @NotNull Iterable<? extends CommittedChangeList> changeLists) {
     if (builder.length() == 0) {
       builder.append("Merged from ").append(branch);
     }
@@ -142,6 +144,7 @@ public class Merger implements IMerger {
                  mySvnConfig.getMergeOptions(), myHandler);
   }
 
+  @Override
   @Nullable
   public String getInfo() {
     String result = null;
@@ -161,13 +164,14 @@ public class Merger implements IMerger {
     return result;
   }
 
+  @Override
   @Nullable
   public String getSkipped() {
     return getSkippedMessage(myMergeChunk != null ? myMergeChunk.chunkAndAfterLists() : ContainerUtil.emptyList());
   }
 
   @Nullable
-  public static String getSkippedMessage(@NotNull List<CommittedChangeList> changeLists) {
+  public static String getSkippedMessage(@NotNull List<? extends CommittedChangeList> changeLists) {
     String result = null;
 
     if (!changeLists.isEmpty()) {
@@ -186,15 +190,18 @@ public class Merger implements IMerger {
     return result;
   }
 
+  @Override
   public String getComment() {
     return myCommitMessage.toString();
   }
 
+  @Override
   @Nullable
   public File getMergeInfoHolder() {
     return myTarget;
   }
 
+  @Override
   public void afterProcessing() {
     // TODO: Previous logic (previously used GroupMerger) that was applied when grouping was enabled contained its own Topic with no
     // TODO: subscribers - so currently message is sent only when grouping is disabled.
@@ -234,7 +241,7 @@ public class Merger implements IMerger {
     private final int myStart;
     private final int mySize;
 
-    public MergeChunk(int start, int size) {
+    MergeChunk(int start, int size) {
       myStart = start;
       mySize = size;
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -42,8 +28,10 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
@@ -57,6 +45,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   public static final ExtensionPointName<WelcomeFrameProvider> EP = ExtensionPointName.create("com.intellij.welcomeFrameProvider");
   static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static IdeFrame ourInstance;
+  private static Disposable ourTouchbar;
   private final WelcomeScreen myScreen;
   private final BalloonLayout myBalloonLayout;
 
@@ -73,7 +62,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         dispose();
       }
     });
@@ -116,6 +105,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
     frame.addWindowListener(
       new WindowAdapter() {
+        @Override
         public void windowClosing(final WindowEvent e) {
           if (ProjectManager.getInstance().getOpenProjects().length == 0) {
             ApplicationManagerEx.getApplicationEx().exit();
@@ -139,9 +129,13 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     }
     return screen;
   }
-  
+
   public static void resetInstance() {
     ourInstance = null;
+    if (ourTouchbar != null) {
+      ourTouchbar.dispose();
+      ourTouchbar = null;
+    }
   }
 
   public static void showNow() {
@@ -158,9 +152,10 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
     if (frame == null) {
       frame = new WelcomeFrame();
     }
-    IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
     ((JFrame)frame).setVisible(true);
+    IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
     ourInstance = frame;
+    ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
   }
 
   public static void showIfNoProjectOpened() {
@@ -178,7 +173,6 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   @Override
   public StatusBar getStatusBar() {
     Container pane = getContentPane();
-    //noinspection ConstantConditions
     return pane instanceof JComponent ? UIUtil.findComponentOfType((JComponent)pane, IdeStatusBarImpl.class) : null;
   }
 

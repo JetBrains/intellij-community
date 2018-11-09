@@ -5,8 +5,9 @@ import com.intellij.lang.Language
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.ResolveResult
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.util.parents
+import com.intellij.psi.util.strictParents
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference
@@ -47,7 +48,7 @@ class GroovyUastPlugin : UastLanguagePlugin {
     }?.takeIf { requiredType?.isAssignableFrom(it.javaClass) ?: true }
 
   private fun makeUParent(element: PsiElement) =
-    element.parent.parents().mapNotNull { convertElementWithParent(it, null) }.firstOrNull()
+    element.strictParents().mapNotNull { convertElementWithParent(it, null) }.firstOrNull()
 
   override fun getMethodCallExpression(element: PsiElement,
                                        containingClassFqName: String?,
@@ -58,9 +59,9 @@ class GroovyUastPlugin : UastLanguagePlugin {
 
   override fun isExpressionValueUsed(element: UExpression): Boolean = TODO("not implemented")
 
-  override val priority = 0
+  override val priority: Int = 0
 
-  override fun isFileSupported(fileName: String) = fileName.endsWith(".groovy", ignoreCase = true)
+  override fun isFileSupported(fileName: String): Boolean = fileName.endsWith(".groovy", ignoreCase = true)
 
   override val language: Language = GroovyLanguage
 
@@ -69,7 +70,7 @@ class GroovyUastPlugin : UastLanguagePlugin {
 class GrULiteral(val grElement: GrLiteral, val parentProvider: () -> UElement?) : ULiteralExpression, JvmDeclarationUElement {
   override val value: Any? get() = grElement.value
   override fun evaluate(): Any? = value
-  override val uastParent by lazy(parentProvider)
+  override val uastParent: UElement? by lazy(parentProvider)
   override val psi: PsiElement? = grElement
   override val annotations: List<UAnnotation> = emptyList() //not implemented
 }
@@ -80,9 +81,9 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
   override val expression: UExpression
     get() = grElement.value.toUElementOfType() ?: GrUnknownUExpression(grElement.value, this)
 
-  override val uastParent by lazy(parentProvider)
+  override val uastParent: UElement? by lazy(parentProvider)
 
-  override val psi = grElement
+  override val psi: GrAnnotationNameValuePair = grElement
   override val annotations: List<UAnnotation> = emptyList() //not implemented
 
   override fun equals(other: Any?): Boolean {
@@ -94,7 +95,7 @@ class GrUNamedExpression(val grElement: GrAnnotationNameValuePair, val parentPro
 }
 
 class GrUAnnotation(val grElement: GrAnnotation,
-                    val parentProvider: () -> UElement?) : UAnnotationEx, JvmDeclarationUElement, UAnchorOwner {
+                    val parentProvider: () -> UElement?) : UAnnotationEx, JvmDeclarationUElement, UAnchorOwner, UMultiResolvable {
 
   override val javaPsi: PsiAnnotation = grElement
 
@@ -102,6 +103,8 @@ class GrUAnnotation(val grElement: GrAnnotation,
     get() = grElement.qualifiedName
 
   override fun resolve(): PsiClass? = grElement.nameReferenceElement?.resolve() as PsiClass?
+  override fun multiResolve(): Iterable<ResolveResult> =
+    grElement.nameReferenceElement?.multiResolve(false)?.asIterable() ?: emptyList()
 
   override val uastAnchor: UIdentifier?
     get() = grElement.classReference.referenceNameElement?.let { UIdentifier(it, this) }
@@ -116,7 +119,7 @@ class GrUAnnotation(val grElement: GrAnnotation,
 
   override fun findDeclaredAttributeValue(name: String?): UExpression? = null //not implemented
 
-  override val uastParent by lazy(parentProvider)
+  override val uastParent: UElement? by lazy(parentProvider)
 
   override val psi: PsiElement? = grElement
 

@@ -21,7 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import static org.jetbrains.plugins.groovy.util.GrFileIndexUtil.hasNameInFile;
+import static com.intellij.psi.impl.cache.impl.id.IdIndex.hasIdentifierInFile;
 
 public class BaseScriptTransformationSupport implements AstTransformationSupport {
 
@@ -79,7 +79,7 @@ public class BaseScriptTransformationSupport implements AstTransformationSupport
 
   @Nullable
   private static GrVariableDeclaration findDeclaration(GroovyFile file) {
-    if (!hasNameInFile(file, "BaseScript")) {
+    if (!hasIdentifierInFile(file, "BaseScript")) {
       return null;
     }
     for (GrVariableDeclaration declaration : file.getScriptDeclarations(false)) {

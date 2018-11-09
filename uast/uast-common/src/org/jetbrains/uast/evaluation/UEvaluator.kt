@@ -33,15 +33,17 @@ interface UEvaluator {
       return rootArea.getExtensionPoint(UEvaluatorExtension.EXTENSION_POINT_NAME).extensions.toList()
     }
 
-  fun PsiElement.languageExtension() = languageExtensions.firstOrNull { it.language == language }
+  fun PsiElement.languageExtension(): UEvaluatorExtension? = languageExtensions.firstOrNull { it.language == language }
 
-  fun UElement.languageExtension() = psi?.languageExtension()
+  fun UElement.languageExtension(): UEvaluatorExtension? = psi?.languageExtension()
 
   fun analyze(method: UMethod, state: UEvaluationState = method.createEmptyState())
 
   fun analyze(field: UField, state: UEvaluationState = field.createEmptyState())
 
   fun evaluate(expression: UExpression, state: UEvaluationState? = null): UValue
+
+  fun evaluateVariableByReference(variableReference: UReferenceExpression, state: UEvaluationState? = null): UValue
 
   fun getDependents(dependency: UDependency): Set<UValue>
 }

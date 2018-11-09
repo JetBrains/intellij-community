@@ -15,6 +15,13 @@
             description="Open current file location in terminal"
             icon="TerminalIcons.OpenTerminal_13x13">
       <add-to-group group-id="RevealGroup" anchor="last"/>
+      <add-to-group group-id="TouchBarDefault_alt" anchor="last"/>
+    </action>
+    <action id="Terminal.RenameSession" class="org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction" text="Rename Session">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
+    </action>
+    <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction" text="Move to Editor">
+      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
   </actions>
 

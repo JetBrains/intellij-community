@@ -162,8 +162,8 @@ public class LongRangeKnownMethods {
 
   void testStringComparison(String name) {
     // Parentheses misplaced -- found in AndroidStudio
-    if (!(name.equals("layout_width") && <warning descr="Condition '!(name.equals(\"layout_height\"))' is always 'true'">!(<warning descr="Condition 'name.equals(\"layout_height\")' is always 'false'">name.equals("layout_height")</warning>)</warning> &&
-          <warning descr="Condition '!(name.equals(\"id\"))' is always 'true'">!(<warning descr="Condition 'name.equals(\"id\")' is always 'false'">name.equals("id")</warning>)</warning>)) {
+    if (!(name.equals("layout_width") && <warning descr="Condition '!(name.equals(\"layout_height\"))' is always 'true'">!(<warning descr="Result of 'name.equals(\"layout_height\")' is always 'false'">name.equals("layout_height")</warning>)</warning> &&
+          <warning descr="Condition '!(name.equals(\"id\"))' is always 'true'">!(<warning descr="Result of 'name.equals(\"id\")' is always 'false'">name.equals("id")</warning>)</warning>)) {
       System.out.println("ok");
     }
   }
@@ -286,10 +286,26 @@ public class LongRangeKnownMethods {
     }
   }
 
+  void testDoubleBrace() {
+    List<String> list = new ArrayList<String>() {{
+      this.add("foo");
+      this.add("bar");
+    }};
+    if(list.isEmpty()) {
+      System.out.println("Not known now");
+    }
+  }
+
   void testSizeCheck() {
     List<String> list = new ArrayList<>();
     list.add(null);
     if(list.size() == 0) return;
     if(<warning descr="Condition 'list.size() == 0' is always 'false'">list.size() == 0</warning>) return;
+  }
+
+  void testStartsWithEmpty(String s1, String s2) {
+    if(s1.startsWith(s2) || <warning descr="Condition 's2.isEmpty()' is always 'false' when reached">s2.isEmpty()</warning>) {
+      System.out.println("Oops");
+    }
   }
 }

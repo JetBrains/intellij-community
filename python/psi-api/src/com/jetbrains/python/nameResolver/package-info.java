@@ -23,7 +23,7 @@
  * So, you need to:
  * <ol>
  *   <li>Create some enum that implements {@link com.jetbrains.python.nameResolver.FQNamesProvider} (see its javadoc for more info)</li>
- *   <li>Use {@link com.jetbrains.python.nameResolver.NameResolverTools#isName(com.jetbrains.python.psi.PyElement, FQNamesProvider)}
+ *   <li>Use {@link com.jetbrains.python.nameResolver.NameResolverTools#isName(com.jetbrains.python.psi.PyElement, com.jetbrains.python.nameResolver.FQNamesProvider...)}
  *   to check that some element matches some names from that enum</li>
  * </ol>
  * @author Ilya.Kazakevich

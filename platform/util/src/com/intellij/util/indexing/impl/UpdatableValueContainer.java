@@ -41,7 +41,7 @@ public abstract class UpdatableValueContainer<T> extends ValueContainer<T> {
     myNeedsCompacting = value;
   }
 
-  public abstract void saveTo(DataOutput out, DataExternalizer<T> externalizer) throws IOException;
+  public abstract void saveTo(DataOutput out, DataExternalizer<? super T> externalizer) throws IOException;
 
   public abstract ValueContainerImpl<T> getModifiableCopy();
 }

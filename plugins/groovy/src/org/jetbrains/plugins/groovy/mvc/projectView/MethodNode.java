@@ -21,7 +21,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 import java.util.Collection;
@@ -32,7 +31,7 @@ import java.util.Collection;
 public class MethodNode extends AbstractMvcPsiNodeDescriptor {
   public MethodNode(@NotNull final Module module,
                     @NotNull final GrMethod method,
-                    @Nullable final ViewSettings viewSettings) {
+                    final ViewSettings viewSettings) {
     super(module, viewSettings, method, METHOD);
   }
 

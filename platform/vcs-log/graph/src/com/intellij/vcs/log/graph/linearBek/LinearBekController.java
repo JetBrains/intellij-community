@@ -225,7 +225,7 @@ public class LinearBekController extends CascadeController {
     private final GraphLayout myGraphLayout;
     private final BekIntMap myBekIntMap;
 
-    public BekGraphLayout(GraphLayout graphLayout, BekIntMap bekIntMap) {
+    BekGraphLayout(GraphLayout graphLayout, BekIntMap bekIntMap) {
       myGraphLayout = graphLayout;
       myBekIntMap = bekIntMap;
     }

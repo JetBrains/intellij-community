@@ -30,12 +30,8 @@ import java.util.Collection;
 import java.util.List;
 
 public class PackageViewModuleNode extends AbstractModuleNode{
-  public PackageViewModuleNode(Project project, Module value, ViewSettings viewSettings) {
+  public PackageViewModuleNode(Project project, @NotNull Module value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
-  }
-
-  public PackageViewModuleNode(Project project, Object value, ViewSettings viewSettings) {
-    this(project, (Module)value, viewSettings);
   }
 
   @Override

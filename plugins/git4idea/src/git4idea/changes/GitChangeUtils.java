@@ -26,12 +26,14 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
-import git4idea.history.browser.SHAHash;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
@@ -264,8 +266,8 @@ public class GitChangeUtils {
   }
 
   @Nullable
-  public static SHAHash commitExists(final Project project, final VirtualFile root, final String anyReference,
-                                     List<VirtualFile> paths, final String... parameters) {
+  public static Hash commitExists(final Project project, final VirtualFile root, final String anyReference,
+                                  List<VirtualFile> paths, final String... parameters) {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.addParameters(parameters);
@@ -276,7 +278,7 @@ public class GitChangeUtils {
     try {
       final String output = Git.getInstance().runCommand(h).getOutputOrThrow().trim();
       if (StringUtil.isEmptyOrSpaces(output)) return null;
-      return new SHAHash(output);
+      return HashImpl.build(output);
     }
     catch (VcsException e) {
       return null;
@@ -415,6 +417,29 @@ public class GitChangeUtils {
     Collection<Change> changes = new ArrayList<>();
     parseChanges(project, root, null, GitRevisionNumber.HEAD, output, changes, emptySet());
     return changes;
+  }
+
+  @NotNull
+  public static List<File> getUnmergedFiles(@NotNull GitRepository repository) throws VcsException {
+    GitCommandResult result = Git.getInstance().getUnmergedFiles(repository);
+    if (!result.success()) {
+      throw new VcsException(result.getErrorOutputAsJoinedString());
+    }
+
+    String output = StringUtil.join(result.getOutput(), "\n");
+    HashSet<String> unmergedPaths = ContainerUtil.newHashSet();
+    for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
+      if (s.isEol()) {
+        s.nextLine();
+        continue;
+      }
+      s.boundedToken('\t');
+      String relative = s.line();
+      unmergedPaths.add(GitUtil.unescapePath(relative));
+    }
+
+    VirtualFile root = repository.getRoot();
+    return ContainerUtil.map(unmergedPaths, path -> new File(root.getPath(), path));
   }
 
   @NotNull

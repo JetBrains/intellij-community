@@ -26,7 +26,6 @@ import javax.swing.*;
 
 public interface ErrorTreeView extends Disposable {
   DataKey<Object> CURRENT_EXCEPTION_DATA_KEY = DataKey.create("CURRENT_EXCEPTION_DATA");
-  @Deprecated String CURRENT_EXCEPTION_DATA = CURRENT_EXCEPTION_DATA_KEY.getName();
 
   /**
    * If file is not null, allows to navigate to this file, line, column

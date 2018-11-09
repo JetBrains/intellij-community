@@ -33,7 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Denis Zhdanov
- * @since 4/9/13 5:30 PM
  */
 public abstract class AbstractRemoteExternalSystemService<S extends ExternalSystemExecutionSettings>
   implements RemoteExternalSystemService<S>

@@ -9,7 +9,6 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandler
 import io.netty.channel.ChannelHandlerContext
-import io.netty.util.CharsetUtil
 import junit.framework.TestCase
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -37,7 +36,7 @@ internal class BinaryRequestHandlerTest {
       it.pipeline().addLast(object : Decoder() {
         override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
           val requiredLength = 4 + text.length
-          val response = readContent(input, context, requiredLength) { buffer, _, _ -> buffer.toString(buffer.readerIndex(), requiredLength, CharsetUtil.UTF_8) }
+          val response = readContent(input, context, requiredLength) { buffer, _, _ -> buffer.toString(buffer.readerIndex(), requiredLength, Charsets.UTF_8) }
           if (response != null) {
             result.setResult(response)
           }
@@ -53,7 +52,7 @@ internal class BinaryRequestHandlerTest {
     buffer.writeLong(MyBinaryRequestHandler.ID.mostSignificantBits)
     buffer.writeLong(MyBinaryRequestHandler.ID.leastSignificantBits)
 
-    val message = Unpooled.copiedBuffer(text, CharsetUtil.UTF_8)
+    val message = Unpooled.copiedBuffer(text, Charsets.UTF_8)
     buffer.writeShort(message.readableBytes())
     channel.write(buffer)
     channel.writeAndFlush(message).await(5, TimeUnit.SECONDS)
@@ -71,7 +70,7 @@ internal class BinaryRequestHandlerTest {
         }
       }
 
-      TestCase.assertEquals("got-" + text, result.get())
+      TestCase.assertEquals("got-$text", result.get())
     }
     finally {
       channel.close()
@@ -80,7 +79,7 @@ internal class BinaryRequestHandlerTest {
 
   class MyBinaryRequestHandler : BinaryRequestHandler() {
     companion object {
-      val ID = UUID.fromString("E5068DD6-1DB7-437C-A3FC-3CA53B6E1AC9")
+      val ID: UUID = UUID.fromString("E5068DD6-1DB7-437C-A3FC-3CA53B6E1AC9")
     }
 
     override fun getId(): UUID {
@@ -112,7 +111,7 @@ internal class BinaryRequestHandlerTest {
               val messageText = readChars(input) ?: return
 
               state = State.HEADER
-              context.writeAndFlush(Unpooled.copiedBuffer("got-" + messageText, CharsetUtil.UTF_8))
+              context.writeAndFlush(Unpooled.copiedBuffer("got-$messageText", Charsets.UTF_8))
             }
           }
         }

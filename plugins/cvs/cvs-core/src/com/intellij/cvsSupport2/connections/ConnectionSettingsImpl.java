@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.connections;
 
 import com.intellij.cvsSupport2.connections.ssh.SshProxyFactory;
@@ -53,26 +39,32 @@ public class ConnectionSettingsImpl implements ConnectionSettings {
     myPassword = password;
   }
 
+  @Override
   public int getConnectionTimeout() {
     return myConnectionTimeout;
   }
 
+  @Override
   public String getHostName() {
     return myHostName;
   }
 
+  @Override
   public int getPort() {
     return myPort;
   }
 
+  @Override
   public boolean isUseProxy() {
     return myUseProxy;
   }
 
+  @Override
   public String getProxyHostName() {
     return myProxyHostName;
   }
 
+  @Override
   public int getProxyPort() {
     if (myProxyPort < 0 || myProxyPort > 0xFFFF) {
       return 80;
@@ -80,18 +72,22 @@ public class ConnectionSettingsImpl implements ConnectionSettings {
     return myProxyPort;
   }
 
+  @Override
   public int getProxyType() {
     return myType;
   }
 
+  @Override
   public String getProxyLogin() {
     return myLogin;
   }
 
+  @Override
   public String getProxyPassword() {
     return myPassword;
   }
 
+  @Override
   public Socket createProxyTransport() throws IOException {
     Socket result = createProxySocketInternal();
     result.setSoTimeout(getConnectionTimeout());

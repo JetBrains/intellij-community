@@ -22,7 +22,7 @@ import org.gradle.api.plugins.JavaPluginConvention
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
-import org.gradle.composite.internal.IncludedBuildInternal
+import org.gradle.composite.internal.DefaultIncludedBuild
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 
@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull
 @CompileStatic
 class SourceSetCachedFinder {
   private final Map<String, SourceSet> myArtifactsMap
+  private final Map<String, Set<File>> mySourcesMap
 
   @SuppressWarnings("GrUnresolvedAccess")
   SourceSetCachedFinder(@NotNull Project project) {
@@ -44,6 +45,7 @@ class SourceSetCachedFinder {
       def cached = extraProperties.get(key)
       if (cached instanceof SourceSetCachedFinder) {
         myArtifactsMap = (cached as SourceSetCachedFinder).myArtifactsMap
+        mySourcesMap = (cached as SourceSetCachedFinder).mySourcesMap
         return
       }
     }
@@ -66,18 +68,31 @@ class SourceSetCachedFinder {
           if (archivePath) {
             artifactsMap[archivePath.path] = sourceSet
           }
-          }
         }
       }
+    }
 
     myArtifactsMap = Collections.unmodifiableMap(artifactsMap)
+    mySourcesMap = [:]
     extraProperties.set(key, this)
+  }
+
+  Set<File> findSourcesByArtifact(String path) {
+    def sources = mySourcesMap[path]
+    if (sources == null) {
+      def sourceSet = myArtifactsMap[path]
+      if (sourceSet != null) {
+        sources = sourceSet.getAllJava().getSrcDirs()
+        mySourcesMap[path] = sources
+      }
+    }
+    return sources
   }
 
   private static List<Project> exposeIncludedBuilds(Project project, List<Project> projects) {
     for (IncludedBuild includedBuild : project.gradle.includedBuilds) {
-      if (includedBuild instanceof IncludedBuildInternal) {
-        def build = includedBuild as IncludedBuildInternal
+      if (includedBuild instanceof DefaultIncludedBuild) {
+        def build = includedBuild as DefaultIncludedBuild
         projects += build.configuredBuild.rootProject.allprojects
       }
     }

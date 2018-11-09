@@ -214,7 +214,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
                                               ? new PythonSdkDetailsDialog(myProject, myAddSdkCallback, getSettingsModifiedCallback())
                                               : new PythonSdkDetailsDialog(myModule, myAddSdkCallback, getSettingsModifiedCallback());
 
-    PythonSdkDetailsStep.show(myProject, myProjectSdksModel.getSdks(), allDialog, myMainPanel,
+    PythonSdkDetailsStep.show(myProject, myModule, myProjectSdksModel.getSdks(), allDialog, myMainPanel,
                               myDetailsButton.getLocationOnScreen(), null, myAddSdkCallback);
   }
 
@@ -253,7 +253,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     mySdkSettingsWereModified = false;
     final Sdk selectedSdk = getSelectedSdk();
 
-    if (myInitialSdkSet.contains(selectedSdk) && selectedSdk != null) {
+    if (selectedSdk != null && myInitialSdkSet.contains(selectedSdk)) {
       PythonSdkUpdater.updateOrShowError(selectedSdk, null, myProject, null);
     }
 
@@ -306,7 +306,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final List<Sdk> allPythonSdks = myInterpreterList.getAllPythonSdks(myProject);
     final List<Sdk> visibleSdks = StreamEx
       .of(allPythonSdks)
-      .filter(sdk -> !PythonSdkType.isInvalid(sdk) && !PySdkExtKt.isAssociatedWithAnotherProject(sdk, myProject))
+      .filter(sdk -> !PythonSdkType.isInvalid(sdk) && !PySdkExtKt.isAssociatedWithAnotherModule(sdk, myModule))
       .toList();
     final LinkedHashSet<Sdk> virtualEnvironments = StreamEx
       .of(visibleSdks)
@@ -362,17 +362,17 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private class MySdkModelListener implements SdkModel.Listener {
 
     @Override
-    public void sdkAdded(Sdk sdk) {
+    public void sdkAdded(@NotNull Sdk sdk) {
       updateSdkList(true);
     }
 
     @Override
-    public void beforeSdkRemove(Sdk sdk) {
+    public void beforeSdkRemove(@NotNull Sdk sdk) {
       updateSdkList(true);
     }
 
     @Override
-    public void sdkChanged(Sdk sdk, String previousName) {
+    public void sdkChanged(@NotNull Sdk sdk, String previousName) {
       updateSdkList(true);
     }
   }

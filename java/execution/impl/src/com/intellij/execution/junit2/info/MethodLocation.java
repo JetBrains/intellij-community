@@ -35,9 +35,9 @@ public class MethodLocation extends Location<PsiMethod> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.info.MethodLocation");
   private final Project myProject;
   @NotNull private final PsiMethod myMethod;
-  private final Location<PsiClass> myClassLocation;
+  private final Location<? extends PsiClass> myClassLocation;
 
-  public MethodLocation(@NotNull final Project project, @NotNull final PsiMethod method, @NotNull final Location<PsiClass> classLocation) {
+  public MethodLocation(@NotNull final Project project, @NotNull final PsiMethod method, @NotNull final Location<? extends PsiClass> classLocation) {
     myProject = project;
     myMethod = method;
     myClassLocation = classLocation;
@@ -48,11 +48,13 @@ public class MethodLocation extends Location<PsiMethod> {
     return new MethodLocation(classLocation.getProject(), psiElement, classLocation);
   }
 
+  @Override
   @NotNull
   public PsiMethod getPsiElement() {
     return myMethod;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
@@ -68,22 +70,26 @@ public class MethodLocation extends Location<PsiMethod> {
     return myClassLocation.getPsiElement();
   }
 
+  @Override
   @NotNull
   public <T extends PsiElement> Iterator<Location<T>> getAncestors(final Class<T> ancestorClass, final boolean strict) {
     final Iterator<Location<T>> fromClass = myClassLocation.getAncestors(ancestorClass, false);
     if (strict) return fromClass;
     return new Iterator<Location<T>>() {
       private boolean myFirstStep = ancestorClass.isInstance(myMethod);
+      @Override
       public boolean hasNext() {
         return myFirstStep || fromClass.hasNext();
       }
 
+      @Override
       public Location<T> next() {
         final Location<T> location = myFirstStep ? (Location<T>)(Location)MethodLocation.this : fromClass.next();
         myFirstStep = false;
         return location;
       }
 
+      @Override
       public void remove() {
         LOG.assertTrue(false);
       }

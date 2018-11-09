@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 public interface ExtensionPointListener<T> {
   ExtensionPointListener[] EMPTY_ARRAY = new ExtensionPointListener[0];
+
   default void extensionAdded(@NotNull T extension, @Nullable PluginDescriptor pluginDescriptor) {
   }
 

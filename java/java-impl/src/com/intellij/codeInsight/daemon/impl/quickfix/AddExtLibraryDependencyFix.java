@@ -25,7 +25,7 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
   private final DependencyScope myScope;
   private final String myQualifiedClassName;
 
-  public AddExtLibraryDependencyFix(PsiReference reference,
+  AddExtLibraryDependencyFix(PsiReference reference,
                                     Module currentModule,
                                     ExternalLibraryDescriptor descriptor,
                                     DependencyScope scope,

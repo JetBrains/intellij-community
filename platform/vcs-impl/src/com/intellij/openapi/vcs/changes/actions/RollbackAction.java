@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -52,7 +38,8 @@ import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.util.containers.UtilKt.notNullize;
 
 public class RollbackAction extends AnAction implements DumbAware {
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final boolean visible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
     e.getPresentation().setEnabledAndVisible(visible);
@@ -87,7 +74,8 @@ public class RollbackAction extends AnAction implements DumbAware {
     return list != null && !list.getChanges().isEmpty();
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
@@ -96,25 +84,26 @@ public class RollbackAction extends AnAction implements DumbAware {
                          ? null
                          : "Can not " + UIUtil.removeMnemonic(RollbackUtil.getRollbackOperationName(project)) + " now";
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(title)) return;
-    FileDocumentManager.getInstance().saveAllDocuments();
 
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
+    List<Change> changes = getChanges(project, e);
+    LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
+    if (modifiedWithoutEditing != null) {
+      changes = ContainerUtil.filter(changes, change -> !modifiedWithoutEditing.contains(change.getVirtualFile()));
+    }
+
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+
     boolean hasChanges = false;
     if (missingFiles != null && !missingFiles.isEmpty()) {
       hasChanges = true;
       new RollbackDeletionAction().actionPerformed(e);
     }
 
-    List<Change> changes = getChanges(project, e);
-
-    final LinkedHashSet<VirtualFile> modifiedWithoutEditing = getModifiedWithoutEditing(e, project);
     if (modifiedWithoutEditing != null && !modifiedWithoutEditing.isEmpty()) {
       hasChanges = true;
       rollbackModifiedWithoutEditing(project, modifiedWithoutEditing);
-    }
-
-    if (modifiedWithoutEditing != null) {
-      changes = ContainerUtil.filter(changes, change -> !modifiedWithoutEditing.contains(change.getVirtualFile()));
     }
 
     if (!changes.isEmpty()) {

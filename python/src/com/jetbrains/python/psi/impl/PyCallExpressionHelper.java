@@ -1,10 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
@@ -117,7 +114,7 @@ public class PyCallExpressionHelper {
     final List<PyCallExpression.PyMarkedCallee> ratedMarkedCallees = new ArrayList<>();
 
     for (QualifiedRatedResolveResult resolveResult : multiResolveCallee(call.getCallee(), resolveContext)) {
-      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(resolveResult, resolveContext)) {
+      for (ClarifiedResolveResult clarifiedResolveResult : clarifyResolveResult(call, resolveResult, resolveContext)) {
         final PyCallExpression.PyMarkedCallee markedCallee = markResolveResult(clarifiedResolveResult, context, implicitOffset);
         if (markedCallee == null) continue;
 
@@ -144,7 +141,7 @@ public class PyCallExpressionHelper {
       final PyReferenceExpression referenceExpression = (PyReferenceExpression)callee;
 
       final List<PyCallExpression.PyMarkedCallee> callees = StreamEx
-        .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
+        .of(PyTypeProvider.EP_NAME.getExtensionList())
         .map(provider -> provider.getReferenceExpressionType(referenceExpression, context))
         .select(PyCallableType.class)
         .map(type -> new PyCallExpression.PyMarkedCallee(type, null, null, 0, false, RatedResolveResult.RATE_NORMAL))
@@ -174,7 +171,8 @@ public class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull QualifiedRatedResolveResult resolveResult,
+  private static List<ClarifiedResolveResult> clarifyResolveResult(@NotNull PyCallExpression call,
+                                                                   @NotNull QualifiedRatedResolveResult resolveResult,
                                                                    @NotNull PyResolveContext resolveContext) {
     final PsiElement resolved = resolveResult.getElement();
 
@@ -227,8 +225,11 @@ public class PyCallExpressionHelper {
       }
     }
 
+    final boolean isConstructor = resolved instanceof PyFunction &&
+                                  isConstructorName(((PyFunction)resolved).getName()) &&
+                                  call.getReceiver((PyCallable)resolved) == null;
     return resolved != null
-           ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, resolved, null, false))
+           ? Collections.singletonList(new ClarifiedResolveResult(resolveResult, resolved, null, isConstructor))
            : Collections.emptyList();
   }
 
@@ -530,7 +531,7 @@ public class PyCallExpressionHelper {
     }
     else if (target instanceof PyFunction) {
       final PyFunction f = (PyFunction)target;
-      if (PyNames.INIT.equals(f.getName())) {
+      if (isConstructorName(f.getName())) {
         init = f;
         cls = f.getContainingClass();
       }
@@ -556,7 +557,7 @@ public class PyCallExpressionHelper {
         return Ref.create(t);
       }
       if (cls != null) {
-        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, null);
+        final PyFunction newMethod = cls.findMethodByName(PyNames.NEW, true, context);
         if (newMethod != null && !PyBuiltinCache.getInstance(call).isBuiltin(newMethod)) {
           return Ref.create(PyUnionType.createWeakType(new PyClassTypeImpl(cls, false)));
         }
@@ -1208,7 +1209,7 @@ public class PyCallExpressionHelper {
     @NotNull private final List<PyExpression> componentsOfVariadicPositionalArguments;
     @NotNull private final List<PyExpression> variadicPositionalArguments;
 
-    public PositionalArgumentsAnalysisResults(@NotNull List<PyExpression> allPositionalArguments,
+    PositionalArgumentsAnalysisResults(@NotNull List<PyExpression> allPositionalArguments,
                                               @NotNull List<PyExpression> componentsOfVariadicPositionalArguments,
                                               @NotNull List<PyExpression> variadicPositionalArguments) {
       this.allPositionalArguments = allPositionalArguments;
@@ -1331,7 +1332,7 @@ public class PyCallExpressionHelper {
 
     private final boolean myIsConstructor;
 
-    public ClarifiedResolveResult(@NotNull QualifiedRatedResolveResult originalResolveResult,
+    ClarifiedResolveResult(@NotNull QualifiedRatedResolveResult originalResolveResult,
                                   @NotNull PsiElement clarifiedResolved,
                                   @Nullable PyFunction.Modifier wrappedModifier,
                                   boolean isConstructor) {

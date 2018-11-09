@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import java.util.List;
 
 public interface TextAnnotationPresentation {
+  int getAnnotationLine(int editorLine);
   EditorFontType getFontType(int line);
   ColorKey getColor(int line);
   List<AnAction> getActions(int line);

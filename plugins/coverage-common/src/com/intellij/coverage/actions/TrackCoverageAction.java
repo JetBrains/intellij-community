@@ -6,7 +6,6 @@ import com.intellij.coverage.CoverageSuitesBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration;
 import com.intellij.execution.testframework.AbstractTestProxy;
@@ -21,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.TreeSelectionEvent;
@@ -40,7 +40,8 @@ public class TrackCoverageAction extends ToggleModelAction {
 
   }
 
-  public void setSelected(final AnActionEvent e, final boolean state) {
+  @Override
+  public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
     super.setSelected(e, state);
     if (!TestConsoleProperties.TRACK_CODE_COVERAGE.value(myProperties)) {
       restoreMergedCoverage();
@@ -50,7 +51,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return super.isSelected(e) && CoverageDataManager.getInstance(myProperties.getProject()).isSubCoverageActive();
   }
 
@@ -64,6 +65,7 @@ public class TrackCoverageAction extends ToggleModelAction {
     }
   }
 
+  @Override
   public void setModel(final TestFrameworkRunningModel model) {
     if (myModel != null) myModel.getTreeView().removeTreeSelectionListener(myTreeSelectionListener);
     myModel = model;
@@ -71,6 +73,7 @@ public class TrackCoverageAction extends ToggleModelAction {
       myTreeSelectionListener = new MyTreeSelectionListener();
       model.getTreeView().addTreeSelectionListener(myTreeSelectionListener);
       Disposer.register(model, new Disposable() {
+        @Override
         public void dispose() {
           restoreMergedCoverage();
         }
@@ -78,6 +81,7 @@ public class TrackCoverageAction extends ToggleModelAction {
     }
   }
 
+  @Override
   protected boolean isEnabled() {
     final CoverageSuitesBundle suite = getCurrentCoverageSuite();
     return suite != null && suite.isCoverageByTestApplicable() && suite.isCoverageByTestEnabled();
@@ -137,10 +141,11 @@ public class TrackCoverageAction extends ToggleModelAction {
   private class MyTreeSelectionListener implements TreeSelectionListener {
     private final Alarm myUpdateCoverageAlarm;
 
-    public MyTreeSelectionListener() {
+    MyTreeSelectionListener() {
       myUpdateCoverageAlarm = new Alarm(myModel);
     }
 
+    @Override
     public void valueChanged(final TreeSelectionEvent e) {
       if (myUpdateCoverageAlarm.isDisposed()) return;
       if (!TestConsoleProperties.TRACK_CODE_COVERAGE.value(myModel.getProperties()) || !isEnabled()) return;

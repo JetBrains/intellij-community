@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
@@ -80,7 +66,7 @@ class AbstractValues {
   static final class NthParamValue extends BasicValue {
     final int n;
 
-    public NthParamValue(Type type, int n) {
+    NthParamValue(Type type, int n) {
       super(type);
       this.n = n;
     }
@@ -216,7 +202,6 @@ final class State {
 }
 
 abstract class Analysis<Res> {
-
   public static final int STEPS_LIMIT = 30000;
   public static final int EQUATION_SIZE_LIMIT = 30;
 
@@ -226,8 +211,7 @@ abstract class Analysis<Res> {
   final MethodNode methodNode;
   final Member method;
   final DFSTree dfsTree;
-
-  final protected List<State>[] computed;
+  final List<State>[] computed;
   final EKey aKey;
 
   Res earlyResult;
@@ -240,7 +224,7 @@ abstract class Analysis<Res> {
     method = new Member(controlFlow.className, methodNode.name, methodNode.desc);
     dfsTree = richControlFlow.dfsTree;
     aKey = new EKey(method, direction, stable);
-    computed = (List<State>[]) new List[controlFlow.transitions.length];
+    computed = ASMUtils.newListArray(controlFlow.transitions.length);
   }
 
   final State createStartState() {
@@ -307,18 +291,18 @@ abstract class Analysis<Res> {
   }
 
   @NotNull
-  static Frame<BasicValue> createCatchFrame(Frame<BasicValue> frame) {
+  static Frame<BasicValue> createCatchFrame(Frame<? extends BasicValue> frame) {
     Frame<BasicValue> catchFrame = new Frame<>(frame);
     catchFrame.clearStack();
     catchFrame.push(ASMUtils.THROWABLE_VALUE);
     return catchFrame;
   }
 
-  static BasicValue popValue(Frame<BasicValue> frame) {
+  static BasicValue popValue(Frame<? extends BasicValue> frame) {
     return frame.getStack(frame.getStackSize() - 1);
   }
 
-  static <A> List<A> append(List<A> xs, A x) {
+  static <A> List<A> append(List<? extends A> xs, A x) {
     ArrayList<A> result = new ArrayList<>();
     if (xs != null) {
       result.addAll(xs);

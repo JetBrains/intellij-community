@@ -25,23 +25,22 @@ import com.intellij.psi.xml.XmlTagValue;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class XmlTagUtil extends XmlTagUtilBase {
-  private static final Map<String, Character> ourCharacterEntities;
+  private static final TObjectIntHashMap<String> ourCharacterEntities = new TObjectIntHashMap<>();
 
   static {
-    ourCharacterEntities = new HashMap<>();
     ourCharacterEntities.put("lt", '<');
     ourCharacterEntities.put("gt", '>');
     ourCharacterEntities.put("apos", '\'');
@@ -98,12 +97,13 @@ public class XmlTagUtil extends XmlTagUtilBase {
   }
 
   public static String[] getCharacterEntityNames() {
-    Set<String> strings = ourCharacterEntities.keySet();
-    return ArrayUtil.toStringArray(strings);
+    List<String> list = new ArrayList<>();
+    ourCharacterEntities.forEachKey(list::add);
+    return ArrayUtil.toStringArray(list);
   }
 
-  public static Character getCharacterByEntityName(String entityName) {
-    return ourCharacterEntities.get(entityName);
+  public static char getCharacterByEntityName(String entityName) {
+    return (char)ourCharacterEntities.get(entityName);
   }
 
   @Nullable

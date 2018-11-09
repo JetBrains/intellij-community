@@ -38,7 +38,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    *             Always {@code false} since 2018.2.
    *             To be removed in 2019.2.
    */
-  public final boolean visualPositionAware = false;
+  @Deprecated public final boolean visualPositionAware = false;
 
   /**
    * @deprecated Not used by platform code since 2018.2.
@@ -46,7 +46,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    *             Always {@code 0} since 2018.2.
    *             To be removed in 2019.2.
    */
-  public final int softWrapLinesBeforeCurrentLogicalLine = 0;
+  @Deprecated public final int softWrapLinesBeforeCurrentLogicalLine = 0;
 
   /**
    * @deprecated Not used by platform code since 2018.2.
@@ -54,7 +54,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    *             Always {@code 0} since 2018.2.
    *             To be removed in 2019.2.
    */
-  public final int softWrapLinesOnCurrentLogicalLine = 0;
+  @Deprecated public final int softWrapLinesOnCurrentLogicalLine = 0;
 
   /**
    * @deprecated Not used by platform code since 2018.2.
@@ -62,7 +62,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    *             Always {@code 0} since 2018.2.
    *             To be removed in 2019.2.
    */
-  public final int softWrapColumnDiff = 0;
+  @Deprecated public final int softWrapColumnDiff = 0;
 
   /**
    * @deprecated Not used by platform code since 2018.2.
@@ -70,7 +70,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    *             Always {@code 0} since 2018.2.
    *             To be removed in 2019.2.
    */
-  public final int foldedLines = 0;
+  @Deprecated public final int foldedLines = 0;
 
   /**
    * @deprecated Not used by platform code since 2018.2.
@@ -78,7 +78,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    *             Always {@code 0} since 2018.2.
    *             To be removed in 2019.2.
    */
-  public final int foldingColumnDiff = 0;
+  @Deprecated public final int foldingColumnDiff = 0;
 
   /**
    * If {@code true}, this position is associated with succeeding character (in logical order), otherwise it's associated with
@@ -95,7 +95,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    *             Always {@code false} since 2018.2.
    *             To be removed in 2019.2.
    */
-  public final boolean visualPositionLeansRight = false;
+  @Deprecated public final boolean visualPositionLeansRight = false;
 
   public LogicalPosition(int line, int column) throws IllegalArgumentException {
     this(line, column, false);
@@ -113,6 +113,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * @deprecated Use {@link #LogicalPosition(int, int)} instead.
    *             Additional fields are not used since 2018.2. To be removed in 2019.2.
    */
+  @Deprecated
   @SuppressWarnings("unused")
   public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
                          int softWrapColumnDiff, int foldedLines, int foldingColumnDiff) throws IllegalArgumentException {
@@ -123,6 +124,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * @deprecated Use {@link #LogicalPosition(int, int, boolean)} instead.
    *             Additional fields are not used since 2018.2. To be removed in 2019.2.
    */
+  @Deprecated
   @SuppressWarnings("unused")
   public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
                          int softWrapColumnDiff, int foldedLines, int foldingColumnDiff, boolean leansForward,
@@ -139,6 +141,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    *             To convert logical to visual position, use {@link Editor#logicalToVisualPosition(LogicalPosition)}.
    *             To be removed in 2019.2.
    */
+  @Deprecated
   public VisualPosition toVisualPosition() {
     return new VisualPosition(line, column);
   }
@@ -149,6 +152,7 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
    * 
    * @deprecated Not needed since 2018.2 (just returns {@code this}). To be removed in 2019.2.
    */
+  @Deprecated
   public LogicalPosition withoutVisualPositionInfo() {
     return this;
   }

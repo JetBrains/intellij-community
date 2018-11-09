@@ -22,7 +22,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Denis Zhdanov
- * @since 4/15/13 2:27 PM
  */
 public class GradleProjectImportProvider extends AbstractExternalProjectImportProvider {
 

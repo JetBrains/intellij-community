@@ -23,47 +23,31 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
  *
  * @see WSLUtil
+ * @see WSLDistributionWithRoot
  */
 public class WSLDistribution {
-  private static final String WSL_MNT_ROOT = "/mnt";
-  private static final Pattern WIN_IN_WSL_PATH_PATTERN = Pattern.compile(WSL_MNT_ROOT + "/(\\S)(.*)?");
+  static final String WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
   private static final Logger LOG = Logger.getInstance(WSLDistribution.class);
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
-  static class Description {
-    @NotNull final String id;
-    @NotNull final String msId;
-    @NotNull final String exeName;
-    @NotNull final String presentableName;
-
-    public Description(@NotNull String id, @NotNull String msId, @NotNull String exeName, @NotNull String presentableName) {
-      this.id = id;
-      this.msId = msId;
-      this.exeName = exeName;
-      this.presentableName = presentableName;
-    }
-  }
-
-  @NotNull private final Description myDescription;
+  @NotNull private final WslDistributionDescriptor myDescriptor;
   @NotNull private final Path myExecutablePath;
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
-    this(dist.myDescription, dist.myExecutablePath);
+    this(dist.myDescriptor, dist.myExecutablePath);
   }
 
-  WSLDistribution(@NotNull Description description, @NotNull Path executablePath) {
-    myDescription = description;
+  WSLDistribution(@NotNull WslDistributionDescriptor descriptor, @NotNull Path executablePath) {
+    myDescriptor = descriptor;
     myExecutablePath = executablePath;
   }
 
@@ -115,7 +99,7 @@ public class WSLDistribution {
    * @param args                   linux args, eg {@code gem env}
    */
   public ProcessOutput executeOnWsl(int timeout,
-                                    @Nullable Consumer<ProcessHandler> processHandlerConsumer,
+                                    @Nullable Consumer<? super ProcessHandler> processHandlerConsumer,
                                     @NotNull String... args) throws ExecutionException {
     GeneralCommandLine commandLine = createWslCommandLine(args);
     CapturingProcessHandler processHandler = new CapturingProcessHandler(commandLine);
@@ -129,7 +113,7 @@ public class WSLDistribution {
     return executeOnWsl(timeout, null, args);
   }
 
-  public ProcessOutput executeOnWsl(@Nullable Consumer<ProcessHandler> processHandlerConsumer, @NotNull String... args)
+  public ProcessOutput executeOnWsl(@Nullable Consumer<? super ProcessHandler> processHandlerConsumer, @NotNull String... args)
     throws ExecutionException {
     return executeOnWsl(-1, processHandlerConsumer, args);
   }
@@ -148,7 +132,7 @@ public class WSLDistribution {
   public ProcessOutput copyFromWsl(@NotNull String wslPath,
                                    @NotNull String windowsPath,
                                    @Nullable List<String> additionalOptions,
-                                   @Nullable Consumer<ProcessHandler> handlerConsumer
+                                   @Nullable Consumer<? super ProcessHandler> handlerConsumer
   )
     throws ExecutionException {
     //noinspection ResultOfMethodCallIgnored
@@ -203,7 +187,17 @@ public class WSLDistribution {
              (askForSudo ? "; with sudo" : ": without sudo")
     );
 
-    StringBuilder commandLineString = new StringBuilder(commandLine.getCommandLineString());
+    StringBuilder commandLineString = new StringBuilder();
+    ParametersList parametersList = commandLine.getParametersList();
+    List<String> realParamsList = parametersList.getList();
+
+    // avoiding double wrapping into bash -c; may cause problems with escaping
+    if (realParamsList.size() == 2 && "bash".equals(commandLine.getExePath()) && "-c".equals(realParamsList.get(0))) {
+      commandLineString.append(realParamsList.get(1));
+    }
+    else {
+      commandLineString.append(commandLine.getCommandLineString());
+    }
 
     if (askForSudo) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
       prependCommandLineString(commandLineString, "sudo", "-S", "-p", "''");
@@ -220,15 +214,12 @@ public class WSLDistribution {
             project,
             "Enter Root Password",
             "Sudo password for " + getPresentableName() + " root:",
-            new CredentialAttributes("WSL", "root", WSLDistribution.class)
+            new CredentialAttributes("WSL", "root", WSLDistribution.class),
+            true
           );
           if (password != null) {
-            PrintWriter pw = new PrintWriter(input);
-            try {
+            try (PrintWriter pw = new PrintWriter(input)) {
               pw.println(password);
-            }
-            finally {
-              pw.close();
             }
           }
           else {
@@ -252,7 +243,6 @@ public class WSLDistribution {
 
 
     commandLine.setExePath(getExecutablePath().toString());
-    ParametersList parametersList = commandLine.getParametersList();
     parametersList.clearAll();
     parametersList.add(getRunCommandLineParameter());
     parametersList.add(commandLineString.toString());
@@ -304,7 +294,7 @@ public class WSLDistribution {
    * @return passed processHandler, patched with sudo listener if any
    */
   @NotNull
-  public ProcessHandler patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull ProcessHandler processHandler) {
+  public <T extends ProcessHandler>T patchProcessHandler(@NotNull GeneralCommandLine commandLine, @NotNull T processHandler) {
     ProcessListener listener = SUDO_LISTENER_KEY.get(commandLine);
     if (listener != null) {
       processHandler.addProcessListener(listener);
@@ -344,13 +334,7 @@ public class WSLDistribution {
    */
   @Nullable
   public String getWindowsPath(@NotNull String wslPath) {
-    Matcher matcher = WIN_IN_WSL_PATH_PATTERN.matcher(wslPath);
-    if (!matcher.matches()) {
-      return null;
-    }
-
-    String path = matcher.group(2);
-    return FileUtil.toSystemDependentName(matcher.group(1) + ":" + (StringUtil.isEmpty(path) ? "/" : path));
+    return WSLUtil.getWindowsPath(wslPath);
   }
 
   /**
@@ -358,9 +342,8 @@ public class WSLDistribution {
    */
   @Nullable
   public String getWslPath(@NotNull String windowsPath) {
-    if (StringUtil.isChar(windowsPath, 1, ':')) { // normal windows path => /mnt/disk_letter/path
+    if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
       return WSL_MNT_ROOT +
-             "/" +
              Character.toLowerCase(windowsPath.charAt(0)) +
              FileUtil.toSystemIndependentName(windowsPath.substring(2));
     }
@@ -369,23 +352,23 @@ public class WSLDistribution {
 
   @NotNull
   public String getId() {
-    return myDescription.id;
+    return myDescriptor.getId();
   }
 
   @NotNull
   public String getMsId() {
-    return myDescription.msId;
+    return myDescriptor.getMsId();
   }
 
   @NotNull
   public String getPresentableName() {
-    return myDescription.presentableName;
+    return myDescriptor.getPresentableName();
   }
 
   @Override
   public String toString() {
     return "WSLDistribution{" +
-           "myId='" + getId() + '\'' +
+           "myDescriptor=" + myDescriptor +
            '}';
   }
 
@@ -395,5 +378,22 @@ public class WSLDistribution {
 
   private static String createAdditionalCommand(@NotNull String... commands) {
     return new GeneralCommandLine(commands).getCommandLineString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    WSLDistribution that = (WSLDistribution)o;
+
+    if (!myDescriptor.equals(that.myDescriptor)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myDescriptor.hashCode();
   }
 }

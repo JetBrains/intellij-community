@@ -54,6 +54,19 @@ public class JBScrollPane extends JScrollPane {
   @Deprecated
   public static final RegionPainter<Float> MAC_THUMB_DARK_PAINTER = ScrollPainter.EditorThumb.Mac.DARCULA;
 
+  /**
+   * Supposed to be used as a client property key for scrollbar and indicates if this scrollbar should be ignored
+   * when insets for {@code JScrollPane's} content are being calculated.
+   * <p>
+   * Without this key scrollbar's width is included to content insets when content is {@code JList}. As a result list items cannot intersect with
+   * scrollbar
+   * <p>
+   * Please use as a marker for scrollbars, that should be transparent and shown over content
+   *
+   * @see UIUtil#putClientProperty(JComponent, Key, Object)
+   */
+  public static final Key<Boolean> IGNORE_SCROLLBAR_IN_INSETS = Key.create("IGNORE_SCROLLBAR_IN_INSETS");
+
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
   private ScrollSource myScrollSource = ScrollSource.UNKNOWN;
@@ -276,7 +289,7 @@ public class JBScrollPane extends JScrollPane {
   private static class Corner extends JPanel {
     private final String myPos;
 
-    public Corner(String pos) {
+    Corner(String pos) {
       myPos = pos;
       ScrollColorProducer.setBackground(this);
       ScrollColorProducer.setForeground(this);
@@ -290,7 +303,7 @@ public class JBScrollPane extends JScrollPane {
   }
 
   private static class ViewportBorder extends LineBorder {
-    public ViewportBorder(int thickness) {
+    ViewportBorder(int thickness) {
       super(null, thickness);
     }
 
@@ -700,9 +713,9 @@ public class JBScrollPane extends JScrollPane {
               vsbPolicy = VERTICAL_SCROLLBAR_ALWAYS;
             }
           }
-          if (!viewTracksViewportWidth && vsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
+          if (!viewTracksViewportWidth && hsbPolicy == HORIZONTAL_SCROLLBAR_AS_NEEDED) {
             if (viewPreferredSize.width > viewportExtentSize.width || 0 != view.getX()) {
-              vsbPolicy = HORIZONTAL_SCROLLBAR_ALWAYS;
+              hsbPolicy = HORIZONTAL_SCROLLBAR_ALWAYS;
             }
           }
         }

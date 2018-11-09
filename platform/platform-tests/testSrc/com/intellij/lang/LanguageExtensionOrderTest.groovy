@@ -3,11 +3,10 @@ package com.intellij.lang
 
 import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import groovy.transform.CompileStatic
-
-import static com.intellij.openapi.extensions.impl.ExtensionComponentAdapterTest.readElement
 
 @CompileStatic
 class LanguageExtensionOrderTest extends PlatformTestCase {
@@ -29,7 +28,7 @@ class LanguageExtensionOrderTest extends PlatformTestCase {
   }
 
   private void registerLanguageEP() {
-    myArea.registerExtensionPoint myDescriptor, readElement('''\
+    myArea.registerExtensionPoint myDescriptor, JDOMUtil.load('''\
 <extensionPoint qualifiedName="langExt" beanClass="com.intellij.lang.LanguageExtensionPoint">
   <with attribute="implementationClass" implements="com.intellij.lang.TestLangExtension"/>
 </extensionPoint>    
@@ -41,7 +40,7 @@ class LanguageExtensionOrderTest extends PlatformTestCase {
 
   private void registerExtensions(String... xmls) {
     for (ext in xmls) {
-      myArea.registerExtension(myDescriptor, readElement(ext), null)
+      myArea.registerExtension(myDescriptor, JDOMUtil.load(ext), null)
     }
   }
 

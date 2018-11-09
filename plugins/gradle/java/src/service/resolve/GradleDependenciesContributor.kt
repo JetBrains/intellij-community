@@ -16,6 +16,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
@@ -27,13 +28,13 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
  */
 class GradleDependenciesContributor : GradleMethodContextContributor {
   companion object {
-    val dependenciesClosure = groovyClosure().inMethod(or(psiMethod(GRADLE_API_PROJECT, "dependencies"),
-                                                          psiMethod(GRADLE_API_SCRIPT_HANDLER, "dependencies")))
-    val dependencyConfigurationClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "add"))
-    val moduleDependencyConfigurationClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "module"))
-    val modulesClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "modules"))
-    val componentsClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "components"))
-    val moduleClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, "module"))
+    val dependenciesClosure: GroovyClosurePattern = groovyClosure().inMethod(or(psiMethod(GRADLE_API_PROJECT, "dependencies"),
+                                                                                psiMethod(GRADLE_API_SCRIPT_HANDLER, "dependencies")))
+    val dependencyConfigurationClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "add"))
+    val moduleDependencyConfigurationClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "module"))
+    val modulesClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "modules"))
+    val componentsClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_DEPENDENCY_HANDLER, "components"))
+    val moduleClosure: GroovyClosurePattern = groovyClosure().inMethod(psiMethod(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, "module"))
   }
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {

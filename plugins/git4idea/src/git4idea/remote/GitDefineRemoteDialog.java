@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRemote;
@@ -62,9 +63,9 @@ public class GitDefineRemoteDialog extends DialogWrapper {
     super(repository.getProject());
     myRepository = repository;
     myGit = git;
-    myRemoteName = new JTextField(initialRemoteName, 20);
+    myRemoteName = new JTextField(initialRemoteName, 30);
     myInitialRemoteName = initialRemoteName;
-    myRemoteUrl = new JTextField(initialRemoteUrl, 20);
+    myRemoteUrl = new JTextField(initialRemoteUrl, 30);
     setTitle("Define Remote" + mention(myRepository));
     init();
   }
@@ -72,15 +73,21 @@ public class GitDefineRemoteDialog extends DialogWrapper {
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  protected JComponent createNorthPanel() {
     JPanel defineRemoteComponent = new JPanel(new GridBagLayout());
     GridBag gb = new GridBag().
       setDefaultAnchor(GridBagConstraints.LINE_START).
-      setDefaultInsets(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP, 0, 0);
-    defineRemoteComponent.add(new JBLabel("Name:"), gb.nextLine().next().anchor(GridBagConstraints.EAST));
-    defineRemoteComponent.add(myRemoteName, gb.next());
-    defineRemoteComponent.add(new JBLabel("URL: "),
-                              gb.nextLine().next().anchor(GridBagConstraints.EAST).insets(0, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP, 0));
-    defineRemoteComponent.add(myRemoteUrl, gb.next());
+      setDefaultInsets(UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP, 0, 0).
+      setDefaultFill(GridBagConstraints.HORIZONTAL);
+    defineRemoteComponent.add(new JBLabel("Name: ", SwingConstants.RIGHT), gb.nextLine().next().weightx(0.0));
+    defineRemoteComponent.add(myRemoteName, gb.next().weightx(1.0));
+    defineRemoteComponent.add(new JBLabel("URL: ", SwingConstants.RIGHT), gb.nextLine().next().weightx(0.0));
+    defineRemoteComponent.add(myRemoteUrl, gb.next().weightx(1.0));
     return defineRemoteComponent;
   }
 
@@ -106,7 +113,7 @@ public class GitDefineRemoteDialog extends DialogWrapper {
     String error = validateRemoteUnderModal(url);
     if (error != null) {
       LOG.warn(String.format("Invalid remote. Name: [%s], URL: [%s], error: %s", getRemoteName(), url, error));
-      Messages.showErrorDialog(myRepository.getProject(), error, "Invalid Remote");
+      Messages.showErrorDialog(myRepository.getProject(), XmlStringUtil.wrapInHtml(error), "Invalid Remote");
     }
     else {
       super.doOKAction();

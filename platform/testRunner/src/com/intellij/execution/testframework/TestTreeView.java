@@ -20,6 +20,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.GraphicsUtil;
@@ -43,8 +45,8 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
   public static final DataKey<TestFrameworkRunningModel> MODEL_DATA_KEY = DataKey.create("testFrameworkModel.dataId");
@@ -73,6 +75,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     myModel = model;
     Disposer.register(myModel, myModel.getRoot());
     Disposer.register(myModel, new Disposable() {
+      @Override
       public void dispose() {
         setModel(null);
         myModel = null;
@@ -82,6 +85,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     setCellRenderer(getRenderer(myModel.getProperties()));
   }
 
+  @Override
   public void setUI(final TreeUI ui) {
     super.setUI(ui);
     final int fontHeight = getFontMetrics(getFont()).getHeight();
@@ -90,7 +94,8 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     setLargeModel(true);
   }
 
-  public Object getData(final String dataId) {
+  @Override
+  public Object getData(@NotNull final String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }
@@ -166,8 +171,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     }
     else {
       AbstractTestProxy selectedTest = getSelectedTest();
-      fqn = selectedTest instanceof TestProxyRoot ? ((TestProxyRoot)selectedTest).getRootLocation() 
-                                                  : selectedTest != null ? selectedTest.getLocationUrl() : null;
+      fqn = selectedTest != null ? selectedTest.getLocationUrl() : null;
     }
     CopyPasteManager.getInstance().setContents(new StringSelection(fqn));
   }
@@ -175,9 +179,6 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
     AbstractTestProxy test = getSelectedTest();
-    if (test instanceof TestProxyRoot) {
-      return ((TestProxyRoot)test).getRootLocation() != null;
-    }
     return test != null && test.getLocationUrl() != null;
   }
 
@@ -191,10 +192,26 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     new TreeSpeedSearch(this, path -> {
       final AbstractTestProxy testProxy = getSelectedTest(path);
       if (testProxy == null) return null;
-      return testProxy.getName();
+      return getPresentableName(testProxy);
     });
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
+    HintUpdateSupply.installHintUpdateSupply(this, obj -> {
+      if (obj instanceof DefaultMutableTreeNode) {
+        Object userObject = ((DefaultMutableTreeNode)obj).getUserObject();
+        if (userObject instanceof NodeDescriptor) {
+          Object element = ((NodeDescriptor)userObject).getElement();
+          if (element instanceof AbstractTestProxy) {
+            return (PsiElement)TestsUIUtil.getData((AbstractTestProxy)element, CommonDataKeys.PSI_ELEMENT.getName(), myModel);
+          }
+        }
+      }
+      return null;
+    });
+  }
+
+  protected String getPresentableName(AbstractTestProxy testProxy) {
+    return testProxy.getName();
   }
 
   public boolean isExpandableHandlerVisibleForCurrentRow(int row) {
@@ -202,7 +219,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     final Collection<Integer> items = handler.getExpandedItems();
     return items.size() == 1 && row == items.iterator().next();
   }
-  
+
   @Override
   public void paint(Graphics g) {
     super.paint(g);
@@ -218,6 +235,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
         if (isExpandableHandlerVisibleForCurrentRow(row)) {
           continue;
         }
+        if (row == -1) continue;
         Object node = getPathForRow(row).getLastPathComponent();
         if (node instanceof DefaultMutableTreeNode) {
           Object data = ((DefaultMutableTreeNode)node).getUserObject();
@@ -253,12 +271,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     g.fillRect(x - leftOffset, bounds.y, totalWidth + leftOffset, bounds.height);
     g.translate(0, bounds.y - 1);
     if (isSelected) {
-      if (!hasFocus && UIUtil.isUnderAquaBasedLookAndFeel()) {
-        g.setColor(UIUtil.getTreeForeground());
-      }
-      else {
-        g.setColor(UIUtil.getTreeSelectionForeground());
-      }
+      g.setColor(UIUtil.getTreeSelectionForeground(hasFocus));
     }
     else {
       g.setColor(new JBColor(0x808080, 0x808080));

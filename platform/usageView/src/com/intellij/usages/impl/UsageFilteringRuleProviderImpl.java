@@ -106,12 +106,12 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myReadWriteState.isShowReadAccess();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myReadWriteState.setShowReadAccess(state);
       Project project = e.getProject();
       if (project == null) return;
@@ -125,12 +125,12 @@ public class UsageFilteringRuleProviderImpl implements UsageFilteringRuleProvide
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myReadWriteState.isShowWriteAccess();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myReadWriteState.setShowWriteAccess(state);
       Project project = e.getProject();
       if (project == null) return;

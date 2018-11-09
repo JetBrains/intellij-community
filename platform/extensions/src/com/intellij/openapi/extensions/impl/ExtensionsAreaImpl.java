@@ -3,6 +3,7 @@ package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
@@ -143,10 +144,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     registerExtensionPoint(epName, className, pluginDescriptor, kind);
   }
 
-  public void registerExtension(@NotNull final String pluginName, @NotNull final Element extensionElement) {
-    registerExtension(new DefaultPluginDescriptor(PluginId.getId(pluginName)), extensionElement, null);
-  }
-
   @Override
   public void registerExtension(@NotNull final PluginDescriptor pluginDescriptor, @NotNull final Element extensionElement, String extensionNs) {
     String epName = extractEPName(extensionElement, extensionNs);
@@ -167,13 +164,21 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
         throw new RuntimeException("'implementation' attribute not specified for '" + extensionPoint.getName() + "' extension in '"
                                    + pluginDescriptor.getPluginId().getIdString() + "' plugin");
       }
-      adapter = new ExtensionComponentAdapter(implClass, extensionElement, myPicoContainer, pluginDescriptor, shouldDeserializeInstance(extensionElement));
+      adapter = createAdapter(implClass, extensionElement, shouldDeserializeInstance(extensionElement), pluginDescriptor);
     }
     else {
-      adapter = new ExtensionComponentAdapter(extensionPoint.getClassName(), extensionElement, myPicoContainer, pluginDescriptor, true);
+      adapter = createAdapter(extensionPoint.getClassName(), extensionElement, !JDOMUtil.isEmpty(extensionElement), pluginDescriptor);
     }
     myPicoContainer.registerComponent(adapter);
     ((ExtensionPointImpl)extensionPoint).registerExtensionAdapter(adapter);
+  }
+
+  // this method is not ExtensionComponentAdapter constructor because later ExtensionComponentAdapter will not hold element
+  @NotNull
+  private ExtensionComponentAdapter createAdapter(@NotNull String implementationClassName, @NotNull Element extensionElement, boolean isNeedToDeserialize, @NotNull PluginDescriptor pluginDescriptor) {
+    String orderId = extensionElement.getAttributeValue("id");
+    LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
+    return new ExtensionComponentAdapter(implementationClassName, myPicoContainer, pluginDescriptor, orderId, order, isNeedToDeserialize ? extensionElement : null);
   }
 
   private static boolean shouldDeserializeInstance(Element extensionElement) {
@@ -182,7 +187,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     // has custom attributes
     for (Attribute attribute : extensionElement.getAttributes()) {
       final String name = attribute.getName();
-      if (!"implementation".equals(name) && !"id".equals(name) && !"order".equals(name)) {
+      if (!"implementation".equals(name) && !"id".equals(name) && !"order".equals(name) && !"os".equals(name)) {
         return true;
       }
     }
@@ -264,8 +269,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   @Override
   public void addAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
     synchronized (myAvailabilityListeners) {
-
-      
       myAvailabilityListeners.putValue(extensionPointName, listener);
     }
     ExtensionPointImpl<?> ep = myExtensionPoints.get(extensionPointName);
@@ -273,7 +276,14 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
       listener.extensionPointRegistered(ep);
     }
   }
-  
+
+  @Override
+  public void removeAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
+    synchronized (myAvailabilityListeners) {
+      myAvailabilityListeners.remove(extensionPointName, listener);
+    }
+  }
+
   private boolean hasAvailabilityListener(@NotNull String extensionPointName, @NotNull ExtensionPointAvailabilityListener listener) {
     Collection<ExtensionPointAvailabilityListener> listeners = myAvailabilityListeners.get(extensionPointName);
     return ContainerUtil.containsIdentity(listeners, listener);
@@ -311,7 +321,6 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     myExtensionPoints.put(name, extensionPoint);
     notifyEPRegistered(extensionPoint);
     if (DEBUG_REGISTRATION) {
-      //noinspection ThrowableResultOfMethodCallIgnored
       myEPTraces.put(name, new Throwable("Original registration for " + name));
     }
   }

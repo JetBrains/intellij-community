@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.debugger.engine.*;
@@ -53,6 +39,7 @@ import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointPr
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCase {
@@ -68,7 +55,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     private final DebugProcessImpl myDebugProcess;
     int invokesN;
 
-    public InvokeRatherLaterRequest(DebuggerCommandImpl debuggerCommand, DebugProcessImpl debugProcess) {
+    InvokeRatherLaterRequest(DebuggerCommandImpl debuggerCommand, DebugProcessImpl debugProcess) {
       myDebuggerCommand = debuggerCommand;
       myDebugProcess = debugProcess;
     }
@@ -117,8 +104,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   protected void stepInto(SuspendContextImpl context) {
+    stepInto(context, false);
+  }
+
+  protected void stepInto(SuspendContextImpl context, boolean ignoreFilters) {
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    debugProcess.getManagerThread().schedule(debugProcess.createStepIntoCommand(context, false, null));
+    debugProcess.getManagerThread().schedule(debugProcess.createStepIntoCommand(context, ignoreFilters, null));
   }
 
   protected void stepOver(SuspendContextImpl context) {
@@ -144,9 +135,9 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       myPauseScriptListener = null;
       myRatherLaterRequests.clear();
       myScriptRunnables.clear();
-      super.tearDown();
     }
     finally {
+      super.tearDown();
       throwExceptionsIfAny();
     }
   }
@@ -185,7 +176,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     if (myPauseScriptListener == null) {
       final DebugProcessImpl debugProcess = getDebugProcess();
 
-      assertTrue("Debug process was not started", debugProcess != null);
+      assertNotNull("Debug process was not started", debugProcess);
 
       myPauseScriptListener = new DelayedEventsProcessListener(
         new DebugProcessAdapterImpl() {
@@ -222,7 +213,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
             if (pausedContext != null) {
               debugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(pausedContext) {
                 @Override
-                public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+                public void contextAction(@NotNull SuspendContextImpl suspendContext) {
                   paused(pausedContext);
                 }
               });
@@ -252,7 +243,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected void printContext(final StackFrameContext context) {
     ApplicationManager.getApplication().runReadAction(() -> {
       if (context.getFrameProxy() != null) {
-        println(toDisplayableString(PositionUtil.getSourcePosition(context)), ProcessOutputTypes.SYSTEM);
+        println(toDisplayableString(Objects.requireNonNull(PositionUtil.getSourcePosition(context))), ProcessOutputTypes.SYSTEM);
       }
       else {
         println("Context thread is null", ProcessOutputTypes.SYSTEM);
@@ -266,7 +257,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         SourcePosition sourcePosition = PositionUtil.getSourcePosition(context);
         int offset = sourcePosition.getOffset();
         Document document = PsiDocumentManager.getInstance(myProject).getDocument(sourcePosition.getFile());
-        CharSequence text = document.getImmutableCharSequence();
+        CharSequence text = Objects.requireNonNull(document).getImmutableCharSequence();
         String positionText = "";
         if (offset > -1) {
           positionText = StringUtil.escapeLineBreak(" [" + text.subSequence(Math.max(0, offset - 20), offset) + "<*>"
@@ -284,7 +275,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   protected void invokeRatherLater(SuspendContextImpl context, final Runnable runnable) {
     invokeRatherLater(new SuspendContextCommandImpl(context) {
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         DebuggerInvocationUtil.invokeLater(myProject, runnable);
       }
     });
@@ -305,7 +296,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
       request.myDebugProcess.getManagerThread().schedule(new SuspendContextCommandImpl(
           ((SuspendContextCommandImpl)request.myDebuggerCommand).getSuspendContext()) {
           @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
             pumpDebuggerThread(request);
           }
 
@@ -318,7 +309,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     else {
       request.myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
           @Override
-          protected void action() throws Exception {
+          protected void action() {
             pumpDebuggerThread(request);
           }
 
@@ -492,12 +483,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   private static class DelayedEventsProcessListener implements DebugProcessListener {
     private final DebugProcessAdapterImpl myTarget;
 
-    public DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
+    DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
       myTarget = target;
     }
 
     @Override
-    public void paused(final SuspendContext suspendContext) {
+    public void paused(@NotNull final SuspendContext suspendContext) {
       pauseExecution();
       myTarget.paused(suspendContext);
     }
@@ -509,12 +500,12 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
 
     @Override
-    public void processDetached(final DebugProcess process, final boolean closedByUser) {
+    public void processDetached(@NotNull final DebugProcess process, final boolean closedByUser) {
       myTarget.processDetached(process, closedByUser);
     }
 
     @Override
-    public void processAttached(final DebugProcess process) {
+    public void processAttached(@NotNull final DebugProcess process) {
       myTarget.processAttached(process);
     }
 

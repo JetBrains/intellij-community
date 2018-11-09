@@ -15,16 +15,10 @@
  */
 package com.intellij.xml.index;
 
-import com.intellij.ide.highlighter.DTDFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.DefaultFileTypeSpecificInputFilter;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -32,8 +26,6 @@ import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -66,52 +58,19 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
     };
   }
 
-
-  protected static VirtualFileFilter createFilter(@NotNull final Module module) {
-
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
-    return new VirtualFileFilter() {
-      @Override
-      public boolean accept(final VirtualFile file) {
-        Module moduleForFile = fileIndex.getModuleForFile(file);
-        if (moduleForFile != null) { // in module content
-          return module.equals(moduleForFile);
-        }
-        if (fileIndex.isInLibraryClasses(file)) {
-          List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(file);
-          if (orderEntries.isEmpty()) {
-            return false;
-          }
-          for (OrderEntry orderEntry : orderEntries) {
-            Module ownerModule = orderEntry.getOwnerModule();
-            if (ownerModule.equals(module)) {
-              return true;
-            }
-          }
-        }
-        final VirtualFile parent = file.getParent();
-        assert parent != null;
-        return parent.getName().equals("standardSchemas");
-      }
-    };
-  }
-
   @Override
   @NotNull
   public KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @Override
   @NotNull
+  @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE, DTDFileType.INSTANCE) {
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
       @Override
       public boolean acceptInput(@NotNull final VirtualFile file) {
-        FileType fileType = file.getFileType();
-        final String extension = file.getExtension();
-        return XmlFileType.INSTANCE.equals(fileType) && "xsd".equals(extension) ||
-               DTDFileType.INSTANCE.equals(fileType) && "dtd".equals(extension);
+        return XmlFileType.INSTANCE.equals(file.getFileType()) && "xsd".equals(file.getExtension());
       }
     };
   }
@@ -123,6 +82,6 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 }

@@ -3,6 +3,7 @@
  */
 package com.siyeh.ig.junit;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,14 +18,14 @@ import org.jetbrains.annotations.NotNull;
 class ReplaceAssertEqualsFix extends InspectionGadgetsFix {
   private final String myMethodName;
 
-  public ReplaceAssertEqualsFix(String methodName) {
+  ReplaceAssertEqualsFix(String methodName) {
     myMethodName = methodName;
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return InspectionGadgetsBundle.message("replace.assertequals.quickfix", myMethodName);
+    return CommonQuickFixBundle.message("fix.replace.with.x", myMethodName);
   }
 
   @Override

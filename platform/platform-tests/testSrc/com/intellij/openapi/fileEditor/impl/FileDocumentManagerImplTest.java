@@ -601,12 +601,12 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     AtomicBoolean expectUnsaved = new AtomicBoolean(true);
     DocumentListener listener = new DocumentListener() {
       @Override
-      public void beforeDocumentChange(DocumentEvent e) {
+      public void beforeDocumentChange(@NotNull DocumentEvent e) {
         assertFalse(manager.isDocumentUnsaved(document));
       }
 
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         invoked.incrementAndGet();
         assertEquals(expectUnsaved.get(), manager.isDocumentUnsaved(document));
       }
@@ -623,7 +623,7 @@ public class FileDocumentManagerImplTest extends PlatformTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
     FileUtil.writeToFile(VfsUtilCore.virtualToIoFile(file), "something");
     file.refresh(false, false);
-    
+
     assertEquals("something", document.getText());
     assertFalse(manager.isDocumentUnsaved(document));
     assertEquals(4, invoked.get());

@@ -5,20 +5,9 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 
+// https://jetbrains.github.io/ui/controls/input_field/#spacing
 fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
-  // https://jetbrains.github.io/ui/controls/input_field/#spacing
-  val isUnderIntelliJLaF = UIUtil.isUnderIntelliJLaF()
-  val isUnderWin10LookAndFeel = UIUtil.isUnderWin10LookAndFeel()
-
-  val labelColumnVerticalTopGap = when {
-    SystemInfoRt.isMac && isUnderIntelliJLaF -> 2
-    isUnderWin10LookAndFeel -> 3
-    else -> 4
-  }
-
   return object : SpacingConfiguration {
-    override val labelColumnVerticalTopGap = JBUI.scale(labelColumnVerticalTopGap)
-
     override val isCompensateVisualPaddings = !SystemInfoRt.isLinux
 
     override val horizontalGap = JBUI.scale(8)
@@ -57,8 +46,6 @@ interface SpacingConfiguration {
    * Horizontal gap after label column.
    */
   val labelColumnHorizontalGap: Int
-
-  val labelColumnVerticalTopGap: Int
 
   val largeVerticalGap: Int
 

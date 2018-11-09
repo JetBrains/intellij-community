@@ -20,18 +20,11 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.java18api.Java8ArraySetAllInspection;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8ArraySetAllInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new Java8ArraySetAllInspection()};
-  }
-
-  public void test() {
-    doAllTests();
   }
 
   @Override

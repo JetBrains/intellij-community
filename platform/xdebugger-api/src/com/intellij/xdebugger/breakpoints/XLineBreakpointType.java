@@ -29,7 +29,7 @@ import java.util.List;
  * &nbsp;&nbsp;&lt;xdebugger.breakpointType implementation="qualified-class-name"/&gt;<br>
  * &lt;/extensions&gt;
  * <p><p>
- * In order to support actual setting breakpoints in a debugging process create a {@link XBreakpointHandler} implementation and return it  
+ * In order to support actual setting breakpoints in a debugging process create a {@link XBreakpointHandler} implementation and return it
  * from {@link com.intellij.xdebugger.XDebugProcess#getBreakpointHandlers()} method
  *
  * @author nik
@@ -83,8 +83,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return null;
   }
 
+  // Preserved for API compatibility
+  @Override
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint, @Nullable XDebugSession currentSession) {
-    return Collections.emptyList();
+    return super.getAdditionalPopupMenuActions(breakpoint, currentSession);
   }
 
   public Icon getTemporaryIcon() {
@@ -130,6 +132,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   public abstract class XLineBreakpointVariant {
+    @NotNull
     public abstract String getText();
 
     @Nullable
@@ -153,6 +156,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       mySourcePosition = position;
     }
 
+    @NotNull
     @Override
     public String getText() {
       return "All";
@@ -192,6 +196,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       return myElement.getIcon(0);
     }
 
+    @NotNull
     @Override
     public String getText() {
       return StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0);

@@ -28,7 +28,8 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
   @NotNull
   protected abstract T createChecker();
 
-  public final void update(final AnActionEvent e) {
+  @Override
+  public final void update(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
     final CommittedChangesBrowserUseCase useCase = CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext());
     final Presentation presentation = e.getPresentation();
@@ -66,7 +67,8 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
   @Nullable
   protected abstract String getDialogTitle();
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 

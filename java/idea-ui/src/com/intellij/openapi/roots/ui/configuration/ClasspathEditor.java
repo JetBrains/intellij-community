@@ -128,7 +128,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   @Override
-  public void rootsChanged(ModuleRootEvent event) {
+  public void rootsChanged(@NotNull ModuleRootEvent event) {
     if (myPanel != null) {
       myPanel.rootsChanged();
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
@@ -21,8 +7,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.*;
 import com.intellij.ui.components.fields.ExpandableTextField;
+import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.components.panels.HorizontalLayout;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,7 +22,7 @@ public class TestTextFieldAction extends DumbAwareAction {
   private JFrame frame;
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     if (frame != null && frame.isVisible()) {
       frame.dispose();
       frame = null;
@@ -85,7 +73,7 @@ public class TestTextFieldAction extends DumbAwareAction {
       new ExpandableTextField(),
       new ExtendableTextField() {{
         setExtensions(
-          new Extension() {
+          new ExtendableTextComponent.Extension() {
             @Override
             public Icon getIcon(boolean hovered) {
               return AllIcons.General.GearPlain;
@@ -101,10 +89,10 @@ public class TestTextFieldAction extends DumbAwareAction {
               return true;
             }
           },
-          new Extension() {
+          new ExtendableTextComponent.Extension() {
             @Override
             public Icon getIcon(boolean hovered) {
-              return hovered ? AllIcons.General.LocateHover : AllIcons.General.Locate;
+              return hovered ? AllIcons.General.ContextHelp : AllIcons.General.Locate;
             }
 
             @Override
@@ -117,12 +105,12 @@ public class TestTextFieldAction extends DumbAwareAction {
               return true;
             }
           },
-          new Extension() {
-            private final Icon icon = new AnimatedIcon.Grey();
+          new ExtendableTextComponent.Extension() {
+            private final Icon icon = new AnimatedIcon.FS();
 
             @Override
             public Icon getIcon(boolean hovered) {
-              return icon;
+              return !hovered ? icon : AllIcons.Process.FS.Step_passive;
             }
 
             @Override
@@ -130,7 +118,7 @@ public class TestTextFieldAction extends DumbAwareAction {
               return "Refresh";
             }
           },
-          new Extension() {
+          new ExtendableTextComponent.Extension() {
             private final TextIcon icon = new TextIcon("empty", null, null, 1);
 
             @Override
@@ -208,7 +196,7 @@ public class TestTextFieldAction extends DumbAwareAction {
       update(field -> center.add(field, gbc));
     }
 
-    private void update(Consumer<JTextField> consumer) {
+    private void update(Consumer<? super JTextField> consumer) {
       fields.forEach(consumer);
       center.revalidate();
       center.repaint();

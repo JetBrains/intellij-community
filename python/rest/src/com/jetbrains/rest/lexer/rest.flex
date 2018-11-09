@@ -94,7 +94,7 @@ LINK = [0-9A-Za-z][0-9A-Za-z\-:+_]*"_""_"?
 ":"[^:\n\r ]([^:\n\r] | "\\:")*[^:\n\r ]":"[`]      { yypushback(1); yybegin(INIT); return FIELD;}
 {CRLF}                                              { yybegin(IN_LINEBEGIN); return WHITESPACE;}
 .                                                   { yypushback(1); yybegin(IN_LINE); }
-{SPACE}+                                            { yybegin(IN_LINEBEGIN); return WHITESPACE;}
+{SPACE}+                                            { yybegin(IN_LINEBEGIN); return LINE;}
 }
 
 <IN_LINEBEGIN> {

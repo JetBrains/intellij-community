@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ide
 
 import com.intellij.execution.ExecutionManager
@@ -33,19 +31,19 @@ import javax.swing.JPanel
 
 class GroovyScriptingShellAction : AnAction() {
 
-  override fun actionPerformed(e: AnActionEvent?) {
-    val project = e?.project ?: return
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
     initConsole(project)
   }
 
-  override fun update(e: AnActionEvent?) {
-    e?.presentation?.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = ApplicationManager.getApplication().isInternal
   }
 }
 
 object MyConsoleRootType : ConsoleRootType("groovy.scripting.shell", null)
 
-private val TITLE = "Groovy IDE Scripting Shell"
+private const val TITLE = "Groovy IDE Scripting Shell"
 
 private val defaultImports = listOf(
   "com.intellij.openapi.application.*",

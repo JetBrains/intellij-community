@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSettingsLoader;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -66,14 +67,14 @@ public class FormatterStarter extends ApplicationStarterEx {
     if (args.length < 2) {
       showUsageInfo(messageOutput);
     }
-    for (int i = 1; i < args.length; i ++) {
+    for (int i = 1; i < args.length; i++) {
       if (args[i].startsWith("-")) {
         if (checkOption(args[i], "-h", "-help")) {
           showUsageInfo(messageOutput);
         }
         if (checkOption(args[i], "-s", "-settings")) {
           //noinspection AssignmentToForLoopParameter
-          i ++;
+          i++;
           if (i >= args.length) {
             fatalError(messageOutput, "Missing settings file path.");
           }
@@ -90,7 +91,7 @@ public class FormatterStarter extends ApplicationStarterEx {
         }
         else if (checkOption(args[i], "-m", "-mask")) {
           //noinspection AssignmentToForLoopParameter
-          i ++;
+          i++;
           if (i >= args.length) {
             fatalError(messageOutput, "Missing file mask(s).");
           }
@@ -138,10 +139,7 @@ public class FormatterStarter extends ApplicationStarterEx {
   }
 
   private static boolean checkOption(@NotNull String arg, String... variants) {
-    for (String variant: variants) {
-      if (variant.equals(arg)) return true;
-    }
-    return false;
+    return ArrayUtil.contains(arg, variants);
   }
 
   private static String getAppInfo() {

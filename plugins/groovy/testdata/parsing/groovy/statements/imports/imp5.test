@@ -9,9 +9,12 @@ Groovy script
     PsiWhiteSpace(' ')
     Reference element
       Reference element
-        PsiElement(identifier)('a')
+        Reference element
+          PsiElement(identifier)('a')
+        PsiElement(.)('.')
+        PsiElement(identifier)('b')
       PsiElement(.)('.')
-      PsiElement(identifier)('b')
-    PsiElement(.)('.')
-    PsiElement(new line)('\n')
-    PsiElement(*)('*')
+      PsiElement(new line)('\n')
+      PsiErrorElement:identifier expected, got '*'
+        <empty list>
+  PsiElement(*)('*')

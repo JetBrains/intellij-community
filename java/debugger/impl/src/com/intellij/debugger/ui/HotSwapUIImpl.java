@@ -12,7 +12,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.HotSwapFile;
 import com.intellij.debugger.impl.HotSwapManager;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -267,7 +266,6 @@ public class HotSwapUIImpl extends HotSwapUI {
 
   private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses,
                                             final HotSwapProgressImpl progress) {
-    UsageTrigger.trigger("debugger.reload.classes");
     ProgressManager.getInstance().runProcess(() -> {
       HotSwapManager.reloadModifiedClasses(modifiedClasses, progress);
       progress.finished();
@@ -327,7 +325,7 @@ public class HotSwapUIImpl extends HotSwapUI {
     }
 
     @Override
-    public void fileGenerated(String outputRoot, String relativePath) {
+    public void fileGenerated(@NotNull String outputRoot, @NotNull String relativePath) {
       if (StringUtil.endsWith(relativePath, ".class") && JpsPathUtil.isUnder(myOutputRoots, new File(outputRoot))) {
         // collect only classes
         myGeneratedPaths.get().computeIfAbsent(outputRoot, k -> new ArrayList<>()).add(relativePath);
@@ -335,7 +333,7 @@ public class HotSwapUIImpl extends HotSwapUI {
     }
 
     @Override
-    public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+    public void compilationFinished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
       final Map<String, List<String>> generated = myGeneratedPaths.getAndSet(new HashMap<>());
       if (myProject.isDisposed()) {
         return;

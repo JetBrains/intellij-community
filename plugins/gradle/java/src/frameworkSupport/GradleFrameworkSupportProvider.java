@@ -21,7 +21,6 @@ import static org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBu
 
 /**
  * @author Vladislav.Soroka
- * @since 4/23/2015
  */
 public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInModuleProvider {
 
@@ -31,6 +30,7 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
   /**
    * @deprecated use {@link #addSupport(ProjectId, Module, ModifiableRootModel, ModifiableModelsProvider, BuildScriptDataBuilder)}
    */
+  @Deprecated
   public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {

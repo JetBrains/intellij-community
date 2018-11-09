@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class SemVer implements Comparable<SemVer> {
   /** @deprecated */
-  public static final SemVer UNKNOWN = new SemVer("?", 0, 0, 0);
+  @Deprecated public static final SemVer UNKNOWN = new SemVer("?", 0, 0, 0);
 
   private final String myRawVersion;
   private final int myMajor;
@@ -121,14 +121,4 @@ public final class SemVer implements Comparable<SemVer> {
 
     return null;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@code ObjectUtils.notNull(SemVer.parseFromText(...), SemVer.UNKNOWN)} (to be removed in IDEA 2019) */
-  @SuppressWarnings("SpellCheckingInspection")
-  public static SemVer parseFromTextNonNullize(@Nullable final String text) {
-    if (text == null) return UNKNOWN;
-    final SemVer ver = parseFromText(text);
-    return ver == null ? UNKNOWN : ver;
-  }
-  //</editor-fold>
 }

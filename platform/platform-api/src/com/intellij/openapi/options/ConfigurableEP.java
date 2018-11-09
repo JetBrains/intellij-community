@@ -347,6 +347,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> extends AbstractExten
       return myType != null;
     }
 
+    @Override
     protected Class<?> getType() {
       return myType;
     }

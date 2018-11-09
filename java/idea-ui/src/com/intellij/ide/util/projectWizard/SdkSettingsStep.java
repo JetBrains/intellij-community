@@ -55,14 +55,14 @@ public class SdkSettingsStep extends ModuleWizardStep {
   private final JPanel myJdkPanel;
 
   public SdkSettingsStep(SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder,
-                         @NotNull Condition<SdkTypeId> sdkTypeIdFilter) {
+                         @NotNull Condition<? super SdkTypeId> sdkTypeIdFilter) {
     this(settingsStep, moduleBuilder, sdkTypeIdFilter, null);
   }
 
   public SdkSettingsStep(SettingsStep settingsStep,
                          @NotNull ModuleBuilder moduleBuilder,
-                         @NotNull Condition<SdkTypeId> sdkTypeIdFilter,
-                         @Nullable Condition<Sdk> sdkFilter) {
+                         @NotNull Condition<? super SdkTypeId> sdkTypeIdFilter,
+                         @Nullable Condition<? super Sdk> sdkFilter) {
     this(settingsStep.getContext(), moduleBuilder, sdkTypeIdFilter, sdkFilter);
     if (!isEmpty()) {
       settingsStep.addSettingsField(getSdkFieldLabel(settingsStep.getContext().getProject()), myJdkPanel);
@@ -71,8 +71,8 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
   public SdkSettingsStep(WizardContext context,
                          @NotNull ModuleBuilder moduleBuilder,
-                         @NotNull Condition<SdkTypeId> sdkTypeIdFilter,
-                         @Nullable Condition<Sdk> sdkFilter) {
+                         @NotNull Condition<? super SdkTypeId> sdkTypeIdFilter,
+                         @Nullable Condition<? super Sdk> sdkFilter) {
     myModuleBuilder = moduleBuilder;
 
     myWizardContext = context;
@@ -122,12 +122,11 @@ public class SdkSettingsStep extends ModuleWizardStep {
     }
   }
 
-  private Sdk getPreselectedSdk(Project project, String lastUsedSdk, Condition<SdkTypeId> sdkFilter) {
+  private Sdk getPreselectedSdk(Project project, String lastUsedSdk, Condition<? super SdkTypeId> sdkFilter) {
     if (project != null) {
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null && myModuleBuilder.isSuitableSdkType(sdk.getSdkType())) {
         // use project SDK
-        //noinspection unchecked
         myJdkComboBox.insertItemAt(new JdkComboBox.ProjectJdkComboBoxItem(), 0);
         return null;
       }

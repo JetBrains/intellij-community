@@ -41,14 +41,17 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
     //setEnabled(false);
   }
 
+  @Override
   public Key<AnyExceptionBreakpoint> getCategory() {
     return ANY_EXCEPTION_BREAKPOINT;
   }
 
+  @Override
   public String getDisplayName() {
     return DebuggerBundle.message("breakpoint.any.exception.display.name");
   }
 
+  @Override
   public void createRequest(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (!shouldCreateRequest(debugProcess)) {
@@ -57,10 +60,12 @@ public class AnyExceptionBreakpoint extends ExceptionBreakpoint {
     super.processClassPrepare(debugProcess, null);
   }
 
+  @Override
   public void processClassPrepare(DebugProcess debugProcess, ReferenceType refType) {
     // should be emty - does not make sense for this breakpoint
   }
 
+  @Override
   public void readExternal(Element parentNode) throws InvalidDataException {
     try {
       super.readExternal(parentNode);

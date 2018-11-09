@@ -146,10 +146,12 @@ public class MavenEditGoalDialog extends DialogWrapper {
     workDirectoryField.setText(mavenProject == null ? "" : mavenProject.getDirectory());
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return contentPane;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return goalsComboBox;
   }

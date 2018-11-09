@@ -38,7 +38,7 @@ public class IssueLinkHtmlRenderer {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  public static String formatTextWithLinks(Project project, String str, Convertor<String, String> convertor) {
+  public static String formatTextWithLinks(Project project, String str, Convertor<? super String, String> convertor) {
     if (StringUtil.isEmpty(str)) return "";
     String comment = XmlStringUtil.escapeString(str, false);
 
@@ -58,7 +58,6 @@ public class IssueLinkHtmlRenderer {
     return comment.replace("\n", "<br>");
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public static String formatTextWithLinks(final Project project, final String c) {
     return formatTextWithLinks(project, c, Convertor.SELF);
   }

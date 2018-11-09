@@ -48,6 +48,7 @@ public class PsiClassWriter extends ClassWriter {
     return JavaSdk.getInstance().isOfVersionOrHigher(projectJdk, JavaSdkVersion.JDK_1_6);
   }
 
+  @Override
   protected String getCommonSuperClass(final String type1, final String type2) {
     //PsiManager.getInstance(myProject).findClass(type1.replace('/', '.').replace('$', '.'), myProject.getAllScope());
     return ReadAction.compute(() -> {

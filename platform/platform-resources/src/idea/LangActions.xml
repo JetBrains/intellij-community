@@ -8,7 +8,7 @@
     <group id="SendToFavoritesGroup" class="com.intellij.ide.favoritesTreeView.actions.SendToFavoritesGroup" popup="true"/>
 
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
-    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" text="Run..." description="Choose and run configuration" icon="AllIcons.Toolwindows.ToolWindowRun"/>
+    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" text="Run..." description="Choose and run configuration" icon="AllIcons.Actions.Execute"/>
     <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" text="Debug..." description="Choose and debug configuration" icon="AllIcons.Actions.StartDebugger"/>
 
     <group id="RunContextGroup" popup="false">
@@ -35,6 +35,7 @@
       <action id="ImplementMethods" class="com.intellij.codeInsight.generation.actions.ImplementMethodsAction"/>
       <action id="DelegateMethods" class="com.intellij.codeInsight.generation.actions.DelegateMethodsAction"/>
       <action id="GeneratePattern" class="com.intellij.codeInsight.generation.GenerateByPatternAction" text="Generate by Pattern..."/>
+      <group id="GenerateFromTestCreatorsGroup" class="com.intellij.testIntegration.GenerateFromTestCreatorsGroup"/>
     </group>
 
     <action id="ShowIntentionActions" class="com.intellij.codeInsight.intention.actions.ShowIntentionActionsAction"/>
@@ -212,8 +213,8 @@
       <action id="GotoClass" class="com.intellij.ide.actions.GotoClassAction"/>
       <action id="GotoFile" class="com.intellij.ide.actions.GotoFileAction"/>
       <action id="GotoSymbol" class="com.intellij.ide.actions.GotoSymbolAction"/>
-      <action id="GotoCustomRegion" class="com.intellij.lang.customFolding.GotoCustomRegionAction"/>
 
+      <action id="GotoCustomRegion" class="com.intellij.lang.customFolding.GotoCustomRegionAction"/>
       <add-to-group group-id="GoToMenu" anchor="first"/>
     </group>
 
@@ -311,6 +312,8 @@
     <group id="ParameterNameHints" popup="true">
       <action id="ShowSettingsWithAddedPattern" class="com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern"/>
       <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction"/>
+      <action id="ShowParameterHintsSettings" class="com.intellij.codeInsight.hints.ShowParameterHintsSettings"/>
+      <separator/>
       <action id="ToggleCompletionHintsAction" class="com.intellij.codeInsight.hints.ToggleCompletionHintsAction"/>
     </group>
     
@@ -363,7 +366,7 @@
       <action id="editRunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationsAction"/>
       <action id="Stop" class="com.intellij.execution.actions.StopAction" icon="AllIcons.Actions.Suspend"/>
       <action id="ShowLiveRunConfigurations" class="com.intellij.execution.actions.ShowRunningListAction"/>
-      <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction" icon="AllIcons.Process.Stop"/>
+      <action id="StopBackgroundProcesses" class="com.intellij.execution.actions.StopBackgroundProcessesAction"/>
 
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="RefactoringMenu"/>
     </group>
@@ -398,6 +401,7 @@
     </group>
 
     <group id="WeighingNewGroup" class="com.intellij.ide.actions.WeighingNewActionGroup"/>
+    <reference ref="AssociateWithFileType"/>
 
     <group id="RevealGroup">
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
@@ -412,6 +416,7 @@
 
     <group id="ToolbarRunGroup">
       <separator/>
+      <reference ref="RunAnything"/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
       <reference ref="Stop"/>
@@ -484,7 +489,7 @@
 
     <group id="ProjectViewPopupMenu">
       <reference ref="WeighingNewGroup"/>
-      <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileTypeAction"/>
+      <reference ref="AssociateWithFileType"/>
       <action id="RestoreDefaultExtensionScripts" class="com.intellij.ide.extensionResources.RestoreBundledExtensionsAction"/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
@@ -505,6 +510,7 @@
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="AllIcons.Actions.Refresh"/>
+      <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
       <separator/>
       <reference ref="ShowFilePath"/>
       <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
@@ -587,8 +593,6 @@
 
     <group id="ScopeViewPopupMenu">
       <reference ref="ProjectViewPopupMenu"/>
-      <separator/>
-      <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
     </group>
 
     <group id="StructureViewPopupMenu">
@@ -642,6 +646,7 @@
 
     <group id="EditorTabPopupMenuEx">
       <separator/>
+      <reference ref="AssociateWithFileType"/>
       <reference ref="AddToFavorites"/>
       <reference ref="AddAllToFavorites"/>
       <separator/>
@@ -754,6 +759,10 @@
       <action id="Debugger.MarkObject" class="com.intellij.xdebugger.impl.actions.MarkObjectAction" use-shortcut-of="ToggleBookmark"/>
       <action id="Debugger.FocusOnBreakpoint" class="com.intellij.xdebugger.impl.actions.FocusOnBreakpointAction"/>
       <action id="Debugger.ShowReferring" class="com.intellij.xdebugger.impl.ui.tree.actions.ShowReferringObjectsAction"/>
+      <action id="Debugger.RemoveAllBreakpoints" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsAction"
+              text="Remove All Breakpoints"/>
+      <action id="Debugger.RemoveAllBreakpointsInFile" class="com.intellij.xdebugger.impl.actions.RemoveAllBreakpointsInFileAction"
+              text="Remove All Breakpoints In The Current File"/>
     </group>
 
     <group id="EditorPopupMenuDebug">
@@ -872,13 +881,13 @@
                 icon="AllIcons.Debugger.RestoreLayout"/>
       </group>
       <group id="Runner.View.Close.Group" popup="false">
-        <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="AllIcons.Actions.Cross"/>
-        <action id="Runner.CloseOtherViews" class="com.intellij.execution.ui.layout.actions.CloseOtherViewsAction" icon="AllIcons.Actions.Cross"/>
-        <action id="Runner.CloseAllViews" class="com.intellij.execution.ui.layout.actions.CloseAllViewsAction" icon="AllIcons.Actions.Cross"/>
-        <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Cross"/>
+        <action id="Runner.CloseView" class="com.intellij.execution.ui.layout.actions.CloseViewAction" icon="AllIcons.Actions.Close"/>
+        <action id="Runner.CloseOtherViews" class="com.intellij.execution.ui.layout.actions.CloseOtherViewsAction" icon="AllIcons.Actions.Close"/>
+        <action id="Runner.CloseAllViews" class="com.intellij.execution.ui.layout.actions.CloseAllViewsAction" icon="AllIcons.Actions.Close"/>
+        <action id="Runner.CloseAllUnpinnedViews" class="com.intellij.execution.ui.layout.actions.CloseAllUnpinnedViewsAction" icon="AllIcons.Actions.Close"/>
       </group>
       <group id="Runner.View.Popup">
-        <action id="Runner.MinimizeView" class="com.intellij.execution.ui.layout.actions.MinimizeViewAction" icon="AllIcons.Actions.Minimize"/>
+        <action id="Runner.MinimizeView" class="com.intellij.execution.ui.layout.actions.MinimizeViewAction" icon="AllIcons.General.HideToolWindow"/>
         <separator/>
         <reference ref="Runner.View.Close.Group"/>
         <separator/>
@@ -903,6 +912,11 @@
       <add-to-group group-id="VcsGroups" anchor="first"/>
     </group>
 
+    <action id="Vcs.Operations.Popup.Annotate" class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup"
+            text="Annotated Line Operations">
+      <add-to-group group-id="VcsGeneral.KeymapGroup"/>
+    </action>
+
     <group id="Vcs.Operations.Popup">
       <group id="Vcs.Operations.Popup.VcsAware" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsAware">
         <group id="Vcs.Operations.Popup.VcsNameSeparator" class="com.intellij.openapi.vcs.actions.VcsQuickListPopupAction$VcsNameSeparator"/>
@@ -923,6 +937,8 @@
         <reference id="Start.Use.Vcs"/>
         <reference id="Vcs.Checkout"/>
       </group>
+      <separator/>
+      <group class="com.intellij.openapi.vcs.actions.ShowAnnotateOperationsPopup$Group" text="Annotated Line" popup="true"/>
       <separator text="Local History"/>
       <reference id="LocalHistory.ShowHistory"/>
       <reference id="LocalHistory.PutLabel"/>
@@ -1066,12 +1082,10 @@
       <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" use-shortcut-of="RunClass"/>
       <!--suppress PluginXmlValidity -->
       <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" use-shortcut-of="DebugClass"/>
+      <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" use-shortcut-of="Stop"/>
+      <separator/>
+      <action id="RunDashboard.ShowConfigurations" class="com.intellij.execution.dashboard.actions.ShowConfigurationsAction"/>
     </group>
-    <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" use-shortcut-of="Stop"/>
-
-    <action id="RunDashboard.ShowConfigurations" class="com.intellij.execution.dashboard.actions.ShowConfigurationsAction">
-      <add-to-group group-id="Runner.Layout" anchor="before" relative-to-action="Runner.RestoreLayout"/>
-    </action>
     <group id="RunDashboardTreeToolbar"/>
     <group id="RunDashboardPopup">
       <action id="RunDashboard.EditConfiguration" class="com.intellij.execution.dashboard.actions.EditConfigurationAction"
@@ -1094,6 +1108,88 @@
             text="Update Running Application">
       <keyboard-shortcut first-keystroke="control F10" keymap="$default"/>
       <add-to-group group-id="DebugMainMenu" anchor="before" relative-to-action="StepOver"/>
+    </action>
+
+    <group id="TouchBar">
+      <group id="TouchBarDefault" text="Default">
+        <reference ref="RunConfiguration"/>
+        <group id="RunnerActionsTouchbar" text="Touchbar Run/Debug Actions"/> <!--filled from ExecutorRegistry-->
+        <reference ref="Stop"/>
+        <separator text="type.small"/>
+        <separator text="type.large"/>
+        <group id="TouchBarDefaultOptionalGroup" text="Optional Actions">
+          <reference ref="Vcs.UpdateProject"/>
+          <reference ref="CheckinProject"/>
+        </group>
+        <group id="TouchBarDefault_ctrl" text="Default with Ctrl key">
+          <separator/>
+        </group>
+        <group id="TouchBarDefault_alt" text="Default with Alt key">
+          <reference ref="SelectInProjectView"/>
+          <separator text="type.flexible"/>
+        </group>
+        <group id="TouchBarDefault_cmd" text="Default with Cmd key">
+          <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
+          <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
+          <reference ref="Back"/>
+          <reference ref="Forward"/>
+          <separator text="type.large"/>
+          <reference ref="ToggleBookmark"/>
+          <reference ref="ToggleLineBreakpoint"/>
+          <separator text="type.flexible"/>
+          <reference ref="ShowUsages"/>
+        </group>
+        <group id="TouchBarDefault_cmd.alt" text="Default with Alt+Cmd key">
+          <separator text="type.flexible"/>
+          <reference ref="FindUsages"/>
+        </group>
+        <group id="TouchBarDefault_shift" text="Default with Shift key">
+          <!--Use Shift to show Refactor actions/-->
+          <reference ref="RenameElement"/>
+          <reference ref="ChangeSignature"/>
+          <separator text="type.flexible"/>
+          <reference ref="CopyElement"/>
+          <reference ref="Move"/>
+        </group>
+      </group>
+      <group id="TouchBarDebug" text="Debugger">
+        <reference ref="Rerun"/>
+        <reference ref="Resume"/>
+        <reference ref="Pause"/>
+        <reference ref="Stop"/>
+        <separator text="type.small"/>
+        <reference ref="XDebugger.MuteBreakpoints"/>
+        <separator text="type.flexible"/>
+        <group id="TouchBarDebug.StepButtons" compact="true" text="Debugger Step Actions">
+          <reference ref="StepOver"/>
+          <reference ref="StepInto"/>
+          <reference ref="StepOut"/>
+        </group>
+        <separator text="type.small"/>
+        <group id="TouchBarDebug_alt" text="Debugger with Alt key">
+          <reference ref="ViewBreakpoints"/>
+          <separator text="type.flexible"/>
+          <group id="TouchBarDebug.ForceStepButtons" compact="true" text="Debugger ForceStep Actions">
+            <reference ref="RunToCursor"/>
+            <reference ref="ForceStepOver"/>
+            <reference ref="ForceStepInto"/>
+            <reference ref="SmartStepInto"/>
+          </group>
+          <separator text="type.small"/>
+        </group>
+      </group>
+    </group>
+
+    <action class="com.intellij.internal.performance.TypingLatencyReportAction" id="TypingLatencyReport" internal="true" text="Typing Latency Report">
+      <add-to-group group-id="Internal.Performance" anchor="last"/>
+    </action>
+    <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.retype.RetypeFileAction" internal="true">
+      <add-to-group group-id="Internal.Performance" anchor="last"/>
+    </action>
+
+    <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction"
+            text="Show control flow" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
     </action>
   </actions>
 </idea-plugin>

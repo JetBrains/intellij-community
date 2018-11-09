@@ -6,7 +6,7 @@ class C {
     }
 
     private void newMethod(int i) {
-        if (i < 10){
+        if (i < 10) {
             return;
         }
     }

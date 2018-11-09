@@ -1,7 +1,7 @@
 package org.jetbrains.protocolModelGenerator
 
 open class ListType(private val itemType: BoxableType) : BoxableType {
-  override val defaultValue = null
+  override val defaultValue: Nothing? = null
 
   override val writeMethodName: String
     get() = when {

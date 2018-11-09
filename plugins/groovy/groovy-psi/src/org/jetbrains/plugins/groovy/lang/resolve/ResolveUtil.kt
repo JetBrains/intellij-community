@@ -3,6 +3,8 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve
 
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.scope.ElementClassHint
@@ -12,22 +14,28 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager.getCachedValue
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.psi.util.skipSameTypeParents
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 import org.jetbrains.plugins.groovy.lang.resolve.processors.DynamicMembersHint
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
+
+val log: Logger = logger(::log)
 
 @JvmField
-val NON_CODE = Key.create<Boolean?>("groovy.process.non.code.members")
+val NON_CODE: Key<Boolean?> = Key.create("groovy.process.non.code.members")
 
-fun initialState(processNonCodeMembers: Boolean) = ResolveState.initial().put(NON_CODE, processNonCodeMembers)
+val sorryCannotKnowElementKind: Key<Boolean> = Key.create("groovy.skip.kind.check.please")
+
+fun initialState(processNonCodeMembers: Boolean): ResolveState = ResolveState.initial().put(NON_CODE, processNonCodeMembers)
 
 fun ResolveState.processNonCodeMembers(): Boolean = get(NON_CODE).let { it == null || it }
 
@@ -69,9 +77,9 @@ fun PsiScopeProcessor.shouldProcessLocals(): Boolean = shouldProcess(GroovyResol
 
 fun PsiScopeProcessor.shouldProcessFields(): Boolean = shouldProcess(GroovyResolveKind.FIELD)
 
-fun PsiScopeProcessor.shouldProcessMethods(): Boolean {
-  return ResolveUtil.shouldProcessMethods(getHint(ElementClassHint.KEY))
-}
+fun PsiScopeProcessor.shouldProcessMethods(): Boolean = shouldProcess(GroovyResolveKind.METHOD)
+
+fun PsiScopeProcessor.shouldProcessProperties(): Boolean = shouldProcess(GroovyResolveKind.PROPERTY)
 
 fun PsiScopeProcessor.shouldProcessClasses(): Boolean {
   return ResolveUtil.shouldProcessClasses(getHint(ElementClassHint.KEY))
@@ -90,10 +98,6 @@ fun PsiScopeProcessor.shouldProcessTypeParameters(): Boolean {
   return groovyKindHint.shouldProcess(GroovyResolveKind.TYPE_PARAMETER)
 }
 
-fun PsiScopeProcessor.shouldProcessProperties(): Boolean {
-  return this is GroovyResolverProcessor && isPropertyResolve
-}
-
 private fun PsiScopeProcessor.shouldProcess(kind: GroovyResolveKind): Boolean {
   val resolveKindHint = getHint(GroovyResolveKind.HINT_KEY)
   if (resolveKindHint != null) return resolveKindHint.shouldProcess(kind)
@@ -102,7 +106,7 @@ private fun PsiScopeProcessor.shouldProcess(kind: GroovyResolveKind): Boolean {
   return kind.declarationKinds.any(elementClassHint::shouldProcess)
 }
 
-fun wrapClassType(type: PsiType, context: PsiElement) = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)
+fun wrapClassType(type: PsiType?, context: PsiElement): PsiType? = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)
 
 fun getDefaultConstructor(clazz: PsiClass): PsiMethod {
   return getCachedValue(clazz) {
@@ -145,4 +149,25 @@ fun GrCodeReferenceElement.isAnnotationReference(): Boolean {
 
 fun getName(state: ResolveState, element: PsiNamedElement): String? {
   return state[importedNameKey] ?: element.name
+}
+
+fun valid(allCandidates: Collection<GroovyResolveResult>): List<GroovyResolveResult> = allCandidates.filter {
+  it.isValidResult
+}
+
+fun singleOrValid(allCandidates: List<GroovyResolveResult>): List<GroovyResolveResult> {
+  return if (allCandidates.size <= 1) allCandidates else valid(allCandidates)
+}
+
+fun getResolveKind(element: PsiNamedElement): GroovyResolveKind? {
+  return when (element) {
+    is PsiClass -> GroovyResolveKind.CLASS
+    is PsiPackage -> GroovyResolveKind.PACKAGE
+    is PsiMethod -> GroovyResolveKind.METHOD
+    is PsiField -> GroovyResolveKind.FIELD
+    is GrBindingVariable -> GroovyResolveKind.BINDING
+    is PsiVariable -> GroovyResolveKind.VARIABLE
+    is GroovyProperty -> GroovyResolveKind.PROPERTY
+    else -> null
+  }
 }

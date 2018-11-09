@@ -8,6 +8,6 @@ class MyTest2<X> {
     }
 
     public static void main(String[] args) {
-        I<String> s = (z) -> new MyTe<caret>st2<String>(z);
+        I<String> s = (z) -> new MyTe<caret>st2<String>((z));
     }
 }

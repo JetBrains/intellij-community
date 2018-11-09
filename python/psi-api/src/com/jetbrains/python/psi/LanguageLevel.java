@@ -72,12 +72,6 @@ public enum LanguageLevel {
   PYTHON36(36, true, false, true, true),
   PYTHON37(37, true, false, true, true);
 
-  /**
-   * @deprecated This field will be removed in 2018.2.
-   */
-  @Deprecated
-  public static final List<LanguageLevel> ALL_LEVELS = ImmutableList.copyOf(values());
-
   public static final List<LanguageLevel> SUPPORTED_LEVELS =
     ImmutableList.copyOf(
       Stream

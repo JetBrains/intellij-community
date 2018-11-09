@@ -21,11 +21,13 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,18 +36,19 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
-@SuppressWarnings("SynchronizeOnThis")
 public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager implements Disposable, BulkFileListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl");
   private static final Comparator<String> URL_COMPARATOR = SystemInfo.isFileSystemCaseSensitive ? String::compareTo : String::compareToIgnoreCase;
+  static final boolean IS_UNDER_UNIT_TEST = ApplicationManager.getApplication().isUnitTestMode();
 
   private final TempFileSystem TEMP_FILE_SYSTEM;
   private final LocalFileSystem LOCAL_FILE_SYSTEM;
-  private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = new LinkedHashMap<>();  // guarded by this
+  private static final VirtualFilePointerListener NULL_LISTENER = new VirtualFilePointerListener() {};
+  private final Map<VirtualFilePointerListener, FilePointerPartNode> myPointers = ContainerUtil.newIdentityTroveMap(); // guarded by this
   // compare by identity because VirtualFilePointerContainer has too smart equals
   private final Set<VirtualFilePointerContainerImpl> myContainers = ContainerUtil.newIdentityTroveSet();  // guarded by myContainers
-  private final @NotNull VirtualFileManager myVirtualFileManager;
-  private final @NotNull MessageBus myBus;
+  @NotNull private final VirtualFileManager myVirtualFileManager;
+  @NotNull private final MessageBus myBus;
 
   VirtualFilePointerManagerImpl(@NotNull VirtualFileManager virtualFileManager,
                                 @NotNull MessageBus bus,
@@ -86,7 +89,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  private static VirtualFilePointer[] toPointers(@NotNull List<FilePointerPartNode> nodes) {
+  private static VirtualFilePointer[] toPointers(@NotNull List<? extends FilePointerPartNode> nodes) {
     if (nodes.isEmpty()) return VirtualFilePointer.EMPTY_ARRAY;
     List<VirtualFilePointer> list = new ArrayList<>(nodes.size());
     for (FilePointerPartNode node : nodes) {
@@ -105,7 +108,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private void addRelevantPointers(VirtualFile parent,
                                    boolean separator,
                                    @NotNull CharSequence childName,
-                                   @NotNull List<FilePointerPartNode> out) {
+                                   @NotNull List<? super FilePointerPartNode> out) {
     for (FilePointerPartNode root : myPointers.values()) {
       root.addRelevantPointersFrom(parent, separator, childName, out);
     }
@@ -113,21 +116,21 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @Override
   @NotNull
-  public synchronized VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
-    return create(null, url, parent, listener);
+  public VirtualFilePointer create(@NotNull String url, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
+    return create(null, url, parent, listener, false);
   }
 
   @Override
   @NotNull
-  public synchronized VirtualFilePointer create(@NotNull VirtualFile file, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
-    return create(file, null, parent, listener);
+  public VirtualFilePointer create(@NotNull VirtualFile file, @NotNull Disposable parent, @Nullable VirtualFilePointerListener listener) {
+    return create(file, null, parent, listener, false);
   }
 
   @NotNull
   private VirtualFilePointer create(@Nullable("null means the pointer will be created from the (not null) url") VirtualFile file,
                                     @Nullable("null means url has to be computed from the (not-null) file path") String url,
                                     @NotNull Disposable parentDisposable,
-                                    @Nullable VirtualFilePointerListener listener) {
+                                    @Nullable VirtualFilePointerListener listener, boolean recursive) {
     VirtualFileSystem fileSystem;
     String protocol;
     String path;
@@ -163,7 +166,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       // we are unable to track alien file systems for now
       VirtualFile found = fileSystem == null ? null : file != null ? file : VirtualFileManager.getInstance().findFileByUrl(url);
       // if file is null, this pointer will never be alive
-      return getOrCreateIdentity(url, found, parentDisposable, listener);
+      return getOrCreateIdentity(url, found, recursive, parentDisposable, listener);
     }
 
     if (file == null) {
@@ -185,21 +188,19 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       }
     }
     // else url has come from VirtualFile.getPath() and is good enough
-    VirtualFilePointerImpl pointer = getOrCreate(path, file, url, listener);
-    DelegatingDisposable.registerDisposable(parentDisposable, pointer);
-    return pointer;
+    return getOrCreate(path, file, url, recursive, parentDisposable, listener);
   }
 
   private final Map<String, IdentityVirtualFilePointer> myUrlToIdentity = new THashMap<>(); // guarded by this
 
   @NotNull
-  private IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url,
-                                                         @Nullable VirtualFile found,
-                                                         @NotNull Disposable parentDisposable,
-                                                         VirtualFilePointerListener listener) {
+  private synchronized IdentityVirtualFilePointer getOrCreateIdentity(@NotNull String url,
+                                                                      @Nullable VirtualFile found,
+                                                                      boolean recursive, @NotNull Disposable parentDisposable,
+                                                                      @Nullable VirtualFilePointerListener listener) {
     IdentityVirtualFilePointer pointer = myUrlToIdentity.get(url);
     if (pointer == null) {
-      pointer = new IdentityVirtualFilePointer(found, url,listener) {
+      pointer = new IdentityVirtualFilePointer(found, url, listener) {
         @Override
         public void dispose() {
           synchronized (VirtualFilePointerManagerImpl.this) {
@@ -213,6 +214,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       DelegatingDisposable.registerDisposable(parentDisposable, pointer);
     }
     pointer.incrementUsageCount(1);
+    pointer.recursive = recursive;
     return pointer;
   }
 
@@ -231,16 +233,18 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @NotNull
-  private VirtualFilePointerImpl getOrCreate(@NotNull String path,
-                                             @Nullable VirtualFile file,
-                                             @NotNull String url,
-                                             @Nullable VirtualFilePointerListener listener) {
-    FilePointerPartNode root = myPointers.get(listener);
+  private synchronized VirtualFilePointerImpl getOrCreate(@NotNull String path,
+                                                          @Nullable VirtualFile file,
+                                                          @NotNull String url,
+                                                          boolean recursive, @NotNull Disposable parentDisposable,
+                                                          @Nullable VirtualFilePointerListener listener) {
+    VirtualFilePointerListener nl = ObjectUtils.notNull(listener, NULL_LISTENER);
+    FilePointerPartNode root = myPointers.get(nl);
     FilePointerPartNode node;
     Pair<VirtualFile, String> fileAndUrl = Pair.create(file, url);
     if (root == null) {
       root = new FilePointerPartNode(path, null, fileAndUrl, 1);
-      myPointers.put(listener, root);
+      myPointers.put(nl, root);
       node = root;
     }
     else {
@@ -253,23 +257,24 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       node.associate(pointer, fileAndUrl);
     }
     pointer.incrementUsageCount(1);
+    pointer.recursive = recursive;
 
     root.checkConsistency();
+    DelegatingDisposable.registerDisposable(parentDisposable, pointer);
     return pointer;
   }
 
   @Override
   @NotNull
-  public synchronized VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer,
-                                                   @NotNull Disposable parent,
-                                                   @Nullable VirtualFilePointerListener listener) {
+  public VirtualFilePointer duplicate(@NotNull VirtualFilePointer pointer,
+                                      @NotNull Disposable parent,
+                                      @Nullable VirtualFilePointerListener listener) {
     VirtualFile file = pointer.getFile();
     return file == null ? create(pointer.getUrl(), parent, listener) : create(file, parent, listener);
   }
 
   private synchronized void assertAllPointersDisposed() {
-    for (Map.Entry<VirtualFilePointerListener, FilePointerPartNode> entry : myPointers.entrySet()) {
-      FilePointerPartNode root = entry.getValue();
+    for (FilePointerPartNode root : myPointers.values()) {
       List<FilePointerPartNode> left = new ArrayList<>();
       root.addRelevantPointersFrom(null, false, "", left);
       List<VirtualFilePointerImpl> pointers = new ArrayList<>();
@@ -298,7 +303,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   @TestOnly
-  synchronized void addAllPointersTo(@NotNull Collection<VirtualFilePointerImpl> pointers) {
+  synchronized void addAllPointersTo(@NotNull Collection<? super VirtualFilePointerImpl> pointers) {
     List<FilePointerPartNode> out = new ArrayList<>();
     for (FilePointerPartNode root : myPointers.values()) {
       root.addRelevantPointersFrom(null, false, "", out);
@@ -333,7 +338,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         synchronized (myContainers) {
           removed = myContainers.remove(container);
         }
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        if (!IS_UNDER_UNIT_TEST) {
           assert removed;
         }
       }
@@ -352,6 +357,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @Override
   public void before(@NotNull final List<? extends VFileEvent> events) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); // guarantees no attempts to get read action lock under "this" lock
     List<FilePointerPartNode> toFireEvents = new ArrayList<>();
     List<FilePointerPartNode> toUpdateUrl = new ArrayList<>();
     VirtualFilePointer[] toFirePointers;
@@ -370,7 +376,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         }
         else if (event instanceof VFileCopyEvent) {
           final VFileCopyEvent copyEvent = (VFileCopyEvent)event;
-          addRelevantPointers(copyEvent.getNewParent(), true, copyEvent.getFile().getName(), toFireEvents);
+          addRelevantPointers(copyEvent.getNewParent(), true, copyEvent.getNewChildName(), toFireEvents);
         }
         else if (event instanceof VFileMoveEvent) {
           final VFileMoveEvent moveEvent = (VFileMoveEvent)event;
@@ -400,7 +406,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
       myEvents = eventList = new ArrayList<>();
       toFirePointers = toPointers(toFireEvents);
       for (final VirtualFilePointerListener listener : myPointers.keySet()) {
-        if (listener == null) continue;
+        if (listener == NULL_LISTENER) continue;
         List<VirtualFilePointer> filtered =
           ContainerUtil.filter(toFirePointers, pointer -> ((VirtualFilePointerImpl)pointer).getListener() == listener);
         if (!filtered.isEmpty()) {
@@ -425,7 +431,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     assertConsistency();
   }
 
-  private static void collectNodes(List<FilePointerPartNode> nodes, List<FilePointerPartNode> toUpdateUrl) {
+  private static void collectNodes(List<? extends FilePointerPartNode> nodes, List<? super FilePointerPartNode> toUpdateUrl) {
     for (FilePointerPartNode node : nodes) {
       VirtualFilePointerImpl pointer = node.getAnyPointer();
       if (pointer != null) {
@@ -438,13 +444,16 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   }
 
   synchronized void assertConsistency() {
-    for (FilePointerPartNode root : myPointers.values()) {
-      root.checkConsistency();
+    if (IS_UNDER_UNIT_TEST) {
+      for (FilePointerPartNode root : myPointers.values()) {
+        root.checkConsistency();
+      }
     }
   }
 
   @Override
   public void after(@NotNull final List<? extends VFileEvent> events) {
+    ApplicationManager.getApplication().assertIsDispatchThread(); // guarantees no attempts to get read action lock under "this" lock
     incModificationCount();
 
     synchronized (this) {
@@ -453,7 +462,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         Pair<VirtualFile,String> after = node.update();
         assert after != null : "can't invalidate inside modification";
         String urlAfter = after.second;
-        if (URL_COMPARATOR.compare(urlBefore, urlAfter) != 0 || !urlAfter.endsWith(node.part)) {
+        if (URL_COMPARATOR.compare(urlBefore, urlAfter) != 0 || !StringUtil.endsWith(urlAfter, node.part)) {
           List<VirtualFilePointerImpl> myPointers = new SmartList<>();
           node.addAllPointersTo(myPointers);
 
@@ -507,7 +516,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
     FilePointerPartNode root = pointer.myNode.remove();
     boolean rootNodeEmpty = root.children.length == 0 ;
     if (rootNodeEmpty) {
-      myPointers.remove(pointer.getListener());
+      myPointers.remove(ObjectUtils.notNull(pointer.getListener(), NULL_LISTENER));
     }
     pointer.myNode = null;
     assertConsistency();
@@ -523,25 +532,31 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
   private static class DelegatingDisposable implements Disposable {
     private static final ConcurrentMap<Disposable, DelegatingDisposable> ourInstances = ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
 
-    private final TObjectIntHashMap<VirtualFilePointerImpl> myCounts = new TObjectIntHashMap<>(); // guarded by this
+    private final TObjectIntHashMap<VirtualFilePointerImpl> myCounts = new TObjectIntHashMap<>(ContainerUtil.identityStrategy()); // guarded by this
     private final Disposable myParent;
 
-    private DelegatingDisposable(@NotNull Disposable parent) {
+    private DelegatingDisposable(@NotNull Disposable parent, @NotNull VirtualFilePointerImpl firstPointer) {
       myParent = parent;
+      synchronized (this) {
+        myCounts.put(firstPointer, 1);
+      }
     }
 
-    @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
     private static void registerDisposable(@NotNull Disposable parentDisposable, @NotNull VirtualFilePointerImpl pointer) {
       DelegatingDisposable result = ourInstances.get(parentDisposable);
       if (result == null) {
-        DelegatingDisposable newDisposable = new DelegatingDisposable(parentDisposable);
+        DelegatingDisposable newDisposable = new DelegatingDisposable(parentDisposable, pointer);
         result = ConcurrencyUtil.cacheOrGet(ourInstances, parentDisposable, newDisposable);
         if (result == newDisposable) {
           Disposer.register(parentDisposable, result);
+          return;
         }
       }
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (result) {
-        result.myCounts.put(pointer, result.myCounts.get(pointer) + 1);
+        if (!result.myCounts.increment(pointer)) {
+          result.myCounts.put(pointer, 1);
+        }
       }
     }
 
@@ -561,15 +576,11 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @NotNull
   @Override
-  public synchronized VirtualFilePointer createDirectoryPointer(@NotNull String url,
-                                                                boolean recursively,
-                                                                @NotNull Disposable parent,
-                                                                @NotNull VirtualFilePointerListener listener) {
-    VirtualFilePointer pointer = create(null, url, parent, listener);
-    if (pointer instanceof VirtualFilePointerImpl) {
-      ((VirtualFilePointerImpl)pointer).recursive = true;
-    }
-    return pointer;
+  public VirtualFilePointer createDirectoryPointer(@NotNull String url,
+                                                   boolean recursively,
+                                                   @NotNull Disposable parent,
+                                                   @NotNull VirtualFilePointerListener listener) {
+    return create(null, url, parent, listener, true);
   }
 
   @TestOnly
@@ -607,6 +618,21 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
         myPointers.clear();
         myPointers.putAll(shelvedPointers);
       }
+    }
+  }
+
+  synchronized Collection<VirtualFilePointer> dumpPointers() {
+    Collection<VirtualFilePointer> result = new THashSet<>();
+    for (FilePointerPartNode node : myPointers.values()) {
+      dumpPointersTo(node, result);
+    }
+    return result;
+  }
+
+  private static void dumpPointersTo(FilePointerPartNode node, Collection<? super VirtualFilePointer> result) {
+    node.addAllPointersTo(result);
+    for (FilePointerPartNode child : node.children) {
+      dumpPointersTo(child, result);
     }
   }
 }

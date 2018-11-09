@@ -34,7 +34,6 @@ public interface RunHotswapDialog {
               public boolean isToBeShown() {
                 return DebuggerSettings.RUN_HOTSWAP_ASK.equals(DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE);
               }
-
               @Override
               public void setToBeShown(boolean toBeShown, int exitCode) {
                 if (toBeShown) {

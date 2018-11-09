@@ -33,7 +33,6 @@ import java.util.Set;
 
 /**
  * @author Denis Zhdanov
- * @since 4/9/13 6:56 PM
  */
 public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExecutionSettings> extends RemoteExternalSystemService<S> {
 

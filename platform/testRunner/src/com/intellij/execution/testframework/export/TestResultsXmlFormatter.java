@@ -141,7 +141,7 @@ public class TestResultsXmlFormatter {
         if (comment != null) {
           rootAttrs.put("comment", comment);
         }
-        final String rootLocation = ((TestProxyRoot)myTestRoot).getRootLocation();
+        final String rootLocation = myTestRoot.getLocationUrl();
         if (rootLocation != null) {
           rootAttrs.put("location", rootLocation);
         }
@@ -247,7 +247,7 @@ public class TestResultsXmlFormatter {
           }
           lastType.set(contentType);
         }
-        if (bufferSize < 0 || buffer.length() < bufferSize) {
+        if (bufferSize <= 0 || buffer.length() < bufferSize) {
           buffer.append(text);
         }
       }

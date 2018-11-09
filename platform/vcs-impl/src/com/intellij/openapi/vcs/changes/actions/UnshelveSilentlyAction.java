@@ -23,13 +23,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager.*;
 
 public class UnshelveSilentlyAction extends AnAction implements DumbAware {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = ObjectUtils.assertNotNull(getEventProject(e));
     FileDocumentManager.getInstance().saveAllDocuments();
     DataContext dataContext = e.getDataContext();
@@ -39,7 +40,7 @@ public class UnshelveSilentlyAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null && !getShelvedLists(e.getDataContext()).isEmpty());
   }
 }

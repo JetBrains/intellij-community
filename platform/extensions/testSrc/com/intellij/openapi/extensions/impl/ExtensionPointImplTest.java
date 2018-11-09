@@ -262,7 +262,7 @@ public class ExtensionPointImplTest {
     private boolean myFire;
 
     MyShootingComponentAdapter(@NotNull String implementationClass) {
-      super(implementationClass, ExtensionComponentAdapterTest.readElement("<bean/>"), new DefaultPicoContainer(), new DefaultPluginDescriptor("test"), false);
+      super(implementationClass, new DefaultPicoContainer(), new DefaultPluginDescriptor("test"), null, LoadingOrder.ANY, null);
     }
 
     public void setFire(boolean fire) {

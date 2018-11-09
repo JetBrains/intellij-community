@@ -140,7 +140,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
         if (method.isVarArgs() && method.hasTypeParameters() && args.length > method.getParameterList().getParametersCount() + 50) {
           PsiSubstitutor substitutor = resolveResult.getSubstitutor();
           for (PsiTypeParameter typeParameter : method.getTypeParameters()) {
-            if (!PsiTypesUtil.isDenotableType(substitutor.substitute(typeParameter))) {
+            if (!PsiTypesUtil.isDenotableType(substitutor.substitute(typeParameter), expression)) {
               return;
             }
           }
@@ -218,7 +218,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   private static class ReplaceAssignmentOperatorWithAssignmentFix implements LocalQuickFix {
     private final String myOperationSign;
 
-    public ReplaceAssignmentOperatorWithAssignmentFix(String operationSign) {
+    ReplaceAssignmentOperatorWithAssignmentFix(String operationSign) {
       myOperationSign = operationSign;
     }
 

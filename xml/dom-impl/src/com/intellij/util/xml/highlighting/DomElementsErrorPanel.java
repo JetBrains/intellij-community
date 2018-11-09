@@ -22,12 +22,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.xml.DomChangeAdapter;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
@@ -91,7 +91,6 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     if (!areValid()) return;
 
     repaint();
-    setToolTipText(myErrorStripeRenderer.getTooltipMessage());
 
     if (!isHighlightingFinished()) {
       addUpdateRequest();
@@ -137,11 +136,11 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   }
 
   private static Dimension getDimension() {
-    return new Dimension(AllIcons.General.ErrorsInProgress.getIconWidth() + 2, AllIcons.General.ErrorsInProgress.getIconHeight() + 2);
+    return JBUI.size(14);
   }
 
   private class DomElementsTrafficLightRenderer extends TrafficLightRenderer {
-    public DomElementsTrafficLightRenderer(@NotNull XmlFile xmlFile) {
+    DomElementsTrafficLightRenderer(@NotNull XmlFile xmlFile) {
       super(xmlFile.getProject(),
             PsiDocumentManager.getInstance(xmlFile.getProject()).getDocument(xmlFile), xmlFile);
     }

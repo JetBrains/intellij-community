@@ -395,7 +395,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void perform() {
       // TODO: This setVisible() is necessary because MoreXAction shows "Loading..." text when disabled
       myMore500Action.setVisible(false);
       myMore100Action.setEnabled(false);
@@ -411,7 +411,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myWiseSelection.setAll();
       myRevisionsList.repaint();
     }
@@ -423,7 +423,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myWiseSelection.clearAll();
       myRevisionsList.repaint();
     }
@@ -436,7 +436,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     private List<SvnChangeList> myLists;
     private boolean myIsLastListLoaded;
 
-    public LoadChangeListsTask(long startNumber, int quantity) {
+    LoadChangeListsTask(long startNumber, int quantity) {
       super(myMergeContext.getProject(), "Loading recent " + myMergeContext.getBranchName() + " revisions", true);
       myStartNumber = startNumber;
       myQuantity = quantity;

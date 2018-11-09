@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -62,7 +48,6 @@ public class RecursionManager {
   /**
    * @see RecursionGuard#doPreventingRecursion(Object, boolean, Computable)
    */
-  @SuppressWarnings("JavaDoc")
   @Nullable
   public static <T> T doPreventingRecursion(@NotNull Object key, boolean memoize, Computable<T> computation) {
     return createGuard(computation.getClass().getName()).doPreventingRecursion(key, memoize, computation);
@@ -82,7 +67,7 @@ public class RecursionManager {
 
         if (stack.checkReentrancy(realKey)) {
           if (ourAssertOnPrevention) {
-            throw new AssertionError("Endless recursion prevention occurred");
+            throw new StackOverflowPreventedException("Endless recursion prevention occurred");
           }
           return null;
         }
@@ -173,7 +158,7 @@ public class RecursionManager {
     private final int myHashCode;
     private final boolean myCallEquals;
 
-    public MyKey(String guardId, @NotNull Object userObject, boolean mayCallEquals) {
+    MyKey(String guardId, @NotNull Object userObject, boolean mayCallEquals) {
       this.guardId = guardId;
       this.userObject = userObject;
       // remember user object hashCode to ensure our internal maps consistency
@@ -372,4 +357,8 @@ public class RecursionManager {
     });
   }
 
+  @TestOnly
+  public static void disableAssertOnRecursionPrevention() {
+    ourAssertOnPrevention = false;
+  }
 }

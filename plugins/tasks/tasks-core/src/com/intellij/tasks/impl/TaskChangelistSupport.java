@@ -42,6 +42,7 @@ public class TaskChangelistSupport implements EditChangelistSupport {
     myTaskManager = taskManager;
   }
 
+  @Override
   public void installSearch(EditorTextField name, final EditorTextField comment) {
     Document document = name.getDocument();
     final TaskAutoCompletionListProvider completionProvider =
@@ -50,6 +51,7 @@ public class TaskChangelistSupport implements EditChangelistSupport {
     TextFieldWithAutoCompletion.installCompletion(document, myProject, completionProvider, false);
   }
 
+  @Override
   public Consumer<LocalChangeList> addControls(JPanel bottomPanel, final LocalChangeList initial) {
     final JCheckBox checkBox = new JCheckBox("Track context");
     checkBox.setMnemonic('t');
@@ -84,6 +86,7 @@ public class TaskChangelistSupport implements EditChangelistSupport {
     };
   }
 
+  @Override
   public void changelistCreated(LocalChangeList changeList) {
   }
 }

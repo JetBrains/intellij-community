@@ -37,6 +37,7 @@ public class PropertyKeyIndex extends StringStubIndexExtension<Property> {
     return ourInstance;
   }
 
+  @Override
   @NotNull
   public StubIndexKey<String, Property> getKey() {
     return KEY;

@@ -49,7 +49,7 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
   private final MyVfsEventsProcessor myEventsProcessor;
   private final Project myProject;
 
-  public ResourceBundleEditorFileListener(ResourceBundleEditor editor) {
+  ResourceBundleEditorFileListener(ResourceBundleEditor editor) {
     myEditor = editor;
     myEventsProcessor = new MyVfsEventsProcessor();
     myProject = myEditor.getResourceBundle().getProject();

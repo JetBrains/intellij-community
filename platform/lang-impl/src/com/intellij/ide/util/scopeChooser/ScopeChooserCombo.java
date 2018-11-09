@@ -4,7 +4,6 @@ package com.intellij.ide.util.scopeChooser;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Condition;
@@ -68,17 +67,15 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   public void init(final Project project,
                    final boolean suggestSearchInLibs,
                    final boolean prevSearchWholeFiles,
-                   final String preselect,
+                   final Object selection,
                    @Nullable Condition<ScopeDescriptor> scopeFilter) {
     mySuggestSearchInLibs = suggestSearchInLibs;
     myPrevSearchFiles = prevSearchWholeFiles;
     myProject = project;
     myScopeListener = () -> {
-      final SearchScope selectedScope = getSelectedScope();
+      SearchScope selectedScope = getSelectedScope();
       rebuildModel();
-      if (selectedScope != null) {
-        selectScope(selectedScope.getDisplayName());
-      }
+      selectItem(selectedScope);
     };
     myScopeFilter = scopeFilter;
     myNamedScopeManager = NamedScopeManager.getInstance(project);
@@ -93,7 +90,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     rebuildModel();
 
-    selectScope(preselect);
+    selectItem(selection);
     new ComboboxSpeedSearch(combo) {
       @Override
       protected String getElementText(Object element) {
@@ -132,16 +129,16 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     myScopeListener = null;
   }
 
-  private void selectScope(String preselect) {
-    if (preselect != null) {
-      final JComboBox combo = getComboBox();
-      DefaultComboBoxModel model = (DefaultComboBoxModel)combo.getModel();
-      for (int i = 0; i < model.getSize(); i++) {
-        ScopeDescriptor descriptor = (ScopeDescriptor)model.getElementAt(i);
-        if (preselect.equals(descriptor.getDisplay())) {
-          combo.setSelectedIndex(i);
-          break;
-        }
+  private void selectItem(@Nullable Object selection) {
+    if (selection == null) return;
+    JComboBox combo = getComboBox();
+    DefaultComboBoxModel model = (DefaultComboBoxModel)combo.getModel();
+    for (int i = 0; i < model.getSize(); i++) {
+      ScopeDescriptor descriptor = (ScopeDescriptor)model.getElementAt(i);
+      if (selection instanceof String && selection.equals(descriptor.getDisplay()) ||
+          selection instanceof SearchScope && descriptor.scopeEquals((SearchScope)selection)) {
+        combo.setSelectedIndex(i);
+        break;
       }
     }
   }
@@ -155,7 +152,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         rebuildModel();
         final NamedScope namedScope = dlg.getSelectedScope();
         if (namedScope != null) {
-          selectScope(namedScope.getName());
+          selectItem(namedScope.getName());
         }
       }
       if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
@@ -225,7 +222,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
                                                                                              myUsageView, myShowEmptyScopes)) {
       addScopeDescriptor(model, new ScopeDescriptor(scope));
     }
-    for (ScopeDescriptorProvider provider : Extensions.getExtensions(ScopeDescriptorProvider.EP_NAME)) {
+    for (ScopeDescriptorProvider provider : ScopeDescriptorProvider.EP_NAME.getExtensionList()) {
       for (ScopeDescriptor scopeDescriptor : provider.getScopeDescriptors(myProject)) {
         if(myScopeFilter == null || myScopeFilter.value(scopeDescriptor)) {
           model.addElement(scopeDescriptor);
@@ -275,8 +272,10 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   private static class ScopeDescriptionWithDelimiterRenderer extends ListCellRendererWrapper<ScopeDescriptor> {
     @Override
     public void customize(JList list, ScopeDescriptor value, int index, boolean selected, boolean hasFocus) {
-      setIcon(value.getDisplayIcon());
-      setText(value.getDisplay());
+      if (value != null) {
+        setIcon(value.getDisplayIcon());
+        setText(value.getDisplay());
+      }
       if (value instanceof ScopeSeparator) {
         setSeparator();
       }

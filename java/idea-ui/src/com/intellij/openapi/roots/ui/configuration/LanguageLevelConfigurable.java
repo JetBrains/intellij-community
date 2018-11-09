@@ -42,7 +42,6 @@ public abstract class LanguageLevelConfigurable implements UnnamedConfigurable {
         return LanguageLevelProjectExtensionImpl.getInstanceImpl(project).getCurrentLevel();
       }
     };
-    myLanguageLevelCombo.addDefaultItem();
     myLanguageLevelCombo.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {

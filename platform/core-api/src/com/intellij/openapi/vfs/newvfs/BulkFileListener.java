@@ -24,6 +24,7 @@ public interface BulkFileListener {
   /**
    * @deprecated obsolete, implement {@link BulkFileListener} directly (to be removed in IDEA 2019)
    */
+  @Deprecated
   class Adapter implements BulkFileListener {
 
   }

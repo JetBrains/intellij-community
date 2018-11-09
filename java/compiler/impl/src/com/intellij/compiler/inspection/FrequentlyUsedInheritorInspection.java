@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.inspection;
 
 import com.intellij.codeInspection.*;
@@ -17,9 +17,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SystemProperties;
 import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.CompilerRef;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -97,8 +98,7 @@ public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInsp
       return isInSourceContent(aClass) ? Pair.create(superClass, aClass.getExtendsList()) : null;
     }
 
-    PsiClass anInterface = Arrays
-      .stream(aClass.getInterfaces())
+    PsiClass anInterface = StreamEx.of(aClass.getInterfaces())
       .filter(c -> !CommonClassNames.JAVA_LANG_OBJECT.equals(c.getQualifiedName()))
       .filter(c -> isInSourceContent(c))
       .collect(MoreCollectors.onlyOne())
@@ -123,7 +123,7 @@ public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInsp
     try {
       int id = compilerRefService.getNameId(qName);
       if (id == 0) return Collections.emptyList();
-      return findInheritors(aClass, new LightRef.JavaLightClassRef(id), searchScope, place, -1, project, compilerRefService);
+      return findInheritors(aClass, new CompilerRef.JavaCompilerClassRef(id), searchScope, place, -1, project, compilerRefService);
     }
     catch (ReferenceIndexUnavailableException e) {
       return Collections.emptyList();
@@ -131,16 +131,16 @@ public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInsp
   }
 
   private static List<ClassAndInheritorCount> findInheritors(@NotNull PsiClass aClass,
-                                                             @NotNull LightRef.JavaLightClassRef classAsLightRef,
+                                                             @NotNull CompilerRef.JavaCompilerClassRef classAsCompilerRef,
                                                              @NotNull GlobalSearchScope searchScope,
                                                              @NotNull PsiElement place,
                                                              int hierarchyCardinality,
                                                              @NotNull Project project,
                                                              @NotNull CompilerReferenceServiceEx compilerRefService) {
-    LightRef.LightClassHierarchyElementDef[] directInheritors = compilerRefService.getDirectInheritors(classAsLightRef);
+    CompilerRef.CompilerClassHierarchyElementDef[] directInheritors = compilerRefService.getDirectInheritors(classAsCompilerRef);
 
     if (hierarchyCardinality == -1) {
-      hierarchyCardinality = compilerRefService.getInheritorCount(classAsLightRef);
+      hierarchyCardinality = compilerRefService.getInheritorCount(classAsCompilerRef);
       if (hierarchyCardinality == -1) {
         return Collections.emptyList();
       }
@@ -149,13 +149,13 @@ public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInsp
 
     List<ClassAndInheritorCount> directInheritorStats = Stream
       .of(directInheritors)
-      .filter(inheritor -> !(inheritor instanceof LightRef.LightAnonymousClassDef))
+      .filter(inheritor -> !(inheritor instanceof CompilerRef.CompilerAnonymousClassDef))
       .map(inheritor -> {
         ProgressManager.checkCanceled();
         int count = compilerRefService.getInheritorCount(inheritor);
         if (count != 1 && count * 100 > finalHierarchyCardinality * PERCENT_THRESHOLD) {
           return new Object() {
-            final LightRef.LightClassHierarchyElementDef myDef = inheritor;
+            final CompilerRef.CompilerClassHierarchyElementDef myDef = inheritor;
             final int inheritorCount = count;
           };
         }
@@ -180,7 +180,7 @@ public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInsp
     return directInheritorStats
       .stream()
       .filter(c -> resolveHelper.isAccessible(c.psi, place, null))
-      .flatMap(c -> Stream.concat(Stream.of(c), getClassesIfInterface(c, finalHierarchyCardinality, searchScope, place, project, compilerRefService).stream()))
+      .flatMap(c -> StreamEx.of(getClassesIfInterface(c, finalHierarchyCardinality, searchScope, place, project, compilerRefService)).prepend(c))
       .sorted()
       .limit(MAX_RESULT)
       .collect(Collectors.toList());
@@ -194,7 +194,7 @@ public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInsp
                                                                     CompilerReferenceServiceEx compilerRefService) {
     if (classAndInheritorCount.psi.isInterface()) {
       return findInheritors(classAndInheritorCount.psi,
-                            (LightRef.JavaLightClassRef)classAndInheritorCount.descriptor,
+                            (CompilerRef.JavaCompilerClassRef)classAndInheritorCount.descriptor,
                             searchScope,
                             place,
                             hierarchyCardinality,
@@ -213,11 +213,11 @@ public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInsp
 
   private static class ClassAndInheritorCount implements Comparable<ClassAndInheritorCount> {
     private final PsiClass psi;
-    private final LightRef.LightClassHierarchyElementDef descriptor;
+    private final CompilerRef.CompilerClassHierarchyElementDef descriptor;
     private final int number;
 
     private ClassAndInheritorCount(PsiClass psi,
-                                   LightRef.LightClassHierarchyElementDef descriptor,
+                                   CompilerRef.CompilerClassHierarchyElementDef descriptor,
                                    int number) {
       this.psi = psi;
       this.descriptor = descriptor;

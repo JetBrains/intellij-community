@@ -284,12 +284,6 @@ public abstract class JBPopupFactory {
                                                    @Nullable String actionPlace);
 
   /**
-   * @deprecated use {@link #createListPopup(ListPopupStep)} instead ({@code step} must be a ListPopupStep in any case)
-   */
-  @NotNull
-  public abstract ListPopup createWizardStep(@NotNull PopupStep step);
-
-  /**
    * Creates a custom list popup with the specified step.
    *
    * @param step the custom step for the list popup.
@@ -361,7 +355,12 @@ public abstract class JBPopupFactory {
   public abstract BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, String title);
 
   @NotNull
-  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, @Nullable Icon icon, Color fillColor, @Nullable HyperlinkListener listener);
+  public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, @Nullable Icon icon, Color fillColor, @Nullable HyperlinkListener listener) {
+    return createHtmlTextBalloonBuilder(htmlContent, icon, null, fillColor, listener);
+  }
+
+  @NotNull
+  public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, @Nullable Icon icon, Color textColor, Color fillColor, @Nullable HyperlinkListener listener);
 
   @NotNull
   public abstract BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent, MessageType messageType, @Nullable HyperlinkListener listener);

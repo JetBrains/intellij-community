@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.editor.ex;
 
+import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,8 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
   /**
    * If {@code true}, there will be a visual indication that this highlighter is present inside a collapsed fold region.
    * By default it won't happen, use {@link #setVisibleIfFolded(boolean)} to change it.
+   *
+   * @see FoldRegion#setInnerHighlightersMuted(boolean)
    */
   boolean isVisibleIfFolded();
 

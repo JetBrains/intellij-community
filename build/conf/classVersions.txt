@@ -35,7 +35,6 @@
 
 1.6 => lib/util.jar
 1.6 => lib/rt/debugger-agent.jar
-1.6 => lib/rt/debugger-agent-storage.jar
 
 1.7 => lib/optimizedFileManager.jar
 
@@ -48,6 +47,7 @@
 
 1.6 => lib/external-system-rt.jar
 - => lib/jshell-frontend.jar
+- => lib/sa-jdwp
 
 1.6 => plugins/gradle/lib/gradle-tooling-extension-api.jar
 1.6 => plugins/gradle/lib/gradle-tooling-extension-impl.jar
@@ -65,4 +65,4 @@
 1.5 => plugins/xslt-debugger/lib/xslt-debugger-engine.jar
 1.5 => plugins/xslt-debugger/lib/rt/xslt-debugger-engine-impl.jar
 
-1.6 => plugins/cucumber-java/lib/cucumber-jvm-formatter.jar
+1.6 => plugins/cucumber-java/lib/cucumber-jvmFormatter.jar

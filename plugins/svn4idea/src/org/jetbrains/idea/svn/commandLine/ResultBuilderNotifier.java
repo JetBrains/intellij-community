@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessAdapter;
@@ -29,6 +30,7 @@ public class ResultBuilderNotifier extends ProcessAdapter {
     myResultBuilder = resultBuilder;
   }
 
+  @Override
   public void processTerminated(@NotNull final ProcessEvent event) {
     try {
       forceNewLine();
@@ -46,6 +48,7 @@ public class ResultBuilderNotifier extends ProcessAdapter {
     }
   }
 
+  @Override
   public void onTextAvailable(@NotNull final ProcessEvent event, @NotNull final Key outputType) {
     onTextAvailable(event.getText(), outputType);
   }

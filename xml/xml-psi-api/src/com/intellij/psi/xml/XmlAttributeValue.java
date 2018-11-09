@@ -17,6 +17,7 @@ package com.intellij.psi.xml;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiLiteralValue;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
@@ -25,8 +26,10 @@ public interface XmlAttributeValue extends XmlElement, PsiLiteralValue {
   /**
    * @return text inside XML attribute with quotes stripped off
    */
+  @Override
+  @NotNull
   String getValue();
-  
+
   /**
    * @return the range occupied by text inside XML attribute with quotes stripped off
    */

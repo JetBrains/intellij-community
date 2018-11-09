@@ -42,4 +42,30 @@ public class FlipComparisonIntentionTest extends IPPTestCase {
                                 "  {x(HashSet</*_Flip '>' to '<'*/>());}" +
                                 "}");
   }
+
+  public void testBrokenCode2() {
+    doTestIntentionNotAvailable("class Builder {\n" +
+                                "    Builder b = !(new//simple end comment\n" +
+                                "         </*_Flip '>=' to '<='*/>   Builder().method( >= caret) >1).method(2);\n" +
+                                "}");
+  }
+
+  public void testBrokenCode3() {
+    doTest("@Anno(\n" +
+           "  param//test comment\n" +
+           "  /*_Flip '<' to '>'*/<foo>",
+
+           "@Anno(\n" +
+           "        //test comment\n" +
+           "        foo > param >");
+  }
+
+  public void testBrokenCode4() {
+    doTestIntentionNotAvailable("class A{\n" +
+           "  {\n" +
+           "    \"\"<foo>\"//simple/*_Flip '>' to '<'*/ end comment\n" +
+           "  }\n" +
+           "}");
+  }
+
 }

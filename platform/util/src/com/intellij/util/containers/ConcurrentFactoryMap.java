@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.RecursionGuard;
@@ -166,17 +152,17 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   }
 
   @Override
-  public V putIfAbsent(K key, V value) {
+  public V putIfAbsent(@NotNull K key, V value) {
     return nullize(myMap.putIfAbsent(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value)));
   }
 
   @Override
-  public boolean remove(Object key, Object value) {
+  public boolean remove(@NotNull Object key, Object value) {
     return myMap.remove(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value));
   }
 
   @Override
-  public boolean replace(K key, V oldValue, V newValue) {
+  public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
     return myMap.replace(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(oldValue), ConcurrentFactoryMap.<V>notNull(newValue));
   }
 
@@ -185,25 +171,8 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     return nullize(myMap.replace(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value)));
   }
 
-  /**
-   * Use {@link #createMap(Function)} instead
-   * TODO to remove in IDEA 2018
-   */
-  @Deprecated
   @NotNull
-  public static <T, V> ConcurrentFactoryMap<T, V> createConcurrentMap(@NotNull final Function<T, V> computeValue) {
-    //noinspection deprecation
-    return new ConcurrentFactoryMap<T, V>() {
-      @Nullable
-      @Override
-      protected V create(T key) {
-        return computeValue.fun(key);
-      }
-    };
-  }
-
-  @NotNull
-  public static <T, V> ConcurrentMap<T, V> createMap(@NotNull final Function<T, V> computeValue) {
+  public static <T, V> ConcurrentMap<T, V> createMap(@NotNull final Function<? super T, ? extends V> computeValue) {
     //noinspection deprecation
     return new ConcurrentFactoryMap<T, V>() {
       @Nullable
@@ -214,7 +183,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     };
   }
   @NotNull
-  public static <K, V> ConcurrentMap<K, V> createMap(@NotNull final Function<K, V> computeValue, @NotNull final Producer<ConcurrentMap<K,V>> mapCreator) {
+  public static <K, V> ConcurrentMap<K, V> createMap(@NotNull final Function<? super K, ? extends V> computeValue, @NotNull final Producer<? extends ConcurrentMap<K, V>> mapCreator) {
     //noinspection deprecation
     return new ConcurrentFactoryMap<K, V>() {
       @Nullable
@@ -235,7 +204,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
    * @return Concurrent factory map with weak keys, strong values
    */
   @NotNull
-  public static <T, V> ConcurrentMap<T, V> createWeakMap(@NotNull Function<T, V> compute) {
+  public static <T, V> ConcurrentMap<T, V> createWeakMap(@NotNull Function<? super T, ? extends V> compute) {
     return createMap(compute, new Producer<ConcurrentMap<T, V>>() {
       @Override
       public ConcurrentMap<T, V> produce() {return ContainerUtil.createConcurrentWeakMap();}
@@ -246,7 +215,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
    * needed for compatibility in case of moronic subclassing
    * TODO to remove in IDEA 2018
    */
-  @Deprecated 
+  @Deprecated
   public V getOrDefault(Object key, V defaultValue) {
       V v;
       return (v = get(key)) != null ? v : defaultValue;
@@ -255,10 +224,11 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   private static class CollectionWrapper<K> extends AbstractCollection<K> {
     private final Collection<K> myDelegate;
 
-    public CollectionWrapper(Collection<K> delegate) {
+    CollectionWrapper(Collection<K> delegate) {
       myDelegate = delegate;
     }
 
+    @NotNull
     @Override
     public Iterator<K> iterator() {
       return new Iterator<K>() {
@@ -301,14 +271,14 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
     }
 
     private static class Set<K> extends CollectionWrapper<K> implements java.util.Set<K> {
-      public Set(Collection<K> delegate) {
+      Set(Collection<K> delegate) {
         super(delegate);
       }
     }
 
     protected static class EntryWrapper<K, V> implements Entry<K, V> {
-      final Entry<K, V> myEntry;
-      private EntryWrapper(Entry<K, V> entry) {
+      final Entry<? extends K, V> myEntry;
+      private EntryWrapper(Entry<? extends K, V> entry) {
         myEntry = entry;
       }
 

@@ -34,6 +34,7 @@ import com.intellij.util.graph.Graph;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -211,11 +212,13 @@ public class ResolverTree {
     }
 
     final DFSTBuilder<PsiTypeVariable> dfstBuilder = new DFSTBuilder<>(new Graph<PsiTypeVariable>() {
+      @NotNull
       @Override
       public Collection<PsiTypeVariable> getNodes() {
         return nodes;
       }
 
+      @NotNull
       @Override
       public Iterator<PsiTypeVariable> getIn(final PsiTypeVariable n) {
         final Set<PsiTypeVariable> in = ins.get(n);
@@ -227,6 +230,7 @@ public class ResolverTree {
         return in.iterator();
       }
 
+      @NotNull
       @Override
       public Iterator<PsiTypeVariable> getOut(final PsiTypeVariable n) {
         final Set<PsiTypeVariable> out = outs.get(n);
@@ -367,7 +371,7 @@ public class ResolverTree {
       if (lowerClass != null && upperClass != null && !lowerClass.equals(upperClass)) {
         final PsiSubstitutor upperSubst = resultUpper.getSubstitutor();
         final PsiClass[] parents = upperClass.getSupers();
-        final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
 
         for (final PsiClass parent : parents) {
           final PsiSubstitutor superSubstitutor = TypeConversionUtil.getClassSubstitutor(parent, upperClass, upperSubst);

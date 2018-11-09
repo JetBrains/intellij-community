@@ -38,7 +38,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since 15-Mar-2006
  */
 public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private String myTitle = "";
@@ -77,7 +76,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myShowBorder = true;
   private boolean myFocusable = true;
   private ActiveComponent myCommandButton;
-  private List<Pair<ActionListener, KeyStroke>> myKeyboardActions = Collections.emptyList();
+  private List<? extends Pair<ActionListener, KeyStroke>> myKeyboardActions = Collections.emptyList();
   private Component mySettingsButtons;
   private boolean myMayBeParent;
   private int myAdAlignment = SwingConstants.LEFT;
@@ -190,7 +189,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
   @Override
   @NotNull
-  public ComponentPopupBuilder setKeyboardActions(@NotNull List<Pair<ActionListener, KeyStroke>> keyboardActions) {
+  public ComponentPopupBuilder setKeyboardActions(@NotNull List<? extends Pair<ActionListener, KeyStroke>> keyboardActions) {
     myKeyboardActions = keyboardActions;
     return this;
   }

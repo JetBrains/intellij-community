@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.ui.persistence;
 
+import com.intellij.internal.statistic.collectors.fus.ui.ShortcutUsagesCollector;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -48,11 +50,13 @@ public class ShortcutsCollector implements PersistentStateComponent<ShortcutsCol
 
   private MyState myState = new MyState();
 
+  @Override
   @NotNull
   public MyState getState() {
     return myState;
   }
 
+  @Override
   public void loadState(@NotNull final MyState state) {
     myState = state;
   }

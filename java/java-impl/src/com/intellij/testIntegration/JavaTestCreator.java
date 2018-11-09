@@ -34,6 +34,7 @@ public class JavaTestCreator implements TestCreator {
     return CreateTestAction.isAvailableForElement(element);
   }
 
+  @Override
   public void createTest(Project project, Editor editor, PsiFile file) {
     try {
       CreateTestAction action = new CreateTestAction();

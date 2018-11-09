@@ -16,13 +16,10 @@
 
 package com.intellij.usageView;
 
-import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
-import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.psi.ElementDescriptionLocation;
 import com.intellij.psi.ElementDescriptionProvider;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
@@ -43,26 +40,20 @@ public class UsageViewNodeTextLocation extends ElementDescriptionLocation {
     return DEFAULT_PROVIDER;
   }
 
-  private static final ElementDescriptionProvider DEFAULT_PROVIDER = new ElementDescriptionProvider() {
-    @Override
-    public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
-      if (!(location instanceof UsageViewNodeTextLocation)) return null;
+  private static final ElementDescriptionProvider DEFAULT_PROVIDER = (element, location) -> {
+    if (!(location instanceof UsageViewNodeTextLocation)) return null;
 
-      if (element instanceof PsiMetaOwner) {
-        final PsiMetaData metaData = ((PsiMetaOwner)element).getMetaData();
-        if (metaData instanceof PsiPresentableMetaData) {
-          return ((PsiPresentableMetaData)metaData).getTypeName() + " " + DescriptiveNameUtil.getMetaDataName(metaData);
-        }
+    if (element instanceof PsiMetaOwner) {
+      final PsiMetaData metaData = ((PsiMetaOwner)element).getMetaData();
+      if (metaData instanceof PsiPresentableMetaData) {
+        return ((PsiPresentableMetaData)metaData).getTypeName() + " " + DescriptiveNameUtil.getMetaDataName(metaData);
       }
-
-      if (element instanceof PsiFile) {
-        return ((PsiFile)element).getName();
-      }
-
-      Language language = element.getLanguage();
-      FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(language);
-      assert provider != null : "Element: " + element + ", language: " + language;
-      return provider.getNodeText(element, true);
     }
+
+    if (element instanceof PsiFile) {
+      return ((PsiFile)element).getName();
+    }
+
+    return LanguageFindUsages.getNodeText(element, true);
   };
 }

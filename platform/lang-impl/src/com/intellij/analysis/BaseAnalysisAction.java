@@ -5,11 +5,13 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.*;
 
@@ -25,13 +27,13 @@ public abstract class BaseAnalysisAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setEnabled(project != null && !DumbService.isDumb(project) && getInspectionScope(e.getDataContext(), project) != null);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
     DataContext dataContext = e.getDataContext();
@@ -44,7 +46,11 @@ public abstract class BaseAnalysisAction extends AnAction {
     boolean rememberScope = ActionPlaces.isMainMenuOrActionSearch(e.getPlace());
     AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(title, noon, project, scope, module, rememberScope, uiOptions, element) {
+    BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(title, noon, project, BaseAnalysisActionDialog.standardItems(project, scope,
+                                                                                                                             module,
+                                                                                                                             element),
+                                                                uiOptions, rememberScope, ModuleUtil
+                                                                  .isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE)) {
       @Override
       protected String getDimensionServiceKey() {
         return DIMENSION_KEY_PREFIX + getClass().getName();

@@ -48,8 +48,5 @@ public class XmlFormattingModelBuilder implements FormattingModelBuilder {
     return new XmlBlock(root, null, null, new XmlPolicy(settings, documentModel), null, null, false);
   }
 
-  @Override
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-    return null;
-  }
+
 }

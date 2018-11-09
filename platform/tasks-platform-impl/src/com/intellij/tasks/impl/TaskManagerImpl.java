@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.impl;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -327,14 +313,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     final LocalTask task = doActivate(origin, true);
 
-    return restoreVcsContext(task);
+    restoreVcsContext(task);
+    return task;
   }
 
-  private LocalTask restoreVcsContext(LocalTask task) {
-    if (!isVcsEnabled()) return task;
+  private void restoreVcsContext(LocalTask task) {
+    if (!isVcsEnabled())
+      return;
 
     List<ChangeListInfo> changeLists = task.getChangeLists();
-    if (!changeLists.isEmpty()) {
+    if (changeLists.isEmpty()) {
+      task.addChangelist(new ChangeListInfo(myChangeListManager.getDefaultChangeList()));
+    }
+    else {
       ChangeListInfo info = changeLists.get(0);
       LocalChangeList changeList = myChangeListManager.getChangeList(info.id);
       if (changeList == null) {
@@ -371,7 +362,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     VcsTaskHandler.TaskInfo info = fromBranches(new ArrayList<>(multiMap.values()));
 
     switchBranch(info);
-    return task;
   }
 
   public void shelveChanges(LocalTask task, @NotNull String shelfName) {
@@ -483,6 +473,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
         () -> ProgressManager.getInstance().run(new com.intellij.openapi.progress.Task.Backgroundable(myProject, "Updating " + task.getPresentableId()) {
 
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             updateIssue(task.getId());
           }
@@ -498,7 +489,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return task;
   }
 
-  private void addTask(LocalTaskImpl task) {
+  private void addTask(@NotNull LocalTaskImpl task) {
     myTasks.put(task.getId(), task);
     myDispatcher.getMulticaster().taskAdded(task);
   }
@@ -507,6 +498,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public boolean testConnection(final TaskRepository repository) {
 
     TestConnectionTask task = new TestConnectionTask("Test connection") {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText("Connecting to " + repository.getUrl() + "...");
         indicator.setFraction(0);
@@ -571,6 +563,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return e == null;
   }
 
+  @Override
   @NotNull
   public Config getState() {
     myConfig.tasks = ContainerUtil.map(myTasks.values(), (Function<Task, LocalTaskImpl>)task -> new LocalTaskImpl(task));
@@ -578,7 +571,12 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return myConfig;
   }
 
+  @Override
   public void loadState(@NotNull Config config) {
+
+    config.branchNameFormat = TaskUtil.updateToVelocity(config.branchNameFormat);
+    config.changelistNameFormat = TaskUtil.updateToVelocity(config.changelistNameFormat);
+
     XmlSerializerUtil.copyBean(config, myConfig);
 
     myRepositories.clear();
@@ -621,6 +619,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return repositories;
   }
 
+  @Override
   public void projectOpened() {
 
     TaskProjectConfiguration projectConfiguration = getProjectConfiguration();
@@ -648,8 +647,6 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       }
     }
 
-    myContextManager.pack(200, 50);
-
     // make sure the task is associated with default changelist
     LocalTask defaultTask = findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     LocalChangeList defaultList = myChangeListManager.findChangeList(LocalChangeList.DEFAULT_NAME);
@@ -671,20 +668,19 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
 
     myChangeListManager.addChangeListListener(myChangeListListener);
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> myContextManager.pack(200, 50));
   }
 
   private TaskProjectConfiguration getProjectConfiguration() {
     return ServiceManager.getService(myProject, TaskProjectConfiguration.class);
   }
 
-  @NotNull
-  public String getComponentName() {
-    return "Task Manager";
-  }
-
+  @Override
   public void initComponent() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myCacheRefreshTimer = UIUtil.createNamedTimer("TaskManager refresh", myConfig.updateInterval * 60 * 1000, new ActionListener() {
+        @Override
         public void actionPerformed(@NotNull ActionEvent e) {
           if (myConfig.updateEnabled && !myUpdating) {
             LOG.debug("Updating issues cache (every " + myConfig.updateInterval + " min)");
@@ -726,6 +722,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myDispatcher.getMulticaster().taskActivated(myActiveTask);
   }
 
+  @NotNull
   private static LocalTaskImpl createDefaultTask() {
     LocalTaskImpl task = new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default task");
     Date date = new Date();
@@ -734,6 +731,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return task;
   }
 
+  @Override
   public void disposeComponent() {
     if (myCacheRefreshTimer != null) {
       myCacheRefreshTimer.stop();
@@ -741,6 +739,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myChangeListManager.removeChangeListListener(myChangeListListener);
   }
 
+  @Override
   public void updateIssues(final @Nullable Runnable onComplete) {
     TaskRepository first = ContainerUtil.find(getAllRepositories(), repository -> repository.isConfigured());
     if (first == null) {
@@ -877,14 +876,22 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   @Nullable
   @Override
   public LocalTask getAssociatedTask(@NotNull LocalChangeList list) {
+    if (hasChangelist(getActiveTask(), list))
+      return getActiveTask();
     for (LocalTask task : getLocalTasks()) {
-      for (ChangeListInfo changeListInfo : new ArrayList<>(task.getChangeLists())) {
-        if (changeListInfo.id.equals(list.getId())) {
-          return task;
-        }
-      }
+      if (hasChangelist(task, list))
+        return task;
     }
     return null;
+  }
+
+  private static boolean hasChangelist(LocalTask task, LocalChangeList list) {
+    for (ChangeListInfo changeListInfo : new ArrayList<>(task.getChangeLists())) {
+      if (changeListInfo.id.equals(list.getId())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
@@ -899,6 +906,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     }
   }
 
+  @Override
   public void decorateChangeList(@NotNull LocalChangeList changeList,
                                  @NotNull ColoredTreeCellRenderer cellRenderer,
                                  boolean selected,
@@ -933,7 +941,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   public String getChangelistName(Task task) {
     String name = task.isIssue() && myConfig.changelistNameFormat != null
-                  ? TaskUtil.formatTask(task, myConfig.changelistNameFormat, false)
+                  ? TaskUtil.formatTask(task, myConfig.changelistNameFormat)
                   : task.getSummary();
     return StringUtil.shortenTextWithEllipsis(name, 100, 0);
   }
@@ -949,7 +957,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @NotNull
   public String constructDefaultBranchName(@NotNull Task task) {
-    return task.isIssue() ? TaskUtil.formatTask(task, myConfig.branchNameFormat, false) : task.getSummary();
+    return task.isIssue() ? TaskUtil.formatTask(task, myConfig.branchNameFormat) : task.getSummary();
   }
 
   @TestOnly
@@ -984,8 +992,8 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     public boolean saveContextOnCommit = true;
     public boolean trackContextForNewChangelist = false;
 
-    public String changelistNameFormat = "{id} {summary}";
-    public String branchNameFormat = "{id}";
+    public String changelistNameFormat = "${id} ${summary}";
+    public String branchNameFormat = "${id}";
 
     public boolean searchClosedTasks = false;
     @Tag("servers")
@@ -998,7 +1006,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     @Nullable
     protected TaskRepository.CancellableConnection myConnection;
 
-    public TestConnectionTask(String title) {
+    TestConnectionTask(String title) {
       super(TaskManagerImpl.this.myProject, title, true);
     }
 

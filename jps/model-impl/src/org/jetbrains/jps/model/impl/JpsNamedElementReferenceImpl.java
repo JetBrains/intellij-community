@@ -45,6 +45,7 @@ public abstract class JpsNamedElementReferenceImpl<T extends JpsNamedElement, Se
     return element;
   }
 
+  @Override
   @Nullable
   protected JpsElementCollection<? extends T> getCollection(@NotNull JpsCompositeElement parent) {
     return parent.getContainer().getChild(myCollectionRole);

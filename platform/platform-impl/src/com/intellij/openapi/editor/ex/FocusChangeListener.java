@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -23,6 +24,6 @@ import java.util.EventListener;
  * @author max
  */
 public interface FocusChangeListener extends EventListener {
-  void focusGained(Editor editor);
-  void focusLost(Editor editor);
+  void focusGained(@NotNull Editor editor);
+  void focusLost(@NotNull Editor editor);
 }

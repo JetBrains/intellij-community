@@ -3,7 +3,6 @@
 package com.theoryinpractice.testng.inspection;
 
 import com.intellij.codeInspection.*;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -34,24 +33,28 @@ import java.util.List;
 public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UndeclaredTestInspection.class);
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return TestNGUtil.TESTNG_GROUP_NAME;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Undeclared test";
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "UndeclaredTests";
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull final PsiClass aClass,
                                         @NotNull final InspectionManager manager,
@@ -107,20 +110,23 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
   private static class RegisterClassFix implements LocalQuickFix {
     private final String myClassName;
 
-    public RegisterClassFix(final PsiClass aClass) {
+    RegisterClassFix(final PsiClass aClass) {
       myClassName = aClass.getName();
     }
 
+    @Override
     @NotNull
     public String getName() {
       return "Register \'" + myClassName + "\'";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return "Register test";
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       LOG.assertTrue(psiClass != null);
@@ -168,11 +174,13 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
   }
 
   private static class CreateTestngFix implements LocalQuickFix {
+    @Override
     @NotNull
     public String getFamilyName() {
       return "Create suite";
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
       final VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, null);

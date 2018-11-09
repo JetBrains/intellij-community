@@ -48,7 +48,6 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @author Eugene Zhuravlev
- * @since 16.04.2012
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class BuildMain {
@@ -142,21 +141,15 @@ public class BuildMain {
             }, dataStorageRoot, fsState);
             data.setProjectDescriptor(pd);
 
-            try {
-              final File fsStateFile = new File(dataStorageRoot, BuildSession.FS_STATE_FILE);
-              final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(fsStateFile)));
-              try {
-                final int version = in.readInt();
-                if (version == BuildFSState.VERSION) {
-                  final long savedOrdinal = in.readLong();
-                  final boolean hasWorkToDo = in.readBoolean();// must skip "has-work-to-do" flag
-                  fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
-                  data.setFsEventOrdinal(savedOrdinal);
-                  data.setHasHasWorkToDo(hasWorkToDo);
-                }
-              }
-              finally {
-                in.close();
+            final File fsStateFile = new File(dataStorageRoot, BuildSession.FS_STATE_FILE);
+            try (DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(fsStateFile)))) {
+              final int version = in.readInt();
+              if (version == BuildFSState.VERSION) {
+                final long savedOrdinal = in.readLong();
+                final boolean hasWorkToDo = in.readBoolean();// must skip "has-work-to-do" flag
+                fsState.load(in, pd.getModel(), pd.getBuildRootIndex());
+                data.setFsEventOrdinal(savedOrdinal);
+                data.setHasHasWorkToDo(hasWorkToDo);
               }
             }
             catch (FileNotFoundException ignored) {

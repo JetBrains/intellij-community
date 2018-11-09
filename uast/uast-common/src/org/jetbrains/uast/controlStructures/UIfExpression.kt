@@ -75,12 +75,12 @@ interface UIfExpression : UExpression {
     visitor.afterVisitIfExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitIfExpression(this, data)
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     if (isTernary) {
       append("(" + condition.asRenderString() + ")")
       append(" ? ")

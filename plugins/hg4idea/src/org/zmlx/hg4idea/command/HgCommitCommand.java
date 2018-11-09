@@ -55,6 +55,7 @@ public class HgCommitCommand extends HgCommitTypeCommand {
     this(project, repo, message, false);
   }
 
+  @Override
   protected void executeChunked(@NotNull List<List<String>> chunkedCommits) throws VcsException {
     if (chunkedCommits.isEmpty()) {
       commitChunkFiles(ContainerUtil.emptyList(), myAmend, myCloseBranch);

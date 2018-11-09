@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.project.DumbAware;
@@ -32,15 +32,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
-import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
+import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.UpToDateLineNumberProviderImpl;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ObjectUtils;
@@ -50,10 +46,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -75,13 +69,13 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     Provider provider = getProvider(e);
     return provider != null && provider.isAnnotated(e);
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean selected) {
+  public void setSelected(@NotNull AnActionEvent e, boolean selected) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       MyEditorNotificationPanel notificationPanel = ObjectUtils.tryCast(editor.getHeaderComponent(), MyEditorNotificationPanel.class);
@@ -97,25 +91,22 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
 
   public static void doAnnotate(@NotNull final Editor editor,
                                 @NotNull final Project project,
-                                @Nullable final VirtualFile currentFile,
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs) {
     UpToDateLineNumberProvider upToDateLineNumberProvider = new UpToDateLineNumberProviderImpl(editor.getDocument(), project);
-    doAnnotate(editor, project, currentFile, fileAnnotation, vcs, upToDateLineNumberProvider);
+    doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumberProvider);
   }
 
   public static void doAnnotate(@NotNull final Editor editor,
                                 @NotNull final Project project,
-                                @Nullable final VirtualFile currentFile,
                                 @NotNull final FileAnnotation fileAnnotation,
                                 @NotNull final AbstractVcs vcs,
                                 @NotNull final UpToDateLineNumberProvider upToDateLineNumbers) {
-    doAnnotate(editor, project, currentFile, fileAnnotation, vcs, upToDateLineNumbers, true);
+    doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, true);
   }
 
   private static void doAnnotate(@NotNull final Editor editor,
                                  @NotNull final Project project,
-                                 @Nullable final VirtualFile currentFile,
                                  @NotNull final FileAnnotation fileAnnotation,
                                  @NotNull final AbstractVcs vcs,
                                  @NotNull final UpToDateLineNumberProvider upToDateLineNumbers,
@@ -127,7 +118,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
       if (Math.abs(expectedLines - actualLines) > 1) { // 1 - for different conventions about files ending with line separator
         editor.setHeaderComponent(new MyEditorNotificationPanel(editor, vcs, () -> {
-          doAnnotate(editor, project, currentFile, fileAnnotation, vcs, upToDateLineNumbers, false);
+          doAnnotate(editor, project, fileAnnotation, vcs, upToDateLineNumbers, false);
         }));
         return;
       }
@@ -142,9 +133,24 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     });
 
     fileAnnotation.setReloader(newFileAnnotation -> {
+      if (project.isDisposed()) return;
       if (editor.getGutter().isAnnotationsShown()) {
-        assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
-        doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumbers, false);
+        if (newFileAnnotation != null) {
+          assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
+          doAnnotate(editor, project, newFileAnnotation, vcs, upToDateLineNumbers, false);
+        }
+        else {
+          DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
+          AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+          Provider provider = getProvider(event);
+
+          if (provider != null && provider.isEnabled(event) && !provider.isSuspended(event)) {
+            provider.perform(event, true);
+          }
+          else {
+            editor.getGutter().closeAllAnnotations();
+          }
+        }
       }
     });
 
@@ -176,9 +182,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();
 
     final AnnotationPresentation presentation = new AnnotationPresentation(fileAnnotation, upToDateLineNumbers, switcher, disposable);
-    if (currentFile != null && vcs.getCommittedChangesProvider() != null) {
-      presentation.addAction(new ShowDiffFromAnnotation(fileAnnotation, vcs, currentFile));
-    }
+    presentation.addAction(new ShowDiffFromAnnotation(project, fileAnnotation));
     presentation.addAction(new CopyRevisionNumberFromAnnotateAction(fileAnnotation));
     presentation.addAction(Separator.getInstance());
 
@@ -234,6 +238,33 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     }
   }
 
+  @Nullable
+  private static AnnotationFieldGutter getAnnotationFieldGutter(@NotNull Editor editor) {
+    List<TextAnnotationGutterProvider> annotations = ((EditorGutterComponentEx)editor.getGutter()).getTextAnnotations();
+    for (TextAnnotationGutterProvider annotation : annotations) {
+      if (annotation instanceof AnnotationGutterLineConvertorProxy) {
+        annotation = ((AnnotationGutterLineConvertorProxy)annotation).getDelegate();
+      }
+      if (annotation instanceof AnnotationFieldGutter) {
+        return ((AnnotationFieldGutter)annotation);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  static TextAnnotationPresentation getAnnotationPresentation(@NotNull Editor editor) {
+    AnnotationFieldGutter gutter = getAnnotationFieldGutter(editor);
+    return gutter != null ? gutter.getPresentation() : null;
+  }
+
+  @Nullable
+  static FileAnnotation getFileAnnotation(@NotNull Editor editor) {
+    TextAnnotationPresentation presentation = getAnnotationPresentation(editor);
+    if (presentation instanceof AnnotationPresentation) return ((AnnotationPresentation)presentation).getFileAnnotation();
+    return null;
+  }
+
   private static void addActionsFromExtensions(@NotNull AnnotationPresentation presentation, @NotNull FileAnnotation fileAnnotation) {
     AnnotationGutterActionProvider[] extensions = AnnotationGutterActionProvider.EP_NAME.getExtensions();
     if (extensions.length > 0) {
@@ -275,7 +306,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       Map<VcsRevisionNumber, String> authorsMap = authorsMappingProvider.getAuthors();
 
       Map<String, Color> authorColors = new HashMap<>();
-      for (String author : ContainerUtil.sorted(authorsMap.values(), Comparing::compare)) {
+      for (String author : ContainerUtil.sorted(new HashSet<>(authorsMap.values()))) {
         int index = authorColors.size();
         Color color = authorsColorPalette.get(index % authorsColorPalette.size());
         authorColors.put(author, color);
@@ -318,18 +349,18 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
   public interface Provider {
     boolean isEnabled(AnActionEvent e);
 
-    boolean isSuspended(AnActionEvent e);
+    boolean isSuspended(@NotNull AnActionEvent e);
 
     boolean isAnnotated(AnActionEvent e);
 
-    void perform(AnActionEvent e, boolean selected);
+    void perform(@NotNull AnActionEvent e, boolean selected);
   }
 
   private static class MyEditorNotificationPanel extends EditorNotificationPanel {
     private final Editor myEditor;
     private final Runnable myShowAnnotations;
 
-    public MyEditorNotificationPanel(@NotNull Editor editor, @NotNull AbstractVcs vcs, @NotNull Runnable doShowAnnotations) {
+    MyEditorNotificationPanel(@NotNull Editor editor, @NotNull AbstractVcs vcs, @NotNull Runnable doShowAnnotations) {
       super(LightColors.RED);
       myEditor = editor;
       myShowAnnotations = doShowAnnotations;

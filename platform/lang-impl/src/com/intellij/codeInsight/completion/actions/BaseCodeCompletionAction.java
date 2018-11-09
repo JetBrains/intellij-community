@@ -57,7 +57,7 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     e.getPresentation().setEnabled(false);
 

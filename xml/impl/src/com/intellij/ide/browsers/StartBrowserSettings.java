@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers;
 
 import com.google.common.base.CharMatcher;
@@ -47,7 +48,7 @@ public class StartBrowserSettings {
   public void setUrl(@Nullable String value) {
     String normalized = StringUtil.nullize(value, true);
     if (normalized != null) {
-      normalized = CharMatcher.WHITESPACE.trimFrom(normalized);
+      normalized = CharMatcher.whitespace().trimFrom(normalized);
     }
     myUrl = normalized;
   }

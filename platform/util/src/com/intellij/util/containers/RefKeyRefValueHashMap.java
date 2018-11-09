@@ -34,7 +34,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
 
     V get();
   }
-  protected V dereference(ValueReference<K, V> reference) {
+  protected V dereference(ValueReference<K, ? extends V> reference) {
     return reference == null ? null : reference.get();
   }
 
@@ -78,7 +78,7 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public void putAll(@NotNull Map<? extends K, ? extends V> t) {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -130,6 +130,6 @@ abstract class RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    throw new RuntimeException("method not implemented");
+    throw new UnsupportedOperationException();
   }
 }

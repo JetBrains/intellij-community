@@ -41,12 +41,13 @@ class DebuggerConnector implements Runnable {
   private final ProcessHandler myProcess;
   private final int myPort;
 
-  public DebuggerConnector(Project project, ProcessHandler process, int port) {
+  DebuggerConnector(Project project, ProcessHandler process, int port) {
     myProject = project;
     myProcess = process;
     myPort = port;
   }
 
+  @Override
   public void run() {
     final Debugger client = connect();
     if (client == null) {

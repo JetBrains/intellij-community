@@ -17,5 +17,4 @@ public class UnnecessaryToStringCallInspectionFixTest extends LightQuickFixParam
     return "/codeInsight/daemonCodeAnalyzer/unnecessaryTostring";
   }
 
-  public void test() {  doAllTests(); }
 }

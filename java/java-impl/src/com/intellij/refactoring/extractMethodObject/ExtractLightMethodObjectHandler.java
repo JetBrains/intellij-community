@@ -127,8 +127,11 @@ public class ExtractLightMethodObjectHandler {
     // expand lambda to code block if needed
     PsiElement containingMethod = PsiTreeUtil.getParentOfType(originalAnchor, PsiMember.class, PsiLambdaExpression.class);
     if (containingMethod instanceof PsiLambdaExpression) {
-      PsiCodeBlock newBody = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)containingMethod);
-      originalAnchor = newBody.getStatements()[0];
+      PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)containingMethod;
+      if (lambdaExpression.getBody() instanceof PsiExpression) {
+        PsiCodeBlock newBody = RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
+        originalAnchor = newBody.getStatements()[0];
+      }
     }
 
     PsiElement anchor = RefactoringUtil.getParentStatement(originalAnchor, false);
@@ -324,7 +327,7 @@ public class ExtractLightMethodObjectHandler {
     private final ExtractMethodObjectProcessor myProcessor;
     private final String myMethodName;
 
-    public LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, String methodName) {
+    LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, String methodName) {
       myProcessor = processor;
       myMethodName = methodName;
     }

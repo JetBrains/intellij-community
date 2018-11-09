@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 14/8/2014
  */
 @State(name = "GradleSystemSettings", storages = @Storage("gradle.settings.xml"))
 public class GradleSystemSettings implements PersistentStateComponent<GradleSystemSettings.MyState> {
@@ -24,7 +23,6 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
     return ServiceManager.getService(GradleSystemSettings.class);
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
   @Override
   public GradleSystemSettings.MyState getState() {

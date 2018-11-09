@@ -20,14 +20,12 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.*;
@@ -39,6 +37,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 import static org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*;
 
 /**
@@ -61,23 +60,6 @@ public class TypesUtil implements TypeConstants {
   private TypesUtil() {
   }
 
-  @NotNull
-  public static GroovyResolveResult[] getOverloadedOperatorCandidates(@NotNull PsiType thisType,
-                                                                      IElementType tokenType,
-                                                                      @NotNull GroovyPsiElement place,
-                                                                      PsiType[] argumentTypes) {
-    return getOverloadedOperatorCandidates(thisType, tokenType, place, argumentTypes, false);
-  }
-
-  @NotNull
-  public static GroovyResolveResult[] getOverloadedOperatorCandidates(@NotNull PsiType thisType,
-                                                                      IElementType tokenType,
-                                                                      @NotNull GroovyPsiElement place,
-                                                                      PsiType[] argumentTypes,
-                                                                      boolean incompleteCode) {
-    return ResolveUtil.getMethodCandidates(thisType, ourOperationsToOperatorNames.get(tokenType), place, incompleteCode, argumentTypes);
-  }
-
 
   public static GroovyResolveResult[] getOverloadedUnaryOperatorCandidates(@NotNull PsiType thisType,
                                                                            IElementType tokenType,
@@ -90,8 +72,10 @@ public class TypesUtil implements TypeConstants {
   private static final String NULL = "null";
 
   static {
-    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mSTRING_LITERAL, CommonClassNames.JAVA_LANG_STRING);
-    ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mGSTRING_LITERAL, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(STRING_SQ, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(STRING_TSQ, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(STRING_DQ, CommonClassNames.JAVA_LANG_STRING);
+    ourPrimitiveTypesToClassNames.put(STRING_TDQ, CommonClassNames.JAVA_LANG_STRING);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mREGEX_LITERAL, CommonClassNames.JAVA_LANG_STRING);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mDOLLAR_SLASH_REGEX_LITERAL, CommonClassNames.JAVA_LANG_STRING);
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.mNUM_INT, CommonClassNames.JAVA_LANG_INTEGER);
@@ -113,31 +97,9 @@ public class TypesUtil implements TypeConstants {
     ourPrimitiveTypesToClassNames.put(GroovyTokenTypes.kBYTE, CommonClassNames.JAVA_LANG_BYTE);
   }
 
-  private static final Map<IElementType, String> ourOperationsToOperatorNames = new HashMap<>();
   private static final Map<IElementType, String> ourUnaryOperationsToOperatorNames = new HashMap<>();
 
   static {
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, PLUS);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, MINUS);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBAND, AND);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBOR, OR);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mBXOR, XOR);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mDIV, DIV);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mMOD, MOD);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR, MULTIPLY);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.kAS, AS_TYPE);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mCOMPARE_TO, COMPARE_TO);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGT, COMPARE_TO);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mGE, COMPARE_TO);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLT, COMPARE_TO);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mLE, COMPARE_TO);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mSTAR_STAR, POWER);
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_LSHIFT_SIGN, LEFT_SHIFT);
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_RSHIFT_SIGN, RIGHT_SHIFT);
-    ourOperationsToOperatorNames.put(GroovyElementTypes.COMPOSITE_TRIPLE_SHIFT_SIGN, RIGHT_SHIFT_UNSIGNED);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mEQUAL, EQUALS);
-    ourOperationsToOperatorNames.put(GroovyTokenTypes.mNOT_EQUAL, EQUALS);
-
     ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mLNOT, AS_BOOLEAN);
     ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mPLUS, POSITIVE);
     ourUnaryOperationsToOperatorNames.put(GroovyTokenTypes.mMINUS, NEGATIVE);
@@ -407,7 +369,7 @@ public class TypesUtil implements TypeConstants {
   }
 
   @Nullable
-  public static PsiType getLeastUpperBound(@NotNull PsiType type1, @NotNull PsiType type2, PsiManager manager) {
+  public static PsiType getLeastUpperBound(@NotNull PsiType type1, @NotNull PsiType type2, @NotNull PsiManager manager) {
     {
       PsiType numericLUB = getNumericLUB(type1, type2);
       if (numericLUB != null) return numericLUB;
@@ -415,16 +377,16 @@ public class TypesUtil implements TypeConstants {
     if (type1 instanceof GrTupleType && type2 instanceof GrTupleType) {
       GrTupleType tuple1 = (GrTupleType)type1;
       GrTupleType tuple2 = (GrTupleType)type2;
-      PsiType[] components1 = tuple1.getComponentTypes();
-      PsiType[] components2 = tuple2.getComponentTypes();
+      List<PsiType> components1 = tuple1.getComponentTypes();
+      List<PsiType> components2 = tuple2.getComponentTypes();
 
-      if (components1.length == 0) return genNewListBy(type2, manager);
-      if (components2.length == 0) return genNewListBy(type1, manager);
+      if (components1.isEmpty()) return genNewListBy(type2, manager);
+      if (components2.isEmpty()) return genNewListBy(type1, manager);
 
-      PsiType[] components3 = PsiType.createArray(Math.min(components1.length, components2.length));
+      PsiType[] components3 = PsiType.createArray(Math.min(components1.size(), components2.size()));
       for (int i = 0; i < components3.length; i++) {
-        PsiType c1 = components1[i];
-        PsiType c2 = components2[i];
+        PsiType c1 = components1.get(i);
+        PsiType c2 = components2.get(i);
         if (c1 == null || c2 == null) {
           components3[i] = null;
         }
@@ -432,7 +394,7 @@ public class TypesUtil implements TypeConstants {
           components3[i] = getLeastUpperBound(c1, c2, manager);
         }
       }
-      return new GrImmediateTupleType(components3, JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
+      return new GrImmediateTupleType(Arrays.asList(components3), JavaPsiFacade.getInstance(manager.getProject()), tuple1.getScope().intersectWith(tuple2.getResolveScope()));
     }
     else if (checkEmptyListAndList(type1, type2)) {
       return genNewListBy(type2, manager);
@@ -452,17 +414,18 @@ public class TypesUtil implements TypeConstants {
     else if (type1 instanceof GrClosureType && type2 instanceof GrClosureType) {
       GrClosureType clType1 = (GrClosureType)type1;
       GrClosureType clType2 = (GrClosureType)type2;
-      GrSignature signature1 = clType1.getSignature();
-      GrSignature signature2 = clType2.getSignature();
+      List<GrSignature> signatures1 = clType1.getSignatures();
+      List<GrSignature> signatures2 = clType2.getSignatures();
 
-      if (signature1 instanceof GrClosureSignature && signature2 instanceof GrClosureSignature) {
-        if (((GrClosureSignature)signature1).getParameterCount() == ((GrClosureSignature)signature2).getParameterCount()) {
-          final GrClosureSignature signature = GrImmediateClosureSignatureImpl.getLeastUpperBound(((GrClosureSignature)signature1),
-                                                                                                  ((GrClosureSignature)signature2), manager);
+      if (signatures1.size() == 1 && signatures2.size() == 1) {
+        final GrSignature signature1 = signatures1.get(0);
+        final GrSignature signature2 = signatures2.get(0);
+        if (signature1.getParameterCount() == signature2.getParameterCount()) {
+          final GrSignature signature = GrImmediateClosureSignatureImpl.getLeastUpperBound(signature1, signature2, manager);
           if (signature != null) {
             GlobalSearchScope scope = clType1.getResolveScope().intersectWith(clType2.getResolveScope());
             final LanguageLevel languageLevel = ComparatorUtil.max(clType1.getLanguageLevel(), clType2.getLanguageLevel());
-            return GrClosureType.create(signature, scope, JavaPsiFacade.getInstance(manager.getProject()), languageLevel, true);
+            return GrClosureType.create(Collections.singletonList(signature), scope, JavaPsiFacade.getInstance(manager.getProject()), languageLevel, true);
           }
         }
       }
@@ -495,14 +458,14 @@ public class TypesUtil implements TypeConstants {
 
   private static boolean checkEmptyListAndList(PsiType type1, PsiType type2) {
     if (type1 instanceof GrTupleType) {
-      PsiType[] types = ((GrTupleType)type1).getComponentTypes();
-      if (types.length == 0 && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_LIST)) return true;
+      List<PsiType> types = ((GrTupleType)type1).getComponentTypes();
+      if (types.isEmpty() && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_LIST)) return true;
     }
 
     return false;
   }
 
-  private static PsiType genNewListBy(PsiType genericOwner, PsiManager manager) {
+  private static PsiType genNewListBy(PsiType genericOwner, @NotNull PsiManager manager) {
     PsiClass list = JavaPsiFacade.getInstance(manager.getProject()).findClass(CommonClassNames.JAVA_UTIL_LIST, genericOwner.getResolveScope());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
     if (list == null) return factory.createTypeFromText(CommonClassNames.JAVA_UTIL_LIST, null);
@@ -565,6 +528,13 @@ public class TypesUtil implements TypeConstants {
   @Contract("null, _ -> false")
   public static boolean isClassType(@Nullable PsiType type, @NotNull String qName) {
     return qName.equals(getQualifiedName(type));
+  }
+
+  @Contract("null, _ -> false")
+  public static boolean isClassType(@Nullable PsiType type, @NotNull String... names) {
+    String fqn = getQualifiedName(type);
+    if (fqn == null) return false;
+    return ContainerUtil.or(names, it -> it.equals(fqn));
   }
 
   public static PsiSubstitutor composeSubstitutors(PsiSubstitutor s1, PsiSubstitutor s2) {
@@ -714,9 +684,9 @@ public class TypesUtil implements TypeConstants {
     return new GrTupleType(value.getResolveScope(), JavaPsiFacade.getInstance(value.getProject())) {
       @NotNull
       @Override
-      protected PsiType[] inferComponents() {
+      protected List<PsiType> inferComponents() {
         final GrAnnotationMemberValue[] initializers = value.getInitializers();
-        return ContainerUtil.map(initializers, value1 -> inferAnnotationMemberValueType(value1), PsiType.createArray(initializers.length));
+        return ContainerUtil.map(initializers, TypesUtil::inferAnnotationMemberValueType);
       }
 
       @Override

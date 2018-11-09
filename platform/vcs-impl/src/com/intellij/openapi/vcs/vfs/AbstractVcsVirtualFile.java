@@ -17,12 +17,20 @@ package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public abstract class AbstractVcsVirtualFile extends VirtualFile {
 
@@ -32,7 +40,6 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
   private final VirtualFile myParent;
   protected int myModificationStamp = 0;
   private final VirtualFileSystem myFileSystem;
-  protected boolean myProcessingBeforeContentsChange;
 
   protected AbstractVcsVirtualFile(String path, VirtualFileSystem fileSystem) {
     myFileSystem = fileSystem;
@@ -43,6 +50,15 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
       myParent = new VcsVirtualFolder(file.getParent(), this, myFileSystem);
     else
       myParent = null;
+
+    OutsidersPsiFileSupport.markFile(this);
+  }
+
+  protected AbstractVcsVirtualFile(@Nullable VirtualFile parent, @NotNull String name, VirtualFileSystem fileSystem) {
+    myFileSystem = fileSystem;
+    myPath = parent != null && !StringUtil.isEmpty(parent.getPath()) ? parent.getPath() + "/" + name : name;
+    myName = name;
+    myParent = parent;
 
     OutsidersPsiFileSupport.markFile(this);
   }
@@ -138,18 +154,10 @@ public abstract class AbstractVcsVirtualFile extends VirtualFile {
     myRevision = revision;
   }
 
-  protected void fireBeforeContentsChange() {
-    myProcessingBeforeContentsChange = true;
-    try {
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          ((VcsFileSystem)getFileSystem()).fireBeforeContentsChange(this, AbstractVcsVirtualFile.this);
-        }
-      });
-    }
-    finally {
-      myProcessingBeforeContentsChange = false;
-    }
+  protected void showLoadingContentFailedMessage(@NotNull VcsException e) {
+    ApplicationManager.getApplication().invokeLater(() -> Messages.showMessageDialog(
+      VcsBundle.message("message.text.could.not.load.virtual.file.content", getPresentableUrl(), e.getLocalizedMessage()),
+      VcsBundle.message("message.title.could.not.load.content"),
+      Messages.getInformationIcon()));
   }
 }

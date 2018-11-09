@@ -25,6 +25,9 @@ public class AddJavadocIntention extends BaseElementAtCaretIntentionAction imple
         element instanceof PsiJavaCodeReferenceElement ||
         element instanceof PsiJavaModuleReferenceElement) {
       PsiElement targetElement = PsiTreeUtil.skipParentsOfType(element, PsiIdentifier.class, PsiJavaCodeReferenceElement.class, PsiJavaModuleReferenceElement.class);
+      if (targetElement instanceof PsiVariable && PsiTreeUtil.isAncestor(((PsiVariable)targetElement).getInitializer(), element, false)) {
+        return false;
+      }
       if (targetElement instanceof PsiJavaDocumentedElement &&
           !(targetElement instanceof PsiTypeParameter) &&
           !(targetElement instanceof PsiAnonymousClass)) {

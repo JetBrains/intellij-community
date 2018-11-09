@@ -13,7 +13,6 @@ import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
-import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -33,19 +32,21 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@State(name = "NodeRendererSettings", storages = @Storage("debugger.renderers.xml"))
+@State(name = "NodeRendererSettings", storages = {
+  @Storage("debugger.xml"),
+  @Storage(value = "debugger.renderers.xml", deprecated = true),
+})
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String REFERENCE_RENDERER = "Reference renderer";
   @NonNls public static final String RENDERER_TAG = "Renderer";
   @NonNls private static final String RENDERER_ID = "ID";
 
   private final EventDispatcher<NodeRendererSettingsListener> myDispatcher = EventDispatcher.create(NodeRendererSettingsListener.class);
-  private RendererConfiguration myCustomRenderers = new RendererConfiguration(this);
+  private final RendererConfiguration myCustomRenderers = new RendererConfiguration(this);
 
   // base renderers
   private final PrimitiveRenderer myPrimitiveRenderer = new PrimitiveRenderer();
@@ -75,14 +76,13 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @NonNls private static final String HEX_VIEW_ENABLED = "HEX_VIEW_ENABLED";
   @NonNls private static final String ALTERNATIVE_COLLECTION_VIEW_ENABLED = "ALTERNATIVE_COLLECTION_VIEW_ENABLED";
   @NonNls private static final String CUSTOM_RENDERERS_TAG_NAME = "CustomRenderers";
-  
+
   public NodeRendererSettings() {
     // default configuration
     myHexRenderer.setEnabled(false);
-    myToStringRenderer.setEnabled(true);
     setAlternateCollectionViewsEnabled(true);
   }
-  
+
   public static NodeRendererSettings getInstance() {
     return ServiceManager.getService(NodeRendererSettings.class);
   }
@@ -110,33 +110,39 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
-    final Element element = new Element("NodeRendererSettings");
+    final Element element = new Element("state");
     if (myHexRenderer.isEnabled()) {
       JDOMExternalizerUtil.writeField(element, HEX_VIEW_ENABLED, "true");
     }
     if (!areAlternateCollectionViewsEnabled()) {
-      JDOMExternalizerUtil
-        .writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, "false");
+      JDOMExternalizerUtil.writeField(element, ALTERNATIVE_COLLECTION_VIEW_ENABLED, "false");
     }
 
     try {
-      element.addContent(writeRenderer(myToStringRenderer));
-      element.addContent(writeRenderer(myClassRenderer));
-      element.addContent(writeRenderer(myPrimitiveRenderer));
+      addRendererIfNotDefault(myToStringRenderer, element);
+      addRendererIfNotDefault(myClassRenderer, element);
+      addRendererIfNotDefault(myPrimitiveRenderer, element);
       if (myCustomRenderers.getRendererCount() > 0) {
         final Element custom = new Element(CUSTOM_RENDERERS_TAG_NAME);
         element.addContent(custom);
         myCustomRenderers.writeExternal(custom);
       }
     }
-    catch (WriteExternalException e) {
-      // ignore
+    catch (WriteExternalException ignore) {
     }
     return element;
   }
 
+  private void addRendererIfNotDefault(@NotNull Renderer renderer, @NotNull Element to) {
+    Element element = writeRenderer(renderer);
+    if (element.getContentSize() == 0 && element.getAttributes().size() <= 1 /* ID attribute */) {
+      return;
+    }
+
+    to.addContent(element);
+  }
+
   @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public void loadState(@NotNull final Element root) {
     final String hexEnabled = JDOMExternalizerUtil.readField(root, HEX_VIEW_ENABLED);
     if (hexEnabled != null) {
@@ -184,14 +190,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return myCustomRenderers;
   }
 
-  public void setCustomRenderers(@NotNull final RendererConfiguration customRenderers) {
-    RendererConfiguration oldConfig = myCustomRenderers;
-    myCustomRenderers = customRenderers;
-    if (oldConfig == null || !oldConfig.equals(customRenderers)) {
-      fireRenderersChanged();
-    }
-  }
-
   public PrimitiveRenderer getPrimitiveRenderer() {
     return myPrimitiveRenderer;
   }
@@ -231,7 +229,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     });
 
     // plugins registered renderers come after that
-    Collections.addAll(allRenderers, NodeRenderer.EP_NAME.getExtensions());
+    allRenderers.addAll(NodeRenderer.EP_NAME.getExtensionList());
 
     // now all predefined stuff
     allRenderers.add(myHexRenderer);
@@ -267,10 +265,11 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return renderer;
   }
 
+  @NotNull
   public Element writeRenderer(Renderer renderer) throws WriteExternalException {
     Element root = new Element(RENDERER_TAG);
-    if(renderer != null) {
-      root.setAttribute(RENDERER_ID  , renderer.getUniqueId());
+    if (renderer != null) {
+      root.setAttribute(RENDERER_ID, renderer.getUniqueId());
       renderer.writeExternal(root);
     }
     return root;
@@ -391,11 +390,6 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
 
     @Override
-    public Icon calcValueIcon(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
-      return null;
-    }
-
-    @Override
     public String calcLabel(ValueDescriptor descriptor, EvaluationContext evaluationContext, DescriptorLabelListener listener) throws EvaluateException {
       final DescriptorUpdater descriptorUpdater = new DescriptorUpdater(descriptor, listener);
 
@@ -463,7 +457,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   }
 
   private static class ListObjectRenderer extends CompoundReferenceRenderer {
-    public ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
+    ListObjectRenderer(NodeRendererSettings rendererSettings, ArrayRenderer arrayRenderer) {
       super(rendererSettings,
             "List",
             createLabelRenderer(" size = ", "size()", null),

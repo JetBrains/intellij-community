@@ -39,6 +39,7 @@ public class ReplaceInstanceVariableAssignment extends FixableUsageInfo {
     fieldName = name;
   }
 
+  @Override
   public void fixUsage() throws IncorrectOperationException {
     final PsiReferenceExpression lhs =
       (PsiReferenceExpression)assignment.getLExpression();

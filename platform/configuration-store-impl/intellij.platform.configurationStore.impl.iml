@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" name="XStream" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />
+    <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
   </component>
 </module>

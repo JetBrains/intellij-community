@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,6 +35,8 @@ import java.awt.image.VolatileImage;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ui.UIUtil.useSafely;
+
 /**
  * @author Pavel Fatin
  */
@@ -61,20 +61,22 @@ class ImmediatePainter {
     });
   }
 
-  void paint(final Graphics g, final EditorActionPlan plan) {
+  boolean paint(final Graphics g, final EditorActionPlan plan) {
     if (ENABLED.asBoolean() && canPaintImmediately(myEditor)) {
-      if (plan.getCaretShift() != 1) return;
+      if (plan.getCaretShift() != 1) return false;
 
       final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();
-      if (replacements.size() != 1) return;
+      if (replacements.size() != 1) return false;
 
       final EditorActionPlan.Replacement replacement = replacements.get(0);
-      if (replacement.getText().length() != 1) return;
+      if (replacement.getText().length() != 1) return false;
 
       final int caretOffset = replacement.getBegin();
       final char c = replacement.getText().charAt(0);
       paintImmediately(g, caretOffset, c);
+      return true;
     }
+    return false;
   }
 
   private static boolean canPaintImmediately(final EditorImpl editor) {
@@ -189,15 +191,15 @@ class ImmediatePainter {
     return attributes.getEffectType() != EffectType.BOXED || attributes.getEffectColor() == null;
   }
 
-  private void paintWithDoubleBuffering(final Graphics graphics, final Consumer<Graphics> painter) {
+  private void paintWithDoubleBuffering(final Graphics graphics, final Consumer<? super Graphics> painter) {
     final Rectangle bounds = graphics.getClipBounds();
 
     createOrUpdateImageBuffer(myEditor.getComponent(), bounds.getSize());
 
-    final Graphics imageGraphics = myImage.getGraphics();
-    imageGraphics.translate(-bounds.x, -bounds.y);
-    painter.consume(imageGraphics);
-    imageGraphics.dispose();
+    useSafely(myImage.getGraphics(), imageGraphics -> {
+      imageGraphics.translate(-bounds.x, -bounds.y);
+      painter.consume(imageGraphics);
+    });
 
     graphics.drawImage(myImage, bounds.x, bounds.y, null);
   }
@@ -250,7 +252,7 @@ class ImmediatePainter {
     return caretColor == null ? new JBColor(Gray._0, Gray._255) : caretColor;
   }
 
-  private static void updateAttributes(final EditorImpl editor, final int offset, final List<TextAttributes> attributes) {
+  private static void updateAttributes(final EditorImpl editor, final int offset, final List<? extends TextAttributes> attributes) {
     final List<RangeHighlighterEx> list1 = new ArrayList<>();
     final List<RangeHighlighterEx> list2 = new ArrayList<>();
 
@@ -281,7 +283,7 @@ class ImmediatePainter {
   // TODO Unify with com.intellij.openapi.editor.impl.view.IterationState.setAttributes
   private static void updateAttributes(final EditorImpl editor,
                                        final TextAttributes attributes,
-                                       final List<RangeHighlighterEx> highlighters) {
+                                       final List<? extends RangeHighlighterEx> highlighters) {
     if (highlighters.size() > 1) {
       ContainerUtil.quickSort(highlighters, IterationState.BY_LAYER_THEN_ATTRIBUTES);
     }

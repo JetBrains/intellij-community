@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -37,21 +38,21 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.SingleTaskController;
+import com.intellij.vcs.log.data.VcsLogProgress;
+import com.intellij.vcs.log.data.VcsLogStorage;
+import com.intellij.vcs.log.data.VcsLogStorageImpl;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
 import com.intellij.vcs.log.impl.VcsIndexableDetails;
-import com.intellij.vcs.log.util.PersistentSet;
-import com.intellij.vcs.log.util.PersistentSetImpl;
-import com.intellij.vcs.log.util.StopWatch;
-import com.intellij.vcs.log.util.TroveUtil;
+import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
+import com.intellij.vcs.log.util.*;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,20 +63,21 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 import static com.intellij.vcs.log.data.index.VcsLogFullDetailsIndex.INDEX;
-import static com.intellij.vcs.log.util.PersistentUtil.*;
+import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
-public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
+public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 4;
+  private static final int VERSION = 11;
+  private static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
   @NotNull private final FatalErrorHandler myFatalErrorsConsumer;
   @NotNull private final VcsLogProgress myProgress;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsLogStorage myStorage;
-  @NotNull private final VcsUserRegistryImpl myUserRegistry;
   @NotNull private final Set<VirtualFile> myRoots;
   @NotNull private final VcsLogBigRepositoriesList myBigRepositoriesList;
+  @NotNull private final VcsLogIndexCollector myIndexCollector;
 
   @Nullable private final IndexStorage myIndexStorage;
   @Nullable private final IndexDataGetter myDataGetter;
@@ -102,6 +104,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     myFatalErrorsConsumer = fatalErrorsConsumer;
     myRoots = ContainerUtil.newLinkedHashSet();
     myBigRepositoriesList = VcsLogBigRepositoriesList.getInstance();
+    myIndexCollector = VcsLogIndexCollector.getInstance(myProject);
 
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       if (VcsLogProperties.get(entry.getValue(), VcsLogProperties.SUPPORTS_INDEXING)) {
@@ -109,9 +112,9 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       }
     }
 
-    myUserRegistry = (VcsUserRegistryImpl)ServiceManager.getService(myProject, VcsUserRegistry.class);
+    VcsUserRegistry userRegistry = ServiceManager.getService(myProject, VcsUserRegistry.class);
 
-    myIndexStorage = createIndexStorage(fatalErrorsConsumer, calcLogId(myProject, providers));
+    myIndexStorage = createIndexStorage(fatalErrorsConsumer, calcLogId(myProject, providers), userRegistry);
     if (myIndexStorage != null) {
       myDataGetter = new IndexDataGetter(myProject, myRoots, myIndexStorage, myStorage, myFatalErrorsConsumer);
     }
@@ -134,19 +137,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     return Registry.intValue("vcs.log.index.limit.minutes");
   }
 
-  protected IndexStorage createIndexStorage(@NotNull FatalErrorHandler fatalErrorHandler, @NotNull String logId) {
+  protected IndexStorage createIndexStorage(@NotNull FatalErrorHandler fatalErrorHandler,
+                                            @NotNull String logId, @NotNull VcsUserRegistry registry) {
     try {
-      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(logId, myUserRegistry, myRoots, fatalErrorHandler, this),
+      return IOUtil.openCleanOrResetBroken(() -> new IndexStorage(logId, myStorage, registry, fatalErrorHandler, this),
                                            () -> IndexStorage.cleanup(logId));
     }
     catch (IOException e) {
       myFatalErrorsConsumer.consume(this, e);
     }
     return null;
-  }
-
-  public static int getVersion() {
-    return VcsLogStorageImpl.VERSION + VERSION;
   }
 
   @Override
@@ -176,7 +176,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
       mySingleTaskController.request(new IndexingRequest(root, commits, isFull, false));
     }
-    if (isFull) myIndexStorage.unmarkFresh();
+
+    if (isFull) {
+      myIndexCollector.reportFreshIndex();
+      myIndexStorage.unmarkFresh();
+    }
   }
 
   private void storeDetail(@NotNull VcsFullCommitDetails detail) {
@@ -187,12 +191,16 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       myIndexStorage.messages.put(index, detail.getFullMessage());
       myIndexStorage.trigrams.update(index, detail);
       myIndexStorage.users.update(index, detail);
-      myIndexStorage.paths.update(index, detail);
+      if (detail instanceof VcsIndexableDetails) myIndexStorage.paths.update(index, (VcsIndexableDetails)detail);
       myIndexStorage.parents.put(index, ContainerUtil.map(detail.getParents(), p -> myStorage.getCommitIndex(p, detail.getRoot())));
       // we know the whole graph without timestamps now
       if (!(detail instanceof VcsIndexableDetails) || ((VcsIndexableDetails)detail).hasRenames()) {
         myIndexStorage.renames.put(index);
       }
+      if (!detail.getAuthor().equals(detail.getCommitter())) {
+        myIndexStorage.committers.put(index, myIndexStorage.users.getUserId(detail.getCommitter()));
+      }
+      myIndexStorage.timestamps.put(index, Pair.create(detail.getAuthorTime(), detail.getCommitTime()));
 
       myIndexStorage.commits.put(index);
     }
@@ -211,6 +219,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
         myIndexStorage.parents.force();
         myIndexStorage.renames.flush();
         myIndexStorage.commits.flush();
+        myIndexStorage.committers.force();
+        myIndexStorage.timestamps.force();
       }
     }
     catch (StorageException e) {
@@ -218,6 +228,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
   }
 
+  @Override
   public void markCorrupted() {
     if (myIndexStorage != null) myIndexStorage.commits.markCorrupted();
   }
@@ -249,6 +260,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
            (!myCommitsToIndex.containsKey(root) && myNumberOfTasks.get(root).get() == 0);
   }
 
+  @Override
   public boolean isIndexingEnabled(@NotNull VirtualFile root) {
     if (myIndexStorage == null) return false;
     return myRoots.contains(root) && !(myBigRepositoriesList.isBig(root));
@@ -265,18 +277,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     LOG.assertTrue(myRoots.contains(root));
     if (hasRenames(commit)) return;
     mySingleTaskController.request(new IndexingRequest(root, TroveUtil.singleton(commit), false, true));
-  }
-
-  @Override
-  public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
-    return myDataGetter != null && myDataGetter.canFilter(filters);
-  }
-
-  @NotNull
-  @Override
-  public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
-    if (myDataGetter == null) return Collections.emptySet();
-    return myDataGetter.filter(detailsFilters);
   }
 
   @Nullable
@@ -305,50 +305,67 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     private static final String MESSAGES = "messages";
     private static final String PARENTS = "parents";
     private static final String RENAMES = "renames";
+    private static final String COMMITTERS = "committers";
+    private static final String TIMESTAMPS = "timestamps";
     private static final int MESSAGES_VERSION = 0;
     @NotNull public final PersistentSet<Integer> commits;
     @NotNull public final PersistentMap<Integer, String> messages;
     @NotNull public final PersistentMap<Integer, List<Integer>> parents;
     @NotNull public final PersistentSet<Integer> renames;
+    @NotNull public final PersistentMap<Integer, Integer> committers;
+    @NotNull public final PersistentMap<Integer, Pair<Long, Long>> timestamps;
     @NotNull public final VcsLogMessagesTrigramIndex trigrams;
     @NotNull public final VcsLogUserIndex users;
     @NotNull public final VcsLogPathsIndex paths;
 
     private volatile boolean myIsFresh;
 
-    public IndexStorage(@NotNull String logId,
-                        @NotNull VcsUserRegistryImpl userRegistry,
-                        @NotNull Set<VirtualFile> roots,
-                        @NotNull FatalErrorHandler fatalErrorHandler,
-                        @NotNull Disposable parentDisposable)
+    IndexStorage(@NotNull String logId,
+                 @NotNull VcsLogStorage storage,
+                 @NotNull VcsUserRegistry userRegistry,
+                 @NotNull FatalErrorHandler fatalErrorHandler,
+                 @NotNull Disposable parentDisposable)
       throws IOException {
       Disposer.register(parentDisposable, this);
 
       try {
-        int version = getVersion();
+        boolean forwardIndexRequired = VcsLogIndexService.isPathsForwardIndexRequired();
+        StorageId storageId = new StorageId(INDEX, logId, getVersion(), new boolean[]{forwardIndexRequired});
 
-        File commitsStorage = getStorageFile(INDEX, COMMITS, logId, version);
+        File commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !commitsStorage.exists();
-        commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null, version);
+        commits = new PersistentSetImpl<>(commitsStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null,
+                                          storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(commits::close));
 
-        File messagesStorage = getStorageFile(INDEX, MESSAGES, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION);
+        File messagesStorage = new StorageId(INDEX, logId, VcsLogStorageImpl.VERSION + MESSAGES_VERSION).getStorageFile(MESSAGES);
         messages = new PersistentHashMap<>(messagesStorage, new IntInlineKeyDescriptor(), EnumeratorStringDescriptor.INSTANCE,
                                            Page.PAGE_SIZE);
         Disposer.register(this, () -> catchAndWarn(messages::close));
 
-        trigrams = new VcsLogMessagesTrigramIndex(logId, fatalErrorHandler, this);
-        users = new VcsLogUserIndex(logId, userRegistry, fatalErrorHandler, this);
-        paths = new VcsLogPathsIndex(logId, roots, fatalErrorHandler, this);
+        trigrams = new VcsLogMessagesTrigramIndex(storageId, fatalErrorHandler, this);
+        users = new VcsLogUserIndex(storageId, userRegistry, fatalErrorHandler, this);
+        paths = new VcsLogPathsIndex(storageId, storage, fatalErrorHandler, this);
 
-        File parentsStorage = getStorageFile(INDEX, PARENTS, logId, version);
+        File parentsStorage = storageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
-                                          new IntListDataExternalizer(), Page.PAGE_SIZE, version);
+                                          new IntListDataExternalizer(), Page.PAGE_SIZE, storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(parents::close));
 
-        File renamesStorage = getStorageFile(INDEX, RENAMES, logId, version);
-        renames = new PersistentSetImpl<>(renamesStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null, version);
+        File renamesStorage = storageId.getStorageFile(RENAMES);
+        renames = new PersistentSetImpl<>(renamesStorage, EnumeratorIntegerDescriptor.INSTANCE, Page.PAGE_SIZE, null,
+                                          storageId.getVersion());
         Disposer.register(this, () -> catchAndWarn(renames::close));
+
+        File committersStorage = storageId.getStorageFile(COMMITTERS);
+        committers = new PersistentHashMap<>(committersStorage, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE,
+                                             Page.PAGE_SIZE, storageId.getVersion());
+        Disposer.register(this, () -> catchAndWarn(committers::close));
+
+        File timestampsStorage = storageId.getStorageFile(TIMESTAMPS);
+        timestamps = new PersistentHashMap<>(timestampsStorage, EnumeratorIntegerDescriptor.INSTANCE, new LongPairDataExternalizer(),
+                                             Page.PAGE_SIZE, storageId.getVersion());
+        Disposer.register(this, () -> catchAndWarn(timestamps::close));
       }
       catch (Throwable t) {
         Disposer.dispose(this);
@@ -370,9 +387,14 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private static void cleanup(@NotNull String logId) {
-      if (!cleanupStorageFiles(INDEX, logId)) {
-        LOG.error("Could not clean up storage files in " + new File(LOG_CACHE, INDEX) + " starting with " + logId);
+      StorageId storageId = new StorageId(INDEX, logId, getVersion());
+      if (!storageId.cleanupAllStorageFiles()) {
+        LOG.error("Could not clean up storage files in " + storageId.subdir() + " starting with " + logId);
       }
+    }
+
+    private static int getVersion() {
+      return VcsLogStorageImpl.VERSION + VERSION;
     }
 
     public void unmarkFresh() {
@@ -392,7 +414,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     private static final int LOW_PRIORITY = Thread.MIN_PRIORITY;
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
-    public MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
+    MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
       super(project, "index", EmptyConsumer.getInstance(), false, parent);
       myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
@@ -400,7 +422,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @NotNull
     @Override
     protected SingleTask startNewBackgroundTask() {
-      ProgressIndicator indicator = myProgress.createProgressIndicator(false);
+      ProgressIndicator indicator = myProgress.createProgressIndicator(false, INDEXING);
       Consumer<ProgressIndicator> task = progressIndicator -> {
         int previousPriority = setMinimumPriority();
         try {
@@ -455,7 +477,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @NotNull private final AtomicInteger myOldCommits = new AtomicInteger();
     private volatile long myStartTime;
 
-    public IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full, boolean reindex) {
+    IndexingRequest(@NotNull VirtualFile root, @NotNull TIntHashSet commits, boolean full, boolean reindex) {
       myRoot = root;
       myCommits = commits;
       myFull = full;
@@ -505,12 +527,11 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       finally {
         if (!myReindex) myNumberOfTasks.get(myRoot).decrementAndGet();
 
+        myIndexingTime.get(myRoot).updateAndGet(t -> t + (getCurrentTimeMillis() - myStartTime));
         if (isIndexed(myRoot)) {
-          myIndexingTime.get(myRoot).set(0);
+          long time = myIndexingTime.get(myRoot).getAndSet(0);
+          myIndexCollector.reportIndexingTime(time);
           myListeners.forEach(listener -> listener.indexingFinished(myRoot));
-        }
-        else {
-          myIndexingTime.get(myRoot).updateAndGet(t -> t + (getCurrentTimeMillis() - myStartTime));
         }
 
         report();
@@ -615,12 +636,14 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     }
 
     private void showIndexingNotification(long time) {
+      myIndexCollector.reportIndexingTooLongNotification();
       Notification notification = VcsNotifier.createNotification(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION,
                                                                  "Log Indexing for \"" + myRoot.getName() + "\" Stopped",
                                                                  "Indexing was taking too long (" +
                                                                  StopWatch.formatTime(time - time % 1000) +
                                                                  ")", NotificationType.WARNING, null);
       notification.addAction(NotificationAction.createSimple("Resume", () -> {
+        myIndexCollector.reportResumeClick();
         if (myBigRepositoriesList.isBig(myRoot)) {
           LOG.info("Resuming indexing " + myRoot.getName());
           myIndexingLimit.get(myRoot).updateAndGet(l -> l + getIndexingLimit());

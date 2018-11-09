@@ -29,6 +29,7 @@ public class MavenRepositoryLayoutConverter extends MavenConstantListConverter {
     super(false);
   }
 
+  @Override
   protected Collection<String> getValues(@NotNull ConvertContext context) {
     return VALUES;
   }

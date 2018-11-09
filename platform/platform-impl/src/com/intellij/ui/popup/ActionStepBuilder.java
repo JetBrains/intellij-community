@@ -12,7 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IconCache;
+import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -161,12 +161,12 @@ public class ActionStepBuilder extends PresentationFactory {
       if (icon == null && selectedIcon == null) {
         @NonNls final String actionId = ActionManager.getInstance().getId(action);
         if (actionId != null && actionId.startsWith("QuickList.")) {
-          icon =  AllIcons.Actions.QuickList;
+          icon =  null; // AllIcons.Actions.QuickList;
         }
         else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
-          icon = IconCache.getIcon("checkmark");
-          selectedIcon = IconCache.getSelectedIcon("checkmark");
-          disabledIcon = IconCache.getDisabledIcon("checkmark");
+          icon = LafIconLookup.getIcon("checkmark");
+          selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
+          disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
         }
       }
       if (!enabled) {

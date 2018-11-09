@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
 import org.jetbrains.java.decompiler.modules.decompiler.decompose.GenericDominatorEngine;
@@ -72,10 +72,12 @@ public class VarVersionsGraph {
     }
 
     engine = new GenericDominatorEngine(new IGraph() {
+      @Override
       public List<? extends IGraphNode> getReversePostOrderList() {
         return getReversedPostOrder(roots);
       }
 
+      @Override
       public Set<? extends IGraphNode> getRoots() {
         return new HashSet<IGraphNode>(roots);
       }

@@ -15,6 +15,12 @@
  */
 package com.intellij.util.ui.accessibility;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.NotNull;
+
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
@@ -25,6 +31,9 @@ import java.util.Properties;
 public class ScreenReader {
   public static final String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
   public static final String ACCESS_BRIDGE = "com.sun.java.accessibility.AccessBridge";
+
+  private static final PropertyChangeSupport PCS = new PropertyChangeSupport(new ScreenReader());
+  public static final String SCREEN_READER_ACTIVE_PROPERTY = "ScreenReader.active";
 
   private static boolean myActive = false;
 
@@ -42,7 +51,9 @@ public class ScreenReader {
    * support for the application.
    */
   public static void setActive(boolean active) {
+    boolean oldValue = myActive;
     myActive = active;
+    PCS.firePropertyChange(SCREEN_READER_ACTIVE_PROPERTY, oldValue, active);
   }
 
   /**
@@ -51,8 +62,8 @@ public class ScreenReader {
    * 2) in the prop. file: <user home>/.accessibility.properties
    * 3) in the prop. file: <jre>/lib/accessibility.properties
    *
-   * @see {@link #ACCESS_BRIDGE}
-   * @see {@link #ATK_WRAPPER}
+   * @see #ACCESS_BRIDGE
+   * @see #ATK_WRAPPER
    * @param a11yClassName the full class name representing the a11y technology
    * @return true if enabled, otherwise false
    */
@@ -86,5 +97,21 @@ public class ScreenReader {
       }
     }
     return false;
+  }
+
+  /**
+   * Adds property change listener. Supported properties:
+   * {@link #SCREEN_READER_ACTIVE_PROPERTY}
+   */
+  public static void addPropertyChangeListener(@NotNull final String propertyName,
+                                               @NotNull Disposable parent,
+                                               @NotNull final PropertyChangeListener listener) {
+    PCS.addPropertyChangeListener(propertyName, listener);
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        PCS.removePropertyChangeListener(propertyName, listener);
+      }
+    });
   }
 }

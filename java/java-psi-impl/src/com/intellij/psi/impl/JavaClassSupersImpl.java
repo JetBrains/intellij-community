@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +9,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +25,7 @@ import java.util.Set;
 public class JavaClassSupersImpl extends JavaClassSupers {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.JavaClassSupersImpl");
 
+  @Override
   @Nullable
   public PsiSubstitutor getSuperClassSubstitutor(@NotNull PsiClass superClass,
                                                  @NotNull PsiClass derivedClass,
@@ -49,7 +37,7 @@ public class JavaClassSupersImpl extends JavaClassSupers {
       bounds = ((InferenceVariable)superClass).getBounds(InferenceBound.LOWER);
     }
     else if (superClass instanceof PsiTypeParameter) {
-      final PsiType lowerBound = TypeConversionUtil.getLowerBound(superClass);
+      final PsiType lowerBound = TypeConversionUtil.getInferredLowerBoundForSynthetic((PsiTypeParameter)superClass);
       if (lowerBound != null) {
         bounds = Collections.singletonList(lowerBound);
       }
@@ -69,8 +57,8 @@ public class JavaClassSupersImpl extends JavaClassSupers {
            ? processTypeParameter((PsiTypeParameter)derivedClass, scope, superClass, ContainerUtil.newTroveSet(), derivedSubstitutor)
            : getSuperSubstitutorWithCaching(superClass, derivedClass, scope, derivedSubstitutor);
   }
-  
-  private static PsiSubstitutor processLowerBound(@NotNull PsiType lowerBound, 
+
+  private static PsiSubstitutor processLowerBound(@NotNull PsiType lowerBound,
                                                   @NotNull PsiClass derivedClass,
                                                   @NotNull GlobalSearchScope scope,
                                                   @NotNull PsiSubstitutor derivedSubstitutor) {
@@ -128,9 +116,23 @@ public class JavaClassSupersImpl extends JavaClassSupers {
       if (outerMap.containsKey(parameter) || innerMap.containsKey(parameter)) {
         PsiType innerType = inner.substitute(parameter);
         PsiClass paramCandidate = PsiCapturedWildcardType.isCapture() ? PsiUtil.resolveClassInClassTypeOnly(innerType) : null;
-        PsiType targetType = paramCandidate instanceof PsiTypeParameter && paramCandidate != parameter
-                             ? outer.substituteWithBoundsPromotion((PsiTypeParameter)paramCandidate)
-                             : outer.substitute(innerType);
+        PsiType targetType;
+        if (paramCandidate instanceof PsiTypeParameter && paramCandidate != parameter) {
+          targetType = outer.substituteWithBoundsPromotion((PsiTypeParameter)paramCandidate);
+          if (targetType != null && innerType.getAnnotations().length > 0) {
+            PsiAnnotation[] typeAnnotations = targetType.getAnnotations();
+            targetType = targetType.annotate(new TypeAnnotationProvider() {
+              @NotNull
+              @Override
+              public PsiAnnotation[] getAnnotations() {
+                return ArrayUtil.mergeArrays(innerType.getAnnotations(), typeAnnotations);
+              }
+            });
+          }
+        }
+        else {
+          targetType = outer.substitute(innerType);
+        }
         answer = answer.put(parameter, targetType);
       }
     }
@@ -139,13 +141,13 @@ public class JavaClassSupersImpl extends JavaClassSupers {
 
   /**
    * Some type parameters (e.g. {@link InferenceVariable} change their supers at will,
-   * so caching the hierarchy is impossible. 
+   * so caching the hierarchy is impossible.
    */
   @Nullable
   private static PsiSubstitutor processTypeParameter(PsiTypeParameter parameter,
                                                      GlobalSearchScope scope,
                                                      PsiClass superClass,
-                                                     Set<PsiTypeParameter> visited, 
+                                                     Set<? super PsiTypeParameter> visited,
                                                      PsiSubstitutor derivedSubstitutor) {
     if (parameter.getManager().areElementsEquivalent(parameter, superClass)) return PsiSubstitutor.EMPTY;
     if (!visited.add(parameter)) return null;

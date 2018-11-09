@@ -28,7 +28,6 @@ import java.awt.image.BufferedImage;
 
 /**
  * @author Denis Zhdanov
- * @since 11/2/12 8:50 PM
  */
 public class ArrangementAnimationPanel extends JPanel {
 

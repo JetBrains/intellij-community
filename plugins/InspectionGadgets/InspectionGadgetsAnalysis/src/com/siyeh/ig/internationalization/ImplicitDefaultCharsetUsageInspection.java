@@ -15,14 +15,27 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.stream.Stream;
 
 /**
  * @author Bas Leijdekkers
@@ -45,6 +58,69 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
     else {
       return InspectionGadgetsBundle.message("implicit.default.charset.usage.problem.descriptor");
     }
+  }
+
+  enum CharsetOverload {
+    EXIST, EXIST_WITH_FALSE, NONE;
+
+    InspectionGadgetsFix createFix() {
+      return this == NONE ? null : new AddUtf8CharsetFix(this);
+    }
+
+    Stream<String> additionalArguments() {
+      switch (this) {
+        case EXIST:
+          return Stream.of("java.nio.charset.StandardCharsets.UTF_8");
+        case EXIST_WITH_FALSE:
+          return Stream.of("false", "java.nio.charset.StandardCharsets.UTF_8");
+        default:
+          throw new IllegalStateException(this.toString());
+      }
+    }
+  }
+
+  private static final Key<CharsetOverload> HAS_CHARSET_OVERLOAD = Key.create("Method has Charset overload");
+
+  @NotNull
+  private static CharsetOverload getCharsetOverload(PsiMethod method) {
+    if (method == null) return CharsetOverload.NONE;
+
+    CharsetOverload charsetOverload = method.getUserData(HAS_CHARSET_OVERLOAD);
+    if (charsetOverload == null) {
+      PsiMethod methodWithCharsetArgument = null;
+      PsiClass aClass = method.getContainingClass();
+      charsetOverload = CharsetOverload.EXIST;
+      if (aClass != null) {
+        MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
+        PsiType charsetType =
+          JavaPsiFacade.getElementFactory(method.getProject()).createTypeByFQClassName("java.nio.charset.Charset", method.getResolveScope());
+        PsiType[] parameterTypes = signature.getParameterTypes();
+        if (method.isConstructor() && "java.io.PrintWriter".equals(aClass.getQualifiedName()) && parameterTypes.length == 1 &&
+            parameterTypes[0].equalsToText("java.io.OutputStream")) {
+          parameterTypes = ArrayUtil.append(parameterTypes, PsiType.BOOLEAN);
+          charsetOverload = CharsetOverload.EXIST_WITH_FALSE;
+        }
+        MethodSignature newSignature = MethodSignatureUtil
+          .createMethodSignature(signature.getName(), ArrayUtil.append(parameterTypes, charsetType),
+                                 signature.getTypeParameters(), signature.getSubstitutor(), signature.isConstructor()
+          );
+        methodWithCharsetArgument = MethodSignatureUtil.findMethodBySignature(aClass, newSignature, false);
+      }
+      if (methodWithCharsetArgument == null) {
+        charsetOverload = CharsetOverload.NONE;
+      }
+      method.putUserData(HAS_CHARSET_OVERLOAD, charsetOverload);
+    }
+    return charsetOverload;
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    PsiCallExpression call = (PsiCallExpression)infos[0];
+    if (!PsiUtil.isLanguageLevel7OrHigher(call)) return null;
+    PsiMethod method = call.resolveMethod();
+    return getCharsetOverload(method).createFix();
   }
 
   @Override
@@ -148,6 +224,32 @@ public class ImplicitDefaultCharsetUsageInspection extends BaseInspection {
                                                 "java.nio.charset.Charset",
                                                 "java.nio.charset.CharsetEncoder",
                                                 "java.nio.charset.CharsetDecoder");
+    }
+  }
+
+  private static class AddUtf8CharsetFix extends InspectionGadgetsFix {
+    private final CharsetOverload myCharsetOverload;
+
+    private AddUtf8CharsetFix(CharsetOverload charsetOverload) {
+      myCharsetOverload = charsetOverload;
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      PsiCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiCallExpression.class);
+      if (call == null) return;
+      PsiExpressionList arguments = call.getArgumentList();
+      if (arguments == null) return;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      myCharsetOverload.additionalArguments().map(arg -> factory.createExpressionFromText(arg, call)).forEach(arguments::add);
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(arguments);
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionGadgetsBundle.message("implicit.default.charset.usage.fix.family.name");
     }
   }
 }

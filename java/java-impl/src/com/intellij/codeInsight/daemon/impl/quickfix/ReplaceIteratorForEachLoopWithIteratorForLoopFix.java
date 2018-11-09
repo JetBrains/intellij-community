@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -59,7 +60,7 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myStatement.isValid() && myStatement.getManager().isInProject(myStatement);
+    return myStatement.isValid() && ScratchFileService.isInProjectOrScratch(myStatement);
   }
 
   @Override
@@ -79,7 +80,7 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
     }
     final PsiStatement forEachBody = myStatement.getBody();
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final JavaCodeStyleManager javaStyleManager = JavaCodeStyleManager.getInstance(project);
     final String name = javaStyleManager.suggestUniqueVariableName("it", myStatement, true);
     PsiForStatement newForLoop = (PsiForStatement)elementFactory.createStatementFromText(

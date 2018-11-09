@@ -82,7 +82,7 @@ public class ToolkitBugsProcessor {
 
   @SuppressWarnings("UnusedDeclaration")
   private static class Sun_6857057 extends Handler {
-    public Sun_6857057() {
+    Sun_6857057() {
       super("text editor component - sync between model and view while dnd operations");
     }
 
@@ -100,7 +100,7 @@ public class ToolkitBugsProcessor {
 
   @SuppressWarnings("UnusedDeclaration")
   private static class Sun_6785663 extends Handler {
-    public Sun_6785663() {
+    Sun_6785663() {
       super("Nimbus L&F problem -- update style");
     }
 
@@ -116,7 +116,7 @@ public class ToolkitBugsProcessor {
 
   @SuppressWarnings("UnusedDeclaration")
   private static class Apple_ExceptionOnChangingMonitors extends Handler {
-    public Apple_ExceptionOnChangingMonitors() { }
+    Apple_ExceptionOnChangingMonitors() { }
 
     @Override
     public boolean isActual() {
@@ -141,7 +141,7 @@ public class ToolkitBugsProcessor {
 
   @SuppressWarnings("UnusedDeclaration")
   private static class Apple_CAccessible_NPE extends Handler {
-    public Apple_CAccessible_NPE() {
+    Apple_CAccessible_NPE() {
       super("apple.awt.CAccessible.getAccessibleContext(CAccessible.java:74)");
     }
 
@@ -161,7 +161,7 @@ public class ToolkitBugsProcessor {
 
   @SuppressWarnings("UnusedDeclaration")
   private static class HeadlessGraphicsEnvironmentUnderWindows extends Handler {
-    public HeadlessGraphicsEnvironmentUnderWindows() {
+    HeadlessGraphicsEnvironmentUnderWindows() {
       super("HeadlessGraphicsEnvironment cannot be cast to Win32GraphicsEnvironment");
     }
 

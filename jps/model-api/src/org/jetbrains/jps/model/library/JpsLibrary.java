@@ -42,6 +42,7 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
 
   void delete();
 
+  @Override
   @NotNull
   JpsLibraryReference createReference();
 

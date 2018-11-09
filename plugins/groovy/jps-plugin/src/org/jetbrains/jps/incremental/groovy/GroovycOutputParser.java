@@ -320,7 +320,7 @@ public class GroovycOutputParser {
     public final String outputPath;
     public final String sourcePath;
 
-    public OutputItem(String outputPath, String sourceFileName) {
+    OutputItem(String outputPath, String sourceFileName) {
       this.outputPath = outputPath;
       sourcePath = sourceFileName;
     }

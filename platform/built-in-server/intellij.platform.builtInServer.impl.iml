@@ -10,7 +10,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="library" name="Guava" level="project" />
@@ -21,5 +20,7 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer" exported="" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="library" name="netty-handler" level="project" />
   </component>
 </module>

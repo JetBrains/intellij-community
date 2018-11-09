@@ -25,9 +25,6 @@ import java.util.List;
  * Date: Oct 6, 2003
  * Time: 5:58:17 PM
  */
-
-
-
 public class RunHotswapDialogImpl extends OptionsDialog implements RunHotswapDialog {
   private final JPanel myPanel;
   private final ElementsChooser<SessionItem> myElementsChooser;
@@ -61,10 +58,12 @@ public class RunHotswapDialogImpl extends OptionsDialog implements RunHotswapDia
     this.init();
   }
 
+  @Override
   protected boolean isToBeShown() {
     return DebuggerSettings.RUN_HOTSWAP_ASK.equals(DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE);
   }
 
+  @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     if (value) {
       DebuggerSettings.getInstance().RUN_HOTSWAP_AFTER_COMPILE = DebuggerSettings.RUN_HOTSWAP_ASK;
@@ -79,10 +78,12 @@ public class RunHotswapDialogImpl extends OptionsDialog implements RunHotswapDia
     }
   }
 
+  @Override
   protected boolean shouldSaveOptionsOnCancel() {
     return true;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     setOKButtonText(CommonBundle.getYesButtonText());
@@ -90,6 +91,7 @@ public class RunHotswapDialogImpl extends OptionsDialog implements RunHotswapDia
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JLabel label = new JLabel(DebuggerBundle.message("hotswap.dialog.run.prompt"));
     JPanel panel = new JPanel(new BorderLayout());
@@ -105,6 +107,7 @@ public class RunHotswapDialogImpl extends OptionsDialog implements RunHotswapDia
     return panel;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

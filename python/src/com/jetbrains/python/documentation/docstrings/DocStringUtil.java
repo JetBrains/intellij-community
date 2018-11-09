@@ -32,7 +32,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -135,7 +134,7 @@ public class DocStringUtil {
 
   @NotNull
   private static Substring stripPrefixAndQuotes(@NotNull String text) {
-    final TextRange contentRange = PyStringLiteralExpressionImpl.getNodeTextRange(text);
+    final TextRange contentRange = PyStringLiteralUtil.getContentRange(text);
     return new Substring(text, contentRange.getStartOffset(), contentRange.getEndOffset());
   }
   
@@ -195,13 +194,19 @@ public class DocStringUtil {
   }
 
   public static boolean isLikeSphinxDocString(@NotNull String text) {
-    return text.contains(":param ") || 
-           text.contains(":return:") || text.contains(":returns:") || 
+    return text.contains(":param ") ||
+           text.contains(":key ") ||  text.contains(":keyword ") ||
+           text.contains(":return:") || text.contains(":returns:") ||
+           text.contains(":raise ") || text.contains(":raises ") || text.contains(":except ") || text.contains(":exception ") ||
            text.contains(":rtype") || text.contains(":type");
   }
 
   public static boolean isLikeEpydocDocString(@NotNull String text) {
-    return text.contains("@param ") || text.contains("@return:") || text.contains("@rtype") || text.contains("@type");
+    return text.contains("@param ") ||
+           text.contains("@kwarg ") || text.contains("@keyword ") || text.contains("@kwparam ") ||
+           text.contains("@raise ") || text.contains("@raises ") || text.contains("@except ") || text.contains("@exception ") ||
+           text.contains("@return:") ||
+           text.contains("@rtype") || text.contains("@type");
   }
 
   public static boolean isLikeGoogleDocString(@NotNull String text) {
@@ -313,7 +318,7 @@ public class DocStringUtil {
   }
 
   /**
-   * Checks that docstring format is set either via element module's {@link com.jetbrains.python.PyNames.DOCFORMAT} attribute or
+   * Checks that docstring format is set either via element module's {@link com.jetbrains.python.PyNames#DOCFORMAT} attribute or
    * in module settings. If none of them applies, show standard choose dialog, asking user to pick one and updates module settings
    * accordingly.
    *

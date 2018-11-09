@@ -29,6 +29,7 @@ public class DimensionPropertyCodeGenerator extends PropertyCodeGenerator {
   private static final Type myDimensionType = Type.getType(Dimension.class);
   private static final Method myInitMethod = Method.getMethod("void <init>(int,int)");
 
+  @Override
   public void generatePushValue(final GeneratorAdapter generator, final Object value) {
     Dimension dimension = (Dimension) value;
     generator.newInstance(myDimensionType);

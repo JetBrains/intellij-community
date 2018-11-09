@@ -16,9 +16,13 @@
 package com.intellij.psi.xml;
 
 import com.intellij.psi.PsiComment;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mike
  */
 public interface XmlComment extends XmlElement, PsiComment, XmlTagChild {
+
+  @NotNull
+  String getCommentText();
 }

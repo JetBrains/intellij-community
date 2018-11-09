@@ -2,9 +2,11 @@
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
+import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
@@ -35,6 +37,11 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (ourLoggerBroken) return false;
 
     try {
+      final Application app = ApplicationManager.getApplication();
+      if (app.isDisposed() || app.isDisposeInProgress()) {
+        return false;
+      }
+
       UpdateChecker.checkForUpdate(event);
 
       boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
@@ -42,11 +49,15 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
 
+      boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
+      boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
+      AppLifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed);
+
       return notificationEnabled ||
              showPluginError ||
              ApplicationManagerEx.getApplicationEx().isInternal() ||
-             getOOMErrorKind(event.getThrowable()) != null ||
-             event.getThrowable() instanceof MappingFailedException;
+             isOOM ||
+             isMappingFailed;
     }
     catch (LinkageError e) {
       if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.IdeErrorsDialog")) {
@@ -62,7 +73,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
     try {
       Throwable throwable = event.getThrowable();
-      final MemoryKind kind = getOOMErrorKind(throwable);
+      MemoryKind kind = getOOMErrorKind(throwable);
       if (kind != null) {
         ourOomOccurred = true;
         SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
@@ -71,8 +82,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         processMappingFailed(event);
       }
       else if (!ourOomOccurred) {
-        MessagePool messagePool = MessagePool.getInstance();
-        messagePool.addIdeFatalMessage(event);
+        MessagePool.getInstance().addIdeFatalMessage(event);
       }
     }
     catch (Throwable e) {

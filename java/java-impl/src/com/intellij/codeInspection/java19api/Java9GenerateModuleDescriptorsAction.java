@@ -66,7 +66,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   private static final String COMMAND_TITLE = RefactoringBundle.message("generate.module.descriptors.command.title");
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setEnabled(project != null && !DumbService.isDumb(project) && isModularJdkAvailable());
   }
@@ -77,7 +77,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
     CompilerManager compilerManager = CompilerManager.getInstance(project);
@@ -158,7 +158,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     );
   }
 
-  private static void collectClassFiles(@NotNull File file, @NotNull List<File> files) {
+  private static void collectClassFiles(@NotNull File file, @NotNull List<? super File> files) {
     final File[] children = file.listFiles();
     if (children != null) { // is Directory
       for (File child : children) {
@@ -179,7 +179,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     double myUpToNow;
     private final double[] myPhases;
 
-    public ProgressTracker(double... phases) {
+    ProgressTracker(double... phases) {
       myPhases = phases;
     }
 
@@ -217,7 +217,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
 
     private final ProgressTracker myProgressTracker = new ProgressTracker(0.5, 0.3, 0.2);
 
-    public DescriptorsGenerator(@NotNull Project project, @NotNull UniqueModuleNames uniqueModuleNames) {
+    DescriptorsGenerator(@NotNull Project project, @NotNull UniqueModuleNames uniqueModuleNames) {
       myProject = project;
       myUniqueModuleNames = uniqueModuleNames;
     }
@@ -347,7 +347,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       return moduleInfo;
     }
 
-    private static void createFiles(Project project, List<ModuleInfo> moduleInfos, ProgressIndicator indicator) {
+    private static void createFiles(Project project, List<? extends ModuleInfo> moduleInfos, ProgressIndicator indicator) {
       indicator.setIndeterminate(false);
       int count = 0;
       double total = moduleInfos.size();
@@ -408,7 +408,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     private final PsiJavaModule myDescriptor;
     private final String myName;
 
-    public ModuleNode(@NotNull Module module,
+    ModuleNode(@NotNull Module module,
                       @NotNull Set<String> declaredPackages,
                       @NotNull Set<String> requiredPackages,
                       @NotNull UniqueModuleNames uniqueModuleNames) {
@@ -428,7 +428,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
       return JavaModuleGraphUtil.findDescriptorByFile(root, module.getProject());
     }
 
-    public ModuleNode(@NotNull PsiJavaModule descriptor) {
+    ModuleNode(@NotNull PsiJavaModule descriptor) {
       myModule = ReadAction.compute(() -> ModuleUtilCore.findModuleForPsiElement(descriptor));
       myDeclaredPackages = Collections.emptySet();
       myRequiredPackages = Collections.emptySet();
@@ -570,7 +570,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
   private static class UniqueModuleNames {
     private final UniqueNameGenerator myNameGenerator;
 
-    public UniqueModuleNames(@NotNull Project project) {
+    UniqueModuleNames(@NotNull Project project) {
       LOG.assertTrue(!DumbService.isDumb(project), "Module name index should be ready");
 
       JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
@@ -594,7 +594,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     private final Map<String, Boolean> myPackages = new THashMap<>();
     private final JavaPsiFacade myPsiFacade;
 
-    public PackageNamesCache(Project project) {
+    PackageNamesCache(Project project) {
       myPsiFacade = JavaPsiFacade.getInstance(project);
     }
 
@@ -620,7 +620,7 @@ public class Java9GenerateModuleDescriptorsAction extends AnAction {
     private final Set<String> myDeclaredPackages = new THashSet<>();
     private final PackageNamesCache myPackageNamesCache;
 
-    public ModuleVisitor(PackageNamesCache packageNamesCache) {
+    ModuleVisitor(PackageNamesCache packageNamesCache) {
       myPackageNamesCache = packageNamesCache;
     }
 

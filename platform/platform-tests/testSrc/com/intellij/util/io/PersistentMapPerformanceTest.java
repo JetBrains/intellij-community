@@ -60,15 +60,15 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     throws IOException {
     File file = FileUtil.createTempFile("persistent", "map");
     FileUtil.createParentDirs(file);
-    PersistentHashMap<T, String> map = null;
 
-    try {
-      map = constructor.createMap(file);
+    try(PersistentHashMap<T, String> map = constructor.createMap(file)) {
       for (int i = 0; i < 12000; i++) {
         setter.putValue(map, i, StringUtil.repeat("0123456789", 10000));
       }
-      map.close();
+    }
 
+    PersistentHashMap<T, String> map = null;
+    try {
       map = constructor.createMap(file);
       long len = 0;
       for (T key : map.getAllKeysWithExistingMapping()) {
@@ -192,7 +192,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     try {
       map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
         @Override
-        protected boolean wantNonnegativeIntegralValues() {
+        protected boolean wantNonNegativeIntegralValues() {
           return true;
         }
       };
@@ -215,7 +215,7 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
       started = System.currentTimeMillis();
       map = new PersistentHashMap<Integer, Integer>(file, EnumeratorIntegerDescriptor.INSTANCE, EnumeratorIntegerDescriptor.INSTANCE) {
         @Override
-        protected boolean wantNonnegativeIntegralValues() {
+        protected boolean wantNonNegativeIntegralValues() {
           return true;
         }
       };
@@ -243,12 +243,14 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
   private static class PathCollectionExternalizer implements DataExternalizer<Collection<String>> {
     static final PathCollectionExternalizer INSTANCE = new PathCollectionExternalizer();
 
+    @Override
     public void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
       for (String str : value) {
         IOUtil.writeString(str, out);
       }
     }
 
+    @Override
     public Collection<String> read(@NotNull DataInput in) throws IOException {
       final Set<String> result = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
       final DataInputStream stream = (DataInputStream)in;

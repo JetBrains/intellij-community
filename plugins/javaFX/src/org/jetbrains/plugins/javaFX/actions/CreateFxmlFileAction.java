@@ -107,7 +107,7 @@ public class CreateFxmlFileAction extends CreateFromTemplateActionBase {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 

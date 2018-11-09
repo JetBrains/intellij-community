@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -20,7 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -31,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class ShowSettingsAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(ShowSettingsAction.class);
+
   public ShowSettingsAction() {
     super(CommonBundle.settingsAction(), CommonBundle.settingsActionDescription(), AllIcons.General.Settings);
   }
@@ -47,19 +35,22 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
     }
   }
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     perform(project != null ? project : ProjectManager.getInstance().getDefaultProject());
   }
 
   public static void perform(@NotNull Project project) {
-    final long startTime = System.nanoTime();
-    SwingUtilities.invokeLater(() -> {
-      final long endTime = System.nanoTime();
-      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-        System.out.println("Displaying settings dialog took " + ((endTime - startTime) / 1000000) + " ms");
-      }
-    });
+    if (LOG.isDebugEnabled()) {
+      final long startTime = System.nanoTime();
+      // SwingUtilities must be used here
+      SwingUtilities.invokeLater(() -> {
+        final long endTime = System.nanoTime();
+        LOG.debug("Displaying settings dialog took " + ((endTime - startTime) / 1000000) + " ms");
+      });
+    }
+
     ShowSettingsUtil.getInstance().showSettingsDialog(project, ShowSettingsUtilImpl.getConfigurableGroups(project, true));
   }
 }

@@ -38,7 +38,6 @@ import static org.jetbrains.plugins.gradle.util.GradleEnvironment.Headless.*;
 
 /**
  * @author Denis Zhdanov
- * @since 4/30/13 11:22 PM
  */
 public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<GradleProjectImportBuilder> {
 
@@ -150,11 +149,6 @@ public class GradleJavaProjectOpenProcessor extends ProjectOpenProcessorBase<Gra
       selectExternalProjectStep.updateDataModel();
     }
     return true;
-  }
-
-  @Override
-  public boolean lookForProjectsInDirectory() {
-    return false;
   }
 
   @Override

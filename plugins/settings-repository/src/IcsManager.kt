@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
-import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.configurationStore.StreamProvider
+import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.application.Application
@@ -33,7 +33,7 @@ internal const val PLUGIN_NAME = "Settings Repository"
 internal val LOG = logger<IcsManager>()
 
 internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-  ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java).icsManager
+  ApplicationLoadListener.EP_NAME.findExtension(IcsApplicationLoadListener::class.java)!!.icsManager
 }
 
 class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: Lazy<SchemeManagerFactoryBase> = lazy { (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase) }) {
@@ -65,12 +65,14 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     }
   }, settings.commitDelay)
 
-  private @Volatile var autoCommitEnabled = true
+  @Volatile
+  private var autoCommitEnabled = true
 
-  @Volatile var repositoryActive = false
+  @Volatile
+  var isRepositoryActive = false
 
-  val active: Boolean
-    get() = repositoryActive || readOnlySourcesManager.repositories.isNotEmpty()
+  val isActive: Boolean
+    get() = isRepositoryActive || readOnlySourcesManager.repositories.isNotEmpty()
 
   internal val autoSyncManager = AutoSyncManager(this)
   internal val syncManager = SyncManager(this, autoSyncManager)
@@ -83,7 +85,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   inner class ApplicationLevelProvider : IcsStreamProvider(null) {
     override fun delete(fileSpec: String, roamingType: RoamingType): Boolean {
-      if (!repositoryActive) {
+      if (!isRepositoryActive) {
         return false
       }
 
@@ -99,19 +101,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     }
   }
 
-//  private inner class ProjectLevelProvider(projectId: String) : IcsStreamProvider(projectId) {
-//    override fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = !isProjectOrModuleFile(fileSpec)
-//
-//    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
-//      if (isProjectOrModuleFile(fileSpec)) {
-//        // applicable only if file was committed to Settings Server explicitly
-//        return repositoryManager.has(buildPath(fileSpec, roamingType, this.projectId))
-//      }
-//      return settings.shareProjectWorkspace || fileSpec != StoragePathMacros.WORKSPACE_FILE
-//    }
-//  }
-
-  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null) = syncManager.sync(syncType, project, localRepositoryInitializer)
+  fun sync(syncType: SyncType, project: Project? = null, localRepositoryInitializer: (() -> Unit)? = null): Boolean = syncManager.sync(syncType, project, localRepositoryInitializer)
 
   private fun cancelAndDisableAutoCommit() {
     if (autoCommitEnabled) {
@@ -127,7 +117,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
     }
     finally {
       autoCommitEnabled = true
-      repositoryActive = repositoryManager.isRepositoryExists()
+      isRepositoryActive = repositoryManager.isRepositoryExists()
     }
   }
 
@@ -139,7 +129,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
   }
 
   fun beforeApplicationLoaded(application: Application) {
-    repositoryActive = repositoryManager.isRepositoryExists()
+    isRepositoryActive = repositoryManager.isRepositoryExists()
 
     application.stateStore.storageManager.addStreamProvider(ApplicationLevelProvider())
 
@@ -166,9 +156,12 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
 
   open inner class IcsStreamProvider(private val projectId: String?) : StreamProvider {
     override val enabled: Boolean
-      get() = this@IcsManager.active
+      get() = this@IcsManager.isActive
 
-    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = repositoryActive
+    override val isDisableExportAction: Boolean
+      get() = this@IcsManager.isRepositoryActive
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = isRepositoryActive
 
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
       val fullPath = toRepositoryPath(path, roamingType, null)
@@ -178,7 +171,7 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
         repository.processChildren(fullPath, filter) { name, input -> processor(name, input, true) }
       }
 
-      if (!repositoryActive) {
+      if (!isRepositoryActive) {
         return false
       }
 
@@ -196,12 +189,12 @@ class IcsManager @JvmOverloads constructor(dir: Path, val schemeManagerFactory: 
       }
     }
 
-    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
+    fun doSave(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType): Boolean = repositoryManager.write(toRepositoryPath(fileSpec, roamingType, projectId), content, size)
 
-    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType) = true
+    protected open fun isAutoCommit(fileSpec: String, roamingType: RoamingType): Boolean = true
 
     override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
-      if (!repositoryActive) {
+      if (!isRepositoryActive) {
         return false
       }
 
@@ -256,7 +249,7 @@ class IcsApplicationLoadListener : ApplicationLoadListener {
       val removeOtherXml = repositoryManager.delete("other.xml")
       if (migrateSchemes || migrateKeyMaps || removeOtherXml) {
         // schedule push to avoid merge conflicts
-        application.invokeLater({ icsManager.autoSyncManager.autoSync(force = true) })
+        application.invokeLater { icsManager.autoSyncManager.autoSync(force = true) }
       }
     }
 

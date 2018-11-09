@@ -27,25 +27,30 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class IndexZeroPredicate extends XPathInspection {
+    @Override
     protected Visitor createVisitor(InspectionManager manager, boolean isOnTheFly) {
         return new MyVisitor(manager, isOnTheFly);
     }
 
+    @Override
     @NotNull
     public String getDisplayName() {
         return "Use of index 0 in XPath predicates";
     }
 
+    @Override
     @NotNull
     @NonNls
     public String getShortName() {
         return "IndexZeroUsage";
     }
 
+    @Override
     public boolean isEnabledByDefault() {
         return true;
     }
 
+  @Override
   protected boolean acceptsLanguage(Language language) {
     return language == XPathFileType.XPATH.getLanguage() || language == XPathFileType.XPATH2.getLanguage();
   }
@@ -55,6 +60,7 @@ public class IndexZeroPredicate extends XPathInspection {
             super(manager, isOnTheFly);
         }
 
+        @Override
         protected void checkPredicate(XPathPredicate predicate) {
             final XPathExpression expr = predicate.getPredicateExpression();
             if (expr != null) {
@@ -69,7 +75,7 @@ public class IndexZeroPredicate extends XPathInspection {
                     if (!XPathTokenTypes.BOOLEAN_OPERATIONS.contains(expression.getOperator())) {
                         return;
                     }
-                    
+
                     final XPathExpression lOp = expression.getLOperand();
                     final XPathExpression rOp = expression.getROperand();
 

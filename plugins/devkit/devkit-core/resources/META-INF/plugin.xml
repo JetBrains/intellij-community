@@ -11,6 +11,7 @@
   <vendor>JetBrains</vendor>
 
   <depends>com.intellij.properties</depends>
+  <depends>com.intellij.modules.json</depends>
   <depends config-file="gradle-devkit.xml" optional="true">org.jetbrains.plugins.gradle</depends>
 
   <resource-bundle>org.jetbrains.idea.devkit.DevKitBundle</resource-bundle>
@@ -26,7 +27,7 @@
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.navigation.DescriptionInspectionGotoRelatedProvider" />
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
-    <getDataRule key="Location" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
+    <getDataRule key="TestLocationData" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
 
@@ -67,11 +68,12 @@
                                 implementationClass="org.jetbrains.idea.devkit.references.extensions.ExtensionPointDocumentationProvider"/>
 
     <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ExtensionOrderKeywordCompletionContributor" language="XML" />
+    <completion.contributor implementationClass="org.jetbrains.idea.devkit.completion.ThemeJsonCompletionContributor" language="JSON" />
 
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
-    <localInspection language="JAVA" shortName="ComponentNotRegistered"
+    <localInspection language="JVM" shortName="ComponentNotRegistered"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.name" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
     <localInspection language="JAVA" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection Description Checker"
@@ -182,10 +184,10 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
-    <localInspection language="UAST" shortName="UnstableApiUsage" displayName="Unstable API usage"
-                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.UnstableApiUsageInspection"/>
 
+    <intentionAction>
+      <className>org.jetbrains.idea.devkit.codeStyle.bean.CodeStyleBeanIntention</className>
+    </intentionAction>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -193,6 +195,7 @@
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.ExperimentalFeatureIdContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
+    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.ThemePathReferenceContributor"/>
     <referencesSearch implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <unusedDeclarationFixProvider implementation="org.jetbrains.idea.devkit.inspections.quickfix.RegisterExtensionFixProvider"/>
 
@@ -208,9 +211,11 @@
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil"/>
     <stacktrace.fold substring="at com.intellij.testFramework.UsefulTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.collectAndCheckHighlighting("/>
-    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResultByFile("/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResult"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.access$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.lambda$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.CodeInsightTestFixture$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
@@ -229,6 +234,7 @@
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>
+    <annotator language="JSON" implementationClass="org.jetbrains.idea.devkit.themes.ThemeColorAnnotator"/>
 
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultThemeFilter"/>
     <images.themeFilter implementation="org.jetbrains.idea.devkit.icons.DefaultHiDPIThemeFilter"/>
@@ -241,10 +247,15 @@
     <psi.referenceContributor
         language="XML"
         implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeReferenceContributor"/>
-    <psi.fileReferenceHelper implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeFileReferenceHelper"/>
+    <psi.fileReferenceHelper
+        order="first"
+        implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeFileReferenceHelper"/>
 
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
     <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>
+  </extensions>
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="org.jetbrains.idea.devkit.themes.ThemeJsonSchemaProviderFactory"/>
   </extensions>
 
   <project-components>
@@ -272,6 +283,9 @@
               class="org.jetbrains.idea.devkit.actions.service.NewProjectServiceAction"/>
       <action text="Module Service" id="NewModuleService"
               class="org.jetbrains.idea.devkit.actions.service.NewModuleServiceAction"/>
+      <separator/>
+      <action text="Theme" id="DevKit.NewTheme"
+              class="org.jetbrains.idea.devkit.actions.NewThemeAction"/>
       <add-to-group group-id="NewGroup" anchor="last"/>
     </group>
 
@@ -303,7 +317,7 @@
     </group>
     <action id="TestData.Navigate"
             class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction"
-            text="Navigate to testdata" use-shortcut-of="GotoRelated">
+            text="Navigate to Test Data" use-shortcut-of="GotoRelated">
       <add-to-group anchor="last" group-id="TestTreePopupMenu"/>
     </action>
     <action id="DumpCleanTestData" internal="true" class="org.jetbrains.idea.devkit.internal.DumpCleanHighlightingTestdataAction">

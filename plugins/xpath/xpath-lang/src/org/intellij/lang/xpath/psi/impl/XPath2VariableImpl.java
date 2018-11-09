@@ -28,6 +28,7 @@ public class XPath2VariableImpl extends XPathElementImpl implements XPathVariabl
     super(node);
   }
 
+  @Override
   @NotNull
   public XPathType getType() {
     final XPathExpression value = getValue();
@@ -59,6 +60,7 @@ public class XPath2VariableImpl extends XPathElementImpl implements XPathVariabl
     return replace(XPathChangeUtil.createVariableReference(this, name));
   }
 
+  @Override
   public void accept(XPathElementVisitor visitor) {
     visitor.visitXPathVariable(this);
   }

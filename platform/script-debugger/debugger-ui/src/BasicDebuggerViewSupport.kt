@@ -13,17 +13,17 @@ import org.jetbrains.debugger.values.Value
 import javax.swing.Icon
 
 open class BasicDebuggerViewSupport : MemberFilter, DebuggerViewSupport {
-  protected val defaultMemberFilterPromise = resolvedPromise<MemberFilter>(this)
+  protected val defaultMemberFilterPromise: Promise<MemberFilter> = resolvedPromise<MemberFilter>(this)
 
-  override fun propertyNamesToString(list: List<String>, quotedAware: Boolean) = ValueModifierUtil.propertyNamesToString(list, quotedAware)
+  override fun propertyNamesToString(list: List<String>, quotedAware: Boolean): String = ValueModifierUtil.propertyNamesToString(list, quotedAware)
 
-  override fun computeObjectPresentation(value: ObjectValue, variable: Variable, context: VariableContext, node: XValueNode, icon: Icon) = VariableView.setObjectPresentation(value, icon, node)
+  override fun computeObjectPresentation(value: ObjectValue, variable: Variable, context: VariableContext, node: XValueNode, icon: Icon): Unit = VariableView.setObjectPresentation(value, icon, node)
 
   override fun computeArrayPresentation(value: Value, variable: Variable, context: VariableContext, node: XValueNode, icon: Icon) {
     VariableView.setArrayPresentation(value, context, icon, node)
   }
 
-  override fun getMemberFilter(context: VariableContext) = defaultMemberFilterPromise
+  override fun getMemberFilter(context: VariableContext): Promise<MemberFilter> = defaultMemberFilterPromise
 
   override fun computeReceiverVariable(context: VariableContext, callFrame: CallFrame, node: XCompositeNode): Promise<*> {
     return callFrame.receiverVariable

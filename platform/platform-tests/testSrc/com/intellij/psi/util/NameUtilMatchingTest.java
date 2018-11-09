@@ -51,6 +51,7 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("nt", "NameUtilTest");
     assertMatches("repl map", "ReplacePathToMacroMap");
     assertMatches("replmap", "ReplacePathToMacroMap");
+    assertMatches("CertificateEx", "CertificateEncodingException");
     assertDoesntMatch("ABCD", "AbstractButton.DISABLED_ICON_CHANGED_PROPERTY");
   }
   
@@ -427,6 +428,10 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("*v2 ", "VARCHAR2");
     assertMatches("smart8co", "SmartType18CompletionTest");
     assertMatches("smart8co", "smart18completion");
+  }
+
+  public void testMatchOnlyAdjacentDigits() {
+    assertDoesntMatch("*012", "001122");
   }
 
   public void testSpecialSymbols() {

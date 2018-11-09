@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -23,7 +25,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,14 +66,14 @@ public class ManualArrayCopyInspection extends BaseInspection {
 
     private final boolean decrement;
 
-    public ManualArrayCopyFix(boolean decrement) {
+    ManualArrayCopyFix(boolean decrement) {
       this.decrement = decrement;
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("manual.array.copy.replace.quickfix");
+      return CommonQuickFixBundle.message("fix.replace.with.x", "System.arraycopy()");
     }
 
     @Override
@@ -84,7 +85,12 @@ public class ManualArrayCopyInspection extends BaseInspection {
       if (newExpression == null) {
         return;
       }
-      PsiReplacementUtil.replaceStatement(forStatement, newExpression, commentTracker);
+      PsiIfStatement ifStatement = (PsiIfStatement)commentTracker.replaceAndRestoreComments(forStatement, newExpression);
+      if (Boolean.TRUE.equals(DfaUtil.evaluateCondition(ifStatement.getCondition())))  {
+        PsiStatement copyStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+        assert copyStatement != null;
+        new CommentTracker().replaceAndRestoreComments(ifStatement, copyStatement);
+      }
     }
 
     @Nullable
@@ -161,7 +167,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
       final String toOffsetText = buildOffsetText(strippedLhsIndexExpression, variable,
                                                   limitExpression, decrement && (JavaTokenType.LT.equals(tokenType) || JavaTokenType.GT.equals(tokenType)),
                                                   commentTracker);
-      return "System.arraycopy(" + fromArrayText + ", " + fromOffsetText + ", " + toArrayText + ", " + toOffsetText + ", " + lengthText + ");";
+      return "if(" + lengthText + ">=0)" + "System.arraycopy(" + fromArrayText + ", " + fromOffsetText + ", " + toArrayText + ", " + toOffsetText + ", " + lengthText + ");";
     }
 
     @Nullable

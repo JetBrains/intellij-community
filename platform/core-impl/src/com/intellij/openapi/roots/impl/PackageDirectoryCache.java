@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static com.intellij.util.containers.ContainerUtil.or;
 
@@ -46,7 +47,8 @@ public class PackageDirectoryCache {
       for (VirtualFile file : rootsByPackagePrefix.get(prefix)) {
         if (!file.isValid()) {
           LOG.error("Invalid root: " + file);
-        } else {
+        }
+        else {
           myRootsByPackagePrefix.putValue(prefix, file);
         }
       }
@@ -60,15 +62,13 @@ public class PackageDirectoryCache {
   @NotNull
   public List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName) {
     PackageInfo info = getPackageInfo(packageName);
-    return info == null ? Collections.emptyList() : info.myPackageDirectories;
+    return info == null ? Collections.emptyList() : Collections.unmodifiableList(info.myPackageDirectories);
   }
 
   @Nullable
   private PackageInfo getPackageInfo(@NotNull final String packageName) {
     PackageInfo info = myDirectoriesByPackageNameCache.get(packageName);
-    if (info == null) {
-      if (myNonExistentPackages.contains(packageName)) return null;
-
+    if (info == null && !myNonExistentPackages.contains(packageName)) {
       if (packageName.length() > Registry.intValue("java.max.package.name.length") || StringUtil.containsAnyChar(packageName, ";[/")) {
         return null;
       }
@@ -96,7 +96,8 @@ public class PackageDirectoryCache {
 
       if (!result.isEmpty()) {
         myDirectoriesByPackageNameCache.put(packageName, info = new PackageInfo(packageName, result));
-      } else {
+      }
+      else {
         myNonExistentPackages.add(packageName);
       }
     }
@@ -104,11 +105,13 @@ public class PackageDirectoryCache {
     return info;
   }
 
+  @NotNull
   public Set<String> getSubpackageNames(@NotNull final String packageName) {
     final PackageInfo info = getPackageInfo(packageName);
     return info == null ? Collections.emptySet() : Collections.unmodifiableSet(info.mySubPackages.getValue().keySet());
   }
 
+  @NotNull
   public Set<String> getSubpackageNames(@NotNull final String packageName, @NotNull GlobalSearchScope scope) {
     final PackageInfo info = getPackageInfo(packageName);
     if (info == null) return Collections.emptySet();
@@ -125,8 +128,10 @@ public class PackageDirectoryCache {
   }
 
   private class PackageInfo {
+    @NotNull
     final String myQname;
-    final List<VirtualFile> myPackageDirectories;
+    @NotNull
+    final List<? extends VirtualFile> myPackageDirectories;
     final NotNullLazyValue<MultiMap<String, VirtualFile>> mySubPackages = new VolatileNotNullLazyValue<MultiMap<String, VirtualFile>>() {
       @NotNull
       @Override
@@ -145,7 +150,7 @@ public class PackageDirectoryCache {
       }
     };
 
-    PackageInfo(String qname, List<VirtualFile> packageDirectories) {
+    PackageInfo(@NotNull String qname, @NotNull List<? extends VirtualFile> packageDirectories) {
       myQname = qname;
       myPackageDirectories = packageDirectories;
     }

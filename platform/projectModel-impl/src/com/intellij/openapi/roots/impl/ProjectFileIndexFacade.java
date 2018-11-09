@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
@@ -107,5 +108,15 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions() {
     return ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions();
+  }
+
+  @Override
+  public boolean isInProjectScope(@NotNull VirtualFile file) {
+    // optimization: equivalent to the super method but has fewer getInfoForFile() calls
+    if (file instanceof VirtualFileWindow) return true;
+    DirectoryInfo info = myDirectoryIndex.getInfoForFile(file);
+    if (!info.isInProject(file)) return false;
+    if (info.hasLibraryClassRoot() && !info.isInModuleSource(file)) return false;
+    return info.getModule() != null;
   }
 }

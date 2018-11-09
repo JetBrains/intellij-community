@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.vfs;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -27,19 +15,25 @@ import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsVFSListener;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepositoryFiles;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.util.*;
@@ -78,24 +72,30 @@ public class GitVFSListener extends VcsVFSListener {
   }
 
   @Override
-  protected boolean isEventIgnored(VirtualFileEvent event, boolean putInDirty) {
-    return super.isEventIgnored(event, putInDirty) || myEventsSuppressLevel.get() != 0;
+  protected boolean isEventIgnored(@NotNull VirtualFileEvent event) {
+    return super.isEventIgnored(event) || myEventsSuppressLevel.get() != 0;
   }
 
+  @NotNull
+  @Override
   protected String getAddTitle() {
     return GitBundle.getString("vfs.listener.add.title");
   }
 
+  @NotNull
+  @Override
   protected String getSingleFileAddTitle() {
     return GitBundle.getString("vfs.listener.add.single.title");
   }
 
+  @NotNull
+  @Override
   protected String getSingleFileAddPromptTemplate() {
     return GitBundle.getString("vfs.listener.add.single.prompt");
   }
 
   @Override
-  protected void executeAdd(final List<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copiedFiles) {
+  protected void executeAdd(@NotNull final List<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copiedFiles) {
     // Filter added files before further processing
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
@@ -106,6 +106,7 @@ public class GitVFSListener extends VcsVFSListener {
     }
     final HashSet<VirtualFile> retainedFiles = new HashSet<>();
     final ProgressManager progressManager = ProgressManager.getInstance();
+    saveGitignoreFileIfNeeded(myProject);
     progressManager.run(new Task.Backgroundable(myProject, GitBundle.getString("vfs.listener.checking.ignored"), true) {
       @Override
       public void run(@NotNull ProgressIndicator pi) {
@@ -127,6 +128,24 @@ public class GitVFSListener extends VcsVFSListener {
     });
   }
 
+  private static void saveGitignoreFileIfNeeded(@NotNull Project project) {
+    @SystemIndependent String basePath = project.getBasePath();
+    if (basePath == null) return;
+    VirtualFile projectRootDir = LocalFileSystem.getInstance().findFileByPath(basePath);
+    if (projectRootDir == null) return;
+    VirtualFile gitDir = GitUtil.findGitDir(projectRootDir);
+    if (gitDir == null) return;
+
+    GitRepositoryFiles gitRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    for (Document document : fileDocumentManager.getUnsavedDocuments()) {
+      VirtualFile documentVFile = fileDocumentManager.getFile(document);
+      if (documentVFile != null && gitRepositoryFiles.isGitIgnore(PathUtil.toSystemIndependentName(documentVFile.getPath()))) {
+        fileDocumentManager.saveDocument(document);
+      }
+    }
+  }
+
   /**
    * The version of execute add before overriding
    *
@@ -137,7 +156,8 @@ public class GitVFSListener extends VcsVFSListener {
     super.executeAdd(addedFiles, copiedFiles);
   }
 
-  protected void performAdding(final Collection<VirtualFile> addedFiles, final Map<VirtualFile, VirtualFile> copyFromMap) {
+  @Override
+  protected void performAdding(@NotNull final Collection<VirtualFile> addedFiles, @NotNull final Map<VirtualFile, VirtualFile> copyFromMap) {
     // copied files (copyFromMap) are ignored, because they are included into added files.
     performAdding(ObjectsConvertor.vf2fp(new ArrayList<>(addedFiles)));
   }
@@ -162,24 +182,30 @@ public class GitVFSListener extends VcsVFSListener {
     });
   }
 
+  @NotNull
+  @Override
   protected String getDeleteTitle() {
     return GitBundle.getString("vfs.listener.delete.title");
   }
 
+  @Override
   protected String getSingleFileDeleteTitle() {
     return GitBundle.getString("vfs.listener.delete.single.title");
   }
 
+  @Override
   protected String getSingleFileDeletePromptTemplate() {
     return GitBundle.getString("vfs.listener.delete.single.prompt");
   }
 
-  protected void performDeletion(final List<FilePath> filesToDelete) {
+  @Override
+  protected void performDeletion(@NotNull final List<FilePath> filesToDelete) {
     performBackgroundOperation(filesToDelete, GitBundle.getString("remove.removing"), new LongOperationPerRootExecutor() {
       HashSet<File> filesToRefresh = new HashSet<>();
 
+      @Override
       public void execute(@NotNull VirtualFile root, @NotNull List<FilePath> files) throws VcsException {
-        GitFileUtils.delete(myProject, root, files, "--ignore-unmatch", "--cached");
+        GitFileUtils.deletePaths(myProject, root, files, "--ignore-unmatch", "--cached");
         if (!myProject.isDisposed()) {
           VcsFileUtil.markFilesDirty(myProject, files);
         }
@@ -191,13 +217,15 @@ public class GitVFSListener extends VcsVFSListener {
         }
       }
 
+      @Override
       public Collection<File> getFilesToRefresh() {
         return filesToRefresh;
       }
     });
   }
 
-  protected void performMoveRename(final List<MovedFileInfo> movedFiles) {
+  @Override
+  protected void performMoveRename(@NotNull final List<MovedFileInfo> movedFiles) {
     List<FilePath> toAdd = ContainerUtil.newArrayList();
     List<FilePath> toRemove = ContainerUtil.newArrayList();
     List<MovedFileInfo> toForceMove = ContainerUtil.newArrayList();
@@ -241,12 +269,13 @@ public class GitVFSListener extends VcsVFSListener {
     });
   }
 
+  @Override
   protected boolean isDirectoryVersioningSupported() {
     return false;
   }
 
   @Override
-  protected Collection<FilePath> selectFilePathsToDelete(final List<FilePath> deletedFiles) {
+  protected Collection<FilePath> selectFilePathsToDelete(@NotNull final List<FilePath> deletedFiles) {
     // For git asking about vcs delete does not make much sense. The result is practically identical.
     return deletedFiles;
   }
@@ -264,6 +293,7 @@ public class GitVFSListener extends VcsVFSListener {
     }
 
     GitVcs.runInBackground(new Task.Backgroundable(myProject, operationTitle) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (Map.Entry<VirtualFile, List<FilePath>> e : sortedFiles.entrySet()) {
           try {

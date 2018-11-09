@@ -72,42 +72,52 @@ public final class ClientEnvironment
 
   // Implemented ============================================================
 
+  @Override
   public IConnection getConnection() {
     return connection;
   }
 
+  @Override
   public ICvsFileSystem getCvsFileSystem() {
     return cvsFileSystem;
   }
 
+  @Override
   public CvsRoot getCvsRoot() {
     return cvsRoot;
   }
 
+  @Override
   public IAdminReader getAdminReader() {
     return adminReader;
   }
 
+  @Override
   public IAdminWriter getAdminWriter() {
     return adminWriter;
   }
 
+  @Override
   public ILocalFileReader getLocalFileReader() {
     return localFileReader;
   }
 
+  @Override
   public ILocalFileWriter getLocalFileWriter() {
     return localFileWriter;
   }
 
+  @Override
   public IIgnoreFileFilter getIgnoreFileFilter() {
     return ignoreFileFilter;
   }
 
+  @Override
   public IFileReadOnlyHandler getFileReadOnlyHandler() {
     return fileReadOnlyHandler;
   }
 
+  @Override
   public String getCharset() {
     return charset;
   }

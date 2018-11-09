@@ -43,7 +43,6 @@ import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/19/2015
  */
 public class PatternGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 
@@ -122,7 +121,7 @@ public class PatternGradleConfigurationProducer extends GradleTestRunConfigurati
   }
 
   private static class GradlePatternBasedConfigurationProducer extends AbstractPatternBasedConfigurationProducer {
-    public GradlePatternBasedConfigurationProducer(ConfigurationType configurationType) {
+    GradlePatternBasedConfigurationProducer(ConfigurationType configurationType) {
       super(configurationType);
     }
 

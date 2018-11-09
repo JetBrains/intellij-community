@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -25,7 +26,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -35,6 +35,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
@@ -87,7 +88,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
 
     private final boolean inSameFile;
 
-    public UnnecessaryFullyQualifiedNameFix(boolean inSameFile) {
+    UnnecessaryFullyQualifiedNameFix(boolean inSameFile) {
       this.inSameFile = inSameFile;
     }
 
@@ -131,9 +132,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       file.accept(qualificationRemover);
       if (isOnTheFly()) {
         final Collection<PsiElement> shortenedElements = qualificationRemover.getShortenedElements();
-        if (isOnTheFly()) {
-          HighlightUtils.highlightElements(shortenedElements);
-        }
+        HighlightUtils.highlightElements(shortenedElements);
         showStatusMessage(file.getProject(), shortenedElements.size());
       }
     }
@@ -179,8 +178,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         if ("package-info.java".equals(file.getName())) {
           return;
         }
-        final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
-        final JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
+        final JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(reference.getContainingFile());
         if (javaSettings.useFqNamesInJavadocAlways()) {
           return;
         }
@@ -189,7 +187,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (qualifier == null) {
         return;
       }
-      qualifier.delete();
+      new CommentTracker().deleteAndRestoreComments(qualifier);
       shortenedElements.add(reference);
     }
   }
@@ -236,7 +234,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(target instanceof PsiClass)) {
         return;
       }
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
+      final CodeStyleSettings styleSettings = CodeStyle.getSettings(containingFile);
       final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
       boolean reportAsInformationInsideJavadoc = false;
       if (containingComment != null) {
@@ -299,7 +297,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       }
     }
 
-    private void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<PsiJavaCodeReferenceElement> references) {
+    private void collectInnerClassNames(PsiJavaCodeReferenceElement reference, List<? super PsiJavaCodeReferenceElement> references) {
       PsiElement rParent = reference.getParent();
       while (rParent instanceof PsiJavaCodeReferenceElement) {
         final PsiJavaCodeReferenceElement parentReference = (PsiJavaCodeReferenceElement)rParent;

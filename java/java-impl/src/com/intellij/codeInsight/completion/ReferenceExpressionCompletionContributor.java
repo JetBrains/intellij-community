@@ -91,7 +91,7 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   @Nullable 
-  public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<LookupElement> result) {
+  public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<? super LookupElement> result) {
     final PsiElement element = parameters.getPosition();
     if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return null;
     if (JavaKeywordCompletion.isAfterPrimitiveOrArrayType(element)) return null;
@@ -202,7 +202,7 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   static PsiExpression createExpression(String text, PsiElement element) {
-    return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createExpressionFromText(text, element);
+    return JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(text, element);
   }
 
   static String getQualifierText(@Nullable final PsiElement qualifier) {

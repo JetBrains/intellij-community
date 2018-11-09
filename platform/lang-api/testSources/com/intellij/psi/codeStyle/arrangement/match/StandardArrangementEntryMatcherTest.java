@@ -36,7 +36,6 @@ import static org.junit.Assert.*;
 
 /**
  * @author Denis Zhdanov
- * @since 08/27/2012
  */
 @RunWith(JMock.class)
 public class StandardArrangementEntryMatcherTest {

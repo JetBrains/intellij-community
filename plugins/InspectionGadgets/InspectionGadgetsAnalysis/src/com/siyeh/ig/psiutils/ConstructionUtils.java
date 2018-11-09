@@ -13,9 +13,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-/**
- * @author Tagir Valeev
- */
 public class ConstructionUtils {
   private static final Set<String> GUAVA_UTILITY_CLASSES =
     ContainerUtil.set("com.google.common.collect.Maps", "com.google.common.collect.Lists", "com.google.common.collect.Sets");
@@ -70,8 +67,9 @@ public class ConstructionUtils {
   public static boolean isEmptyCollectionInitializer(PsiExpression expression) {
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     if (expression instanceof PsiNewExpression) {
-      PsiExpressionList argumentList = ((PsiNewExpression)expression).getArgumentList();
-      if (argumentList != null && argumentList.isEmpty()) {
+      PsiNewExpression newExpression = (PsiNewExpression)expression;
+      PsiExpressionList argumentList = newExpression.getArgumentList();
+      if (argumentList != null && argumentList.isEmpty() && newExpression.getAnonymousClass() == null) {
         PsiType type = expression.getType();
         return com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION) ||
                com.intellij.psi.util.InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_MAP);

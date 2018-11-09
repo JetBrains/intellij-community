@@ -97,7 +97,11 @@ public class IntroduceVariableIntentionAction extends BaseRefactoringIntentionAc
       return getExpression((PsiStatement)prevSibling);
     }
     else {
-      return getExpression(PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, PsiReturnStatement.class));
+      while(!(element instanceof PsiExpressionStatement) && !(element instanceof PsiReturnStatement)) {
+        element = element.getParent();
+        if (element == null || element instanceof PsiCodeBlock) return null;
+      }
+      return getExpression(((PsiStatement)element));
     }
   }
 

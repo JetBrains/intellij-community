@@ -8,7 +8,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -17,10 +16,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*
-import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrOperatorReference
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**
@@ -459,6 +457,7 @@ class ResolveMethodTest extends GroovyResolveTestCase {
 
   void testMethodCallTypeFromMultiResolve() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("methodCallTypeFromMultiResolve/A.groovy").element
+    def result = ref.advancedResolve()
     assertNull(ref.resolve())
     assertTrue(((GrMethodCallExpression)ref.parent).type.equalsToText("java.lang.String"))
   }
@@ -1728,7 +1727,7 @@ class Bar {
 }
 
 def bar(Object o) {
-  if (o instanceof Foo && o instanceof Bar o.fo<caret>o() && o.bar()) {
+  if (o instanceof Foo && o instanceof Bar && o.fo<caret>o() && o.bar()) {
     print o.foo()
   }
 }
@@ -1746,7 +1745,7 @@ class Bar {
 }
 
 def bar(Object o) {
-  if (o instanceof Foo && o instanceof Bar o.foo() && o.b<caret>ar()) {
+  if (o instanceof Foo && o instanceof Bar && o.foo() && o.b<caret>ar()) {
     print o.foo()
   }
 }
@@ -1817,7 +1816,7 @@ def bar(Object o) {
   }
 
   void testBinaryWithQualifiedRefsInArgs() {
-    GrBinaryExpression expr = configureByText('_.groovy', '''\
+    GrOperatorReference ref = configureByText('_.groovy', '''\
 class Base {
     def or(String s) {}
     def or(Base b) {}
@@ -1832,10 +1831,10 @@ class GrTypeDefinition  {
 
     }
 }
-''', GrBinaryExpression)
+''', GrOperatorReference)
 
-    assert expr.multiResolve(false).length == 1
-    assert expr.multiResolve(true).length > 1
+    assert ref.multiResolve(false).length == 1
+    assert ref.multiResolve(true).length > 1
   }
 
   void testStaticMethodInInstanceContext() {
@@ -2182,26 +2181,10 @@ class X {
 trait GenericSourceTrait<E> {
     static E someOtherStaticMethod() {null}
 }
-class SourceConcrete implements GenericSourceTrait<String> {})
+class SourceConcrete implements GenericSourceTrait<String> {}
 SourceConcrete.someOtherStatic<caret>Method()
 ''', GrTraitMethod)
     assertEquals "java.lang.String", method.returnType.canonicalText
-  }
-
-  void 'test substitutor is not computed within resolve'() {
-    def ref = configureByText('_.groovy', '''
-[1, 2, 3].with {
-  group<caret>By({2})
-}
-''', GrReferenceExpression)
-    def results = ref.multiResolve(false)
-    assert results.length > 0
-    results.each {
-      assert it instanceof GroovyMethodResultImpl
-      def computer = it.substitutorComputer
-      assert computer instanceof NotNullCachedComputableWrapper
-      assert !computer.computed
-    }
   }
 
   void 'test resolve method with class qualifier'() {
@@ -2295,5 +2278,13 @@ new A()
     def resolved = expression.resolveMethod()
     assert resolved instanceof GrMethod
     assert resolved.isVarArgs()
+  }
+
+  void 'test static method via class instance'() {
+    resolveByText '''\
+class A { public static foo() { 45 } }
+def a = A // class instance
+a.<caret>foo()
+''', GrMethod
   }
 }

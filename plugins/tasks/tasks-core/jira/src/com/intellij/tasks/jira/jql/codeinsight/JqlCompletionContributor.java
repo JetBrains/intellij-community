@@ -4,7 +4,6 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiElement;
@@ -244,7 +243,7 @@ public class JqlCompletionContributor extends CompletionContributor {
 
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
-                                  ProcessingContext context,
+                                  @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       for (String keyword : myKeywords) {
         result.addElement(LookupElementBuilder.create(keyword).withBoldness(true));
@@ -256,7 +255,7 @@ public class JqlCompletionContributor extends CompletionContributor {
 
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
-                                  ProcessingContext context,
+                                  @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       JqlFieldType operandType;
       boolean listFunctionExpected;
@@ -316,7 +315,7 @@ public class JqlCompletionContributor extends CompletionContributor {
 
     @Override
     protected void addCompletions(@NotNull CompletionParameters parameters,
-                                  ProcessingContext context,
+                                  @NotNull ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
       for (String field : JqlStandardField.allOfType(myFieldType)) {
         result.addElement(LookupElementBuilder.create(field));

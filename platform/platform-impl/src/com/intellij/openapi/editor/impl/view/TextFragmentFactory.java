@@ -16,8 +16,8 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
-import sun.swing.SwingUtilities2;
 
 class TextFragmentFactory {
   public static TextFragment createTextFragment(@NotNull char[] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
@@ -31,6 +31,6 @@ class TextFragmentFactory {
 
   private static boolean isComplexText(char[] chars, int start, int end) {
     // replace with Font.textRequiresLayout in Java 9
-    return SwingUtilities2.isComplexLayout(chars, start, end);
+    return UIUtilities.isComplexLayout(chars, start, end);
   }
 }

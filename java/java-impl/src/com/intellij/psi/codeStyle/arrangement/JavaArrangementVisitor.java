@@ -36,6 +36,7 @@ import java.util.*;
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
@@ -63,7 +64,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<>();
 
   @NotNull private final  JavaArrangementParseInfo      myInfo;
-  @NotNull private final  Collection<TextRange>         myRanges;
+  @NotNull private final Collection<? extends TextRange> myRanges;
   @NotNull private final  Set<ArrangementSettingsToken> myGroupingRules;
   @NotNull private final  MethodBodyProcessor           myMethodBodyProcessor;
   @NotNull private final  ArrangementSectionDetector mySectionDetector;
@@ -75,7 +76,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
 
   JavaArrangementVisitor(@NotNull JavaArrangementParseInfo infoHolder,
                          @Nullable Document document,
-                         @NotNull Collection<TextRange> ranges,
+                         @NotNull Collection<? extends TextRange> ranges,
                          @NotNull ArrangementSettings settings) {
     myInfo = infoHolder;
     myDocument = document;
@@ -551,6 +552,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     }
   }
 
+  // Visitor that search dependencies (calls of other methods, that declared in this class, or method reference usages) for given method
   private static class MethodBodyProcessor extends JavaRecursiveElementVisitor {
 
     @NotNull private final JavaArrangementParseInfo myInfo;
@@ -581,6 +583,16 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
       //   }.run();
       // Here we want to process that 'Runnable.run()' implementation.
       super.visitMethodCallExpression(psiMethodCallExpression);
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      PsiMethod method = tryCast(expression.resolve(), PsiMethod.class);
+      if (method == null) return;
+      assert myBaseMethod != null;
+      if (method.getContainingClass() == myBaseMethod.getContainingClass()) {
+        myInfo.registerMethodCallDependency(myBaseMethod, method);
+      }
     }
 
     boolean setBaseMethod(@Nullable PsiMethod baseMethod) {

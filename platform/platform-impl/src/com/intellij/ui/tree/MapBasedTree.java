@@ -17,22 +17,16 @@ package com.intellij.ui.tree;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
-import static java.util.Collections.unmodifiableList;
-import static java.util.stream.Collectors.toList;
+import static java.util.Collections.*;
 
 /**
  * @author Sergey.Malenkov
@@ -41,17 +35,17 @@ public final class MapBasedTree<K, N> {
   private static final Logger LOG = Logger.getInstance(MapBasedTree.class);
 
   private final Map<K, Entry<N>> map;
-  private final Function<N, K> keyFunction;
+  private final Function<? super N, ? extends K> keyFunction;
   private final TreePath path;
   private volatile Entry<N> root;
-  private volatile Consumer<N> nodeRemoved;
-  private volatile Consumer<N> nodeInserted;
+  private volatile Consumer<? super N> nodeRemoved;
+  private volatile Consumer<? super N> nodeInserted;
 
-  public MapBasedTree(boolean identity, @NotNull Function<N, K> keyFunction) {
+  public MapBasedTree(boolean identity, @NotNull Function<? super N, ? extends K> keyFunction) {
     this(identity, keyFunction, null);
   }
 
-  public MapBasedTree(boolean identity, @NotNull Function<N, K> keyFunction, TreePath path) {
+  public MapBasedTree(boolean identity, @NotNull Function<? super N, ? extends K> keyFunction, TreePath path) {
     map = identity ? new IdentityHashMap<>() : new HashMap<>();
     this.keyFunction = keyFunction;
     this.path = path;
@@ -62,13 +56,13 @@ public final class MapBasedTree<K, N> {
     map.values().forEach(entry -> entry.invalidate());
   }
 
-  public void onRemove(@NotNull Consumer<N> consumer) {
-    Consumer<N> old = nodeRemoved;
+  public void onRemove(@NotNull Consumer<? super N> consumer) {
+    Consumer old = (Consumer<N>)nodeRemoved;
     nodeRemoved = old == null ? consumer : old.andThen(consumer);
   }
 
-  public void onInsert(@NotNull Consumer<N> consumer) {
-    Consumer<N> old = nodeInserted;
+  public void onInsert(@NotNull Consumer<? super N> consumer) {
+    Consumer old = (Consumer<N>)nodeInserted;
     nodeInserted = old == null ? consumer : old.andThen(consumer);
   }
 
@@ -99,8 +93,8 @@ public final class MapBasedTree<K, N> {
     return null;
   }
 
-  public boolean updateRoot(Pair<N, Boolean> pair) {
-    N node = pair == null ? null : pair.first;
+  public boolean updateRoot(Pair<? extends N, Boolean> pair) {
+    N node = Pair.getFirst(pair);
     if (root == null ? node == null : root.node == node) return false;
 
     if (root != null) {
@@ -118,7 +112,7 @@ public final class MapBasedTree<K, N> {
     return true;
   }
 
-  public UpdateResult<N> update(@NotNull Entry<N> parent, List<Pair<N, Boolean>> children) {
+  public UpdateResult<N> update(@NotNull Entry<N> parent, List<? extends Pair<N, Boolean>> children) {
     List<Entry<N>> newChildren = new ArrayList<>(children == null ? 0 : children.size());
     List<Entry<N>> oldChildren = parent.children;
     Map<Entry<N>, K> mapInserted = new IdentityHashMap<>();
@@ -161,9 +155,9 @@ public final class MapBasedTree<K, N> {
         oldChildren = emptyList();
         LOG.warn("MapBasedTree: unexpected state");
       }
-      removed = oldChildren.stream().filter(entry -> !mapContained.containsKey(entry)).collect(toList());
-      inserted = newChildren.stream().filter(entry -> !mapContained.containsKey(entry)).collect(toList());
-      contained = newChildren.stream().filter(entry -> mapContained.containsKey(entry)).collect(toList());
+      removed = ContainerUtil.filter(oldChildren, entry -> !mapContained.containsKey(entry));
+      inserted = ContainerUtil.filter(newChildren, entry -> !mapContained.containsKey(entry));
+      contained = ContainerUtil.filter(newChildren, entry -> mapContained.containsKey(entry));
     }
     removeChildren(parent, removed);
     mapInserted.forEach(this::insert);
@@ -196,7 +190,7 @@ public final class MapBasedTree<K, N> {
       }
     }
     removeChildren(entry, entry.children);
-    Consumer<N> consumer = nodeRemoved;
+    Consumer<? super N> consumer = nodeRemoved;
     if (consumer != null) consumer.accept(entry.node);
   }
 
@@ -209,11 +203,11 @@ public final class MapBasedTree<K, N> {
         return;
       }
     }
-    Consumer<N> consumer = nodeInserted;
+    Consumer<? super N> consumer = nodeInserted;
     if (consumer != null) consumer.accept(entry.node);
   }
 
-  private static <T> List<T> guard(List<T> list) {
+  private static <T> List<T> guard(List<? extends T> list) {
     return list == null || list.isEmpty() ? emptyList() : unmodifiableList(list);
   }
 

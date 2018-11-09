@@ -15,19 +15,68 @@
  */
 package com.intellij.util.concurrency
 
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.execution.ExecutionException
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.LoggedErrorProcessor
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 
-class QueueProcessorTest : PlatformTestCase() {
+private const val TIMEOUT_MS = 1000L
+
+class QueueProcessorTest : LightPlatformTestCase() {
   fun `test waiting for returns on finish condition`() {
-    var stop = false;
+    var stop = false
     val semaphore = Semaphore(0)
     val processor = QueueProcessor<Any>({ semaphore.down() }, { stop })
-    
+
     processor.add(1)
-    stop = true;
+    stop = true
     semaphore.up()
-    
-    assertTrue(processor.waitFor(1000));
-    processor.waitFor(); // just in case let's check this method as well - hopefully, it won't hang since waitFor(timeout) works
+
+    assertTrue(processor.waitFor(TIMEOUT_MS))
+    processor.waitFor() // just in case let's check this method as well - hopefully, it won't hang since waitFor(timeout) works
+  }
+
+  fun `test works fine after thrown exception`() {
+    LoggedErrorProcessor.getInstance().disableStderrDumping(testRootDisposable)
+
+    val resultQueue = LinkedBlockingQueue<Any>()
+    val queueProcessor = QueueProcessor<() -> Any> {
+      try {
+        resultQueue.add(it())
+      }
+      catch (e: Throwable) {
+        resultQueue.add(e)
+        throw e
+      }
+    }
+
+    fun check(expectedResult: Any, item: () -> Any) {
+      queueProcessor.add(item)
+      assertEquals(expectedResult, resultQueue.poll(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+      assertEmpty(resultQueue)
+    }
+
+    fun check(expectedResult: Number) = check(expectedResult) { expectedResult }
+    fun check(expectedException: Throwable) = check(expectedException) {
+      throw expectedException.also {
+        it.addSuppressed(Throwable())
+      }
+    }
+
+    check(1)
+    check(Throwable())
+    check(2)
+    check(Error())
+    check(3)
+    check(RuntimeException())
+    check(4)
+    check(ProcessCanceledException())  // this used to make the remaining queue elements stuck
+    check(5)
+    check(Exception())
+    check(6)
+    check(ExecutionException("EE"))
+    check(7)
   }
 }

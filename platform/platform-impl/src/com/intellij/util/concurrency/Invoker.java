@@ -2,16 +2,21 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.openapi.project.IndexNotReadyException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Obsolescent;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.swing.Timer;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.util.Disposer.register;
@@ -25,12 +30,13 @@ public abstract class Invoker implements Disposable {
   private static final int THRESHOLD = Integer.MAX_VALUE;
   private static final Logger LOG = Logger.getInstance(Invoker.class);
   private static final AtomicInteger UID = new AtomicInteger();
+  private final ConcurrentHashMap<AsyncPromise<?>, ProgressIndicatorBase> indicators = new ConcurrentHashMap<>();
   private final AtomicInteger count = new AtomicInteger();
   private final String description;
-  volatile boolean disposed;
+  private volatile boolean disposed;
 
-  private Invoker(String prefix, Disposable parent) {
-    description = UID.getAndIncrement() + ".Invoker." + prefix + ":" + parent.getClass().getName();
+  private Invoker(@NotNull String prefix, @NotNull Disposable parent) {
+    description = UID.getAndIncrement() + ".Invoker." + prefix + ": " + parent;
     register(parent, this);
   }
 
@@ -42,6 +48,9 @@ public abstract class Invoker implements Disposable {
   @Override
   public void dispose() {
     disposed = true;
+    while (!indicators.isEmpty()) {
+      indicators.keySet().forEach(AsyncPromise::cancel);
+    }
   }
 
   /**
@@ -58,9 +67,11 @@ public abstract class Invoker implements Disposable {
    * until all pending events have been processed.
    *
    * @param task a task to execute asynchronously on the valid thread
+   * @return an object to control task processing
    */
-  public final void invokeLater(@NotNull Runnable task) {
-    invokeLater(task, 0);
+  @NotNull
+  public final CancellablePromise<?> invokeLater(@NotNull Runnable task) {
+    return invokeLater(task, 0);
   }
 
   /**
@@ -68,13 +79,17 @@ public abstract class Invoker implements Disposable {
    *
    * @param task  a task to execute asynchronously on the valid thread
    * @param delay milliseconds for the initial delay
+   * @return an object to control task processing
    */
-  public final void invokeLater(@NotNull Runnable task, int delay) {
-    if (delay < 0) throw new IllegalArgumentException("delay");
-    if (canInvoke(task)) {
+  @NotNull
+  public final CancellablePromise<?> invokeLater(@NotNull Runnable task, int delay) {
+    if (delay < 0) throw new IllegalArgumentException("delay must be non-negative: " + delay);
+    AsyncPromise<?> promise = new AsyncPromise<>();
+    if (canInvoke(task, promise)) {
       count.incrementAndGet();
-      offer(() -> invokeSafely(task, 0), delay);
+      offer(() -> invokeSafely(task, promise, 0), delay);
     }
+    return promise;
   }
 
   /**
@@ -82,15 +97,25 @@ public abstract class Invoker implements Disposable {
    * or asynchronously after all pending tasks have been processed.
    *
    * @param task a task to execute on the valid thread
+   * @return an object to control task processing
    */
-  public final void invokeLaterIfNeeded(@NotNull Runnable task) {
+  @NotNull
+  public final CancellablePromise<?> runOrInvokeLater(@NotNull Runnable task) {
     if (isValidThread()) {
       count.incrementAndGet();
-      invokeSafely(task, 0);
+      AsyncPromise<?> promise = new AsyncPromise<>();
+      invokeSafely(task, promise, 0);
+      return promise;
     }
-    else {
-      invokeLater(task);
-    }
+    return invokeLater(task);
+  }
+
+  /**
+   * @deprecated use {@link #runOrInvokeLater(Runnable)}
+   */
+  @Deprecated
+  public final void invokeLaterIfNeeded(@NotNull Runnable task) {
+    runOrInvokeLater(task);
   }
 
   /**
@@ -102,60 +127,115 @@ public abstract class Invoker implements Disposable {
     return disposed ? 0 : count.get();
   }
 
-  abstract void offer(Runnable runnable, int delay);
+  abstract void offer(@NotNull Runnable runnable, int delay);
 
-  final void invokeSafely(Runnable task, int attempt) {
+  /**
+   * @param task    a task to execute on the valid thread
+   * @param promise an object to control task processing
+   * @param attempt an attempt to run the specified task
+   */
+  private void invokeSafely(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt) {
     try {
-      if (canInvoke(task)) {
-        if (isDispatchThread() || getApplication() == null) {
-          // do not care about ReadAction in EDT and in tests without application
-          task.run();
+      if (canInvoke(task, promise)) {
+        if (getApplication() == null) {
+          task.run(); // is not interruptible in tests without application
         }
-        else if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task)) {
-          throw new ProcessCanceledException();
+        else if (isDispatchThread()) {
+          ProgressManager.getInstance().runProcess(task, indicator(promise));
         }
+        else if (getApplication().isReadAccessAllowed()) {
+          if (((ApplicationEx)getApplication()).isWriteActionPending()) throw new ProcessCanceledException();
+          ProgressManager.getInstance().runProcess(task, indicator(promise));
+        }
+        else {
+          // try to execute a task until it stops throwing ProcessCanceledException
+          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task, indicator(promise))) {
+            if (!canInvoke(task, promise)) return; // stop execution of obsolete task
+            ProgressIndicatorUtils.yieldToPendingWriteActions();
+            if (!canRestart(task, promise, attempt)) return;
+            LOG.debug("Task is restarted");
+            attempt++;
+          }
+        }
+        promise.setResult(null);
       }
     }
-    catch (ProcessCanceledException exception) {
-      if (canRestart(task, attempt)) {
+    catch (ProcessCanceledException | IndexNotReadyException exception) {
+      if (canRestart(task, promise, attempt)) {
         count.incrementAndGet();
         int nextAttempt = attempt + 1;
-        offer(() -> invokeSafely(task, nextAttempt), 10);
+        offer(() -> invokeSafely(task, promise, nextAttempt), 10);
         LOG.debug("Task is restarted");
       }
     }
-    catch (Exception exception) {
-      LOG.warn(exception);
-    }
     catch (Throwable throwable) {
-      LOG.warn(throwable);
-      throw throwable;
+      try {
+        LOG.error(throwable);
+      }
+      finally {
+        promise.setError(throwable);
+      }
     }
     finally {
       count.decrementAndGet();
     }
   }
 
-  private boolean canRestart(Runnable task, int attempt) {
+  /**
+   * @param task    a task to execute on the valid thread
+   * @param promise an object to control task processing
+   * @param attempt an attempt to run the specified task
+   * @return {@code false} if too many attempts to run the task,
+   * or if the given promise is already done or cancelled,
+   * or if the current invoker is disposed,
+   * or if the specified task is obsolete
+   */
+  private boolean canRestart(@NotNull Runnable task, @NotNull AsyncPromise<?> promise, int attempt) {
     LOG.debug("Task is canceled");
-    if (attempt < THRESHOLD) return canInvoke(task);
+    if (attempt < THRESHOLD) return canInvoke(task, promise);
     LOG.warn("Task is always canceled: " + task);
+    promise.setError("timeout");
     return false;
   }
 
-  final boolean canInvoke(Runnable task) {
+  /**
+   * @param task    a task to execute on the valid thread
+   * @param promise an object to control task processing
+   * @return {@code false} if the given promise is already done or cancelled,
+   * or if the current invoker is disposed,
+   * or if the specified task is obsolete
+   */
+  private boolean canInvoke(@NotNull Runnable task, @NotNull AsyncPromise<?> promise) {
+    if (promise.isDone()) {
+      LOG.debug("Promise is cancelled: ", promise.isCancelled());
+      return false;
+    }
     if (disposed) {
       LOG.debug("Invoker is disposed");
+      promise.setError("disposed");
       return false;
     }
     if (task instanceof Obsolescent) {
       Obsolescent obsolescent = (Obsolescent)task;
       if (obsolescent.isObsolete()) {
         LOG.debug("Task is obsolete");
+        promise.setError("obsolete");
         return false;
       }
     }
     return true;
+  }
+
+  @NotNull
+  private ProgressIndicatorBase indicator(@NotNull AsyncPromise<?> promise) {
+    ProgressIndicatorBase indicator = indicators.get(promise);
+    if (indicator == null) {
+      indicator = new ProgressIndicatorBase(true);
+      ProgressIndicatorBase old = indicators.put(promise, indicator);
+      if (old != null) LOG.error("the same task is running in parallel");
+      promise.onProcessed(done -> indicators.remove(promise).cancel());
+    }
+    return indicator;
   }
 
   /**
@@ -163,17 +243,8 @@ public abstract class Invoker implements Disposable {
    * which is the only one valid thread for this invoker.
    */
   public static final class EDT extends Invoker {
-    private final TransferToEDTQueue<Runnable> queue;
-
     public EDT(@NotNull Disposable parent) {
       super("EDT", parent);
-      queue = TransferToEDTQueue.createRunnableMerger(toString());
-    }
-
-    @Override
-    public void dispose() {
-      super.dispose();
-      queue.stop();
     }
 
     @Override
@@ -182,14 +253,12 @@ public abstract class Invoker implements Disposable {
     }
 
     @Override
-    void offer(Runnable runnable, int delay) {
+    void offer(@NotNull Runnable runnable, int delay) {
       if (delay > 0) {
-        Timer timer = new Timer(delay, event -> runnable.run());
-        timer.setRepeats(false);
-        timer.start();
+        EdtExecutorService.getScheduledExecutorInstance().schedule(runnable, delay, MILLISECONDS);
       }
       else {
-        queue.offer(runnable);
+        EdtExecutorService.getInstance().execute(runnable);
       }
     }
   }
@@ -211,7 +280,7 @@ public abstract class Invoker implements Disposable {
     }
 
     @Override
-    void offer(Runnable runnable, int delay) {
+    void offer(@NotNull Runnable runnable, int delay) {
       schedule(AppExecutorUtil.getAppScheduledExecutorService(), runnable, delay);
     }
   }
@@ -241,12 +310,16 @@ public abstract class Invoker implements Disposable {
     }
 
     @Override
-    void offer(Runnable runnable, int delay) {
+    void offer(@NotNull Runnable runnable, int delay) {
       schedule(executor, () -> {
-        if (thread != null) LOG.warn("unexpected thread: " + thread);
-        thread = Thread.currentThread();
-        runnable.run();
-        thread = null;
+        if (thread != null) LOG.error("unexpected thread: " + thread);
+        try {
+          thread = Thread.currentThread();
+          runnable.run(); // may throw an assertion error
+        }
+        finally {
+          thread = null;
+        }
       }, delay);
     }
   }

@@ -141,8 +141,8 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Nullable
   private static Ref<PyType> getGeneratorReturnType(@Nullable PyType type) {
-    if (type instanceof PyClassLikeType && type instanceof PyCollectionType) {
-      if (type instanceof PyClassType && PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
+    if (type instanceof PyCollectionType) {
+      if (PyNames.AWAITABLE.equals(((PyClassType)type).getPyClass().getName())) {
         return Ref.create(((PyCollectionType)type).getIteratedItemType());
       }
       else {

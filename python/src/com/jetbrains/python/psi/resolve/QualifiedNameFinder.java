@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Couple;
@@ -37,9 +22,9 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+
+import static com.jetbrains.python.codeInsight.typing.PyStubPackages.convertStubToRuntimePackageName;
 
 /**
  * @author yole
@@ -88,7 +73,7 @@ public class QualifiedNameFinder {
 
   @Nullable
   private static QualifiedName shortestQName(@NotNull List<QualifiedName> qNames) {
-    return qNames.stream().min((o1, o2) -> o1.getComponentCount() - o2.getComponentCount()).orElse(null);
+    return qNames.stream().min(Comparator.comparingInt(QualifiedName::getComponentCount)).orElse(null);
   }
 
   @Nullable
@@ -166,7 +151,7 @@ public class QualifiedNameFinder {
 
   @Nullable
   public static QualifiedName canonizeQualifiedName(QualifiedName qname, PsiElement foothold) {
-    for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
+    for (PyCanonicalPathProvider provider : PyCanonicalPathProvider.EP_NAME.getExtensionList()) {
       final QualifiedName restored = provider.getCanonicalPath(qname, foothold);
       if (restored != null) {
         return restored;
@@ -212,47 +197,62 @@ public class QualifiedNameFinder {
   }
 
   /**
-   * Tries to find roots that contain given vfile, and among them the root that contains at the smallest depth.
-   * For equal depth source root is in preference to library.
+   * Tries to find roots that contain given vfile.
    */
   private static class PathChoosingVisitor implements RootVisitor {
-    @Nullable private final VirtualFile myVFile;
-    @NotNull private final List<QualifiedName> myResults = new ArrayList<>();
+    @NotNull private final VirtualFile myVFile;
+    @NotNull private final Set<QualifiedName> myResults = new LinkedHashSet<>();
 
     private PathChoosingVisitor(@NotNull VirtualFile file) {
-      if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {
-        myVFile = file.getParent();
-      }
-      else {
-        myVFile = file;
-      }
+      myVFile = file;
     }
 
-    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk, boolean isModuleSource) {
-      if (myVFile != null) {
-        final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
-        if (relativePath != null && !relativePath.isEmpty()) {
-          List<String> result = StringUtil.split(relativePath, "/");
-          if (result.size() > 0) {
-            result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
-          }
-          for (String component : result) {
-            if (!PyNames.isIdentifier(component)) {
-              return true;
-            }
-          }
-          final QualifiedName resQname = QualifiedName.fromComponents(result);
-          if (!myResults.contains(resQname)) {
-            myResults.add(resQname);
+    @Override
+    public boolean visitRoot(@NotNull VirtualFile root, @Nullable Module module, @Nullable Sdk sdk, boolean isModuleSource) {
+      final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
+      final QualifiedName result = convertStubToRuntimePackageName(pathToQualifiedName(relativePath));
+      if (result.getComponentCount() != 0) {
+        for (String component : result.getComponents()) {
+          if (!PyNames.isIdentifier(component)) {
+            return true;
           }
         }
+        myResults.add(result);
       }
       return true;
     }
 
     @NotNull
+    private QualifiedName pathToQualifiedName(@Nullable String relativePath) {
+      if (StringUtil.isEmpty(relativePath)) return QualifiedName.fromComponents();
+
+      final List<String> result = new ArrayList<>(StringUtil.split(relativePath, "/"));
+      if (!result.isEmpty()) {
+        final int lastIndex = result.size() - 1;
+        final String nameWithoutExtension = FileUtil.getNameWithoutExtension(result.get(lastIndex));
+
+        if (myVFile.isDirectory() || !nameWithoutExtension.equals(PyNames.INIT)) {
+          result.set(lastIndex, nameWithoutExtension);
+        }
+        else {
+          result.remove(lastIndex);
+        }
+
+        for (String component : result) {
+          if (component.contains(".")) {
+            return QualifiedName.fromComponents();
+          }
+        }
+
+        return QualifiedName.fromComponents(result);
+      }
+
+      return QualifiedName.fromComponents();
+    }
+
+    @NotNull
     public List<QualifiedName> getResults() {
-      return myResults;
+      return new ArrayList<>(myResults);
     }
   }
 }

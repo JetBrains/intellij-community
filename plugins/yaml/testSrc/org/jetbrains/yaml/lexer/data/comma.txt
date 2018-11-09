@@ -1,3 +1,4 @@
-scalar key ('key:')
+scalar key ('key')
+: (':')
 whitespace (' ')
 text ('Hello, how are you?')

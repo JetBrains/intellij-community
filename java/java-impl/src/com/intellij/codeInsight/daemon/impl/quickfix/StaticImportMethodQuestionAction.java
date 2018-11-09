@@ -47,12 +47,12 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
   private static final Logger LOG = Logger.getInstance(StaticImportMethodQuestionAction.class);
   private final Project myProject;
   private final Editor myEditor;
-  private final List<T> myCandidates;
+  private final List<? extends T> myCandidates;
   private final SmartPsiElementPointer<? extends PsiElement> myRef;
 
   public StaticImportMethodQuestionAction(Project project,
                                           Editor editor,
-                                          List<T> candidates,
+                                          List<? extends T> candidates,
                                           SmartPsiElementPointer<? extends PsiElement> ref) {
     myProject = project;
     myEditor = editor;
@@ -105,7 +105,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
     }
     final BaseListPopupStep<T> step =
       new BaseListPopupStep<T>(getPopupTitle(), myCandidates) {
-        
+
         @Override
         public boolean isAutoSelectionEnabled() {
           return false;
@@ -115,7 +115,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
         public boolean isSpeedSearchEnabled() {
           return true;
         }
-        
+
         @Override
         public PopupStep onChosen(T selectedValue, boolean finalChoice) {
           if (selectedValue == null) {
@@ -150,21 +150,23 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
           return aValue.getIcon(0);
         }
       };
-    if (ApplicationManager.getApplication().isOnAir()) {
+if (ApplicationManager.getApplication().isOnAir()) {
       JBPopupFactory.getInstance().createListPopup(step).showInBestPositionFor(editor);
     } else {
-      final ListPopupImpl popup = new ListPopupImpl(step) {
-        final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
-        @Override
-        protected ListCellRenderer getListElementRenderer() {
-          return new PsiElementListCellRenderer<T>() {
-            public String getElementText(T element) {
-              return getElementPresentableName(element);
-            }
+    final ListPopupImpl popup = new ListPopupImpl(step) {
+      final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
+      @Override
+      protected ListCellRenderer getListElementRenderer() {
+        return new PsiElementListCellRenderer<T>() {
+          @Override
+          public String getElementText(T element) {
+            return getElementPresentableName(element);
+          }
 
-            public String getContainerText(final T element, final String name) {
-              return PsiClassListCellRenderer.getContainerTextStatic(element);
-            }
+          @Override
+          public String getContainerText(final T element, final String name) {
+            return PsiClassListCellRenderer.getContainerTextStatic(element);
+          }
 
           @Override
           public int getIconFlags() {

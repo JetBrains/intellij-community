@@ -18,7 +18,7 @@ public class ModuleOptionsTableModel extends AbstractTableModel implements ItemR
     private final Module module;
     private String option;
 
-    public Item(Module module) {
+    Item(Module module) {
       this(module, "");
     }
 

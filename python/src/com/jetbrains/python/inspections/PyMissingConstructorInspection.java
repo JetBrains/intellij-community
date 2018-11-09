@@ -55,7 +55,7 @@ public class PyMissingConstructorInspection extends PyInspection {
 
   private static class Visitor extends PyInspectionVisitor {
 
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
@@ -124,7 +124,7 @@ public class PyMissingConstructorInspection extends PyInspection {
 
       private boolean myHasConstructorCall = false;
 
-      public CallVisitor(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+      CallVisitor(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
         myClass = cls;
         myContext = context;
       }

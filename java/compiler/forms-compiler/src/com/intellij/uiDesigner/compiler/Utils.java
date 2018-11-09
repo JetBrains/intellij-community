@@ -115,6 +115,7 @@ public final class Utils {
     final String[] className = new String[]{null};
     try {
       SAX_PARSER.parse(new InputSource(new StringReader(formFileContent)), new DefaultHandler() {
+        @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
           if ("form".equals(qName)) {
             className[0] = attributes.getValue("", "bind-to-class");
@@ -219,6 +220,7 @@ public final class Utils {
     final CodeGenerationException[] validateExceptions = new CodeGenerationException[1];
     final RecursiveFormNestingException[] recursiveNestingExceptions = new RecursiveFormNestingException[1];
     rootContainer.accept(new ComponentVisitor() {
+      @Override
       public boolean visit(final IComponent component) {
         if (component instanceof LwNestedForm) {
           LwNestedForm nestedForm = (LwNestedForm)component;
@@ -292,6 +294,7 @@ public final class Utils {
     final int[] result = new int[1];
     result[0] = 0;
     container.accept(new ComponentVisitor() {
+      @Override
       public boolean visit(IComponent c) {
         if (c.isCustomCreate()) {
           result[0]++;

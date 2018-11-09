@@ -1,6 +1,6 @@
 /*
  * Copyright 2006 ProductiveMe Inc.
- * Copyright 2013 JetBrains s.r.o.
+ * Copyright 2013-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 package com.pme.exe.res;
 
 /**
+ * @author Sergey Zhulin
  * Date: Apr 25, 2006
  * Time: 3:12:58 PM
  */

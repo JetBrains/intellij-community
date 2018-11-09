@@ -61,7 +61,7 @@ fun processScopeVariables(scope: Scope,
 
     val functions = SmartList<Variable>()
     for (variable in variables) {
-      if (memberFilter.isMemberVisible(variable)) {
+      if (memberFilter.isMemberVisible(variable) && variable.name != RECEIVER_NAME && variable.name != memberFilter.sourceNameToRaw(RECEIVER_NAME)) {
         val value = variable.value
         if (value != null && value.type == ValueType.FUNCTION && value.valueString != null && !UNNAMED_FUNCTION_PATTERN.matcher(
           value.valueString).lookingAt()) {
@@ -172,7 +172,7 @@ private fun addAditionalVariables(additionalVariables: Collection<Variable>,
   }
 }
 
-// prefixed '_' must be last, fixed case sensitive natural compare
+// prefixed '_' must be last, uppercase after lowercase, fixed case sensitive natural compare
 private fun naturalCompare(string1: String?, string2: String?): Int {
   //noinspection StringEquality
   if (string1 === string2) {
@@ -238,10 +238,16 @@ private fun naturalCompare(string1: String?, string2: String?): Int {
       j--
     }
     else if (ch1 != ch2) {
+      fun reverseCase(ch: Char) = when {
+        ch.isUpperCase() -> ch.toLowerCase()
+        ch.isLowerCase() -> ch.toUpperCase()
+        else -> ch
+      }
+
       when {
         ch1 == '_' -> return 1
         ch2 == '_' -> return -1
-        else -> return ch1 - ch2
+        else -> return reverseCase(ch1) - reverseCase(ch2)
       }
     }
     i++

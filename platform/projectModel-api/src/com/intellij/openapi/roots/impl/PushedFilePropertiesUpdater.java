@@ -41,5 +41,5 @@ public abstract class PushedFilePropertiesUpdater {
    * Invalidates indices and other caches for the given file or its immediate children (in case it's a directory).
    * Only files matching the condition are processed.
    */
-  public abstract void filePropertiesChanged(@NotNull VirtualFile fileOrDir, @NotNull Condition<VirtualFile> acceptFileCondition);
+  public abstract void filePropertiesChanged(@NotNull VirtualFile fileOrDir, @NotNull Condition<? super VirtualFile> acceptFileCondition);
 }

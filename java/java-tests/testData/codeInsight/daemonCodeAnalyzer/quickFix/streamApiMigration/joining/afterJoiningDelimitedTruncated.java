@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 public class Test {
   static String test(List<String> list) {
-      String sb = list.stream().filter(s -> !s.isEmpty()).map(s -> String.valueOf(s.length())).collect(Collectors.joining("\""));
+    String sb = list.stream().filter(s -> !s.isEmpty()).map(s -> String.valueOf(s.length())).collect(Collectors.joining("\""));
       return sb.trim();
   }
 

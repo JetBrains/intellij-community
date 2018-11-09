@@ -29,10 +29,16 @@ import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.pipenv.PipenvKt;
+import com.jetbrains.python.sdk.pipenv.UsePipEnvQuickFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class PyInterpreterInspection extends PyInspection {
 
@@ -62,27 +68,45 @@ public class PyInterpreterInspection extends PyInspection {
     public void visitPyFile(PyFile node) {
       final Module module = ModuleUtilCore.findModuleForPsiElement(node);
       if (module == null) return;
+      final Sdk sdk = PythonSdkType.findPythonSdk(module);
 
       final boolean pyCharm = PlatformUtils.isPyCharm();
 
       final String interpreterOwner = pyCharm ? "project" : "module";
-      final LocalQuickFix[] fixes = pyCharm ? new LocalQuickFix[]{new ConfigureInterpreterFix()} : LocalQuickFix.EMPTY_ARRAY;
+      final List<LocalQuickFix> fixes = new ArrayList<>();
+      // TODO: Introduce an inspection extension
+      if (UsePipEnvQuickFix.Companion.isApplicable(module)) {
+        fixes.add(new UsePipEnvQuickFix(sdk, module));
+      }
+      if (pyCharm) {
+        fixes.add(new ConfigureInterpreterFix());
+      }
+
       final String product = pyCharm ? "PyCharm" : "Python plugin";
 
-      final Sdk sdk = PythonSdkType.findPythonSdk(module);
-
       if (sdk == null) {
-        registerProblem(node, "No Python interpreter configured for the " + interpreterOwner, fixes);
-      }
-      else if (PythonSdkType.isInvalid(sdk)) {
-        registerProblem(node, "Invalid Python interpreter selected for the " + interpreterOwner, fixes);
+        registerProblem(node, "No Python interpreter configured for the " + interpreterOwner, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else {
-        final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
-        if (!LanguageLevel.SUPPORTED_LEVELS.contains(languageLevel)) {
-          registerProblem(node,
-                          "Python " + languageLevel + " has reached its end-of-life and is no longer supported by " + product,
-                          fixes);
+        final Module associatedModule = PySdkExtKt.getAssociatedModule(sdk);
+        final String associatedName = associatedModule != null ? associatedModule.getName() : PySdkExtKt.getAssociatedModulePath(sdk);
+        // TODO: Introduce an inspection extension
+        if (PipenvKt.isPipEnv(sdk) && associatedModule != module) {
+          final String message = associatedName != null ?
+                                 "Pipenv interpreter is associated with another " + interpreterOwner + ": '" + associatedName + "'" :
+                                 "Pipenv interpreter is not associated with any " + interpreterOwner;
+          registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        }
+        else if (PythonSdkType.isInvalid(sdk)) {
+          registerProblem(node, "Invalid Python interpreter selected for the " + interpreterOwner, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        }
+        else {
+          final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
+          if (!LanguageLevel.SUPPORTED_LEVELS.contains(languageLevel)) {
+            registerProblem(node,
+                            "Python " + languageLevel + " has reached its end-of-life and is no longer supported by " + product,
+                            fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          }
         }
       }
     }

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,7 +34,7 @@ import java.util.List;
  */
 public class MoveProjectToGroupActionGroup extends DefaultActionGroup implements DumbAware {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     removeAll();
     final List<ProjectGroup> groups = new ArrayList<>(RecentProjectsManager.getInstance().getGroups());
     Collections.sort(groups, (o1, o2) -> StringUtil.naturalCompare(o1.getName(), o2.getName()));

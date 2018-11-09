@@ -51,12 +51,12 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
 
 //    private Set<Namespace> namespaces = new HashSet();
 
+  @Override
   public void loadState(@NotNull Element state) {
     readHistory(state, HISTORY, history);
     readHistory(state, FIND_HISTORY, findHistory);
   }
 
-    @SuppressWarnings({"unchecked"})
     private static void readHistory(Element element, String s, LinkedHashMap<String, HistoryElement> hst) {
         final Element historyElement = element.getChild(s);
         if (historyElement != null) {
@@ -81,6 +81,7 @@ public class XPathProjectComponent implements PersistentStateComponent<Element> 
         }
     }
 
+  @Override
   public Element getState() {
     Element element = new Element("xpathview");
     writeHistory(element, HISTORY, history);

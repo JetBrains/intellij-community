@@ -24,6 +24,7 @@ import icons.JetgroovyIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
 import javax.swing.*;
 import java.io.File;
@@ -51,7 +52,7 @@ public class GantLibraryPresentationProvider extends GroovyLibraryPresentationPr
 
   @Override
   @NotNull
-  public Icon getIcon() {
+  public Icon getIcon(GroovyLibraryProperties properties) {
     return JetgroovyIcons.Groovy.Gant_sdk;
   }
 

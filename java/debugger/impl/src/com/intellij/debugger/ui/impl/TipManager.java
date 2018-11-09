@@ -18,6 +18,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.xdebugger.settings.XDebuggerSettingsManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -278,12 +279,12 @@ public class TipManager implements Disposable, PopupMenuListener {
 
   private class HideTooltipAction extends AnAction {
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       hideTooltip(true);
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myTipPopup != null);
     }
   }

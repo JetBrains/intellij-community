@@ -42,7 +42,7 @@ public class XmlMethodNavigationOffsetProvider implements MethodNavigationOffset
     return null;
   }
 
-  private static void addNavigationElements(ArrayList<PsiElement> array, PsiElement element) {
+  private static void addNavigationElements(ArrayList<? super PsiElement> array, PsiElement element) {
     PsiElement parent = element instanceof XmlFile ? element : element.getParent();
 
     if (parent != null) {

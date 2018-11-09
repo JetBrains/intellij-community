@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class ShowColorPickerAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Window root = parent();
     if (root != null) {
       List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(e.getData(CommonDataKeys.PSI_ELEMENT));
@@ -41,7 +41,7 @@ public class ShowColorPickerAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     if (component == null || !(SwingUtilities.getWindowAncestor(component) instanceof Frame)) {
       e.getPresentation().setEnabledAndVisible(false);
@@ -53,7 +53,7 @@ public class ShowColorPickerAction extends DumbAwareAction {
   private static Window parent() {
     Window activeWindow = null;
     for (Window w : Window.getWindows()) {
-      if (w.isActive()) {activeWindow = w;};
+      if (w.isActive()) {activeWindow = w;}
     }
     return activeWindow;
   }

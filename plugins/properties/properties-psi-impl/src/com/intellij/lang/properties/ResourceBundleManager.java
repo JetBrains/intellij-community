@@ -213,7 +213,7 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
     }
   }
 
-  public void combineToResourceBundle(final @NotNull List<PropertiesFile> propertiesFiles, final String baseName) {
+  public void combineToResourceBundle(final @NotNull List<? extends PropertiesFile> propertiesFiles, final String baseName) {
     if (propertiesFiles.isEmpty()) {
       throw new IllegalStateException();
     }

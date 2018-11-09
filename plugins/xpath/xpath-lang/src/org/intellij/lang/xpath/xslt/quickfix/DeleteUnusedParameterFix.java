@@ -33,10 +33,12 @@ public class DeleteUnusedParameterFix extends DeleteUnusedElementBase<XsltParame
         super(name, param);
     }
 
+    @Override
     public String getType() {
         return "Parameter";
     }
 
+    @Override
     protected void deleteElement(@NotNull XsltParameter obj) throws IncorrectOperationException {
         final XsltTemplate template = XsltCodeInsightUtil.getTemplate(obj.getTag(), false);
         if (template == null || template.getMatchExpression() == null) {

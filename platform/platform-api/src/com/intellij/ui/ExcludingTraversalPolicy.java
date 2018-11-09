@@ -66,7 +66,7 @@ public class ExcludingTraversalPolicy extends FocusTraversalPolicy {
     }
   }
 
-  private Component traverse(Container aContainer, Component aComponent, Function<Pair<Container, Component>, Component> func) {
+  private Component traverse(Container aContainer, Component aComponent, Function<? super Pair<Container, Component>, ? extends Component> func) {
     Set<Component> loopGuard = new THashSet<>();
     do {
       if (!loopGuard.add(aComponent)) return null;

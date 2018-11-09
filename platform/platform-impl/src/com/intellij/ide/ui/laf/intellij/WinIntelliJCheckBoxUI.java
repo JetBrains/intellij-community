@@ -39,7 +39,7 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
     boolean pressed = bm.isPressed() || isCellPressed(b);
 
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-    Icon icon = IconCache.getIcon(iconName, selected || isIndeterminate(b), focused, enabled, false, pressed);
+    Icon icon = LafIconLookup.getIcon(iconName, selected || isIndeterminate(b), focused, enabled, false, pressed);
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 

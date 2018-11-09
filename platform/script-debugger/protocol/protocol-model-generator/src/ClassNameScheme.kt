@@ -34,7 +34,7 @@ abstract class ClassNameScheme(private val suffix: String, private val rootPacka
     return name
   }
 
-  fun getPackageNameVirtual(domainName: String) = getPackageName(rootPackage, domainName)
+  fun getPackageNameVirtual(domainName: String): String = getPackageName(rootPackage, domainName)
 
   class Input(suffix: String, rootPackage: String) : ClassNameScheme(suffix, rootPackage) {
     fun getParseMethodName(domain: String, name: String): String {

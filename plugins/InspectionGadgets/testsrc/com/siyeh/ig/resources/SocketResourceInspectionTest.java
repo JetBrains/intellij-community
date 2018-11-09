@@ -27,7 +27,7 @@ public class SocketResourceInspectionTest extends LightInspectionTestCase {
     doTest("import java.io.*;" +
            "import java.net.*;" +
            "class X {" +
-           "    public void m() throws IOException, UnknownHostException {" +
+           "    public void m() throws IOException {" +
            "       new /*'Socket' should be opened in front of a 'try' block and closed in the corresponding 'finally' block*/Socket/**/( InetAddress.getLocalHost(), 1);" +
            "    }" +
            "}");
@@ -37,7 +37,7 @@ public class SocketResourceInspectionTest extends LightInspectionTestCase {
     doTest("import java.io.*;" +
            "import java.net.*;" +
            "class X {" +
-           "    public void m() throws IOException, UnknownHostException {" +
+           "    public void m() throws IOException {" +
            "        final Socket socket = new /*'Socket' should be opened in front of a 'try' block and closed in the corresponding 'finally' block*/Socket/**/(InetAddress.getLocalHost(), 1);" +
            "    }" +
            "}");
@@ -47,7 +47,7 @@ public class SocketResourceInspectionTest extends LightInspectionTestCase {
     doTest("import java.io.*;" +
            "import java.net.*;" +
            "class X {" +
-           "    public void m() throws IOException, UnknownHostException {" +
+           "    public void m() throws IOException {" +
            "        try {" +
            "            final Socket socket = new /*'Socket' should be opened in front of a 'try' block and closed in the corresponding 'finally' block*/Socket/**/(InetAddress.getLocalHost(), 1);" +
            "        } finally {" +

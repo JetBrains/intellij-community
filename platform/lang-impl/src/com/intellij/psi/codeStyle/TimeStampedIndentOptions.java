@@ -23,11 +23,16 @@ import org.jetbrains.annotations.NotNull;
 public class TimeStampedIndentOptions extends CommonCodeStyleSettings.IndentOptions {
   private long myTimeStamp;
   private int myOriginalIndentOptionsHash;
+  private boolean myDetected;
 
   protected TimeStampedIndentOptions(CommonCodeStyleSettings.IndentOptions toCopyFrom, long timeStamp) {
     copyFrom(toCopyFrom);
     myTimeStamp = timeStamp;
     myOriginalIndentOptionsHash = toCopyFrom.hashCode();
+  }
+
+  public void setDetected(boolean isDetected) {
+    myDetected = isDetected;
   }
 
   void setTimeStamp(long timeStamp) {
@@ -41,5 +46,9 @@ public class TimeStampedIndentOptions extends CommonCodeStyleSettings.IndentOpti
   public boolean isOutdated(@NotNull Document document, @NotNull CommonCodeStyleSettings.IndentOptions defaultForFile) {
     return document.getModificationStamp() != myTimeStamp
            || defaultForFile.hashCode() != myOriginalIndentOptionsHash;
+  }
+
+  public boolean isDetected() {
+    return myDetected;
   }
 }

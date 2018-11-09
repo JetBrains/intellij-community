@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find.findInProject;
 
@@ -28,7 +14,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usageView.UsageViewManager;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -53,38 +39,44 @@ public class FindInProjectManager {
   public void findInProject(@NotNull DataContext dataContext, @Nullable FindModel model) {
     final boolean isOpenInNewTabEnabled;
     final boolean toOpenInNewTab;
-    Content selectedContent = UsageViewManager.getInstance(myProject).getSelectedContent(true);
+    Content selectedContent = UsageViewContentManager.getInstance(myProject).getSelectedContent(true);
     if (selectedContent != null && selectedContent.isPinned()) {
       toOpenInNewTab = true;
       isOpenInNewTabEnabled = false;
     }
     else {
       toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
-      isOpenInNewTabEnabled = UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
+      isOpenInNewTabEnabled = UsageViewContentManager.getInstance(myProject).getReusableContentsCount() > 0;
     }
 
     final FindManager findManager = FindManager.getInstance(myProject);
     final FindModel findModel;
     if (model != null) {
       findModel = model.clone();
+      findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
     }
     else {
       findModel = findManager.getFindInProjectModel().clone();
       findModel.setReplaceState(false);
-      findModel.setOpenInNewTabVisible(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
       initModel(findModel, dataContext);
     }
 
     findManager.showFindDialog(findModel, () -> {
-      findModel.setOpenInNewTabVisible(false);
-      if (isOpenInNewTabEnabled) {
-        FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
+      if (findModel.isReplaceState()) {
+        ReplaceInProjectManager.getInstance(myProject).replaceInPath(findModel);
+      } else {
+        findInPath(findModel);
       }
-      startFindInProject(findModel);
-      findModel.setOpenInNewTabVisible(false); //todo check it in both cases: dialog & popup
     });
+  }
+
+  public void findInPath(@NotNull FindModel findModel) {
+    if (findModel.isOpenInNewTabEnabled()) {
+      FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
+    }
+    startFindInProject(findModel);
   }
 
   @SuppressWarnings("WeakerAccess")

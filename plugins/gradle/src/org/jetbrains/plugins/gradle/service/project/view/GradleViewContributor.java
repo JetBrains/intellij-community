@@ -19,7 +19,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
@@ -28,6 +30,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -37,7 +40,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2015
  */
 public class GradleViewContributor extends ExternalSystemViewContributor {
   private static final Key<?>[] KEYS = new Key[]{
@@ -65,6 +67,15 @@ public class GradleViewContributor extends ExternalSystemViewContributor {
     return result;
   }
 
+  @Nullable
+  @Override
+  public String getDisplayName(@NotNull DataNode node) {
+    if (ProjectKeys.MODULE.equals(node.getKey())) {
+      return ((ModuleData)node.getData()).getId();
+    }
+    return super.getDisplayName(node);
+  }
+
   private static void addCustomSourceSetsNodes(@NotNull ExternalProjectsView externalProjectsView,
                                                @NotNull MultiMap<Key<?>, DataNode<?>> dataNodes,
                                                @NotNull List<ExternalSystemNode<?>> result) {
@@ -81,13 +92,13 @@ public class GradleViewContributor extends ExternalSystemViewContributor {
 
   @Order(ExternalSystemNode.BUILTIN_TASKS_DATA_NODE_ORDER - 1)
   private static class SourceSetsNode extends ExternalSystemNode {
-    public SourceSetsNode(ExternalProjectsView externalProjectsView) {
+    SourceSetsNode(ExternalProjectsView externalProjectsView) {
       //noinspection unchecked
       super(externalProjectsView, null, null);
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Nodes.ModuleGroup);
     }
@@ -100,12 +111,12 @@ public class GradleViewContributor extends ExternalSystemViewContributor {
 
   private static class SourceSetNode extends ExternalSystemNode<GradleSourceSetData> {
 
-    public SourceSetNode(ExternalProjectsView externalProjectsView, DataNode<GradleSourceSetData> dataNode) {
+    SourceSetNode(ExternalProjectsView externalProjectsView, DataNode<GradleSourceSetData> dataNode) {
       super(externalProjectsView, null, dataNode);
     }
 
     @Override
-    protected void update(PresentationData presentation) {
+    protected void update(@NotNull PresentationData presentation) {
       super.update(presentation);
       presentation.setIcon(AllIcons.Modules.SourceFolder);
 

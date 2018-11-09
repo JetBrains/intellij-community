@@ -7,5 +7,5 @@ import com.intellij.openapi.vcs.changes.actions.BaseCommitExecutorAction
 import git4idea.checkin.GitCommitAndPushExecutor
 
 class GitCommitAndPushExecutorAction : BaseCommitExecutorAction() {
-  override val executorId = GitCommitAndPushExecutor.ID
+  override val executorId: String = GitCommitAndPushExecutor.ID
 }

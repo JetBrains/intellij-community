@@ -22,7 +22,7 @@ final class ShowLibraryFramesAction extends ToggleAction {
   private static final String ourTextWhenShowIsOn = "Hide Frames from Libraries";
   private static final String ourTextWhenShowIsOff = "Show All Frames";
 
-  public ShowLibraryFramesAction() {
+  ShowLibraryFramesAction() {
     super("", "", AllIcons.General.Filter);
     myShouldShow = XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isShowLibraryStackFrames();
   }
@@ -57,12 +57,12 @@ final class ShowLibraryFramesAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return !myShouldShow;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean enabled) {
+  public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
     myShouldShow = !enabled;
     XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().setShowLibraryStackFrames(myShouldShow);
     XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.meta.MetaRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -76,7 +77,7 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   @Override
   @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, XmlComment.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 
   @Override
@@ -105,5 +106,12 @@ public class XmlCommentImpl extends XmlElementImpl implements XmlComment, XmlEle
   @NotNull
   public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new XmlCommentLiteralEscaper(this);
+  }
+
+  @NotNull
+  @Override
+  public String getCommentText() {
+    ASTNode node = getNode().findChildByType(XmlTokenType.XML_COMMENT_CHARACTERS);
+    return node == null ? "" : node.getText();
   }
 }

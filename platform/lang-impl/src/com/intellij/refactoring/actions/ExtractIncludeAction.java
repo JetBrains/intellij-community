@@ -31,7 +31,7 @@ public class ExtractIncludeAction extends BasePlatformRefactoringAction {
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     final RefactoringActionHandler handler = getHandler(e.getDataContext());
     if (handler instanceof TitledHandler) {

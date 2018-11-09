@@ -17,6 +17,8 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -209,7 +211,17 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-11208
   public void testMockPatchObject() {
-    doMultiFileTest(getTestName(true) + ".py");
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + getTestDirectoryPath() + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        final PsiFile file = myFixture.configureByFile(getTestDirectoryPath() + "/a.py");
+        configureInspection();
+        assertSdkRootsNotParsed(file);
+      }
+    );
   }
 
   // PY-22525
@@ -274,5 +286,19 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
   // PY-27964
   public void testUsingFunctoolsSingledispatch() {
     doTest();
+  }
+
+  // PY-27866
+  public void testUnionOwnSlots() {
+    doTestByText("from typing import Union\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    __slots__ = ['x']\n" +
+                 "\n" +
+                 "class B:\n" +
+                 "    __slots__ = ['y']\n" +
+                 "    \n" +
+                 "def foo(ab: Union[A, B]):\n" +
+                 "    print(ab.x)");
   }
 }

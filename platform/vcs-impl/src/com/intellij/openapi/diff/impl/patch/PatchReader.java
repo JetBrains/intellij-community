@@ -432,7 +432,7 @@ public class PatchReader {
       else if (line.startsWith("-") && expectMeaningfulLines) {
         type = PatchLine.Type.REMOVE;
       }
-      else if (line.startsWith(" ") || line.length() == 0) {
+      else if (line.startsWith(" ") && expectMeaningfulLines) {
         type = PatchLine.Type.CONTEXT;
       }
       else {

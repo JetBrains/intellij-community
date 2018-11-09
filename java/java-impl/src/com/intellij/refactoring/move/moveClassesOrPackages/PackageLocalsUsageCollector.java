@@ -33,7 +33,7 @@ class PackageLocalsUsageCollector extends JavaRecursiveElementWalkingVisitor {
   private final MultiMap<PsiElement, String> myConflicts;
   private final PackageWrapper myTargetPackage;
 
-  public PackageLocalsUsageCollector(final PsiElement[] elementsToMove, final PackageWrapper targetPackage, MultiMap<PsiElement,String> conflicts) {
+  PackageLocalsUsageCollector(final PsiElement[] elementsToMove, final PackageWrapper targetPackage, MultiMap<PsiElement,String> conflicts) {
     myElementsToMove = elementsToMove;
     myConflicts = conflicts;
     myTargetPackage = targetPackage;
