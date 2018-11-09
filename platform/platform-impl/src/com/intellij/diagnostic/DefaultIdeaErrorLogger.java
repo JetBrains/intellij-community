@@ -4,6 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -50,7 +51,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
       Throwable t = event.getThrowable();
       PluginId pluginId = IdeErrorsDialog.findPluginId(t);
-      if (pluginId != null && !pluginId.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID)) {
+      if (pluginId != null &&
+          !pluginId.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID) &&
+          StatisticsUtilKt.isFromPluginRepository(pluginId.getIdString())) {
         FUSApplicationUsageTrigger.getInstance().trigger(PluginExceptionStatisticCollector.class, pluginId.getIdString(), null);
       }
 

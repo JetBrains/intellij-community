@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +23,8 @@ public class NonBundledPluginsUsagesCollector extends ApplicationUsagesCollector
   @NotNull
   public Set<UsageDescriptor> getUsages() {
     final IdeaPluginDescriptor[] plugins = PluginManagerCore.getPlugins();
-    final List<IdeaPluginDescriptor> nonBundledEnabledPlugins = ContainerUtil.filter(plugins, d -> d.isEnabled() && !d.isBundled() && d.getPluginId() != null);
+    final List<IdeaPluginDescriptor> nonBundledEnabledPlugins = ContainerUtil.filter(plugins, d -> d.isEnabled() && !d.isBundled() &&
+                                                                                                   StatisticsUtilKt.isFromPluginRepository(d));
 
     return ContainerUtil.map2Set(nonBundledEnabledPlugins, descriptor -> new UsageDescriptor(descriptor.getPluginId().getIdString(), 1));
   }
