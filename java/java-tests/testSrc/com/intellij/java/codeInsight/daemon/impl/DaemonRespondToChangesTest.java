@@ -2276,10 +2276,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     UIUtil.dispatchAllInvocationEvents();
     IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
     // it must be either hidden or not have that error anymore
-    if (lastHintAfterDeletion != null) {
-      assertFalse(lastHintBeforeDeletion.getCachedIntentions().toString(), lastHintBeforeDeletion.getCachedIntentions().getErrorFixes().stream().anyMatch(e -> e.getText().equals("Initialize variable 'var'")));
-    } else {
+    if (lastHintAfterDeletion == null) {
       assertEmpty(visibleHints);
+    }
+    else {
+      assertFalse(lastHintAfterDeletion.getCachedIntentions().toString(), lastHintBeforeDeletion.getCachedIntentions().getErrorFixes().stream().anyMatch(e -> e.getText().equals("Initialize variable 'var'")));
     }
   }
 
