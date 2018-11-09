@@ -32,6 +32,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
@@ -43,10 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 /**
  * @author Dennis.Ushakov
@@ -211,7 +209,13 @@ public final class PyExtractSuperclassHelper {
 
     // NOTE: we don't canonicalize target; must be ok in reasonable cases, and is far easier in unit test mode
     target = FileUtil.toSystemIndependentName(target);
-    for (VirtualFile file : ProjectRootManager.getInstance(project).getContentRoots()) {
+    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
+    final List<VirtualFile> allRoots = new ArrayList<>();
+    ContainerUtil.addAll(allRoots, projectRootManager.getContentRoots());
+    ContainerUtil.addAll(allRoots, projectRootManager.getContentSourceRoots());
+    // Check deepest roots first
+    allRoots.sort(Comparator.comparingInt((VirtualFile vf) -> vf.getPath().length()).reversed());
+    for (VirtualFile file : allRoots) {
       final String rootPath = file.getPath();
       if (target.startsWith(rootPath)) {
         relativePath = target.substring(rootPath.length());
