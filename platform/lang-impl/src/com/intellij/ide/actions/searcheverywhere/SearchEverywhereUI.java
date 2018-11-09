@@ -700,7 +700,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private static Optional<String> getEventShortcut(AnActionEvent event) {
-    return Optional.ofNullable(KeymapUtil.getEventCallerShortcut(event));
+    return Optional.ofNullable(KeymapUtil.getEventCallerKeystrokeText(event));
   }
 
   private void triggerTabSwitched(AnActionEvent e) {
