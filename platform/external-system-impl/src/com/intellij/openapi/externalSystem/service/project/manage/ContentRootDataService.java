@@ -45,11 +45,13 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -59,10 +61,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
 
@@ -171,9 +170,8 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       final ContentRootData contentRoot = node.getData();
 
       final ContentEntry contentEntry = findOrCreateContentRoot(modifiableRootModel, contentRoot.getRootPath());
-      if(!importedContentEntries.contains(contentEntry)) {
-        // clear source folders but do not remove existing excluded folders
-        contentEntry.clearSourceFolders();
+      if (!importedContentEntries.contains(contentEntry)) {
+        removeSourceFoldersIfAbsent(contentEntry, contentRoot);
         importedContentEntries.add(contentEntry);
       }
       if (LOG.isDebugEnabled()) {
@@ -255,6 +253,31 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
       }
     }
     return model.addContentEntry(pathToUrl(path));
+  }
+
+  private static Set<String> getSourceRoots(@NotNull ContentRootData contentRoot) {
+    Set<String> sourceRoots = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    for (ExternalSystemSourceType externalSrcType : ExternalSystemSourceType.values()) {
+      final JpsModuleSourceRootType<?> type = getJavaSourceRootType(externalSrcType);
+      if (type == null) continue;
+      for (SourceRoot path : contentRoot.getPaths(externalSrcType)) {
+        if (path == null) continue;
+        sourceRoots.add(path.getPath());
+      }
+    }
+    return sourceRoots;
+  }
+
+  private static void removeSourceFoldersIfAbsent(@NotNull ContentEntry contentEntry, @NotNull ContentRootData contentRoot) {
+    Set<String> sourceRoots = getSourceRoots(contentRoot);
+    SourceFolder[] sourceFolders = contentEntry.getSourceFolders();
+    for (SourceFolder sourceFolder : sourceFolders) {
+      String url = sourceFolder.getUrl();
+      String path = VfsUtilCore.urlToPath(url);
+      if (!sourceRoots.contains(path)) {
+        contentEntry.removeSourceFolder(sourceFolder);
+      }
+    }
   }
 
   private static void createSourceRootIfAbsent(
