@@ -13,16 +13,17 @@ import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
 /**
- * To run [KotlinCreateProjectGuiTestSuite] locally you need
+ * To run Kotlin GuiTestSuites locally you need
  * 1. setup following environment parameters
- *     - `kotlin.gui.test.properties.file` - full path where kotlin.gui.test.properties file should be located
+ *     - `kotlin.gui.test.properties.file` - full path where kotlin.gui.test.properties file(*) should be located
  *     - `kotlin.plugin.download.path` - path to the folder where kotlin plugin will be downloaded to
  *     - `ide.tested` - specifies IDE kind and defines for which IDE Kotlin plugin zip should be downloaded, actual value at the moment is `IJ2018.2`.
  *     - `kotlin.configuration.name` - specifies where Kotlin plugin should be taken from, actual value at the moment is Kotlin_1250_CompilerAllPlugins.
  *        The value is taken from buildTypeId of `Compiler and all IDEA Plugins (...)` configuration on Kotlin TeamCity server.
  *        For testing developed builds specify `Kotlin_dev_CompilerAllPlugins`.
  *     - `kotlin.configuration.buildId` - specifies where Kotlin plugin should be taken from - usual value is `.lastSuccessful`.
- *        Apart it `.lastFinished` can be specified.
+ *        Apart it `.lastFinished` can be specified or exact build number like `1710010:id`. Number is taken from the URL
+ *        of the corresponding build in the configuration specified by `kotlin.configuration.name`
  *     - `kotlin.artifact.version` - version of Kotlin gradle/maven artifacts,
  *        this parameter should be specified only if its version differs from tested Kotlin IDE plugin.
  *        If this parameter is not specified the value is calculated from Kotlin IDE plugin.
@@ -35,22 +36,35 @@ import org.junit.runners.Suite
  *        If this parameter is not specified it's true
  *
  * 2. run gradle script: `gradlew -b kotlin.gui.test.configure.gradle` (the script file is located in the one step up folder)
+ * (*) as a result of this script working `kotlin.gui.test.properties` file should be created
+ * at path specified by `kotlin.gui.test.properties.file` environment variable
  *
  * 3. now the suite can be run
-* */
+ * */
 @RunWith(Suite::class)
 @Suite.SuiteClasses(
-    PreparationSteps::class
+  PreparationSteps::class
   , KotlinCreateGradleProject::class
 )
 class KotlinCreateGradleProjectGuiTestSuite : GuiTestSuite()
 
 @RunWith(Suite::class)
 @Suite.SuiteClasses(
-    PreparationSteps::class
+  PreparationSteps::class
   , KotlinCreateOtherProject::class
 )
 class KotlinCreateOtherProjectGuiTestSuite : GuiTestSuite()
+
+/**
+ * This suite should be run only on final releases - when the tested Kotlin version
+ * is downloaded to maven central
+ * */
+@RunWith(Suite::class)
+@Suite.SuiteClasses(
+  PreparationSteps::class
+  , ConfigureKotlinReleaseTests::class
+)
+class ConfigureKotlinReleaseGuiTestSuite : GuiTestSuite()
 
 
 @RunWith(GuiTestSuiteRunner::class)
@@ -65,22 +79,29 @@ class PreparationSteps
 @RunWith(Suite::class)
 @RunWithIde(CommunityIde::class)
 @Suite.SuiteClasses(
-  CreateGradleProjectAndConfigureKotlinGuiTest::class
-  , CreateGradleProjectAndConfigureExactKotlinGuiTest::class
-  , CreateGradleProjectWithKotlinGuiTest::class
-  , CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest::class
+  CreateGradleProjectWithKotlinGuiTest::class
   , CreateGradleKotlinDslProjectWithKotlinGuiTest::class
+  , CreateKotlinMPProjectGuiTest::class
 )
 class KotlinCreateGradleProject
 
 @RunWith(Suite::class)
 @RunWithIde(CommunityIde::class)
 @Suite.SuiteClasses(
-  CreateKotlinProjectGuiTest::class
-  , CreateKotlinMPProjectGuiTest::class
-  , CreateJavaProjectAndConfigureKotlinGuiTest::class
+  CreateJavaProjectAndConfigureKotlinGuiTest::class
+  , CreateKotlinProjectGuiTest::class
   , CreateJavaProjectWithKotlinGuiTest::class // attempt to find a workaround to failing java_with_jvm test when it runs first ever time
+  , CreateMavenProjectAndConfigureExactKotlinGuiTest::class
+  , CreateGradleProjectAndConfigureExactKotlinGuiTest::class
+)
+class KotlinCreateOtherProject
+
+@RunWith(Suite::class)
+@RunWithIde(CommunityIde::class)
+@Suite.SuiteClasses(
+  CreateGradleProjectAndConfigureKotlinGuiTest::class
+  , CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest::class
   , CreateMavenProjectWithKotlinGuiTest::class
   , CreateMavenProjectAndConfigureKotlinGuiTest::class
 )
-class KotlinCreateOtherProject
+class ConfigureKotlinReleaseTests
