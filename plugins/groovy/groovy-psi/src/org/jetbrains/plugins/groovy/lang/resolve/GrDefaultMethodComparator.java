@@ -18,11 +18,11 @@ public class GrDefaultMethodComparator extends GrMethodComparator {
                            @NotNull GroovyMethodResult result2,
                            @NotNull Context context) {
     final PsiMethod method1 = result1.getElement();
-    final PsiSubstitutor substitutor1 = result1.getPartialSubstitutor();
+    final PsiSubstitutor substitutor1 = result1.getContextSubstitutor();
     final PsiElement resolveContext1 = result1.getCurrentFileResolveContext();
 
     final PsiMethod method2 = result2.getElement();
-    final PsiSubstitutor substitutor2 = result2.getPartialSubstitutor();
+    final PsiSubstitutor substitutor2 = result2.getContextSubstitutor();
     final PsiElement resolveContext2 = result2.getCurrentFileResolveContext();
 
     final PsiType[] argTypes = context.getArgumentTypes();

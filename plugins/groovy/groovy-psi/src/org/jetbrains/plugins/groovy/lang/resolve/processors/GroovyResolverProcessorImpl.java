@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,10 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
 
   GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
     super(ref, kinds);
-    myArgumentTypes = NullableLazyValue.createValue(() -> buildTopLevelArgumentTypes((GrCall)myRef.getParent()));
+    myArgumentTypes = NullableLazyValue.createValue(() -> {
+      PsiType[] types = buildTopLevelArgumentTypes((GrCall)myRef.getParent());
+      return types == null ? null : ContainerUtil.map(types, TypeConversionUtil::erasure, PsiType.EMPTY_ARRAY);
+    });
   }
 
   @Override
