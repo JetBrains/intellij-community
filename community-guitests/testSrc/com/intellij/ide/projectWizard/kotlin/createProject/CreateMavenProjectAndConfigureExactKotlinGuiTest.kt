@@ -10,19 +10,20 @@ import org.junit.runners.Parameterized
 import java.io.Serializable
 
 @RunWith(GuiTestSuiteParam::class)
-class CreateMavenProjectAndConfigureKotlinGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
+class CreateMavenProjectAndConfigureExactKotlinGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
 
   data class TestParameters(
     val projectName: String,
+    val kotlinVersion: String,
     val project: ProjectProperties,
     val expectedFacet: FacetStructure) : Serializable {
     override fun toString() = projectName
   }
 
   @Test
-  fun createMavenAndConfigureKotlin() {
+  fun testCreateMavenAndConfigureKotlin() {
     createMavenAndConfigureKotlin(
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
+      kotlinVersion = testParameters.kotlinVersion,
       project = testParameters.project,
       expectedFacet = testParameters.expectedFacet
     )
@@ -34,14 +35,16 @@ class CreateMavenProjectAndConfigureKotlinGuiTest(private val testParameters: Te
     fun data(): Collection<TestParameters> {
       return listOf(
         TestParameters(
-          projectName = "maven_cfg_jvm",
+          projectName = "maven_cfg_jvm_130",
           project = kotlinProjects.getValue(Projects.MavenProjectJvm),
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18)
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
+          kotlinVersion = "1.3.0"
         ),
         TestParameters(
-          projectName = "maven_cfg_js",
+          projectName = "maven_cfg_js_130",
           project = kotlinProjects.getValue(Projects.MavenProjectJs),
-          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript)
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript),
+          kotlinVersion = "1.3.0"
         )
       )
     }

@@ -672,6 +672,49 @@ fun KotlinGuiTestCase.saveAndCloseCurrentEditor() {
   }
 }
 
+fun KotlinGuiTestCase.createMavenAndConfigureKotlin(
+  kotlinVersion: String,
+  project: ProjectProperties,
+  expectedFacet: FacetStructure
+) {
+  if (!isIdeFrameRun()) return
+  val projectName = testMethod.methodName
+  createMavenProject(
+    projectPath = projectFolder,
+    artifact = projectName)
+  waitAMoment()
+  when(project.modules.contains(TargetPlatform.JavaScript)){
+    false -> configureKotlinJvmFromMaven(kotlinVersion)
+    true -> configureKotlinJsFromMaven(kotlinVersion)
+  }
+
+  waitAMoment()
+  saveAndCloseCurrentEditor()
+  editPomXml(
+    kotlinVersion = kotlinVersion
+  )
+  waitAMoment()
+  mavenReimport()
+  Pause.pause(5000)
+  waitAMoment()
+  mavenReimport()
+
+  projectStructureDialogScenarios.openProjectStructureAndCheck {
+    projectStructureDialogModel.checkLibrariesFromMavenGradle(
+      buildSystem = BuildSystem.Maven,
+      kotlinVersion = kotlinVersion,
+      expectedJars = project.jars.getJars(kotlinVersion)
+    )
+    projectStructureDialogModel.checkFacetInOneModule(
+      expectedFacet = expectedFacet,
+      path = *arrayOf(projectName, "Kotlin")
+    )
+  }
+
+  waitAMoment()
+}
+
+
 fun KotlinGuiTestCase.testCreateGradleAndConfigureKotlin(
   kotlinVersion: String,
   project: ProjectProperties,
