@@ -86,11 +86,23 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
                                     @NotNull Set<String> approvedGroups,
                                     boolean isStateCollector) {
     if (!usagesCollector.isValid()) return;
-    if (approvedGroups.contains(usagesCollector.getGroupId())) {
-      addUsageDescriptors(project, usagesCollector.getGroupId(), context, usageDescriptors, usagesProducer, isStateCollector);
-    }
-    else if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-      addUsageDescriptors(project, createDebugModeId(usagesCollector.getGroupId()), context, usageDescriptors, usagesProducer, isStateCollector);
+
+    final String groupId = usagesCollector.getGroupId();
+    if (!isStateCollector && !approvedGroups.contains(groupId) && !ApplicationManagerEx.getApplicationEx().isInternal()) return;
+
+    Set<UsageDescriptor> usages = usagesProducer.create();
+    usages = usages.stream().filter(descriptor -> descriptor.getValue() > 0).collect(Collectors.toSet());
+    if (!usages.isEmpty()) {
+      if (isStateCollector) {
+        logUsagesAsStateEvents(project, groupId, context, usages);
+      }
+
+      if (approvedGroups.contains(groupId)) {
+        addUsageDescriptors(groupId, context, usageDescriptors, usages);
+      }
+      else if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+        addUsageDescriptors(createDebugModeId(groupId), context, usageDescriptors, usages);
+      }
     }
   }
 
@@ -99,19 +111,12 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
     return "internal." + groupId;
   }
 
-  private static void addUsageDescriptors(@Nullable Project project, @NotNull String groupDescriptor,
+  private static void addUsageDescriptors(@NotNull String groupDescriptor,
                                           @Nullable FUSUsageContext context,
                                           @NotNull Map<CollectorGroupDescriptor, Set<UsageDescriptor>> allUsageDescriptors,
-                                          @NotNull Factory<Set<UsageDescriptor>> usagesProducer, boolean isStateCollector) {
-    Set<UsageDescriptor> usages = usagesProducer.create();
-    usages = usages.stream().filter(descriptor -> descriptor.getValue() > 0).collect(Collectors.toSet());
-    if (!usages.isEmpty()) {
-      if (isStateCollector) {
-        logUsagesAsStateEvents(project, groupDescriptor, context, usages);
-      }
-      CollectorGroupDescriptor collectorGroupDescriptor = CollectorGroupDescriptor.create(groupDescriptor, context);
-      allUsageDescriptors.merge(collectorGroupDescriptor, usages, ContainerUtil::union);
-    }
+                                          @NotNull Set<UsageDescriptor> usages) {
+    CollectorGroupDescriptor collectorGroupDescriptor = CollectorGroupDescriptor.create(groupDescriptor, context);
+    allUsageDescriptors.merge(collectorGroupDescriptor, usages, ContainerUtil::union);
   }
 
   private static boolean isStateCollector(@NotNull FeatureUsagesCollector usagesCollector) {
