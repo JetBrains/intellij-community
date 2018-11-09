@@ -2,7 +2,6 @@
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
-import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.Notification;
@@ -60,7 +59,6 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
       boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
       boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
-      AppLifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed);
 
       return notificationEnabled ||
              showPluginError ||
@@ -105,7 +103,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   }
 
   @Nullable
-  private static MemoryKind getOOMErrorKind(Throwable t) {
+  static MemoryKind getOOMErrorKind(Throwable t) {
     String message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {
