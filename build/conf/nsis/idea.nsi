@@ -804,9 +804,8 @@ complete:
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 1" "Text" "$(uninstall_previous_installations_prompt)"
     !insertmacro INSTALLOPTIONS_WRITE "UninstallOldVersions.ini" "Field 3" "Flags" "FOCUS"
     !insertmacro INSTALLOPTIONS_DISPLAY "UninstallOldVersions.ini"
-    ;uninstall chosen installation(s)
 
-    ;no disabled controls. StrCmp $2 "OK" loop finish
+    ;uninstall chosen installation(s)
 loop:
     !insertmacro INSTALLOPTIONS_READ $0 "UninstallOldVersions.ini" "Field $8" "State"
     !insertmacro INSTALLOPTIONS_READ $3 "UninstallOldVersions.ini" "Field $8" "Text"
@@ -1472,7 +1471,13 @@ required_admin_perm:
 copy_uninstall:
   ;do copy for unistall.exe
   CopyFiles "$OUTDIR\Uninstall.exe" "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
+  IfSilent uninstall_silent_mode uninstall_gui_mode
+uninstall_silent_mode:
+  ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" /S _?=$INSTDIR'
+  Goto delete_uninstaller_itself
+uninstall_gui_mode:
   ExecWait '"$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe" _?=$INSTDIR'
+delete_uninstaller_itself:
   Delete "$LOCALAPPDATA\${PRODUCT_PATHS_SELECTOR}_${VER_BUILD}_Uninstall.exe"
   IfFileExists "$INSTDIR\bin\*.*" 0 delete_install_dir
   StrCpy $0 "$INSTDIR\bin"
