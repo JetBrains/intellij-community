@@ -833,7 +833,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue && 
-        !(TypeUtils.isJavaLangString(dfaLeft.getType()) && !(TypeUtils.isJavaLangString(dfaRight.getType()))) ||
+        !(TypeUtils.isJavaLangString(dfaLeft.getType())) && !(TypeUtils.isJavaLangString(dfaRight.getType())) ||
         DfaConstValue.isContractFail(dfaLeft) || DfaConstValue.isContractFail(dfaRight)) {
       boolean negated = (relationType == RelationType.NE) ^ (DfaMemoryStateImpl.isNaN(dfaLeft) || DfaMemoryStateImpl.isNaN(dfaRight));
       boolean result = dfaLeft == dfaRight ^ negated;
