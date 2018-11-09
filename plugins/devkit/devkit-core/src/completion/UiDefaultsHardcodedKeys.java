@@ -179,6 +179,8 @@ public final class UiDefaultsHardcodedKeys {
     "ComboBoxUI",
     "Component.arc",
     "Component.grayForeground",
+    "Component.iconColor",
+    "Component.hoverIconColor",
     "Desktop.ancestorInputMap",
     "Desktop.background",
     "Desktop.minOnScreenInsets",
