@@ -4,6 +4,7 @@ package com.intellij.execution.testDiscovery;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.annotations.SerializedName;
 import com.intellij.openapi.application.ApplicationManager;
@@ -116,6 +117,18 @@ public class IntellijTestDiscoveryProducer implements TestDiscoveryProducer {
       return result == null ? Collections.emptyList() : result;
     }
     return query.compute();
+  }
+
+  @NotNull
+  @Override
+  public List<String> getFilesWithoutTests(@NotNull Project project, @NotNull Collection<String> paths) throws IOException {
+    if (paths.isEmpty()) return Collections.emptyList();
+    String url = INTELLIJ_TEST_DISCOVERY_HOST + "/search/files-without-related-tests";
+    LOG.debug(url);
+    return HttpRequests.post(url, "application/json").productNameAsUserAgent().gzip(true).connect(r -> {
+      r.write(paths.stream().map(s -> "\"" + s + "\"").collect(Collectors.joining(",", "[", "]")));
+      return new ObjectMapper().readValue(r.getInputStream(), new TypeReference<List<String>>(){});
+    });
   }
 
   @JsonInclude(JsonInclude.Include.NON_EMPTY)

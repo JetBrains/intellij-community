@@ -524,7 +524,7 @@ public class ShowAffectedTestsAction extends AnAction {
   }
 
   @Nullable
-  private static VirtualFile getBasePathAsVirtualFile(@NotNull Project project) {
+  static VirtualFile getBasePathAsVirtualFile(@NotNull Project project) {
     String basePath = project.getBasePath();
     return basePath == null ? null : LocalFileSystem.getInstance().findFileByPath(basePath);
   }
