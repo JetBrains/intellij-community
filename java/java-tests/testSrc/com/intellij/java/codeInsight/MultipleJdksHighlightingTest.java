@@ -311,6 +311,9 @@ public class MultipleJdksHighlightingTest extends UsefulTestCase {
                                               "");
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     myFixture.checkHighlighting();
+
+    HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
+    assertSize(2, myFixture.getEditor().getMarkupModel().getAllHighlighters());
   }
 
   private void doTestWithoutLibrary() {
