@@ -22,8 +22,9 @@ class CreateMavenProjectAndConfigureExactKotlinGuiTest(private val testParameter
 
   @Test
   fun testCreateMavenAndConfigureKotlin() {
+    KotlinTestProperties.kotlin_artifact_version = testParameters.kotlinVersion
     createMavenAndConfigureKotlin(
-      kotlinVersion = testParameters.kotlinVersion,
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = testParameters.project,
       expectedFacet = testParameters.expectedFacet
     )
