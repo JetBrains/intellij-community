@@ -98,13 +98,13 @@ public class JavaKeywordCompletion {
     psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(
       not(
         or(
-           psiElement(PsiSwitchLabelStatement.class),
            psiElement(PsiExpressionStatement.class),
            psiElement(PsiPrefixExpression.class)
         )
       )
     )),
-    not(psiElement().afterLeaf("."))
+    not(psiElement().afterLeaf(".")),
+    not(JavaCompletionContributor.IN_SWITCH_LABEL)
   );
 
   private final CompletionParameters myParameters;
