@@ -41,8 +41,9 @@ fi
 
 if [ -n "$JEDITERM_SOURCE" ]
 then
-  source $(echo $JEDITERM_SOURCE)
+  source $(echo $JEDITERM_SOURCE) $JEDITERM_SOURCE_ARGS
   unset JEDITERM_SOURCE
+  unset JEDITERM_SOURCE_ARGS
 fi
 
 function override_jb_variables {
