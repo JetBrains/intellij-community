@@ -75,7 +75,7 @@ private fun createReviewForDev(root: File, context: Context, user: String, email
 }
 
 private fun postVerificationResultToReview(success: Boolean, review: Review) {
-  val runConfigurations = System.getProperty("sync.dev.icons.checks").splitNotBlank(";")
+  val runConfigurations = System.getProperty("sync.dev.icons.checks")?.splitNotBlank(";") ?: return
   val comment = if (success) "Following checks were successful:" else "Some of the following checks failed:"
   postComment(UPSOURCE_DEV_PROJECT_ID, review, "$comment ${runConfigurations.joinToString()}, see build log ${thisBuildReportableLink()}")
 }
