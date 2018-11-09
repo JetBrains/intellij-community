@@ -208,8 +208,10 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     if (expression instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
       PsiLambdaExpression lambda = LambdaRefactoringUtil.createLambda(methodRef, true);
-      LambdaRefactoringUtil.specifyLambdaParameterTypes(methodRef.getFunctionalInterfaceType(), lambda);
-      return lambda;
+      if (lambda != null) {
+        LambdaRefactoringUtil.specifyLambdaParameterTypes(methodRef.getFunctionalInterfaceType(), lambda);
+        return lambda;
+      }
     }
     return null;
   }
