@@ -18,6 +18,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
@@ -34,10 +35,14 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -368,6 +373,132 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       assertContain(beforeSyncTasks, "projects", "tasks");
     } else {
       assertContain(beforeSyncTasks, ":projects", ":tasks");
+    }
+  }
+
+  @Test
+  public void testImportEncodingSettings() throws IOException {
+    {
+      importProject(
+        new GradleBuildScriptBuilderEx()
+          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+          .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
+          .addPostfix("idea {")
+          .addPostfix("  project {")
+          .addPostfix("    settings {")
+          .addPostfix("      encodings {")
+          .addPostfix("        encoding = 'IBM-Thai'")
+          .addPostfix("        bomPolicy = BomPolicy.WITH_NO_BOM")
+          .addPostfix("        properties {")
+          .addPostfix("          encoding = 'GB2312'")
+          .addPostfix("          transparentNativeToAsciiConversion = true")
+          .addPostfix("        }")
+          .addPostfix("      }")
+          .addPostfix("    }")
+          .addPostfix("  }")
+          .addPostfix("}")
+          .generate());
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      assertEquals("IBM-Thai", encodingManager.getDefaultCharset().name());
+      assertEquals("GB2312", encodingManager.getDefaultCharsetForPropertiesFiles(null).name());
+      assertTrue(encodingManager.isNative2AsciiForPropertiesFiles());
+      assertFalse(encodingManager.shouldAddBOMForNewUtf8File());
+    }
+    {
+      importProject(
+        new GradleBuildScriptBuilderEx()
+          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+          .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
+          .addPostfix("idea {")
+          .addPostfix("  project {")
+          .addPostfix("    settings {")
+          .addPostfix("      encodings {")
+          .addPostfix("        encoding = 'UTF-8'")
+          .addPostfix("        bomPolicy = BomPolicy.WITH_BOM")
+          .addPostfix("        properties {")
+          .addPostfix("          encoding = 'UTF-8'")
+          .addPostfix("          transparentNativeToAsciiConversion = false")
+          .addPostfix("        }")
+          .addPostfix("      }")
+          .addPostfix("    }")
+          .addPostfix("  }")
+          .addPostfix("}")
+          .generate());
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      assertEquals("UTF-8", encodingManager.getDefaultCharset().name());
+      assertEquals("UTF-8", encodingManager.getDefaultCharsetForPropertiesFiles(null).name());
+      assertFalse(encodingManager.isNative2AsciiForPropertiesFiles());
+      assertTrue(encodingManager.shouldAddBOMForNewUtf8File());
+    }
+  }
+
+  @Test
+  public void testImportFileEncodingSettings() throws IOException {
+    VirtualFile aDir = createProjectSubDir("src/main/java/a");
+    VirtualFile bDir = createProjectSubDir("src/main/java/b");
+    VirtualFile cDir = createProjectSubDir("src/main/java/c");
+    VirtualFile mainDir = createProjectSubDir("../sub-project/src/main/java");
+    createProjectSubFile("src/main/java/a/A.java");
+    createProjectSubFile("src/main/java/c/C.java");
+    createProjectSubFile("../sub-project/src/main/java/Main.java");
+    {
+      importProject(
+        new GradleBuildScriptBuilderEx()
+          .withJavaPlugin()
+          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+          .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
+          .addPostfix("sourceSets {")
+          .addPostfix("  main.java.srcDirs += '../sub-project/src/main/java'")
+          .addPostfix("}")
+          .addPostfix("idea {")
+          .addPostfix("  project {")
+          .addPostfix("    settings {")
+          .addPostfix("      encodings {")
+          .addPostfix("        mapping['src/main/java/a'] = 'ISO-8859-9'")
+          .addPostfix("        mapping['src/main/java/b'] = 'x-EUC-TW'")
+          .addPostfix("        mapping['src/main/java/c'] = 'UTF-8'")
+          .addPostfix("        mapping['../sub-project/src/main/java'] = 'KOI8-R'")
+          .addPostfix("      }")
+          .addPostfix("    }")
+          .addPostfix("  }")
+          .addPostfix("}")
+          .generate());
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      Map<String, String> allMappings = encodingManager.getAllMappings().entrySet().stream()
+        .collect(Collectors.toMap(it -> it.getKey().getCanonicalPath(), it -> it.getValue().name()));
+      assertEquals("ISO-8859-9", allMappings.get(aDir.getCanonicalPath()));
+      assertEquals("x-EUC-TW", allMappings.get(bDir.getCanonicalPath()));
+      assertEquals("UTF-8", allMappings.get(cDir.getCanonicalPath()));
+      assertEquals("KOI8-R", allMappings.get(mainDir.getCanonicalPath()));
+    }
+    {
+      importProject(
+        new GradleBuildScriptBuilderEx()
+          .withJavaPlugin()
+          .withGradleIdeaExtPlugin(IDEA_EXT_PLUGIN_VERSION)
+          .addImport("org.jetbrains.gradle.ext.EncodingConfiguration.BomPolicy")
+          .addPostfix("sourceSets {")
+          .addPostfix("  main.java.srcDirs += '../sub-project/src/main/java'")
+          .addPostfix("}")
+          .addPostfix("idea {")
+          .addPostfix("  project {")
+          .addPostfix("    settings {")
+          .addPostfix("      encodings {")
+          .addPostfix("        mapping['src/main/java/a'] = '<System Default>'")
+          .addPostfix("        mapping['src/main/java/b'] = '<System Default>'")
+          .addPostfix("        mapping['../sub-project/src/main/java'] = '<System Default>'")
+          .addPostfix("      }")
+          .addPostfix("    }")
+          .addPostfix("  }")
+          .addPostfix("}")
+          .generate());
+      EncodingProjectManagerImpl encodingManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+      Map<String, String> allMappings = encodingManager.getAllMappings().entrySet().stream()
+        .collect(Collectors.toMap(it -> it.getKey().getCanonicalPath(), it -> it.getValue().name()));
+      assertNull(allMappings.get(aDir.getCanonicalPath()));
+      assertNull(allMappings.get(bDir.getCanonicalPath()));
+      assertEquals("UTF-8", allMappings.get(cDir.getCanonicalPath()));
+      assertNull(allMappings.get(mainDir.getCanonicalPath()));
     }
   }
 

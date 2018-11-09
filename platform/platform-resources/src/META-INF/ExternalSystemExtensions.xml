@@ -53,6 +53,8 @@
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationHandler"/>
     <externalSystemConfigurationHandler
+        implementation="com.intellij.openapi.externalSystem.service.project.settings.EncodingConfigurationHandler"/>
+    <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.PackagePrefixConfigurationHandler"/>
     <externalSystemConfigurationHandler implementation="com.intellij.profile.codeInspection.InspectionsProfileConfigurationHandler"/>
     <externalSystemConfigurationHandler
