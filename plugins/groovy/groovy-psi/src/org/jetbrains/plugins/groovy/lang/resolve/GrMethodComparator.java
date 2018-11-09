@@ -22,9 +22,6 @@ public abstract class GrMethodComparator {
     @Nullable
     PsiType[] getArgumentTypes();
 
-    @Nullable
-    PsiType[] getTypeArguments();
-
     @NotNull
     PsiElement getPlace();
 

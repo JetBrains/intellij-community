@@ -27,12 +27,10 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Inf
 class GroovyResolverProcessorImpl extends GroovyResolverProcessor
   implements GrMethodComparator.Context, GrResolverProcessor<GroovyResolveResult> {
 
-  private final @NotNull PsiType[] myTypeArguments;
   private final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
 
   GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
     super(ref, kinds);
-    myTypeArguments = ref.getTypeArguments();
     myArgumentTypes = NullableLazyValue.createValue(() -> buildTopLevelArgumentTypes((GrCall)myRef.getParent()));
   }
 
@@ -163,12 +161,6 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
   @Override
   public PsiType[] getArgumentTypes() {
     return myArgumentTypes.getValue();
-  }
-
-  @Nullable
-  @Override
-  public PsiType[] getTypeArguments() {
-    return myTypeArguments;
   }
 
   @NotNull
