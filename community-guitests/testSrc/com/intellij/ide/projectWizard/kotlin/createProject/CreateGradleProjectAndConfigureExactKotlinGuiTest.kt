@@ -8,9 +8,9 @@ import org.junit.Test
 class CreateGradleProjectAndConfigureExactKotlinGuiTest : KotlinGuiTestCase() {
 
   @Test
-  @JvmName("gradle_cfg_jvm_old1231")
-  fun createGradleAndConfigureKotlinJvmOldVersion1231() {
-    KotlinTestProperties.kotlin_artifact_version = "1.2.31"
+  @JvmName("gradle_cfg_jvm_old1271")
+  fun createGradleAndConfigureKotlinJvmExactVersion1271() {
+    KotlinTestProperties.kotlin_artifact_version = "1.2.71"
     testCreateGradleAndConfigureKotlin(
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
       project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
@@ -26,9 +26,26 @@ class CreateGradleProjectAndConfigureExactKotlinGuiTest : KotlinGuiTestCase() {
     )
   }
 
+  fun createGradleAndConfigureKotlinJvmExactVersion130() {
+    KotlinTestProperties.kotlin_artifact_version = "1.3.0"
+    testCreateGradleAndConfigureKotlin(
+      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
+      project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
+      expectedFacet = FacetStructure(
+        targetPlatform = TargetPlatform.JVM18,
+        languageVersion = LanguageVersion.L13,
+        apiVersion = LanguageVersion.L13,
+        jvmOptions = FacetStructureJVM()
+      ),
+      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
+        artifact = testMethod.methodName
+      )
+    )
+  }
+
   @Test
   @JvmName("gradle_cfg_jvm_old1161")
-  fun createGradleAndConfigureKotlinJvmOldVersion1161() {
+  fun createGradleAndConfigureKotlinJvmExactVersion1161() {
     KotlinTestProperties.kotlin_artifact_version = "1.1.61"
     testCreateGradleAndConfigureKotlin(
       kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
