@@ -310,17 +310,10 @@ public class JdkChooserPanel extends JPanel {
     ApplicationManager.getApplication().runWriteAction(() -> {
       ProjectJdkTable table = ProjectJdkTable.getInstance();
       List<Sdk> sdks = table.getSdksOfType(jdk.getSdkType());
-      Sdk candidate = jdk;
-      for (Sdk sdk : sdks) {
-        if (path.equals(sdk.getHomePath())) {
-          candidate = sdk;//known sdk should be selected in project
-          break;
-        }
-      }
-      if (candidate == jdk) {
+      if (ContainerUtil.find(sdks, sdk -> path.equals(sdk.getHomePath())) == null) {
         table.addJdk(jdk);//this jdk is unknown yet and so it has to be added to Platform-level table now
       }
-      ProjectRootManager.getInstance(project).setProjectSdk(candidate);
+      ProjectRootManager.getInstance(project).setProjectSdk(jdk);
     });
     return jdk;
   }
