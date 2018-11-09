@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.refactoring.move.moduleMembers.PyMoveModuleMembersHelper.isMovableModuleMember;
@@ -431,62 +433,67 @@ public class PyMoveTest extends PyTestCase {
     doMoveSymbolsTest("dst.py", "func");
   }
 
-  private void doMoveFileTest(String fileName, String toDirName) {
-    Project project = myFixture.getProject();
-    PsiManager manager = PsiManager.getInstance(project);
+  // PY-8415
+  public void testMoveSymbolDoesntCreateInitPyInSourceRoot() {
+    doComparingDirectories(testDir -> {
+      final VirtualFile sourceRoot = testDir.findFileByRelativePath("src");
+      runWithSourceRoots(Collections.singletonList(sourceRoot), () -> {
+        moveSymbols(testDir, "src/pkg/subpkg/b.py", "MyClass");
+      });
+    });
+  }
 
-    String root = "/refactoring/move/" + getTestName(true);
-    String rootBefore = root + "/before/src";
-    String rootAfter = root + "/after/src";
+  private void doComparingDirectories(@NotNull Consumer<VirtualFile> testDirConsumer) {
+    final String root = "/refactoring/move/" + getTestName(true);
+    final String rootBefore = root + "/before/src";
+    final String rootAfter = root + "/after/src";
 
-    VirtualFile dir1 = myFixture.copyDirectoryToProject(rootBefore, "");
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    final VirtualFile testDir = myFixture.copyDirectoryToProject(rootBefore, "");
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+    
+    testDirConsumer.consume(testDir);
 
-    VirtualFile virtualFile = dir1.findFileByRelativePath(fileName);
-    assertNotNull(virtualFile);
-    PsiElement file = manager.findFile(virtualFile);
-    if (file == null) {
-      file = manager.findDirectory(virtualFile);
-    }
-    assertNotNull(file);
-    VirtualFile toVirtualDir = dir1.findFileByRelativePath(toDirName);
-    assertNotNull(toVirtualDir);
-    PsiDirectory toDir = manager.findDirectory(toVirtualDir);
-    new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{file}, toDir, false, false, null, null).run();
-
-    VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
+    final VirtualFile expectedDir = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
     try {
-      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1);
+      PlatformTestUtil.assertDirectoriesEqual(expectedDir, testDir);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  private void doMoveSymbolsTest(@NotNull String toFileName, String... symbolNames) {
-    String root = "/refactoring/move/" + getTestName(true);
-    String rootBefore = root + "/before/src";
-    String rootAfter = root + "/after/src";
-    VirtualFile dir1 = myFixture.copyDirectoryToProject(rootBefore, "");
-    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+  private void doMoveFileTest(String fileName, String toDirName) {
+    doComparingDirectories(testDir -> {
+      final Project project = myFixture.getProject();
+      final PsiManager manager = PsiManager.getInstance(project);
+      final VirtualFile virtualFile = testDir.findFileByRelativePath(fileName);
+      assertNotNull(virtualFile);
+      PsiElement file = manager.findFile(virtualFile);
+      if (file == null) {
+        file = manager.findDirectory(virtualFile);
+      }
+      assertNotNull(file);
+      final VirtualFile toVirtualDir = testDir.findFileByRelativePath(toDirName);
+      assertNotNull(toVirtualDir);
+      final PsiDirectory toDir = manager.findDirectory(toVirtualDir);
+      new MoveFilesOrDirectoriesProcessor(project, new PsiElement[]{file}, toDir, false, false, null, null).run();
+    });
+  }
 
+  private void doMoveSymbolsTest(@NotNull String toFileName, String... symbolNames) {
+    doComparingDirectories(testDir -> moveSymbols(testDir, toFileName, symbolNames));
+  }
+
+  private void moveSymbols(@NotNull VirtualFile testDir, @NotNull String toFileName, @NotNull String... symbolNames) {
     final PsiNamedElement[] symbols = ContainerUtil.map2Array(symbolNames, PsiNamedElement.class, name -> {
       final PsiNamedElement found = findFirstNamedElement(name);
       assertNotNull("Symbol '" + name + "' does not exist", found);
       return found;
     });
 
-    VirtualFile toVirtualFile = dir1.findFileByRelativePath(toFileName);
-    String path = toVirtualFile != null ? toVirtualFile.getPath() : (dir1.getPath() + "/" + toFileName);
+    final VirtualFile toVirtualFile = testDir.findFileByRelativePath(toFileName);
+    final String path = toVirtualFile != null ? toVirtualFile.getPath() : (testDir.getPath() + "/" + toFileName);
     new PyMoveModuleMembersProcessor(symbols, path).run();
-
-    VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
-    try {
-      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
 
