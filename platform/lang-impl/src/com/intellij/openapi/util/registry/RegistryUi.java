@@ -84,6 +84,7 @@ public class RegistryUi implements Disposable {
     myTable.setStriped(true);
 
     myDescriptionLabel = new JTextArea(3, 50);
+    myDescriptionLabel.setMargin(JBUI.insets(2));
     myDescriptionLabel.setWrapStyleWord(true);
     myDescriptionLabel.setLineWrap(true);
     myDescriptionLabel.setEditable(false);
