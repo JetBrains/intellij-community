@@ -5,7 +5,7 @@ import com.intellij.ide.projectWizard.kotlin.model.*
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
 import org.junit.Test
 
-class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
+class CreateGradleProjectAndConfigureExactKotlinGuiTest : KotlinGuiTestCase() {
 
   @Test
   @JvmName("gradle_cfg_jvm_old1231")

@@ -66,7 +66,7 @@ class PreparationSteps
 @RunWithIde(CommunityIde::class)
 @Suite.SuiteClasses(
   CreateGradleProjectAndConfigureKotlinGuiTest::class
-  , CreateGradleProjectAndConfigureOldKotlinGuiTest::class
+  , CreateGradleProjectAndConfigureExactKotlinGuiTest::class
   , CreateGradleProjectWithKotlinGuiTest::class
   , CreateGradleKotlinDslProjectAndConfigureKotlinGuiTest::class
   , CreateGradleKotlinDslProjectWithKotlinGuiTest::class
