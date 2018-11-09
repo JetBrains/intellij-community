@@ -5,14 +5,15 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.idea.svn.api.BaseSvnClient
 import org.jetbrains.idea.svn.api.Depth
 import org.jetbrains.idea.svn.api.Revision
 import org.jetbrains.idea.svn.api.Target
 import org.jetbrains.idea.svn.commandLine.*
+import org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent
 import org.xml.sax.SAXException
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -23,21 +24,17 @@ import javax.xml.parsers.SAXParserFactory
 private val LOG = logger<CmdInfoClient>()
 
 private fun parseResult(base: File?, result: String?): Info? {
-  val handler = CollectInfoHandler()
-
-  parseResult(handler, base, result)
-
-  return handler.info
+  val ref = Ref<Info?>()
+  parseResult(InfoConsumer(ref::set), base, result)
+  return ref.get()
 }
 
 private fun parseResult(handler: InfoConsumer, base: File?, result: String?) {
-  if (StringUtil.isEmptyOrSpaces(result)) {
-    return
-  }
+  if (isEmptyOrSpaces(result)) return
 
-  val infoHandler = SvnInfoHandler(base) { info ->
+  val infoHandler = SvnInfoHandler(base) {
     try {
-      handler.consume(info)
+      handler.consume(it)
     }
     catch (e: SvnBindException) {
       throw SvnExceptionWrapper(e)
@@ -49,9 +46,8 @@ private fun parseResult(handler: InfoConsumer, base: File?, result: String?) {
 
 private fun parseResult(result: String, handler: SvnInfoHandler) {
   try {
-    val parser = SAXParserFactory.newInstance().newSAXParser()
-
-    parser.parse(ByteArrayInputStream(result.trim { it <= ' ' }.toByteArray(CharsetToolkit.UTF8_CHARSET)), handler)
+    SAXParserFactory.newInstance().newSAXParser().parse(
+      ByteArrayInputStream(result.trim { it <= ' ' }.toByteArray(CharsetToolkit.UTF8_CHARSET)), handler)
   }
   catch (e: SvnExceptionWrapper) {
     LOG.info("info output $result")
@@ -71,15 +67,11 @@ private fun parseResult(result: String, handler: SvnInfoHandler) {
   }
 }
 
-private fun buildParameters(target: Target, revision: Revision?, depth: Depth?): List<String> {
-  val parameters = ContainerUtil.newArrayList<String>()
-
-  CommandUtil.put(parameters, depth)
-  CommandUtil.put(parameters, revision)
-  CommandUtil.put(parameters, target)
-  parameters.add("--xml")
-
-  return parameters
+private fun buildParameters(target: Target, revision: Revision?): List<String> = mutableListOf<String>().apply {
+  CommandUtil.put(this, Depth.EMPTY)
+  CommandUtil.put(this, revision)
+  CommandUtil.put(this, target)
+  add("--xml")
 }
 
 class CmdInfoClient : BaseSvnClient(), InfoClient {
@@ -94,59 +86,48 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
       }
     }
 
-    try {
-      val command = execute(myVcs, Target.on(path), SvnCommandName.info, parameters, listener)
-
-      return command.output
+    return try {
+      execute(myVcs, Target.on(path), SvnCommandName.info, parameters, listener).output
     }
     catch (e: SvnBindException) {
-      val text = StringUtil.notNullize(e.message)
-      if (text.contains("W155010")) {
+      val text = e.message
+      when {
         // if "svn info" is executed for several files at once, then this warning could be printed only for some files, but info for other
         // files should be parsed from output
-        return output.stdout
-      }
-      // not a working copy exception
-      // "E155007: '' is not a working copy"
-      if (text.contains("is not a working copy") && StringUtil.isNotEmpty(output.stdout)) {
+        "W155010" in text -> output.stdout
         // TODO: Seems not reproducible in 1.8.4
-        // workaround: as in subversion 1.8 "svn info" on a working copy root outputs such error for parent folder,
-        // if there are files with conflicts.
-        // but the requested info is still in the output except root closing tag
-        return output.stdout + "</info>"
+        // "E155007: '' is not a working copy"
+        // Workaround: in subversion 1.8 "svn info" on a working copy root outputs such error for parent folder, if there are files with
+        // conflicts. But the requested info is still in the output except root closing tag.
+        "is not a working copy" in text && !output.stdout.isEmpty() -> "${output.stdout}</info>"
+        else -> throw e
       }
-      throw e
     }
   }
 
   @Throws(SvnBindException::class)
   override fun doInfo(path: File, revision: Revision?): Info? {
-    val base = CommandUtil.requireExistingParent(path)
-
-    return parseResult(base, execute(buildParameters(Target.on(path), revision, Depth.EMPTY), path))
+    val base = requireExistingParent(path)
+    return parseResult(base, execute(buildParameters(Target.on(path), revision), path))
   }
 
   @Throws(SvnBindException::class)
   override fun doInfo(target: Target, revision: Revision?): Info? {
     assertUrl(target)
 
-    val command = execute(myVcs, target, SvnCommandName.info, buildParameters(target, revision, Depth.EMPTY), null)
-
+    val command = execute(myVcs, target, SvnCommandName.info, buildParameters(target, revision), null)
     return parseResult(null, command.output)
   }
 
   @Throws(SvnBindException::class)
   override fun doInfo(paths: Collection<File>, handler: InfoConsumer?) {
-    var base = ContainerUtil.getFirstItem(paths)
-
-    if (base != null) {
-      base = CommandUtil.requireExistingParent(base)
-
-      val parameters = ContainerUtil.newArrayList<String>()
-      for (file in paths) {
-        CommandUtil.put(parameters, file)
+    val firstPath = paths.firstOrNull()
+    if (firstPath != null) {
+      val base = requireExistingParent(firstPath)
+      val parameters = mutableListOf<String>().apply {
+        paths.forEach { CommandUtil.put(this, it) }
+        add("--xml")
       }
-      parameters.add("--xml")
 
       // Currently do not handle exceptions here like in SvnVcs.handleInfoException - just continue with parsing in case of warnings for
       // some of the requested items
@@ -155,14 +136,5 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
         parseResult(handler, base, result)
       }
     }
-  }
-}
-
-private class CollectInfoHandler : InfoConsumer {
-  var info: Info? = null
-    private set
-
-  override fun consume(info: Info) {
-    this.info = info
   }
 }
