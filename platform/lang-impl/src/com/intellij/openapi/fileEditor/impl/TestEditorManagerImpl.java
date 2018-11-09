@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
@@ -479,13 +478,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       myVirtualFile2Editor.put(file, editor);
     }
 
-    if (descriptor.getOffset() >= 0){
-      editor.getCaretModel().moveToOffset(descriptor.getOffset());
-    }
-    else if (descriptor.getLine() >= 0 && descriptor.getColumn() >= 0){
-      editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(descriptor.getLine(), descriptor.getColumn()));
-    }
-    editor.getSelectionModel().removeSelection();
+    descriptor.navigateIn(editor);
     myActiveFile = file;
 
     return editor;

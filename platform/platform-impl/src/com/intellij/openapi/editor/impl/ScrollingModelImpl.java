@@ -3,6 +3,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.RemoteDesktopService;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +37,7 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   private final EditorImpl myEditor;
   private final List<VisibleAreaListener> myVisibleAreaListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<ScrollRequestListener> myScrollRequestListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private AnimatedScrollingRunnable myCurrentAnimationRequest = null;
   private boolean myAnimationDisabled = false;
@@ -132,6 +134,9 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   }
 
   private void scrollTo(@NotNull VisualPosition pos, @NotNull ScrollType scrollType) {
+    for (ScrollRequestListener listener : myScrollRequestListeners) {
+      listener.scrollRequested(myEditor.visualToLogicalPosition(pos), scrollType);
+    }
     Point targetLocation = myEditor.visualPositionToXY(pos);
     scrollTo(targetLocation, scrollType);
   }
@@ -147,7 +152,12 @@ public class ScrollingModelImpl implements ScrollingModelEx {
   public void scrollTo(@NotNull LogicalPosition pos, @NotNull ScrollType scrollType) {
     assertIsDispatchThread();
 
-    AsyncEditorLoader.performWhenLoaded(myEditor, () -> scrollTo(myEditor.logicalPositionToXY(pos), scrollType));
+    AsyncEditorLoader.performWhenLoaded(myEditor, () -> {
+      for (ScrollRequestListener listener : myScrollRequestListeners) {
+        listener.scrollRequested(pos, scrollType);
+      }
+      scrollTo(myEditor.logicalPositionToXY(pos), scrollType);
+    });
   }
 
   private static void assertIsDispatchThread() {
@@ -426,6 +436,11 @@ public class ScrollingModelImpl implements ScrollingModelEx {
 
   void onBulkDocumentUpdateStarted() {
     cancelAnimatedScrolling(true);
+  }
+
+  public void addScrollRequestListener(ScrollRequestListener scrollRequestListener, Disposable parentDisposable) {
+    myScrollRequestListeners.add(scrollRequestListener);
+    Disposer.register(parentDisposable, () -> myScrollRequestListeners.remove(scrollRequestListener));
   }
 
   private class AnimatedScrollingRunnable {
