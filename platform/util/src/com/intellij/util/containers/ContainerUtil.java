@@ -53,13 +53,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
+  public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap() {
     return ContainerUtilRt.newTreeMap();
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
+  public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
     return ContainerUtilRt.newTreeMap(map);
   }
 
@@ -391,19 +391,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> TreeSet<T> newTreeSet() {
+  public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
     return ContainerUtilRt.newTreeSet();
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
-    return ContainerUtilRt.newTreeSet(elements);
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
+  public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
     return ContainerUtilRt.newTreeSet(elements);
   }
 
