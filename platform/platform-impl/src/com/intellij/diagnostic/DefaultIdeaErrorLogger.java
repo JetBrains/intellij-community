@@ -2,8 +2,8 @@
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
+import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -51,17 +51,22 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
       Throwable t = event.getThrowable();
       PluginId pluginId = IdeErrorsDialog.findPluginId(t);
-      if (pluginId != null &&
-          !pluginId.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID) &&
-          StatisticsUtilKt.isFromPluginRepository(pluginId.getIdString())) {
-        FUSApplicationUsageTrigger.getInstance().trigger(PluginExceptionStatisticCollector.class, pluginId.getIdString(), null);
-      }
 
       ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
 
       boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
       boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
+      String pluginIdString = pluginId == null ? null : pluginId.getIdString();
+      String pluginIdToReport;
+      if (pluginIdString != null && !pluginIdString.equals(PluginManagerCore.CORE_PLUGIN_ID) &&
+          StatisticsUtilKt.isFromPluginRepository(pluginIdString)) {
+        pluginIdToReport = pluginIdString;
+      }
+      else {
+        pluginIdToReport = null;
+      }
+      AppLifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed, pluginIdToReport);
 
       return notificationEnabled ||
              showPluginError ||
