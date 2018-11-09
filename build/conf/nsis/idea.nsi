@@ -684,9 +684,9 @@ check_version:
   StrCmp $3 "" done
   IntCmpU $3 ${VER_BUILD} ask_Install_Over done ask_Install_Over
 ask_Install_Over:
-  ${LogText} ""
   ${LogText} "  NOTE: ${PRODUCT_WITH_VER} is already installed:"
   ${LogText} "  $9"
+  ${LogText} ""
   IfSilent continue 0
   MessageBox MB_YESNO|MB_ICONQUESTION "$(current_version_already_installed)" IDYES continue IDNO exit_installer
 exit_installer:
@@ -1300,10 +1300,9 @@ custom_silent_config:
 validate_install_dir:
   Call searchCurrentVersion
   Call silentInstallDirValidate
-  Call OnDirectoryPageLeave
 set_reg_key:
   StrCpy $baseRegKey "HKCU"
-  StrCmp $silentMode "admin" uac_elevate done
+  StrCmp $silentMode "admin" uac_elevate installdir_is_empty
 uac_elevate:
   !insertmacro UAC_RunElevated
   StrCmp 1223 $0 uac_elevation_aborted ; UAC dialog aborted by user? - continue install under user
@@ -1317,7 +1316,7 @@ uac_elevation_aborted:
   ${LogText} "  NOTE: UAC elevation has been aborted. Installation dir will be changed."
   ${LogText} ""
   StrCpy $INSTDIR "$LOCALAPPDATA\${MANUFACTURER}\${PRODUCT_WITH_VER}"
-  goto done
+  goto installdir_is_empty
 uac_success:
   StrCmp 1 $3 uac_admin ;Admin?
   StrCmp 3 $1 0 uac_elevation_aborted ;Try again?
@@ -1333,6 +1332,10 @@ set_install_dir_admin_mode:
 uac_all_users:
   SetShellVarContext all
   StrCpy $baseRegKey "HKLM"
+installdir_is_empty:
+  IfSilent 0 done
+; Check in silent mode if install folder is not empty.
+  Call OnDirectoryPageLeave
 done:
   ${LogText} "Installation dir: $INSTDIR"
 ;  !insertmacro MUI_LANGDLL_DISPLAY
