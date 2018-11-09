@@ -5,7 +5,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -16,6 +19,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +37,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -43,6 +47,7 @@ import java.util.stream.Collectors;
  */
 public class RegistryUi implements Disposable {
   private static final String RECENT_PROPERTIES_KEY = "RegistryRecentKeys";
+  private static final String REQUIRES_IDE_RESTART = "Requires IDE Restart";
 
   private final JBTable myTable;
   private final JTextArea myDescriptionLabel;
@@ -100,7 +105,7 @@ public class RegistryUi implements Disposable {
           final RegistryValue value = myModel.getRegistryValue(selected);
           String desc = value.getDescription();
           if (value.isRestartRequired()) {
-            String required = " Requires IDE restart.";
+            String required = " " + REQUIRES_IDE_RESTART + ".";
             if (desc.endsWith(".")) {
               desc += required;
             } else {
@@ -408,7 +413,14 @@ public class RegistryUi implements Disposable {
       if (v != null) {
         switch (column) {
           case 0:
-            myLabel.setIcon(v.isRestartRequired() ? RESTART_ICON : null);
+            if (v.isRestartRequired()) {
+              myLabel.setIcon(RESTART_ICON);
+              myLabel.setToolTipText(REQUIRES_IDE_RESTART);
+            }
+            else {
+              myLabel.setIcon(null);
+              myLabel.setToolTipText(null);
+            }
             myLabel.setHorizontalAlignment(SwingConstants.CENTER);
             break;
           case 1:
