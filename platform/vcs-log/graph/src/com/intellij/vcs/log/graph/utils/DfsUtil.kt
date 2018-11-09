@@ -16,7 +16,6 @@
 
 package com.intellij.vcs.log.graph.utils
 
-import com.intellij.openapi.util.Ref
 import com.intellij.util.containers.IntStack
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -136,29 +135,4 @@ private fun isDown(stack: IntStack): Boolean {
   val previousNode = getPreviousNode(stack)
   if (previousNode == Dfs.NextNode.NODE_NOT_FOUND) return true
   return previousNode < currentNode
-}
-
-fun LiteLinearGraph.isAncestor(lowerNode: Int, upperNode: Int): Boolean {
-  val visited = BitSetFlags(nodesCount(), false)
-
-  val result = Ref.create(false)
-  walk(lowerNode) { currentNode ->
-    visited.set(currentNode, true)
-
-    if (currentNode == upperNode) {
-      result.set(true)
-      return@walk Dfs.NextNode.EXIT
-    }
-    if (currentNode > upperNode) {
-      for (nextNode in getNodes(currentNode, LiteLinearGraph.NodeFilter.UP)) {
-        if (!visited.get(nextNode)) {
-          return@walk nextNode
-        }
-      }
-    }
-
-    Dfs.NextNode.NODE_NOT_FOUND
-  }
-
-  return result.get()
 }

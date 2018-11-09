@@ -17,11 +17,9 @@
 package com.intellij.vcs.log.graph.impl.facade
 
 import com.intellij.util.Consumer
-import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.Flags
-import com.intellij.vcs.log.graph.utils.UnsignedBitSet
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import java.util.*
 
@@ -50,24 +48,6 @@ class ReachableNodes(private val graph: LiteLinearGraph) {
     synchronized(visited) {
       visited.setAll(false)
       DfsWalk(startNodes, graph, visited).walk(goDown, consumer)
-    }
-  }
-
-  companion object {
-    @JvmStatic
-    fun getReachableNodes(graph: LinearGraph, headNodeIndexes: Set<Int>?): UnsignedBitSet {
-      if (headNodeIndexes == null) {
-        val nodesVisibility = UnsignedBitSet()
-        nodesVisibility.set(0, graph.nodesCount() - 1, true)
-        return nodesVisibility
-      }
-
-      val result = UnsignedBitSet()
-      DfsWalk(headNodeIndexes, graph).walk(true) { node: Int ->
-        result.set(node, true)
-        true
-      }
-      return result
     }
   }
 }

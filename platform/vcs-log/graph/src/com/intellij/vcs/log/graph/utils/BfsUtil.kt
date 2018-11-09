@@ -42,27 +42,3 @@ class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val vi
     }
   }
 }
-
-object BfsUtil {
-  fun getCorrespondingParent(graph: LiteLinearGraph, startNode: Int, endNode: Int, visited: Flags): Int {
-    val candidates = graph.getNodes(startNode, LiteLinearGraph.NodeFilter.DOWN)
-    if (candidates.size == 1) return candidates[0]
-    if (candidates.contains(endNode)) return endNode
-
-    val bfsWalks = candidates.mapTo(mutableListOf()) { BfsWalk(it, graph, visited) }
-
-    visited.setAll(false)
-    do {
-      for (walk in bfsWalks) {
-        if (walk.step().contains(endNode)) {
-          return walk.start
-        }
-      }
-      bfsWalks.removeIf { it.isFinished() }
-    }
-    while (bfsWalks.isNotEmpty())
-
-    return candidates[0]
-  }
-
-}

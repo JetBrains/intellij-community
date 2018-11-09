@@ -19,12 +19,8 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.impl.facade.*
-import com.intellij.vcs.log.graph.utils.BfsUtil.getCorrespondingParent
-import com.intellij.vcs.log.graph.utils.Dfs
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import com.intellij.vcs.log.graph.utils.*
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import com.intellij.vcs.log.graph.utils.isAncestor
-import com.intellij.vcs.log.graph.utils.walk
 import gnu.trove.*
 import java.util.*
 import java.util.function.BiConsumer
