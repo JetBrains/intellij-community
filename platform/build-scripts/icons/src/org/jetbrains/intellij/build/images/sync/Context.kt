@@ -5,6 +5,7 @@ import com.intellij.openapi.util.io.FileUtil
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.function.Consumer
 
 internal class Context(val devIconsVerifier: Runnable? = null) {
   val devRepoDir: String
@@ -25,6 +26,7 @@ internal class Context(val devIconsVerifier: Runnable? = null) {
   var removedByDesigners: MutableCollection<String> = mutableListOf()
   var modifiedByDesigners: MutableCollection<String> = mutableListOf()
   var createdReviews: Collection<Review> = emptyList()
+  lateinit var errorHandler: Consumer<String>
   fun isSuccess() = addedByDev.isEmpty() && removedByDev.isEmpty() && modifiedByDev.isEmpty()
 
   init {

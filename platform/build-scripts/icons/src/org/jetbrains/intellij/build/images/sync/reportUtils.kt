@@ -3,17 +3,10 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 import java.util.*
-import java.util.function.Consumer
 import java.util.stream.Stream
 import kotlin.streams.toList
 
-internal fun report(context: Context,
-                    root: File,
-                    devIcons: Int,
-                    icons: Int,
-                    skipped: Int,
-                    consistent: Collection<String>,
-                    errorHandler: Consumer<String>) {
+internal fun report(context: Context, root: File, devIcons: Int, icons: Int, skipped: Int, consistent: Collection<String>) {
   log("Skipped $skipped dirs")
   fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
   val report = """
@@ -35,7 +28,7 @@ internal fun report(context: Context,
     }
     else null
     if (context.notifySlack) sendNotification(investigator, context)
-    if (!context.isSuccess()) errorHandler.accept(report)
+    if (!context.isSuccess()) context.errorHandler.accept(report)
   }
 }
 

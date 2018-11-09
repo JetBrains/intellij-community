@@ -17,13 +17,14 @@ import java.util.stream.Collectors
 private lateinit var icons: Map<String, GitObject>
 private lateinit var devIcons: Map<String, GitObject>
 
-fun main(args: Array<String>) = checkIcons(Context())
+fun main(args: Array<String>) = checkIcons()
 
-internal fun checkIcons(context: Context,
+internal fun checkIcons(context: Context = Context(),
                         loggerImpl: Consumer<String> = Consumer { println(it) },
                         errorHandler: Consumer<String> = Consumer { error(it) }) {
   logger = loggerImpl
   context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
+  context.errorHandler = errorHandler
   icons = readIconsRepo(context.iconsRepo, context.iconsRepoDir)
   val devRepoRoot = findGitRepoRoot(context.devRepoDir)
   val devRepoVcsRoots = vcsRoots(devRepoRoot)
@@ -56,19 +57,8 @@ internal fun checkIcons(context: Context,
       if (it.isEmpty()) "" else "$it/"
     })
   }
-  if (context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) {
-    log("Syncing icons repo:")
-    syncAdded(context.addedByDev, devIcons, File(context.iconsRepoDir)) { context.iconsRepo }
-    syncModified(context.modifiedByDev, icons, devIcons)
-    syncRemoved(context.removedByDev, icons)
-  }
-  if (context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) {
-    log("Syncing dev repo:")
-    syncAdded(context.addedByDesigners, icons, File(context.devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
-    syncModified(context.modifiedByDesigners, devIcons, icons)
-    if (context.doSyncRemovedIconsInDev) syncRemoved(context.removedByDesigners, devIcons)
-  }
-  report(context, devRepoRoot, devIcons.size, icons.size, skippedDirs.size, consistent, errorHandler)
+  syncIcons(context, devIcons, icons)
+  report(context, devRepoRoot, devIcons.size, icons.size, skippedDirs.size, consistent)
 }
 
 private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) =
