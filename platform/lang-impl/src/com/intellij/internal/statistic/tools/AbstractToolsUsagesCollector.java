@@ -5,28 +5,16 @@ import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.project.DefaultProjectFactory;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ObjectUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,26 +26,7 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     return descriptor != null && descriptor.isBundled();
   };
 
-  private static final Predicate<ScopeToolState> LISTED = state -> {
-    final IdeaPluginDescriptor descriptor = getIdeaPluginDescriptor(state);
-    if (descriptor != null) {
-      String path;
-      try {
-        //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin
-        path = descriptor.getPath().getCanonicalPath();
-      }
-      catch (final IOException e) {
-        path = descriptor.getPath().getAbsolutePath();
-      }
-      if (path.startsWith(PathManager.getPluginsPath())) {
-        final PluginId id = descriptor.getPluginId();
-        if (id != null && getRepositoryPluginIds().contains(id.getIdString())) {
-          return true;
-        }
-      }
-    }
-    return false;
-  };
+  private static final Predicate<ScopeToolState> LISTED = state -> StatisticsUtilKt.isFromPluginRepository(getIdeaPluginDescriptor(state));
 
   private static IdeaPluginDescriptor getIdeaPluginDescriptor(final ScopeToolState state) {
     final InspectionEP extension = state.getTool().getExtension();
@@ -153,49 +122,6 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     @Override
     protected Stream<ScopeToolState> filter(@NotNull final Stream<ScopeToolState> tools) {
       return tools.filter(DISABLED).filter(LISTED);
-    }
-  }
-
-  private static Set<String> getRepositoryPluginIds() {
-    final Project project = DefaultProjectFactory.getInstance().getDefaultProject();
-    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      List<IdeaPluginDescriptor> plugins = Collections.emptyList();
-      try {
-        final List<IdeaPluginDescriptor> cached = RepositoryHelper.loadCachedPlugins();
-        if (cached != null) {
-          plugins = cached;
-        }
-        else {
-          // schedule plugins loading, will take them the next time
-          ApplicationManager.getApplication().executeOnPooledThread(() -> {
-            try {
-              RepositoryHelper.loadPlugins(null);
-            }
-            catch (final IOException ignored) {
-            }
-          });
-        }
-      }
-      catch (final IOException ignored) {
-      }
-      final Set<String> ids = StreamEx.of(plugins).map(PluginDescriptor::getPluginId).nonNull().map(PluginId::getIdString).toSet();
-      return CachedValueProvider.Result.create(ids, new DelayModificationTracker(1, TimeUnit.HOURS));
-    });
-  }
-
-  private static class DelayModificationTracker implements ModificationTracker {
-
-    private final long myStamp = System.currentTimeMillis();
-    private final long myDelay;
-
-    private DelayModificationTracker(final long delay, @NotNull final TimeUnit unit) {
-      myDelay = TimeUnit.MILLISECONDS.convert(delay, unit);
-    }
-
-    @Override
-    public long getModificationCount() {
-      final long diff = System.currentTimeMillis() - (myStamp + myDelay);
-      return diff > 0 ? diff : 0;
     }
   }
 }

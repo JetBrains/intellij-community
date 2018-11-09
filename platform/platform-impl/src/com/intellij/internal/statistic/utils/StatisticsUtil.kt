@@ -1,17 +1,29 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.utils
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCacheFileName
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
+import one.util.streamex.StreamEx
+import java.io.IOException
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 fun getProjectId(project: Project): String {
   return project.getProjectCacheFileName(false, ".").hashCode().toString()
@@ -172,5 +184,69 @@ private fun addAll(result: ObjectIntHashMap<String>, usages: Set<UsageDescriptor
   for (usage in usages) {
     val key = usage.key
     result.put(key, result.get(key, 0) + usage.value)
+  }
+}
+
+private val repositoryPluginIds: Set<String>
+  get() {
+    val project = DefaultProjectFactory.getInstance().defaultProject
+    return CachedValuesManager.getManager(project).getCachedValue(project) {
+      var plugins = emptyList<IdeaPluginDescriptor>()
+      try {
+        val cached = RepositoryHelper.loadCachedPlugins()
+        if (cached != null) {
+          plugins = cached
+        }
+        else {
+          // schedule plugins loading, will take them the next time
+          ApplicationManager.getApplication().executeOnPooledThread {
+            try {
+              RepositoryHelper.loadPlugins(null)
+            }
+            catch (ignored: IOException) {
+            }
+          }
+        }
+      }
+      catch (ignored: IOException) {
+      }
+
+      val ids = StreamEx.of(plugins).map<PluginId> { descriptor: PluginDescriptor -> descriptor.pluginId }.nonNull().
+        map<String> { id: PluginId -> id.idString }.toSet()
+      CachedValueProvider.Result.create(ids, DelayModificationTracker(1, TimeUnit.HOURS))
+    }
+  }
+
+fun isFromPluginRepository(descriptor: IdeaPluginDescriptor?): Boolean {
+  if (descriptor == null) {
+    return false
+  }
+  var path: String
+  try {
+    //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin
+    path = descriptor.path.canonicalPath
+  }
+  catch (e: IOException) {
+    path = descriptor.path.absolutePath
+  }
+
+  if (path.startsWith(PathManager.getPluginsPath())) {
+    return isFromPluginRepository(descriptor.pluginId?.idString)
+  }
+  return false
+}
+
+fun isFromPluginRepository(pluginId: String?): Boolean {
+  return pluginId != null && repositoryPluginIds.contains(pluginId)
+}
+
+private class DelayModificationTracker internal constructor(delay: Long, unit: TimeUnit) : ModificationTracker {
+
+  private val myStamp = System.currentTimeMillis()
+  private val myDelay: Long = TimeUnit.MILLISECONDS.convert(delay, unit)
+
+  override fun getModificationCount(): Long {
+    val diff = System.currentTimeMillis() - (myStamp + myDelay)
+    return if (diff > 0) diff else 0
   }
 }
