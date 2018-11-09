@@ -39,7 +39,8 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
   }
 
   @Override
-  public IntroduceVariableSettings getSettings(Project project, Editor editor,
+  public IntroduceVariableSettings getSettings(Project project,
+                                               Editor editor,
                                                PsiExpression expr,
                                                PsiExpression[] occurrences,
                                                TypeSelectorManagerImpl typeSelectorManager,
@@ -50,7 +51,7 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
                                                JavaReplaceChoice replaceChoice) {
     PsiType defaultType = typeSelectorManager.getDefaultType();
     PsiType type = myLookForType ? findType(typeSelectorManager.getTypesForAll(), defaultType) : defaultType;
-    assertEquals(type.getInternalCanonicalText(), myExpectedTypeText);
+    assertEquals(myExpectedTypeText, type.getInternalCanonicalText());
     IntroduceVariableSettings introduceVariableSettings = new IntroduceVariableSettings() {
       @Override
       public String getEnteredName() {
