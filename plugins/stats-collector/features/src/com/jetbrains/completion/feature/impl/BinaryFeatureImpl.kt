@@ -28,12 +28,6 @@ class BinaryFeatureImpl(override val name: String,
                         override val defaultValue: Double,
                         private val firstValue: BinaryFeature.BinaryValueDescriptor,
                         private val secondValue: BinaryFeature.BinaryValueDescriptor) : BinaryFeature {
-    private fun transform(value: String): Double = when (value) {
-        firstValue.key -> firstValue.mapped
-        secondValue.key -> secondValue.mapped
-        else -> throw UnexpectedBinaryValueException(name, value, setOf(firstValue.key, secondValue.key))
-    }
-
     override val availableValues: Pair<String, String> = firstValue.key to secondValue.key
 
     override fun process(value: Any, featureArray: DoubleArray) {
@@ -44,5 +38,11 @@ class BinaryFeatureImpl(override val name: String,
     override fun setDefaults(featureArray: DoubleArray) {
         featureArray[undefinedIndex] = 1.0
         featureArray[index] = defaultValue
+    }
+
+    private fun transform(value: String): Double = when (value) {
+        firstValue.key -> firstValue.mapped
+        secondValue.key -> secondValue.mapped
+        else -> throw UnexpectedBinaryValueException(name, value, setOf(firstValue.key, secondValue.key))
     }
 }
