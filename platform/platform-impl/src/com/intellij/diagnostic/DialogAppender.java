@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
+import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
@@ -10,6 +11,7 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.io.MappingFailedException;
 import org.apache.log4j.AppenderSkeleton;
 import org.apache.log4j.Level;
 import org.apache.log4j.spi.LoggingEvent;
@@ -91,6 +93,10 @@ public class DialogAppender extends AppenderSkeleton {
       if (info == null || info.getThrowable() == null) return;
       ideaEvent = extractLoggingEvent(messageObject, info.getThrowable());
     }
+
+    boolean isOOM = DefaultIdeaErrorLogger.getOOMErrorKind(ideaEvent.getThrowable()) != null;
+    boolean isMappingFailed = !isOOM && ideaEvent.getThrowable() instanceof MappingFailedException;
+    AppLifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed);
 
     for (int i = errorLoggers.length - 1; i >= 0; i--) {
       ErrorLogger logger = errorLoggers[i];
