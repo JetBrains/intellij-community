@@ -80,9 +80,9 @@ public class JavaCompletionContributor extends CompletionContributor {
        psiElement().afterLeaf("(").withParent(psiReferenceExpression().withParent(NAME_VALUE_PAIR)));
 
   public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
-    psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2, PsiSwitchStatement.class));
+    psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchStatement.class)));
   private static final ElementPattern IN_ENUM_SWITCH_LABEL =
-    psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2,
+    psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2,
       psiElement(PsiSwitchStatement.class).with(new PatternCondition<PsiSwitchStatement>("enumExpressionType") {
         @Override
         public boolean accepts(@NotNull PsiSwitchStatement psiSwitchStatement, ProcessingContext context) {
@@ -91,7 +91,7 @@ public class JavaCompletionContributor extends CompletionContributor {
           PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
           return aClass != null && aClass.isEnum();
         }
-      })));
+      }))));
 
   private static final ElementPattern<PsiElement> AFTER_NUMBER_LITERAL =
     psiElement().afterLeaf(psiElement().withElementType(
