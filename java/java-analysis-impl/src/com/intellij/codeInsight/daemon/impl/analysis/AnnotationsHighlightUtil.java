@@ -623,6 +623,12 @@ public class AnnotationsHighlightUtil {
       }
     }
 
+    for (PsiMethod method : container.getMethods()) {
+      if (method instanceof PsiAnnotationMethod && !"value".equals(method.getName()) && ((PsiAnnotationMethod)method).getDefaultValue() == null) {
+        return JavaErrorMessages.message("annotation.container.abstract", container.getQualifiedName(), method.getName());
+      }
+    }
+
     return null;
   }
 
