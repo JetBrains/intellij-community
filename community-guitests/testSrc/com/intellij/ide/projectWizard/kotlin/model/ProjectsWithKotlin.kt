@@ -777,6 +777,7 @@ fun KotlinGuiTestCase.testGradleProjectWithKotlin(
     kotlinVersion = kotlinVersion,
     isKotlinDslUsed = gradleOptions.useKotlinDsl
   )
+  waitAMoment()
   gradleReimport()
   assert(waitForGradleReimport(projectName)) { "Gradle import failed after editing of gradle files" }
   waitAMoment()

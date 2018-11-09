@@ -47,8 +47,10 @@ class CreateMavenProjectAndConfigureKotlinGuiTest(private val testParameters: Te
     editPomXml(
       kotlinVersion = kotlinVersion
     )
+    waitAMoment()
     mavenReimport()
     Pause.pause(5000)
+    waitAMoment()
     mavenReimport()
 
     projectStructureDialogScenarios.openProjectStructureAndCheck {
@@ -62,6 +64,8 @@ class CreateMavenProjectAndConfigureKotlinGuiTest(private val testParameters: Te
         path = *arrayOf(projectName, "Kotlin")
       )
     }
+
+    waitAMoment()
   }
 
   companion object {
