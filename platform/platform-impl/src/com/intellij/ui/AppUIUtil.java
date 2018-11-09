@@ -359,7 +359,7 @@ public class AppUIUtil {
       protected void createDefaultActions() {
         super.createDefaultActions();
         init();
-        setOKButtonText("Accept");
+        setOKButtonText("Continue");
         setOKActionEnabled(false);
         setCancelButtonText("Reject and Exit");
         setAutoAdjustable(false);
@@ -382,7 +382,7 @@ public class AppUIUtil {
       dialog.setTitle(ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy");
     }
     else {
-      dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User License Agreement");
+      dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User Agreement");
     }
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
