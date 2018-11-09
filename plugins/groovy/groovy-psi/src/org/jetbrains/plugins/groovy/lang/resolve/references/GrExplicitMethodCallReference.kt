@@ -9,7 +9,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.resolveReferenceExpression
 class GrExplicitMethodCallReference(ref: GrReferenceExpressionImpl) : GroovyCachingReference<GrReferenceExpressionImpl>(ref) {
 
   override fun doResolve(incomplete: Boolean): Collection<GroovyResolveResult> {
+    require(!incomplete)
     element.referenceName ?: return emptyList()
-    return element.resolveReferenceExpression(incomplete)
+    return element.resolveReferenceExpression(false)
   }
 }

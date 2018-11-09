@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.doResolveStatic
 class GrStaticExpressionReference(element: GrReferenceExpression) : GroovyReferenceBase<GrReferenceExpression>(element) {
 
   override fun resolve(incomplete: Boolean): Collection<GroovyResolveResult> {
+    require(!incomplete)
     // results of this reference doesn't depend on types and inference, and can be cached once and for all
     return InferenceContext.TOP_CONTEXT.resolve(this, false, Resolver)
   }

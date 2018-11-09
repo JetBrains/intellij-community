@@ -45,8 +45,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.references.GrExplicitMethodCall
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrStaticExpressionReference;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
+import static java.util.Collections.emptyList;
 import static kotlin.LazyKt.lazy;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.getRValue;
@@ -534,9 +538,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     @NotNull
     @Override
     public Collection<GroovyResolveResult> doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
-      if (incomplete) {
-        return resolveReferenceExpression(ref, true);
-      }
       final GroovyReference rValueRef = ref.myRValueReference.getValue();
       final GroovyReference lValueRef = ref.myLValueReference.getValue();
       if (rValueRef != null && lValueRef != null) {
@@ -560,13 +561,16 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
       else {
         LOG.error("Reference expression has no references");
-        return Collections.emptyList();
+        return emptyList();
       }
     }
   };
 
-  @Nullable
-  private Collection<? extends GroovyResolveResult> resolveSpecial(boolean incomplete) {
+  private static final GroovyResolver<GrReferenceExpression> INCOMPLETE_RESOLVER = (ref, inc) -> resolveReferenceExpression(ref, true);
+
+  @NotNull
+  @Override
+  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
     final PsiElement parent = getParent();
     if (parent instanceof GrConstructorInvocation) {
       // Archaeology notice.
@@ -580,33 +584,37 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return ((GrConstructorInvocation)parent).getConstructorReference().resolve(incomplete);
     }
 
-    final Collection<? extends GroovyResolveResult> staticResults = getStaticReference().resolve(incomplete);
+    final Collection<? extends GroovyResolveResult> staticResults = getStaticReference().resolve(false);
+    if (!staticResults.isEmpty()) {
+      return staticResults;
+    }
+
+    if (incomplete) {
+      return TypeInferenceHelper.getCurrentContext().resolve(this, true, INCOMPLETE_RESOLVER);
+    }
+
+    final GroovyReference callReference = getCallReference();
+    if (callReference != null) {
+      return callReference.resolve(false);
+    }
+
+    return TypeInferenceHelper.getCurrentContext().resolve(this, false, RESOLVER);
+  }
+
+  @NotNull
+  protected Collection<? extends GroovyResolveResult> lrResolve(boolean rValue) {
+    final Collection<? extends GroovyResolveResult> staticResults = getStaticReference().resolve(false);
     if (!staticResults.isEmpty()) {
       return staticResults;
     }
 
     final GroovyReference callReference = getCallReference();
     if (callReference != null) {
-      return callReference.resolve(incomplete);
+      return callReference.resolve(false);
     }
 
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
-    final Collection<? extends GroovyResolveResult> specialResults = resolveSpecial(incomplete);
-    if (specialResults != null) return specialResults;
-    return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, RESOLVER);
-  }
-
-  @NotNull
-  protected Collection<? extends GroovyResolveResult> lrResolve(boolean rValue) {
-    final Collection<? extends GroovyResolveResult> specialResults = resolveSpecial(false);
-    if (specialResults != null) return specialResults;
-    GroovyReference ref = (rValue ? myRValueReference : myLValueReference).getValue();
-    return ref == null ? Collections.emptyList() : ref.resolve(false);
+    final GroovyReference ref = (rValue ? myRValueReference : myLValueReference).getValue();
+    return ref == null ? emptyList() : ref.resolve(false);
   }
 
   @Override
