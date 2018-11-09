@@ -42,5 +42,6 @@ iml_module(
         "//tools/idea/.idea/libraries:JUnit4[test]",
         "//tools/idea/platform/testFramework:intellij.platform.testFramework[module, test]",
         "//tools/idea/.idea/libraries:jediterm-pty",
+        "//tools/idea/platform/lang-impl:intellij.platform.lang.impl[module]",
     ],
 )
