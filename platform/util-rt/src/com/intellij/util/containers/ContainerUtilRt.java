@@ -135,7 +135,7 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
-    ArrayList<T> list = newArrayListWithCapacity(elements.length);
+    ArrayList<T> list = new ArrayList<T>(elements.length);
     Collections.addAll(list, elements);
     return list;
   }
@@ -144,10 +144,11 @@ public class ContainerUtilRt {
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull Iterable<? extends T> elements) {
     if (elements instanceof Collection) {
-      @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
+      @SuppressWarnings("unchecked")
+      Collection<? extends T> collection = (Collection<? extends T>)elements;
       return new ArrayList<T>(collection);
     }
-    return copy(ContainerUtilRt.<T>newArrayList(), elements);
+    return copy(new ArrayList<T>(), elements);
   }
 
   @NotNull
