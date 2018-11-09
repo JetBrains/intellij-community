@@ -875,8 +875,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       if (grandParent instanceof PsiAssertStatement) return ((PsiAssertStatement)grandParent).getAssertDescription() == parent;
       if (grandParent instanceof PsiNameValuePair) return ((PsiNameValuePair)grandParent).getValue() == parent;
     }
-    if (grandParent instanceof PsiSwitchLabelStatement) {
-      return ((PsiSwitchLabelStatement)grandParent).getEnclosingSwitchStatement() != null;
+    if (grandParent instanceof PsiExpressionList) {
+      PsiElement label = grandParent.getParent();
+      if (label instanceof PsiSwitchLabelStatementBase) {
+        return ((PsiSwitchLabelStatementBase)label).getEnclosingSwitchStatement() != null;
+      }
     }
     if (grandParent instanceof PsiVariable) {
       return ((PsiVariable)grandParent).getInitializer() == parent;
@@ -912,7 +915,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiPolyadicExpression) return true;
-    if (grandParent instanceof PsiSwitchLabelStatement)  return true;
+    if (grandParent instanceof PsiExpressionList && grandParent.getParent() instanceof PsiSwitchLabelStatementBase)  return true;
     if (grandParent instanceof PsiExpressionStatement && hasSemicolon(grandParent)) return true;
     if (grandParent instanceof PsiReferenceList) {
       final PsiElement greatGrandParent = grandParent.getParent();
@@ -929,10 +932,10 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     final PsiElement grandParent = parent.getParent();
     if (grandParent instanceof PsiCatchSection && parent instanceof PsiParameter) return true;
     if (grandParent instanceof PsiAnnotation && !(grandParent.getParent().getNextSibling() instanceof PsiErrorElement)) return true;
-    if (grandParent instanceof PsiParameterList || grandParent instanceof PsiExpressionList ||
+    if (grandParent instanceof PsiParameterList || grandParent instanceof PsiArrayInitializerMemberValue ||
+        (grandParent instanceof PsiExpressionList && !(grandParent.getParent() instanceof PsiSwitchLabelStatementBase)) ||
         grandParent instanceof PsiTypeParameterList || grandParent instanceof PsiResourceList ||
-        grandParent instanceof PsiResourceExpression || grandParent instanceof PsiArrayInitializerExpression ||
-        grandParent instanceof PsiArrayInitializerMemberValue) {
+        grandParent instanceof PsiResourceExpression || grandParent instanceof PsiArrayInitializerExpression) {
       return true;
     }
     if (grandParent instanceof PsiTypeElement) {

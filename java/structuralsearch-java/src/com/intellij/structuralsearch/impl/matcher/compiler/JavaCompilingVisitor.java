@@ -5,6 +5,7 @@ import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -282,11 +283,13 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       // typed var for expression (but not top level)
       MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
       GlobalCompilingVisitor.setFilter(handler, ExpressionFilter.getInstance());
-      final PsiElement parent = reference.getParent();
-      if (parent instanceof PsiSwitchLabelStatement && handler instanceof SubstitutionHandler) {
-        final SubstitutionHandler handler1 = (SubstitutionHandler)handler;
-        pattern.setHandler(parent, new SubstitutionHandler("__case_" + parent.getTextOffset(), false,
-                                                           handler1.getMinOccurs(), handler1.getMaxOccurs(), true));
+      if (handler instanceof SubstitutionHandler) {
+        PsiSwitchLabelStatementBase label = PsiImplUtil.getSwitchLabel(reference);
+        if (label != null) {
+          SubstitutionHandler handler1 = (SubstitutionHandler)handler;
+          pattern.setHandler(label, new SubstitutionHandler("__case_" + label.getTextOffset(), false,
+                                                            handler1.getMinOccurs(), handler1.getMaxOccurs(), true));
+        }
       }
       typedVarProcessed = true;
     }
