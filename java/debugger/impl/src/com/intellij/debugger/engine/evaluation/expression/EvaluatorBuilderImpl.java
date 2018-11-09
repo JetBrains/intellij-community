@@ -1244,7 +1244,6 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                 "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
             }
           } else if (PsiUtil.isArrayClass(resolved)) {
-            // TODO: may use MethodHandles#arrayConstructor when we move to Java 9
             code =
               "MethodType mt = MethodType.methodType(Object.class, Class.class, int.class);\n" +
               "MethodHandle mh = MethodHandles.publicLookup().findStatic(Array.class, \"newInstance\", mt);\n" +
