@@ -98,9 +98,6 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     applyInformationWithProgress();
     DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
     daemonCodeAnalyzer.getFileStatusMap().markFileUpToDate(myDocument, getId());
-    if (myHighlightingSession != null) {
-      myHighlightInfoProcessor.progressIsAdvanced(myHighlightingSession, getEditor(), 1);  //causes traffic light repaint
-    }
   }
 
   protected abstract void applyInformationWithProgress();
