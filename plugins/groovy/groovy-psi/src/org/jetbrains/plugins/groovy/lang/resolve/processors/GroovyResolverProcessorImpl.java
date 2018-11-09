@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
+import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -23,7 +24,8 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
 
-class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrMethodComparator.Context {
+class GroovyResolverProcessorImpl extends GroovyResolverProcessor
+  implements GrMethodComparator.Context, GrResolverProcessor<GroovyResolveResult> {
 
   private final @NotNull PsiType[] myTypeArguments;
   private final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
@@ -36,7 +38,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
 
   @Override
   @NotNull
-  public List<GroovyResolveResult> getCandidates() {
+  public List<GroovyResolveResult> getResults() {
     final List<GroovyResolveResult> variables = getCandidates(VARIABLE);
     if (!variables.isEmpty()) {
       return variables;

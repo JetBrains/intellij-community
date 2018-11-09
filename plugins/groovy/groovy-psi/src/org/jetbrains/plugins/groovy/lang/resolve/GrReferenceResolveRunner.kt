@@ -85,7 +85,7 @@ fun GrReferenceExpression.resolveReferenceExpression(incomplete: Boolean): Colle
     .setIncomplete(incomplete)
     .build(this)
   GrReferenceResolveRunner(this, processor).resolveReferenceExpression()
-  return processor.candidates
+  return processor.results
 }
 
 private fun GrReferenceExpression.resolvePackageOrClass() = doResolvePackageOrClass()?.let(::ElementResolveResult)

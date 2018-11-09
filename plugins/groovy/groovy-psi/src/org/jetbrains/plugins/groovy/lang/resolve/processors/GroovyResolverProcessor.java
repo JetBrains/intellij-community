@@ -165,9 +165,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
                                   : concat(singletonList(this), myAccessorProcessors);
   }
 
-  @NotNull
-  public abstract List<GroovyResolveResult> getCandidates();
-
   private static GroovyResolveKind getResolveKind(PsiNamedElement element) {
     if (element instanceof PsiClass) {
       return GroovyResolveKind.CLASS;
