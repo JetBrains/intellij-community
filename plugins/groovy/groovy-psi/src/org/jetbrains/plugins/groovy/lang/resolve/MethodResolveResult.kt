@@ -22,8 +22,10 @@ class MethodResolveResult(
   state: ResolveState
 ) : BaseGroovyResolveResult<PsiMethod>(method, ref, state), GroovyMethodResult {
 
+  private val contextSubstitutor get() = super.getSubstitutor()
+
   private val siteSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    super.getSubstitutor().putAll(method.typeParameters, ref.typeArguments)
+    contextSubstitutor.putAll(method.typeParameters, ref.typeArguments)
   }
 
   private val methodCandidate by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -66,7 +68,7 @@ class MethodResolveResult(
   override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor
 
   private val applicability by lazy {
-    methodCandidate.isApplicable(applicabilitySubstitutor)
+    methodCandidate.isApplicable(contextSubstitutor)
   }
 
   override fun isApplicable(): Boolean = applicability

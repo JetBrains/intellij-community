@@ -145,9 +145,10 @@ public class PsiUtil {
     if (result != null) return result;
 
     result = GrClosureSignatureUtil.isSignatureApplicableConcrete(singletonList(signature), argumentTypes, place);
-    if (result != GrClosureSignatureUtil.ApplicabilityResult.inapplicable &&
-        isTypeArgumentsApplicable(method.getTypeParameters(), substitutor, place)) {
-      return result;
+    if (result != GrClosureSignatureUtil.ApplicabilityResult.inapplicable) {
+      if (eraseParameterTypes || isTypeArgumentsApplicable(method.getTypeParameters(), substitutor, place)) {
+        return result;
+      }
     }
 
     if (method instanceof GrBuilderMethod && !((GrBuilderMethod)method).hasObligatoryNamedArguments()) {
