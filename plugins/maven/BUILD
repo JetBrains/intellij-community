@@ -107,6 +107,7 @@ iml_module(
         "//tools/idea/lib:jaxb-api",
         "//tools/idea/lib:jaxb-impl",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:nexus-indexer-1.2.3",
+        "//prebuilts/tools/common/m2/repository/javax/activation/activation/1.1:jar",
         "//tools/idea/.idea/libraries:commons-logging",
         "//tools/idea/plugins/maven/maven2-server-impl/lib:commons-beanutils",
         "//tools/idea/plugins/maven:intellij.maven[module, test]",
