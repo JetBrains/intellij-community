@@ -100,7 +100,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
   private static boolean compareConflictVersion(ConflictVersion v1, ConflictVersion v2) {
     if (v1 == null && v2 == null) return true;
     if (v1 == null || v2 == null) return false;
-    if (!v1.getKind().equals(v2.getKind())) return false;
+    if (!v1.getNodeKind().equals(v2.getNodeKind())) return false;
     if (!v1.getPath().equals(v2.getPath())) return false;
     if (v1.getPegRevision() != v2.getPegRevision()) return false;
     if (!Comparing.equal(v1.getRepositoryRoot(), v2.getRepositoryRoot())) return false;

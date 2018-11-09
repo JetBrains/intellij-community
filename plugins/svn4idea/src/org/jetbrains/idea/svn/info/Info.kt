@@ -12,7 +12,7 @@ private fun resolveConflictFile(file: File?, path: String?) = if (file != null &
 class Info(val file: File?,
            val url: Url?,
            val revision: Revision,
-           kind: NodeKind,
+           nodeKind: NodeKind,
            val repositoryRootUrl: Url?,
            val repositoryId: String?,
            commitInfo: CommitInfo? = null,
@@ -24,12 +24,15 @@ class Info(val file: File?,
            conflictOldFileName: String? = null,
            conflictNewFileName: String? = null,
            conflictWorkingFileName: String? = null,
-           val treeConflict: TreeConflictDescription? = null) : BaseNodeDescription(kind) {
+           val treeConflict: TreeConflictDescription? = null) : BaseNodeDescription(nodeKind) {
   val commitInfo: CommitInfo = commitInfo ?: CommitInfo.EMPTY
   val conflictOldFile = resolveConflictFile(file, conflictOldFileName)
   val conflictNewFile = resolveConflictFile(file, conflictNewFileName)
   val conflictWrkFile = resolveConflictFile(file, conflictWorkingFileName)
-  val kind get() = myKind
+
+  @Deprecated("Use nodeKind property", ReplaceWith("nodeKind"))
+  val kind
+    get() = nodeKind
 
   @Deprecated("Use url property", ReplaceWith("url"))
   fun getURL() = url

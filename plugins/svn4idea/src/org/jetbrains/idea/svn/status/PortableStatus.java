@@ -136,7 +136,7 @@ public class PortableStatus extends Status {
     if (myFileExists) return super.getKind();
     final Info info = initInfo();
     if (info != null) {
-      return info.getKind();
+      return info.getNodeKind();
     }
     return super.getKind();
   }

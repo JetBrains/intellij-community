@@ -35,13 +35,8 @@ public class ConflictVersion extends BaseNodeDescription {
   }
 
   @NotNull
-  public NodeKind getKind() {
-    return myKind;
-  }
-
-  @NotNull
   public String toPresentableString() {
-    return "(" + getKind() + ") " + myRepositoryRoot.toDecodedString() + "/" + myPath + "@" + getPegRevision();
+    return "(" + getNodeKind() + ") " + myRepositoryRoot.toDecodedString() + "/" + myPath + "@" + getPegRevision();
   }
 
   @NotNull
