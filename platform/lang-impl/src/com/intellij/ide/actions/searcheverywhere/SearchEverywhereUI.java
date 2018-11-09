@@ -567,7 +567,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     };
 
     registerAction(SearchEverywhereActions.AUTOCOMPLETE_COMMAND, CompleteCommandAction::new);
-    registerSelectItemAction();
     registerAction(SearchEverywhereActions.SWITCH_TO_NEXT_TAB, nextTabAction);
     registerAction(SearchEverywhereActions.SWITCH_TO_PREV_TAB, prevTabAction);
     registerAction(IdeActions.ACTION_NEXT_TAB, nextTabAction);
@@ -591,6 +590,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       FUSUsageContext context = getEventShortcut(e).map(shortcut -> FUSUsageContext.create(shortcut)).orElse(null);
       featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, context);
     });
+    registerSelectItemAction();
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction.create(__ -> closePopup())
