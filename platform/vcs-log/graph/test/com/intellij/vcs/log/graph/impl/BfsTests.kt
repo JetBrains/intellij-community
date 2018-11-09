@@ -15,8 +15,7 @@ class BfsTests {
 
   private fun assertCorrespondingParent(startNode: Int, endNode: Int, expectedParent: Int, graphBuilder: TestGraphBuilder.() -> Unit) {
     val graph = graph(graphBuilder)
-    val actualParent = getCorrespondingParent(LinearGraphUtils.asLiteLinearGraph(graph), startNode, endNode,
-                                              BitSetFlags(graph.nodesCount()))
+    val actualParent = LinearGraphUtils.asLiteLinearGraph(graph).getCorrespondingParent(startNode, endNode, BitSetFlags(graph.nodesCount()))
     assertEquals(expectedParent, actualParent,
                  "Incorrect parent found when walking from ${startNode} to ${endNode} in ${graph.asString(true)}")
   }

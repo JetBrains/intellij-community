@@ -198,7 +198,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
           namesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath.filePath)
         }
         val path = findPathWithoutConflict(previousNodeId, pathGetter)
-        path ?: pathGetter(getCorrespondingParent(permanentLinearGraph, previousNodeId, currentNodeId, visibilityBuffer))
+        path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(previousNodeId, currentNodeId, visibilityBuffer))
       }
       else {
         val pathGetter = { parentIndex: Int ->
@@ -206,7 +206,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
         }
         val path = findPathWithoutConflict(currentNodeId, pathGetter)
         // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
-        path ?: pathGetter(getCorrespondingParent(permanentLinearGraph, currentNodeId, previousNodeId, visibilityBuffer))
+        path ?: pathGetter(permanentLinearGraph.getCorrespondingParent(currentNodeId, previousNodeId, visibilityBuffer))
       }
     }
 

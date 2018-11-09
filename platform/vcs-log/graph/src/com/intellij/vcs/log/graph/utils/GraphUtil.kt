@@ -6,15 +6,15 @@ import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 
-fun getReachableNodes(graph: LinearGraph, headNodes: Set<Int>?): UnsignedBitSet {
+fun LinearGraph.getReachableNodes(headNodes: Set<Int>?): UnsignedBitSet {
   if (headNodes == null) {
     val nodesVisibility = UnsignedBitSet()
-    nodesVisibility.set(0, graph.nodesCount() - 1, true)
+    nodesVisibility.set(0, nodesCount() - 1, true)
     return nodesVisibility
   }
 
   val result = UnsignedBitSet()
-  DfsWalk(headNodes, graph).walk(true) { node: Int ->
+  DfsWalk(headNodes, this).walk(true) { node: Int ->
     result.set(node, true)
     true
   }
@@ -46,12 +46,12 @@ fun LiteLinearGraph.isAncestor(lowerNode: Int, upperNode: Int): Boolean {
   return result.get()
 }
 
-fun getCorrespondingParent(graph: LiteLinearGraph, startNode: Int, endNode: Int, visited: Flags): Int {
-  val candidates = graph.getNodes(startNode, LiteLinearGraph.NodeFilter.DOWN)
+fun LiteLinearGraph.getCorrespondingParent(startNode: Int, endNode: Int, visited: Flags): Int {
+  val candidates = getNodes(startNode, LiteLinearGraph.NodeFilter.DOWN)
   if (candidates.size == 1) return candidates[0]
   if (candidates.contains(endNode)) return endNode
 
-  val bfsWalks = candidates.mapTo(mutableListOf()) { BfsWalk(it, graph, visited) }
+  val bfsWalks = candidates.mapTo(mutableListOf()) { BfsWalk(it, this, visited) }
 
   visited.setAll(false)
   do {
