@@ -113,8 +113,8 @@ public class ForNestedRootChecker {
           result = new Node(myFile, Url.EMPTY, Url.EMPTY, myError);
         }
       }
-      else if (myInfo != null && myInfo.getRepositoryRootURL() != null && myInfo.getUrl() != null) {
-        result = new Node(myFile, myInfo.getUrl(), myInfo.getRepositoryRootURL());
+      else if (myInfo != null && myInfo.getRepositoryRootUrl() != null && myInfo.getUrl() != null) {
+        result = new Node(myFile, myInfo.getUrl(), myInfo.getRepositoryRootUrl());
       }
 
       return result;

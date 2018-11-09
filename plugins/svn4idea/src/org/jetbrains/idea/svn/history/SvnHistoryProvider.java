@@ -297,7 +297,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     @Override
     protected void preliminary() {
       myInfo = myVcs.getInfo(myFile.getIOFile());
-      if (myInfo == null || myInfo.getRepositoryRootURL() == null) {
+      if (myInfo == null || myInfo.getRepositoryRootUrl() == null) {
         myException = new VcsException("File " + myFile.getPath() + " is not under version control");
         return;
       }
@@ -310,7 +310,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
     @Override
     protected void load() {
-      Url repoRootURL = myInfo.getRepositoryRootURL();
+      Url repoRootURL = myInfo.getRepositoryRootUrl();
       String relativeUrl = getRelativeUrl(repoRootURL, myUrl);
       
       if (myPI != null) {
@@ -391,11 +391,11 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       // this method is called when svnurl does not exist in latest repository revision - thus concrete old revision is used for "info"
       // command to get repository url
       Info info = myVcs.getInfo(svnurl, myPeg, myPeg);
-      if (info == null || info.getRepositoryRootURL() == null) {
+      if (info == null || info.getRepositoryRootUrl() == null) {
         throw new VcsException("Could not find repository root for URL: " + svnurl + " in revision " + myPeg);
       }
 
-      Url rootURL = info.getRepositoryRootURL();
+      Url rootURL = info.getRepositoryRootUrl();
       String relativeUrl = getRelativeUrl(rootURL, myUrl);
       final RepositoryLogEntryHandler repositoryLogEntryHandler =
         new RepositoryLogEntryHandler(myVcs, myUrl, Revision.UNDEFINED, relativeUrl, revision -> myConsumer.consume(revision), rootURL);

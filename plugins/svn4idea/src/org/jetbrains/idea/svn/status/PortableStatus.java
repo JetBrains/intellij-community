@@ -152,7 +152,7 @@ public class PortableStatus extends Status {
     if (! isCopied()) return null;
     final Info info = initInfo();
     if (info == null) return null;
-    return initInfo().getCopyFromURL();
+    return initInfo().getCopyFromUrl();
   }
 
   @Override
@@ -173,7 +173,7 @@ public class PortableStatus extends Status {
 
     if (url == null) {
       Info info = initInfo();
-      url = info != null ? info.getRepositoryRootURL() : url;
+      url = info != null ? info.getRepositoryRootUrl() : url;
     }
 
     return url;

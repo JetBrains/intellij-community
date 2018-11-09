@@ -11,7 +11,6 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
@@ -115,8 +114,9 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
   }
 
   private Info createStubInfo(final String baseUrl) throws SvnBindException {
-    return new Info(createUrl(baseUrl), Revision.HEAD, NodeKind.FILE, "", createUrl("http://a.b.c"),
-                    new CommitInfo.Builder(1, new Date(), "me").build(), null, Depth.EMPTY);
+    return new Info(null, createUrl(baseUrl), Revision.HEAD, NodeKind.FILE, createUrl("http://a.b.c"), "",
+                    new CommitInfo.Builder(1, new Date(), "me").build(), null, null, null, Revision.UNDEFINED, null, null, null, null,
+                    null);
   }
 
   @Test

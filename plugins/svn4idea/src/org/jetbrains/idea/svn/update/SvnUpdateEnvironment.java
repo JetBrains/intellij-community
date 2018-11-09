@@ -160,8 +160,8 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       return true;
     }
 
-    final Url copyFromTarget = targetSvnInfo.getCopyFromURL();
-    final Url copyFromSource = sourceSvnInfo.getCopyFromURL();
+    final Url copyFromTarget = targetSvnInfo.getCopyFromUrl();
+    final Url copyFromSource = sourceSvnInfo.getCopyFromUrl();
 
     if ((copyFromSource != null) || (copyFromTarget != null)) {
       if (sourceSvnInfo.getUrl().equals(copyFromTarget) || targetUrl.equals(copyFromSource)) {

@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn.info;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
@@ -50,9 +51,9 @@ public class SvnInfoStructure {
   public TreeConflictDescription myTreeConflict;
 
   public Info convert() throws SAXException, SvnBindException {
-    return new Info(myFile, myUrl, myRootURL, myRevision, myKind, myUuid, getCommitInfo(), mySchedule,
-                    myCopyFromURL, myCopyFromRevision, myConflictOld, myConflictNew, myConflictWorking,
-                    getLock(), myDepth, createTreeConflict());
+    return new Info(myFile, myUrl, Revision.of(myRevision), myKind, myRootURL, myUuid, getCommitInfo(), mySchedule,
+                    myDepth, myCopyFromURL, Revision.of(myCopyFromRevision), getLock(), myConflictOld, myConflictNew, myConflictWorking,
+                    createTreeConflict());
   }
 
   @Nullable
