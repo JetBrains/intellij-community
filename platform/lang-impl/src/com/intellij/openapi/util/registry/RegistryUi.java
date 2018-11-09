@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBUI;
@@ -400,20 +401,24 @@ public class RegistryUi implements Disposable {
 
   private static class MyRenderer implements TableCellRenderer {
     private final JLabel myLabel = new JLabel();
+    private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
 
     @NotNull
     @Override
-    public Component getTableCellRendererComponent(@NotNull JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    public Component getTableCellRendererComponent(@NotNull JTable table,
+                                                   Object value,
+                                                   boolean isSelected,
+                                                   boolean hasFocus,
+                                                   int row,
+                                                   int column) {
       final RegistryValue v = ((MyTableModel)table.getModel()).getRegistryValue(row);
-      myLabel.setIcon(null);
-      myLabel.setText(null);
-      myLabel.setHorizontalAlignment(SwingConstants.LEFT);
-      Color fg = isSelected ? table.getSelectionForeground() : v.isChangedFromDefault() ? JBColor.blue : table.getForeground();
+
       Color bg = isSelected ? table.getSelectionBackground() : table.getBackground();
 
       if (v != null) {
         switch (column) {
           case 0:
+            myLabel.setText(null);
             if (v.isRestartRequired()) {
               myLabel.setIcon(RESTART_ICON);
               myLabel.setToolTipText(REQUIRES_IDE_RESTART);
@@ -425,29 +430,55 @@ public class RegistryUi implements Disposable {
             myLabel.setHorizontalAlignment(SwingConstants.CENTER);
             break;
           case 1:
-            myLabel.setText(v.getKey());
-            break;
+            myComponent.clear();
+            myComponent.append(v.getKey(), getAttributes(v, isSelected));
+            myComponent.setBackground(bg);
+            SpeedSearchUtil.applySpeedSearchHighlighting(table, myComponent, true, hasFocus);
+            return myComponent;
           case 2:
             if (v.asColor(null) != null) {
+              myLabel.setText(null);
+              myLabel.setToolTipText(v.asString());
               myLabel.setIcon(createColoredIcon(v.asColor(null)));
-            } else if (v.isBoolean()) {
+              myLabel.setHorizontalAlignment(SwingConstants.LEFT);
+            }
+            else if (v.isBoolean()) {
               final JCheckBox box = new JCheckBox();
               box.setSelected(v.asBoolean());
               box.setBackground(bg);
               return box;
-            } else {
-              myLabel.setText(v.asString());
+            }
+            else {
+              myComponent.clear();
+              myComponent.setBackground(bg);
+              myComponent.append(v.asString(), getAttributes(v, isSelected));
+              if (v.isChangedFromDefault()) {
+                myComponent.append(" [" + Registry.getInstance().getBundleValue(v.getKey(), false) + "]",
+                                   SimpleTextAttributes.GRAYED_ATTRIBUTES);
+              }
+              return myComponent;
             }
         }
 
         myLabel.setOpaque(true);
-
-        myLabel.setFont(myLabel.getFont().deriveFont(v.isChangedFromDefault() ? Font.BOLD : Font.PLAIN));
-        myLabel.setForeground(fg);
         myLabel.setBackground(bg);
       }
 
       return myLabel;
+    }
+
+    @NotNull
+    private static SimpleTextAttributes getAttributes(RegistryValue value, boolean isSelected) {
+      boolean changedFromDefault = value.isChangedFromDefault();
+      if (isSelected) {
+        return new SimpleTextAttributes(changedFromDefault ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN,
+                                        UIUtil.getListSelectionForeground(true));
+      }
+
+      if (changedFromDefault) {
+        return new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.blue);
+      }
+      return SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
   }
 
@@ -478,7 +509,7 @@ public class RegistryUi implements Disposable {
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       myValue = ((MyTableModel)table.getModel()).getRegistryValue(row);
       if (myValue.asColor(null) != null) {
-        final Color color = ColorChooser.chooseColor(table, "Choose color", myValue.asColor(Color.WHITE));
+        final Color color = ColorChooser.chooseColor(table, "Choose Color", myValue.asColor(Color.WHITE));
         if (color != null) {
           myValue.setValue(color.getRed() + "," + color.getGreen() + "," + color.getBlue());
           keyChanged(myValue.getKey());
