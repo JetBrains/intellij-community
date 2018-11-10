@@ -304,3 +304,13 @@ class X6 extends X5 {
     };
   }
 }
+////////////////
+class LocalModelGraphElementWrapper<T> {
+  public T getElement() {
+    return null;
+  }
+}
+class LocalModelWrapper<T extends LocalModel> extends LocalModelGraphElementWrapper<T> {
+  public T getElement()  { return super.getElement(); }
+}
+interface LocalModel {}
