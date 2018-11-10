@@ -33,11 +33,15 @@ public interface LineMarkerProvider {
    * <p/>
    * So imagine a {@code LineMarkerProvider} which (incorrectly) written like this:
    * <pre>
-   * {@code class MyBadLineMarkerProvider implements LineMarkerProvider {
+   * {@code
+   *   class MyBadLineMarkerProvider implements LineMarkerProvider {
    *     public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
-   *       if (element instanceof PsiMethod) return // ACTUALLY DONT!
-   *            new LineMarkerInfo(element, element.getTextRange(), icon, null,null, alignment);
-   *       else return null;
+   *       if (element instanceof PsiMethod) { // ACTUALLY DONT!
+   *          return new LineMarkerInfo(element, element.getTextRange(), icon, null,null, alignment);
+   *       }
+   *       else {
+   *         return null;
+   *       }
    *     }
    *     ...
    *   }
@@ -52,13 +56,17 @@ public interface LineMarkerProvider {
    * As a result, line marker icon will blink annoyingly.
    * Instead, write this:
    * <pre>
-   * {@code class MyGoodLineMarkerProvider implements LineMarkerProvider {
+   * {@code
+   *   class MyGoodLineMarkerProvider implements LineMarkerProvider {
    *     public LineMarkerInfo getLineMarkerInfo(PsiElement element) {
    *       if (element instanceof PsiIdentifier &&
    *           (parent = element.getParent()) instanceof PsiMethod &&
-   *           ((PsiMethod)parent).getMethodIdentifier() == element)) // aha, we are at method name
+   *           ((PsiMethod)parent).getMethodIdentifier() == element)) { // aha, we are at method name
    *            return new LineMarkerInfo(element, element.getTextRange(), icon, null,null, alignment);
-   *       else return null;
+   *       }
+   *       else {
+   *         return null;
+   *       }
    *     }
    *     ...
    *   }
