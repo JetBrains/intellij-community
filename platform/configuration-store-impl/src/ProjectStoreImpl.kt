@@ -135,7 +135,7 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
 
       if (ApplicationManager.getApplication().isUnitTestMode) {
         // load state only if there are existing files
-        isOptimiseTestLoadSpeed = !Paths.get(filePath).exists()
+        isOptimiseTestLoadSpeed = !Paths.get(filePath).toFile().exists()
       }
     }
     else {
