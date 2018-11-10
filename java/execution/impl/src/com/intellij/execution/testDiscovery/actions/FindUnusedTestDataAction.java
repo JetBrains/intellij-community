@@ -31,8 +31,8 @@ import java.util.Set;
 
 import static com.intellij.openapi.vfs.LocalFileSystem.PROTOCOL_PREFIX;
 
-public class FindFilesWithoutTestsAction extends DumbAwareAction {
-  private final static Logger LOG = Logger.getInstance(FindFilesWithoutTestsAction.class);
+public class FindUnusedTestDataAction extends DumbAwareAction {
+  private final static Logger LOG = Logger.getInstance(FindUnusedTestDataAction.class);
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -93,7 +93,7 @@ public class FindFilesWithoutTestsAction extends DumbAwareAction {
   }
 
   private static void nothingToDo() {
-    Notifications.Bus.notify(new Notification(FindFilesWithoutTestsAction.class.getName(),
+    Notifications.Bus.notify(new Notification(FindUnusedTestDataAction.class.getName(),
                                               "Well done",
                                               "Every file is used",
                                               NotificationType.INFORMATION));

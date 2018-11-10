@@ -418,8 +418,8 @@
       <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>
 
-    <action class="com.intellij.execution.testDiscovery.actions.FindFilesWithoutTestsAction" id="FindFilesWithoutTests"
-            text="Find Files Without Tests" internal="true"/>
+    <action class="com.intellij.execution.testDiscovery.actions.FindUnusedTestDataAction" id="FindUsedTestData"
+            text="Find Unused Test Data" internal="true"/>
 
     <action id="JShell.Console"
             class="com.intellij.execution.jshell.LaunchJShellConsoleAction"
