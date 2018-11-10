@@ -39,11 +39,6 @@ class TestingTasksImpl extends TestingTasks {
 
   @Override
   void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
-    if (options.testDiscoveryEnabled && isPerformanceRun()) {
-      context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
-      return
-    }
-
     checkOptions()
 
     def compilationTasks = CompilationTasks.create(context)
