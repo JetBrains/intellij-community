@@ -78,7 +78,7 @@ public class PyCharmInitialConfigurator {
     Registry.get("ide.ssh.one.time.password").setValue(true);
   }
 
-  private static void disableRunAnything() {
+  public static void disableRunAnything() {
     ApplicationManager.getApplication().invokeLater(() -> {
       ActionManager manager = ActionManager.getInstance();
       DefaultActionGroup group = ObjectUtils.tryCast(manager.getAction("ToolbarRunGroup"), DefaultActionGroup.class);
