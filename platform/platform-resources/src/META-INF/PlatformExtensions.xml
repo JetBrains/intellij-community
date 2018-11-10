@@ -8,9 +8,6 @@
     <appStarter implementation="com.intellij.openapi.command.impl.UpdatePluginsApp"/>
     <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
     <applicationService
-        serviceInterface="com.intellij.openapi.ui.MessagesService"
-        serviceImplementation="com.intellij.openapi.ui.MessagesServiceImpl"/>
-    <applicationService
         serviceInterface="com.intellij.openapi.progress.util.ProgressDialogFactory"
         serviceImplementation="com.intellij.openapi.progress.util.ProgressDialogFactoryImpl"/>
 
