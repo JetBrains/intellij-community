@@ -1023,7 +1023,7 @@ public class UsageViewImpl implements UsageViewEx {
     });
   }
 
-  void expandRoot() {
+  public void expandRoot() {
     expandTree(1);
   }
 
