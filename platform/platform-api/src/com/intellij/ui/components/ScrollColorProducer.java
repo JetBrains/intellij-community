@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.NotNullProducer;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
+import java.util.function.Function;
 import javax.swing.JScrollPane;
 
 import static com.intellij.ui.components.JBScrollPane.BRIGHTNESS_FROM_VIEW;
@@ -31,46 +33,48 @@ import static com.intellij.ui.components.JBScrollPane.BRIGHTNESS_FROM_VIEW;
 /**
  * @author Sergey.Malenkov
  */
-final class ScrollColorProducer implements NotNullProducer<Color> {
-  private final Component myComponent;
-  private final Color myBrightColor;
-  private final Color myDarkColor;
-  private final boolean isBackground;
-  // cached color values
-  private volatile Color myOriginal;
-  private volatile Color myModified;
+final class ScrollColorProducer {
+  private static final ColorKey FOREGROUND = createKey("ScrollBar.foreground", 0xFFE6E6E6, 0xFF3F4244);
+  private static final ColorKey BACKGROUND = createKey("ScrollBar.background", 0xFFF5F5F5, 0xFF3F4244);
 
-  @SuppressWarnings("UseJBColor")
-  private ScrollColorProducer(Component component, int bright, int dark, boolean background) {
-    myComponent = component;
-    myBrightColor = new Color(bright);
-    myDarkColor = new Color(dark);
-    isBackground = background;
+  @NotNull
+  private static ColorKey createKey(@NotNull String name, int light, int dark) {
+    return ColorKey.createColorKey(name, JBColor.namedColor(name, new JBColor(new Color(light, true), new Color(dark, true))));
   }
 
   @NotNull
-  @Override
-  public Color produce() {
-    Container parent = myComponent.getParent();
-    if (isBackground && parent instanceof JScrollPane && ScrollSettings.isBackgroundFromView()) {
-      Color background = JBScrollPane.getViewBackground((JScrollPane)parent);
-      if (background != null) {
-        if (!background.equals(myOriginal)) {
-          myModified = ColorUtil.shift(background, ColorUtil.isDark(background) ? 1.05 : 0.96);
-          myOriginal = background;
+  static Color getColor(@NotNull ColorKey key, Component component) {
+    Function<ColorKey, Color> function = UIUtil.getClientProperty(component, ColorKey.FUNCTION_KEY);
+    Color color = function == null ? null : function.apply(key);
+    return color != null ? color : key.getDefaultColor();
+  }
+
+  static void setForeground(@NotNull Component component) {
+    component.setForeground(new JBColor(() -> getColor(FOREGROUND, component)));
+  }
+
+  static void setBackground(@NotNull Component component) {
+    component.setBackground(new JBColor(new NotNullProducer<Color>() {
+      private Color original;
+      private Color modified;
+
+      @NotNull
+      @Override
+      public Color produce() {
+        Container parent = component.getParent();
+        if (parent instanceof JScrollPane && ScrollSettings.isBackgroundFromView()) {
+          Color background = JBScrollPane.getViewBackground((JScrollPane)parent);
+          if (background != null) {
+            if (!background.equals(original)) {
+              modified = ColorUtil.shift(background, ColorUtil.isDark(background) ? 1.05 : 0.96);
+              original = background;
+            }
+            return modified;
+          }
         }
-        return myModified;
+        return getColor(BACKGROUND, component);
       }
-    }
-    return isDark(myComponent) ? myDarkColor : myBrightColor;
-  }
-
-  static void setForeground(Component component) {
-    component.setForeground(new JBColor(new ScrollColorProducer(component, 0xE6E6E6, 0x3C3F41, false)));
-  }
-
-  static void setBackground(Component component) {
-    component.setBackground(new JBColor(new ScrollColorProducer(component, 0xF5F5F5, 0x3C3F41, true)));
+    }));
   }
 
   static boolean isDark(Component c) {

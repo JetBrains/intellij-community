@@ -60,6 +60,9 @@
       <option name="VCS_ANNOTATIONS_COLOR_3" value="d9e4f9"/>
       <option name="VCS_ANNOTATIONS_COLOR_4" value="fffbcf"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="ffbfc3"/>
+
+      <option name="ScrollBar.foreground" value="E6E6E6"/>
+      <option name="ScrollBar.background" value="F5F5F5"/>
     </colors>
 
     <attributes>
@@ -1192,6 +1195,9 @@
       <option name="VCS_ANNOTATIONS_COLOR_3" value="41444a"/>
       <option name="VCS_ANNOTATIONS_COLOR_4" value="484248"/>
       <option name="VCS_ANNOTATIONS_COLOR_5" value="4c393a"/>
+
+      <option name="ScrollBar.foreground" value="3F4244"/>
+      <option name="ScrollBar.background" value="3F4244"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">
