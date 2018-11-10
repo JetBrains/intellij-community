@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -50,8 +52,10 @@ public class JavaFxHtmlPanel implements Disposable {
   private static final CefApp ourCefApp;
   private static final CefClient ourCefClient;
   private static final Map<CefBrowser, JavaFxHtmlPanel> ourBrowser2Panel = new HashMap<>();
+  // browser requires some correct URL for loading
+  private final static String ourUrl = JavaFxHtmlPanel.class.getResource(JavaFxHtmlPanel.class.getSimpleName() + ".class").toExternalForm();
 
-  private final CefBrowser myCefBrowser;
+  private @NotNull final CefBrowser myCefBrowser;
   private boolean myIsCefBrowserCreated;
   private @Nullable String myHtml;
 
@@ -68,26 +72,53 @@ public class JavaFxHtmlPanel implements Disposable {
         if (panel != null) {
           panel.myIsCefBrowserCreated = true;
           if (panel.myHtml != null) {
-            browser.loadString(panel.myHtml, "file:\\C:\\");
-            ourBrowser2Panel.remove(browser);
+            browser.loadString(panel.myHtml, ourUrl);
+            panel.myHtml = null;
           }
         }
       }
     });
-    //ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
-    //  @Override
-    //  public void onLoadEnd(CefBrowser browser, CefFrame frame, int i) {
-    //  }
-    //});
+    ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
+      @Override
+      public void onLoadEnd(CefBrowser browser, CefFrame frame, int i) {
+        JavaFxHtmlPanel panel = ourBrowser2Panel.get(browser);
+        if (panel != null && browser.getURL() != null && panel.isHtmlLoaded()) {
+          browser.getUIComponent().setSize(panel.myPanelWrapper.getSize());
+          panel.myPanelWrapper.revalidate();
+        }
+      }
+    });
   }
 
   public JavaFxHtmlPanel() {
-    background = JBColor.background();
-    myPanelWrapper = new JPanel(new BorderLayout());
-    myPanelWrapper.setBackground(background);
+    myPanelWrapper = new JPanel(new BorderLayout()) {
+      @Override
+      public void removeNotify() {
+        super.removeNotify();
+        ourBrowser2Panel.remove(myCefBrowser);
+      }
+      @Override
+      public void addNotify() {
+        ourBrowser2Panel.put(myCefBrowser, JavaFxHtmlPanel.this);
+        super.addNotify();
+      }
+    };
+    myPanelWrapper.setBackground(JBColor.background());
 
     myCefBrowser = ourCefClient.createBrowser("about:blank", false, false);
-    myPanelWrapper.add(myCefBrowser.getUIComponent(), BorderLayout.CENTER);
+
+    // workaround for the UI garbage issue: keep the browser component min until the browser loads html
+    myPanelWrapper.setLayout(null);
+    myCefBrowser.getUIComponent().setSize(1, 1);
+    myPanelWrapper.add(myCefBrowser.getUIComponent()/*, BorderLayout.CENTER*/);
+    myPanelWrapper.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(ComponentEvent e) {
+        if (isHtmlLoaded()) {
+          myCefBrowser.getUIComponent().setSize(myPanelWrapper.getSize());
+        }
+      }
+    });
 
     //engine.getLoadWorker().stateProperty().addListener((observable, oldValue, newValue) -> {
     //  if (newValue == Worker.State.RUNNING) {
@@ -139,6 +170,11 @@ public class JavaFxHtmlPanel implements Disposable {
     }));
   }
 
+  private boolean isHtmlLoaded() {
+    // return ourUrl.equals(myCefBrowser.getURL()); 99% match due to protocols
+    return myCefBrowser.getURL().contains(JavaFxHtmlPanel.class.getSimpleName());
+  }
+
   protected void registerListeners(@NotNull WebEngine engine) {
   }
 
@@ -166,10 +202,9 @@ public class JavaFxHtmlPanel implements Disposable {
     //runInPlatformWhenAvailable(() -> getWebViewGuaranteed().getEngine().loadContent(htmlToRender));
     if (!myIsCefBrowserCreated) {
       myHtml = htmlToRender;
-      ourBrowser2Panel.put(myCefBrowser, this);
     }
     else {
-      myCefBrowser.loadString(htmlToRender, "file:\\C:\\");
+      myCefBrowser.loadString(htmlToRender, ourUrl);
     }
   }
 
@@ -179,10 +214,10 @@ public class JavaFxHtmlPanel implements Disposable {
   }
 
   public void render() {
-    runInPlatformWhenAvailable(() -> {
-      getWebViewGuaranteed().getEngine().reload();
-      ApplicationManager.getApplication().invokeLater(myPanelWrapper::repaint);
-    });
+    //runInPlatformWhenAvailable(() -> {
+    //  getWebViewGuaranteed().getEngine().reload();
+    //  ApplicationManager.getApplication().invokeLater(myPanelWrapper::repaint);
+    //});
   }
 
   @Nullable
