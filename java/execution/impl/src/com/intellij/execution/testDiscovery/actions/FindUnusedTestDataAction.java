@@ -78,7 +78,7 @@ public class FindUnusedTestDataAction extends DumbAwareAction {
               nothingToDo();
             }
             else {
-              application.invokeLater(() -> FindUtil.showInUsageView(null, files, "Files Without Tests", project));
+              application.invokeLater(() -> FindUtil.showInUsageView(null, files, "Unused Test Data", project));
             }
           });
         }
