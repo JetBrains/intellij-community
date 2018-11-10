@@ -15,13 +15,17 @@
  */
 package com.intellij.openapi.ui.popup;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author yole
  */
 public abstract class JBPopupAdapter implements JBPopupListener {
-  public void beforeShown(LightweightWindowEvent event) {
+  @Override
+  public void beforeShown(@NotNull LightweightWindowEvent event) {
   }
 
-  public void onClosed(LightweightWindowEvent event) {
+  @Override
+  public void onClosed(@NotNull LightweightWindowEvent event) {
   }
 }

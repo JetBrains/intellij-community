@@ -4,12 +4,12 @@ package com.intellij.openapi.components
 import com.intellij.configurationStore.properties.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.util.SmartList
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.PropertyAccessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
 import gnu.trove.THashMap
+import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
 
@@ -20,15 +20,21 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     private val MOD_COUNT_UPDATER = AtomicLongFieldUpdater.newUpdater(BaseState::class.java, "ownModificationCount")
   }
 
-  private val properties: MutableList<StoredProperty> = SmartList()
+  // do not use SmartList because most objects have more than 1 property
+  private val properties: MutableList<StoredProperty<Any>> = ArrayList()
 
   @Volatile
   @Transient
   private var ownModificationCount: Long = 0
 
-  fun <T> property(): StoredPropertyBase<T?> {
+  private fun addProperty(p: StoredProperty<*>) {
+    @Suppress("UNCHECKED_CAST")
+    properties.add(p as StoredProperty<Any>)
+  }
+
+  protected fun <T : BaseState> property(): StoredPropertyBase<T?> {
     val result = ObjectStoredProperty<T?>(null)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -36,21 +42,21 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    * Value considered as default only if all properties have default values.
    * Passed instance is not used for `isDefault` check. It is just an initial value.
    */
-  fun <T : BaseState?> property(initialValue: T): StoredPropertyBase<T> {
+  protected fun <T : BaseState?> property(initialValue: T): StoredPropertyBase<T> {
     val result = StateObjectStoredProperty(initialValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
   /**
    * For non-BaseState classes explicit `isDefault` must be provided, because no other way to check.
    */
-  fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean): StoredPropertyBase<T> {
+  protected fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean): StoredPropertyBase<T> {
     val result = object : ObjectStoredProperty<T>(initialValue) {
       override fun isEqualToDefault() = isDefault(value)
     }
 
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -58,85 +64,94 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
    * Collection considered as default if empty. It is *your* responsibility to call `incrementModificationCount` on collection modification.
    * You cannot set value to a new collection - on set current collection is cleared and new collection is added to current.
    */
-  fun <E, C : MutableCollection<E>> property(initialValue: C): StoredPropertyBase<C> {
+  protected fun <E, C : MutableCollection<E>> property(initialValue: C): StoredPropertyBase<C> {
     val result = CollectionStoredProperty(initialValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
   /**
    * Charset is an immutable, so, it is safe to use it as default value.
    */
-  fun <T : Charset> property(initialValue: T): StoredPropertyBase<T> {
+  protected fun <T : Charset> property(initialValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(initialValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
-  /**
-   * Enum is an immutable, so, it is safe to use it as default value.
-   */
-  fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
+  // Enum is an immutable, so, it is safe to use it as default value.
+  protected fun <T : Enum<*>> property(defaultValue: T): StoredPropertyBase<T> {
     val result = ObjectStoredProperty(defaultValue)
-    properties.add(result)
+    addProperty(result)
+    return result
+  }
+
+  protected inline fun <reified T : Enum<*>> enum(defaultValue: T? = null): StoredPropertyBase<T?> {
+    return doEnum(defaultValue, T::class.java)
+  }
+
+  @PublishedApi
+  internal fun <T : Enum<*>> doEnum(defaultValue: T? = null, clazz: Class<T>): StoredPropertyBase<T?> {
+    val result = EnumStoredProperty(defaultValue, clazz)
+    addProperty(result)
     return result
   }
 
   /**
    * Not-null list. Initialized as SmartList.
    */
-  fun <T : Any> list(): StoredPropertyBase<MutableList<T>> {
+  protected fun <T : Any> list(): StoredPropertyBase<MutableList<T>> {
     val result = ListStoredProperty<T>()
-    properties.add(result)
+    addProperty(result)
     @Suppress("UNCHECKED_CAST")
     return result as StoredPropertyBase<MutableList<T>>
   }
 
-  fun <K : Any, V: Any> property(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
+  protected fun <K : Any, V: Any> property(value: MutableMap<K, V>): StoredPropertyBase<MutableMap<K, V>> {
     return map(value)
   }
 
-  fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
+  protected fun <K : Any, V: Any> map(value: MutableMap<K, V> = THashMap()): StoredPropertyBase<MutableMap<K, V>> {
     val result = MapStoredProperty(value)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
   /**
    * Empty string is always normalized to null.
    */
-  fun property(defaultValue: String?) = string(defaultValue)
+  protected fun property(defaultValue: String?) = string(defaultValue)
 
   /**
    * Empty string is always normalized to null.
    */
-  fun string(defaultValue: String? = null): StoredPropertyBase<String?> {
+  protected fun string(defaultValue: String? = null): StoredPropertyBase<String?> {
     val result = NormalizedStringStoredProperty(defaultValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
-  fun property(defaultValue: Int = 0): StoredPropertyBase<Int> {
+  protected fun property(defaultValue: Int = 0): StoredPropertyBase<Int> {
     val result = IntStoredProperty(defaultValue, null)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
-  fun property(defaultValue: Long = 0): StoredPropertyBase<Long> {
+  protected fun property(defaultValue: Long = 0): StoredPropertyBase<Long> {
     val result = LongStoredProperty(defaultValue, null)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
-  fun property(defaultValue: Float = 0f, valueNormalizer: ((value: Float) -> Float)? = null): StoredPropertyBase<Float> {
+  protected fun property(defaultValue: Float = 0f, valueNormalizer: ((value: Float) -> Float)? = null): StoredPropertyBase<Float> {
     val result = FloatStoredProperty(defaultValue, valueNormalizer)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
-  fun property(defaultValue: Boolean = false): StoredPropertyBase<Boolean> {
+  protected fun property(defaultValue: Boolean = false): StoredPropertyBase<Boolean> {
     val result = ObjectStoredProperty(defaultValue)
-    properties.add(result)
+    addProperty(result)
     return result
   }
 
@@ -167,7 +182,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return true
   }
 
-  fun isEqualToDefault() = properties.all { it.isEqualToDefault() }
+  fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
 
   @Transient
   override fun getModificationCount(): Long {
@@ -178,9 +193,9 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  override fun equals(other: Any?) = this === other || (other is BaseState && properties == other.properties)
+  override fun equals(other: Any?): Boolean = this === other || (other is BaseState && properties == other.properties)
 
-  override fun hashCode() = properties.hashCode()
+  override fun hashCode(): Int = properties.hashCode()
 
   override fun toString(): String {
     if (properties.isEmpty()) {
@@ -195,11 +210,16 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return builder.toString()
   }
 
-  fun copyFrom(state: BaseState) {
-    LOG.assertTrue(state.properties.size == properties.size)
+  @JvmOverloads
+  fun copyFrom(state: BaseState, isMustBeTheSameType: Boolean = true) {
+    val propertyCount = state.properties.size
+    if (isMustBeTheSameType) {
+      LOG.assertTrue(propertyCount == properties.size)
+    }
+
     var changed = false
-    for ((index, property) in properties.withIndex()) {
-      val otherProperty = state.properties.get(index)
+    for ((index, otherProperty) in state.properties.withIndex()) {
+      val property = properties.get(index)
       LOG.assertTrue(otherProperty.name == property.name)
       if (property.setValue(otherProperty)) {
         changed = true
@@ -210,4 +230,9 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
       incrementModificationCount()
     }
   }
+
+  // internal usage only
+  @Suppress("FunctionName")
+  @ApiStatus.Experimental
+  fun __getProperties() = properties
 }

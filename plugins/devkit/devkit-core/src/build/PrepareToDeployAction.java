@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.server.CompileServerPlugin;
@@ -71,7 +57,8 @@ public class PrepareToDeployAction extends AnAction {
 
   private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Plugin DevKit Deployment");
 
-  public void actionPerformed(final AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     if (module != null && PluginModuleType.isOfType(module)) {
       doPrepare(Arrays.asList(module), e.getProject());
@@ -85,10 +72,11 @@ public class PrepareToDeployAction extends AnAction {
     final CompilerManager compilerManager = CompilerManager.getInstance(project);
     compilerManager.make(compilerManager.createModulesCompileScope(pluginModules.toArray(Module.EMPTY_ARRAY), true),
                          new CompileStatusNotification() {
+                           @Override
                            public void finished(final boolean aborted,
                                                 final int errors,
                                                 final int warnings,
-                                                final CompileContext compileContext) {
+                                                @NotNull final CompileContext compileContext) {
                              if (aborted || errors != 0) return;
                              ApplicationManager.getApplication().invokeLater(() -> {
                                for (Module aModule : pluginModules) {
@@ -119,7 +107,7 @@ public class PrepareToDeployAction extends AnAction {
                          });
   }
 
-  public static boolean doPrepare(final Module module, final List<String> errorMessages, final List<String> successMessages) {
+  public static boolean doPrepare(final Module module, final List<? super String> errorMessages, final List<? super String> successMessages) {
     final String pluginName = module.getName();
     final String defaultPath = new File(module.getModuleFilePath()).getParent() + File.separator + pluginName;
     final HashSet<Module> modules = new HashSet<>();
@@ -205,7 +193,6 @@ public class PrepareToDeployAction extends AnAction {
   }
 
   private static boolean clearReadOnly(final Project project, final File dstFile) {
-    //noinspection EmptyCatchBlock
     final URL url;
     try {
       url = dstFile.toURL();
@@ -227,7 +214,7 @@ public class PrepareToDeployAction extends AnAction {
   }
 
   private static void processLibrariesAndJpsPlugins(final File jarFile, final File zipFile, final String pluginName,
-                                                    final Set<Library> libs,
+                                                    final Set<? extends Library> libs,
                                                     Map<Module, String> jpsModules, final ProgressIndicator progressIndicator) throws IOException {
     if (FileUtil.ensureCanCreateFile(zipFile)) {
       ZipOutputStream zos = null;
@@ -273,7 +260,7 @@ public class PrepareToDeployAction extends AnAction {
                                            final File zipFile,
                                            final String pluginName,
                                            final ZipOutputStream zos,
-                                           final Set<String> usedJarNames,
+                                           final Set<? super String> usedJarNames,
                                            final ProgressIndicator progressIndicator,
                                            final String preferredName) throws IOException {
     File libraryJar = FileUtil.createTempFile(TEMP_PREFIX, JAR_EXTENSION);
@@ -292,7 +279,7 @@ public class PrepareToDeployAction extends AnAction {
     ZipUtil.addFileOrDirRecursively(zos, zipFile, libraryJar, getZipPath(pluginName, jarName), createFilter(progressIndicator, null), null);
   }
 
-  private static String getLibraryJarName(final String fileName, Set<String> usedJarNames, @Nullable final String preferredName) {
+  private static String getLibraryJarName(final String fileName, Set<? super String> usedJarNames, @Nullable final String preferredName) {
     String uniqueName;
     if (preferredName != null && !usedJarNames.contains(preferredName)) {
       uniqueName = preferredName;
@@ -320,7 +307,7 @@ public class PrepareToDeployAction extends AnAction {
                                     final File zipFile,
                                     final String pluginName,
                                     final ZipOutputStream zos,
-                                    final Set<String> usedJarNames,
+                                    final Set<? super String> usedJarNames,
                                     final ProgressIndicator progressIndicator) throws IOException {
     File ioFile = VfsUtil.virtualToIoFile(virtualFile);
     final String jarName = getLibraryJarName(ioFile.getName(), usedJarNames, null);
@@ -336,14 +323,14 @@ public class PrepareToDeployAction extends AnAction {
     zos.closeEntry();
   }
 
-  private static File preparePluginsJar(Module module, final HashSet<Module> modules) throws IOException {
+  private static File preparePluginsJar(Module module, final HashSet<? extends Module> modules) throws IOException {
     final PluginBuildConfiguration pluginModuleBuildProperties = PluginBuildConfiguration.getInstance(module);
     final Manifest manifest = createOrFindManifest(pluginModuleBuildProperties);
 
     return jarModulesOutput(modules, manifest, pluginModuleBuildProperties.getPluginXmlPath());
   }
 
-  private static File jarModulesOutput(@NotNull Set<Module> modules, @Nullable Manifest manifest, final @Nullable String pluginXmlPath) throws IOException {
+  private static File jarModulesOutput(@NotNull Set<? extends Module> modules, @Nullable Manifest manifest, final @Nullable String pluginXmlPath) throws IOException {
     File jarFile = FileUtil.createTempFile(TEMP_PREFIX, JAR_EXTENSION);
     jarFile.deleteOnExit();
     ZipOutputStream jarPlugin = null;
@@ -389,7 +376,8 @@ public class PrepareToDeployAction extends AnAction {
     return manifest;
   }
 
-  public void update(AnActionEvent e) {
+  @Override
+  public void update(@NotNull AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     boolean enabled = module != null && PluginModuleType.isOfType(module);
     e.getPresentation().setVisible(enabled);

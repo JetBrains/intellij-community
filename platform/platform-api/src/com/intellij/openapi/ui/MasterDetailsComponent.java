@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.Tree;
@@ -34,12 +35,11 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author anna
- * @since 29-May-2006
  */
 public abstract class MasterDetailsComponent implements Configurable, DetailsComponent.Facade, MasterDetails {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.MasterDetailsComponent");
@@ -82,7 +82,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       if (node == null) return;
 
       myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
-      myDetails.setText(node.getConfigurable().getBannerSlogan());
+      NamedConfigurable configurable = node.getConfigurable();
+      if (configurable != null) {
+        myDetails.setText(configurable.getBannerSlogan());
+      }
       node.reloadNode((DefaultTreeModel)myTree.getModel());
       fireItemsChangedExternally();
     }
@@ -122,7 +125,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   protected void reInitWholePanelIfNeeded() {
     if (!myToReInitWholePanel) return;
 
-    myWholePanel = new JPanel(new BorderLayout()) {
+    myWholePanel = new NonOpaquePanel(new BorderLayout()) {
       @Override
       public void addNotify() {
         super.addNotify();
@@ -163,7 +166,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     left.add(myMaster, BorderLayout.CENTER);
     mySplitter.setFirstComponent(left);
 
-    final JPanel right = new JPanel(new BorderLayout());
+    final JPanel right = new NonOpaquePanel(new BorderLayout());
     right.add(myDetails.getComponent(), BorderLayout.CENTER);
 
     mySplitter.setSecondComponent(right);
@@ -228,7 +231,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   }
 
-  protected boolean updateMultiSelection(final List<NamedConfigurable> selectedConfigurables) {
+  protected boolean updateMultiSelection(final List<? extends NamedConfigurable> selectedConfigurables) {
     return false;
   }
 
@@ -498,7 +501,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   private void createUIComponents() {
     myTree = new Tree() {
       @Override
-      @SuppressWarnings("NonStaticInitializer")
       public JToolTip createToolTip() {
         final JToolTip toolTip = new JToolTip() {
           {
@@ -593,7 +595,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     return findNodeByCondition(root, configurable -> Comparing.equal(editableObject, configurable.getEditableObject()));
   }
 
-  protected static MyNode findNodeByCondition(final TreeNode root, final Condition<NamedConfigurable> condition) {
+  protected static MyNode findNodeByCondition(final TreeNode root, final Condition<? super NamedConfigurable> condition) {
     return TreeUtil.treeNodeTraverser(root)
       .filter(MyNode.class)
       .filter(node -> condition.value(node.getConfigurable()))
@@ -654,15 +656,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected void initializeConfigurable(final NamedConfigurable configurable) {
     myInitializedConfigurables.add(configurable);
-  }
-
-  /**
-   * @deprecated use {@link #checkForEmptyAndDuplicatedNames(String, String, Class)} instead
-   */
-  protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
-    for (MyNode rootNode : rootNodes) {
-      checkForEmptyAndDuplicatedNames(rootNode, prefix, title, NamedConfigurable.class, false);
-    }
   }
 
   protected final void checkForEmptyAndDuplicatedNames(String prefix, String title,
@@ -781,7 +774,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final TreePath[] selectionPath = myTree.getSelectionPaths();
@@ -793,7 +786,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       removePaths(myTree.getSelectionPaths());
     }
   }
@@ -853,7 +846,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   protected static class MyRootNode extends MyNode {
     public MyRootNode() {
       super(new NamedConfigurable(false, null) {
@@ -925,7 +917,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       DataContext dataContext = e.getDataContext();
       ListPopupStep step = popupFactory.createActionsStep(

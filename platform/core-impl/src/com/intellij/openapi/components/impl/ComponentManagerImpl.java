@@ -26,6 +26,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusFactory;
@@ -59,7 +60,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   private int myInstantiatedComponentCount = -1;
   private boolean myComponentsCreated;
 
-  private final List<BaseComponent> myBaseComponents = new ArrayList<>();
+  private final List<BaseComponent> myBaseComponents = new SmartList<>();
 
   private final ComponentManager myParentComponentManager;
   private final Condition myDisposedCondition = o -> isDisposed();
@@ -72,10 +73,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   protected ComponentManagerImpl(@Nullable ComponentManager parentComponentManager, @NotNull String name) {
     myParentComponentManager = parentComponentManager;
     bootstrapPicoContainer(name);
-  }
-
-  protected final void init(@Nullable ProgressIndicator progressIndicator) {
-    init(progressIndicator, null);
   }
 
   protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
@@ -284,20 +281,20 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @NotNull
   private List<ComponentConfig> getComponentConfigs(final ProgressIndicator indicator) {
-    ArrayList<ComponentConfig> componentConfigs = new ArrayList<>();
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
     StartupProgress startupProgress = null;
     if (indicator != null) {
       startupProgress = (message, progress) -> indicator.setFraction(progress);
     }
+    ArrayList<ComponentConfig> componentConfigs = new ArrayList<>();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins(startupProgress)) {
       if (PluginManagerCore.shouldSkipPlugin(plugin)) {
         continue;
       }
 
-      ComponentConfig[] configs = getMyComponentConfigsFromDescriptor(plugin);
-      componentConfigs.ensureCapacity(componentConfigs.size() + configs.length);
+      List<ComponentConfig> configs = getMyComponentConfigsFromDescriptor(plugin);
+      componentConfigs.ensureCapacity(componentConfigs.size() + configs.size());
       for (ComponentConfig config : configs) {
         if ((!isDefaultProject || config.isLoadForDefaultProject()) && isComponentSuitable(config.options) && config.prepareClasses(headless)) {
           config.pluginDescriptor = plugin;
@@ -310,7 +307,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   // used in upsource
   @NotNull
-  public ComponentConfig[] getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public List<ComponentConfig> getMyComponentConfigsFromDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     return plugin.getAppComponents();
   }
 
@@ -411,7 +408,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
       BaseComponent loadedComponent = myNameToComponent.get(componentName);
       // component may have been already loaded by PicoContainer, so fire error only if components are really different
       if (!instance.equals(loadedComponent)) {
-        LOG.error("Component name collision: " + componentName + " " + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass());
+        String errorMessage = "Component name collision: " + componentName + " " + (loadedComponent == null ? "null" : loadedComponent.getClass()) + " and " + instance.getClass();
+        LOG.error(PluginManagerCore.createPluginException(errorMessage, null, instance.getClass()));
       }
     }
     else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
@@ -60,8 +60,8 @@ import org.picocontainer.MutablePicoContainer;
 import java.io.File;
 import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author yole
@@ -105,8 +105,8 @@ public class CoreApplicationEnvironment {
                              ? new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem, myJrtFileSystem}
                              : new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem};
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, myApplication.getMessageBus());
-    registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
-    
+    registerApplicationComponent(VirtualFileManager.class, virtualFileManager);
+
     //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area) 
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
 
@@ -165,35 +165,11 @@ public class CoreApplicationEnvironment {
 
       @NotNull
       @Override
-      public Job<Void> submitToJobThread(@NotNull Runnable action, Consumer<Future> onDoneCallback) {
+      public Job<Void> submitToJobThread(@NotNull Runnable action, Consumer<? super Future<?>> onDoneCallback) {
         action.run();
-        if (onDoneCallback != null)
-          onDoneCallback.consume(new Future() {
-            @Override
-            public boolean cancel(boolean mayInterruptIfRunning) {
-              return false;
-            }
-
-            @Override
-            public boolean isCancelled() {
-              return false;
-            }
-
-            @Override
-            public boolean isDone() {
-              return true;
-            }
-
-            @Override
-            public Object get() {
-              return null;
-            }
-
-            @Override
-            public Object get(long timeout, @NotNull TimeUnit unit) {
-              return null;
-            }
-          });
+        if (onDoneCallback != null) {
+          onDoneCallback.consume(CompletableFuture.completedFuture(null));
+        }
         return Job.NULL_JOB;
       }
     };
@@ -231,6 +207,9 @@ public class CoreApplicationEnvironment {
 
   public <T> void registerApplicationComponent(@NotNull Class<T> interfaceClass, @NotNull T implementation) {
     registerComponentInstance(myApplication.getPicoContainer(), interfaceClass, implementation);
+    if (implementation instanceof Disposable) {
+      Disposer.register(myApplication, (Disposable)implementation);
+    }
   }
 
   public void registerFileType(@NotNull FileType fileType, @NotNull String extension) {

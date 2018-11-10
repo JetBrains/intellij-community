@@ -74,16 +74,18 @@ CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{WHITE_SPACE_CHARS}|{DIGIT}|"."|
 <YYINITIAL> "<!--" { yybegin(COMMENT); return XmlTokenType.XML_COMMENT_START; }
 <COMMENT> "[" { yybegin(C_COMMENT_START); return XmlTokenType.XML_CONDITIONAL_COMMENT_START; }
 <COMMENT> "<![" { yybegin(C_COMMENT_END); return XmlTokenType.XML_CONDITIONAL_COMMENT_END_START; }
-<COMMENT> {END_COMMENT} { yybegin(YYINITIAL); return XmlTokenType.XML_COMMENT_END; }
+<COMMENT> {END_COMMENT} | "<!-->" { yybegin(YYINITIAL); return XmlTokenType.XML_COMMENT_END; }
+<COMMENT> "<!--" { return XmlTokenType.XML_BAD_CHARACTER; }
+<COMMENT> "<!--->" | "--!>" { yybegin(YYINITIAL); return XmlTokenType.XML_BAD_CHARACTER; }
 <COMMENT> ">" {
   // according to HTML spec (http://www.w3.org/html/wg/drafts/html/master/syntax.html#comments)
-  // comments should start with <!-- and end with --> thus making <!--> absolutely valid comment
-  // please note that it's not true for XML (http://www.w3.org/TR/REC-xml/#sec-comments)
+  // comments should start with <!-- and end with -->. The comment <!--> is not valid, but should terminate
+  // comment token. Please note that it's not true for XML (http://www.w3.org/TR/REC-xml/#sec-comments)
   int loc = getTokenStart();
   char prev = zzBuffer.charAt(loc - 1);
   char prevPrev = zzBuffer.charAt(loc - 2);
   if (prev == '-' && prevPrev == '-') {
-    yybegin(YYINITIAL); return XmlTokenType.XML_COMMENT_END;
+    yybegin(YYINITIAL); return XmlTokenType.XML_BAD_CHARACTER;
   }
   return XmlTokenType.XML_COMMENT_CHARACTERS;
 }
@@ -137,7 +139,7 @@ CONDITIONAL_COMMENT_CONDITION=({ALPHA})({ALPHA}|{WHITE_SPACE_CHARS}|{DIGIT}|"."|
 "&nbsp;" |
 "&amp;" |
 "&#"{DIGIT}+";" |
-"&#x"({DIGIT}|[a-fA-F])+";" { return XmlTokenType.XML_CHAR_ENTITY_REF; }
+"&#"[xX]({DIGIT}|[a-fA-F])+";" { return XmlTokenType.XML_CHAR_ENTITY_REF; }
 "&"{TAG_NAME}";" { return XmlTokenType.XML_ENTITY_REF_TOKEN; }
 
 <YYINITIAL> ([^<&\$# \n\r\t\f]|(\\\$)|(\\#))* { return XmlTokenType.XML_DATA_CHARACTERS; }

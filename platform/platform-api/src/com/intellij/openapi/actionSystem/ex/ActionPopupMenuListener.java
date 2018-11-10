@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to receive notifications when popup menus created from action groups are shown and closed.
@@ -10,9 +11,9 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu;
  * @see ActionManagerEx#addActionPopupMenuListener(ActionPopupMenuListener, Disposable)
  */
 public interface ActionPopupMenuListener {
-  default void actionPopupMenuCreated(ActionPopupMenu menu) {
+  default void actionPopupMenuCreated(@NotNull ActionPopupMenu menu) {
   }
 
-  default void actionPopupMenuReleased(ActionPopupMenu menu) {
+  default void actionPopupMenuReleased(@NotNull ActionPopupMenu menu) {
   }
 }

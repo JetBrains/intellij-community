@@ -2,11 +2,10 @@ import org.jetbrains.annotations.NotNull;
 
 public class StaticInnerClass {
   public StaticInnerClass() {
-    new Inner("");
+    new Inner(null, "");
   }
 
   public static class Inner {
-    public Inner(@NotNull String s) {
-    }
+    public Inner(String s1, @NotNull String s2) { }
   }
 }

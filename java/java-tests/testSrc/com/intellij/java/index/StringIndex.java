@@ -158,7 +158,7 @@ public class StringIndex {
     final String path;
     final String content;
 
-    public PathContentPair(final String path, final String content) {
+    PathContentPair(final String path, final String content) {
       this.path = path;
       this.content = content;
     }

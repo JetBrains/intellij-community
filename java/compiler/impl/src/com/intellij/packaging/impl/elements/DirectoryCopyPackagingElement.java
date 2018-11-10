@@ -43,10 +43,12 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
     return Collections.singletonList(creator.createDirectoryContentCopyInstruction(path));
   }
 
+  @Override
   public DirectoryCopyPackagingElement getState() {
     return this;
   }
 
+  @Override
   public void loadState(@NotNull DirectoryCopyPackagingElement state) {
     myFilePath = state.getFilePath();
   }

@@ -1,14 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.instructions.EndOfInitializerInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,11 @@ public class CommonDataflow {
    * Represents the result of dataflow applied to some code fragment (usually a method)
    */
   public static class DataflowResult {
+    private final Object VALUE_NOT_KNOWN = ObjectUtils.sentinel("VALUE_NOT_KNOWN");
+
     private final Map<PsiExpression, DfaFactMap> myFacts = new HashMap<>();
+    private final Map<PsiExpression, Object> myValues = new HashMap<>();
+    private final Map<PsiExpression, Set<Object>> myNotValues = new HashMap<>();
 
     DataflowResult copy() {
       DataflowResult copy = new DataflowResult();
@@ -32,13 +37,53 @@ public class CommonDataflow {
     }
 
     void add(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
+      addFacts(expression, memState, value);
+      addValue(expression, memState, value);
+      addNotValues(expression, memState, value);
+    }
+
+    private void addNotValues(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
+      // We do not store not-values for integral numbers as this functionality is covered by range fact
+      if (value instanceof DfaVariableValue && !TypeConversionUtil.isIntegralNumberType(value.getType())) {
+        Set<Object> notValues = myNotValues.get(expression);
+        if (notValues == null) {
+          Set<Object> constants = memState.getNonEqualConstants((DfaVariableValue)value);
+          myNotValues.put(expression, constants.isEmpty() ? Collections.emptySet() : constants);
+        } else if (!notValues.isEmpty()) {
+          notValues.retainAll(memState.getNonEqualConstants((DfaVariableValue)value));
+          if (notValues.isEmpty()) {
+            myNotValues.put(expression, Collections.emptySet());
+          }
+        }
+      }
+    }
+
+    private void addValue(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
+      Object curValue = myValues.get(expression);
+      if (curValue != VALUE_NOT_KNOWN) {
+        DfaConstValue constantValue = memState.getConstantValue(value);
+        Object newValue = constantValue == null ? null : constantValue.getValue();
+        if (newValue == null || curValue != null && !Objects.equals(curValue, newValue)) {
+          newValue = VALUE_NOT_KNOWN;
+        }
+        myValues.put(expression, newValue);
+      }
+    }
+
+    private void addFacts(PsiExpression expression, DfaMemoryStateImpl memState, DfaValue value) {
       DfaFactMap existing = myFacts.get(expression);
       if(existing != DfaFactMap.EMPTY) {
         DfaFactMap newMap = memState.getFactMap(value);
-        if (!Boolean.FALSE.equals(newMap.get(DfaFactType.CAN_BE_NULL)) && memState.isNotNull(value)) {
-          newMap = newMap.with(DfaFactType.CAN_BE_NULL, false);
+        if (!DfaNullability.isNotNull(newMap) && memState.isNotNull(value)) {
+          newMap = newMap.with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
         }
-        myFacts.put(expression, existing == null ? newMap : existing.union(newMap));
+        myFacts.put(expression, existing == null ? newMap : existing.unite(newMap));
+
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+        if (parent instanceof PsiConditionalExpression &&
+            !PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false)) {
+          add((PsiExpression)parent, memState, value);
+        }
       }
     }
 
@@ -52,7 +97,9 @@ public class CommonDataflow {
      * the dataflow implementation details.
      */
     public boolean expressionWasAnalyzed(PsiExpression expression) {
-      assert !(expression instanceof PsiParenthesizedExpression);
+      if (expression instanceof PsiParenthesizedExpression) {
+        throw new IllegalArgumentException("Should not pass parenthesized expression");
+      }
       return myFacts.containsKey(expression);
     }
 
@@ -68,6 +115,36 @@ public class CommonDataflow {
     public <T> T getExpressionFact(PsiExpression expression, DfaFactType<T> type) {
       DfaFactMap map = this.myFacts.get(expression);
       return map == null ? null : map.get(type);
+    }
+
+    /**
+     * Returns an expression value if known
+     *
+     * @param expression an expression to get its value
+     * @return a value or null if not known
+     */
+    @Nullable
+    @Contract("null -> null")
+    public Object getExpressionValue(@Nullable PsiExpression expression) {
+      return this.myValues.get(expression);
+    }
+
+    /**
+     * Returns a set of values which are known to be not equal to given expression.
+     * An empty list is returned if nothing is known.
+     *
+     * <p>
+     * This method may return nothing if {@link #getExpressionValue(PsiExpression)}
+     * returns some value (if expression value is known, it's not equal to any other value),
+     * or if expression type is an integral type (in this case use
+     * {@code getExpressionFact(expression, DfaFactType.RANGE)} which would provide more information anyway).
+     *
+     * @param expression an expression to get values not equal to.
+     * @return a set of values; empty set if nothing is known or this expression was not tracked.
+     */
+    @NotNull
+    public Set<Object> getValuesNotEqualToExpression(@Nullable PsiExpression expression) {
+      return myNotValues.getOrDefault(expression, Collections.emptySet());
     }
 
     /**
@@ -88,7 +165,7 @@ public class CommonDataflow {
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return null;
     DataFlowRunner runner = new DataFlowRunner(false, block);
-    CommonDataflowVisitor visitor = new CommonDataflowVisitor(runner);
+    CommonDataflowVisitor visitor = new CommonDataflowVisitor();
     RunnerResult result = runner.analyzeMethodRecursively(block, visitor);
     if (result != RunnerResult.OK) return null;
     if (!(block instanceof PsiClass)) return visitor.myResult;
@@ -120,10 +197,7 @@ public class CommonDataflow {
    */
   @Nullable
   public static DataflowResult getDataflowResult(PsiExpression context) {
-    PsiMember member = PsiTreeUtil.getParentOfType(context, PsiMember.class);
-    if(!(member instanceof PsiMethod) && !(member instanceof PsiField) && !(member instanceof PsiClassInitializer)) return null;
-    PsiElement body =
-      member instanceof PsiMethod && !((PsiMethod)member).isConstructor() ? ((PsiMethod)member).getBody() : member.getContainingClass();
+    PsiElement body = DfaUtil.getDataflowContext(context);
     if (body == null) return null;
     return CachedValuesManager.getCachedValue(body, () -> {
       DataflowResult result = runDFA(body);
@@ -146,14 +220,8 @@ public class CommonDataflow {
   }
 
   private static class CommonDataflowVisitor extends StandardInstructionVisitor {
-    private DataflowResult myResult;
-    private final DfaConstValue myFail;
+    private DataflowResult myResult = new DataflowResult();
     private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
-
-    public CommonDataflowVisitor(DataFlowRunner runner) {
-      myFail = runner.getFactory().getConstFactory().getContractFail();
-      myResult = new DataflowResult();
-    }
 
     @Override
     public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction,
@@ -166,76 +234,14 @@ public class CommonDataflow {
     }
 
     @Override
-    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      DfaInstructionState[] states = super.visitPush(instruction, runner, memState);
-      PsiExpression place = instruction.getPlace();
-      if (place != null && !instruction.isReferenceWrite()) {
-        for (DfaInstructionState state : states) {
-          DfaMemoryState afterState = state.getMemoryState();
-          myResult.add(place, (DfaMemoryStateImpl)afterState, instruction.getValue());
-        }
+    protected void beforeExpressionPush(@NotNull DfaValue value,
+                                     @NotNull PsiExpression expression,
+                                     @Nullable TextRange range,
+                                     @NotNull DfaMemoryState state) {
+      if (range == null && !DfaConstValue.isContractFail(value)) {
+        // Do not track instructions which cover part of expression
+        myResult.add(expression, (DfaMemoryStateImpl)state, value);
       }
-      return states;
-    }
-
-    @Override
-    public DfaInstructionState[] visitArrayAccess(ArrayAccessInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      DfaInstructionState[] states = super.visitArrayAccess(instruction, runner, memState);
-      PsiArrayAccessExpression anchor = instruction.getExpression();
-      for (DfaInstructionState state : states) {
-        DfaMemoryState afterState = state.getMemoryState();
-        myResult.add(anchor, (DfaMemoryStateImpl)afterState, afterState.peek());
-      }
-      return states;
-    }
-
-    @Override
-    public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      DfaInstructionState[] states = super.visitBinop(instruction, runner, memState);
-      PsiElement anchor = instruction.getPsiAnchor();
-      if (anchor instanceof PsiExpression) {
-        for (DfaInstructionState state : states) {
-          DfaMemoryState afterState = state.getMemoryState();
-          myResult.add((PsiExpression)anchor, (DfaMemoryStateImpl)afterState, afterState.peek());
-        }
-      }
-      return states;
-    }
-
-    @NotNull
-    @Override
-    protected DfaCallArguments popCall(MethodCallInstruction instruction,
-                                       DataFlowRunner runner,
-                                       DfaMemoryState memState,
-                                       boolean contractOnly) {
-      DfaCallArguments arguments = super.popCall(instruction, runner, memState, contractOnly);
-      PsiElement context = instruction.getContext();
-      if (instruction.getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL &&
-          context instanceof PsiMethodCallExpression) {
-        PsiExpression qualifier =
-          PsiUtil.skipParenthesizedExprDown(((PsiMethodCallExpression)context).getMethodExpression().getQualifierExpression());
-        if (qualifier != null) {
-          myResult.add(qualifier, (DfaMemoryStateImpl)memState, arguments.myQualifier);
-        }
-      }
-      return arguments;
-    }
-
-    @Override
-    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
-                                                 DataFlowRunner runner,
-                                                 DfaMemoryState memState) {
-      DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
-      PsiExpression context = ObjectUtils.tryCast(instruction.getContext(), PsiExpression.class);
-      if (context != null && ExpressionUtils.getCallForQualifier(context) == null) {
-        for (DfaInstructionState state : states) {
-          DfaValue value = state.getMemoryState().peek();
-          if (value != myFail) {
-            myResult.add(context, (DfaMemoryStateImpl)state.getMemoryState(), value);
-          }
-        }
-      }
-      return states;
     }
   }
 }

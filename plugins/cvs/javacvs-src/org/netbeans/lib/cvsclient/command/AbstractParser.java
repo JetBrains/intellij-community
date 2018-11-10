@@ -28,15 +28,18 @@ public abstract class AbstractParser
 
 	// Implemented ============================================================
 
-	public void registerListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void registerListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.addTerminationListener(this);
 	}
 
-	public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.removeTerminationListener(this);
 	}
 
-	public void commandTerminated(boolean error) {
+	@Override
+        public void commandTerminated(boolean error) {
 		outputDone();
 	}
 }

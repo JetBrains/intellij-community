@@ -3,6 +3,7 @@ package com.jetbrains.python.newProject.steps
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.PathMappingSettings
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.remote.PyProjectSynchronizer
@@ -19,6 +21,7 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
+import com.jetbrains.python.sdk.associatedModulePath
 import java.awt.BorderLayout
 import java.awt.Component
 
@@ -26,11 +29,18 @@ import java.awt.Component
  * @author vlan
  */
 class PyAddExistingSdkPanel(project: Project?,
+                            module: Module?,
                             existingSdks: List<Sdk>,
                             newProjectPath: String?,
                             preferredSdk: Sdk?) : PyAddSdkPanel() {
 
-  override val panelName = "Existing interpreter"
+  override val panelName: String = "Existing interpreter"
+
+  /**
+   * Path mappings of current synchronizer.
+   * Once set, [remotePathField] will be updated on any change of local path passed through mappings
+   */
+  private var defaultMappings: List<PathMappingSettings.PathMapping>? = null
 
   override val sdk: Sdk?
     get() = sdkChooserCombo.comboBox.selectedItem as? Sdk
@@ -42,6 +52,7 @@ class PyAddExistingSdkPanel(project: Project?,
     set(value) {
       field = value
       sdkChooserCombo.setNewProjectPath(value)
+      updateRemotePathIfNeeded()
     }
 
   private val sdkChooserCombo: PythonSdkChooserCombo
@@ -55,7 +66,10 @@ class PyAddExistingSdkPanel(project: Project?,
 
   init {
     layout = BorderLayout()
-    sdkChooserCombo = PythonSdkChooserCombo(project, existingSdks, newProjectPath, { it != null && it == preferredSdk }).apply {
+    val sdksForNewProject = existingSdks.filter { it.associatedModulePath == null }
+    sdkChooserCombo = PythonSdkChooserCombo(project, module, sdksForNewProject, newProjectPath) {
+      it != null && it == preferredSdk
+    }.apply {
       if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
         putClientProperty("JButton.buttonType", null)
       }
@@ -71,7 +85,7 @@ class PyAddExistingSdkPanel(project: Project?,
     update()
   }
 
-  override fun validateAll() =
+  override fun validateAll(): List<ValidationInfo> =
     listOf(validateSdkChooserField(),
            validateRemotePathField())
       .filterNotNull()
@@ -99,16 +113,34 @@ class PyAddExistingSdkPanel(project: Project?,
     }
   }
 
+
   private fun update() {
     val synchronizer = sdk?.projectSynchronizer
     remotePathField.mainPanel.isVisible = synchronizer != null
     if (synchronizer != null) {
       val defaultRemotePath = synchronizer.getDefaultRemotePath()
+      defaultMappings = synchronizer.getAutoMappings()
+      assert(defaultRemotePath == null || defaultMappings == null) { "Can't have both: default mappings and default value" }
+      assert(!(defaultRemotePath?.isEmpty() ?: false)) { "Mappings are empty" }
+
       val textField = remotePathField.textField
       if (defaultRemotePath != null && StringUtil.isEmpty(textField.text)) {
         textField.text = defaultRemotePath
       }
     }
+    // DefaultMappings revokes user ability to change mapping by her self, so field is readonly
+    remotePathField.setReadOnly(defaultMappings != null)
+    updateRemotePathIfNeeded()
+  }
+
+  /**
+   * Remote path should be updated automatically if [defaultMappings] are set.
+   * See [PyProjectSynchronizer.getAutoMappings].
+   */
+  private fun updateRemotePathIfNeeded() {
+    val path = newProjectPath ?: return
+    val mappings = defaultMappings ?: return
+    remotePathField.textField.text = mappings.find { it.canReplaceLocal(path) }?.mapToRemote(path) ?: "?"
   }
 
   companion object {
@@ -134,7 +166,10 @@ class PyAddExistingSdkPanel(project: Project?,
       }
       panel.isVisible = true
       val wrapper = object : DialogWrapper(true) {
-        init { init() }
+        init {
+          init()
+        }
+
         override fun createCenterPanel() = panel
       }
       return if (wrapper.showAndGet()) supplier.get() else null

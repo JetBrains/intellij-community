@@ -56,11 +56,6 @@ public class CoreExternalResourceManager extends ExternalResourceManagerEx {
   }
 
   @Override
-  public void removeIgnoredResource(@NotNull String url) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean isIgnoredResource(@NotNull String url) {
     return false;
   }

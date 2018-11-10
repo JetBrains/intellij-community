@@ -216,7 +216,7 @@ public class PatchBuilderTest extends PlatformTestCase {
     private final FilePath myFilePath;
     private final String myRevisionName;
 
-    public MockContentRevision(@NotNull File file, @NotNull FilePath path, @NotNull String revisionName) {
+    MockContentRevision(@NotNull File file, @NotNull FilePath path, @NotNull String revisionName) {
       myFile = file;
       myFilePath = path;
       myRevisionName = revisionName;

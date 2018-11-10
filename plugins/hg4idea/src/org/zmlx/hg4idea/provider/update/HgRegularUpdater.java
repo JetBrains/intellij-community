@@ -52,6 +52,7 @@ public class HgRegularUpdater implements HgUpdater {
     this.updateConfiguration = configuration;
   }
 
+  @Override
   public boolean update(final UpdatedFiles updatedFiles, ProgressIndicator indicator, List<VcsException> warnings)
     throws VcsException {
     indicator.setText(HgVcsMessages.message("hg4idea.progress.updating", repoRoot.getPath()));
@@ -289,7 +290,6 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private static void reportWarning(List<VcsException> exceptions, String warningMessage) {
-    @SuppressWarnings({"ThrowableInstanceNeverThrown"})
     VcsException warningException = new VcsException(warningMessage);
     warningException.setIsWarning(true);
     exceptions.add(warningException);

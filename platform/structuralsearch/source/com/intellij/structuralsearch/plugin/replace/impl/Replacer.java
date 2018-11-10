@@ -44,7 +44,7 @@ public class Replacer {
     this.options = options;
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getMatchOptions().getFileType());
     assert profile != null;
-    replaceHandler = profile.getReplaceHandler(new ReplacementContext(options, project));
+    replaceHandler = profile.getReplaceHandler(project, options);
     assert replaceHandler != null;
     replacementBuilder = new ReplacementBuilder(this.project, this.options);
   }
@@ -66,7 +66,7 @@ public class Replacer {
   }
 
   public static String testReplace(String in, String what, String by, ReplaceOptions options, Project project, boolean sourceIsFile) {
-    FileType type = options.getMatchOptions().getFileType();
+    final FileType type = options.getMatchOptions().getFileType();
     return testReplace(in, what, by, options, project, sourceIsFile, false, type, null);
   }
 
@@ -75,7 +75,6 @@ public class Replacer {
     replaceOptions.setReplacement(by);
 
     final MatchOptions matchOptions = replaceOptions.getMatchOptions();
-    matchOptions.clearVariableConstraints();
     matchOptions.fillSearchCriteria(what);
 
     Matcher.validate(project, matchOptions);
@@ -106,7 +105,7 @@ public class Replacer {
         lastElement = parent.getLastChild();
       }
 
-      CollectingMatchResultSink sink = new CollectingMatchResultSink();
+      final CollectingMatchResultSink sink = new CollectingMatchResultSink();
       matcher.testFindMatches(sink, matchOptions);
 
       final List<ReplacementInfo> resultPtrList = new SmartList<>();

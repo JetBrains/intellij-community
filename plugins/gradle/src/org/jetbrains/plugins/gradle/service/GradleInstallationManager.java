@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -63,7 +64,6 @@ import java.util.regex.Pattern;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/4/11 11:06 AM
  */
 @SuppressWarnings("MethodMayBeStatic")
 public class GradleInstallationManager {
@@ -147,7 +147,14 @@ public class GradleInstallationManager {
 
     final GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
     if (settings == null) {
-      return null;
+      Pair<String, Sdk> sdkPair = ExternalSystemJdkUtil.getAvailableJdk(project);
+      if (!ExternalSystemJdkUtil.USE_INTERNAL_JAVA.equals(sdkPair.first) ||
+          ExternalSystemJdkUtil.isValidJdk(sdkPair.second.getHomePath())) {
+        return sdkPair.second;
+      }
+      else {
+        return null;
+      }
     }
 
     final String gradleJvm = settings.getGradleJvm();

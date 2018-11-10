@@ -148,8 +148,7 @@ public class TreeExpandCollapseTest extends TestCase {
       treePaths[i] = myChild2Path.pathByAddingChild(child);
     }
     TreeExpandCollapse.expandAll(myTree);
-    for (int i = 0; i < treePaths.length; i++) {
-      TreePath treePath = treePaths[i];
+    for (TreePath treePath : treePaths) {
       checkExpanded(treePath);
     }
   }

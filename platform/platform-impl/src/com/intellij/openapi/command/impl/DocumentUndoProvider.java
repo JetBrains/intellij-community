@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoConstants;
@@ -29,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.AbstractFileViewProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DocumentUndoProvider implements Disposable {
@@ -61,19 +49,19 @@ public class DocumentUndoProvider implements Disposable {
 
   private class MyEditorDocumentListener implements DocumentListener {
     @Override
-    public void beforeDocumentChange(DocumentEvent e) {
+    public void beforeDocumentChange(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
       if (!shouldProcess(document)) return;
 
       UndoManagerImpl undoManager = getUndoManager();
-      if (undoManager.isActive() && isUndoable(document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) && 
+      if (undoManager.isActive() && isUndoable(document) && (undoManager.isUndoInProgress() || undoManager.isRedoInProgress()) &&
           document.getUserData(UNDOING_EDITOR_CHANGE) != Boolean.TRUE) {
         throw new IllegalStateException("Do not change documents during undo as it will break undo sequence.");
       }
     }
 
     @Override
-    public void documentChanged(final DocumentEvent e) {
+    public void documentChanged(@NotNull final DocumentEvent e) {
       Document document = e.getDocument();
       if (!shouldProcess(document)) return;
 
@@ -85,9 +73,10 @@ public class DocumentUndoProvider implements Disposable {
         registerNonUndoableAction(document);
       }
     }
-    
+
     private boolean shouldProcess(Document document) {
       if (myProject != null && myProject.isDisposed()) return false;
+      if (!ApplicationManager.getApplication().isDispatchThread()) return false; // some light document
       return !UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
              // for the same event twice (from original document too)
              // and undo will work incorrectly
@@ -99,7 +88,7 @@ public class DocumentUndoProvider implements Disposable {
 
       VirtualFile vFile = FileDocumentManager.getInstance().getFile(document);
       if (vFile == null) return true;
-      return vFile.getUserData(AbstractFileViewProvider.FREE_THREADED) != Boolean.TRUE && 
+      return vFile.getUserData(AbstractFileViewProvider.FREE_THREADED) != Boolean.TRUE &&
              vFile.getUserData(UndoConstants.DONT_RECORD_UNDO) != Boolean.TRUE;
     }
 

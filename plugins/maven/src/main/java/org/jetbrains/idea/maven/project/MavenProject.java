@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -44,6 +45,7 @@ import org.jetbrains.idea.maven.plugins.api.MavenModelPropertiesPatcher;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.*;
@@ -56,6 +58,19 @@ public class MavenProject {
 
   private static final Key<MavenArtifactIndex> DEPENDENCIES_CACHE_KEY = Key.create("MavenProject.DEPENDENCIES_CACHE_KEY");
   private static final Key<List<String>> FILTERS_CACHE_KEY = Key.create("MavenProject.FILTERS_CACHE_KEY");
+
+  public enum ConfigFileKind {
+    MAVEN_CONFIG(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "true"),
+    JVM_CONFIG(MavenConstants.JVM_CONFIG_RELATIVE_PATH, "");
+    final Key<Map<String, String>> CACHE_KEY = Key.create("MavenProject." + name());
+    final String myRelativeFilePath;
+    final String myValueIfMissing;
+
+    ConfigFileKind(String relativeFilePath, String valueIfMissing) {
+      myRelativeFilePath = relativeFilePath;
+      myValueIfMissing = valueIfMissing;
+    }
+  }
 
   @NotNull private final VirtualFile myFile;
   @NotNull private volatile State myState = new State();
@@ -1081,6 +1096,43 @@ public class MavenProject {
   @NotNull
   public Properties getProperties() {
     return myState.myProperties;
+  }
+
+  @NotNull
+  public Map<String, String> getMavenConfig() {
+    return getPropertiesFromConfig(ConfigFileKind.MAVEN_CONFIG);
+  }
+
+  @NotNull
+  private Map<String, String> getPropertiesFromConfig(ConfigFileKind kind) {
+    Map<String, String> mavenConfig = getCachedValue(kind.CACHE_KEY);
+    if (mavenConfig == null) {
+      mavenConfig = readConfigFile(MavenUtil.getBaseDir(getDirectoryFile()), kind);
+      putCachedValue(kind.CACHE_KEY, mavenConfig);
+    }
+
+    return mavenConfig;
+  }
+
+  @NotNull
+  public Map<String, String> getJvmConfig() {
+    return getPropertiesFromConfig(ConfigFileKind.JVM_CONFIG);
+  }
+
+  @NotNull
+  public static Map<String, String> readConfigFile(final File baseDir, ConfigFileKind kind) {
+    File configFile = new File(baseDir + FileUtil.toSystemDependentName(kind.myRelativeFilePath));
+
+    ParametersList parametersList = new ParametersList();
+    if (configFile.isFile()) {
+      try {
+        parametersList.addParametersString(FileUtil.loadFile(configFile, CharsetToolkit.UTF8));
+      }
+      catch (IOException ignore) {
+      }
+    }
+    Map<String, String> config = parametersList.getProperties(kind.myValueIfMissing);
+    return config.isEmpty() ? Collections.emptyMap() : config;
   }
 
   @NotNull

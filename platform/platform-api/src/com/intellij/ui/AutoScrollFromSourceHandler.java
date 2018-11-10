@@ -20,8 +20,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.DumbAware;
@@ -38,7 +40,6 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings("MethodMayBeStatic")
 public abstract class AutoScrollFromSourceHandler implements Disposable {
   protected final Project myProject;
   protected final Alarm myAlarm;
@@ -77,13 +78,24 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        final FileEditor editor = event.getNewEditor();
-        if (editor != null && myComponent.isShowing() && isAutoScrollEnabled()) {
-          myAlarm.cancelAllRequests();
-          myAlarm.addRequest(() -> selectElementFromEditor(editor), getAlarmDelay(), getModalityState());
-        }
+        selectInAlarm(event.getNewEditor());
       }
     });
+    updateCurrentSelection();
+  }
+
+  private void selectInAlarm(final FileEditor editor) {
+    if (editor != null && myComponent.isShowing() && isAutoScrollEnabled()) {
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(() -> selectElementFromEditor(editor), getAlarmDelay(), getModalityState());
+    }
+  }
+
+  private void updateCurrentSelection() {
+    FileEditor selectedEditor = FileEditorManager.getInstance(myProject).getSelectedEditor();
+    if (selectedEditor != null) {
+      ApplicationManager.getApplication().invokeLater(() -> selectInAlarm(selectedEditor), ModalityState.NON_MODAL, myProject.getDisposed());
+    }
   }
 
   @Override
@@ -98,18 +110,21 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
   }
 
   private class AutoScrollFromSourceAction extends ToggleAction implements DumbAware {
-    public AutoScrollFromSourceAction() {
+    AutoScrollFromSourceAction() {
       super(UIBundle.message("autoscroll.from.source.action.name"),
             UIBundle.message("autoscroll.from.source.action.description"),
             AllIcons.General.AutoscrollFromSource);
     }
 
-    public boolean isSelected(final AnActionEvent event) {
+    @Override
+    public boolean isSelected(@NotNull final AnActionEvent event) {
       return isAutoScrollEnabled();
     }
 
-    public void setSelected(final AnActionEvent event, final boolean flag) {
+    @Override
+    public void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       setAutoScrollEnabled(flag);
+      updateCurrentSelection();
     }
   }
 }

@@ -48,27 +48,34 @@ public interface ChangeListFilteringStrategy {
       return "None";
     }
 
+    @Override
     @Nullable
     public JComponent getFilterUI() {
       return null;
     }
 
+    @Override
     public void setFilterBase(List<CommittedChangeList> changeLists) {
     }
 
+    @Override
     public void addChangeListener(ChangeListener listener) {
     }
 
+    @Override
     public void removeChangeListener(ChangeListener listener) {
     }
 
+    @Override
     @Nullable
     public void resetFilterBase() {
     }
 
+    @Override
     public void appendFilterBase(List<CommittedChangeList> changeLists) {
     }
 
+    @Override
     @NotNull
     public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
       return changeLists;

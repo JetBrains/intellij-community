@@ -13,13 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@State(
-  name = "Registry",
-  storages = {
-    @Storage("ide.general.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "Registry", storages = @Storage("ide.general.xml"))
 public class RegistryState implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(RegistryState.class);
 

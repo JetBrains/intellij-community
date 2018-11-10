@@ -30,6 +30,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -43,7 +44,7 @@ abstract class RenameChooser {
   private final Editor myEditor;
   private final TextAttributes myAttributes;
 
-  public RenameChooser(Editor editor) {
+  RenameChooser(Editor editor) {
     myEditor = editor;
     myAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
   }
@@ -93,7 +94,7 @@ abstract class RenameChooser {
       .setItemChosenCallback((selectedValue) -> runRenameTemplate(ALL_OCCURRENCES.equals(selectedValue) ? stringUsages : new ArrayList<>()))
       .addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           dropHighlighters();
         }
       })

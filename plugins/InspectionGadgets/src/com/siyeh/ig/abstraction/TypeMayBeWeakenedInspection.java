@@ -39,14 +39,18 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.WeakestTypeFinder;
 import com.siyeh.ig.ui.UiUtils;
@@ -59,7 +63,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspectionTool {
   @SuppressWarnings({"PublicField", "WeakerAccess"})
@@ -77,8 +80,8 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
   @SuppressWarnings("PublicField")
   public boolean doNotWeakenReturnType = true;
 
-  @SuppressWarnings("PublicField")
-  public boolean doNotWeakenInferredVariableType = false;
+  @SuppressWarnings({"PublicField", "WeakerAccess"})
+  public boolean doNotWeakenInferredVariableType;
 
   public OrderedSet<String> myStopClassSet = new OrderedSet<>();
 
@@ -187,7 +190,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     }
     if (!myStopClassSet.isEmpty()) {
       Element stopClasses = new Element("stopClasses");
-      stopClasses.addContent(myStopClassSet.stream().collect(Collectors.joining(",")));
+      stopClasses.addContent(String.join(",", myStopClassSet));
       node.addContent(stopClasses);
     }
   }
@@ -240,6 +243,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
   @NotNull
   public JComponent createOptionsPanel() {
     VerticalBox verticalBox = new VerticalBox();
+    JBScrollPane scrollPane = new JBScrollPane(verticalBox, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("inspection.type.may.be.weakened.ignore.option"),
                              "useRighthandTypeAsWeakestTypeInAssignments");
@@ -260,7 +264,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       UiUtils.createAddRemoveTreeClassChooserPanel(stopClassesTable, InspectionGadgetsBundle
         .message("inspection.type.may.be.weakened.add.stop.class.selection.table"), CommonClassNames.JAVA_LANG_OBJECT);
     verticalBox.add(stopClassesPanel);
-    return verticalBox;
+    return scrollPane;
   }
 
   private static class TypeMayBeWeakenedFix implements LocalQuickFix {
@@ -302,7 +306,8 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
         return;
       }
       final PsiJavaCodeReferenceElement componentReferenceElement = typeElement.getInnermostComponentReferenceElement();
-      if (componentReferenceElement == null) {
+      boolean isInferredType = typeElement.isInferredType();
+      if (componentReferenceElement == null && !isInferredType) {
         return;
       }
       final PsiType oldType = typeElement.getType();
@@ -333,10 +338,18 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
           classType = factory.createType(aClass, substitutor);
         }
       }
-      final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(classType);
-      final PsiElement replacement = componentReferenceElement.replace(referenceElement);
+      final PsiElement replacement;
+      if (isInferredType) {
+        PsiTypeElement newTypeElement = factory.createTypeElement(classType);
+        replacement = new CommentTracker().replaceAndRestoreComments(typeElement, newTypeElement);
+      }
+      else {
+        final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(classType);
+        replacement = new CommentTracker().replaceAndRestoreComments(componentReferenceElement, referenceElement);
+      }
       final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
       javaCodeStyleManager.shortenClassReferences(replacement);
+
     }
   }
 
@@ -413,7 +426,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
           return;
         }
       }
-      if (!doNotWeakenInferredVariableType) {
+      if (doNotWeakenInferredVariableType) {
         PsiTypeElement typeElement = variable.getTypeElement();
         if (typeElement != null && typeElement.isInferredType()) {
           return;
@@ -436,6 +449,10 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
             return;
           }
         }
+      }
+      if (variable instanceof PsiParameter) {
+        PsiMethod method = PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
+        if (method == null || UnusedSymbolUtil.isImplicitUsage(variable.getProject(), method, null)) return;
       }
       if (UnusedSymbolUtil.isImplicitWrite(variable) || UnusedSymbolUtil.isImplicitRead(variable)) {
         return;
@@ -499,9 +516,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
         weakestClasses.removeIf(weakestClass -> !weakestClass.isInterface());
       }
 
-      weakestClasses = weakestClasses.stream()
-                                     .map(psiClass -> tryReplaceWithParentStopper(originClass, psiClass, myStopClassSet))
-                                     .collect(Collectors.toList());
+      weakestClasses = ContainerUtil.map(weakestClasses, psiClass -> tryReplaceWithParentStopper(originClass, psiClass, myStopClassSet));
       return weakestClasses;
     }
 

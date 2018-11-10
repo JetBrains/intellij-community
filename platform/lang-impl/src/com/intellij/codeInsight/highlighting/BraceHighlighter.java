@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -44,18 +30,13 @@ public class BraceHighlighter implements StartupActivity {
 
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
+        if (e.getCaret() != e.getEditor().getCaretModel().getPrimaryCaret()) return;
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
         final SelectionModel selectionModel = editor.getSelectionModel();
         // Don't update braces in case of the active selection.
         if (editor.getProject() != project || selectionModel.hasSelection()) {
-          return;
-        }
-
-        final Document document = editor.getDocument();
-        int line = e.getNewPosition().line;
-        if (line < 0 || line >= document.getLineCount()) {
           return;
         }
         updateBraces(editor, myAlarm);
@@ -64,7 +45,7 @@ public class BraceHighlighter implements StartupActivity {
 
     final SelectionListener mySelectionListener = new SelectionListener() {
       @Override
-      public void selectionChanged(SelectionEvent e) {
+      public void selectionChanged(@NotNull SelectionEvent e) {
         myAlarm.cancelAllRequests();
         Editor editor = e.getEditor();
         if (editor.getProject() != project) {
@@ -73,7 +54,7 @@ public class BraceHighlighter implements StartupActivity {
 
         final TextRange oldRange = e.getOldRange();
         final TextRange newRange = e.getNewRange();
-        if (oldRange != null && newRange != null && !(oldRange.isEmpty() ^ newRange.isEmpty())) {
+        if (oldRange != null && newRange != null && oldRange.isEmpty() == newRange.isEmpty()) {
           // Don't perform braces update in case of active/absent selection.
           return;
         }
@@ -84,7 +65,7 @@ public class BraceHighlighter implements StartupActivity {
 
     DocumentListener documentListener = new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         myAlarm.cancelAllRequests();
         Editor[] editors = EditorFactory.getInstance().getEditors(e.getDocument(), project);
         for (Editor editor : editors) {

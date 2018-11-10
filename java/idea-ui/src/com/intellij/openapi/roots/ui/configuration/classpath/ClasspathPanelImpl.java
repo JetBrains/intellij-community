@@ -390,7 +390,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myEntryTable);
     AnActionButtonUpdater moveUpDownUpdater = new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         for (RowSorter.SortKey key : myEntryTable.getRowSorter().getSortKeys()) {
           if (key.getSortOrder() != SortOrder.UNSORTED) {
             return false;
@@ -445,7 +445,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       })
       .setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           final int[] selectedRows = myEntryTable.getSelectedRows();
           for (final int selectedRow : selectedRows) {
             if (!getItemAt(selectedRow).isRemovable()) {
@@ -553,7 +553,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
   }
 
   @Override
-  public void addItems(List<ClasspathTableItem<?>> toAdd) {
+  public void addItems(List<? extends ClasspathTableItem<?>> toAdd) {
     for (ClasspathTableItem<?> item : toAdd) {
       myModel.addRow(item);
     }
@@ -713,7 +713,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     private final Border NO_FOCUS_BORDER = BorderFactory.createEmptyBorder(1, 1, 1, 1);
     private final StructureConfigurableContext myContext;
 
-    public TableItemRenderer(StructureConfigurableContext context) {
+    TableItemRenderer(StructureConfigurableContext context) {
       myContext = context;
     }
 
@@ -734,7 +734,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     private final TableCellRenderer myDelegate;
     private final JPanel myBlankPanel;
 
-    public ExportFlagRenderer(TableCellRenderer delegate) {
+    ExportFlagRenderer(TableCellRenderer delegate) {
       myDelegate = delegate;
       myBlankPanel = new JPanel();
     }
@@ -814,7 +814,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       new AnalyzeDependenciesOnSpecifiedTargetHandler(getProject(), new AnalysisScope(myState.getRootModel().getModule()),
                                                       targetScope) {
         @Override
-        protected boolean shouldShowDependenciesPanel(List<DependenciesBuilder> builders) {
+        protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
           for (DependenciesBuilder builder : builders) {
             for (Set<PsiFile> files : builder.getDependencies().values()) {
               if (!files.isEmpty()) {

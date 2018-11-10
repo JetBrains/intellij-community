@@ -33,7 +33,7 @@ import java.util.Date;
 
 class DateFilterPopupComponent extends FilterPopupComponent<VcsLogDateFilter> {
 
-  public DateFilterPopupComponent(FilterModel<VcsLogDateFilter> filterModel) {
+  DateFilterPopupComponent(FilterModel<VcsLogDateFilter> filterModel) {
     super("Date", filterModel);
   }
 

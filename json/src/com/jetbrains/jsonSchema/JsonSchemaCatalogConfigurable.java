@@ -8,7 +8,6 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.FormBuilder;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,25 +18,44 @@ import java.awt.*;
 
 public class JsonSchemaCatalogConfigurable implements Configurable {
   @NonNls public static final String SETTINGS_JSON_SCHEMA_CATALOG = "settings.json.schema.catalog";
-  public static final String JSON_SCHEMA_CATALOG = "JSON Schema Catalog";
+  public static final String JSON_SCHEMA_CATALOG = "Remote JSON Schemas";
   @NotNull private final Project myProject;
-  private final JBCheckBox myCheckBox;
+  private final JBCheckBox myCatalogCheckBox;
+  private final JBCheckBox myRemoteCheckBox;
+  private final JBCheckBox myPreferRemoteCheckBox;
 
   public JsonSchemaCatalogConfigurable(@NotNull final Project project) {
     myProject = project;
-    myCheckBox = new JBCheckBox("Use schemastore.org JSON Schema catalog");
+    myCatalogCheckBox = new JBCheckBox("Use schemastore.org JSON Schema catalog");
+    myRemoteCheckBox = new JBCheckBox("Allow downloading JSON Schemas from remote sources");
+    myPreferRemoteCheckBox = new JBCheckBox("Always download the most recent version of schemas");
   }
 
   @Nullable
   @Override
   public JComponent createComponent() {
     FormBuilder builder = FormBuilder.createFormBuilder();
-    JLabel commentComponent =
-      ComponentPanelBuilder.createCommentComponent("Schemas will be downloaded and assigned using the <a href=\"http://schemastore.org/json/\">SchemaStore API</a>", true);
-    builder.addComponent(myCheckBox);
-    commentComponent.setBorder(JBUI.Borders.emptyLeft(18));
-    builder.addComponent(commentComponent);
+
+    builder.addComponent(myRemoteCheckBox);
+    builder.addVerticalGap(2);
+    myRemoteCheckBox.addChangeListener(c -> {
+      boolean selected = myRemoteCheckBox.isSelected();
+      myCatalogCheckBox.setEnabled(selected);
+      myPreferRemoteCheckBox.setEnabled(selected);
+      if (!selected) {
+        myCatalogCheckBox.setSelected(false);
+        myPreferRemoteCheckBox.setSelected(false);
+      }
+    });
+    addWithComment(builder, myCatalogCheckBox,
+                   "Schemas will be downloaded and assigned using the <a href=\"http://schemastore.org/json/\">SchemaStore API</a>");
+    addWithComment(builder, myPreferRemoteCheckBox,
+                   "Schemas will always be downloaded from the SchemaStore, even if some of them are bundled with the IDE");
     return wrap(builder.getPanel());
+  }
+
+  private static void addWithComment(FormBuilder builder, JBCheckBox box, String s) {
+    builder.addComponent(new ComponentPanelBuilder(box).withComment(s).createPanel());
   }
 
   private static JPanel wrap(JComponent panel) {
@@ -48,24 +66,34 @@ public class JsonSchemaCatalogConfigurable implements Configurable {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myCheckBox;
+    return myCatalogCheckBox;
   }
 
   @Override
   public void reset() {
     JsonSchemaCatalogProjectConfiguration.MyState state = JsonSchemaCatalogProjectConfiguration.getInstance(myProject).getState();
-    myCheckBox.setSelected(state == null || state.myIsEnabled);
+    final boolean remoteEnabled = state == null || state.myIsRemoteActivityEnabled;
+    myRemoteCheckBox.setSelected(remoteEnabled);
+    myCatalogCheckBox.setEnabled(remoteEnabled);
+    myPreferRemoteCheckBox.setEnabled(remoteEnabled);
+    myCatalogCheckBox.setSelected(state == null || state.myIsCatalogEnabled);
+    myPreferRemoteCheckBox.setSelected(state == null || state.myIsPreferRemoteSchemas);
   }
 
   @Override
   public boolean isModified() {
     JsonSchemaCatalogProjectConfiguration.MyState state = JsonSchemaCatalogProjectConfiguration.getInstance(myProject).getState();
-    return state == null || state.myIsEnabled != myCheckBox.isSelected();
+    return state == null
+           || state.myIsCatalogEnabled != myCatalogCheckBox.isSelected()
+           || state.myIsPreferRemoteSchemas != myPreferRemoteCheckBox.isSelected()
+           || state.myIsRemoteActivityEnabled != myRemoteCheckBox.isSelected();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    JsonSchemaCatalogProjectConfiguration.getInstance(myProject).setState(myCheckBox.isSelected());
+    JsonSchemaCatalogProjectConfiguration.getInstance(myProject).setState(myCatalogCheckBox.isSelected(),
+                                                                          myRemoteCheckBox.isSelected(),
+                                                                          myPreferRemoteCheckBox.isSelected());
   }
 
   @Nls(capitalization = Nls.Capitalization.Title)

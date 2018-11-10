@@ -78,7 +78,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     }
 
     final Project project = myReferenceExpression.getProject();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     final PsiFile targetFile = targetClass.getContainingFile();
 
@@ -146,7 +146,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
     startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
       @Override
-      public void templateFinished(Template template, boolean brokenOff) {
+      public void templateFinished(@NotNull Template template, boolean brokenOff) {
         PsiDocumentManager.getInstance(project).commitDocument(newEditor.getDocument());
         final int offset = newEditor.getCaretModel().getOffset();
         final PsiLocalVariable localVariable = PsiTreeUtil.findElementOfClassAtOffset(targetFile, offset, PsiLocalVariable.class, false);

@@ -26,10 +26,10 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
 import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -42,21 +42,21 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
   /**
    * Actions to be performed at commit.
    */
-  private final ArrayList<Runnable> myRunnables = new ArrayList<>();
-  private final List<RefactoringElementListenerProvider> myListenerProviders;
+  private final List<Runnable> myRunnables = new ArrayList<>();
+  private final List<? extends RefactoringElementListenerProvider> myListenerProviders;
   private final Project myProject;
-  private final Map<PsiElement,ArrayList<RefactoringElementListener>> myOldElementToListenerListMap = new HashMap<>();
+  private final Map<PsiElement,List<RefactoringElementListener>> myOldElementToListenerListMap = new HashMap<>();
   private final Map<PsiElement,RefactoringElementListener> myOldElementToTransactionListenerMap = new HashMap<>();
 
   public RefactoringTransactionImpl(Project project,
-                                    List<RefactoringElementListenerProvider> listenerProviders) {
+                                    List<? extends RefactoringElementListenerProvider> listenerProviders) {
     myListenerProviders = listenerProviders;
     myProject = project;
   }
 
   private void addAffectedElement(PsiElement oldElement) {
     if(myOldElementToListenerListMap.get(oldElement) != null) return;
-    ArrayList<RefactoringElementListener> listenerList = new ArrayList<>();
+    List<RefactoringElementListener> listenerList = new ArrayList<>();
     for (RefactoringElementListenerProvider provider : myListenerProviders) {
       try {
         final RefactoringElementListener listener = provider.getListener(oldElement);
@@ -84,7 +84,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
   }
 
   private class MyRefactoringElementListener implements RefactoringElementListener, UndoRefactoringElementListener {
-    private final ArrayList<RefactoringElementListener> myListenerList;
+    private final List<RefactoringElementListener> myListenerList;
     private MyRefactoringElementListener(PsiElement oldElement) {
       addAffectedElement(oldElement);
       myListenerList = myOldElementToListenerListMap.get(oldElement);

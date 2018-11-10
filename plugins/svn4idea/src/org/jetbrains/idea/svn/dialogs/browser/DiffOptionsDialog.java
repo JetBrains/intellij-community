@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.dialogs.browser;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -65,7 +66,8 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
       }
     });
     myFileBrowser.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         update();
       }
     });
@@ -77,6 +79,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     }
   }
 
+  @Override
   @NonNls
   protected String getDimensionServiceKey() {
     return "svn4idea.diff.options";
@@ -111,6 +114,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     return myUnifiedDiffButton.isSelected();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     update();
     return myMainPanel;
@@ -137,6 +141,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     getOKAction().setEnabled(true);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myBrowser;
   }
@@ -155,6 +160,7 @@ public class DiffOptionsDialog extends DialogWrapper implements ActionListener {
     return virtualToIoFile(file);
   }
 
+  @Override
   public void actionPerformed(ActionEvent e) {
     myFileBrowser.setEnabled(myUnifiedDiffButton.isSelected());
     update();

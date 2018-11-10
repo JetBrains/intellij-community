@@ -25,7 +25,6 @@ import com.intellij.openapi.ide.KillRingTransferable;
  * Thread-safe. 
  * 
  * @author Denis Zhdanov
- * @since 4/19/11 6:01 PM
  */
 public class KillRegionAction extends TextComponentEditorAction {
 

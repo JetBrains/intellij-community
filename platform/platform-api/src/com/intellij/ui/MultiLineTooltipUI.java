@@ -32,6 +32,7 @@ import java.util.List;
 public class MultiLineTooltipUI extends MetalToolTipUI {
   private final List myLines = new ArrayList();
 
+  @Override
   public void paint(Graphics g, JComponent c) {
     FontMetrics metrics = g.getFontMetrics(g.getFont());
     Dimension size = c.getSize();
@@ -45,6 +46,7 @@ public class MultiLineTooltipUI extends MetalToolTipUI {
     }
   }
 
+  @Override
   public Dimension getPreferredSize(JComponent c) {
     FontMetrics metrics = c.getFontMetrics(c.getFont());
     String tipText = ((JToolTip)c).getTipText();

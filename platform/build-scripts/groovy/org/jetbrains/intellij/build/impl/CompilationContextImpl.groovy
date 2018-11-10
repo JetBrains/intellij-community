@@ -1,19 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
+
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -39,6 +26,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.BiFunction
+
 /**
  * @author nik
  */
@@ -173,7 +161,7 @@ class CompilationContextImpl implements CompilationContext {
       ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$it", ant)
       }
-      ["kotlin-runtime.jar"].each {
+      ["kotlin-stdlib.jar"].each {
         BuildUtils.addToJpsClassPath("$kotlincLibPath/$it", ant)
       }
     }
@@ -195,7 +183,11 @@ class CompilationContextImpl implements CompilationContext {
     def projectArtifactsDirName = "project-artifacts"
     def classesOutput = "$paths.buildOutputRoot/$classesDirName"
     List<String> outputDirectoriesToKeep = ["log"]
-    if (options.pathToCompiledClassesArchive != null) {
+    if (options.pathToCompiledClassesArchivesMetadata != null) {
+      fetchAndUnpackCompiledClasses(messages, classesOutput, options)
+      outputDirectoriesToKeep.add(classesDirName)
+    }
+    else if (options.pathToCompiledClassesArchive != null) {
       unpackCompiledClasses(messages, ant, classesOutput, options)
       outputDirectoriesToKeep.add(classesDirName)
     }
@@ -263,13 +255,17 @@ class CompilationContextImpl implements CompilationContext {
     }
   }
 
-
   @CompileDynamic
   private static void unpackCompiledClasses(BuildMessages messages, AntBuilder ant, String classesOutput, BuildOptions options) {
     messages.block("Unpack compiled classes archive") {
       FileUtil.delete(new File(classesOutput))
       ant.unzip(src: options.pathToCompiledClassesArchive, dest: classesOutput)
     }
+  }
+
+  @CompileStatic
+  private static void fetchAndUnpackCompiledClasses(BuildMessages messages, String classesOutput, BuildOptions options) {
+    CompilationPartsUtil.fetchAndUnpackCompiledClasses(messages, classesOutput, options)
   }
 
   private void checkCompilationOptions() {
@@ -284,6 +280,18 @@ class CompilationContextImpl implements CompilationContext {
     if (options.pathToCompiledClassesArchive != null && options.useCompiledClassesFromProjectOutput) {
       messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so the archive with compiled project output won't be used")
       options.pathToCompiledClassesArchive = null
+    }
+    if (options.pathToCompiledClassesArchivesMetadata != null && options.incrementalCompilation) {
+      messages.warning("Paths to the compiled project output metadata is specified, so 'incremental compilation' option will be ignored")
+      options.incrementalCompilation = false
+    }
+    if (options.pathToCompiledClassesArchivesMetadata != null && options.useCompiledClassesFromProjectOutput) {
+      messages.warning("'${BuildOptions.USE_COMPILED_CLASSES_PROPERTY}' is specified, so the archive with the compiled project output metadata won't be used to fetch compile output")
+      options.pathToCompiledClassesArchivesMetadata = null
+    }
+    if (options.incrementalCompilation && "false" == System.getProperty("teamcity.build.branch.is_default")) {
+      messages.warning("Incremental builds for feature branches have no sense because JPS caches are out of date, so 'incremental compilation' option will be ignored")
+      options.incrementalCompilation = false
     }
   }
 
@@ -348,12 +356,7 @@ class CompilationContextImpl implements CompilationContext {
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     def file = new File(artifactPath)
-    def baseDir = new File(paths.projectHome)
     def artifactsDir = new File(paths.artifacts)
-    if (!FileUtil.isAncestor(baseDir, file, true)) {
-      messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
-      return
-    }
 
     if (file.isFile()) {
       //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
@@ -380,7 +383,7 @@ class CompilationContextImpl implements CompilationContext {
       }
     }
 
-    def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
+    def pathToReport = file.absolutePath
 
     def targetDirectoryPath = ""
     if (FileUtil.isAncestor(artifactsDir, file.parentFile, true)) {
@@ -391,9 +394,14 @@ class CompilationContextImpl implements CompilationContext {
       targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.name
     }
     if (targetDirectoryPath) {
-      relativePath += "=>" + targetDirectoryPath
+      pathToReport += "=>" + targetDirectoryPath
     }
-    messages.artifactBuilt(relativePath)
+    messages.artifactBuilt(pathToReport)
+  }
+
+  @Override
+  boolean isBundledJreModular() {
+    return options.bundledJreVersion >= 9
   }
 
   private static String toCanonicalPath(String path) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.application.ReadAction;
@@ -56,14 +42,14 @@ public class GitLogUtil {
   /**
    * A parameter to {@code git log} which is equivalent to {@code --all}, but doesn't show the stuff from index or stash.
    */
-  public static final List<String> LOG_ALL = Arrays.asList("HEAD", "--branches", "--remotes", "--tags");
+  public static final List<String> LOG_ALL = Arrays.asList(GitUtil.HEAD, "--branches", "--remotes", "--tags");
   public static final String STDIN = "--stdin";
 
   @NotNull
-  public static List<? extends VcsShortCommitDetails> collectShortDetails(@NotNull Project project,
-                                                                          @NotNull GitVcs vcs,
-                                                                          @NotNull VirtualFile root,
-                                                                          @NotNull List<String> hashes)
+  public static List<? extends VcsCommitMetadata> collectShortDetails(@NotNull Project project,
+                                                                      @NotNull GitVcs vcs,
+                                                                      @NotNull VirtualFile root,
+                                                                      @NotNull List<String> hashes)
     throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -71,8 +57,8 @@ public class GitLogUtil {
     }
 
     GitLineHandler h = createGitHandler(project, root);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME,
-                                           AUTHOR_EMAIL, COMMIT_TIME, SUBJECT, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_EMAIL,
+                                           COMMIT_TIME, SUBJECT, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME, BODY, RAW_BODY);
     h.setSilent(true);
     // git show can show either -p, or --name-status, or --name-only, but we need nothing, just details => using git log --no-walk
     h.addParameters(getNoWalkParameter(vcs));
@@ -91,27 +77,35 @@ public class GitLogUtil {
         parents.add(HashImpl.build(parent));
       }
       record.setUsedHandler(h);
-      return factory.createShortDetails(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
-                                        record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getCommitterName(),
-                                        record.getCommitterEmail(),
-                                        record.getAuthorTimeStamp());
+      return factory.createCommitMetadata(HashImpl.build(record.getHash()), parents, record.getCommitTime(), root,
+                                          record.getSubject(), record.getAuthorName(), record.getAuthorEmail(), record.getFullMessage(),
+                                          record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp());
     });
   }
 
   public static void readTimedCommits(@NotNull Project project,
                                       @NotNull VirtualFile root,
                                       @NotNull List<String> parameters,
-                                      @NotNull Consumer<VcsUser> userConsumer,
-                                      @NotNull Consumer<VcsRef> refConsumer,
-                                      @NotNull Consumer<TimedVcsCommit> commitConsumer) throws VcsException {
+                                      @Nullable Consumer<? super VcsUser> userConsumer,
+                                      @Nullable Consumer<? super VcsRef> refConsumer,
+                                      @NotNull Consumer<? super TimedVcsCommit> commitConsumer) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
     }
 
-    GitLineHandler handler = createGitHandler(project, root);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME,
-                                           AUTHOR_NAME, AUTHOR_EMAIL, REF_NAMES);
+    GitLineHandler handler = createGitHandler(project, root, Collections.emptyList(), false);
+    List<GitLogParser.GitLogOption> options = ContainerUtil.newArrayList(HASH, PARENTS, COMMIT_TIME);
+    if (userConsumer != null) {
+      options.add(AUTHOR_NAME);
+      options.add(AUTHOR_EMAIL);
+    }
+    if (refConsumer != null) {
+      options.add(REF_NAMES);
+    }
+
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE,
+                                           ArrayUtil.toObjectArray(options, GitLogParser.GitLogOption.class));
     handler.setStdoutSuppressed(true);
     handler.addParameters(parser.getPretty(), "--encoding=UTF-8");
     handler.addParameters("--decorate=full");
@@ -123,11 +117,13 @@ public class GitLogUtil {
       List<Hash> parents = getParentHashes(factory, record);
       commitConsumer.consume(factory.createTimedCommit(hash, parents, record.getCommitTime()));
 
-      for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
-        refConsumer.consume(ref);
+      if (refConsumer != null) {
+        for (VcsRef ref : parseRefs(record.getRefs(), hash, factory, root)) {
+          refConsumer.consume(ref);
+        }
       }
 
-      userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
+      if (userConsumer != null) userConsumer.consume(factory.createUser(record.getAuthorName(), record.getAuthorEmail()));
     });
     Git.getInstance().runCommandWithoutCollectingOutput(handler);
     handlerListener.reportErrors();
@@ -149,6 +145,7 @@ public class GitLogUtil {
   @NotNull
   public static VcsLogProvider.DetailedLogData collectMetadata(@NotNull Project project,
                                                                @NotNull VirtualFile root,
+                                                               boolean lowPriorityProcess,
                                                                String... params) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -156,7 +153,7 @@ public class GitLogUtil {
     }
     Set<VcsRef> refs = new OpenTHashSet<>(GitLogProvider.DONT_CONSIDER_SHA);
     List<VcsCommitMetadata> commits =
-      collectMetadata(project, root, record -> {
+      collectMetadata(project, root, lowPriorityProcess, record -> {
         GitCommit commit = createCommit(project, root, Collections.singletonList(record), factory);
         Collection<VcsRef> refsInRecord = parseRefs(record.getRefs(), commit.getId(), factory, root);
         for (VcsRef ref : refsInRecord) {
@@ -173,13 +170,15 @@ public class GitLogUtil {
   @NotNull
   private static List<VcsCommitMetadata> collectMetadata(@NotNull Project project,
                                                          @NotNull VirtualFile root,
+                                                         boolean lowPriorityProcess,
                                                          @NotNull NullableFunction<GitLogRecord, VcsCommitMetadata> converter,
                                                          String... parameters) throws VcsException {
 
     List<VcsCommitMetadata> commits = ContainerUtil.newArrayList();
 
     try {
-      GitLineHandler handler = createGitHandler(project, root, createConfigParameters(false, false, DiffRenameLimit.GIT_CONFIG));
+      GitLineHandler handler =
+        createGitHandler(project, root, createConfigParameters(false, false, DiffRenameLimit.GIT_CONFIG), lowPriorityProcess);
       readRecordsFromHandler(project, root, true, false, record -> commits.add(converter.fun(record)), handler, parameters);
     }
     catch (VcsException e) {
@@ -232,7 +231,7 @@ public class GitLogUtil {
 
     List<GitCommit> commits = ContainerUtil.newArrayList();
     try {
-      readFullDetails(project, root, commits::add, true, parameters);
+      readFullDetails(project, root, commits::add, true, true, false, parameters);
     }
     catch (VcsException e) {
       if (commits.isEmpty()) {
@@ -247,11 +246,14 @@ public class GitLogUtil {
                                      @NotNull VirtualFile root,
                                      @NotNull Consumer<? super GitCommit> commitConsumer,
                                      boolean includeRootChanges,
+                                     boolean preserverOrder,
+                                     boolean lowPriorityProcess,
                                      @NotNull String... parameters) throws VcsException {
     DiffRenameLimit renameLimit = DiffRenameLimit.REGISTRY;
 
-    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit));
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, parameters);
+    GitLineHandler handler =
+      createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), lowPriorityProcess);
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, preserverOrder, parameters);
   }
 
   private static void readFullDetailsFromHandler(@NotNull Project project,
@@ -259,28 +261,29 @@ public class GitLogUtil {
                                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                                  @NotNull DiffRenameLimit renameLimit,
                                                  @NotNull GitLineHandler handler,
+                                                 boolean preserverOrder,
                                                  @NotNull String... parameters) throws VcsException {
     VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return;
     }
 
-    GitLogRecordCollector recordCollector = new GitLogRecordCollector(project, root) {
-      @Override
-      public void consume(@NotNull List<GitLogRecord> records) {
-        GitLogRecord firstRecord = notNull(getFirstItem(records));
-        String[] parents = firstRecord.getParentsHashes();
+    Consumer<List<GitLogRecord>> consumer = records -> {
+      GitLogRecord firstRecord = notNull(getFirstItem(records));
+      String[] parents = firstRecord.getParentsHashes();
 
-        LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
-                                                                                firstRecord.getHash() +
-                                                                                " expected " +
-                                                                                parents.length +
-                                                                                " records, but got " +
-                                                                                records.size());
+      LOG.assertTrue(parents.length == 0 || parents.length == records.size(), "Not enough records for commit " +
+                                                                              firstRecord.getHash() +
+                                                                              " expected " +
+                                                                              parents.length +
+                                                                              " records, but got " +
+                                                                              records.size());
 
-        commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
-      }
+      commitConsumer.consume(createCommit(project, root, records, factory, renameLimit));
     };
+
+    GitLogRecordCollector recordCollector = preserverOrder ? new GitLogRecordCollector(project, root, consumer)
+                                                           : new GitLogUnorderedRecordCollector(project, root, consumer);
 
     readRecordsFromHandler(project, root, false, true, recordCollector, handler, parameters);
     recordCollector.finish();
@@ -299,7 +302,7 @@ public class GitLogUtil {
     StopWatch sw = StopWatch.start("loading details in [" + root.getName() + "]");
 
     GitLogOutputSplitter handlerListener = new GitLogOutputSplitter(handler, parser, converter);
-    Git.getInstance().runCommandWithoutCollectingOutput(handler).getOutputOrThrow();
+    Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError();
     handlerListener.reportErrors();
 
     sw.report();
@@ -340,11 +343,13 @@ public class GitLogUtil {
                                               @NotNull Consumer<? super GitCommit> commitConsumer,
                                               @NotNull List<String> hashes,
                                               boolean includeRootChanges,
+                                              boolean lowPriorityProcess,
                                               @NotNull DiffRenameLimit renameLimit) throws VcsException {
-    GitLineHandler handler = createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit));
+    GitLineHandler handler =
+      createGitHandler(project, root, createConfigParameters(true, includeRootChanges, renameLimit), lowPriorityProcess);
     sendHashesToStdin(vcs, hashes, handler);
 
-    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, getNoWalkParameter(vcs), STDIN);
+    readFullDetailsFromHandler(project, root, commitConsumer, renameLimit, handler, false, getNoWalkParameter(vcs), STDIN);
   }
 
   public static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
@@ -364,14 +369,16 @@ public class GitLogUtil {
 
   @NotNull
   public static GitLineHandler createGitHandler(@NotNull Project project, @NotNull VirtualFile root) {
-    return createGitHandler(project, root, Collections.emptyList());
+    return createGitHandler(project, root, Collections.emptyList(), false);
   }
 
   @NotNull
   private static GitLineHandler createGitHandler(@NotNull Project project,
                                                  @NotNull VirtualFile root,
-                                                 @NotNull List<String> configParameters) {
+                                                 @NotNull List<String> configParameters,
+                                                 boolean lowPriorityProcess) {
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG, configParameters);
+    handler.setWithLowPriority(lowPriorityProcess);
     handler.setWithMediator(false);
     return handler;
   }

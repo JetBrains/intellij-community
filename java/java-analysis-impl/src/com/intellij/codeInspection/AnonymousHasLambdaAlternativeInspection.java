@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.function.UnaryOperator;
 
-/**
- * @author Tagir Valeev
- */
 public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(AnonymousHasLambdaAlternativeInspection.class);
 
@@ -26,7 +23,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     final String myLambdaAlternative;
     final String myReplacementMessage;
 
-    public AnonymousLambdaAlternative(String className, String methodName, String lambdaAlternative, String replacementMessage) {
+    AnonymousLambdaAlternative(String className, String methodName, String lambdaAlternative, String replacementMessage) {
       myClassName = className;
       myMethodName = methodName;
       myLambdaAlternative = lambdaAlternative;
@@ -83,7 +80,7 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
   static class ReplaceWithLambdaAlternativeFix implements LocalQuickFix {
     private final @NotNull AnonymousLambdaAlternative myAlternative;
 
-    public ReplaceWithLambdaAlternativeFix(@NotNull AnonymousLambdaAlternative alternative) {
+    ReplaceWithLambdaAlternativeFix(@NotNull AnonymousLambdaAlternative alternative) {
       myAlternative = alternative;
     }
 

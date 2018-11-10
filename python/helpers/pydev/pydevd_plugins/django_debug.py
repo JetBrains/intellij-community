@@ -376,7 +376,7 @@ def cmd_step_over(plugin, main_debugger, frame, event, args, stop_info, stop):
             info.pydev_step_stop = frame.f_back
             info.pydev_django_resolve_frame = False
             thread.additional_info.suspend_type = DJANGO_SUSPEND
-        stop = info.pydev_step_stop is frame and event in ('line', 'return')
+            stop = info.pydev_step_stop is frame and event in ('line', 'return')
     return stop, plugin_stop
 
 

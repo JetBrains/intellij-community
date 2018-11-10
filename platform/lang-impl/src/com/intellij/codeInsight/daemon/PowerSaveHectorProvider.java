@@ -18,7 +18,6 @@ package com.intellij.codeInsight.daemon;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.editor.HectorComponentPanelsProvider;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +43,7 @@ public class PowerSaveHectorProvider implements HectorComponentPanelsProvider {
       }
 
       @Override
-      public void apply() throws ConfigurationException {
+      public void apply() {
         PowerSaveMode.setEnabled(myCheckBox.isSelected());
       }
 

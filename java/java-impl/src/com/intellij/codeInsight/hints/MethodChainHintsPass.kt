@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -19,15 +20,12 @@ class MethodChainHintsPass(
   editor: Editor
 ) : ElementProcessingHintPass(rootElement, editor, modificationStampHolder) {
 
-  override fun isAvailable(virtualFile: VirtualFile) = CodeInsightSettings.getInstance().SHOW_METHOD_CHAIN_TYPES_INLINE
+  override fun isAvailable(virtualFile: VirtualFile): Boolean = CodeInsightSettings.getInstance().SHOW_METHOD_CHAIN_TYPES_INLINE
 
   override fun collectElementHints(element: PsiElement, collector: (offset: Int, hint: String) -> Unit) {
     val call = element as? PsiMethodCallExpression ?: return
-    val qualifier = call.methodExpression.qualifierExpression
-    if (qualifier != null && qualifier is PsiMethodCallExpression) {
-      val callSibling = qualifier.nextSibling
-      if (callSibling is PsiWhiteSpace && callSibling.textContains('\n')) return // Not first call
-    }
+    if (!isFirstCall(call)) return
+
     val next = call.nextSibling
     if (!(next is PsiWhiteSpace && next.textContains('\n'))) return
     val chain = collectChain(call)
@@ -50,6 +48,32 @@ class MethodChainHintsPass(
     }
   }
 
+  private fun isFirstCall(call: PsiMethodCallExpression): Boolean {
+    val document = myEditor.document
+
+    val textOffset = call.argumentList.textOffset
+    if (document.textLength - 1 < textOffset) return false
+    val callLine = document.getLineNumber(textOffset)
+
+    val callForQualifier = ExpressionUtils.getCallForQualifier(call)
+    if (callForQualifier == null ||
+        document.getLineNumber(callForQualifier.argumentList.textOffset) == callLine) return false
+
+    val firstQualifierCall = call.methodExpression.qualifier as? PsiMethodCallExpression
+    if (firstQualifierCall != null) {
+      if (document.getLineNumber(firstQualifierCall.argumentList.textOffset) != callLine) return false
+      var currentQualifierCall: PsiMethodCallExpression = firstQualifierCall
+      while (true) {
+        val qualifier = currentQualifierCall.methodExpression.qualifier
+        if (qualifier == null) return false
+        if (qualifier !is PsiMethodCallExpression) return true
+        if (document.getLineNumber(qualifier.argumentList.textOffset) != callLine) return false
+        currentQualifierCall = qualifier
+      }
+    }
+    return true
+  }
+
   private fun collectChain(call: PsiMethodCallExpression): List<PsiMethodCallExpression> {
     val chain = mutableListOf(call)
     var current = call
@@ -66,7 +90,7 @@ class MethodChainHintsPass(
   override fun createRenderer(text: String): HintRenderer = MethodChainHintRenderer(text)
 
   private class MethodChainHintRenderer(text: String) : HintRenderer(text) {
-    override fun getContextMenuGroupId() = "MethodChainHintsContextMenu"
+    override fun getContextMenuGroupId(inlay: Inlay<*>) = "MethodChainHintsContextMenu"
   }
 
   companion object {

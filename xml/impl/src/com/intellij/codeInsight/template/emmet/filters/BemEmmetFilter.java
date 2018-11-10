@@ -63,7 +63,8 @@ public class BemEmmetFilter extends ZenCodingFilter {
   @Override
   public GenerationNode filterNode(@NotNull final GenerationNode node) {
     final Map<String, String> attributes = node.getTemplateToken().getAttributes();
-    String classValue = attributes.get(HtmlUtil.CLASS_ATTRIBUTE_NAME);
+    String classAttributeName = getClassAttributeName();
+    String classValue = attributes.get(classAttributeName);
     EmmetOptions emmetOptions = EmmetOptions.getInstance();
     if (classValue != null && emmetOptions != null) {
       String elementSeparator = emmetOptions.getBemElementSeparator();
@@ -77,9 +78,14 @@ public class BemEmmetFilter extends ZenCodingFilter {
       for (String className : classNames) {
         ContainerUtil.addAll(newClassNames, processClassName(className, node, elementSeparator, modifierSeparator));
       }
-      attributes.put(HtmlUtil.CLASS_ATTRIBUTE_NAME, StringUtil.join(newClassNames, " "));
+      attributes.put(classAttributeName, StringUtil.join(newClassNames, " "));
     }
     return node;
+  }
+
+  @NotNull
+  public String getClassAttributeName() {
+    return HtmlUtil.CLASS_ATTRIBUTE_NAME;
   }
 
   private static Iterable<String> processClassName(@NotNull String className, @NotNull GenerationNode node,

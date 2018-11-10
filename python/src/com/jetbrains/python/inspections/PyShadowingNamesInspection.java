@@ -34,6 +34,8 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 /**
  * Warns about shadowing names defined in outer scopes.
  *
@@ -55,7 +57,7 @@ public class PyShadowingNamesInspection extends PyInspection {
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
@@ -111,8 +113,12 @@ public class PyShadowingNamesInspection extends PyInspection {
                 if (scope.isGlobal(name) || scope.isNonlocal(name)) {
                   return;
                 }
+                if (Arrays.stream(PyInspectionExtension.EP_NAME.getExtensions())
+                          .anyMatch(o -> o.ignoreShadowed(resolved))) {
+                  return;
+                }
                 registerProblem(problemElement, String.format("Shadows name '%s' from outer scope", name),
-                                ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix());
+                                ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix(problemElement));
                 return;
               }
             }

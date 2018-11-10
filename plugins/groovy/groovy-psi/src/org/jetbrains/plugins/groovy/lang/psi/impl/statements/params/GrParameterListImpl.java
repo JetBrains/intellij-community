@@ -1,28 +1,17 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.params;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.stubs.EmptyStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -30,10 +19,18 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
+
 /**
  * @author: Dmitry.Krasilschikov
  */
-public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements GrParameterList, StubBasedPsiElement<EmptyStub> {
+public class GrParameterListImpl extends GrStubElementBase<EmptyStub>
+  implements GrParameterList, StubBasedPsiElement<EmptyStub>, PsiListLikeElement {
+
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.statements.params.GrParameterListImpl");
 
   public GrParameterListImpl(@NotNull ASTNode node) {
@@ -45,12 +42,37 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitParameterList(this);
   }
 
+  @Override
   public String toString() {
     return "Parameter list";
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getLParen() {
+    return findChildByType(T_LPAREN);
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getRParen() {
+    return findLastChildByType(T_RPAREN);
+  }
+
+  @NotNull
+  @Override
+  public TextRange getParametersRange() {
+    TextRange range = getTextRange();
+    PsiElement lParen = getLParen();
+    PsiElement rParen = getRParen();
+    return new TextRange(
+      lParen == null ? range.getStartOffset() : lParen.getTextRange().getEndOffset(),
+      rParen == null ? range.getEndOffset() : rParen.getTextRange().getStartOffset()
+    );
   }
 
   @Override
@@ -130,22 +152,27 @@ public class GrParameterListImpl extends GrStubElementBase<EmptyStub> implements
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
     GrParameter[] params = getParameters();
-
-    ASTNode result = super.addInternal(first, last, anchor, before);
+    ASTNode result = super.addInternal(first, last, anchor == null ? findChildByType(before ? T_RPAREN : T_LPAREN) : anchor, before);
     if (first == last && first.getPsi() instanceof GrParameter && params.length > 0) {
-      if (before.booleanValue() && anchor != null) {
+      if (before && anchor != null) {
         getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", anchor);
       }
-      else if (before.booleanValue() && anchor == null) {
+      else if (before) {
         getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result);
       }
-      else if (!before.booleanValue() && anchor != null) {
+      else if (anchor != null) {
         getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result);
       }
-      else if (!before.booleanValue() && anchor == null) {
+      else {
         getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", result.getTreeNext());
       }
     }
     return result;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getParameters());
   }
 }

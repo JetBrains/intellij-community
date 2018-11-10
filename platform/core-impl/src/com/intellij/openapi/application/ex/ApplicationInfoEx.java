@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.ApplicationInfo;
@@ -20,12 +6,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.io.File;
 import java.util.Calendar;
 import java.util.List;
 
 /**
  * @author mike
- * @since Sep 16, 2002
  */
 public abstract class ApplicationInfoEx extends ApplicationInfo {
   public static ApplicationInfoEx getInstanceEx() {
@@ -40,17 +26,37 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getAboutImageUrl();
 
+  /**
+   * @deprecated use {@link #getApplicationSvgIconUrl()} instead
+   */
+  @Deprecated
   public abstract String getIconUrl();
 
   public abstract String getSmallIconUrl();
 
+  /**
+   * @deprecated use {@link #getApplicationSvgIconUrl()} instead
+   */
+  @Deprecated
+  @Nullable
   public abstract String getBigIconUrl();
+
+  /**
+   * Return path to an svg file containing icon of the current version of the product. The path is a relative path inside the product's JAR
+   * files. It may return special icon for EAP builds.
+   */
+  @Nullable
+  public abstract String getApplicationSvgIconUrl();
+
+  /**
+   * Return an svg file containing icon of the current version of the product. It may return special icon for EAP builds.
+   */
+  @Nullable
+  public abstract File getApplicationSvgIconFile();
 
   public abstract String getToolWindowIconUrl();
 
   public abstract String getWelcomeScreenLogoUrl();
-
-  public abstract String getEditorBackgroundImageUrl();
 
   /**
    * This method is used to detect that the product isn't meant to be used as an IDE but is embedded to another product or used as a
@@ -65,15 +71,20 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean isEAP();
 
+  /**
+   * Returns {@code true} only for EAP builds of "major" releases (i.e. for 2018.3, but not for 2018.3.1).
+   */
+  public abstract boolean isMajorEAP();
+
   public abstract UpdateUrls getUpdateUrls();
 
   public abstract String getDocumentationUrl();
 
   public abstract String getSupportUrl();
 
-  public abstract String getEAPFeedbackUrl();
+  public abstract String getYoutrackUrl();
 
-  public abstract String getReleaseFeedbackUrl();
+  public abstract String getFeedbackUrl();
 
   public abstract String getPluginManagerUrl();
 

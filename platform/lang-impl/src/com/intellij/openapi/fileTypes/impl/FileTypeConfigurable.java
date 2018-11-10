@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.templateLanguages.TemplateDataLanguagePatterns;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,23 +78,14 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
   }
 
   private void updateFileTypeList() {
-    FileType[] types = myTempFileTypes.toArray(FileType.EMPTY_ARRAY);
-    Arrays.sort(types, (o1, o2) -> {
-      FileType fileType1 = (FileType)o1;
-      FileType fileType2 = (FileType)o2;
-      return fileType1.getDescription().compareToIgnoreCase(fileType2.getDescription());
-    });
-    myRecognizedFileType.setFileTypes(types);
+    List<FileType> types = ContainerUtil.filter(myTempFileTypes, fileType -> !fileType.isReadOnly());
+    types.sort((o1, o2) -> o1.getDescription().compareToIgnoreCase(o2.getDescription()));
+    myRecognizedFileType.setFileTypes(types.toArray(FileType.EMPTY_ARRAY));
   }
 
   @NotNull
-  private static FileType[] getModifiableFileTypes() {
-    FileType[] registeredFileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
-    ArrayList<FileType> result = new ArrayList<>();
-    for (FileType fileType : registeredFileTypes) {
-      if (!fileType.isReadOnly()) result.add(fileType);
-    }
-    return result.toArray(FileType.EMPTY_ARRAY);
+  private static HashSet<FileType> getRegisteredFilesTypes() {
+    return new HashSet<>(Arrays.asList(FileTypeManager.getInstance().getRegisteredFileTypes()));
   }
 
   @Override
@@ -123,7 +115,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
     myTempPatternsTable = myManager.getExtensionMap().copy();
     myTempTemplateDataLanguages = TemplateDataLanguagePatterns.getInstance().getAssocTable();
 
-    myTempFileTypes = new HashSet<>(Arrays.asList(getModifiableFileTypes()));
+    myTempFileTypes = getRegisteredFilesTypes();
     myOriginalToEditedMap.clear();
 
     updateFileTypeList();
@@ -135,8 +127,8 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
   @Override
   public boolean isModified() {
     if (!myManager.isIgnoredFilesListEqualToCurrent(myFileTypePanel.myIgnoreFilesField.getText())) return true;
-    HashSet<FileType> types = new HashSet<>(Arrays.asList(getModifiableFileTypes()));
-    return !myTempPatternsTable.equals(myManager.getExtensionMap()) || !myTempFileTypes.equals(types) ||
+    return !myTempPatternsTable.equals(myManager.getExtensionMap()) ||
+           !myTempFileTypes.equals(getRegisteredFilesTypes()) ||
            !myOriginalToEditedMap.isEmpty() ||
            !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
   }
@@ -399,14 +391,14 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
         })
         .setEditActionUpdater(new AnActionButtonUpdater() {
           @Override
-          public boolean isEnabled(AnActionEvent e) {
+          public boolean isEnabled(@NotNull AnActionEvent e) {
             final FileType fileType = getSelectedFileType();
             return canBeModified(fileType);
           }
         })
         .setRemoveActionUpdater(new AnActionButtonUpdater() {
           @Override
-          public boolean isEnabled(AnActionEvent e) {
+          public boolean isEnabled(@NotNull AnActionEvent e) {
             return canBeModified(getSelectedFileType());
           }
         })
@@ -637,7 +629,7 @@ public class FileTypeConfigurable implements SearchableConfigurable, Configurabl
     private final T myFileType;
     private final SettingsEditor<T> myEditor;
 
-    public TypeEditor(Component parent, T fileType, final String title) {
+    TypeEditor(Component parent, T fileType, final String title) {
       super(parent, false);
       myFileType = fileType;
       myEditor = fileType.getEditor();

@@ -8,30 +8,32 @@ import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 
-internal class MethodReferenceProcessor(methodName: String) : ProcessorWithCommonHints(), GrResolverProcessor<GroovyResolveResult> {
+internal open class MethodReferenceProcessor(methodName: String) : ProcessorWithCommonHints(), GrResolverProcessor<GroovyResolveResult> {
 
   init {
     nameHint(methodName)
     elementClassHint(ElementClassHint.DeclarationKind.METHOD)
   }
 
-  override val results: List<GroovyResolveResult> get() = myResults
-
   private val myResults = SmartList<GroovyResolveResult>()
 
-  override fun execute(element: PsiElement, state: ResolveState): Boolean {
+  final override val results: List<GroovyResolveResult> get() = myResults
+
+  final override fun execute(element: PsiElement, state: ResolveState): Boolean {
     if (element is PsiMethod) {
-      myResults += result(element, state)
+      result(element, state)?.let {
+        myResults += it
+      }
     }
     return true
   }
 
-  private fun result(element: PsiMethod, state: ResolveState): GroovyResolveResult {
+  protected open fun result(method: PsiMethod, state: ResolveState): GroovyResolveResult? {
     val substitutor = state[PsiSubstitutor.KEY]
-    return object : ElementGroovyResult<PsiMethod>(element) {
+    return object : ElementResolveResult<PsiMethod>(method) {
       override fun getSubstitutor() = substitutor
     }
   }

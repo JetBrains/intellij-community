@@ -89,7 +89,8 @@ public abstract class Executor {
   @NonNls
   public abstract String getHelpId();
 
-  public String getStartActionText(String configurationName) {
+  @NotNull
+  public String getStartActionText(@NotNull String configurationName) {
     return getStartActionText() + (StringUtil.isEmpty(configurationName) ? "" : " '" + shortenNameIfNeed(configurationName) + "'");
   }
 

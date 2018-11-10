@@ -19,6 +19,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import org.jetbrains.annotations.NotNull;
 
 public class ViewSourceAction extends BaseNavigateToSourceAction {
   public ViewSourceAction() {
@@ -26,7 +27,7 @@ public class ViewSourceAction extends BaseNavigateToSourceAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     if (CommonDataKeys.EDITOR.getData(e.getDataContext()) != null) {
       e.getPresentation().setEnabledAndVisible(false);
     }

@@ -24,7 +24,6 @@ import javax.activation.DataSource;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -35,8 +34,7 @@ import java.util.List;
  */
 public class Endpoint {
 
-  public static DataSource getArtifactInfoByUri(String uri)
-    throws IOException, MalformedURLException {
+  public static DataSource getArtifactInfoByUri(String uri) throws IOException {
     DSDispatcher _dsDispatcher = new DSDispatcher();
     UriBuilder _uriBuilder = new UriBuilder();
     _uriBuilder.addPathSegment(uri);
@@ -73,8 +71,7 @@ public class Endpoint {
             }
 
             public DataSource getArtifactSearchResultJson(String name, String repos)
-                throws IOException, MalformedURLException
-            {
+                throws IOException {
                 HashMap<String, Object> _queryParameterValues = new HashMap<>();
                 HashMap<String, Object> _headerParameterValues = new HashMap<>();
                 _queryParameterValues.put("name", name);
@@ -112,8 +109,7 @@ public class Endpoint {
             }
 
             public DataSource getGavcSearchResultJson(String g, String a, String v, String c, String repos)
-                throws IOException, MalformedURLException
-            {
+                throws IOException {
                 HashMap<String, Object> _queryParameterValues = new HashMap<>();
                 HashMap<String, Object> _headerParameterValues = new HashMap<>();
                 _queryParameterValues.put("g", g);
@@ -153,8 +149,7 @@ public class Endpoint {
             }
 
             public DataSource getArchiveSearchResultJson(String className, String repos)
-                throws IOException, MalformedURLException
-            {
+                throws IOException {
                 HashMap<String, Object> _queryParameterValues = new HashMap<>();
                 HashMap<String, Object> _headerParameterValues = new HashMap<>();
                 _queryParameterValues.put("name", className);
@@ -193,8 +188,7 @@ public class Endpoint {
         }
 
         public DataSource getAsApplicationXml()
-            throws IOException, MalformedURLException
-        {
+            throws IOException {
             HashMap<String, Object> _queryParameterValues = new HashMap<>();
             HashMap<String, Object> _headerParameterValues = new HashMap<>();
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
@@ -228,8 +222,7 @@ public class Endpoint {
             }
 
             public DataSource postAsTextPlain(DataSource input)
-                throws IOException, MalformedURLException
-            {
+                throws IOException {
                 HashMap<String, Object> _queryParameterValues = new HashMap<>();
                 HashMap<String, Object> _headerParameterValues = new HashMap<>();
                 String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
@@ -238,8 +231,7 @@ public class Endpoint {
             }
 
             public DataSource getAsApplicationXml()
-                throws IOException, MalformedURLException
-            {
+                throws IOException {
                 HashMap<String, Object> _queryParameterValues = new HashMap<>();
                 HashMap<String, Object> _headerParameterValues = new HashMap<>();
                 String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
@@ -274,8 +266,7 @@ public class Endpoint {
                 }
 
                 public void put(DataSource input)
-                    throws IOException, MalformedURLException
-                {
+                    throws IOException {
                     HashMap<String, Object> _queryParameterValues = new HashMap<>();
                     HashMap<String, Object> _headerParameterValues = new HashMap<>();
                     String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
@@ -314,8 +305,7 @@ public class Endpoint {
         }
 
         public DataSource getSystemVersionJson()
-            throws IOException, MalformedURLException
-        {
+            throws IOException {
             HashMap<String, Object> _queryParameterValues = new HashMap<>();
             HashMap<String, Object> _headerParameterValues = new HashMap<>();
             String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);
@@ -353,8 +343,7 @@ public class Endpoint {
       }
 
       public DataSource getRepositoryDetailsListJson(String type)
-          throws IOException, MalformedURLException
-      {
+          throws IOException {
           HashMap<String, Object> _queryParameterValues = new HashMap<>();
           HashMap<String, Object> _headerParameterValues = new HashMap<>();
           _queryParameterValues.put("type", type);
@@ -405,8 +394,7 @@ public class Endpoint {
           }
 
           public DataSource getAsApplicationVndOrgJfrogArtifactoryRepositoriesRepositoryConfigurationJson()
-              throws IOException, MalformedURLException
-          {
+              throws IOException {
               HashMap<String, Object> _queryParameterValues = new HashMap<>();
               HashMap<String, Object> _headerParameterValues = new HashMap<>();
               String _url = _uriBuilder.buildUri(_templateAndMatrixParameterValues, _queryParameterValues);

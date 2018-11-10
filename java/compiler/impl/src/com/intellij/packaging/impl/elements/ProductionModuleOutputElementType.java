@@ -31,15 +31,17 @@ import javax.swing.*;
 public class ProductionModuleOutputElementType extends ModuleOutputElementTypeBase<ProductionModuleOutputPackagingElement> {
   public static final ProductionModuleOutputElementType ELEMENT_TYPE = new ProductionModuleOutputElementType();
 
-  ProductionModuleOutputElementType() {
+  private ProductionModuleOutputElementType() {
     super("module-output", CompilerBundle.message("element.type.name.module.output"));
   }
 
+  @Override
   @NotNull
   public ProductionModuleOutputPackagingElement createEmpty(@NotNull Project project) {
     return new ProductionModuleOutputPackagingElement(project);
   }
 
+  @Override
   protected ModuleOutputPackagingElementBase createElement(@NotNull Project project, @NotNull ModulePointer pointer) {
     return new ProductionModuleOutputPackagingElement(project, pointer);
   }
@@ -49,8 +51,14 @@ public class ProductionModuleOutputElementType extends ModuleOutputElementTypeBa
     return AllIcons.Nodes.Module;
   }
 
+  @NotNull
   @Override
-  public boolean isSuitableModule(ModulesProvider modulesProvider, Module module) {
+  public String getElementText(@NotNull String moduleName) {
+    return CompilerBundle.message("node.text.0.compile.output", moduleName);
+  }
+
+  @Override
+  public boolean isSuitableModule(@NotNull ModulesProvider modulesProvider, @NotNull Module module) {
     return modulesProvider.getRootModel(module).getSourceRootUrls(false).length > 0;
   }
 }

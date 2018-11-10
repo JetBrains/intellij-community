@@ -26,6 +26,8 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UDeclaration;
+import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.util.*;
@@ -50,7 +52,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
 
   @Override
   protected void initialize() {
-    ((RefModuleImpl)myRefModule).add(this);
+    ((WritableRefEntity)myRefModule).add(this);
   }
 
   @Override
@@ -65,8 +67,8 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
 
   @Nullable
   @Override
-  public PsiJavaModule getElement() {
-    return (PsiJavaModule)super.getElement();
+  public PsiJavaModule getPsiElement() {
+    return (PsiJavaModule)super.getPsiElement();
   }
 
   @Nullable
@@ -175,8 +177,8 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
 
                     final RefMethod refConstructor = ((RefClassImpl)refClass).getDefaultConstructor();
                     if (refConstructor != null) {
-                      final PsiModifierListOwner constructorElement = refConstructor.getElement();
-                      if (constructorElement != null && constructorElement.hasModifierProperty(PsiModifier.PUBLIC)) {
+                      final PsiElement constructorElement = refConstructor.getPsiElement();
+                      if (constructorElement instanceof PsiModifierListOwner && ((PsiModifierListOwner)constructorElement).hasModifierProperty(PsiModifier.PUBLIC)) {
                         refTargetElement = refConstructor;
                         targetElement = constructorElement;
                       }
@@ -191,7 +193,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
                 }
                 if (refTargetElement != null) {
                   ((RefClassImpl)refInterface)
-                    .addReference(refTargetElement, targetElement, providerInterface, false, true, null);
+                    .addReference(refTargetElement, targetElement, UastContextKt.toUElement(providerInterface, UDeclaration.class), false, true, null);
                 }
               }
             }
@@ -219,7 +221,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
 
   @Override
   public void buildReferences() {
-    PsiJavaModule javaModule = getElement();
+    PsiJavaModule javaModule = getPsiElement();
     if (javaModule != null) {
       buildRequiresReferences(javaModule);
       buildExportsReferences(javaModule);
@@ -244,7 +246,7 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
           RefElement refElement = getRefManager().getReference(element);
           if (refElement != null) {
             addOutReference(refElement);
-            ((RefElementImpl)refElement).addInReference(this);
+            ((WritableRefElement)refElement).addInReference(this);
           }
         }
       }

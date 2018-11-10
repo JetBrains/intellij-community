@@ -100,9 +100,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
 
   protected void reloadVersions(List<? extends FrameworkVersion> frameworkVersions) {
     myVersions.clear();
-    for (FrameworkVersion version : frameworkVersions) {
-      myVersions.add(version);
-    }
+    myVersions.addAll(frameworkVersions);
   }
 
   @Override

@@ -1,16 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.SequenceHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +56,7 @@ public class SynchronizedStatement extends Statement {
   // public methods
   // *****************************************************************************
 
+  @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     TextBuffer buf = new TextBuffer();
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
@@ -88,10 +87,12 @@ public class SynchronizedStatement extends Statement {
     }
   }
 
+  @Override
   public void initExprents() {
     headexprent.set(0, first.getExprents().remove(first.getExprents().size() - 1));
   }
 
+  @Override
   public List<Object> getSequentialObjects() {
 
     List<Object> lst = new ArrayList<>(stats);
@@ -100,12 +101,14 @@ public class SynchronizedStatement extends Statement {
     return lst;
   }
 
+  @Override
   public void replaceExprent(Exprent oldexpr, Exprent newexpr) {
     if (headexprent.get(0) == oldexpr) {
       headexprent.set(0, newexpr);
     }
   }
 
+  @Override
   public void replaceStatement(Statement oldstat, Statement newstat) {
 
     if (body == oldstat) {
@@ -122,10 +125,12 @@ public class SynchronizedStatement extends Statement {
     stats.removeWithKey(exc.id);
   }
 
+  @Override
   public Statement getSimpleCopy() {
     return new SynchronizedStatement();
   }
 
+  @Override
   public void initSimpleCopy() {
     first = stats.get(0);
     body = stats.get(1);

@@ -28,6 +28,8 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
+import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.commands.Git;
@@ -81,7 +83,7 @@ public class GitFileHistory {
   private GitFileHistory(@NotNull Project project, @NotNull VirtualFile root, @NotNull FilePath path, @NotNull VcsRevisionNumber revision) {
     myProject = project;
     myRoot = root;
-    myPath = GitHistoryUtils.getLastCommitName(myProject, path);
+    myPath = VcsUtil.getLastCommitPath(myProject, path);
     myStartingRevision = revision;
   }
 
@@ -91,7 +93,7 @@ public class GitFileHistory {
     GitLogParser logParser = new GitLogParser(myProject, GitLogParser.NameStatus.STATUS,
                                               HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                               SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
-    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(consumer, exceptionConsumer);
+    GitLogRecordConsumer recordConsumer = new GitLogRecordConsumer(consumer);
 
     String firstCommitParent = myStartingRevision.asString();
     FilePath currentPath = myPath;
@@ -255,12 +257,9 @@ public class GitFileHistory {
     @NotNull private final AtomicBoolean mySkipFurtherOutput = new AtomicBoolean();
     @NotNull private final AtomicReference<String> myFirstCommit = new AtomicReference<>();
     @NotNull private final AtomicReference<FilePath> myCurrentPath = new AtomicReference<>();
-    @NotNull private final Consumer<VcsException> myExceptionConsumer;
     @NotNull private final Consumer<GitFileRevision> myRevisionConsumer;
 
-    public GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer,
-                                @NotNull Consumer<VcsException> exceptionConsumer) {
-      myExceptionConsumer = exceptionConsumer;
+    GitLogRecordConsumer(@NotNull Consumer<GitFileRevision> revisionConsumer) {
       myRevisionConsumer = revisionConsumer;
     }
 
@@ -277,36 +276,33 @@ public class GitFileHistory {
 
       myFirstCommit.set(record.getHash());
 
-      try {
-        myRevisionConsumer.consume(createGitFileRevision(record));
-        List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
-        if (statusInfos.isEmpty()) {
-          // can safely be empty, for example, for simple merge commits that don't change anything.
-          return;
-        }
-        if (statusInfos.get(0).getType() == GitChangeType.ADDED && !myPath.isDirectory()) {
-          mySkipFurtherOutput.set(true);
-        }
+      myRevisionConsumer.consume(createGitFileRevision(record));
+      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      if (statusInfos.isEmpty()) {
+        // can safely be empty, for example, for simple merge commits that don't change anything.
+        return;
       }
-      catch (VcsException e) {
-        myExceptionConsumer.consume(e);
+      if (statusInfos.get(0).getType() == Change.Type.NEW && !myPath.isDirectory()) {
+        mySkipFurtherOutput.set(true);
       }
     }
 
     @NotNull
-    private GitFileRevision createGitFileRevision(@NotNull GitLogRecord record) throws VcsException {
+    private GitFileRevision createGitFileRevision(@NotNull GitLogRecord record) {
       GitRevisionNumber revision = new GitRevisionNumber(record.getHash(), record.getDate());
       FilePath revisionPath = getRevisionPath(record);
       Couple<String> authorPair = Couple.of(record.getAuthorName(), record.getAuthorEmail());
       Couple<String> committerPair = Couple.of(record.getCommitterName(), record.getCommitterEmail());
       Collection<String> parents = Arrays.asList(record.getParentsHashes());
+      List<VcsFileStatusInfo> statusInfos = record.getStatusInfos();
+      boolean deleted = !statusInfos.isEmpty() && statusInfos.get(0).getType() == Change.Type.DELETED;
       return new GitFileRevision(myProject, myRoot, revisionPath, revision, Couple.of(authorPair, committerPair),
                                  record.getFullMessage(),
-                                 null, new Date(record.getAuthorTimeStamp()), parents);
+                                 null, new Date(record.getAuthorTimeStamp()), parents, deleted);
     }
 
     @NotNull
-    private FilePath getRevisionPath(@NotNull GitLogRecord record) throws VcsException {
+    private FilePath getRevisionPath(@NotNull GitLogRecord record) {
       List<FilePath> paths = record.getFilePaths(myRoot);
       if (paths.size() > 0) {
         return paths.get(0);

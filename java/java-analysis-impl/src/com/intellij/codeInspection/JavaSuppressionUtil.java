@@ -22,11 +22,11 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
@@ -86,28 +86,15 @@ public class JavaSuppressionUtil {
     if (attributes.length == 0) {
       return Collections.emptyList();
     }
-    final PsiAnnotationMemberValue attributeValue = attributes[0].getValue();
-    Collection<String> result = new ArrayList<>();
-    if (attributeValue instanceof PsiArrayInitializerMemberValue) {
-      final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
-      for (PsiAnnotationMemberValue annotationMemberValue : initializers) {
-        final String id = getInspectionIdSuppressedInAnnotationAttribute(annotationMemberValue);
-        if (id != null) {
-          result.add(id);
-        }
-      }
-    }
-    else {
-      final String id = getInspectionIdSuppressedInAnnotationAttribute(attributeValue);
-      if (id != null) {
-        result.add(id);
-      }
-    }
-    return result;
+    return ContainerUtil.mapNotNull(AnnotationUtil.arrayAttributeValues(attributes[0].getValue()),
+                                    JavaSuppressionUtil::getInspectionIdSuppressedInAnnotationAttribute);
   }
 
-  public static PsiElement getElementMemberSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {
-    PsiElement element = getDocCommentToolSuppressedIn(owner, inspectionToolID);
+  public static <T extends PsiElement> PsiElement getElementMemberSuppressedIn(@NotNull T owner, @NotNull String inspectionToolID) {
+    PsiElement element = null;
+    if (owner instanceof PsiJavaDocumentedElement) {
+      element = getDocCommentToolSuppressedIn((PsiJavaDocumentedElement)owner, inspectionToolID);
+    }
     if (element != null) return element;
     if (owner instanceof PsiModifierListOwner) {
       element = getAnnotationMemberSuppressedIn((PsiModifierListOwner)owner, inspectionToolID);
@@ -208,7 +195,7 @@ public class JavaSuppressionUtil {
     return null;
   }
 
-  static PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, @NotNull final String toolId) {
+  public static PsiElement getElementToolSuppressedIn(@NotNull final PsiElement place, @NotNull final String toolId) {
     if (place instanceof PsiFile) return null;
     return ReadAction.compute(() -> {
       final PsiElement statement = SuppressionUtil.getStatementToolSuppressedIn(place, toolId, PsiStatement.class);
@@ -272,7 +259,7 @@ public class JavaSuppressionUtil {
                                                    PsiAnnotation annotation,
                                                    @NotNull String id) throws IncorrectOperationException {
     if (annotation == null) {
-      return JavaPsiFacade.getInstance(project).getElementFactory()
+      return JavaPsiFacade.getElementFactory(project)
         .createAnnotationFromText("@" + SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "(\"" + id + "\")", container);
     }
     final String currentSuppressedId = "\"" + id + "\"";
@@ -281,7 +268,7 @@ public class JavaSuppressionUtil {
       if (attributes.length == 1) {
         final String suppressedWarnings = attributes[0].getText();
         if (suppressedWarnings.contains(currentSuppressedId)) return null;
-        return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(
+        return JavaPsiFacade.getElementFactory(project).createAnnotationFromText(
             "@" + SUPPRESS_INSPECTIONS_ANNOTATION_NAME + "({" + suppressedWarnings + ", " + currentSuppressedId + "})", container);
 
       }
@@ -291,7 +278,7 @@ public class JavaSuppressionUtil {
       if (curlyBraceIndex > 0) {
         final String oldSuppressWarning = annotation.getText().substring(0, curlyBraceIndex);
         if (oldSuppressWarning.contains(currentSuppressedId)) return null;
-        return JavaPsiFacade.getInstance(project).getElementFactory().createAnnotationFromText(
+        return JavaPsiFacade.getElementFactory(project).createAnnotationFromText(
           oldSuppressWarning + ", " + currentSuppressedId + "})", container);
       }
       else {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.icons.AllIcons;
@@ -28,20 +14,23 @@ import com.intellij.openapi.projectRoots.ui.Util;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.DumbAwareActionButton;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * @author anna
- * @since 26-Dec-2007
  */
 public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   @Override
@@ -62,7 +51,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
   private static class JavadocPathsEditor extends SdkPathEditor {
     private final Sdk mySdk;
 
-    public JavadocPathsEditor(Sdk sdk, FileChooserDescriptor descriptor) {
+    JavadocPathsEditor(Sdk sdk, FileChooserDescriptor descriptor) {
       super(ProjectBundle.message("sdk.configure.javadoc.tab"), JavadocOrderRootType.getInstance(), descriptor);
       mySdk = sdk;
     }
@@ -71,22 +60,17 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     protected void addToolbarButtons(ToolbarDecorator toolbarDecorator) {
       AnActionButton specifyUrlButton = new DumbAwareActionButton(ProjectBundle.message("sdk.paths.specify.url.button"), IconUtil.getAddLinkIcon()) {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           onSpecifyUrlButtonClicked();
         }
       };
       specifyUrlButton.setShortcut(CustomShortcutSet.fromString("alt S"));
-      specifyUrlButton.addCustomUpdater(new AnActionButtonUpdater() {
-        @Override
-        public boolean isEnabled(AnActionEvent e) {
-          return myEnabled;
-        }
-      });
+      specifyUrlButton.addCustomUpdater(e -> myEnabled);
       toolbarDecorator.addExtraAction(specifyUrlButton);
     }
 
     private void onSpecifyUrlButtonClicked() {
-      String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(((SdkType)mySdk.getSdkType()).getDefaultDocumentationUrl(mySdk), "");
+      String defaultDocsUrl = mySdk == null ? "" : StringUtil.notNullize(((SdkType)mySdk.getSdkType()).getDefaultDocumentationUrl(mySdk));
       VirtualFile virtualFile = Util.showSpecifyJavadocUrlDialog(myPanel, defaultDocsUrl);
       if (virtualFile != null) {
         addElement(virtualFile);
@@ -99,9 +83,10 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
     @Override
     protected VirtualFile[] adjustAddedFileSet(Component component, VirtualFile[] files) {
       JavadocQuarantineStatusCleaner.cleanIfNeeded(files);
+      List<VirtualFile> docRoots = ContainerUtil.newArrayListWithCapacity(files.length);
 
-      for (int i = 0; i < files.length; i++) {
-        VirtualFile file = files[i], docRoot = null;
+      for (VirtualFile file : files) {
+        VirtualFile docRoot = null;
 
         if (file.getName().equalsIgnoreCase("docs")) {
           docRoot = file.findChild("api");
@@ -110,10 +95,20 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
           docRoot = file.findFileByRelativePath("docs/api");
         }
 
-        if (docRoot != null) files[i] = docRoot;
+        if (docRoot == null) {
+          docRoots.add(file);
+        }
+        else if (docRoot.findChild("java.base") != null) {
+          Stream.of(docRoot.getChildren())
+            .filter(f -> f.isDirectory() && f.findChild("module-summary.html") != null)
+            .forEach(root -> docRoots.add(root));
+        }
+        else {
+          docRoots.add(docRoot);
+        }
       }
 
-      return super.adjustAddedFileSet(component, files);
+      return VfsUtilCore.toVirtualFileArray(docRoots);
     }
   }
 }

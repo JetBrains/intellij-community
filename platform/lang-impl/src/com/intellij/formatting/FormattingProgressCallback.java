@@ -25,7 +25,6 @@ import java.util.Collection;
  * Defines common interface for receiving events about formatting progress.
  * 
  * @author Denis Zhdanov
- * @since 2/10/11 3:38 PM
  */
 public interface FormattingProgressCallback {
 

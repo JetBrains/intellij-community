@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.OutputStream;
 
 public class OutputWrapper extends OutputStream {
@@ -42,7 +41,7 @@ public class OutputWrapper extends OutputStream {
       myBuffer = new StringBuilder();
     }
     char c = (char)b;
-    myBuffer.append(Character.toString(c));
+    myBuffer.append(c);
     if (c == '\n') {
       doFlush();
     }

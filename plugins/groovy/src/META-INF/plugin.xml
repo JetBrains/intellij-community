@@ -1,22 +1,7 @@
-<!--
-  ~  Copyright 2000-2009 JetBrains s.r.o.
-  ~  Licensed under the Apache License, Version 2.0 (the "License");
-  ~  you may not use this file except in compliance with the License.
-  ~  You may obtain a copy of the License at
-  ~
-  ~  http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~  Unless required by applicable law or agreed to in writing, software
-  ~  distributed under the License is distributed on an "AS IS" BASIS,
-  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~  See the License for the specific language governing permissions and
-  ~  limitations under the License.
-  ~
-  -->
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <id>org.intellij.groovy</id>
   <name>Groovy</name>
-  <description>Plugin for Groovy language support, including, Grape, Gant and Griffon</description>
+  <description>Plugin for Groovy language support, including, Grape and Gant</description>
   <version>9.0</version>
   <vendor>JetBrains</vendor>
   <depends>com.intellij.properties</depends>
@@ -59,6 +44,7 @@
 
     <extensionPoint name="callExpressionTypeCalculator"
                     interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrCallExpressionTypeCalculator"/>
+    <!--suppress DeprecatedClassUsageInspection -->
     <extensionPoint name="expressionTypeCalculator"
                     interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrExpressionTypeCalculator"/>
     <extensionPoint name="typeCalculator" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
@@ -101,7 +87,6 @@
     <groovyFrameworkConfigNotification order="last"
                                        implementation="org.jetbrains.plugins.groovy.config.DefaultGroovyFrameworkConfigNotification"/>
 
-    <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.GrCollectionTypeMembersProvider"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.CategoryMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyMemberContributor"/>
@@ -152,6 +137,7 @@
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.immutable.ImmutableTransformationSupport"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.immutable.CopyWithNamedArgumentProvider"/>
 
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedVariantTransformationSupport"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
@@ -162,6 +148,7 @@
 
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.groovy.extensions.GroovyUnresolvedReferenceFilterByFile"/>
 
+    <callExpressionTypeCalculator implementation="org.jetbrains.plugins.groovy.lang.typing.PredefinedReturnType"/>
     <callExpressionTypeCalculator
         implementation="org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrWithTraitTypeCalculator"/>
     <callExpressionTypeCalculator
@@ -189,6 +176,10 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultBuiltinTypeClassTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultSafeCaseTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultConditionalTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultMethodReferenceTypeCalculator"/>
 
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
@@ -196,6 +187,7 @@
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.ext.newify.GroovyNewifyNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyNewExprNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyMethodReturnNamedArgumentProvider" order="last"/>
+    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.GroovyNamedVariantArgumentProvider"/>
 
     <applicabilityProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.ConstructorMapApplicabilityProvider"/>
     <applicabilityProvider implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyConstructorApplicabilityProvider"/>
@@ -258,10 +250,6 @@
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
 
-    <mvc.framework implementation="org.jetbrains.plugins.groovy.griffon.GriffonFramework"/>
-    <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.groovy.griffon.GriffonConfigureNotification"/>
-    <importContributor implementation="org.jetbrains.plugins.groovy.griffon.GriffonDefaultImportContributor"/>
-
     <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.GdslClosureCompleter"/>
     <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.EachWithIndexClosureCompleter"/>
 
@@ -273,8 +261,9 @@
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.DelegatesToAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.DelegateAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.BuilderAnnotationChecker"/>
-    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.griffon.GriffonPropertyListenerAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.BaseScriptAnnotationChecker"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.NamedParamAnnotationChecker"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.ImmutableOptionsAnnotationChecker"/>
 
     <convertToJava.customMethodInvocator
         implementation="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.MapGetterSetterInvocator"/>
@@ -306,8 +295,6 @@
     <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer"
                              implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrClassInitializerDeclarationRangeHandler"/>
 
-
-    <psi.clsCustomNavigationPolicy implementation="org.jetbrains.plugins.groovy.codeInsight.GroovyClsCustomNavigationPolicy"/>
 
     <moduleBuilder builderClass="org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder"/>
 
@@ -403,9 +390,6 @@
     <nameSuggestionProvider implementation="org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionProvider"/>
 
     <statementUpDownMover implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyStatementMover"/>
-    <moveLeftRightHandler language="Groovy"
-                          implementationClass="org.jetbrains.plugins.groovy.codeInsight.editorActions.GroovyMoveLeftRightHandler"/>
-
     <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrVariableJoinLinesHandler"/>
     <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrJoinBlockStatementHandler"/>
     <joinLinesHandler implementation="org.jetbrains.plugins.groovy.editor.actions.joinLines.GrJoinControlStatementHandler"/>
@@ -422,6 +406,7 @@
 
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyKeywordAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GrAnnotatorImpl"/>
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyVersionAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.dsl.GroovyDslAnnotator"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedTransformationAnnotator"/>
 
@@ -600,6 +585,7 @@
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyConstructorUsagesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReflectedMethodReferenceSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrLiteralMethodSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrNewMethodsReferencesSearcher"/>
     <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
     <superMethodsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GDKSuperMethodSearcher"/>
     <definitionsScopedSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyImplementationSearch"/>
@@ -650,6 +636,7 @@
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.transformations.impl.synch.SynchronizedReferenceContributor"/>
 
     <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.GroovyResolveScopeProvider"/>
+    <resolveScopeProvider implementation="org.jetbrains.plugins.groovy.bundled.BundledGroovyResolveScopeProvider"/>
 
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyClassFinder"/>
     <java.elementFinder implementation="org.jetbrains.plugins.groovy.lang.psi.impl.javaView.GroovyLightInnerClassFinder"/>
@@ -1507,6 +1494,11 @@
       <categoryKey>intention.category.conversions</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.conversions.ConvertJunitAssertionToAssertStatementIntention</className>
     </intentionAction>
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.conversions</categoryKey>
+      <className>org.jetbrains.plugins.groovy.refactoring.convertToStatic.ConvertToStaticIntention</className>
+    </intentionAction>
 
     <!-- groovy style -->
     <intentionAction>
@@ -1637,26 +1629,12 @@
       <className>org.jetbrains.plugins.groovy.intentions.annotations.AddAnnotationValueIntention</className>
     </intentionAction>
 
-    <projectService serviceInterface="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"
-                    serviceImplementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectViewState"/>
-
     <java.programPatcher implementation="org.jetbrains.plugins.groovy.debugger.GroovyHotSwapper"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.groovy.gpp.GppReferenceContributor"/>
-
-    <library.presentationProvider implementation="org.jetbrains.plugins.groovy.griffon.GriffonLibraryPresentationProvider"/>
-    <moduleBuilder builderClass="org.jetbrains.plugins.groovy.griffon.GriffonModuleBuilder" id="griffonModuleBuilder"/>
-    <projectStructureDetector implementation="org.jetbrains.plugins.groovy.griffon.GriffonProjectStructureDetector"
-                              order="before groovyDetector"/>
-    <programRunner implementation="org.jetbrains.plugins.groovy.griffon.GriffonDebuggerRunner"/>
-    <configurationType implementation="org.jetbrains.plugins.groovy.griffon.GriffonRunConfigurationType"/>
-    <toolWindow id="Griffon View" anchor="left" secondary="false" icon="JetgroovyIcons.Griffon.GriffonToolWindow"
-                factoryClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"
-                conditionClass="org.jetbrains.plugins.groovy.griffon.GriffonToolWindowFactory"/>
 
     <roots.watchedRootsProvider implementation="org.jetbrains.plugins.groovy.mvc.MvcWatchedRootProvider"/>
     <projectService serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcConsole"
                     serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcConsole"/>
-    <selectInTarget implementation="org.jetbrains.plugins.groovy.mvc.projectView.MvcProjectViewSelectInTarget"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"
                         serviceInterface="org.jetbrains.plugins.groovy.mvc.MvcRunTargetHistoryService"/>
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory"
@@ -1802,11 +1780,6 @@
       <action id="Mvc.Upgrade"
               class="org.jetbrains.plugins.groovy.mvc.MvcUpgradeAction"
               text="Change SDK version" description="Change Grails/Griffon SDK version">
-      </action>
-
-      <action id="Griffon.UpdateDependencies" class="org.jetbrains.plugins.groovy.griffon.UpdateGriffonSettingsAction"
-              text="Synchronize Griffon settings"
-              description="Refresh IntelliJ IDEA project structure so that it matches Griffon build settings">
       </action>
 
       <action id="Mvc.RunTarget" class="org.jetbrains.plugins.groovy.mvc.actions.MvcRunCommandAction"

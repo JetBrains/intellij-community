@@ -50,10 +50,12 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     return SingletonHolder.ourInstance;
   }
 
+  @Override
   public JavaCodeFragment createPresentationCodeFragment(final TextWithImports item, final PsiElement context, final Project project) {
     return createCodeFragment(item, context, project);
   }
 
+  @Override
   public JavaCodeFragment createCodeFragment(TextWithImports item, PsiElement context, final Project project) {
     final JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     final String text = item.getText();
@@ -121,10 +123,12 @@ public class DefaultCodeFragmentFactory extends CodeFragmentFactory {
     return fragment;
   }
 
+  @Override
   public boolean isContextAccepted(PsiElement contextElement) {
     return true; // default factory works everywhere debugger can stop
   }
 
+  @Override
   @NotNull
   public LanguageFileType getFileType() {
     return StdFileTypes.JAVA;

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+  <g fill="none" fill-rule="evenodd">
+    <path fill="#9AA7B0" fill-opacity=".8" d="M6.49272307,1 L13,1 L13,8 L7.34221187,8 C7.46416609,7.90615914 7.58113984,7.80363647 7.69238816,7.69238816 C9.25448532,6.13029099 9.09619408,3.43933983 7.33883476,1.68198052 C7.0754535,1.41859925 6.79110189,1.19113628 6.49272307,1 Z"/>
+    <path fill="#935E2D" fill-opacity=".7" d="M.6572 1.188C-.4708 2.588-.0688 4.384 1.2742 5.726 2.6162 7.069 4.4122 7.471 5.8122 6.343L.6572 1.188zM6.3437 5.812C7.4717 4.412 7.0687 2.616 5.7267 1.274 4.3837-.069 2.5877-.472 1.1877.657L6.3437 5.812z" transform="translate(1 1)"/>
+    <polygon fill="#F26522" fill-opacity=".7" points="1 16 16 16 16 9 1 9"/>
+    <polygon fill="#231F20" fill-opacity=".7" points="0 3 0 2 3 0 3 1 .8 2.5 3 4 3 5" transform="translate(3 10)"/>
+    <polygon fill="#231F20" fill-opacity=".7" points="0 4 2.2 2.5 0 1 0 0 3 2 3 3 0 5" transform="translate(8 10)"/>
+  </g>
+</svg>

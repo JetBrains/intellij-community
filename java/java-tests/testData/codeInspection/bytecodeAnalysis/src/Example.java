@@ -34,7 +34,7 @@ public class Example {
       System.out.println("null");
     }
 
-    @NotNull Class x = <warning descr="Expression 'ClassUtils.primitiveToWrapper(null)' might evaluate to null but is assigned to a variable that is annotated with @NotNull">ClassUtils.primitiveToWrapper(null)</warning>;
+    @NotNull Class x = <warning descr="'null' is assigned to a variable that is annotated with @NotNull">ClassUtils.primitiveToWrapper(null)</warning>;
   }
 
   void writeBytes(@Nullable byte[] bytes) throws IOException {

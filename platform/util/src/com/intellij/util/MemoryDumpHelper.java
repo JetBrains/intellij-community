@@ -32,7 +32,7 @@ import java.util.Set;
 
 /**
  * An utility class to capture heap dumps of the current process
- * 
+ *
  * @author Pavel.Sher
  */
 public class MemoryDumpHelper {
@@ -49,6 +49,7 @@ public class MemoryDumpHelper {
       final Class hotSpotMxBeanClass = Class.forName("com.sun.management.HotSpotDiagnosticMXBean");
 
       mxBean = AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
+        @Override
         public Object run() throws Exception {
           MBeanServer server = ManagementFactory.getPlatformMBeanServer();
           Set<ObjectName> s = server.queryNames(new ObjectName(HOT_SPOT_BEAN_NAME), null);
@@ -96,13 +97,17 @@ public class MemoryDumpHelper {
     ourDumpHeap.invoke(ourMXBean, dumpPath, true);
   }
 
-  public static synchronized void captureMemoryDumpZipped(@NotNull String zipPath) throws Exception {
+  public static void captureMemoryDumpZipped(@NotNull String zipPath) throws Exception {
+    captureMemoryDumpZipped(new File(zipPath));
+  }
+
+  public static synchronized void captureMemoryDumpZipped(@NotNull File zipFile) throws Exception {
     File tempFile = FileUtil.createTempFile("heapDump.", ".hprof");
     FileUtil.delete(tempFile);
 
     captureMemoryDump(tempFile.getPath());
 
-    ZipUtil.compressFile(tempFile, new File(zipPath));
+    ZipUtil.compressFile(tempFile, zipFile);
     FileUtil.delete(tempFile);
   }
 }

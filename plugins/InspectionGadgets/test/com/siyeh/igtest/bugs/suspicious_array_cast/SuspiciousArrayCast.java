@@ -2,7 +2,7 @@ package com.siyeh.igtest.bugs.suspicious_array_cast;
 
 class SuspiciousArrayCast {
 
-  private Long[] longs = (Long[])getNumbers();
+  private Long[] longs = (<warning descr="Suspicious cast to 'Long[]'">Long[]</warning>)getNumbers();
   private Number[] numbers = (Number[])getNumbers();
 
   private Number[] getNumbers() {

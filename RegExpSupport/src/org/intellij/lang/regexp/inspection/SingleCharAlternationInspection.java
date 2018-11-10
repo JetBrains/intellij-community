@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -52,7 +38,7 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
 
     private final ProblemsHolder myHolder;
 
-    public SingleCharAlternationVisitor(ProblemsHolder holder) {
+    SingleCharAlternationVisitor(ProblemsHolder holder) {
       myHolder = holder;
     }
 
@@ -66,7 +52,6 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         return;
       }
       final String text = buildReplacementText(pattern);
-      //noinspection DialogTitleCapitalization
       myHolder.registerProblem(pattern, "Single character alternation in RegExp", new SingleCharAlternationFix(text));
     }
 
@@ -79,7 +64,7 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
 
       private final String myText;
 
-      public SingleCharAlternationFix(String text) {
+      SingleCharAlternationFix(String text) {
         myText = text;
       }
 
@@ -104,15 +89,10 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
           return;
         }
         final RegExpPattern pattern = (RegExpPattern)element;
-        final String text = buildReplacementText(pattern);
-        final RegExpBranch branch = RegExpFactory.createBranchFromText(text, element);
         final PsiElement parent = pattern.getParent();
-        if (parent instanceof RegExpGroup && ((RegExpGroup)parent).getType() == RegExpGroup.Type.NON_CAPTURING) {
-          parent.replace(branch.getAtoms()[0]);
-        }
-        else {
-          pattern.replace(branch.getAtoms()[0]);
-        }
+        final PsiElement victim =
+          (parent instanceof RegExpGroup && ((RegExpGroup)parent).getType() == RegExpGroup.Type.NON_CAPTURING) ? parent : pattern;
+        RegExpReplacementUtil.replaceInContext(victim, buildReplacementText(pattern));
       }
     }
   }
@@ -124,7 +104,16 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
         final RegExpChar ch = (RegExpChar)child;
         final IElementType type = ch.getNode().getFirstChildNode().getElementType();
         if (type == RegExpTT.REDUNDANT_ESCAPE) {
-          text.append((char)ch.getValue());
+          final int value = ch.getValue();
+          if (value == ']') {
+            text.append(ch.getUnescapedText());
+          }
+          else if (value == '-' && text.length() != 1) {
+            text.append("\\-");
+          }
+          else {
+            text.append((char)value);
+          }
         }
         else if (type == RegExpTT.ESC_CHARACTER) {
           final int value = ch.getValue();
@@ -159,7 +148,6 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
               text.append("\\]");
               break;
             case '-':
-            case '^':
               if (text.length() != 1) {
                 text.append("\\-");
                 break;
@@ -171,6 +159,6 @@ public class SingleCharAlternationInspection extends LocalInspectionTool {
       }
     }
     text.append("]");
-    return RegExpReplacementUtil.escapeForContext(text.toString(), pattern);
+    return text.toString();
   }
 }

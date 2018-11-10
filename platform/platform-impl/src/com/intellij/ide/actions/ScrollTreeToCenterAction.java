@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,7 +29,7 @@ import java.awt.*;
  */
 public class ScrollTreeToCenterAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (component instanceof JTree) {
       JTree tree = (JTree)component;
@@ -40,7 +41,7 @@ public class ScrollTreeToCenterAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(PlatformDataKeys.CONTEXT_COMPONENT) instanceof JTree);
   }
 }

@@ -18,18 +18,19 @@ import java.util.Arrays;
 class NewArrayInstanceEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.NewArrayInstanceEvaluator");
   private final Evaluator myArrayTypeEvaluator;
-  private Evaluator myDimensionEvaluator = null;
-  private Evaluator myInitializerEvaluator = null;
+  private Evaluator myDimensionEvaluator;
+  private Evaluator myInitializerEvaluator;
 
   /**
    * either dimensionEvaluator or initializerEvaluators must be null!
    */
-  public NewArrayInstanceEvaluator(Evaluator arrayTypeEvaluator, Evaluator dimensionEvaluator, Evaluator initializerEvaluator) {
+  NewArrayInstanceEvaluator(Evaluator arrayTypeEvaluator, Evaluator dimensionEvaluator, Evaluator initializerEvaluator) {
     myArrayTypeEvaluator = arrayTypeEvaluator;
     myDimensionEvaluator = dimensionEvaluator;
     myInitializerEvaluator = initializerEvaluator;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
 //    throw new EvaluateException("Creating new array instances is not supported yet", true);
     DebugProcessImpl debugProcess = context.getDebugProcess();

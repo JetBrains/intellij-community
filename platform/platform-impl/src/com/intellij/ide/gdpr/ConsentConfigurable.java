@@ -11,7 +11,7 @@ public class ConsentConfigurable extends ConfigurableBase<ConsentSettingsUi, Lis
   private final List<Consent> myConsents;
 
   public ConsentConfigurable() {
-    super("consents", "Data Sharing", null);
+    super("consents", "Data Sharing", "preferences.usage.statistics");
     myConsents = new ArrayList<>(ConsentOptions.getInstance().getConsents().first);
   }
 

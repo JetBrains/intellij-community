@@ -23,10 +23,6 @@ import com.intellij.testFramework.IdeaTestUtil;
  * @author Pavel.Dolgov
  */
 public class AddAnnotationAttributeNameTest extends LightQuickFixParameterizedTestCase {
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/addAnnotationAttributeName";

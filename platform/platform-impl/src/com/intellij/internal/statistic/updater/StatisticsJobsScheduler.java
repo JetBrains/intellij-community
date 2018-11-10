@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -31,8 +31,9 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence.persistProjectUsages;
 
-public class StatisticsJobsScheduler implements ApplicationComponent {
+public class StatisticsJobsScheduler implements BaseComponent {
   private static final int SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS = 10 * 60 * 1000;
+  private static final int SEND_EVENT_LOG_DELAY_IN_MILLIS = 2 * 60 * 60 * 1000;
   private static final int SEND_STATISTICS_DELAY_IN_MIN = 10;
 
   public static final int PERSIST_SESSIONS_INITIAL_DELAY_IN_MIN = 30;
@@ -84,15 +85,14 @@ public class StatisticsJobsScheduler implements ApplicationComponent {
       final StatisticsService statisticsService = StatisticsUploadAssistant.getApprovedGroupsStatisticsService();
       if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
         runStatisticsServiceWithDelay(statisticsService, SEND_STATISTICS_DELAY_IN_MIN);
-
-        // TODO: to be removed in 2018.1
-        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getOldStatisticsService(), 2 * SEND_STATISTICS_DELAY_IN_MIN);
-      }
-
-      if (FeatureUsageLogger.INSTANCE.isEnabled() && StatisticsUploadAssistant.isTimeToSendEventLog()) {
-        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), 3 * SEND_STATISTICS_DELAY_IN_MIN);
       }
     }, SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, StatisticsUploadAssistant.getSendPeriodInMillis(), TimeUnit.MILLISECONDS);
+
+    JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
+      if (FeatureUsageLogger.INSTANCE.isEnabled()) {
+        runStatisticsServiceWithDelay(StatisticsUploadAssistant.getEventLogStatisticsService(), SEND_STATISTICS_DELAY_IN_MIN);
+      }
+    }, 2 * SEND_STATISTICS_INITIAL_DELAY_IN_MILLIS, SEND_EVENT_LOG_DELAY_IN_MILLIS, TimeUnit.MILLISECONDS);
   }
 
   private static void runStatisticsServiceWithDelay(@NotNull final StatisticsService statisticsService, int delayInMin) {
@@ -105,14 +105,15 @@ public class StatisticsJobsScheduler implements ApplicationComponent {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
         ScheduledFuture<?> future =
           JobScheduler.getScheduler().scheduleWithFixedDelay(() -> persistProjectUsages(project), PERSIST_SESSIONS_INITIAL_DELAY_IN_MIN,
                                                              PERSIST_SESSIONS_DELAY_IN_MIN, TimeUnit.MINUTES);
         myPersistStatisticsSessionsMap.put(project, future);
       }
 
-      public void projectClosed(Project project) {
+      @Override
+      public void projectClosed(@NotNull Project project) {
         Future future = myPersistStatisticsSessionsMap.remove(project);
         if (future != null) {
           future.cancel(true);

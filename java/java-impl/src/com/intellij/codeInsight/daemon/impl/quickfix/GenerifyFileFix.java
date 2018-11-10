@@ -20,14 +20,13 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.application.Result;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.actions.TypeCookAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +68,7 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (file != null && file.isValid()) {
       myFileName = file.getName();
-      return PsiManager.getInstance(project).isInProject(file);
+      return ScratchFileService.isInProjectOrScratch(file);
     }
     else {
       return false;

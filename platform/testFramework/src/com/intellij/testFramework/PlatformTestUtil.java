@@ -10,13 +10,15 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ServiceKt;
@@ -33,7 +35,10 @@ import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,25 +51,23 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.io.ZipUtil;
-import com.intellij.util.ref.GCUtil;
+import com.intellij.util.io.Decompressor;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
-import org.junit.Assert;
 
 import javax.swing.*;
 import javax.swing.tree.TreeModel;
@@ -76,18 +79,22 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * @author yole
@@ -130,8 +137,11 @@ public class PlatformTestUtil {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
   }
 
-  public static <T> void registerExtension(@NotNull ExtensionsArea area, @NotNull ExtensionPointName<T> name, @NotNull final T t, @NotNull Disposable parentDisposable) {
-    final ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
+  public static <T> void registerExtension(@NotNull ExtensionsArea area,
+                                           @NotNull ExtensionPointName<T> name,
+                                           @NotNull T t,
+                                           @NotNull Disposable parentDisposable) {
+    ExtensionPoint<T> extensionPoint = area.getExtensionPoint(name.getName());
     extensionPoint.registerExtension(t);
     Disposer.register(parentDisposable, () -> extensionPoint.unregisterExtension(t));
   }
@@ -166,14 +176,14 @@ public class PlatformTestUtil {
     return print(tree, path,  withSelection, printInfo, null);
   }
 
-  public static String print(JTree tree, boolean withSelection, @Nullable Predicate<String> nodePrintCondition) {
+  public static String print(JTree tree, boolean withSelection, @Nullable Predicate<? super String> nodePrintCondition) {
     return print(tree, new TreePath(tree.getModel().getRoot()), withSelection, null, nodePrintCondition);
   }
 
   private static String print(JTree tree, TreePath path,
                              boolean withSelection,
                              @Nullable Queryable.PrintInfo printInfo,
-                             @Nullable Predicate<String> nodePrintCondition) {
+                             @Nullable Predicate<? super String> nodePrintCondition) {
     return StringUtil.join(printAsList(tree, path, withSelection, printInfo, nodePrintCondition), "\n");
   }
 
@@ -181,7 +191,7 @@ public class PlatformTestUtil {
                                                 TreePath path,
                                                 boolean withSelection,
                                                 @Nullable Queryable.PrintInfo printInfo,
-                                                @Nullable Predicate<String> nodePrintCondition) {
+                                                @Nullable Predicate<? super String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<>();
     printImpl(tree, path, strings, 0, withSelection, printInfo, nodePrintCondition);
     return strings;
@@ -189,11 +199,11 @@ public class PlatformTestUtil {
 
   private static void printImpl(JTree tree,
                                 TreePath path,
-                                Collection<String> strings,
+                                Collection<? super String> strings,
                                 int level,
                                 boolean withSelection,
                                 @Nullable Queryable.PrintInfo printInfo,
-                                @Nullable Predicate<String> nodePrintCondition) {
+                                @Nullable Predicate<? super String> nodePrintCondition) {
     Object pathComponent = path.getLastPathComponent();
     Object userObject = TreeUtil.getUserObject(pathComponent);
     String nodeText = toString(userObject, printInfo);
@@ -236,12 +246,6 @@ public class PlatformTestUtil {
     assertTreeEqual(tree, expected, false);
   }
 
-  public static void assertTreeEqualIgnoringNodesOrder(JTree tree, @NonNls String expected) {
-    final Collection<String> actualNodesPresentation = printAsList(tree, new TreePath(tree.getModel().getRoot()), false, null, null);
-    final List<String> expectedNodes = StringUtil.split(expected, "\n");
-    UsefulTestCase.assertSameElements(actualNodesPresentation, expectedNodes);
-  }
-
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
     assertEquals(expected.trim(), treeStringPresentation.trim());
@@ -263,7 +267,11 @@ public class PlatformTestUtil {
   }
 
   private static void assertMaxWaitTimeSince(long startTimeMillis) {
-    assert getMillisSince(startTimeMillis) <= MAX_WAIT_TIME : "the waiting takes too long";
+    assertMaxWaitTimeSince(startTimeMillis, MAX_WAIT_TIME);
+  }
+
+  private static void assertMaxWaitTimeSince(long startTimeMillis, long timeout) {
+    assert getMillisSince(startTimeMillis) <= timeout : "the waiting takes too long";
   }
 
   private static void assertDispatchThreadWithoutWriteAccess() {
@@ -313,6 +321,11 @@ public class PlatformTestUtil {
 
   @Nullable
   public static <T> T waitForPromise(@NotNull Promise<T> promise) {
+    return waitForPromise(promise, MAX_WAIT_TIME);
+  }
+
+  @Nullable
+  public static <T> T waitForPromise(@NotNull Promise<T> promise, long timeout) {
     assertDispatchThreadWithoutWriteAccess();
     AtomicBoolean complete = new AtomicBoolean(false);
     promise.onProcessed(ignore -> complete.set(true));
@@ -325,7 +338,7 @@ public class PlatformTestUtil {
       }
       catch (Exception ignore) {
       }
-      assertMaxWaitTimeSince(start);
+      assertMaxWaitTimeSince(start, timeout);
     }
     while (!complete.get());
     UIUtil.dispatchAllInvocationEvents();
@@ -364,11 +377,12 @@ public class PlatformTestUtil {
         AtomicBoolean laterInvoked = new AtomicBoolean();
         app.invokeLater(() -> laterInvoked.set(true));
         UIUtil.dispatchAllInvocationEvents();
-        Assert.assertTrue(laterInvoked.get());
+        assertTrue(laterInvoked.get());
 
         TimeoutUtil.sleep(sleptAlready ? 10 : delay);
         sleptAlready = true;
         if (getMillisSince(start) > MAX_WAIT_TIME) {
+          String queue = ((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue();
           throw new AssertionError("Couldn't await alarm" +
                                    "; alarm passed=" + alarmInvoked1.get() +
                                    "; modality1=" + initialModality +
@@ -379,7 +393,7 @@ public class PlatformTestUtil {
                                    "; app.disposed=" + app.isDisposed() +
                                    "; alarm.disposed=" + alarm.isDisposed() +
                                    "; alarm.requests=" + alarm.getActiveRequestCount() +
-                                   "\n delayQueue=" + StringUtil.trimLog(((AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService()).dumpQueue(), 1000) +
+                                   "\n delayQueue=" + StringUtil.trimLog(queue, 1000) +
                                    "\n invocatorQueue=" + LaterInvocator.getLaterInvocatorQueue()
           );
         }
@@ -505,55 +519,14 @@ public class PlatformTestUtil {
     return print(tree, false);
   }
 
-  public static void assertTreeStructureEquals(@NotNull TreeModel treeModel, @NotNull String expected) {
-    assertEquals(expected.trim(), print(createStructure(treeModel), treeModel.getRoot(), 0, null, -1, ' ', (Queryable.PrintInfo)null).toString().trim());
-  }
-
-  @NotNull
-  protected static AbstractTreeStructure createStructure(@NotNull TreeModel treeModel) {
-    return new AbstractTreeStructure() {
-      @Override
-      public Object getRootElement() {
-        return treeModel.getRoot();
-      }
-
-      @Override
-      public Object[] getChildElements(Object element) {
-        return TreeUtil.nodeChildren(element, treeModel).toList().toArray();
-      }
-
-      @Nullable
-      @Override
-      public Object getParentElement(Object element) {
-        return ((AbstractTreeNode)element).getParent();
-      }
-
-      @NotNull
-      @Override
-      public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public void commit() {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public boolean hasSomethingToCommit() {
-        throw new UnsupportedOperationException();
-      }
-    };
-  }
-
   public static void invokeNamedAction(final String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
-    Assert.assertNotNull(action);
+    assertNotNull(action);
     final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
     final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
     action.beforeActionPerformedUpdate(event);
-    Assert.assertTrue(presentation.isEnabled());
+    assertTrue(presentation.isEnabled());
     action.actionPerformed(event);
   }
 
@@ -611,6 +584,17 @@ public class PlatformTestUtil {
     return SystemProperties.getJavaHome() + "/lib/rt.jar";
   }
 
+  @NotNull
+  public static URL getRtJarURL() {
+    String home = SystemProperties.getJavaHome();
+    try {
+      return JavaVersion.current().feature >= 9 ? new URL("jrt:" + home) : new File(home + "/lib/rt.jar").toURI().toURL();
+    }
+    catch (MalformedURLException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   public static void saveProject(@NotNull Project project) {
     saveProject(project, false);
   }
@@ -634,17 +618,18 @@ public class PlatformTestUtil {
     assertTiming(message, expected, 4, actionToMeasure);
   }
 
-  private static long measure(@NotNull Runnable actionToMeasure) {
-    waitForAllBackgroundActivityToCalmDown();
+  public static long measure(@NotNull Runnable actionToMeasure) {
     long start = System.currentTimeMillis();
     actionToMeasure.run();
     long finish = System.currentTimeMillis();
     return finish - start;
   }
 
+  @SuppressWarnings("CallToSystemGC")
   public static void assertTiming(String message, long expected, int attempts, @NotNull Runnable actionToMeasure) {
     while (true) {
       attempts--;
+      waitForAllBackgroundActivityToCalmDown();
       long duration = measure(actionToMeasure);
       try {
         assertTiming(message, expected, duration);
@@ -662,8 +647,8 @@ public class PlatformTestUtil {
     }
   }
 
-  private static HashMap<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
-    HashMap<String, VirtualFile> map = new HashMap<>();
+  private static Map<String, VirtualFile> buildNameToFileMap(VirtualFile[] files, @Nullable VirtualFileFilter filter) {
+    Map<String, VirtualFile> map = new HashMap<>();
     for (VirtualFile file : files) {
       if (filter != null && !filter.accept(file)) continue;
       map.put(file.getName(), file);
@@ -680,20 +665,13 @@ public class PlatformTestUtil {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     VirtualFile[] childrenAfter = dirExpected.getChildren();
-
-    if (dirExpected.isInLocalFileSystem() && dirExpected.getFileSystem() != TempFileSystem.getInstance()) {
-      File[] ioAfter = new File(dirExpected.getPath()).listFiles();
-      shallowCompare(childrenAfter, ioAfter);
-    }
+    shallowCompare(dirExpected, childrenAfter);
 
     VirtualFile[] childrenBefore = dirActual.getChildren();
-    if (dirActual.isInLocalFileSystem() && dirActual.getFileSystem() != TempFileSystem.getInstance()) {
-      File[] ioBefore = new File(dirActual.getPath()).listFiles();
-      shallowCompare(childrenBefore, ioBefore);
-    }
+    shallowCompare(dirActual, childrenBefore);
 
-    HashMap<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter);
-    HashMap<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter);
+    Map<String, VirtualFile> mapAfter = buildNameToFileMap(childrenAfter, fileFilter);
+    Map<String, VirtualFile> mapBefore = buildNameToFileMap(childrenBefore, fileFilter);
 
     Set<String> keySetAfter = mapAfter.keySet();
     Set<String> keySetBefore = mapBefore.keySet();
@@ -711,30 +689,13 @@ public class PlatformTestUtil {
     }
   }
 
-  private static void shallowCompare(VirtualFile[] vfs, @Nullable File[] io) {
-    List<String> vfsPaths = new ArrayList<>();
-    for (VirtualFile file : vfs) {
-      vfsPaths.add(file.getPath());
+  private static void shallowCompare(VirtualFile dir, VirtualFile[] vfs) {
+    if (dir.isInLocalFileSystem() && dir.getFileSystem() != TempFileSystem.getInstance()) {
+      String vfsPaths = Stream.of(vfs).map(VirtualFile::getPath).sorted().collect(Collectors.joining("\n"));
+      File[] io = notNull(new File(dir.getPath()).listFiles());
+      String ioPaths = Stream.of(io).map(f -> FileUtil.toSystemIndependentName(f.getPath())).sorted().collect(Collectors.joining("\n"));
+      assertEquals(vfsPaths, ioPaths);
     }
-
-    List<String> ioPaths = new ArrayList<>();
-    if (io != null) {
-      for (File file : io) {
-        ioPaths.add(file.getPath().replace(File.separatorChar, '/'));
-      }
-    }
-
-    assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
-  }
-
-  private static String sortAndJoin(List<String> strings) {
-    Collections.sort(strings);
-    StringBuilder buf = new StringBuilder();
-    for (String string : strings) {
-      buf.append(string);
-      buf.append('\n');
-    }
-    return buf.toString();
   }
 
   public static void assertFilesEqual(VirtualFile fileExpected, VirtualFile fileActual) throws IOException {
@@ -742,36 +703,29 @@ public class PlatformTestUtil {
       assertJarFilesEqual(VfsUtilCore.virtualToIoFile(fileExpected), VfsUtilCore.virtualToIoFile(fileActual));
     }
     catch (IOException e) {
-      FileDocumentManager manager = FileDocumentManager.getInstance();
-
-      Document docBefore = manager.getDocument(fileActual);
-      boolean canLoadBeforeText = !fileActual.getFileType().isBinary() || fileActual.getFileType() == FileTypes.UNKNOWN;
-      String textB = docBefore != null
-                     ? docBefore.getText()
-                     : !canLoadBeforeText
-                       ? null
-                       : LoadTextUtil.getTextByBinaryPresentation(fileActual.contentsToByteArray(false), fileActual).toString();
-
-      Document docAfter = manager.getDocument(fileExpected);
-      boolean canLoadAfterText = !fileActual.getFileType().isBinary() || fileActual.getFileType() == FileTypes.UNKNOWN;
-      String textA = docAfter != null
-                     ? docAfter.getText()
-                     : !canLoadAfterText
-                       ? null
-                       : LoadTextUtil.getTextByBinaryPresentation(fileExpected.contentsToByteArray(false), fileExpected).toString();
-
-      if (textA != null && textB != null) {
-        if (!StringUtil.equals(textA, textB)) {
-          throw new FileComparisonFailure("Text mismatch in file " + fileExpected.getName(), textA, textB, fileExpected.getPath());
-        }
+      String actual = fileText(fileActual);
+      String expected = fileText(fileExpected);
+      if (expected == null || actual == null) {
+        assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
       }
-      else {
-        Assert.assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
+      else if (!StringUtil.equals(expected, actual)) {
+        throw new FileComparisonFailure("Text mismatch in file " + fileExpected.getName(), expected, actual, fileExpected.getPath());
       }
     }
   }
 
-  public static void assertJarFilesEqual(File file1, File file2) throws IOException {
+  private static String fileText(VirtualFile file) throws IOException {
+    Document doc = FileDocumentManager.getInstance().getDocument(file);
+    if (doc != null) {
+      return doc.getText();
+    }
+    if (!file.getFileType().isBinary() || file.getFileType() == FileTypes.UNKNOWN) {
+      return LoadTextUtil.getTextByBinaryPresentation(file.contentsToByteArray(false), file).toString();
+    }
+    return null;
+  }
+
+  private static void assertJarFilesEqual(File file1, File file2) throws IOException {
     final File tempDir = FileUtilRt.createTempDirectory("assert_jar_tmp", null, false);
     try {
       final File tempDirectory1 = new File(tempDir, "tmp1");
@@ -781,15 +735,15 @@ public class PlatformTestUtil {
 
       try (JarFile jarFile1 = new JarFile(file1)) {
         try (JarFile jarFile2 = new JarFile(file2)) {
-          ZipUtil.extract(jarFile1, tempDirectory1, null);
-          ZipUtil.extract(jarFile2, tempDirectory2, null);
+          new Decompressor.Zip(new File(jarFile1.getName())).extract(tempDirectory1);
+          new Decompressor.Zip(new File(jarFile2.getName())).extract(tempDirectory2);
         }
       }
 
       final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
-      Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
+      assertNotNull(tempDirectory1.toString(), dirAfter);
       final VirtualFile dirBefore = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory2);
-      Assert.assertNotNull(tempDirectory2.toString(), dirBefore);
+      assertNotNull(tempDirectory2.toString(), dirBefore);
       getApplication().runWriteAction(() -> {
         dirAfter.refresh(false, true);
         dirBefore.refresh(false, true);
@@ -801,33 +755,8 @@ public class PlatformTestUtil {
     }
   }
 
-  /**
-   * @deprecated Use com.intellij.testFramework.assertions.Assertions.assertThat().isEqualTo()
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static void assertElementsEqual(final Element expected, final Element actual) {
-    if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
-    }
-  }
-
-  /**
-   * @deprecated Use com.intellij.testFramework.assertions.Assertions.assertThat().isEqualTo()
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static void assertElementEquals(final String expected, final Element actual) {
-    try {
-      assertElementsEqual(JdomKt.loadElement(expected), actual);
-    }
-    catch (IOException | JDOMException e) {
-      throw new AssertionError(e);
-    }
-  }
-
   public static String getCommunityPath() {
-    final String homePath = PathManager.getHomePath();
+    final String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
     if (new File(homePath, "community/.idea").isDirectory()) {
       return homePath + File.separatorChar + "community";
     }
@@ -848,17 +777,13 @@ public class PlatformTestUtil {
 
   @NotNull
   public static <T> T notNull(@Nullable T t) {
-    Assert.assertNotNull(t);
+    assertNotNull(t);
     return t;
   }
 
   @NotNull
   public static String loadFileText(@NotNull String fileName) throws IOException {
     return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
-  }
-
-  public static void tryGcSoftlyReachableObjects() {
-    GCUtil.tryGcSoftlyReachableObjects();
   }
 
   public static void withEncoding(@NotNull String encoding, @NotNull ThrowableRunnable r) {
@@ -994,10 +919,9 @@ public class PlatformTestUtil {
     }
   }
 
-
-  public static <T> void assertComparisonContractNotViolated(@NotNull List<T> values,
-                                                             @NotNull Comparator<T> comparator,
-                                                             @NotNull Equality<T> equality) {
+  public static <T> void assertComparisonContractNotViolated(@NotNull List<? extends T> values,
+                                                             @NotNull Comparator<? super T> comparator,
+                                                             @NotNull Equality<? super T> equality) {
     for (int i1 = 0; i1 < values.size(); i1++) {
       for (int i2 = i1; i2 < values.size(); i2++) {
         T value1 = values.get(i1);
@@ -1010,10 +934,10 @@ public class PlatformTestUtil {
           assertEquals(String.format("Equal, but not 0: '%s' - '%s'", value2, value1), 0, result21);
         }
         else {
-          if (result12 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));
-          if (result21 == 0) Assert.fail(String.format("Not equal, but 0: '%s' - '%s'", value2, value1));
+          if (result12 == 0) fail(String.format("Not equal, but 0: '%s' - '%s'", value1, value2));
+          if (result21 == 0) fail(String.format("Not equal, but 0: '%s' - '%s'", value2, value1));
           if (Integer.signum(result12) == Integer.signum(result21)) {
-            Assert.fail(String.format("Not symmetrical: '%s' - '%s'", value1, value2));
+            fail(String.format("Not symmetrical: '%s' - '%s'", value1, value2));
           }
         }
 
@@ -1024,7 +948,7 @@ public class PlatformTestUtil {
           int result31 = comparator.compare(value3, value1);
 
           if (!isTransitive(result12, result23, result31)) {
-            Assert.fail(String.format("Not transitive: '%s' - '%s' - '%s'", value1, value2, value3));
+            fail(String.format("Not transitive: '%s' - '%s' - '%s'", value1, value2, value3));
           }
         }
       }

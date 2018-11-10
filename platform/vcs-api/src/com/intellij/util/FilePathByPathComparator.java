@@ -26,6 +26,7 @@ public class FilePathByPathComparator implements Comparator<FilePath> {
     return ourInstance;
   }
 
+  @Override
   public int compare(FilePath o1, FilePath o2) {
     return o1.getPath().compareTo(o2.getPath());
   }

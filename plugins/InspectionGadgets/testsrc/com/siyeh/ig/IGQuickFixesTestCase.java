@@ -28,9 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author anna
- * @since 16-Jun-2009
  */
-@SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
 public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCase {
   protected String myDefaultHint = null;
   protected String myRelativePath = null;
@@ -57,6 +55,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     return new BaseInspection[0];
   }
 
+  @SuppressWarnings("LanguageMismatch")
   @NonNls
   @Language("JAVA")
   protected String[] getEnvironmentClasses() {
@@ -112,14 +111,14 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   protected void doExpressionTest(
     @NotNull String hint,
-    @Language(value = "JAVA", prefix = "class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String before,
-    @Language(value = "JAVA", prefix = "class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String after) {
-    doTest(hint, "class $X$ {{System.out.print(" + before + ");}}", "class $X$ {{System.out.print(" + after + ");}}");
+    @Language(value = "JAVA", prefix = "/** @noinspection ALL*/class $X$ {static {System.out.print(", suffix = ");}}") @NotNull @NonNls String before,
+    @Language(value = "JAVA", prefix = "class $X$ {static {System.out.print(", suffix = ");}}") @NotNull @NonNls String after) {
+    doTest(hint, "class $X$ {static {System.out.print(" + before + ");}}", "class $X$ {static {System.out.print(" + after + ");}}");
   }
 
   protected void doMemberTest(
     @NotNull String hint,
-    @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String before,
+    @Language(value = "JAVA", prefix = "/** @noinspection ALL*/class $X$ {", suffix = "}") @NotNull @NonNls String before,
     @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String after) {
     doTest(hint, "class $X$ {" + before + "}", "class $X$ {" + after + "}");
   }
@@ -146,4 +145,5 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     assertNotNull(myRelativePath);
     return myRelativePath;
   }
+
 }

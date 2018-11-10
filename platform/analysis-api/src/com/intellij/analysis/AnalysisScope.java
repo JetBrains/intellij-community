@@ -51,12 +51,13 @@ public class AnalysisScope {
   public static final int DIRECTORY = 2;
   public static final int FILE = 3;
   public static final int MODULE = 4;
+  protected static final int PACKAGE = 5;
   public static final int INVALID = 6;
   public static final int MODULES = 7;
   public static final int CUSTOM = 8;
   public static final int VIRTUAL_FILES = 9;
   public static final int UNCOMMITTED_FILES = 10;
-  @MagicConstant(intValues = {PROJECT, DIRECTORY, FILE, MODULE, INVALID, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
+  @MagicConstant(intValues = {PROJECT, DIRECTORY, FILE, MODULE, PACKAGE, INVALID, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
   public @interface Type { }
 
   @NotNull
@@ -70,7 +71,7 @@ public class AnalysisScope {
   @Type protected int myType;
 
   private final Set<VirtualFile> myVFiles;  // initial files and directories the scope is configured on
-  Set<VirtualFile> myFilesSet;    // set of files (not directories) this scope consists of. calculated in initFilesSet()
+  protected Set<VirtualFile> myFilesSet;    // set of files (not directories) this scope consists of. calculated in initFilesSet()
 
   private boolean myIncludeTestSource = true;
 
@@ -135,7 +136,7 @@ public class AnalysisScope {
     myVFiles = null;
   }
 
-  public AnalysisScope(@NotNull Project project, @NotNull Collection<VirtualFile> virtualFiles) {
+  public AnalysisScope(@NotNull Project project, @NotNull Collection<? extends VirtualFile> virtualFiles) {
     myProject = project;
     myElement = null;
     myModule = null;
@@ -154,7 +155,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  PsiElementVisitor createFileSearcher() {
+  protected PsiElementVisitor createFileSearcher() {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.setText(AnalysisScopeBundle.message("scanning.scope.progress.title"));
@@ -170,6 +171,7 @@ public class AnalysisScope {
             return;
           }
           if (!shouldHighlightFile(file)) return;
+          if (myFilesSet == null) return;
           myFilesSet.add(virtualFile);
         }
       }
@@ -325,7 +327,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  private ContentIterator createScopeIterator(@NotNull final Processor<VirtualFile> processor, 
+  private ContentIterator createScopeIterator(@NotNull final Processor<? super VirtualFile> processor,
                                               @Nullable final SearchScope searchScope) {
     return fileOrDir -> {
       final boolean isInScope = ReadAction.compute(() -> {
@@ -403,7 +405,7 @@ public class AnalysisScope {
     }
   }
 
-  protected boolean accept(@NotNull final PsiDirectory dir, @NotNull final Processor<VirtualFile> processor) {
+  protected boolean accept(@NotNull final PsiDirectory dir, @NotNull final Processor<? super VirtualFile> processor) {
     final Project project = dir.getProject();
     //we should analyze generated source files only if the action is explicitly invoked for a directory located under generated roots
     final boolean processGeneratedFiles = GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(dir.getVirtualFile(), project);
@@ -589,7 +591,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  static AnalysisScope collectScopes(@NotNull final Project defaultProject, @NotNull final HashSet<Module> modules) {
+  protected static AnalysisScope collectScopes(@NotNull final Project defaultProject, @NotNull final Set<? extends Module> modules) {
     if (modules.isEmpty()) {
       return new AnalysisScope(defaultProject);
     }
@@ -631,7 +633,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  static HashSet<Module> getAllInterestingModules(@NotNull final ProjectFileIndex fileIndex, @NotNull final VirtualFile vFile) {
+  protected static HashSet<Module> getAllInterestingModules(@NotNull final ProjectFileIndex fileIndex, @NotNull final VirtualFile vFile) {
     final HashSet<Module> modules = new HashSet<>();
     if (fileIndex.isInLibrarySource(vFile) || fileIndex.isInLibraryClasses(vFile)) {
       for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(vFile)) {
@@ -668,11 +670,6 @@ public class AnalysisScope {
           @Override
           public boolean contains(@NotNull VirtualFile file) {
             return myFilesSet.contains(file);
-          }
-
-          @Override
-          public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-            return 0;
           }
 
           @Override

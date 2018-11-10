@@ -15,9 +15,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
 
-/**
- * @author Tagir Valeev
- */
 public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
@@ -54,7 +51,7 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
     private final LambdaAndExplicitMethodPair myInfo;
     private final String myName;
 
-    public RemoveExcessiveLambdaFix(LambdaAndExplicitMethodPair info, String name) {
+    RemoveExcessiveLambdaFix(LambdaAndExplicitMethodPair info, String name) {
       myInfo = info;
       myName = name;
     }

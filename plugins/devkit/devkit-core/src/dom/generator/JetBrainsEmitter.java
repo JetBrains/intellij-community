@@ -29,6 +29,7 @@ public class JetBrainsEmitter implements Emitter {
   private boolean myUseQualifiedClassNames = false;
 
 
+  @Override
   public void emit(FileManager fileManager, ModelDesc model, File outputRoot) {
     final NamespaceDesc nsdDef = model.nsdMap.get("");
     final Set<String> simpleTypes = new TreeSet<>();

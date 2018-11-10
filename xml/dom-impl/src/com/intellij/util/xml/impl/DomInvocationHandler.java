@@ -606,7 +606,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @NotNull
-  final IndexedElementInvocationHandler getFixedChild(final Pair<FixedChildDescriptionImpl, Integer> info) {
+  final IndexedElementInvocationHandler getFixedChild(final Pair<? extends FixedChildDescriptionImpl, Integer> info) {
     final FixedChildDescriptionImpl description = info.first;
     XmlName xmlName = description.getXmlName();
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(xmlName);
@@ -880,11 +880,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   private static class StableCopyFactory<T extends DomElement> implements NullableFactory<T> {
-    private final SmartPsiElementPointer<XmlTag> myPointer;
+    private final SmartPsiElementPointer<? extends XmlTag> myPointer;
     private final Type myType;
     private final Class<? extends DomInvocationHandler> myHandlerClass;
 
-    public StableCopyFactory(final SmartPsiElementPointer<XmlTag> pointer,
+    StableCopyFactory(final SmartPsiElementPointer<? extends XmlTag> pointer,
                              final Type type, final Class<? extends DomInvocationHandler> aClass) {
       myPointer = pointer;
       myType = type;

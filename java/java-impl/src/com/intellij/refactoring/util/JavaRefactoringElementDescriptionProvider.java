@@ -8,6 +8,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
+  @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     if (!(location instanceof RefactoringDescriptionLocation)) return null;
     RefactoringDescriptionLocation rdLocation = (RefactoringDescriptionLocation) location;

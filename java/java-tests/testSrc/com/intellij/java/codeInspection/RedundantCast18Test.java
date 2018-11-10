@@ -44,4 +44,6 @@ public class RedundantCast18Test extends LightDaemonAnalyzerTestCase {
   public void testCastToRawType() { doTest(); }
   public void testEnumConstantArgument() { doTest(); }
   public void testCastInMultidimensionalArrayIndex() { doTest(); }
+  public void testCastWithClassHierarchyWithPrivateMethods() { doTest(); }
+  public void testFieldInitializer() { doTest();}
 }

@@ -32,7 +32,7 @@ public class UnselectWordAtCaretAction extends EditorAction implements DumbAware
   }
 
   private static class Handler extends EditorActionHandler {
-    public Handler() {
+    Handler() {
       super(true);
     }
 

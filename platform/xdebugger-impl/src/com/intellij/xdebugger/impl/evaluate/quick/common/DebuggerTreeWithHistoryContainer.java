@@ -99,12 +99,12 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   }
 
   private class GoForwardAction extends AnAction {
-    public GoForwardAction() {
+    GoForwardAction() {
       super(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1){
         myCurrentIndex ++;
         updateTree();
@@ -112,18 +112,18 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1);
     }
   }
 
   private class GoBackwardAction extends AnAction {
-    public GoBackwardAction() {
+    GoBackwardAction() {
       super(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (myHistory.size() > 1 && myCurrentIndex > 0) {
         myCurrentIndex--;
         updateTree();
@@ -132,7 +132,7 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
 
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myHistory.size() > 1 && myCurrentIndex > 0);
     }
   }
@@ -140,20 +140,20 @@ abstract class DebuggerTreeWithHistoryContainer<D> {
   private class SetAsRootAction extends AnAction {
     private final Tree myTree;
 
-    public SetAsRootAction(Tree tree) {
+    SetAsRootAction(Tree tree) {
       super(XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"),
             XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip"), AllIcons.Modules.UnmarkWebroot);
       myTree = tree;
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       TreePath path = myTree.getSelectionPath();
       e.getPresentation().setEnabled(path != null && path.getPathCount() > 1);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       TreePath path = myTree.getSelectionPath();
       if (path != null) {
         Object node = path.getLastPathComponent();

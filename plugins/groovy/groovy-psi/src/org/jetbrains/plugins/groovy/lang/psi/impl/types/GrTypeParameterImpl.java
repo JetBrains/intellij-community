@@ -88,6 +88,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
     return GrClassImplUtil.findCodeMethodsBySignature(this, patternMethod, checkBases);
   }
 
+  @Override
   public String toString() {
     return "Type parameter";
   }
@@ -432,7 +433,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitTypeParameter(this);
   }
 }

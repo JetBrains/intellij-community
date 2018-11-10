@@ -1,14 +1,16 @@
-import sys
-import unittest
-import threading
 import os
-from _pydev_bundle.pydev_imports import SimpleXMLRPCServer
-from _pydev_bundle.pydev_localhost import get_localhost
-from _pydev_bundle.pydev_console_utils import StdIn
-import socket
+import sys
 import time
-from _pydevd_bundle import pydevd_io
+import unittest
+
 import pytest
+
+from _pydev_bundle.pydev_stdin import StdIn
+from _pydev_bundle.pydev_localhost import get_localhost
+from _pydev_comm.rpc import make_rpc_client
+from _pydevd_bundle import pydevd_io
+from pydev_console.protocol import PythonConsoleFrontendService, PythonConsoleBackendService
+from pydevconsole import enable_thrift_logging, create_server_handler_factory
 
 try:
     xrange
@@ -35,7 +37,7 @@ class TestBase(unittest.TestCase):
         # PyDevFrontEnd depends on singleton in IPython, so you
         # can't make multiple versions. So we reuse self.front_end for
         # all the tests
-        self.front_end = get_pydev_frontend(get_localhost(), 0)
+        self.front_end = get_pydev_frontend(None)
 
         from pydev_ipython.inputhook import set_return_control_callback
         set_return_control_callback(lambda:True)
@@ -203,53 +205,42 @@ class TestRunningCode(TestBase):
             return
 
         from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
+        from _pydev_comm.rpc import start_rpc_server_and_make_client
 
         called_RequestInput = [False]
         called_IPythonEditor = [False]
-        def start_client_thread(client_port):
-            class ClientThread(threading.Thread):
-                def __init__(self, client_port):
-                    threading.Thread.__init__(self)
-                    self.client_port = client_port
-                def run(self):
-                    class HandleRequestInput:
-                        def RequestInput(self):
-                            called_RequestInput[0] = True
-                            return '\n'
-                        def IPythonEditor(self, name, line):
-                            called_IPythonEditor[0] = (name, line)
-                            return True
 
-                    handle_request_input = HandleRequestInput()
+        class RequestInputHandler:
+            def __init__(self):
+                self.rpc_client = None
 
-                    from _pydev_bundle import pydev_localhost
-                    self.client_server = client_server = SimpleXMLRPCServer(
-                        (pydev_localhost.get_localhost(), self.client_port), logRequests=False)
-                    client_server.register_function(handle_request_input.RequestInput)
-                    client_server.register_function(handle_request_input.IPythonEditor)
-                    client_server.serve_forever()
+            def requestInput(self, path):
+                called_RequestInput[0] = True
+                return '\n'
 
-                def shutdown(self):
-                    return
-                    self.client_server.shutdown()
+            def IPythonEditor(self, name, line):
+                called_IPythonEditor[0] = (name, line)
+                return True
 
-            client_thread = ClientThread(client_port)
-            client_thread.setDaemon(True)
-            client_thread.start()
-            return client_thread
+        enable_thrift_logging()
+
+        # here we start the test server
+        server_socket = start_rpc_server_and_make_client(get_localhost(), 0,
+                                                         PythonConsoleFrontendService,
+                                                         PythonConsoleBackendService,
+                                                         create_server_handler_factory(RequestInputHandler()))
+
+        host, port = server_socket.getsockname()
+
+        rpc_client, _ = make_rpc_client(PythonConsoleFrontendService, host, port)
 
         # PyDevFrontEnd depends on singleton in IPython, so you
         # can't make multiple versions. So we reuse self.front_end for
         # all the tests
-        s = socket.socket()
-        s.bind(('', 0))
-        self.client_port = client_port = s.getsockname()[1]
-        s.close()
-        self.front_end = get_pydev_frontend(get_localhost(), client_port)
+        self.front_end = get_pydev_frontend(rpc_client)
 
-        client_thread = start_client_thread(self.client_port)
         orig_stdin = sys.stdin
-        sys.stdin = StdIn(self, get_localhost(), self.client_port)
+        sys.stdin = StdIn(self, rpc_client)
         try:
             filename = 'made_up_file.py'
             self.add_exec('%edit ' + filename)
@@ -309,5 +300,4 @@ class TestRunningCode(TestBase):
             assert called_RequestInput[0], "Make sure the 'wait' parameter has been respected"
         finally:
             sys.stdin = orig_stdin
-            client_thread.shutdown()
 

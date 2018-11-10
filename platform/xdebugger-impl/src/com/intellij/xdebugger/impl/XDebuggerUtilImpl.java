@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl;
 import com.intellij.CommonBundle;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -153,16 +154,17 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   public static Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>
   getLineBreakpointVariants(@NotNull final Project project,
-                            @NotNull List<XLineBreakpointType> types,
+                            @NotNull List<? extends XLineBreakpointType> types,
                             @NotNull final XSourcePosition position) {
     List<Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>>> promises = new SmartList<>();
     for (XLineBreakpointType type : types) {
       promises.add(type.computeVariantsAsync(project, position).then(o -> {
         if (((List)o).isEmpty() && types.size() > 1) { // multiple types
           return Collections.singletonList(type.new XLineBreakpointAllVariant(position) {
+            @NotNull
             @Override
             public String getText() {
-              return StringUtil.unpluralize(type.getTitle());
+              return StringUtil.notNullize(StringUtil.unpluralize(type.getTitle()), type.getTitle());
             }
 
             @Nullable
@@ -182,7 +184,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @NotNull
   public static Promise<XLineBreakpoint> toggleAndReturnLineBreakpoint(@NotNull final Project project,
-                                                                       @NotNull List<XLineBreakpointType> types,
+                                                                       @NotNull List<? extends XLineBreakpointType> types,
                                                                        @NotNull final XSourcePosition position,
                                                                        final boolean temporary,
                                                                        @Nullable final Editor editor,
@@ -258,7 +260,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
             for (XLineBreakpointType.XLineBreakpointVariant variant : variants) {
               TextRange range = variant.getHighlightRange();
               if (range != null && range.contains(caretOffset)) {
-                //noinspection ConstantConditions
                 if (defaultVariant == null || defaultVariant.getHighlightRange().getLength() > range.getLength()) {
                   defaultVariant = variant;
                 }
@@ -326,7 +327,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   }
 
   private static <P extends XBreakpointProperties> void insertBreakpoint(P properties,
-                                                                         AsyncPromise<XLineBreakpoint> res,
+                                                                         AsyncPromise<? super XLineBreakpoint> res,
                                                                          XBreakpointManager breakpointManager,
                                                                          VirtualFile file,
                                                                          int line,
@@ -343,11 +344,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       StringBuilder message = new StringBuilder(XDebuggerBundle.message("message.confirm.breakpoint.removal.message"));
       if (!isEmptyExpression(breakpoint.getConditionExpression())) {
         message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.condition",
-                                               StringUtil.escapeXml(breakpoint.getConditionExpression().getExpression())));
+                                               StringUtil.escapeXmlEntities(breakpoint.getConditionExpression().getExpression())));
       }
       if (!isEmptyExpression(breakpoint.getLogExpressionObject())) {
         message.append(XDebuggerBundle.message("message.confirm.breakpoint.removal.message.log",
-                                               StringUtil.escapeXml(breakpoint.getLogExpressionObject().getExpression())));
+                                               StringUtil.escapeXmlEntities(breakpoint.getLogExpressionObject().getExpression())));
       }
       if (Messages.showOkCancelDialog(message.toString(),
                                       XDebuggerBundle.message("message.confirm.breakpoint.removal.title"),
@@ -611,6 +612,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return expression == null || StringUtil.isEmptyOrSpaces(expression.getExpression());
   }
 
+  @Override
   public void logStack(@NotNull XSuspendContext suspendContext, @NotNull XDebugSession session) {
     XExecutionStack activeExecutionStack = suspendContext.getActiveExecutionStack();
     if (activeExecutionStack != null) {
@@ -662,5 +664,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         }
       });
     }
+  }
+
+  public static Icon getVerifiedIcon(@NotNull XBreakpoint breakpoint) {
+    return breakpoint.getSuspendPolicy() == SuspendPolicy.NONE
+           ? AllIcons.Debugger.Db_verified_no_suspend_breakpoint
+           : AllIcons.Debugger.Db_verified_breakpoint;
   }
 }

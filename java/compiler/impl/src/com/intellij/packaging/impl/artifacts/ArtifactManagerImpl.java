@@ -4,9 +4,10 @@ package com.intellij.packaging.impl.artifacts;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,7 +41,7 @@ import java.util.*;
  * @author nik
  */
 @State(name = ArtifactManagerImpl.COMPONENT_NAME, storages = @Storage(value = "artifacts", stateSplitter = ArtifactManagerStateSplitter.class))
-public class ArtifactManagerImpl extends ArtifactManager implements ProjectComponent, PersistentStateComponent<ArtifactManagerState>,
+public class ArtifactManagerImpl extends ArtifactManager implements BaseComponent, PersistentStateComponent<ArtifactManagerState>,
                                                                     Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.artifacts.ArtifactManagerImpl");
   @NonNls public static final String COMPONENT_NAME = "ArtifactManager";
@@ -275,7 +276,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
 
   @Override
   public void initComponent() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new ArtifactVirtualFileListener(myProject, this), myProject);
+    myProject.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new ArtifactVirtualFileListener(myProject, this));
     updateWatchedRoots();
   }
 
@@ -319,7 +320,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     return myResolvingContext;
   }
 
-  public List<ArtifactImpl> getArtifactsList() {
+  public List<? extends ArtifactImpl> getArtifactsList() {
     return myModel.myArtifactsList;
   }
 
@@ -418,10 +419,10 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   }
 
   private static class ArtifactManagerModel extends ArtifactModelBase {
-    private List<ArtifactImpl> myArtifactsList = new ArrayList<>();
+    private List<? extends ArtifactImpl> myArtifactsList = new ArrayList<>();
     private Artifact[] mySortedArtifacts;
 
-    public void setArtifactsList(List<ArtifactImpl> artifactsList) {
+    public void setArtifactsList(List<? extends ArtifactImpl> artifactsList) {
       myArtifactsList = artifactsList;
       artifactsChanged();
     }

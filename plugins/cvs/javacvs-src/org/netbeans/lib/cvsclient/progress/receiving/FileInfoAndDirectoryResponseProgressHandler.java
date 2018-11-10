@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.netbeans.lib.cvsclient.progress.receiving;
 
 import org.netbeans.lib.cvsclient.command.ICvsFiles;
@@ -23,21 +24,25 @@ public final class FileInfoAndDirectoryResponseProgressHandler extends AbstractR
 
 	// Implemented ============================================================
 
-	public void registerListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void registerListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.addDirectoryListener(this);
 		listenerRegistry.addFileInfoListener(this);
 	}
 
-	public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
+	@Override
+        public void unregisterListeners(ICvsListenerRegistry listenerRegistry) {
 		listenerRegistry.removeDirectoryListener(this);
 		listenerRegistry.removeFileInfoListener(this);
 	}
 
-	public void processingDirectory(DirectoryObject directoryObject) {
+	@Override
+        public void processingDirectory(DirectoryObject directoryObject) {
 		directoryProcessed(directoryObject.getPath());
 	}
 
-	public void fileInfoGenerated(Object info) {
+	@Override
+        public void fileInfoGenerated(Object info) {
 		if (info instanceof IFileInfo) {
 			final IFileInfo fileInfo = (IFileInfo)info;
 			fileProcessed(fileInfo.getFileObject());

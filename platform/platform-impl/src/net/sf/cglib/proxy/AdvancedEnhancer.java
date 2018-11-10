@@ -68,6 +68,7 @@ import java.util.*;
 public class AdvancedEnhancer extends AbstractClassGenerator
 {
   private static final CallbackFilter ALL_ZERO = new CallbackFilter(){
+    @Override
     public int accept(Method method) {
       return 0;
     }
@@ -363,6 +364,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     return tuple;
   }
 
+  @Override
   protected ClassLoader getDefaultClassLoader() {
     int maxIndex = -1;
     ClassLoader bestLoader = null;
@@ -421,6 +423,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     CollectionUtils.filter(methods, new VisibilityPredicate(superclass, true));
   }
 
+  @Override
   public void generateClass($ClassVisitor v) throws Exception {
     Class sc = (superclass == null) ? Object.class : superclass;
 
@@ -555,6 +558,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
   }
 
+  @Override
   protected Object firstInstance(Class type) throws Exception {
     if (classOnly) {
       return type;
@@ -563,6 +567,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     }
   }
 
+  @Override
   protected Object nextInstance(Object instance) {
     Class protoclass = (instance instanceof Class) ? (Class) instance : instance.getClass();
     if (classOnly) {
@@ -657,10 +662,12 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.load_this();
     e.load_arg(0);
     e.process_switch(keys, new ProcessSwitchCallback() {
+      @Override
       public void processCase(int key, $Label end) {
         e.getfield(getCallbackField(key));
         e.goTo(end);
       }
+      @Override
       public void processDefault() {
         e.pop(); // stack height
         e.aconst_null();
@@ -676,11 +683,13 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.load_arg(1);
     e.load_arg(0);
     e.process_switch(keys, new ProcessSwitchCallback() {
+      @Override
       public void processCase(int key, $Label end) {
         e.checkcast(callbackTypes[key]);
         e.putfield(getCallbackField(key));
         e.goTo(end);
       }
+      @Override
       public void processDefault() {
         final $Type type = $Type.getType(AssertionError.class);
         e.new_instance(type);
@@ -772,6 +781,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     e.dup();
     e.load_arg(0);
     EmitUtils.constructor_switch(e, constructors, new ObjectSwitchCallback() {
+      @Override
       public void processCase(Object key, $Label end) {
         MethodInfo constructor = (MethodInfo)key;
         $Type[] types = constructor.getSignature().getArgumentTypes();
@@ -784,6 +794,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         e.invoke_constructor_this(constructor.getSignature());
         e.goTo(end);
       }
+      @Override
       public void processDefault() {
         e.throw_exception(ILLEGAL_ARGUMENT_EXCEPTION, "Constructor not found");
       }
@@ -833,18 +844,23 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     se.putfield(THREAD_CALLBACKS_FIELD);
 
     CallbackGenerator.Context context = new CallbackGenerator.Context() {
+      @Override
       public ClassLoader getClassLoader() {
   	return AdvancedEnhancer.this.getClassLoader();
       }
+      @Override
       public int getOriginalModifiers(MethodInfo method) {
         return originalModifiers.get(method);
       }
+      @Override
       public int getIndex(MethodInfo method) {
         return indexes.get(method);
       }
+      @Override
       public void emitCallback(CodeEmitter e, int index) {
         emitCurrentCallback(e, index);
       }
+      @Override
       public Signature getImplSignature(MethodInfo method) {
         return rename(method.getSignature(), (Integer)positions.get(method));
       }
@@ -854,6 +870,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
         codeEmitter.super_invoke(methodInfo.getSignature());
       }
 
+      @Override
       public CodeEmitter beginMethod(ClassEmitter ce, MethodInfo method) {
         CodeEmitter e = EmitUtils.begin_method(ce, method);
         if (!interceptDuringConstruction &&

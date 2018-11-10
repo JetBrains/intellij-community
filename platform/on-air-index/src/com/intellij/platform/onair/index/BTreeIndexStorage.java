@@ -184,7 +184,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   }
 
   @Override
-  public boolean processKeys(@NotNull Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+  public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     synchronized (lockObject) {
       myCache.invalidateAll(); // force all data from cache to the BTree like in VfsAwareMapIndexStorage
       // TODO: pass by StorageException instead of assert
@@ -353,7 +353,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
     }
 
     @Override
-    public void saveTo(DataOutput out, DataExternalizer<V> externalizer) {
+    public void saveTo(DataOutput out, DataExternalizer<? super V> externalizer) {
       throw new UnsupportedOperationException();
     }
 
@@ -393,7 +393,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
     }
 
     @Override
-    public void saveTo(DataOutput out, DataExternalizer<V> externalizer) throws IOException {
+    public void saveTo(DataOutput out, DataExternalizer<? super V> externalizer) throws IOException {
       removed.forEach(value -> {
         try {
           DataInputOutputUtil.writeINT(out, -value);

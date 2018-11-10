@@ -34,12 +34,15 @@ public abstract class ResolveTestCase extends PsiTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    if (myDocument != null) {
-      FileDocumentManager.getInstance().reloadFromDisk(myDocument);
-      myDocument = null;
+    try {
+      if (myDocument != null) {
+        FileDocumentManager.getInstance().reloadFromDisk(myDocument);
+        myDocument = null;
+      }
     }
-
-    super.tearDown();
+    finally {
+      super.tearDown();
+    }
   }
 
   protected PsiReference configureByFile(@NotNull String filePath) throws Exception {

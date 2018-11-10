@@ -76,7 +76,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   protected void setupClassFromNewExpression(final PsiClass psiClass, final PsiNewExpression newExpression) {
     assert ApplicationManager.getApplication().isWriteAccessAllowed();
 
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(newExpression.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(newExpression.getProject());
     PsiClass aClass = psiClass;
     if (aClass == null) return;
 
@@ -131,7 +131,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @Nullable
   public static PsiMethod setupSuperCall(PsiClass targetClass, PsiMethod constructor, TemplateBuilderImpl templateBuilder)
     throws IncorrectOperationException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(targetClass.getProject()).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(targetClass.getProject());
     PsiMethod supConstructor = null;
     PsiClass superClass = targetClass.getSuperClass();
     if (superClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName()) &&
@@ -178,7 +178,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       PsiClass aClass = classType.resolve();
       if (aClass == null) continue;
       if (aClass.equals(targetClass) || aClass.hasModifierProperty(PsiModifier.FINAL)) continue;
-      PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 
       if (aClass.isInterface()) {
         PsiReferenceList implementsList = targetClass.getImplementsList();
@@ -236,7 +236,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @Override
   protected boolean isAvailableImpl(int offset) {
     PsiNewExpression expression = getNewExpression();
-    if (expression.getQualifier() != null) {
+    if (rejectQualifier(expression.getQualifier())) {
       return false;
     }
 
@@ -253,6 +253,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     }
 
     return false;
+  }
+
+  protected boolean rejectQualifier(PsiExpression qualifier) {
+    return qualifier != null;
   }
 
   protected String getText(final String varName) {

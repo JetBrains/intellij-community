@@ -17,6 +17,7 @@ import java.util.Collections;
  * @author yole
  */
 public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
+  @Override
   public boolean canProcessElement(@NotNull final PsiElement element) {
     return element instanceof PsiDirectory;
   }
@@ -36,6 +37,7 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
     RefactoringSettings.getInstance().RENAME_SEARCH_FOR_REFERENCES_FOR_DIRECTORY = value;
   }
 
+  @Override
   public String getQualifiedNameAfterRename(@NotNull final PsiElement element, @NotNull final String newName, final boolean nonJava) {
     PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (psiPackage != null) {
@@ -61,18 +63,21 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
     return null;
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpID(final PsiElement element) {
     return HelpID.RENAME_DIRECTORY;
   }
 
+  @Override
   public boolean isToSearchInComments(@NotNull PsiElement element) {
     element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (element == null) return false;
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_PACKAGE;
   }
 
+  @Override
   public void setToSearchInComments(@NotNull PsiElement element, final boolean enabled) {
     element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (element != null) {
@@ -80,12 +85,14 @@ public class RenamePsiDirectoryProcessor extends RenamePsiElementProcessor {
     }
   }
 
+  @Override
   public boolean isToSearchForTextOccurrences(@NotNull PsiElement element) {
     element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (element == null) return false;
     return JavaRefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_PACKAGE;
   }
 
+  @Override
   public void setToSearchForTextOccurrences(@NotNull PsiElement element, final boolean enabled) {
     element = JavaDirectoryService.getInstance().getPackage(((PsiDirectory)element));
     if (element != null) {

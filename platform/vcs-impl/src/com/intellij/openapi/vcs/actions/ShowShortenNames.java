@@ -28,7 +28,7 @@ import java.util.ArrayList;
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowShortenNames extends ActionGroup {
+public class ShowShortenNames extends ActionGroup implements DumbAware {
   private final AnAction[] myChildren;
 
   public ShowShortenNames() {
@@ -58,18 +58,18 @@ public class ShowShortenNames extends ActionGroup {
   private static class SetShortNameTypeAction extends ToggleAction implements DumbAware {
     private final ShortNameType myType;
 
-    public SetShortNameTypeAction(ShortNameType type) {
+    SetShortNameTypeAction(ShortNameType type) {
       super(type.getDescription());
       myType = type;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myType == getType();
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean enabled) {
+    public void setSelected(@NotNull AnActionEvent e, boolean enabled) {
       if (enabled) {
         myType.set();
       }

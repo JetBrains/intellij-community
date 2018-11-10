@@ -2,83 +2,85 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
+import com.intellij.testGuiFramework.impl.mavenReimport
+import com.intellij.testGuiFramework.impl.waitAMoment
 import com.intellij.testGuiFramework.util.*
+import com.intellij.testGuiFramework.util.scenarios.openProjectStructureAndCheck
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
+import org.fest.swing.timing.Pause
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import java.io.Serializable
 
-class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
+@RunWith(GuiTestSuiteParam::class)
+class CreateMavenProjectAndConfigureKotlinGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
+
+  enum class KotlinKind{Jvm, Js}
+
+  data class TestParameters(
+    val projectName: String,
+    val project: ProjectProperties,
+    val kotlinKind: KotlinKind,
+    val expectedFacet: FacetStructure) : Serializable {
+    override fun toString() = projectName
+  }
 
   @Test
-  @JvmName("maven_cfg_jvm")
-  fun createMavenAndConfigureKotlinJvm() {
-    val groupName = "group_maven_jvm"
+  fun createMavenAndConfigureKotlin() {
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val kotlinKind = KotlinKind.JVM
-    val extraTimeOut = 4000L
     if (!isIdeFrameRun()) return
     createMavenProject(
-        projectPath = projectFolder,
-        group = groupName,
-        artifact = projectName)
-    waitAMoment(extraTimeOut)
-    configureKotlinJvmFromMaven(kotlinVersion)
-    waitAMoment(extraTimeOut)
+      projectPath = projectFolder,
+      artifact = projectName)
+    waitAMoment()
+    when(testParameters.kotlinKind){
+      KotlinKind.Jvm -> configureKotlinJvmFromMaven(kotlinVersion)
+      KotlinKind.Js -> configureKotlinJsFromMaven(kotlinVersion)
+    }
+
+    waitAMoment()
     saveAndCloseCurrentEditor()
     editPomXml(
-      kotlinVersion = kotlinVersion,
-      kotlinKind = kotlinKind
+      kotlinVersion = kotlinVersion
     )
-    waitAMoment(extraTimeOut)
     mavenReimport()
-    waitAMoment(extraTimeOut)
+    Pause.pause(5000)
+    mavenReimport()
 
-    checkInProjectStructure {
-      checkLibrariesFromMavenGradle(
+    projectStructureDialogScenarios.openProjectStructureAndCheck {
+      projectStructureDialogModel.checkLibrariesFromMavenGradle(
         buildSystem = BuildSystem.Maven,
         kotlinVersion = kotlinVersion,
-        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars()
+        expectedJars = testParameters.project.jars.getJars(kotlinVersion)
       )
-      checkFacetInOneModule(
-        defaultFacetSettings[TargetPlatform.JVM18]!!,
-        projectName, "Kotlin"
+      projectStructureDialogModel.checkFacetInOneModule(
+        expectedFacet = testParameters.expectedFacet,
+        path = *arrayOf(projectName, "Kotlin")
       )
     }
   }
 
-  @Test
-  @JvmName("maven_cfg_js")
-  fun createMavenAndConfigureKotlinJs() {
-    val groupName = "group_maven_js"
-    val projectName = testMethod.methodName
-    val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val kotlinKind = KotlinKind.JS
-    val extraTimeOut = 4000L
-    if (!isIdeFrameRun()) return
-    createMavenProject(
-        projectPath = projectFolder,
-        group = groupName,
-        artifact = projectName)
-    waitAMoment(extraTimeOut)
-    configureKotlinJsFromMaven(kotlinVersion)
-    waitAMoment(extraTimeOut)
-    saveAndCloseCurrentEditor()
-    editPomXml(
-      kotlinVersion = kotlinVersion,
-      kotlinKind = kotlinKind
-    )
-    waitAMoment(extraTimeOut)
-    mavenReimport()
-    waitAMoment(extraTimeOut)
-
-    checkInProjectStructure {
-      checkLibrariesFromMavenGradle(
-        buildSystem = BuildSystem.Maven,
-        kotlinVersion = kotlinVersion,
-        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars()
-      )
-      checkFacetInOneModule(
-        defaultFacetSettings[TargetPlatform.JavaScript]!!,
-        projectName, "Kotlin"
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun data(): Collection<TestParameters> {
+      return listOf(
+        TestParameters(
+          projectName = "maven_cfg_jvm",
+          project = kotlinProjects.getValue(Projects.MavenProjectJvm),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM18),
+          kotlinKind = KotlinKind.Jvm
+        ),
+        TestParameters(
+          projectName = "maven_cfg_js",
+          project = kotlinProjects.getValue(Projects.MavenProjectJs),
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript),
+          kotlinKind = KotlinKind.Js
+        )
       )
     }
   }
@@ -90,23 +92,4 @@ class CreateMavenProjectAndConfigureKotlinGuiTest : KotlinGuiTestCase() {
       }
       else true
 
-  /*@Test
-  @Ignore
-  @JvmName("maven_jvm_from_file")
-  fun createMavenAndConfigureKotlinJvmFromFile() {
-    val groupName = "group_maven_jvm"
-    val artifactName = "art_maven_jvm"
-    createMavenProject(
-        projectPath = projectFolder.absolutePath,
-        group = groupName,
-        artifact = artifactName)
-    waitAMoment(10000)
-//    configureKotlinJvm(libInPlugin = false)
-    createKotlinFile(
-        projectName = testMethod.methodName,
-        packageName = "src/main/java",
-        fileName = "K1"
-    )
-    waitAMoment(10000)
-  }*/
 }

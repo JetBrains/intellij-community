@@ -22,7 +22,10 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
-import com.sun.jdi.*;
+import com.sun.jdi.ClassNotLoadedException;
+import com.sun.jdi.InvalidTypeException;
+import com.sun.jdi.Type;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,7 +98,7 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
 
   @Override
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
       return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
     }
@@ -113,20 +116,18 @@ public class LocalVariableDescriptorImpl extends ValueDescriptorImpl implements 
         if (local != null) {
           final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
           set(expression, callback, debuggerContext, new SetValueRunnable() {
+            @Override
             public void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
                                                                                                  InvalidTypeException,
                                                                                                  EvaluateException {
-              debuggerContext.getFrameProxy().setValue(local, preprocessValue(evaluationContext, newValue, local.getType()));
+              debuggerContext.getFrameProxy().setValue(local, preprocessValue(evaluationContext, newValue, getLType()));
               update(debuggerContext);
             }
 
-            public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws InvocationException,
-                                                                                                             ClassNotLoadedException,
-                                                                                                             IncompatibleThreadStateException,
-                                                                                                             InvalidTypeException,
-                                                                                                             EvaluateException {
-              return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                   evaluationContext.getClassLoader());
+            @NotNull
+            @Override
+            public Type getLType() throws EvaluateException, ClassNotLoadedException {
+              return local.getType();
             }
           });
         }

@@ -1,19 +1,19 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.imports;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -54,8 +54,14 @@ public class AddImportHelper {
     return firstIsFromImport - secondIsFromImport;
   };
 
-  private static final Comparator<PyImportStatementBase> IMPORT_NAMES_COMPARATOR =
-    (import1, import2) -> ContainerUtil.compareLexicographically(getSortNames(import1), getSortNames(import2));
+  @NotNull
+  private static Comparator<PyImportStatementBase> getImportNamesComparator(@NotNull PyCodeStyleSettings settings) {
+    return (import1, import2) -> {
+      final Comparator<String> stringComparator =
+        settings.OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER ? String.CASE_INSENSITIVE_ORDER : Comparator.naturalOrder();
+      return ContainerUtil.compareLexicographically(getSortNames(import1), getSortNames(import2), Comparator.nullsFirst(stringComparator));
+    };
+  }
 
   @NotNull
   private static List<String> getSortNames(@NotNull PyImportStatementBase importStatement) {
@@ -87,16 +93,17 @@ public class AddImportHelper {
    * Creates and return comparator for import statements that compares them according to the rules specified in the code style settings.
    * It's intended to be used for imports that have the same import priority in order to sort them within the corresponding group.
    *
+   * @param settingsAnchor file to use as an anchor to detect settings of Optimize Imports
    * @see ImportPriority
    */
   @NotNull
-  public static Comparator<PyImportStatementBase> getSameGroupImportsComparator(@NotNull Project project) {
-    final PyCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class);
+  public static Comparator<PyImportStatementBase> getSameGroupImportsComparator(@NotNull PsiFile settingsAnchor) {
+    final PyCodeStyleSettings settings = CodeStyle.getCustomSettings(settingsAnchor, PyCodeStyleSettings.class);
     if (settings.OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST) {
-      return IMPORT_TYPE_COMPARATOR.thenComparing(IMPORT_NAMES_COMPARATOR);
+      return IMPORT_TYPE_COMPARATOR.thenComparing(getImportNamesComparator(settings));
     }
     else {
-      return IMPORT_NAMES_COMPARATOR.thenComparing(IMPORT_TYPE_COMPARATOR);
+      return getImportNamesComparator(settings).thenComparing(IMPORT_TYPE_COMPARATOR);
     }
   }
 
@@ -111,7 +118,7 @@ public class AddImportHelper {
     private final ImportPriority myPriority;
     private final String myDescription;
 
-    public ImportPriorityChoice(@NotNull ImportPriority priority, @NotNull String description) {
+    ImportPriorityChoice(@NotNull ImportPriority priority, @NotNull String description) {
       myPriority = priority;
       myDescription = description;
     }
@@ -253,7 +260,7 @@ public class AddImportHelper {
     if (newImport == null) {
       return false;
     }
-    return getSameGroupImportsComparator(existingImport.getProject()).compare(newImport, existingImport) < 0;
+    return getSameGroupImportsComparator(existingImport.getContainingFile()).compare(newImport, existingImport) < 0;
   }
 
   @NotNull
@@ -367,12 +374,10 @@ public class AddImportHelper {
       return false;
     }
     final List<PyImportElement> existingImports = ((PyFile)file).getImportTargets();
-    for (PyImportElement element : existingImports) {
-      final QualifiedName qName = element.getImportedQName();
-      if (qName != null && name.equals(qName.toString())) {
-        if ((asName != null && asName.equals(element.getAsName())) || (asName == null && element.getAsName() == null)) {
-          return false;
-        }
+    for (PyImportElement existingImport : existingImports) {
+      final String existingName = Objects.toString(existingImport.getImportedQName(), "");
+      if (name.equals(existingName) && Comparing.equal(asName, existingImport.getAsName())) {
+        return false;
       }
     }
 
@@ -497,24 +502,27 @@ public class AddImportHelper {
                                                        @Nullable ImportPriority priority,
                                                        @Nullable PsiElement anchor) {
     final List<PyFromImportStatement> existingImports = ((PyFile)file).getFromImports();
-    for (PyFromImportStatement existingImport : existingImports) {
-      if (existingImport.isStarImport()) {
-        continue;
-      }
-      final QualifiedName qName = existingImport.getImportSourceQName();
-      if (qName != null && qName.toString().equals(from) && existingImport.getRelativeLevel() == 0) {
-        for (PyImportElement el : existingImport.getImportElements()) {
-          final QualifiedName importedQName = el.getImportedQName();
-          if (importedQName != null && StringUtil.equals(name, importedQName.toString()) && StringUtil.equals(asName, el.getAsName())) {
-            return false;
-          }
+    final PyCodeStyleSettings pySettings = CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class);
+    if (!pySettings.OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS) {
+      for (PyFromImportStatement existingImport : existingImports) {
+        if (existingImport.isStarImport()) {
+          continue;
         }
-        final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
-        final PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name, asName);
-        existingImport.add(importElement);
-        // May need to add parentheses, trailing comma, etc.
-        CodeStyleManager.getInstance(file.getProject()).reformat(existingImport);
-        return true;
+        final String existingSource = Objects.toString(existingImport.getImportSourceQName(), "");
+        if (from.equals(existingSource) && existingImport.getRelativeLevel() == 0) {
+          for (PyImportElement el : existingImport.getImportElements()) {
+            final String existingName = Objects.toString(el.getImportedQName(), "");
+            if (name.equals(existingName) && Comparing.equal(asName, el.getAsName())) {
+              return false;
+            }
+          }
+          final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
+          final PyImportElement importElement = generator.createImportElement(LanguageLevel.forElement(file), name, asName);
+          existingImport.add(importElement);
+          // May need to add parentheses, trailing comma, etc.
+          CodeStyleManager.getInstance(file.getProject()).reformat(existingImport);
+          return true;
+        }
       }
     }
     addFromImportStatement(file, from, name, asName, priority, anchor);

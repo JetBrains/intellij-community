@@ -43,7 +43,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- * @since Oct 8, 2003
  */
 @SuppressWarnings("UnusedDeclaration")
 public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallback {

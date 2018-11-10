@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
+import com.intellij.internal.statistic.collectors.fus.ProductivityUsageCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -16,14 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
-@State(
-  name = "FeatureUsageStatistics",
-  storages = {
-    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
-    @Storage(value = "feature.usage.statistics.xml", roamingType = RoamingType.DISABLED, deprecated = true)
-  }
-)
+@State(name = "FeatureUsageStatistics", storages = @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED))
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;
   private static final long DAY = HOUR * 24;
@@ -72,7 +66,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
     }
 
     long current = System.currentTimeMillis();
-    long succesive_interval = descriptor.getDaysBetweenSuccesiveShowUps() * timeUnit + descriptor.getShownCount() * 2;
+    long succesive_interval = descriptor.getDaysBetweenSuccessiveShowUps() * timeUnit + descriptor.getShownCount() * 2;
     long firstShowUpInterval = descriptor.getDaysBeforeFirstShowUp() * timeUnit;
     long lastTimeUsed = descriptor.getLastTimeUsed();
     long lastTimeShown = descriptor.getLastTimeShown();
@@ -177,7 +171,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
     }
     else {
-      FeatureUsageLogger.INSTANCE.log(descriptor.getGroupId(), descriptor.getId());
+      FeatureUsageLogger.INSTANCE.log(ProductivityUsageCollector.GROUP_ID, descriptor.getId());
       descriptor.triggerUsed();
     }
   }

@@ -39,6 +39,7 @@ public class RoundedLineBorder extends LineBorder {
     myArcSize = arcSize;
   }
 
+  @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     final Graphics2D g2 = (Graphics2D)g;
 

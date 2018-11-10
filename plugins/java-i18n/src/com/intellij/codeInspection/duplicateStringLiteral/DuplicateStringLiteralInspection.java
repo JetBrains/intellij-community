@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateStringLiteral;
 
-import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
@@ -31,8 +30,8 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import com.siyeh.ig.style.UnnecessarilyQualifiedStaticUsageInspection;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,18 +61,6 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
         checkStringLiteralExpression(expression, holder, isOnTheFly);
       }
     };
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionsBundle.message("inspection.duplicates.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String getGroupDisplayName() {
-    return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
   }
 
   @Override
@@ -204,12 +191,12 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   }
 
   private boolean shouldCheck(@NotNull PsiLiteralExpression expression) {
-    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, new THashMap<>())) return false;
+    if (IGNORE_PROPERTY_KEYS && JavaI18nUtil.mustBePropertyKey(expression, null)) return false;
     return !SuppressManager.isSuppressedInspectionName(expression);
   }
 
   private static void createReplaceFixes(@NotNull List<PsiLiteralExpression> foundExpr, @NotNull PsiLiteralExpression originalExpression,
-                                         @NotNull Collection<LocalQuickFix> fixes) {
+                                         @NotNull Collection<? super LocalQuickFix> fixes) {
     Set<PsiField> constants = new THashSet<>();
     for (Iterator<PsiLiteralExpression> iterator = foundExpr.iterator(); iterator.hasNext();) {
       PsiExpression expression1 = iterator.next();
@@ -268,7 +255,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       e -> IGNORE_PROPERTY_KEYS = optionsPanel.myIgnorePropertyKeyExpressions.isSelected());
     optionsPanel.myMinStringLengthField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
-      protected void textChanged(final DocumentEvent e) {
+      protected void textChanged(@NotNull final DocumentEvent e) {
         try {
           MIN_STRING_LENGTH = Integer.parseInt(optionsPanel.myMinStringLengthField.getText());
         }
@@ -414,7 +401,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
 
       PsiLiteralExpression literal = (PsiLiteralExpression)startElement;
       List<PsiLiteralExpression> duplicates = getDuplicateLiterals(file.getProject(), literal);
-      PsiLiteralExpression[] literalExpressions = Stream.concat(duplicates.stream(), Stream.of(literal)).toArray(PsiLiteralExpression[]::new);
+      PsiLiteralExpression[] literalExpressions = StreamEx.of(duplicates).append(literal).toArray(PsiLiteralExpression.class);
       Usage[] usages = Stream.of(literalExpressions)
         .map(UsageInfo::new)
         .map(UsageInfo2UsageAdapter::new)

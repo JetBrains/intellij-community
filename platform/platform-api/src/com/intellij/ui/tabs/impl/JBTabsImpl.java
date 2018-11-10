@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -43,8 +44,8 @@ import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 
@@ -59,6 +60,7 @@ public class JBTabsImpl extends JComponent
 
   public static final Color MAC_AQUA_BG_COLOR = Gray._200;
   private static final Comparator<TabInfo> ABC_COMPARATOR = (o1, o2) -> StringUtil.naturalCompare(o1.getText(), o2.getText());
+  private static final JBValue ACTIVE_TAB_UNDERLINE_HEIGHT = new JBValue.Float(4);
 
   @NotNull final ActionManager myActionManager;
   private final List<TabInfo> myVisibleInfos = new ArrayList<>();
@@ -76,7 +78,7 @@ public class JBTabsImpl extends JComponent
   private final List<TabsListener> myTabListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myFocused;
 
-  private Getter<ActionGroup> myPopupGroup;
+  private Getter<? extends ActionGroup> myPopupGroup;
   private String myPopupPlace;
 
   TabInfo myPopupInfo;
@@ -350,7 +352,7 @@ public class JBTabsImpl extends JComponent
   }
 
   public int getActiveTabUnderlineHeight() {
-    return TabsUtil.ACTIVE_TAB_UNDERLINE_HEIGHT;
+    return ACTIVE_TAB_UNDERLINE_HEIGHT.get();
   }
 
   public boolean isEditorTabs() {
@@ -408,6 +410,7 @@ public class JBTabsImpl extends JComponent
   }
 
   protected void resetTabsCache() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myAllTabs = null;
   }
 
@@ -808,7 +811,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @NotNull
-  public JBTabs setPopupGroup(@NotNull final Getter<ActionGroup> popupGroup,
+  public JBTabs setPopupGroup(@NotNull final Getter<? extends ActionGroup> popupGroup,
                               @NotNull final String place,
                               final boolean addNavigationGroup) {
     myPopupGroup = popupGroup;
@@ -960,7 +963,7 @@ public class JBTabsImpl extends JComponent
   }
 
 
-  void fireTabRemoved(TabInfo info) {
+  void fireTabRemoved(@NotNull TabInfo info) {
     for (TabsListener eachListener : myTabListeners) {
       if (eachListener != null) {
         eachListener.tabRemoved(info);
@@ -2376,7 +2379,7 @@ public class JBTabsImpl extends JComponent
     return size;
   }
 
-  private Dimension computeSize(Function<JComponent, Dimension> transform, int tabCount) {
+  private Dimension computeSize(Function<? super JComponent, ? extends Dimension> transform, int tabCount) {
     Dimension size = new Dimension();
     for (TabInfo each : myVisibleInfos) {
       final JComponent c = each.getComponent();
@@ -2481,6 +2484,8 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
+    if (myPopupInfo == info) myPopupInfo = null;
+
     if (!isDropTarget) {
       if (info == null || !getTabs().contains(info)) return ActionCallback.DONE;
     }
@@ -2840,13 +2845,12 @@ public class JBTabsImpl extends JComponent
     protected BaseNavigationAction(@NotNull String copyFromID, @NotNull JBTabsImpl tabs, @NotNull ActionManager mgr) {
       myActionManager = mgr;
       myTabs = tabs;
-      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs);
-      Disposer.register(tabs, myShadow);
+      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs, tabs);
       setEnabledInModalContext(true);
     }
 
     @Override
-    public final void update(final AnActionEvent e) {
+    public final void update(@NotNull final AnActionEvent e) {
       JBTabsImpl tabs = e.getData(NAVIGATION_ACTIONS_KEY);
       e.getPresentation().setVisible(tabs != null);
       if (tabs == null) return;
@@ -2890,7 +2894,7 @@ public class JBTabsImpl extends JComponent
     protected abstract void _update(AnActionEvent e, final JBTabsImpl tabs, int selectedIndex);
 
     @Override
-    public final void actionPerformed(final AnActionEvent e) {
+    public final void actionPerformed(@NotNull final AnActionEvent e) {
       JBTabsImpl tabs = e.getData(NAVIGATION_ACTIONS_KEY);
       tabs = findNavigatableTabs(tabs);
       if (tabs == null) return;
@@ -3103,7 +3107,7 @@ public class JBTabsImpl extends JComponent
     }
   }
 
-  public void sortTabs(Comparator<TabInfo> comparator) {
+  public void sortTabs(Comparator<? super TabInfo> comparator) {
     Collections.sort(myVisibleInfos, comparator);
 
     relayout(true, false);
@@ -3122,7 +3126,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   @Nullable
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (myDataProvider != null) {
       final Object value = myDataProvider.getData(dataId);
       if (value != null) return value;
@@ -3407,11 +3411,6 @@ public class JBTabsImpl extends JComponent
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PAGE_TAB_LIST;
-    }
-
-    @Override
-    public int getAccessibleChildrenCount() {
-      return getTabCount();
     }
 
     @Override

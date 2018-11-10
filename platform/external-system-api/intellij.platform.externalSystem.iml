@@ -8,7 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.annotations.java5" exported="" />
+    <orderEntry type="library" exported="" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
@@ -16,9 +16,10 @@
     <orderEntry type="module" module-name="intellij.java.compiler" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.rt" exported="" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
-    <orderEntry type="library" name="de.ruedigermoeller:fst" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
-    <orderEntry type="library" name="javassist" level="project" />
-    <orderEntry type="library" name="Objenesis" level="project" />
+    <orderEntry type="library" name="de.ruedigermoeller:fst" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Objenesis" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="jackson" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="javassist" level="project" />
   </component>
 </module>

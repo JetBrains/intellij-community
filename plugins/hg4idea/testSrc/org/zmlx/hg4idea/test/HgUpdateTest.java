@@ -38,7 +38,7 @@ import java.util.Set;
 
 import static org.testng.Assert.*;
 
-@SuppressWarnings({"ConstantConditions", "ThrowableResultOfMethodCallIgnored"})
+@SuppressWarnings({"ConstantConditions"})
 public class HgUpdateTest extends HgCollaborativeTest {
 
   private VirtualFile projectRepoVirtualFile;
@@ -177,8 +177,8 @@ public class HgUpdateTest extends HgCollaborativeTest {
   @Override
   protected HgFile getHgFile(String... filepath) {
     File fileToInclude = projectRepo;
-    for (int i = 0; i < filepath.length; i++) {
-      fileToInclude = new File(fileToInclude, filepath[i]);
+    for (String path : filepath) {
+      fileToInclude = new File(fileToInclude, path);
     }
     return new HgFile(projectRepoVirtualFile, fileToInclude);
   }

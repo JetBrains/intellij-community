@@ -16,13 +16,13 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.Function;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
+import java.util.OptionalInt;
+
 public abstract class ContractValue {
   // package private to avoid uncontrolled implementations
   ContractValue() {
@@ -30,12 +30,63 @@ public abstract class ContractValue {
   }
 
   abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
+  
+  public DfaValue fromCall(DfaValueFactory factory, PsiCallExpression call) {
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return DfaUnknownValue.getInstance();
+    PsiExpressionList argumentList = call.getArgumentList();
+    if (argumentList == null) return DfaUnknownValue.getInstance();
+    DfaValue qualifierValue = null;
+    if (call instanceof PsiMethodCallExpression) {
+      PsiExpression qualifier = ((PsiMethodCallExpression)call).getMethodExpression().getQualifierExpression();
+      qualifierValue = factory.createValue(qualifier);
+    }
+    if (qualifierValue == null) {
+      qualifierValue = DfaUnknownValue.getInstance();
+    }
+    boolean varArgCall = MethodCallUtils.isVarArgCall(call);
+    PsiExpression[] args = argumentList.getExpressions();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    DfaValue[] argValues = new DfaValue[parameters.length];
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      DfaValue argValue = null;
+      if (i < args.length && (!varArgCall || i < parameters.length - 1)) {
+        argValue = factory.createValue(args[i]);
+      }
+      if (argValue == null) {
+        argValue = DfaUnknownValue.getInstance();
+      }
+      argValues[i] = argValue;
+    }
+    return makeDfaValue(factory, new DfaCallArguments(qualifierValue, argValues, JavaMethodContractUtil.isPure(method)));
+  }
+
+  /**
+   * @param other other contract condition
+   * @return true if this contract condition and other condition cannot be fulfilled at the same time
+   */
+  public boolean isExclusive(ContractValue other) {
+    return false;
+  }
 
   /**
    * @return true if this contract value represents a bounds-checking condition
    */
   public boolean isBoundCheckingCondition() {
     return false;
+  }
+
+  public DfaCallArguments updateArguments(DfaCallArguments arguments, boolean negated) {
+    return arguments;
+  }
+
+  public OptionalInt getNullCheckedArgument(boolean equalToNull) {
+    return getArgumentComparedTo(nullValue(), equalToNull);
+  }
+
+  public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
+    return OptionalInt.empty();
   }
 
   public static ContractValue qualifier() {
@@ -46,12 +97,12 @@ public abstract class ContractValue {
     return new Argument(index);
   }
 
-  public ContractValue specialField(SpecialField field) {
+  public ContractValue specialField(@NotNull SpecialField field) {
     return new Spec(this, field);
   }
 
   public static ContractValue constant(Object value, @NotNull PsiType type) {
-    return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type, null), String.valueOf(value));
+    return new IndependentValue(factory -> factory.getConstFactory().createFromValue(value, type), String.valueOf(value));
   }
 
   public static ContractValue booleanValue(boolean value) {
@@ -88,7 +139,7 @@ public abstract class ContractValue {
     }
   }
 
-  private static class Argument extends ContractValue {
+  private static final class Argument extends ContractValue {
     private final int myIndex;
 
     Argument(int index) {
@@ -100,10 +151,12 @@ public abstract class ContractValue {
       if (arguments.myArguments.length <= myIndex) {
         return DfaUnknownValue.getInstance();
       }
-      else {
-        DfaValue arg = arguments.myArguments[myIndex];
-        return arg instanceof DfaBoxedValue ? ((DfaBoxedValue)arg).getWrappedValue() : arg;
-      }
+      return arguments.myArguments[myIndex];
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj == this || (obj instanceof Argument && myIndex == ((Argument)obj).myIndex);
     }
 
     @Override
@@ -114,18 +167,28 @@ public abstract class ContractValue {
 
   private static class IndependentValue extends ContractValue {
     static final IndependentValue NULL = new IndependentValue(factory -> factory.getConstFactory().getNull(), "null");
-    static final IndependentValue TRUE = new IndependentValue(factory -> factory.getConstFactory().getTrue(), "true");
-    static final IndependentValue FALSE = new IndependentValue(factory -> factory.getConstFactory().getFalse(), "false");
+    static final IndependentValue TRUE = new IndependentValue(factory -> factory.getConstFactory().getTrue(), "true") {
+      @Override
+      public boolean isExclusive(ContractValue other) {
+        return other == FALSE;
+      }
+    };
+    static final IndependentValue FALSE = new IndependentValue(factory -> factory.getConstFactory().getFalse(), "false") {
+      @Override
+      public boolean isExclusive(ContractValue other) {
+        return other == TRUE;
+      }
+    };
     static final IndependentValue OPTIONAL_PRESENT =
-      new IndependentValue(factory -> factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true), "present");
+      new IndependentValue(factory -> DfaOptionalSupport.getOptionalValue(factory, true), "present");
     static final IndependentValue OPTIONAL_ABSENT =
-      new IndependentValue(factory -> factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false), "empty");
+      new IndependentValue(factory -> DfaOptionalSupport.getOptionalValue(factory, false), "empty");
     static final IndependentValue ZERO = new IndependentValue(factory -> factory.getInt(0), "0");
 
-    private final Function<DfaValueFactory, DfaValue> mySupplier;
+    private final Function<? super DfaValueFactory, ? extends DfaValue> mySupplier;
     private final String myPresentation;
 
-    IndependentValue(Function<DfaValueFactory, DfaValue> supplier, String presentation) {
+    IndependentValue(Function<? super DfaValueFactory, ? extends DfaValue> supplier, String presentation) {
       mySupplier = supplier;
       myPresentation = presentation;
     }
@@ -141,11 +204,11 @@ public abstract class ContractValue {
     }
   }
 
-  private static class Spec extends ContractValue {
-    private final ContractValue myQualifier;
-    private final SpecialField myField;
+  private static final class Spec extends ContractValue {
+    private final @NotNull ContractValue myQualifier;
+    private final @NotNull SpecialField myField;
 
-    Spec(ContractValue qualifier, SpecialField field) {
+    Spec(@NotNull ContractValue qualifier, @NotNull SpecialField field) {
       myQualifier = qualifier;
       myField = field;
     }
@@ -153,6 +216,14 @@ public abstract class ContractValue {
     @Override
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
       return myField.createValue(factory, myQualifier.makeDfaValue(factory, arguments));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) return true;
+      if (!(obj instanceof Spec)) return false;
+      Spec that = (Spec)obj;
+      return myQualifier.equals(that.myQualifier) && myField == that.myField;
     }
 
     @Override
@@ -185,8 +256,73 @@ public abstract class ContractValue {
     }
 
     @Override
+    public boolean isExclusive(ContractValue other) {
+      if (!(other instanceof Condition)) return false;
+      Condition that = (Condition)other;
+      if (that.myLeft.equals(myLeft) && that.myRight.equals(myRight) && that.myRelationType.getNegated() == myRelationType) {
+        return true;
+      }
+      if (that.myLeft.equals(myRight) && that.myRight.equals(myLeft) && that.myRelationType.getNegated() == myRelationType.getFlipped()) {
+        return true;
+      }
+      if (that.myRelationType == myRelationType) {
+        if (that.myLeft.equals(myLeft) && that.myRight.isExclusive(myRight)) return true;
+        if (that.myLeft.equals(myRight) && that.myRight.isExclusive(myLeft)) return true;
+      }
+      return false;
+    }
+
+    @Override
+    public DfaCallArguments updateArguments(DfaCallArguments arguments, boolean negated) {
+      int index = getNullCheckedArgument(negated).orElse(-1);
+      if (index >= 0 && index < arguments.myArguments.length) {
+        DfaValue arg = arguments.myArguments[index];
+        if (arg instanceof DfaFactMapValue) {
+          DfaValue newArg = ((DfaFactMapValue)arg).withFact(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
+          if (newArg != arg) {
+            DfaValue[] newArguments = arguments.myArguments.clone();
+            newArguments[index] = newArg;
+            return new DfaCallArguments(arguments.myQualifier, newArguments, arguments.myPure);
+          }
+        }
+      }
+      return arguments;
+    }
+
+    @Override
+    public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
+      if (myRelationType == DfaRelationValue.RelationType.equivalence(equal)) {
+        ContractValue other;
+        if (myLeft == value) {
+          other = myRight;
+        }
+        else if (myRight == value) {
+          other = myLeft;
+        }
+        else {
+          return OptionalInt.empty();
+        }
+        if (other instanceof Argument) {
+          return OptionalInt.of(((Argument)other).myIndex);
+        }
+      }
+      if (value == IndependentValue.FALSE) {
+        return getArgumentComparedTo(IndependentValue.TRUE, !equal);
+      }
+      return OptionalInt.empty();
+    }
+
+    @Override
     DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments) {
-      return factory.createCondition(myLeft.makeDfaValue(factory, arguments), myRelationType, myRight.makeDfaValue(factory, arguments));
+      DfaValue left = myLeft.makeDfaValue(factory, arguments);
+      DfaValue right = myRight.makeDfaValue(factory, arguments);
+      if (left instanceof DfaConstValue && left.getType() instanceof PsiPrimitiveType) {
+        right = DfaUtil.boxUnbox(right, left.getType());
+      }
+      if (right instanceof DfaConstValue && right.getType() instanceof PsiPrimitiveType) {
+        left = DfaUtil.boxUnbox(left, right.getType());
+      }
+      return factory.createCondition(left, myRelationType, right);
     }
 
     @Override

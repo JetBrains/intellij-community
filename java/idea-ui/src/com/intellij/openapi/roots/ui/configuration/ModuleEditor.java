@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
@@ -10,7 +8,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.module.impl.ModuleConfigurationStateImpl;
@@ -19,7 +16,6 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ModuleConfigurableEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableBase;
 import com.intellij.openapi.roots.libraries.Library;
@@ -39,13 +35,12 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
  */
-@SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public abstract class ModuleEditor implements Place.Navigator, Disposable {
   private static final Logger LOG = Logger.getInstance(ModuleEditor.class);
   private static final ExtensionPointName<ModuleConfigurableEP> MODULE_CONFIGURABLES = ExtensionPointName.create("com.intellij.moduleConfigurable");
@@ -131,7 +126,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     if (myModifiableRootModel == null) {
       final Module module = getModule();
       if (module != null) {
-        myModifiableRootModel = ((ModuleRootManagerImpl)ModuleRootManager.getInstance(module)).getModifiableModel(new UIRootConfigurationAccessor(myProject));
+        myModifiableRootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModel(new UIRootConfigurationAccessor(myProject));
       }
     }
     return myModifiableRootModel;
@@ -224,7 +219,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     for (ModuleConfigurationEditorProvider component : result) {
       reportDeprecatedModuleEditor(component.getClass());
     }
-    ContainerUtil.addAll(result, Extensions.getExtensions(ModuleConfigurationEditorProvider.EP_NAME, module));
+    ContainerUtil.addAll(result, ModuleConfigurationEditorProvider.EP_NAME.getExtensions(module));
     return result.toArray(new ModuleConfigurationEditorProvider[0]);
   }
 
@@ -575,12 +570,12 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
   }
 
   private class ModuleEditorPanel extends JPanel implements DataProvider{
-    public ModuleEditorPanel() {
+    ModuleEditorPanel() {
       super(new BorderLayout());
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
         return getModule();
       }

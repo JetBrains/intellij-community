@@ -231,12 +231,10 @@ public class ChangeSet {
 
   private <T> T accessChanges(@NotNull Producer<T> func) {
     if (isLocked) {
-      //noinspection ConstantConditions
       return func.produce();
     }
 
     synchronized (myChanges) {
-      //noinspection ConstantConditions
       return func.produce();
     }
   }

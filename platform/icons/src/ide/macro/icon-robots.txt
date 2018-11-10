@@ -1,0 +1,1 @@
+deprecated: recording_stop.png -> /actions/suspend.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Suspend

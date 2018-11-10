@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -115,8 +114,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                 @NotNull DaemonCodeAnalyzerSettings daemonCodeAnalyzerSettings,
                                 @NotNull EditorTracker editorTracker,
                                 @NotNull PsiDocumentManager psiDocumentManager,
-                                @SuppressWarnings("UnusedParameters") @NotNull final NamedScopeManager namedScopeManager,
-                                @SuppressWarnings("UnusedParameters") @NotNull final DependencyValidationManager dependencyValidationManager) {
+                                @NotNull final NamedScopeManager namedScopeManager,
+                                @NotNull final DependencyValidationManager dependencyValidationManager) {
     myProject = project;
     mySettings = daemonCodeAnalyzerSettings;
     myEditorTracker = editorTracker;
@@ -160,7 +159,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @NotNull
   @TestOnly
-  public static List<HighlightInfo> getHighlights(@NotNull Document document, HighlightSeverity minSeverity, @NotNull Project project) {
+  public static List<HighlightInfo> getHighlights(@NotNull Document document, @Nullable HighlightSeverity minSeverity, @NotNull Project project) {
     List<HighlightInfo> infos = new ArrayList<>();
     processHighlights(document, project, minSeverity, 0, document.getTextLength(), Processors.cancelableCollectProcessor(infos));
     return infos;
@@ -288,12 +287,12 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @NotNull
   @TestOnly
-  public List<HighlightInfo> runPasses(@NotNull PsiFile file,
-                                       @NotNull Document document,
-                                       @NotNull List<TextEditor> textEditors,
-                                       @NotNull int[] toIgnore,
-                                       boolean canChangeDocument,
-                                       @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
+  public void runPasses(@NotNull PsiFile file,
+                        @NotNull Document document,
+                        @NotNull List<? extends TextEditor> textEditors,
+                        @NotNull int[] toIgnore,
+                        boolean canChangeDocument,
+                        @Nullable final Runnable callbackWhileWaiting) throws ProcessCanceledException {
     assert myInitialized;
     assert !myDisposed;
     ApplicationEx application = ApplicationManagerEx.getApplicationEx();
@@ -385,8 +384,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
       UIUtil.dispatchAllInvocationEvents();
       UIUtil.dispatchAllInvocationEvents();
       assert progress.isCanceled() && progress.isDisposed();
-
-      return getHighlights(document, null, project);
     }
     finally {
       DaemonProgressIndicator.setDebug(false);
@@ -404,7 +401,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         throw new IllegalStateException("You must not perform PSI modifications from inside highlighting");
       });
     if (!canChangeDocument) {
-      myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonListenerAdapter() {
+      myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonListener() {
         @Override
         public void daemonCancelEventOccurred(@NotNull String reason) {
           throw new IllegalStateException("You must not cancel daemon inside highlighting test: "+reason);
@@ -596,11 +593,11 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
   public synchronized boolean isRunning() {
     return !myUpdateProgress.isCanceled();
   }
-  
+
   @TestOnly
   public boolean isRunningOrPending() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    return isRunning() || !myUpdateRunnableFuture.isDone();
+    return isRunning() || !myUpdateRunnableFuture.isDone() || GeneralHighlightingPass.isRestartPending();
   }
 
   // return true if the progress really was canceled
@@ -610,7 +607,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     boolean restart = toRestartAlarm && !myDisposed && myInitialized;
 
     if (restart && myUpdateRunnableFuture.isDone()) {
-      myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.AUTOREPARSE_DELAY, TimeUnit.MILLISECONDS);
+      myUpdateRunnableFuture = myAlarm.schedule(myUpdateRunnable, mySettings.getAutoReparseDelay(), TimeUnit.MILLISECONDS);
     }
 
     return canceled;
@@ -636,7 +633,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
                                              @NotNull final HighlightSeverity minSeverity,
                                              final int offset,
                                              final boolean includeFixRange,
-                                             @NotNull final Processor<HighlightInfo> processor) {
+                                             @NotNull final Processor<? super HighlightInfo> processor) {
     return processHighlights(document, project, null, 0, document.getTextLength(), info -> {
       if (!isOffsetInsideHighlightInfo(offset, info, includeFixRange)) return true;
 
@@ -793,7 +790,6 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         // we'll restart when the write action finish
         return;
       }
-      Editor activeEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       final PsiDocumentManagerBase documentManager = (PsiDocumentManagerBase)dca.myPsiDocumentManager;
 
       if (documentManager.hasUncommitedDocuments()) {
@@ -802,10 +798,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         return;
       }
 
-      if (!ApplicationManager.getApplication().isOnAir() && activeEditor == null) {
-        AutoPopupController.runTransactionWithEverythingCommitted(myProject, this);
-        return;
-      }
+      //if (!ApplicationManager.getApplication().isOnAir() && activeEditor == null) {
+      //  AutoPopupController.runTransactionWithEverythingCommitted(myProject, this);
+      //  return;
+      //}
       if (RefResolveService.ENABLED &&
           !RefResolveService.getInstance(myProject).isUpToDate() &&
           RefResolveService.getInstance(myProject).getQueueSize() == 1) {
@@ -822,9 +818,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         }
       }
 
-      boolean hasPasses = false;
       // wait for heavy processing to stop, re-schedule daemon but not too soon
       if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        boolean hasPasses = false;
         for (Map.Entry<FileEditor, HighlightingPass[]> entry : passes.entrySet()) {
           HighlightingPass[] filtered = Arrays.stream(entry.getValue()).filter(DumbService::isDumbAware).toArray(HighlightingPass[]::new);
           entry.setValue(filtered);
@@ -867,7 +863,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
     private final Project myProject;
     private Collection<FileEditor> myFileEditors;
 
-    public MyDaemonProgressIndicator(Project project, Collection<FileEditor> fileEditors) {
+    MyDaemonProgressIndicator(@NotNull Project project, @NotNull Collection<FileEditor> fileEditors) {
       myFileEditors = fileEditors;
       myProject = project;
     }
@@ -884,7 +880,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
 
   @Override
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile file) {
-    for (ReferenceImporter importer : Extensions.getExtensions(ReferenceImporter.EP_NAME)) {
+    for (ReferenceImporter importer : ReferenceImporter.EP_NAME.getExtensionList()) {
       if (importer.autoImportReferenceAtCursor(editor, file)) break;
     }
   }

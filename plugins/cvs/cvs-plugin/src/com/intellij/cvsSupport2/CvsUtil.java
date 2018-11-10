@@ -168,6 +168,7 @@ public class CvsUtil {
 
   private static FileCondition fileIsUnderCvsCondition() {
     return new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileIsUnderCvs(file);
       }
@@ -187,6 +188,7 @@ public class CvsUtil {
 
   public static boolean filesHaveParentUnderCvs(File[] files) {
     return allSatisfy(files, new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileHasParentUnderCvs(file);
       }
@@ -420,6 +422,7 @@ public class CvsUtil {
 
   public static boolean filesExistInCvs(File[] files) {
     return allSatisfy(files, new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileIsUnderCvs(file) && !fileIsLocallyAdded(file);
       }
@@ -428,6 +431,7 @@ public class CvsUtil {
 
   public static boolean filesAreNotDeleted(File[] files) {
     return allSatisfy(files, new FileCondition() {
+      @Override
       public boolean verify(File file) {
         return fileIsUnderCvs(file)
                && !fileIsLocallyAdded(file)
@@ -730,10 +734,11 @@ public class CvsUtil {
   private static class ReverseFileCondition implements FileCondition {
     private final FileCondition myCondition;
 
-    public ReverseFileCondition(FileCondition condition) {
+    ReverseFileCondition(FileCondition condition) {
       myCondition = condition;
     }
 
+    @Override
     public boolean verify(File file) {
       return !myCondition.verify(file);
     }
@@ -761,10 +766,10 @@ public class CvsUtil {
     }
 
     public String toString() {
-      StringBuffer result = new StringBuffer();
+      StringBuilder result = new StringBuilder();
       result.append(myName);
       result.append(DELIM);
-      result.append(String.valueOf(myPreviousTime));
+      result.append(myPreviousTime);
       result.append(DELIM);
       for (int i = 0; i < myRevisions.size(); i++) {
         if (i > 0) {

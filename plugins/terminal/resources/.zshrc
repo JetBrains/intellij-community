@@ -44,3 +44,34 @@ then
   source $(echo $JEDITERM_SOURCE)
   unset JEDITERM_SOURCE
 fi
+
+function override_jb_variables {
+  for VARIABLE in $(env)
+  do
+    NAME=${VARIABLE%%=*}
+    if [[ $NAME = '_INTELLIJ_FORCE_SET_'* ]]
+    then
+      NEW_NAME=${NAME:20}
+      if [ -n "$NEW_NAME" ]
+      then
+        VALUE=${VARIABLE#*=}
+        export "$NEW_NAME"="$VALUE"
+      fi
+    fi
+  done
+}
+
+override_jb_variables
+
+function configureCommandHistory {
+  local commandHistoryFile="$__INTELLIJ_COMMAND_HISTFILE__"
+  if [ -n "$commandHistoryFile" ]
+  then
+    if ! [ -s "$commandHistoryFile" ] && [ -f "$HISTFILE" ]
+    then
+      cp "$HISTFILE" "$commandHistoryFile"
+    fi
+    export HISTFILE="$commandHistoryFile"
+  fi
+}
+configureCommandHistory

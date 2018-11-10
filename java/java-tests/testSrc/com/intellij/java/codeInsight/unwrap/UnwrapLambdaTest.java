@@ -78,6 +78,16 @@ public class UnwrapLambdaTest extends UnwrapTestCase {
                     "}\n", 1);
   }
 
+  public void testUnwrapAssignmentWithCodeBlock() throws Exception {
+    assertUnwrapped("{\n" +
+                    "    Runnable r = () -> {in<caret>t i = 0;};\n" +
+                    "}\n",
+
+                    "{\n" +
+                    "    int i = 0;\n" +
+                    "}\n");
+  }
+
   public void testUnwrapUnresolved() throws Exception {
     assertUnwrapped("{\n" +
                     "    () -> <caret>null;\n" +

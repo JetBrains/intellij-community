@@ -75,3 +75,39 @@ class TypeParameterWithEnumBound<E extends Enum<E>> {
     }
   }
 }
+class Demo {
+
+  boolean compare(Object... objects) {
+    Object object = objects[0];
+    return object == Enum.A; // <---
+  }
+
+  enum Enum {
+    A,B
+  }
+}
+final class Test {
+
+  public void doSomething(Object other) {
+    if(this == other) {
+      // No Warning
+    }
+    if(other == this) {
+      // Warning
+    }
+  }
+
+}
+
+class Test2 {
+  private Test2() {}
+
+  public void doSomething(Object other) {
+    if(this == other) {
+      // No Warning
+    }
+    if(other == this) {
+      // Warning
+    }
+  }
+}

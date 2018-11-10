@@ -21,7 +21,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public interface ExternalLibraryDependency extends ExternalDependency {
   /**

@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface GroovyResolveResult extends ResolveResult {
 
-  @Deprecated
-  GroovyResolveResult EMPTY_RESULT = EmptyGroovyResolveResult.INSTANCE;
-
   GroovyResolveResult[] EMPTY_ARRAY = new GroovyResolveResult[0];
 
   boolean isAccessible();

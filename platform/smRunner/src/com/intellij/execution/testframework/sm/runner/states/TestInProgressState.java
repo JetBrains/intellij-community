@@ -28,26 +28,32 @@ public class TestInProgressState extends AbstractState {
   protected TestInProgressState() {
   }
 
+  @Override
   public boolean isInProgress() {
     return true;
   }
 
+  @Override
   public boolean isDefect() {
     return false;
   }
 
+  @Override
   public boolean wasLaunched() {
     return true;
   }
 
+  @Override
   public boolean isFinal() {
     return false;
   }
 
+  @Override
   public boolean wasTerminated() {
     return false;
   }
 
+  @Override
   public Magnitude getMagnitude() {
     return Magnitude.RUNNING_INDEX;
   }

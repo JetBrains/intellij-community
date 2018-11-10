@@ -15,13 +15,15 @@
  */
 package com.intellij.ide.favoritesTreeView;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author Konstantin Bulenkov
  */
 public interface FavoritesListener {
   void rootsChanged();
 
-  void listAdded(String listName);
+  void listAdded(@NotNull String listName);
 
-  void listRemoved(String listName);
+  void listRemoved(@NotNull String listName);
 }

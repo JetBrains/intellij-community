@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IntIntFunction;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,10 +13,7 @@ import java.util.*;
 /**
  * A storage for stub-related data, shared by all stubs in one file. More memory-efficient, than keeping the same data in stub objects themselves.
  */
-class StubList {
-  /** The list of all stubs ordered by id. The order is DFS (except maybe temporarily during construction, fixed by {@link #finalizeLoadingStage()} later) */
-  private final ArrayList<StubBase<?>> myPlainList;
-
+abstract class StubList extends AbstractList<StubBase<?>> {
   /** A list to hold ids of stub children at contiguous ranges, to avoid allocating separate lists in each parent stub */
   private final MostlyUShortIntList myJoinedChildrenList;
 
@@ -27,7 +25,7 @@ class StubList {
    * For each id there's 3 values:
    * <ol>
    *   <li>element type id</li>
-   *   <li>children start: 0 when children are found in {@link #myPlainList} right after parent id, a positive integer for an offset in {@link #myJoinedChildrenList} where the children start, or {@link #IN_TEMP_MAP}</li>
+   *   <li>children start: 0 when children are found in {@link #toPlainList()} right after parent id, a positive integer for an offset in {@link #myJoinedChildrenList} where the children start, or {@link #IN_TEMP_MAP}</li>
    *   <li>children count</li>
    * </ol>
    */
@@ -36,17 +34,16 @@ class StubList {
   @Nullable private TempState myTempState = new TempState();
 
   StubList(int initialCapacity) {
-    myPlainList = new ArrayList<>(initialCapacity);
     myStubData = new MostlyUShortIntList(initialCapacity * 3);
     myJoinedChildrenList = new MostlyUShortIntList(initialCapacity);
-    myJoinedChildrenList.add(0); // indices in this list should be non-zero 
+    myJoinedChildrenList.add(0); // indices in this list should be non-zero
   }
 
   IStubElementType<?, ?> getStubType(int id) {
     return (IStubElementType<?, ?>)IElementType.find(getStubTypeIndex(id));
   }
 
-  private short getStubTypeIndex(int id) {
+  short getStubTypeIndex(int id) {
     return (short)myStubData.get(id * 3);
   }
 
@@ -62,39 +59,32 @@ class StubList {
     return myStubData.get(childrenStartIndex(id));
   }
 
-  private int getChildrenCount(int id) {
+  int getChildrenCount(int id) {
     return myStubData.get(childrenCountIndex(id));
   }
 
   void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
-    int stubId = myPlainList.size();
-    setStubToListReferences(stub, stubId);
+    int stubId = size();
+    stub.id = stubId;
 
     int parentId = parent == null ? -1 : parent.id;
     if (nonDfsOrderDetected(parentId, stubId)) {
       Objects.requireNonNull(myTempState).switchChildrenToTempMap(parentId);
     }
 
-    addStub(stub, stubId, parentId, type == null ? 0 : type.getIndex());
+    addStub(stubId, parentId, type == null ? 0 : type.getIndex());
   }
 
   private boolean nonDfsOrderDetected(int parentId, int childId) {
     return parentId >= 0 && childId != parentId + 1 && getChildrenCount(parentId) == 0;
   }
 
-  private void setStubToListReferences(@NotNull StubBase<?> stub, int stubId) {
-    stub.myStubList = this;
-    stub.id = stubId;
-  }
-
-  private void addStub(@NotNull StubBase<?> child, int childId, int parentId, short elementTypeIndex) {
+  void addStub(int childId, int parentId, short elementTypeIndex) {
     assert myTempState != null;
-    assert childId == myPlainList.size();
 
-    myPlainList.add(child);
     myStubData.add(elementTypeIndex); myStubData.add(0); myStubData.add(0);
 
-    if (parentId < 0) return;
+    if (childId == 0) return;
 
     int childrenCount = getChildrenCount(parentId);
     int childrenStart = myTempState.ensureCapacityForNextChild(childId, parentId, childrenCount);
@@ -108,6 +98,10 @@ class StubList {
     }
 
     myStubData.set(childrenCountIndex(parentId), childrenCount + 1);
+  }
+
+  int getParentIndex(int childIndex) {
+    return ((StubBase)get(childIndex).getParentStub()).id;
   }
 
   private enum ChildrenStorage { inPlainList, inJoinedList, inTempMap }
@@ -132,10 +126,13 @@ class StubList {
     }
   }
 
-  void prepareForChildren(StubBase<?> parent, int childrenCount) {
+  void prepareForChildren(int parentId, int childrenCount) {
     assert myTempState != null;
-    myTempState.prepareForChildren(parent.id, childrenCount);
+    myTempState.prepareForChildren(parentId, childrenCount);
   }
+
+  @Nullable
+  abstract StubBase<?> getCachedStub(int index);
 
   List<StubBase<?>> getChildrenStubs(int id) {
     int count = getChildrenCount(id);
@@ -143,7 +140,7 @@ class StubList {
 
     int start = getChildrenStart(id);
     switch (getChildrenStorage(start)) {
-      case inPlainList: return myPlainList.subList(id + 1, id + 1 + count);
+      case inPlainList: return subList(id + 1, id + 1 + count);
       case inJoinedList: return idSubList(myJoinedChildrenList, start, count);
       default: return idSubList(tempMap().get(id), 0, count);
     }
@@ -153,7 +150,8 @@ class StubList {
     return new AbstractList<StubBase<?>>() {
       @Override
       public StubBase<?> get(int index) {
-        return myPlainList.get(idList.get(start + index));
+        if (index < 0 || index >= count) throw new IndexOutOfBoundsException("index=" + index + ", size=" + count);
+        return StubList.this.get(idList.get(start + index));
       }
 
       @Override
@@ -184,10 +182,10 @@ class StubList {
                                                                                  IntIntFunction idList,
                                                                                  int start, int end) {
     for (int i = start; i < end; ++i) {
-      int id = idList.get(i);
+      int id = idList.fun(i);
       if (elementType.getIndex() == getStubTypeIndex(id)) {
         //noinspection unchecked
-        return (S)myPlainList.get(id);
+        return (S)get(id);
       }
     }
     return null;
@@ -199,52 +197,26 @@ class StubList {
    */
   @NotNull
   StubList finalizeLoadingStage() {
-    if (myTempState == null) return this;
-    
-    if (!isChildrenLayoutOptimal()) {
-      return createOptimizedCopy();
+    if (myTempState != null) {
+      myTempState = null;
+      myJoinedChildrenList.trimToSize();
+      myStubData.trimToSize();
     }
-    
-    myTempState = null;
-    myPlainList.trimToSize();
-    myJoinedChildrenList.trimToSize();
-    myStubData.trimToSize();
     return this;
   }
 
   @NotNull
   List<StubElement<?>> toPlainList() {
-    return Collections.unmodifiableList(myPlainList);
-  }
-
-  @NotNull
-  private StubList createOptimizedCopy() {
-    StubList copy = new StubList(myPlainList.size());
-    new Object() {
-      void visitStub(StubBase<?> stub, int parentId) {
-        int idInCopy = copy.myPlainList.size();
-        copy.addStub(stub, idInCopy, parentId, getStubTypeIndex(stub.id));
-
-        List<StubBase<?>> children = getChildrenStubs(stub.id);
-        Objects.requireNonNull(copy.myTempState).prepareForChildren(idInCopy, children.size());
-
-        for (StubBase<?> child : children) {
-          visitStub(child, idInCopy);
-        }
-      }
-    }.visitStub(myPlainList.get(0), -1);
-
-    assert copy.isChildrenLayoutOptimal();
-
-    for (int i = 0; i < copy.myPlainList.size(); i++) {
-      copy.setStubToListReferences(copy.myPlainList.get(i), i);
-    }
-
-    return copy.finalizeLoadingStage();
+    //noinspection unchecked
+    return (List)this;
   }
 
   boolean isChildrenLayoutOptimal() {
     return myTempState == null || myTempState.myTempJoinedChildrenMap == null;
+  }
+
+  boolean areChildrenNonAdjacent(int childId, int parentId) {
+    return getParentIndex(childId - 1) != parentId;
   }
 
   private class TempState {
@@ -278,10 +250,6 @@ class StubList {
         return IN_TEMP_MAP;
       }
       return childrenStart;
-    }
-
-    private boolean areChildrenNonAdjacent(int childId, int parentId) {
-      return myPlainList.get(childId - 1).getParentStub() != myPlainList.get(parentId);
     }
 
     private int switchChildrenToJoinedList(int parentId, int childrenCount, int slotsToReserve) {
@@ -320,7 +288,7 @@ class StubList {
     }
 
     void prepareForChildren(int parentId, int childrenCount) {
-      assert parentId == myPlainList.size() - 1;
+      assert parentId == size() - 1;
       if (childrenCount == 0) return;
 
       if (myCurrentParent >= 0) {
@@ -333,5 +301,78 @@ class StubList {
     }
 
   }
-  
+
 }
+
+class MaterialStubList extends StubList {
+  /** The list of all stubs ordered by id. The order is DFS (except maybe temporarily during construction, fixed by {@link #finalizeLoadingStage()} later) */
+  private final ArrayList<StubBase<?>> myPlainList;
+
+  MaterialStubList(int initialCapacity) {
+    super(initialCapacity);
+    myPlainList = new ArrayList<>(initialCapacity);
+  }
+
+  @Override
+  void addStub(@NotNull StubBase<?> stub, @Nullable StubBase<?> parent, @Nullable IStubElementType<?, ?> type) {
+    super.addStub(stub, parent, type);
+    myPlainList.add(stub);
+  }
+
+  @NotNull
+  @Override
+  StubList finalizeLoadingStage() {
+    if (!isChildrenLayoutOptimal()) {
+      return createOptimizedCopy();
+    }
+
+    myPlainList.trimToSize();
+    return super.finalizeLoadingStage();
+  }
+
+  @NotNull
+  private StubList createOptimizedCopy() {
+    MaterialStubList copy = new MaterialStubList(size());
+    new Object() {
+      void visitStub(StubBase<?> stub, int parentId) {
+        int idInCopy = copy.size();
+        copy.addStub(idInCopy, parentId, getStubTypeIndex(stub.id));
+        copy.myPlainList.add(stub);
+
+        List<StubBase<?>> children = getChildrenStubs(stub.id);
+        copy.prepareForChildren(idInCopy, children.size());
+
+        for (StubBase<?> child : children) {
+          visitStub(child, idInCopy);
+        }
+      }
+    }.visitStub(get(0), -1);
+
+    assert copy.isChildrenLayoutOptimal();
+
+    for (int i = 0; i < copy.size(); i++) {
+      StubBase<?> stub = copy.get(i);
+      stub.myStubList = copy;
+      stub.id = i;
+    }
+
+    return copy.finalizeLoadingStage();
+  }
+
+  @Override
+  public int size() {
+    return myPlainList.size();
+  }
+
+  @Override
+  public StubBase<?> get(int id) {
+    return myPlainList.get(id);
+  }
+
+  @Nullable
+  @Override
+  StubBase<?> getCachedStub(int index) {
+    return get(index);
+  }
+}
+

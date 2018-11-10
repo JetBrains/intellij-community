@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.xdebugger.XDebugProcess
 import org.jetbrains.rpc.LOG
+import java.io.OutputStream
 
 class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val handler: ProcessHandler) : ProcessHandler(), KillableProcess {
   init {
@@ -25,7 +26,7 @@ class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val
     })
   }
 
-  override fun isSilentlyDestroyOnClose() = handler.isSilentlyDestroyOnClose
+  override fun isSilentlyDestroyOnClose(): Boolean = handler.isSilentlyDestroyOnClose
 
   override fun startNotify() {
     handler.startNotify()
@@ -61,11 +62,11 @@ class ProcessHandlerWrapper(private val debugProcess: XDebugProcess, private val
       }
   }
 
-  override fun detachIsDefault() = handler.detachIsDefault()
+  override fun detachIsDefault(): Boolean = handler.detachIsDefault()
 
-  override fun getProcessInput() = handler.processInput
+  override fun getProcessInput(): OutputStream? = handler.processInput
 
-  override fun canKillProcess() = handler is KillableProcess && handler.canKillProcess()
+  override fun canKillProcess(): Boolean = handler is KillableProcess && handler.canKillProcess()
 
   override fun killProcess() {
     if (handler is KillableProcess) {

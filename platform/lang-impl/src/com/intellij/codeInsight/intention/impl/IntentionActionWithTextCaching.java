@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,11 +43,11 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     this(action, action.getText(), null, null);
   }
 
-  IntentionActionWithTextCaching(@NotNull HighlightInfo.IntentionActionDescriptor descriptor, @Nullable BiConsumer<IntentionActionWithTextCaching,IntentionAction> markInvoked){
+  IntentionActionWithTextCaching(@NotNull HighlightInfo.IntentionActionDescriptor descriptor, @Nullable BiConsumer<? super IntentionActionWithTextCaching,? super IntentionAction> markInvoked){
     this(descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), markInvoked);
   }
 
-  private IntentionActionWithTextCaching(@NotNull IntentionAction action, String displayName, @Nullable Icon icon, @Nullable BiConsumer<IntentionActionWithTextCaching, IntentionAction> markInvoked) {
+  private IntentionActionWithTextCaching(@NotNull IntentionAction action, String displayName, @Nullable Icon icon, @Nullable BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
@@ -89,6 +90,11 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   @NotNull
   public List<IntentionAction> getOptionInspectionFixes() {
     return myOptionInspectionFixes;
+  }
+
+  @NotNull
+  public List<IntentionAction> getOptionActions() {
+    return ContainerUtil.concat(myOptionIntentions, myOptionErrorFixes, myOptionInspectionFixes);
   }
 
   String getToolName() {
@@ -137,9 +143,9 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   // IntentionAction which wraps the original action and then marks it as executed to hide it from the popup to avoid invoking it twice accidentally
   private class MyIntentionAction implements IntentionAction, IntentionActionDelegate, Comparable<MyIntentionAction>, ShortcutProvider {
     private final IntentionAction myAction;
-    private final BiConsumer<IntentionActionWithTextCaching, IntentionAction> myMarkInvoked;
+    private final BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> myMarkInvoked;
 
-    MyIntentionAction(IntentionAction action, BiConsumer<IntentionActionWithTextCaching, IntentionAction> markInvoked) {
+    MyIntentionAction(IntentionAction action, BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
       myAction = action;
       myMarkInvoked = markInvoked;
     }

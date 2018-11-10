@@ -19,7 +19,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import org.netbeans.lib.cvsclient.command.Watch;
 
 import javax.swing.*;
-import java.text.MessageFormat;
 
 /**
  * author: lesya
@@ -42,6 +41,7 @@ public class WatcherDialog extends DialogWrapper{
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }

@@ -163,9 +163,11 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     if (group.size() > 1) {
+      //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
       Collections.sort(group,
                        Comparator.<PsiFileSystemItem, Boolean>comparing(f -> f instanceof PsiDirectory).
                          thenComparing(qualifierMatchingDegrees::get).
+                         thenComparing(i -> FileUtilRt.getNameWithoutExtension(i.getName()).toLowerCase()).
                          thenComparing(i -> i.getName().toLowerCase()).
                          thenComparing(nesting::get).
                          thenComparing(dirCloseness::get).

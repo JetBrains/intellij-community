@@ -71,12 +71,12 @@ public class InspectionManagerEx extends InspectionManagerBase {
             private static final String PREFIX = "of ";
 
             @Override
-            public void contentAdded(ContentManagerEvent event) {
+            public void contentAdded(@NotNull ContentManagerEvent event) {
               handleContentSizeChanged();
             }
 
             @Override
-            public void contentRemoved(ContentManagerEvent event) {
+            public void contentRemoved(@NotNull ContentManagerEvent event) {
               handleContentSizeChanged();
             }
 

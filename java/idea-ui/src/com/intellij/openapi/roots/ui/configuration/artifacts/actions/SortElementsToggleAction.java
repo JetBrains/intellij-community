@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -33,12 +34,12 @@ public class SortElementsToggleAction extends ToggleAction implements DumbAware 
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return myLayoutTreeComponent.isSortElements();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     myLayoutTreeComponent.setSortElements(state);
   }
 }

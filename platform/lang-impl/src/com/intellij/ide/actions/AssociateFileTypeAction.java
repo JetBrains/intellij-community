@@ -23,27 +23,27 @@ import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public class AssociateFileTypeAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile file = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
     FileTypeChooser.associateFileType(file.getName());
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    DataContext dataContext = e.getDataContext();
-    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    Project project = e.getProject();
     boolean haveSmthToDo;
     if (project == null || file == null || file.isDirectory()) {
       haveSmthToDo = false;
     }
     else {
       // the action should also be available for files which have been auto-detected as text or as a particular language (IDEA-79574)
-      haveSmthToDo = FileTypeManager.getInstance().getFileTypeByFileName(file.getName()) == FileTypes.UNKNOWN &&
+      haveSmthToDo = FileTypeManager.getInstance().getFileTypeByFileName(file.getNameSequence()) == FileTypes.UNKNOWN &&
                      !(file.getFileSystem() instanceof NonPhysicalFileSystem) &&
                      !ScratchRootType.getInstance().containsFile(file);
     }

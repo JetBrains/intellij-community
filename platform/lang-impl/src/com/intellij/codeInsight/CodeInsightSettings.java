@@ -41,8 +41,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public CodeInsightSettings() {
     Application application = ApplicationManager.getApplication();
     if (Registry.is("java.completion.argument.hints") ||
-        (application != null && application.isInternal() && !application.isUnitTestMode()) && 
-        Registry.is("java.completion.argument.hints.internal")) {
+        application != null && application.isInternal() && !application.isUnitTestMode() && Registry.is("java.completion.argument.hints.internal")) {
       SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION = true;
       Registry.get("java.completion.argument.hints").setValue(false);
       Registry.get("java.completion.argument.hints.internal").setValue(false);
@@ -61,7 +60,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   }
 
   public boolean SHOW_EXTERNAL_ANNOTATIONS_INLINE = true;
-  public boolean SHOW_INFERRED_ANNOTATIONS_INLINE = false;
+  public boolean SHOW_INFERRED_ANNOTATIONS_INLINE;
 
 
   public boolean SHOW_METHOD_CHAIN_TYPES_INLINE = true;
@@ -83,6 +82,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
 
+  @Deprecated
   public boolean AUTOCOMPLETE_COMMON_PREFIX = true;
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO;
@@ -143,7 +143,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   /**
    * @deprecated use {@link CodeInsightWorkspaceSettings#optimizeImportsOnTheFly}
    */
-  public boolean OPTIMIZE_IMPORTS_ON_THE_FLY;
+  @SuppressWarnings("MissingDeprecatedAnnotation") public boolean OPTIMIZE_IMPORTS_ON_THE_FLY;
 
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   public boolean ADD_MEMBER_IMPORTS_ON_THE_FLY = true;
@@ -158,6 +158,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
    */
   @Property(surroundWithTag = false)
   @XCollection(elementName = "EXCLUDED_PACKAGE", valueAttributeName = "NAME")
+  @NotNull
   public String[] EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
 
   @Override
@@ -204,5 +205,12 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     catch (XmlSerializationException e) {
       LOG.info(e);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    return ReflectionUtil.comparePublicNonFinalFields(this, o);
   }
 }

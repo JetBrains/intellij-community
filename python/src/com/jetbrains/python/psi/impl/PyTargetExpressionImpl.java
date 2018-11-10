@@ -1,12 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -35,6 +37,7 @@ import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
 import com.jetbrains.python.psi.impl.references.PyTargetReference;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -268,7 +271,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       if (enterType != null) {
         return isAsync ? Ref.deref(PyTypingTypeProvider.coroutineOrGeneratorElementType(enterType)) : enterType;
       }
-      for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+      for (PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
         final PyType typeFromProvider = provider.getContextManagerVariableType(cls, withExpression, context);
         if (typeFromProvider != null) {
           return typeFromProvider;
@@ -484,6 +487,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return myQualifiedName;
   }
 
+  @Override
   public String toString() {
     return super.toString() + ": " + getName();
   }
@@ -505,12 +509,6 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     return getQualifier() != null;
   }
 
-  @Nullable
-  @Override
-  public PsiElement resolveAssignedValue(@NotNull PyResolveContext resolveContext) {
-    return ContainerUtil.getFirstItem(multiResolveAssignedValue(resolveContext));
-  }
-
   @NotNull
   @Override
   public List<PsiElement> multiResolveAssignedValue(@NotNull PyResolveContext resolveContext) {
@@ -527,24 +525,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
 
       if (qName != null && qName.getComponentCount() != 0) {
         final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
-        if (owner instanceof PyTypedElement) {
-          List<? extends RatedResolveResult> resolved =
-            Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_NORMAL, owner));
-
-          for (String component : qName.getComponents()) {
-            resolved = PyUtil.filterTopPriorityResults(
-              StreamEx
-                .of(resolved)
-                .map(ResolveResult::getElement)
-                .select(PyTypedElement.class)
-                .map(context::getType)
-                .nonNull()
-                .flatCollection(qualifier -> qualifier.resolveMember(component, null, AccessDirection.READ, resolveContext))
-                .toList()
-            );
-          }
-
-          return ContainerUtil.mapNotNull(resolved, ResolveResult::getElement);
+        if (owner != null) {
+          return PyResolveUtil.resolveQualifiedNameInScope(qName, owner, context);
         }
       }
 

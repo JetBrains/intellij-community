@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.extern;
 
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -19,6 +17,7 @@ public interface IFernflowerPreferences {
   String HIDE_DEFAULT_CONSTRUCTOR = "hdc";
   String DECOMPILE_GENERIC_SIGNATURES = "dgs";
   String NO_EXCEPTIONS_RETURN = "ner";
+  String ENSURE_SYNCHRONIZED_MONITOR = "esm";
   String DECOMPILE_ENUM = "den";
   String REMOVE_GET_CLASS_NEW = "rgn";
   String LITERALS_AS_IS = "lit";
@@ -33,6 +32,8 @@ public interface IFernflowerPreferences {
   String IDEA_NOT_NULL_ANNOTATION = "inn";
   String LAMBDA_TO_ANONYMOUS_CLASS = "lac";
   String BYTECODE_SOURCE_MAPPING = "bsm";
+  String IGNORE_INVALID_BYTECODE = "iib";
+  String VERIFY_ANONYMOUS_CLASSES = "vac";
 
   String LOG_LEVEL = "log";
   String MAX_PROCESSING_METHOD = "mpm";
@@ -62,6 +63,7 @@ public interface IFernflowerPreferences {
     defaults.put(HIDE_DEFAULT_CONSTRUCTOR, "1");
     defaults.put(DECOMPILE_GENERIC_SIGNATURES, "0");
     defaults.put(NO_EXCEPTIONS_RETURN, "1");
+    defaults.put(ENSURE_SYNCHRONIZED_MONITOR, "1");
     defaults.put(DECOMPILE_ENUM, "1");
     defaults.put(REMOVE_GET_CLASS_NEW, "1");
     defaults.put(LITERALS_AS_IS, "0");
@@ -76,6 +78,8 @@ public interface IFernflowerPreferences {
     defaults.put(IDEA_NOT_NULL_ANNOTATION, "1");
     defaults.put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
     defaults.put(BYTECODE_SOURCE_MAPPING, "0");
+    defaults.put(IGNORE_INVALID_BYTECODE, "0");
+    defaults.put(VERIFY_ANONYMOUS_CLASSES, "0");
 
     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     defaults.put(MAX_PROCESSING_METHOD, "0");

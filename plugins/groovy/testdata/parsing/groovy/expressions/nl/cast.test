@@ -1,0 +1,12 @@
+(a)
+b
+-----
+Groovy script
+  Parenthesized expression
+    PsiElement(()('(')
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement())(')')
+  PsiElement(new line)('\n')
+  Reference expression
+    PsiElement(identifier)('b')

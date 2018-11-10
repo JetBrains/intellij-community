@@ -28,9 +28,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String JAVA_UTIL_MAP_ENTRY = CommonClassNames.JAVA_UTIL_MAP + ".Entry";
 
@@ -73,7 +70,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
       }
 
       private boolean allUsagesAllowed(@NotNull PsiParameter entry) {
-        return ReferencesSearch.search(entry).forEach(entryRef -> {
+        return ReferencesSearch.search(entry).allMatch(entryRef -> {
           PsiMethodCallExpression entryCall =
             ExpressionUtils.getCallForQualifier(ObjectUtils.tryCast(entryRef.getElement(), PsiExpression.class));
           return ENTRY_GETTER.test(entryCall);

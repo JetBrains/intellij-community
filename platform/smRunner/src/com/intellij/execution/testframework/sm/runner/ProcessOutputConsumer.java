@@ -14,6 +14,7 @@ public interface ProcessOutputConsumer extends Disposable {
   /**
    * @deprecated use {@link #flushBufferOnProcessTermination(int)}
    */
+  @Deprecated
   default void flushBufferBeforeTerminating() {}
 
   default void flushBufferOnProcessTermination(int exitCode) {

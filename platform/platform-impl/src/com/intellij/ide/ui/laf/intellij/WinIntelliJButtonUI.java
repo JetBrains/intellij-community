@@ -18,7 +18,6 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.util.ui.*;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -67,7 +66,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     if (UIUtil.isHelpButton(c)) {
-      Icon help = IconCache.getIcon("winHelp");
+      Icon help = LafIconLookup.getIcon("winHelp");
       Insets i = c.getInsets();
       help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
     } else if (c instanceof AbstractButton) {
@@ -118,7 +117,7 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
     Graphics2D g2 = (Graphics2D)g.create();
     try {
       g2.setColor(UIManager.getColor("Button.disabledText"));
-      SwingUtilities2.drawStringUnderlineCharAt(c, g2, text, -1,
+      UIUtilities.drawStringUnderlineCharAt(c, g2, text, -1,
                                                 textRect.x + getTextShiftOffset(),
                                                 textRect.y + metrics.getAscent() + getTextShiftOffset());
     } finally {

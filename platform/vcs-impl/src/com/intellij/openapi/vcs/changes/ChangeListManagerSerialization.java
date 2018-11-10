@@ -33,7 +33,6 @@ class ChangeListManagerSerialization {
   @NonNls private static final String ATT_NAME = "name";
   @NonNls private static final String ATT_COMMENT = "comment";
   @NonNls private static final String ATT_DEFAULT = "default";
-  @NonNls private static final String ATT_READONLY = "readonly";
   @NonNls private static final String ATT_VALUE_TRUE = "true";
   @NonNls private static final String ATT_CHANGE_BEFORE_PATH = "beforePath";
   @NonNls private static final String ATT_CHANGE_AFTER_PATH = "afterPath";
@@ -119,7 +118,6 @@ class ChangeListManagerSerialization {
     Element listNode = new Element(NODE_LIST);
 
     if (list.isDefault()) listNode.setAttribute(ATT_DEFAULT, ATT_VALUE_TRUE);
-    if (list.isReadOnly()) listNode.setAttribute(ATT_READONLY, ATT_VALUE_TRUE);
 
     listNode.setAttribute(ATT_ID, list.getId());
     listNode.setAttribute(ATT_NAME, list.getName());
@@ -171,7 +169,6 @@ class ChangeListManagerSerialization {
     String comment = StringUtil.notNullize(listNode.getAttributeValue(ATT_COMMENT));
     ChangeListData data = ChangeListData.readExternal(listNode);
     boolean isDefault = ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_DEFAULT));
-    boolean isReadOnly = ATT_VALUE_TRUE.equals(listNode.getAttributeValue(ATT_READONLY));
 
     List<Change> changes = new ArrayList<>();
     for (Element changeNode : listNode.getChildren(NODE_CHANGE)) {
@@ -184,7 +181,6 @@ class ChangeListManagerSerialization {
       .setChanges(changes)
       .setData(data)
       .setDefault(isDefault)
-      .setReadOnly(isReadOnly)
       .build();
   }
 

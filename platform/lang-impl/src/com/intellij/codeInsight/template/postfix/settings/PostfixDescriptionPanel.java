@@ -33,7 +33,7 @@ class PostfixDescriptionPanel implements Disposable {
   private JPanel myBeforePanel;
   private JEditorPane myDescriptionBrowser;
 
-  public PostfixDescriptionPanel() {
+  PostfixDescriptionPanel() {
     myDescriptionBrowser.setMargin(JBUI.insets(5));
     initializeExamplePanel(myAfterPanel);
     initializeExamplePanel(myBeforePanel);

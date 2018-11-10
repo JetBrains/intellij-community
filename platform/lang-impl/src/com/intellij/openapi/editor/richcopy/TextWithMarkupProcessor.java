@@ -132,7 +132,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
       logSyntaxInfo(syntaxInfo);
 
       createResult(syntaxInfo, editor);
-      return ObjectUtils.notNull(myResult, Collections.<RawTextWithMarkup>emptyList());
+      return ObjectUtils.notNull(myResult, Collections.emptyList());
     }
     catch (Throwable t) {
       // catching the exception so that the rest of copy/paste functionality can still work fine
@@ -470,7 +470,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     private int myCurrentEnd;
 
     // iterators have priority corresponding to their order in the parameter list - rightmost having the largest priority
-    public CompositeRangeIterator(@NotNull EditorColorsScheme colorsScheme, RangeIterator... iterators) {
+    CompositeRangeIterator(@NotNull EditorColorsScheme colorsScheme, RangeIterator... iterators) {
       myDefaultForeground = colorsScheme.getDefaultForeground();
       myDefaultBackground = colorsScheme.getDefaultBackground();
       myIterators = new IteratorWrapper[iterators.length];
@@ -751,7 +751,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
     private int myCurrentEnd;
     private TextAttributes myCurrentAttributes;
 
-    public HighlighterRangeIterator(@NotNull EditorHighlighter highlighter, int startOffset, int endOffset) {
+    HighlighterRangeIterator(@NotNull EditorHighlighter highlighter, int startOffset, int endOffset) {
       myStartOffset = startOffset;
       myEndOffset = endOffset;
       myIterator = highlighter.createIterator(startOffset);

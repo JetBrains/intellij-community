@@ -1,24 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
-import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.LowPriorityAction;
@@ -72,7 +55,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiMethod method = getTargetMethod(editor, file);
     if (method != null) {
-      boolean hasContract = ControlFlowAnalyzer.findContractAnnotation(method) != null;
+      boolean hasContract = JavaMethodContractUtil.findContractAnnotation(method) != null;
       setText(hasContract ? "Edit method contract of '" + method.getName() + "'" : "Add method contract to '" + method.getName() + "'");
       return true;
     }
@@ -94,7 +77,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
     DialogBuilder builder = createDialog(project, contractText, pureCB, mutatesText);
     DocumentAdapter validator = new DocumentAdapter() {
       @Override
-      protected void textChanged(DocumentEvent e) {
+      protected void textChanged(@NotNull DocumentEvent e) {
         String contractError = getContractErrorMessage(contractText.getText(), method);
         if (contractError != null) {
           builder.setOkActionEnabled(false);
@@ -173,6 +156,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
     DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title("Edit Method Contract");
     builder.setPreferredFocusComponent(contractText);
+    builder.setHelpId("define_contract_dialog");
     return builder;
   }
 
@@ -186,11 +170,11 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   private static void updateContract(PsiMethod method, String contract, boolean pure, String mutates) {
     Project project = method.getProject();
     ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
-    manager.deannotate(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-    PsiAnnotation mockAnno = InferredAnnotationsManagerImpl.createContractAnnotation(project, pure, contract, mutates);
+    manager.deannotate(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    PsiAnnotation mockAnno = DefaultInferredAnnotationProvider.createContractAnnotation(project, pure, contract, mutates);
     if (mockAnno != null) {
       try {
-        manager.annotateExternally(method, ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
+        manager.annotateExternally(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),
                                    mockAnno.getParameterList().getAttributes());
       }
       catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
@@ -205,7 +189,11 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
   @Nullable
   private static String getContractErrorMessage(String contract, PsiMethod method) {
-    return StringUtil.isEmpty(contract) ? null : ContractInspection.checkContract(method, contract);
+    if (StringUtil.isEmpty(contract)) {
+      return null;
+    }
+    StandardMethodContract.ParseException error = ContractInspection.checkContract(method, contract);
+    return error != null ? error.getMessage() : null;
   }
 
   @Override

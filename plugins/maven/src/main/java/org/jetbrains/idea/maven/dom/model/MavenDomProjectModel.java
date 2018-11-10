@@ -73,6 +73,7 @@ public interface MavenDomProjectModel extends MavenDomElement, MavenDomProjectMo
    *
    * @return the value of the groupId child.
    */
+  @Override
   @NotNull
   @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getGroupId();
@@ -86,6 +87,7 @@ public interface MavenDomProjectModel extends MavenDomElement, MavenDomProjectMo
    *
    * @return the value of the artifactId child.
    */
+  @Override
   @NotNull
   @Required
   GenericDomValue<String> getArtifactId();
@@ -99,6 +101,7 @@ public interface MavenDomProjectModel extends MavenDomElement, MavenDomProjectMo
    *
    * @return the value of the version child.
    */
+  @Override
   @NotNull
   @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getVersion();
@@ -273,6 +276,7 @@ public interface MavenDomProjectModel extends MavenDomElement, MavenDomProjectMo
   @NotNull
   MavenDomOrganization getOrganization();
 
+  @Override
   @NotNull
   MavenDomBuild getBuild();
 

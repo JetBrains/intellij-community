@@ -1,17 +1,14 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell.protocol;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlEnum;
-import javax.xml.bind.annotation.XmlType;
+import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Eugene Zhuravlev
  */
-@XmlType
-public class CodeSnippet {
-
-  @XmlEnum
+public class CodeSnippet implements Serializable {
+  @SuppressWarnings("unused")
   public enum Status {
     VALID(true, true),
     RECOVERABLE_DEFINED(true, true),
@@ -39,7 +36,7 @@ public class CodeSnippet {
     }
   }
 
-  @XmlEnum
+  @SuppressWarnings("unused")
   public enum Kind {
     IMPORT(true),
     TYPE_DECL(true),
@@ -51,15 +48,17 @@ public class CodeSnippet {
     UNKNOWN(false);
 
     private final boolean isPersistent;
+
     Kind(boolean isPersistent) {
       this.isPersistent = isPersistent;
     }
+
     public boolean isPersistent() {
       return isPersistent;
     }
   }
 
-  @XmlEnum
+  @SuppressWarnings("unused")
   public enum SubKind {
     SINGLE_TYPE_IMPORT_SUBKIND(Kind.IMPORT),
     TYPE_IMPORT_ON_DEMAND_SUBKIND(Kind.IMPORT),
@@ -108,15 +107,14 @@ public class CodeSnippet {
     }
   }
 
-
   private String myId;
   private Kind myKind;
   private SubKind mySubKind;
   private String myCodeText;
   private String myPresentation;
 
-  public CodeSnippet() {
-  }
+  @SuppressWarnings("unused")
+  public CodeSnippet() { }
 
   public CodeSnippet(String id, Kind kind, SubKind subKind, String codeText, String presentation) {
     myId = id;
@@ -130,45 +128,20 @@ public class CodeSnippet {
     return myId;
   }
 
-  @XmlAttribute
-  public void setId(String id) {
-    myId = id;
-  }
-
   public Kind getKind() {
     return myKind;
-  }
-
-  @XmlAttribute
-  public void setKind(Kind kind) {
-    myKind = kind;
   }
 
   public SubKind getSubKind() {
     return mySubKind;
   }
 
-  @XmlAttribute
-  public void setSubKind(SubKind subKind) {
-    mySubKind = subKind;
-  }
-
   public String getCodeText() {
     return myCodeText;
   }
 
-  @XmlElement
-  public void setCodeText(String codeText) {
-    myCodeText = codeText;
-  }
-
   public String getPresentation() {
     return myPresentation;
-  }
-
-  @XmlElement
-  public void setPresentation(String presentation) {
-    myPresentation = presentation;
   }
 
   @Override
@@ -178,11 +151,11 @@ public class CodeSnippet {
 
     CodeSnippet snippet = (CodeSnippet)o;
 
-    if (myId != null ? !myId.equals(snippet.myId) : snippet.myId != null) return false;
+    if (!Objects.equals(myId, snippet.myId)) return false;
     if (myKind != snippet.myKind) return false;
     if (mySubKind != snippet.mySubKind) return false;
-    if (myCodeText != null ? !myCodeText.equals(snippet.myCodeText) : snippet.myCodeText != null) return false;
-    if (myPresentation != null ? !myPresentation.equals(snippet.myPresentation) : snippet.myPresentation != null) return false;
+    if (!Objects.equals(myCodeText, snippet.myCodeText)) return false;
+    if (!Objects.equals(myPresentation, snippet.myPresentation)) return false;
 
     return true;
   }

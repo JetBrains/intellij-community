@@ -18,7 +18,7 @@ class Test2 {
 
   static void test(Project project) {
     Version version = getVersion(getInstance(project).getProjectSdk());
-    System.out.println(version.<warning descr="Method invocation 'hashCode' may produce 'java.lang.NullPointerException'">hashCode</warning>());
+    System.out.println(version.<warning descr="Method invocation 'hashCode' may produce 'NullPointerException'">hashCode</warning>());
   }
 }
 

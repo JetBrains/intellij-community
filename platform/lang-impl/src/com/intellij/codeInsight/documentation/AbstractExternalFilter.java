@@ -338,7 +338,7 @@ public abstract class AbstractExternalFilter {
     private final MyDocBuilder myBuilder;
     private Exception myException;
 
-    public MyJavadocFetcher(String url, MyDocBuilder builder) {
+    MyJavadocFetcher(String url, MyDocBuilder builder) {
       this.url = url;
       myBuilder = builder;
       //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -368,8 +368,7 @@ public abstract class AbstractExternalFilter {
                 byte[] bytes = request.readBytes(null);
                 String contentEncoding = null;
                 ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-                try {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
                   for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
                     contentEncoding = parseContentEncoding(htmlLine);
                     if (contentEncoding != null) {
@@ -378,7 +377,6 @@ public abstract class AbstractExternalFilter {
                   }
                 }
                 finally {
-                  reader.close();
                   stream.reset();
                 }
 
@@ -386,7 +384,6 @@ public abstract class AbstractExternalFilter {
                   contentEncoding = request.getConnection().getContentEncoding();
                 }
 
-                //noinspection IOResourceOpenedButNotSafelyClosed
                 myBuilder.buildFromStream(url, contentEncoding != null ? new MyReader(stream, contentEncoding) : new MyReader(stream), data);
                 return null;
               }
@@ -409,14 +406,14 @@ public abstract class AbstractExternalFilter {
   private static class MyReader extends InputStreamReader {
     private final ByteArrayInputStream myInputStream;
 
-    public MyReader(ByteArrayInputStream in) {
+    MyReader(ByteArrayInputStream in) {
       super(in);
 
       in.reset();
       myInputStream = in;
     }
 
-    public MyReader(ByteArrayInputStream in, String charsetName) throws UnsupportedEncodingException {
+    MyReader(ByteArrayInputStream in, String charsetName) throws UnsupportedEncodingException {
       super(in, charsetName);
 
       in.reset();

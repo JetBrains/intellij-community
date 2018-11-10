@@ -20,26 +20,12 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCa
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ObviousNullCheckInspection;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class ObviousNullCheckInspectionTest extends LightInspectionTestCase {
   static final String TEST_DATA_DIR = "/inspection/obviousNotNull/";
-
-  private static final LightProjectDescriptor JAVA_8_WITH_ANNOTATIONS = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
-    }
-  };
 
   public void testObviousNullCheck() {
     doTest();
@@ -58,7 +44,7 @@ public class ObviousNullCheckInspectionTest extends LightInspectionTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_WITH_ANNOTATIONS;
+    return JAVA_8_ANNOTATED;
   }
 
   public static class ObviousNullCheckInspectionFixTest extends LightQuickFixParameterizedTestCase {
@@ -66,10 +52,6 @@ public class ObviousNullCheckInspectionTest extends LightInspectionTestCase {
     @Override
     protected LocalInspectionTool[] configureLocalInspectionTools() {
       return new LocalInspectionTool[]{new ObviousNullCheckInspection()};
-    }
-
-    public void test() {
-      doAllTests();
     }
 
     @Override

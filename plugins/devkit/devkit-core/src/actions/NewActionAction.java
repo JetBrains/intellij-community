@@ -55,7 +55,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
   }
 
   private PsiElement[] doInvokeDialog(Project project, PsiDirectory directory) {
-    myDialog = new NewActionDialog(project);
+    myDialog = new NewActionDialog(project, directory);
     try {
       myDialog.show();
       if (myDialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
@@ -96,7 +96,7 @@ public class NewActionAction extends CreateElementActionBase implements Descript
 
   @NotNull
   @Override
-  protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+  protected PsiElement[] create(@NotNull String newName, PsiDirectory directory) throws Exception {
     PsiClass createdClass = DevkitActionsUtil.createSingleClass(newName, "Action.java", directory);
     DescriptorUtil.patchPluginXml(this, createdClass, pluginDescriptorToPatch);
     return new PsiElement[]{createdClass};

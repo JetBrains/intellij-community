@@ -70,6 +70,7 @@ public class XPath2TypeElementImpl extends XPath2ElementImpl implements XPath2Ty
     return null;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferences() {
     final PrefixedName prefixedName = getQName();
@@ -83,6 +84,7 @@ public class XPath2TypeElementImpl extends XPath2ElementImpl implements XPath2Ty
     return super.getReferences();
   }
 
+  @Override
   public void accept(XPath2ElementVisitor visitor) {
     visitor.visitXPath2TypeElement(this);
   }

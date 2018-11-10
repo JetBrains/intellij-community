@@ -10,21 +10,23 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.*;
-
-import java.util.Collections;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import com.sun.jdi.Value;
 
 class InstanceofEvaluator implements Evaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.evaluation.expression.InstanceofEvaluator");
   private final Evaluator myOperandEvaluator;
   private final TypeEvaluator myTypeEvaluator;
 
-  public InstanceofEvaluator(Evaluator operandEvaluator, TypeEvaluator typeEvaluator) {
+  InstanceofEvaluator(Evaluator operandEvaluator, TypeEvaluator typeEvaluator) {
     myOperandEvaluator = operandEvaluator;
     myTypeEvaluator = typeEvaluator;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value value = (Value)myOperandEvaluator.evaluate(context);
     if (value == null) {
@@ -34,13 +36,8 @@ class InstanceofEvaluator implements Evaluator {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.object.reference.expected"));
     }
     try {
-      ReferenceType refType = (ReferenceType)myTypeEvaluator.evaluate(context);
-      ClassObjectReference classObject = refType.classObject();
-      ClassType classRefType = (ClassType)classObject.referenceType();
-      //noinspection HardCodedStringLiteral
-      Method method = classRefType.concreteMethodByName("isAssignableFrom", "(Ljava/lang/Class;)Z");
-      return context.getDebugProcess().invokeMethod(context, classObject, method,
-                                                    Collections.singletonList(((ObjectReference)value).referenceType().classObject()));
+      return context.getDebugProcess().getVirtualMachineProxy().mirrorOf(
+        DebuggerUtilsImpl.instanceOf(((ObjectReference)value).referenceType(), (ReferenceType)myTypeEvaluator.evaluate(context)));
     }
     catch (Exception e) {
       LOG.debug(e);

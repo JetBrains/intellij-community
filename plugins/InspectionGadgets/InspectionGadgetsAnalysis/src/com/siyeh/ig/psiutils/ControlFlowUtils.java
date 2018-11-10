@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,13 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -551,6 +553,10 @@ public class ControlFlowUtils {
     return i == count;
   }
 
+  public static <T extends PsiElement> boolean isNestedElement(@NotNull T element, @NotNull Class<? extends T> aClass) {
+    return PsiTreeUtil.getParentOfType(element, aClass, true, PsiClass.class, PsiLambdaExpression.class) != null;
+  }
+
   public static boolean isEmptyCodeBlock(PsiCodeBlock codeBlock) {
     return hasStatementCount(codeBlock, 0);
   }
@@ -674,11 +680,10 @@ public class ControlFlowUtils {
             .filter(binOp -> binOp.getOperationTokenType().equals(JavaTokenType.EQEQ))
             .anyMatch(binOp -> ExpressionUtils.getOtherOperand(binOp, variable) != null);
           if (hasLoopVarCheck) {
-            boolean notWritten = ReferencesSearch.search(variable).forEach(ref -> {
+            return ReferencesSearch.search(variable).allMatch(ref -> {
               PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
               return expression == null || PsiTreeUtil.isAncestor(update, expression, false) || !PsiUtil.isAccessedForWriting(expression);
             });
-            if (notWritten) return true;
           }
         }
       }
@@ -894,35 +899,35 @@ public class ControlFlowUtils {
   }
 
   /**
-   * @param expression expression to check
-   * @return true if given expression is always executed and can be converted to a statement
+   * @param expression    expression to check
+   * @return true if given expression can be extracted to a statement
    */
   public static boolean canExtractStatement(PsiExpression expression) {
-    return canExtractStatement(expression, true);
-  }
-
-  /**
-   * @param expression    expression to check
-   * @param checkExecuted if true, expression will be considered non-extractable if it is not always executed within its topmost expression
-   *                      (e.g. appears in then/else branches in ?: expression)
-   * @return true if given expression can be converted to a statement
-   */
-  public static boolean canExtractStatement(PsiExpression expression, boolean checkExecuted) {
     PsiElement cur = expression;
     PsiElement parent = cur.getParent();
     while(parent instanceof PsiExpression || parent instanceof PsiExpressionList) {
       if(parent instanceof PsiLambdaExpression) {
         return true;
       }
-      if (checkExecuted && parent instanceof PsiPolyadicExpression) {
+      if (parent instanceof PsiPolyadicExpression) {
         PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
         IElementType type = polyadicExpression.getOperationTokenType();
-        if ((type.equals(JavaTokenType.ANDAND) || type.equals(JavaTokenType.OROR)) && polyadicExpression.getOperands()[0] != cur) {
-          // not the first in the &&/|| chain: we cannot properly generate code which would short-circuit as well
-          return false;
+        if (type.equals(JavaTokenType.ANDAND) && polyadicExpression.getOperands()[0] != cur) {
+          PsiElement polyParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
+          // not the first in the && chain: we cannot properly generate code which would short-circuit as well
+          // except some special cases
+          return (polyParent instanceof PsiIfStatement && ((PsiIfStatement)polyParent).getElseBranch() == null) ||
+                 (polyParent instanceof PsiWhileStatement) || (polyParent instanceof PsiReturnStatement) ||
+                 (polyParent instanceof PsiLambdaExpression);
+        }
+        else if (type.equals(JavaTokenType.OROR) && polyadicExpression.getOperands()[0] != cur) {
+          PsiElement polyParent = PsiUtil.skipParenthesizedExprUp(polyadicExpression.getParent());
+          // not the first in the || chain: we cannot properly generate code which would short-circuit as well
+          // except some special cases
+          return (polyParent instanceof PsiReturnStatement) || (polyParent instanceof PsiLambdaExpression);
         }
       }
-      if (checkExecuted && parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
+      if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
         return false;
       }
       if(parent instanceof PsiMethodCallExpression) {
@@ -936,15 +941,20 @@ public class ControlFlowUtils {
     }
     if (parent instanceof PsiStatement) {
       PsiElement grandParent = parent.getParent();
-      if (checkExecuted && grandParent instanceof PsiForStatement && ((PsiForStatement)grandParent).getUpdate() == parent) {
+      if (grandParent instanceof PsiForStatement && ((PsiForStatement)grandParent).getUpdate() == parent) {
         return false;
       }
     }
+    if (parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == cur) return true;
     if(parent instanceof PsiReturnStatement || parent instanceof PsiExpressionStatement) return true;
     if(parent instanceof PsiLocalVariable) {
       PsiElement grandParent = parent.getParent();
       if(grandParent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)grandParent).getDeclaredElements().length == 1) {
-        return true;
+        PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
+        if (!typeElement.isInferredType() ||
+            PsiTypesUtil.replaceWithExplicitType(((PsiLocalVariable)parent.copy()).getTypeElement()) != null) {
+          return true;
+        }
       }
     }
     if (parent instanceof PsiField) {
@@ -993,8 +1003,12 @@ public class ControlFlowUtils {
    */
   public static boolean isReachable(@NotNull PsiStatement statement) {
     ControlFlow flow;
-    PsiCodeBlock block = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
-    if (block == null) return true;
+    PsiElement block = statement;
+    do {
+      block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class);
+      if (block == null) return true;
+    }
+    while (block.getParent() instanceof PsiSwitchStatement);
     try {
       flow = ControlFlowFactory.getInstance(statement.getProject())
         .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
@@ -1009,16 +1023,16 @@ public class ControlFlowUtils {
    * Returns true if given element is an empty statement
    *
    * @param element element to check
-   * @param ignoreComments if true, empty statement containing comments is still considered empty
+   * @param commentIsContent if true, empty statement containing comments is not considered empty
    * @param emptyBlocks if true, empty block (or nested empty block like {@code {{}}}) is considered an empty statement
    * @return true if given element is an empty statement
    */
-  public static boolean isEmpty(PsiElement element, boolean ignoreComments, boolean emptyBlocks) {
-    if (!ignoreComments && element instanceof PsiComment) {
+  public static boolean isEmpty(PsiElement element, boolean commentIsContent, boolean emptyBlocks) {
+    if (!commentIsContent && element instanceof PsiComment) {
       return true;
     }
     else if (element instanceof PsiEmptyStatement) {
-      return !ignoreComments ||
+      return !commentIsContent ||
              PsiTreeUtil.getChildOfType(element, PsiComment.class) == null &&
              !(PsiTreeUtil.skipWhitespacesBackward(element) instanceof PsiComment);
     }
@@ -1027,7 +1041,7 @@ public class ControlFlowUtils {
     }
     else if (element instanceof PsiBlockStatement) {
       final PsiBlockStatement block = (PsiBlockStatement)element;
-      return isEmpty(block.getCodeBlock(), ignoreComments, emptyBlocks);
+      return isEmpty(block.getCodeBlock(), commentIsContent, emptyBlocks);
     }
     else if (emptyBlocks && element instanceof PsiCodeBlock) {
       final PsiCodeBlock codeBlock = (PsiCodeBlock)element;
@@ -1037,13 +1051,35 @@ public class ControlFlowUtils {
       }
       for (int i = 1; i < children.length - 1; i++) {
         final PsiElement child = children[i];
-        if (!isEmpty(child, ignoreComments, true)) {
+        if (!isEmpty(child, commentIsContent, true)) {
           return false;
         }
       }
       return true;
     }
     return false;
+  }
+
+  /**
+   * Ensures that the {@code if} statement has the {@code else} branch which is a block statement (adding it if absent) 
+   * @param ifStatement an {@code if} statement to add an else branch or expand it to the block
+   */
+  public static void ensureElseBranch(PsiIfStatement ifStatement) {
+    PsiStatement elseBranch = ifStatement.getElseBranch();
+    if (elseBranch != null) {
+      if (!(elseBranch instanceof PsiBlockStatement)) {
+        BlockUtils.expandSingleStatementToBlockStatement(elseBranch);
+      }
+    } else {
+      PsiStatement thenBranch = ifStatement.getThenBranch();
+      PsiBlockStatement emptyBlock = BlockUtils.createBlockStatement(ifStatement.getProject());
+      if (thenBranch == null) {
+        ifStatement.setThenBranch(emptyBlock);
+      } else if (!(thenBranch instanceof PsiBlockStatement)) {
+        BlockUtils.expandSingleStatementToBlockStatement(thenBranch);
+      }
+      ifStatement.setElseBranch(emptyBlock);
+    }
   }
 
   public enum InitializerUsageStatus {

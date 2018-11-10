@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +26,6 @@ import org.jetbrains.yaml.psi.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
 
@@ -36,7 +37,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
   protected abstract YamlMetaTypeProvider getMetaTypeProvider(@NotNull CompletionParameters params);
 
   @Override
-  protected void addCompletions(@NotNull CompletionParameters params, ProcessingContext context, @NotNull CompletionResultSet result) {
+  protected void addCompletions(@NotNull CompletionParameters params, @NotNull ProcessingContext context, @NotNull CompletionResultSet result) {
     final YamlMetaTypeProvider metaTypeProvider = getMetaTypeProvider(params);
     if (metaTypeProvider == null) {
       return;
@@ -82,6 +83,9 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       YamlScalarType scalarType = (YamlScalarType)metaType;
       if (insertedScalar.getParent() instanceof YAMLKeyValue) {
         PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(insertedScalar);
+        if (isOfType(prevSibling, YAMLTokenTypes.COLON)) {
+          prevSibling = PsiTreeUtil.skipWhitespacesBackward(prevSibling);
+        }
         if (isOfType(prevSibling, YAMLTokenTypes.SCALAR_KEY)) {
           addValueCompletions(insertedScalar, scalarType, result, Collections.emptyMap());
           return;
@@ -141,9 +145,8 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     Map<String, YAMLKeyValue> existingByKey = existingPairs.stream().collect(
       Collectors.toMap(kv -> kv.getKeyText().trim(), kv -> kv, (oldValue, newValue) -> oldValue));
 
-    final List<Field> fieldList = metaClass.getFeatures().stream()
-      .filter(childField -> !existingByKey.containsKey(childField.getName()) && childField.isEditable())
-      .collect(Collectors.toList());
+    final List<Field> fieldList = ContainerUtil
+      .filter(metaClass.getFeatures(), childField -> !existingByKey.containsKey(childField.getName()) && childField.isEditable());
 
     final boolean needsSequenceItemMark = existingPairs.isEmpty() && needsSequenceItem(meta.getField());
 
@@ -213,11 +216,11 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     fields.stream()
           .filter(field -> !field.isAnyNameAllowed())
           .forEach(field -> {
-      final List<Field> fieldPath = Stream.concat(currentPath.stream(), Stream.of(field)).collect(Collectors.toList());
+      final List<Field> fieldPath = StreamEx.of(currentPath).append(field).toList();
       result.add(fieldPath);
       final YamlMetaType metaType = field.getType(field.getDefaultRelation());
             if (metaType instanceof YamlMetaClass) {
-        doCollectPathsRec(((YamlMetaClass)metaType).getFeatures().stream().filter(Field::isEditable).collect(Collectors.toList()),
+        doCollectPathsRec(ContainerUtil.filter(((YamlMetaClass)metaType).getFeatures(), Field::isEditable),
                           fieldPath, result, deepness);
       }
     });

@@ -31,7 +31,6 @@ import com.intellij.openapi.ide.KillRingTransferable;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/19/11 4:18 PM
  */
 public class KillToWordStartAction extends TextComponentEditorAction {
 

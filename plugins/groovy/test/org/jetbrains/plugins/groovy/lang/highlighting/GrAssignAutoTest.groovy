@@ -3,11 +3,13 @@ package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
 import org.codehaus.groovy.control.MultipleCompilationErrorsException
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.RepositoryProjectDescriptor
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.util.Slow
 
@@ -64,7 +66,12 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
   @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
-    return GroovyLightProjectDescriptor.GROOVY_LATEST_REAL_JDK
+    return new RepositoryProjectDescriptor("org.codehaus.groovy:groovy:2.4.15") {
+      @Override
+      Sdk getSdk() {
+        return IdeaTestUtil.getMockJdk18()
+      }
+    }
   }
 
   @Override
@@ -79,25 +86,15 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         ''',
            vectorProduct(types, types),
            [],
-           ['boolean -> int', 'boolean -> double', 'boolean -> short', 'boolean -> byte', 'List<BigDecimal> -> boolean[]',
-            'List<BigDecimal> -> int[]', 'List<BigDecimal> -> String[]', 'List<BigDecimal> -> Integer[]', 'List<BigDecimal> -> List[]',
-            'List<BigDecimal> -> Thread[]', 'List<BigInteger> -> boolean[]', 'List<BigInteger> -> int[]', 'List<BigInteger> -> double[]',
-            'List<BigInteger> -> String[]', 'List<BigInteger> -> Integer[]', 'List<BigInteger> -> List[]', 'List<BigInteger> -> Thread[]',
-            'List<Integer> -> boolean[]', 'List<Integer> -> String[]', 'List<Integer> -> List[]', 'List<Integer> -> Thread[]',
-            'List<String> -> boolean[]', 'List<String> -> int[]', 'List<String> -> double[]', 'List<String> -> Integer[]',
-            'List<String> -> List[]', 'List<String> -> Thread[]', 'List<Object> -> boolean[]', 'List<Object> -> int[]',
-            'List<Object> -> double[]', 'List<Object> -> String[]', 'List<Object> -> Integer[]', 'List<Object> -> List[]',
-            'List<Object> -> Thread[]', 'List<Thread> -> boolean[]', 'List<Thread> -> int[]', 'List<Thread> -> double[]',
-            'List<Thread> -> String[]', 'List<Thread> -> Integer[]', 'List<Thread> -> List[]', 'boolean[] -> int[]', 'boolean[] -> double[]',
-            'boolean[] -> String[]', 'int[] -> boolean[]', 'int[] -> String[]', 'double[] -> boolean[]', 'double[] -> String[]',
-            'String[] -> boolean[]', 'Integer[] -> boolean[]', 'Integer[] -> String[]', 'List[] -> boolean[]', 'List[] -> String[]',
-            'Object[] -> boolean[]', 'Object[] -> String[]', 'Thread[] -> boolean[]', 'Thread[] -> String[]', 'Set<String> -> boolean[]',
-            'Set<String> -> int[]', 'Set<String> -> double[]', 'Set<String> -> Integer[]', 'Set<String> -> List[]', 'Set<String> -> Thread[]',
-            'Set<Integer> -> boolean[]', 'Set<Integer> -> String[]', 'Set<Integer> -> List[]', 'Set<Integer> -> Thread[]',
-            'Set<Object> -> boolean[]', 'Set<Object> -> int[]', 'Set<Object> -> double[]', 'Set<Object> -> String[]',
-            'Set<Object> -> Integer[]', 'Set<Object> -> List[]', 'Set<Object> -> Thread[]', 'Set<Thread> -> boolean[]',
-            'Set<Thread> -> int[]', 'Set<Thread> -> double[]', 'Set<Thread> -> String[]', 'Set<Thread> -> Integer[]', 'Set<Thread> -> List[]',
-            'boolean -> int']
+           ['boolean -> int', 'boolean -> double', 'boolean -> short', 'boolean -> byte',
+            'boolean[] -> int[]', 'boolean[] -> double[]', 'boolean[] -> String[]',
+            'int[] -> boolean[]', 'int[] -> String[]',
+            'double[] -> boolean[]', 'double[] -> String[]',
+            'String[] -> boolean[]',
+            'Integer[] -> boolean[]', 'Integer[] -> String[]',
+            'List[] -> boolean[]', 'List[] -> String[]',
+            'Object[] -> boolean[]', 'Object[] -> String[]',
+            'Thread[] -> boolean[]', 'Thread[] -> String[]']
   }
 
 
@@ -110,10 +107,15 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         ''',
            vectorProduct(types, types),
            [],
-           ['boolean -> int', 'boolean -> double', 'boolean -> short', 'boolean -> byte', 'boolean[] -> int[]', 'boolean[] -> double[]',
-            'boolean[] -> String[]', 'int[] -> boolean[]', 'int[] -> String[]', 'double[] -> boolean[]', 'double[] -> String[]',
-            'String[] -> boolean[]', 'Integer[] -> boolean[]', 'Integer[] -> String[]', 'List[] -> boolean[]', 'List[] -> String[]',
-            'Object[] -> boolean[]', 'Object[] -> String[]', 'Thread[] -> boolean[]', 'Thread[] -> String[]']
+           ['boolean -> int', 'boolean -> double', 'boolean -> short', 'boolean -> byte',
+            'boolean[] -> int[]', 'boolean[] -> double[]', 'boolean[] -> String[]',
+            'int[] -> boolean[]', 'int[] -> String[]',
+            'double[] -> boolean[]', 'double[] -> String[]',
+            'String[] -> boolean[]',
+            'Integer[] -> boolean[]', 'Integer[] -> String[]',
+            'List[] -> boolean[]', 'List[] -> String[]',
+            'Object[] -> boolean[]', 'Object[] -> String[]',
+            'Thread[] -> boolean[]', 'Thread[] -> String[]']
   }
 
   void testParameterMethodCall() {
@@ -127,11 +129,8 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         }
         ''',
            vectorProduct(types, types),
-           ['int -> double[]', 'short -> int[]', 'short -> double[]', 'short -> Integer[]', 'byte -> int[]', 'byte -> double[]',
-            'byte -> Integer[]'],
-           ['Integer[] -> int[]', 'Integer[] -> double[]',
-            'BigDecimal -> int', 'BigDecimal -> int[]', 'BigDecimal -> short', 'BigInteger -> int', 'BigInteger -> double',
-            'BigInteger -> int[]', 'BigInteger -> double[]', 'BigInteger -> short', 'int[] -> double[]', 'int[] -> Integer[]']
+           ['int -> double[]', 'short -> int[]', 'short -> double[]', 'byte -> int[]', 'byte -> double[]'],
+           ['Integer[] -> int[]', 'Integer[] -> double[]', 'int[] -> double[]', 'int[] -> Integer[]']
   }
 
   void testReturnAssignValue() {
@@ -161,13 +160,16 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         }
         ''',
            vectorProduct(values, types),
-           ['[] -> BigInteger', '[1] -> BigInteger', '[1.1] -> BigDecimal'],
-           ['[] -> int', '[] -> double', '[] -> short', '[] -> byte', '[1.1] -> int', '[1.1] -> double', '[1.1] -> boolean[]',
-            '[1.1] -> String[]', '[1.1] -> short', '[] -> int', '[1] -> int', '[1] -> double', '[1] -> int',
-            '[1] -> boolean[]', '[1] -> String[]', '[0L] -> double', '[0L] -> boolean[]', '[0L] -> String[]', '[1.1] -> int',
-            '[1.2f] -> double', '[1.2f] -> boolean[]', '[1.2f] -> String[]', '[] -> int', '[1] -> int', '[1.1] -> int',
+           ['[] -> BigInteger', '[1] -> BigInteger'],
+           ['[] -> int', '[] -> double', '[] -> short', '[] -> byte', '[] -> int',
+            '[1.1] -> boolean[]', '[1.1] -> String[]',
+            '[1] -> int', '[1] -> double', '[1] -> int', '[1] -> boolean[]', '[1] -> String[]',
+            '[0L] -> double', '[0L] -> boolean[]', '[0L] -> String[]',
+            '[1.2f] -> double', '[1.2f] -> boolean[]', '[1.2f] -> String[]',
             '["str"] -> int', '["str"] -> double', '["str"] -> boolean[]', '["str"] -> short', '["str"] -> byte',
-            '[new Object()] -> boolean[]', '[new Object()] -> String[]', '[new Thread()] -> boolean[]', '[new Thread()] -> String[]']
+            '[new Object()] -> boolean[]', '[new Object()] -> String[]',
+            '[new Thread()] -> boolean[]', '[new Thread()] -> String[]',
+            'new ArrayList<>() -> boolean[]', 'new ArrayList<>() -> int[]', 'new ArrayList<>() -> double[]', 'new ArrayList<>() -> String[]', 'new ArrayList<>() -> Integer[]', 'new ArrayList<>() -> List[]', 'new ArrayList<>() -> Object[]', 'new ArrayList<>() -> Thread[]']
   }
 
   void testWrongConstructorResolve() {

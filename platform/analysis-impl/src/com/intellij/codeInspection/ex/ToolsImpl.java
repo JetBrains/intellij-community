@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.ProfileEx;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -19,7 +20,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,11 +41,6 @@ public class ToolsImpl implements Tools {
     myDefaultState = new ScopeToolState(CustomScopesProviderEx.getAllScope(), toolWrapper, enabledByDefault, level);
     myTools = null;
     myEnabled = enabled;
-  }
-
-  @TestOnly
-  public ToolsImpl(@NotNull InspectionToolWrapper toolWrapper, @NotNull HighlightDisplayLevel level, boolean enabled) {
-    this(toolWrapper, level, enabled, enabled);
   }
 
   @NotNull
@@ -144,7 +139,7 @@ public class ToolsImpl implements Tools {
     inspectionElement.setAttribute(ENABLED_BY_DEFAULT_ATTRIBUTE, Boolean.toString(myDefaultState.isEnabled()));
     InspectionToolWrapper toolWrapper = myDefaultState.getTool();
     if (toolWrapper.isInitialized()) {
-      toolWrapper.getTool().writeSettings(inspectionElement);
+      ScopeToolState.tryWriteSettings(toolWrapper.getTool(), inspectionElement);
     }
   }
 
@@ -209,7 +204,7 @@ public class ToolsImpl implements Tools {
 
     // check if unknown children exists
     if (toolElement.getAttributes().size() > 4 || toolElement.getChildren().size() > scopeElements.size()) {
-      toolWrapper.getTool().readSettings(toolElement);
+      ScopeToolState.tryReadSettings(toolWrapper.getTool(), toolElement);
     }
 
     myEnabled = isEnabled;
@@ -417,8 +412,9 @@ public class ToolsImpl implements Tools {
               }
             }
             else {
-              if (packageSet instanceof PackageSetBase &&
-                  ((PackageSetBase)packageSet).contains(PsiUtilCore.getVirtualFile(element), project, validationManager)) {
+              VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+              if (packageSet instanceof PackageSetBase && virtualFile != null &&
+                  ((PackageSetBase)packageSet).contains(virtualFile, project, validationManager)) {
                 state.setEnabled(false);
                 return;
               }

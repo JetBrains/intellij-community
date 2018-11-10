@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Document;
@@ -9,6 +9,8 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +67,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
   private int myCurrentStartLogicalLine;
   private int myCurrentEndLogicalLine;
   private int myNextWrapOffset;
+  private JBUI.ScaleContext myScaleContext;
 
   private VisualLineFragmentsIterator(EditorView view, int offset, boolean beforeSoftWrap, boolean align) {
     EditorImpl editor = view.getEditor();
@@ -115,6 +118,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
     myQuickEvaluationListener = quickEvaluationListener;
     myView = view;
     EditorImpl editor = view.getEditor();
+    myScaleContext = JBUI.ScaleContext.create(editor.getContentComponent());
     if (align && visualLine != -1 && editor.isRightAligned()) {
       myFragment = new RightAlignedFragment(view.getRightAlignmentLineStartX(visualLine) - myView.getInsets().left);
     }
@@ -243,7 +247,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       myFoldRegion = null;
       myCurrentStartLogicalLine = myCurrentEndLogicalLine;
       Inlay inlay = myInlays.get(myCurrentInlayIndex);
-      myCurrentX += inlay.getWidthInPixels();
+      myCurrentX += PaintUtil.alignToInt(inlay.getWidthInPixels(), myScaleContext);
       myCurrentVisualColumn++;
       myCurrentInlayIndex++;
       if (myCurrentInlayIndex >= myInlays.size() || myInlays.get(myCurrentInlayIndex).getOffset() > inlay.getOffset()) {

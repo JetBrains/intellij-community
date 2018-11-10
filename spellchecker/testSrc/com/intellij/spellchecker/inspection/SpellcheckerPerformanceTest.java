@@ -44,7 +44,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
   }
 
   public void testLargeTextFileWithManyTypos() {
-    final int typoCount = 40000;
+    final int typoCount = 5000;
     @SuppressWarnings("SpellCheckingInspection") String text = StringUtil.repeat("aaaaaaaaa ", typoCount);  // about 0.5M
 
     long start = System.currentTimeMillis();
@@ -84,7 +84,7 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
     assertEmpty(infos);
     System.out.println("warm-up took " + (System.currentTimeMillis() - start) + " ms");
 
-    PlatformTestUtil.startPerformanceTest("many whitespaces highlighting", 4000, () -> {
+    PlatformTestUtil.startPerformanceTest("many whitespaces highlighting", 4500, () -> {
       DaemonCodeAnalyzer.getInstance(getProject()).restart();
       assertEmpty(runLocalInspections());
     }).assertTiming();

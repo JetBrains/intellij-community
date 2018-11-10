@@ -22,7 +22,6 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * @author Denis Zhdanov
- * @since 02/02/2011
  */
 public class JavadocTypedHandlerTest {
 

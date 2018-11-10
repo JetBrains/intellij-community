@@ -24,20 +24,6 @@ public abstract class PyModuleMembersProvider {
   /**
    * Provides members for specified module.
    *
-   * @param module members owner
-   * @param point  position in import
-   * @return provided members
-   * @deprecated Use {@link PyModuleMembersProvider#getMembers(PyFile, PointInImport, TypeEvalContext)} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Deprecated
-  public Collection<PyCustomMember> getMembers(PyFile module, PointInImport point) {
-    return getMembers(module, point, TypeEvalContext.codeInsightFallback(module.getProject()));
-  }
-
-  /**
-   * Provides members for specified module.
-   *
    * @param module  members owner
    * @param point   position in import
    * @param context type evaluation context
@@ -53,22 +39,6 @@ public abstract class PyModuleMembersProvider {
       }
     }
     return Collections.emptyList();
-  }
-
-  /**
-   * Provides member with specified name for specified module.
-   *
-   * @param module member owner
-   * @param name   member name
-   * @return provided member
-   * @deprecated Use {@link PyModuleMembersProvider#resolveMember(PyFile, String, PyResolveContext)} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Nullable
-  @Deprecated
-  public PsiElement resolveMember(PyFile module, String name) {
-    final TypeEvalContext context = TypeEvalContext.codeInsightFallback(module.getProject());
-    return resolveMember(module, name, PyResolveContext.noImplicits().withTypeEvalContext(context));
   }
 
   /**
@@ -92,26 +62,13 @@ public abstract class PyModuleMembersProvider {
   /**
    * Provides members for module with specified qualified name.
    *
-   * @param module module itself
-   * @param qName  module name
-   * @return provided members
-   * @deprecated Use {@link PyModuleMembersProvider#getMembersByQName(PyFile, String, TypeEvalContext)}} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Deprecated
-  protected abstract Collection<PyCustomMember> getMembersByQName(PyFile module, String qName);
-
-  /**
-   * Provides members for module with specified qualified name.
-   *
    * @param module  module itself
    * @param qName   module name
    * @param context type evaluation context
    * @return provided members
-   * @apiNote This method will be marked as abstract in 2018.2.
    */
   @NotNull
-  protected Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
-    return getMembersByQName(module, qName);
-  }
+  protected abstract Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module,
+                                                                  @NotNull String qName,
+                                                                  @NotNull TypeEvalContext context);
 }

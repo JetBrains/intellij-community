@@ -137,7 +137,7 @@ public class HtmlUtil {
     final XmlExtension extension = XmlExtension.getExtensionByElement(tag);
     final String name = tag.getName();
     boolean result = EMPTY_TAGS_MAP.contains(lowerCase ? name.toLowerCase(Locale.US) : name);
-    return result && (extension == null || !extension.isSingleTagException(name));
+    return result && (extension == null || !extension.isSingleTagException(tag));
   }
 
   public static boolean isSingleHtmlTag(String tagName) {
@@ -183,7 +183,7 @@ public class HtmlUtil {
 
   public static void addHtmlSpecificCompletions(final XmlElementDescriptor descriptor,
                                                 final XmlTag element,
-                                                final List<XmlElementDescriptor> variants) {
+                                                final List<? super XmlElementDescriptor> variants) {
     // add html block completions for tags with optional ends!
     String name = descriptor.getName(element);
 
@@ -424,7 +424,7 @@ public class HtmlUtil {
   }
 
   public static boolean isHtmlTag(@NotNull XmlTag tag) {
-    if (tag.getLanguage() != HTMLLanguage.INSTANCE) return false;
+    if (!tag.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) return false;
 
     XmlDocument doc = PsiTreeUtil.getParentOfType(tag, XmlDocument.class);
 
@@ -582,7 +582,7 @@ public class HtmlUtil {
         }
 
         @Override
-        public void error(String message, int startOffset, int endOffset) {
+        public void error(@NotNull String message, int startOffset, int endOffset) {
         }
       });
     }

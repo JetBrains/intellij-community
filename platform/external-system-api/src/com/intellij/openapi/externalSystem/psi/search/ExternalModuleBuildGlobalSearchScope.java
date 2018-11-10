@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 1/15/14
  */
 public class ExternalModuleBuildGlobalSearchScope extends DelegatingGlobalSearchScope {
 

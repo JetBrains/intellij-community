@@ -27,6 +27,7 @@ import com.intellij.ui.AnActionButtonUpdater;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -66,7 +67,7 @@ public class ManageRepoDialog extends DialogWrapper {
       @Override
       public void run(AnActionButton button) {
         String url = Messages.showInputDialog("Please input repository URL", "Repository URL", null);
-        if (!repoModel.contains(url) && !StringUtil.isEmptyOrSpaces(url)) {
+        if (!StringUtil.isEmptyOrSpaces(url) && !repoModel.contains(url)) {
           repoModel.addElement(url);
           controller.addRepository(url);
         }
@@ -107,13 +108,13 @@ public class ManageRepoDialog extends DialogWrapper {
     });
     decorator.setRemoveActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         return myEnabled;
       }
     });
     decorator.setEditActionUpdater(new AnActionButtonUpdater() {
       @Override
-      public boolean isEnabled(AnActionEvent e) {
+      public boolean isEnabled(@NotNull AnActionEvent e) {
         return myEnabled;
       }
     });

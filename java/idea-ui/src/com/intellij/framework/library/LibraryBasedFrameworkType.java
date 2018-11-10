@@ -49,7 +49,7 @@ public abstract class LibraryBasedFrameworkType extends FrameworkTypeEx {
   @Override
   public Icon getIcon() {
     DownloadableLibraryType libraryType = getLibraryType();
-    return libraryType.getIcon();
+    return libraryType.getLibraryTypeIcon();
   }
 
   @NotNull

@@ -24,11 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class SplitElseIfIntention extends Intention {
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new SplitElseIfPredicate();
   }
 
+  @Override
   public void processIntention(PsiElement element) {
     final PsiJavaToken token = (PsiJavaToken)element;
     final PsiIfStatement parentStatement = (PsiIfStatement)token.getParent();

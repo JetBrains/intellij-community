@@ -15,7 +15,9 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.SchemeState;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
@@ -30,15 +32,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-
-import static com.intellij.openapi.editor.colors.CodeInsightColors.*;
-import static com.intellij.openapi.editor.colors.EditorColors.*;
-import static com.intellij.openapi.util.Couple.of;
-import static com.intellij.ui.ColorUtil.fromHex;
 
 @SuppressWarnings("UseJBColor")
 public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
@@ -69,8 +66,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   // version influences XML format and triggers migration
   private int myVersion = CURR_VERSION;
 
-  protected Map<ColorKey, Color>                   myColorsMap     = ContainerUtilRt.newHashMap();
-  protected Map<TextAttributesKey, TextAttributes> myAttributesMap = new THashMap<>();
+  Map<ColorKey, Color> myColorsMap = ContainerUtilRt.newHashMap();
+  Map<String, TextAttributes> myAttributesMap = new THashMap<>();
 
   @NonNls private static final String EDITOR_FONT       = "font";
   @NonNls private static final String CONSOLE_FONT      = "console-font";
@@ -183,16 +180,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   /**
-   * Returns the collection of text attribute keys for which this color scheme defines attributes.
+   * Returns the attributes defined in this scheme (not inherited from a parent).
    */
-  @SuppressWarnings("unused")
+  @SuppressWarnings("unused")  // for Rider
   @NotNull
-  public Set<TextAttributesKey> getAttributeKeys() {
-    HashSet<TextAttributesKey> result = new HashSet<>(myAttributesMap.keySet());
-    if (myParentScheme instanceof DefaultColorsScheme) {
-      result.addAll(((DefaultColorsScheme) myParentScheme).getAttributeKeys());
-    }
-    return result;
+  public Map<String, TextAttributes> getDirectlyDefinedAttributes() {
+    return new HashMap<>(myAttributesMap);
   }
 
   @Override
@@ -366,10 +359,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
 
     if (myDeprecatedBackgroundColor != null) {
-      TextAttributes textAttributes = myAttributesMap.get(HighlighterColors.TEXT);
+      TextAttributes textAttributes = myAttributesMap.get(HighlighterColors.TEXT.getExternalName());
       if (textAttributes == null) {
         textAttributes = new TextAttributes(Color.black, myDeprecatedBackgroundColor, null, EffectType.BOXED, Font.PLAIN);
-        myAttributesMap.put(HighlighterColors.TEXT, textAttributes);
+        myAttributesMap.put(HighlighterColors.TEXT.getExternalName(), textAttributes);
       }
       else {
         textAttributes.setBackgroundColor(myDeprecatedBackgroundColor);
@@ -410,38 +403,14 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     for (Element e : childNode.getChildren(OPTION_ELEMENT)) {
       String keyName = e.getAttributeValue(NAME_ATTR);
       Element valueElement = e.getChild(VALUE_ELEMENT);
-      TextAttributesKey key = TextAttributesKey.find(keyName);
       TextAttributes attr = valueElement != null ? myValueReader.read(TextAttributes.class, valueElement) :
                             e.getAttributeValue(BASE_ATTRIBUTES_ATTR) != null ? INHERITED_ATTRS_MARKER :
                             null;
       if (attr != null) {
-        myAttributesMap.put(key, attr);
-        migrateErrorStripeColorFrom14(key, attr);
+        myAttributesMap.put(keyName, attr);
       }
     }
   }
-
-  private void migrateErrorStripeColorFrom14(@NotNull TextAttributesKey name, @NotNull TextAttributes attr) {
-    if (myVersion >= 141 || myParentScheme == null) return;
-
-    Couple<Color> m = DEFAULT_STRIPE_COLORS.get(name.getExternalName());
-    if (m != null && Comparing.equal(m.first, attr.getErrorStripeColor())) {
-      attr.setErrorStripeColor(m.second);
-    }
-  }
-
-  @SuppressWarnings("UseJBColor")
-  private static final Map<String, Couple<Color>> DEFAULT_STRIPE_COLORS = new THashMap<String, Couple<Color>>() {
-    {
-      put(ERRORS_ATTRIBUTES.getExternalName(),                        of(Color.red,          fromHex("CF5B56")));
-      put(WARNINGS_ATTRIBUTES.getExternalName(),                      of(Color.yellow,       fromHex("EBC700")));
-      put("EXECUTIONPOINT_ATTRIBUTES",                                of(Color.blue,         fromHex("3763b0")));
-      put(IDENTIFIER_UNDER_CARET_ATTRIBUTES.getExternalName(),        of(fromHex("CCCFFF"),  fromHex("BAA8FF")));
-      put(WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES.getExternalName(),  of(fromHex("FFCCE5"),  fromHex("F0ADF0")));
-      put(TEXT_SEARCH_RESULT_ATTRIBUTES.getExternalName(),            of(fromHex("586E75"),  fromHex("71B362")));
-      put(TODO_DEFAULT_ATTRIBUTES.getExternalName(),                  of(fromHex("268BD2"),  fromHex("54AAE3")));
-    }
-  };
 
   private void readColors(Element childNode) {
     for (Element colorElement : childNode.getChildren(OPTION_ELEMENT)) {
@@ -572,7 +541,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (myParentScheme != null && myParentScheme != EmptyColorScheme.INSTANCE) {
       parentNode.setAttribute(PARENT_SCHEME_ATTR, myParentScheme.getName());
     }
-    
+
     if (!myMetaInfo.isEmpty()) {
       parentNode.addContent(metaInfoToElement());
     }
@@ -592,7 +561,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       }
       writeLigaturesPreferences(parentNode, myFontPreferences, EDITOR_LIGATURES);
     }
-    
+
     if (!(myConsoleFontPreferences instanceof DelegatingFontPreferences)) {
       if (myConsoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
         JdomKt.addOptionTag(parentNode, CONSOLE_FONT_NAME, getConsoleFontName());
@@ -626,7 +595,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (!attrElements.getChildren().isEmpty()) {
       parentNode.addContent(attrElements);
     }
-    
+
     myIsSaveNeeded = false;
   }
 
@@ -645,16 +614,19 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  private void writeAttributes(@NotNull Element attrElements) throws WriteExternalException {
-    List<TextAttributesKey> list = new ArrayList<>(myAttributesMap.keySet());
-    list.sort(null);
-    for (TextAttributesKey key : list) {
-      writeAttribute(attrElements, key);
+  private void writeAttributes(@NotNull Element attrElements) {
+    List<Map.Entry<String, TextAttributes>> list = new ArrayList<>(myAttributesMap.entrySet());
+    list.sort(Map.Entry.comparingByKey());
+    for (Map.Entry<String, TextAttributes> entry : list) {
+      String keyName = entry.getKey();
+      TextAttributes attributes = entry.getValue();
+      writeAttribute(attrElements, TextAttributesKey.find(keyName), attributes);
     }
   }
 
-  private void writeAttribute(@NotNull Element attrElements, @NotNull TextAttributesKey key) {
-    TextAttributes attributes = myAttributesMap.get(key);
+  private void writeAttribute(@NotNull Element attrElements,
+                              @NotNull TextAttributesKey key,
+                              @NotNull TextAttributes attributes) {
     if (attributes == INHERITED_ATTRS_MARKER) {
       TextAttributesKey baseKey = key.getFallbackAttributeKey();
       // IDEA-162774 do not store if  inheritance = on in the parent scheme
@@ -674,7 +646,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       TextAttributes parentAttributes = myParentScheme instanceof AbstractColorsScheme
                                         ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key)
                                         : myParentScheme.getAttributes(key);
-      if (parentAttributes != null && attributes.equals(parentAttributes)) {
+      if (attributes.equals(parentAttributes)) {
         return;
       }
     }
@@ -689,17 +661,17 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (parentScheme == null) {
       return;
     }
-    myAttributesMap.keySet().removeAll(JBIterable.from(myAttributesMap.keySet()).filter(
-      key -> {
-        TextAttributes attrs = myAttributesMap.get(key);
-        if (attrs == INHERITED_ATTRS_MARKER) {
-          return !hasExplicitlyDefinedAttributes(parentScheme, key);
-        }
-        TextAttributes parent = parentScheme instanceof DefaultColorsScheme ?
-                                ((DefaultColorsScheme)parentScheme).getAttributes(key, false) : parentScheme.getAttributes(key);
-        return Comparing.equal(parent, attrs);
+    myAttributesMap.entrySet().removeIf(entry -> {
+      String keyName = entry.getKey();
+      TextAttributes attrs = entry.getValue();
+      TextAttributesKey key = TextAttributesKey.find(keyName);
+      if (attrs == INHERITED_ATTRS_MARKER) {
+        return !hasExplicitlyDefinedAttributes(parentScheme, key);
       }
-    ).toList());
+      TextAttributes parent = parentScheme instanceof DefaultColorsScheme ?
+                              ((DefaultColorsScheme)parentScheme).getAttributes(key, false) : parentScheme.getAttributes(key);
+      return Comparing.equal(parent, attrs);
+    });
     myColorsMap.keySet().removeAll(JBIterable.from(myColorsMap.keySet()).filter(
       key -> {
         Color color = myColorsMap.get(key);
@@ -727,7 +699,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
 
-  
+
   @NotNull
   private Element metaInfoToElement() {
     Element metaInfoElement = new Element(META_INFO_ELEMENT);
@@ -780,7 +752,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);
   }
 
-  private static boolean colorsEqual(@Nullable Color c1, @Nullable Color c2) {
+  protected static boolean colorsEqual(@Nullable Color c1, @Nullable Color c2) {
     if (c1 == NULL_COLOR_MARKER) return c1 == c2;
     return Comparing.equal(c1, c2 == NULL_COLOR_MARKER ? null : c2);
   }
@@ -800,7 +772,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public FontPreferences getConsoleFontPreferences() {
     return myConsoleFontPreferences;
   }
-  
+
   @Override
   public void setUseEditorFontPreferencesInConsole() {
     myConsoleFontPreferences = new DelegatingFontPreferences(() -> myFontPreferences);
@@ -905,7 +877,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
    */
   @Nullable
   public TextAttributes getDirectlyDefinedAttributes(@NotNull TextAttributesKey key) {
-    TextAttributes attributes = myAttributesMap.get(key);
+    TextAttributes attributes = myAttributesMap.get(key.getExternalName());
     return attributes != null ? attributes :
            myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedAttributes(key) :
            null;
@@ -934,7 +906,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public void setSaveNeeded(boolean value) {
     myIsSaveNeeded = value;
   }
-  
+
   public boolean isReadOnly() { return  false; }
 
   @NotNull
@@ -942,15 +914,15 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public Properties getMetaProperties() {
     return myMetaInfo;
   }
-  
+
   public boolean canBeDeleted() {
     return myCanBeDeleted;
   }
-  
+
   public void setCanBeDeleted(boolean canBeDeleted) {
     myCanBeDeleted = canBeDeleted;
   }
-  
+
   public boolean isVisible() {
     return true;
   }
@@ -988,7 +960,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public boolean settingsEqual(Object other, @Nullable Predicate<ColorKey> colorKeyFilter) {
     if (!(other instanceof AbstractColorsScheme)) return false;
     AbstractColorsScheme otherScheme = (AbstractColorsScheme)other;
-    
+
     // parent is used only for default schemes (e.g. Darcula bundled in all ide (opposite to IDE-specific, like Cobalt))
     if (getBaseDefaultScheme(this) != getBaseDefaultScheme(otherScheme)) {
       return false;
@@ -1002,7 +974,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
           propertyName.equals(META_INFO_ORIGINAL)
         ) {
         continue;
-      }                                                                                                               
+      }
 
       if (!Comparing.equal(myMetaInfo.getProperty(propertyName), otherScheme.myMetaInfo.getProperty(propertyName))) {
         return false;
@@ -1027,8 +999,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   protected boolean colorsEqual(AbstractColorsScheme otherScheme, @Nullable Predicate<ColorKey> colorKeyFilter) {
     if (myColorsMap.size() != otherScheme.myColorsMap.size()) return false;
-    for (ColorKey key : myColorsMap.keySet()) {
-      Color c1 = myColorsMap.get(key);
+    for (Map.Entry<ColorKey, Color> entry : myColorsMap.entrySet()) {
+      Color c1 = entry.getValue();
+      ColorKey key = entry.getKey();
       Color c2 = otherScheme.myColorsMap.get(key);
       if (!colorsEqual(c1, c2)) return false;
     }
@@ -1046,15 +1019,15 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     EditorColorsScheme parent = ((AbstractColorsScheme)scheme).myParentScheme;
     return parent != null ? getBaseDefaultScheme(parent) : null;
   }
-  
+
   private static class TemporaryParent extends EditorColorsSchemeImpl {
 
     private static final Logger LOG = Logger.getInstance(TemporaryParent.class);
-    
+
     private final String myParentName;
     private boolean isErrorReported;
 
-    public TemporaryParent(@NotNull String parentName) {
+    TemporaryParent(@NotNull String parentName) {
       super(EmptyColorScheme.INSTANCE);
       myParentName = parentName;
     }
@@ -1089,7 +1062,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     myParentScheme = newParent;
   }
 
-  void resolveParent(@NotNull Function<String,EditorColorsScheme> nameResolver) {
+  void resolveParent(@NotNull Function<? super String, ? extends EditorColorsScheme> nameResolver) {
     if (myParentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)myParentScheme).getParentName();
       EditorColorsScheme newParent = nameResolver.apply(parentName);

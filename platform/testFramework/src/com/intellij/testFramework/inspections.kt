@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.analysis.AnalysisScope
@@ -13,6 +13,7 @@ import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.GlobalInspectionContextForTests
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.mapSmart
@@ -61,6 +62,8 @@ fun createGlobalContextForTool(scope: AnalysisScope,
   }
 }
 
+private val myToolField = ReflectionUtil.findField(InspectionToolWrapper::class.java, InspectionProfileEntry::class.java, "myTool")
+
 private fun clearAllToolsIn(profile: InspectionProfileImpl) {
   if (!profile.wasInitialized()) {
     return
@@ -70,7 +73,7 @@ private fun clearAllToolsIn(profile: InspectionProfileImpl) {
     val wrapper = state.tool
     if (wrapper.extension != null) {
       // make it not initialized
-      ReflectionUtil.resetField(wrapper, InspectionProfileEntry::class.java, "myTool")
+      ReflectionUtil.resetField(wrapper, myToolField)
     }
   }
 }
@@ -79,7 +82,7 @@ fun ProjectInspectionProfileManager.createProfile(localInspectionTool: LocalInsp
   return configureInspections(arrayOf(localInspectionTool), project, disposable)
 }
 
-fun enableInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable) = enableInspectionTool(project, InspectionToolRegistrar.wrapTool(tool), disposable)
+fun enableInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable): Unit = enableInspectionTool(project, InspectionToolRegistrar.wrapTool(tool), disposable)
 
 fun enableInspectionTools(project: Project, disposable: Disposable, vararg tools: InspectionProfileEntry) {
   for (tool in tools) {
@@ -103,6 +106,8 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
     profile.enableTool(shortName, project)
   }
   Disposer.register(disposable, Disposable { profile.setToolEnabled(shortName, false) })
+
+  IdeaTestExecutionPolicy.current()?.inspectionToolEnabled(project, toolWrapper, disposable)
 }
 
 inline fun <T> runInInitMode(runnable: () -> T): T {

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 class TextBinding extends Binding {
   private final Class<?> valueClass;
 
-  public TextBinding(@NotNull MutableAccessor accessor) {
+  TextBinding(@NotNull MutableAccessor accessor) {
     super(accessor);
 
     valueClass = XmlSerializerImpl.typeToClass(accessor.getGenericType());

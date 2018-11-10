@@ -29,7 +29,7 @@ public class JavaUnresolvableLocalCollisionDetector {
   private JavaUnresolvableLocalCollisionDetector() {
   }
 
-  public static void findCollisions(final PsiElement element, final String newName, final List<UsageInfo> result) {
+  public static void findCollisions(final PsiElement element, final String newName, final List<? super UsageInfo> result) {
     if (!(element instanceof PsiLocalVariable || element instanceof PsiParameter)) {
       return;
     }
@@ -50,6 +50,7 @@ public class JavaUnresolvableLocalCollisionDetector {
     LOG.assertTrue(scope != null, element.getClass().getName());
 
     final CollidingVariableVisitor collidingNameVisitor = new CollidingVariableVisitor() {
+      @Override
       public void visitCollidingElement(PsiVariable collidingVariable) {
         if (collidingVariable.equals(element)) return;
         LocalHidesRenamedLocalUsageInfo collision = new LocalHidesRenamedLocalUsageInfo(element, collidingVariable);

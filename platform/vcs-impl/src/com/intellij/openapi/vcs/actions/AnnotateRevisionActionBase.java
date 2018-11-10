@@ -1,6 +1,6 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -32,7 +33,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.util.ObjectUtils.notNull;
 
-public abstract class AnnotateRevisionActionBase extends AnAction {
+public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
   public AnnotateRevisionActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
   }
@@ -56,6 +57,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     return editor == null ? 0 : editor.getCaretModel().getLogicalPosition().line;
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e));
   }
@@ -70,10 +72,13 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
                                   @Nullable VirtualFile file,
                                   @Nullable VcsFileRevision fileRevision) {
     if (VcsHistoryUtil.isEmpty(fileRevision) || file == null || vcs == null) return false;
-
     AnnotationProvider provider = vcs.getAnnotationProvider();
-    if (provider == null || !provider.isAnnotationValid(fileRevision)) return false;
-    if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) return false;
+    if (provider == null) return false;
+    if (!provider.isAnnotationValid(fileRevision)) return false;
+
+    if (VcsAnnotateUtil.getBackgroundableLock(vcs.getProject(), file).isLocked()) {
+      return false;
+    }
 
     return true;
   }
@@ -107,6 +112,7 @@ public abstract class AnnotateRevisionActionBase extends AnAction {
     AtomicBoolean shouldOpenEditorInSync = new AtomicBoolean(true);
 
     ProgressManager.getInstance().run(new Task.Backgroundable(vcs.getProject(), VcsBundle.message("retrieving.annotations"), true) {
+      @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           FileAnnotation fileAnnotation = annotationProvider.annotate(file, fileRevision);

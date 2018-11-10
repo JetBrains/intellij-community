@@ -22,7 +22,7 @@ open class PositionsAwareCollectionView(tree: CollectionTree,
     })
   }
 
-  fun addValuesPositionsListener(listener: ValuesPositionsListener) = myDispatcher.addListener(listener)
+  fun addValuesPositionsListener(listener: ValuesPositionsListener): Unit = myDispatcher.addListener(listener)
 
   private fun updateValues() {
     var changed = false

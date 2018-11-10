@@ -47,6 +47,7 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
       return myMethod.isValid();
     }
 
+    @Override
     @NotNull
     public Project getProject() {
       return myProject;
@@ -72,8 +73,8 @@ public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference,
     public SearchScope getScopeDeterminedByUser() {
       return myScope;
     }
-    
-    
+
+
     /**
      * @return Same as {@link #getScopeDeterminedByUser()}. Searchers most likely need to use {@link #getEffectiveSearchScope()}.
      */

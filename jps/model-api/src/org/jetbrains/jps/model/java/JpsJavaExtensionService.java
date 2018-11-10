@@ -42,6 +42,9 @@ public abstract class JpsJavaExtensionService {
   public abstract JpsProductionModuleOutputPackagingElement createProductionModuleOutput(@NotNull JpsModuleReference moduleReference);
 
   @NotNull
+  public abstract JpsProductionModuleSourcePackagingElement createProductionModuleSource(@NotNull JpsModuleReference moduleReference);
+
+  @NotNull
   public abstract JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference);
 
   public abstract JpsJavaDependenciesEnumerator enumerateDependencies(Collection<JpsModule> modules);

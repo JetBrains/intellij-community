@@ -51,7 +51,7 @@ public class PyDocstringParsingContext extends ParsingContext {
   }
 
   private static class PyDocstringExpressionParsing extends ExpressionParsing {
-    public PyDocstringExpressionParsing(ParsingContext context) {
+    PyDocstringExpressionParsing(ParsingContext context) {
       super(context);
     }
 

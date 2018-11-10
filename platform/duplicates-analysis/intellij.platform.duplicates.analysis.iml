@@ -8,7 +8,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.annotations.java5" exported="" />
+    <orderEntry type="library" exported="" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util" exported="" />
     <orderEntry type="module" module-name="intellij.platform.indexing" exported="" />

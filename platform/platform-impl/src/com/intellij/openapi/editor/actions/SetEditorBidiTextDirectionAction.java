@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.BidiTextDirection;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class SetEditorBidiTextDirectionAction extends ToggleAction {
   private final BidiTextDirection myDirection;
@@ -29,12 +30,12 @@ public abstract class SetEditorBidiTextDirectionAction extends ToggleAction {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return EditorSettingsExternalizable.getInstance().getBidiTextDirection() == myDirection;
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     if (myDirection != EditorSettingsExternalizable.getInstance().getBidiTextDirection()) {
       EditorSettingsExternalizable.getInstance().setBidiTextDirection(myDirection);
       EditorFactory.getInstance().refreshAllEditors();

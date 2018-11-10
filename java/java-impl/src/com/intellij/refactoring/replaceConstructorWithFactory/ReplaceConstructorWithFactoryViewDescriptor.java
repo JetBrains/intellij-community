@@ -29,19 +29,20 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
   private final PsiMethod myConstructor;
   private final PsiClass myClass;
 
-  public ReplaceConstructorWithFactoryViewDescriptor(
+  ReplaceConstructorWithFactoryViewDescriptor(
     PsiMethod constructor) {
     super();
     myConstructor = constructor;
     myClass = null;
   }
 
-  public ReplaceConstructorWithFactoryViewDescriptor(PsiClass aClass) {
+  ReplaceConstructorWithFactoryViewDescriptor(PsiClass aClass) {
     super();
     myClass = aClass;
     myConstructor = null;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     if (myConstructor != null) {
@@ -51,6 +52,7 @@ class ReplaceConstructorWithFactoryViewDescriptor extends UsageViewDescriptorAda
     }
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     if (myConstructor != null) {
       return RefactoringBundle.message("replace.constructor.with.factory.method");

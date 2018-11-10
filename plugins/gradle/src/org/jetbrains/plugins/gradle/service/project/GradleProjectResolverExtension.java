@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +44,6 @@ import java.util.Set;
  *
  * @author Denis Zhdanov, Vladislav Soroka
  * @see GradleManager#enhanceRemoteProcessing(SimpleJavaParameters)   sample enhanceParameters() implementation
- * @since 4/17/13 11:24 AM
  */
 public interface GradleProjectResolverExtension extends ParametersEnhancer {
 
@@ -102,6 +102,14 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    */
   @NotNull
   Set<Class> getToolingExtensionsClasses();
+
+  /**
+   * add target types to be used in the polymorphic containers
+   * @return
+   */
+  default Set<Class> getTargetTypes() {
+    return Collections.emptySet();
+  }
 
   @NotNull
   List<Pair<String, String>> getExtraJvmArgs();

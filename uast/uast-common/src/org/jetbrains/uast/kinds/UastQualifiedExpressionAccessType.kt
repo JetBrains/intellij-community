@@ -22,7 +22,7 @@ package org.jetbrains.uast
 open class UastQualifiedExpressionAccessType(val name: String) {
   companion object {
     @JvmField
-    val SIMPLE = UastQualifiedExpressionAccessType(".")
+    val SIMPLE: UastQualifiedExpressionAccessType = UastQualifiedExpressionAccessType(".")
   }
 
   override fun toString(): String {

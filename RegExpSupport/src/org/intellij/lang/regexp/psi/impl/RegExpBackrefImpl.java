@@ -20,16 +20,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiElementFilter;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ArrayUtil;
-
-import org.intellij.lang.regexp.psi.RegExpElementVisitor;
-import org.intellij.lang.regexp.psi.RegExpElement;
-import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.intellij.lang.regexp.psi.RegExpBackref;
+import org.intellij.lang.regexp.psi.RegExpElement;
+import org.intellij.lang.regexp.psi.RegExpElementVisitor;
+import org.intellij.lang.regexp.psi.RegExpGroup;
 import org.jetbrains.annotations.NotNull;
 
 public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackref {
@@ -37,16 +35,19 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
         super(astNode);
     }
 
+    @Override
     public int getIndex() {
         final String s = getUnescapedText();
         assert s.charAt(0) == '\\';
         return Integer.parseInt(s.substring(1));
     }
 
+    @Override
     public void accept(RegExpElementVisitor visitor) {
         visitor.visitRegExpBackref(this);
     }
 
+    @Override
     public RegExpGroup resolve() {
         final int index = getIndex();
 
@@ -54,6 +55,7 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
           new PsiElementProcessor.FindFilteredElement<>(new PsiElementFilter() {
             int groupCount;
 
+            @Override
             public boolean isAccepted(PsiElement element) {
               if (element instanceof RegExpGroup) {
                 if (((RegExpGroup)element).isCapturing() && ++groupCount == index) {
@@ -71,46 +73,50 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
         return null;
     }
 
+    @Override
     public PsiReference getReference() {
         return new PsiReference() {
+            @Override
             @NotNull
             public PsiElement getElement() {
                 return RegExpBackrefImpl.this;
             }
 
+            @Override
             @NotNull
             public TextRange getRangeInElement() {
                 return TextRange.from(0, getElement().getTextLength());
             }
 
+            @Override
             @NotNull
             public String getCanonicalText() {
                 return getElement().getText();
             }
 
-            public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+            @Override
+            public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
                 throw new IncorrectOperationException();
             }
 
+            @Override
             public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
                 throw new IncorrectOperationException();
             }
 
-            public boolean isReferenceTo(PsiElement element) {
+            @Override
+            public boolean isReferenceTo(@NotNull PsiElement element) {
                 return Comparing.equal(element, resolve());
             }
 
+            @Override
             public boolean isSoft() {
                 return false;
             }
 
+            @Override
             public PsiElement resolve() {
                 return RegExpBackrefImpl.this.resolve();
-            }
-            
-            @NotNull
-            public Object[] getVariants() {
-                return ArrayUtil.EMPTY_OBJECT_ARRAY;
             }
         };
     }

@@ -57,7 +57,6 @@ import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBOptionButton;
-import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.Alarm;
@@ -97,6 +96,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * KEY_TYPED event because they are not valid.
    */
   private boolean myPressedWasProcessed;
+  private boolean myIgnoreNextKeyTypedEvent;
   private KeyState myState = KeyState.STATE_INIT;
 
   private final PresentationFactory myPresentationFactory = new PresentationFactory();
@@ -142,11 +142,14 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return false;
     }
 
+    if (myIgnoreNextKeyTypedEvent) {
+      if (KeyEvent.KEY_TYPED == e.getID()) return true;
+      myIgnoreNextKeyTypedEvent = false;
+    }
+
     if (isSpeedSearchEditing(e)) {
       return false;
     }
-
-    TouchBarsManager.onKeyEvent(e);
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
     if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
@@ -225,6 +228,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
       else if (getState() == KeyState.STATE_KEY_GESTURE_PROCESSOR) {
         return myKeyGestureProcessor.process();
+      }
+      else if (getState() == KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR) {
+        return inWaitForPossibleAltGr();
       }
       else {
         throw new IllegalStateException("state = " + getState());
@@ -329,6 +335,30 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   }
 
+  private boolean inWaitForPossibleAltGr() {
+    KeyEvent e = myContext.getInputEvent();
+    KeyStroke keyStroke = myFirstKeyStroke;
+    myFirstKeyStroke = null;
+    setState(KeyState.STATE_INIT);
+
+    // processing altGr
+    int eventId = e.getID();
+    if (KeyEvent.KEY_TYPED == eventId && e.isAltGraphDown()) {
+      return false;
+    } else if (KeyEvent.KEY_RELEASED == eventId) {
+
+      updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(keyStroke, null), myContext.isModalContext());
+
+      if (myContext.getActions().isEmpty()) {
+        return false;
+      }
+
+      return processActionOrWaitSecondStroke(keyStroke);
+    }
+
+    return false;
+  }
+
   private boolean inSecondStrokeInProgressState() {
     KeyEvent e = myContext.getInputEvent();
 
@@ -384,7 +414,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   }
 
   @NonNls private static final Set<String> ALT_GR_LAYOUTS = new HashSet<>(Arrays.asList(
-    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk", "lv"
+    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk", "lv", "sv"
   ));
 
   private boolean inInitState() {
@@ -394,7 +424,8 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyEvent e = myContext.getInputEvent();
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
-    if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) {
+    boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
+    if (isCandidateForAltGr) {
       if (Registry.is("actionSystem.force.alt.gr")) {
         return false;
       }
@@ -421,15 +452,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
       return true;
     }
 
-    if (SystemInfo.isMac) {
-      boolean keyTyped = e.getID() == KeyEvent.KEY_TYPED;
-      boolean hasMnemonicsInWindow = e.getID() == KeyEvent.KEY_PRESSED && hasMnemonicInWindow(focusOwner, e.getKeyCode()) ||
-                                     keyTyped && hasMnemonicInWindow(focusOwner, e.getKeyChar());
-      boolean imEnabled = IdeEventQueue.getInstance().isInputMethodEnabled();
-
-      if (e.getModifiersEx() == InputEvent.ALT_DOWN_MASK && (hasMnemonicsInWindow || !imEnabled && keyTyped))  {
-        setPressedWasProcessed(true);
-        setState(KeyState.STATE_PROCESSED);
+    if (SystemInfo.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
+      // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics on Mac only
+      if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) || hasMnemonicInWindow(focusOwner, e)) {
+        myIgnoreNextKeyTypedEvent = true;
         return false;
       }
     }
@@ -439,6 +465,20 @@ public final class IdeKeyEventDispatcher implements Disposable {
       // there's nothing mapped for this stroke
       return false;
     }
+
+    // workaround for IDEA-177327
+    if (isCandidateForAltGr && SystemInfo.isWindows && Registry.is("actionSystem.fix.alt.gr")) {
+      myFirstKeyStroke = keyStroke;
+      setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
+      return true;
+    }
+
+    return processActionOrWaitSecondStroke(keyStroke);
+  }
+
+  private boolean processActionOrWaitSecondStroke(KeyStroke keyStroke) {
+    DataContext dataContext = myContext.getDataContext();
+    KeyEvent e = myContext.getInputEvent();
 
     if(myContext.isHasSecondStroke()){
       myFirstKeyStroke=keyStroke;
@@ -498,6 +538,11 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return secondKeyStrokes;
   }
 
+  private static boolean hasMnemonicInWindow(Component focusOwner, KeyEvent event) {
+    return KeyEvent.KEY_TYPED == event.getID() && hasMnemonicInWindow(focusOwner, event.getKeyChar()) ||
+           KeyEvent.KEY_PRESSED == event.getID() && hasMnemonicInWindow(focusOwner, event.getKeyCode());
+  }
+
   private static boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
     if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
     final Container container = focusOwner == null ? null : UIUtil.getWindow(focusOwner);
@@ -552,7 +597,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     @NotNull
     @Override
     public AnActionEvent createEvent(final InputEvent inputEvent, @NotNull final DataContext context, @NotNull final String place, @NotNull final Presentation presentation,
-                                     final ActionManager manager) {
+                                     @NotNull final ActionManager manager) {
       return new AnActionEvent(inputEvent, context, place, presentation, manager, 0);
     }
 
@@ -643,6 +688,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       showDumbModeWarningLaterIfNobodyConsumesEvent(e, nonDumbAwareAction.toArray(new AnActionEvent[0]));
     }
 
+    IdeEventQueue.getInstance().flushDelayedKeyEvents();
     return false;
   }
 
@@ -666,7 +712,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
    * This method fills {@code myActions} list.
    * @return true if there is a shortcut with second stroke found.
    */
-  public KeyProcessorContext updateCurrentContext(Component component, Shortcut sc, boolean isModalContext){
+  public KeyProcessorContext updateCurrentContext(Component component, @NotNull Shortcut sc, boolean isModalContext){
     myContext.setFoundComponent(null);
     myContext.getActions().clear();
 
@@ -757,7 +803,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   /**
    * @return true if action is added and has second stroke
    */
-  private boolean addAction(AnAction action, Shortcut sc) {
+  private boolean addAction(AnAction action, @NotNull Shortcut sc) {
     boolean hasSecondStroke = false;
 
     Shortcut[] shortcuts = action.getShortcutSet().getShortcuts();

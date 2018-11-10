@@ -34,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class FixLineSeparatorsAction extends AnAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (project == null || vFiles == null) return;

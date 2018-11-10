@@ -28,7 +28,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author anna
- * @since Feb 13, 2005
  */
 public class SearchCyclesTest extends GraphTestCase {
   @Test

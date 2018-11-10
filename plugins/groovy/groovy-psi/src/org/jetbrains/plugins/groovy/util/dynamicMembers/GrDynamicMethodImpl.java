@@ -202,11 +202,11 @@ public class GrDynamicMethodImpl extends LightElement implements GrMethod {
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
   }
 
   @Override
-  public void acceptChildren(GroovyElementVisitor visitor) {
+  public void acceptChildren(@NotNull GroovyElementVisitor visitor) {
   }
 
   @Override

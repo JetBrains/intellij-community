@@ -36,7 +36,6 @@ import java.util.Arrays;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/30/13
  */
 public class GradleResolverUtil {
 

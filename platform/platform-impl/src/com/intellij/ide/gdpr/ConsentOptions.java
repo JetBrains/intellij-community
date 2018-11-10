@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 import com.google.gson.Gson;
@@ -13,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,24 +41,29 @@ public final class ConsentOptions {
       private final File DEFAULT_CONSENTS_FILE = new File(Locations.getDataRoot(), ApplicationNamesInfo.getInstance().getLowercaseProductName() + "/consentOptions/cached");
       private final File CONFIRMED_CONSENTS_FILE = new File(Locations.getDataRoot(), "/consentOptions/accepted");
 
+      @Override
       public void writeDefaultConsents(@NotNull String data) throws IOException {
         FileUtil.writeToFile(DEFAULT_CONSENTS_FILE, data);
       }
 
+      @Override
       @NotNull
       public String readDefaultConsents() throws IOException {
         return loadText(new FileInputStream(DEFAULT_CONSENTS_FILE));
       }
 
+      @Override
       @NotNull
       public String readBundledConsents() {
         return loadText(ConsentOptions.class.getResourceAsStream(getBundledResourcePath()));
       }
 
+      @Override
       public void writeConfirmedConsents(@NotNull String data) throws IOException {
         FileUtil.writeToFile(CONFIRMED_CONSENTS_FILE, data);
       }
 
+      @Override
       @NotNull
       public String readConfirmedConsents() throws IOException {
         return loadText(new FileInputStream(CONFIRMED_CONSENTS_FILE));
@@ -173,9 +177,7 @@ public final class ConsentOptions {
 
   public void setConsents(Collection<Consent> confirmedByUser) {
     saveConfirmedConsents(
-      confirmedByUser.stream().map(
-        c -> new ConfirmedConsent(c.getId(), c.getVersion(), c.isAccepted(), 0L)
-      ).collect(Collectors.toList())
+      ContainerUtil.map(confirmedByUser, c -> new ConfirmedConsent(c.getId(), c.getVersion(), c.isAccepted(), 0L))
     );
   }
 
@@ -224,7 +226,7 @@ public final class ConsentOptions {
     return false;
   }
 
-  private static boolean applyServerChangesToConfirmedConsents(Map<String, ConfirmedConsent> base, Collection<ConsentAttributes> fromServer) {
+  private static boolean applyServerChangesToConfirmedConsents(Map<String, ConfirmedConsent> base, Collection<? extends ConsentAttributes> fromServer) {
     boolean changes = false;
     for (ConsentAttributes update : fromServer) {
       final ConfirmedConsent current = base.get(update.consentId);
@@ -239,7 +241,7 @@ public final class ConsentOptions {
     return changes;
   }
 
-  private static boolean applyServerChangesToDefaults(Map<String, Consent> base, Collection<ConsentAttributes> fromServer) {
+  private static boolean applyServerChangesToDefaults(Map<String, Consent> base, Collection<? extends ConsentAttributes> fromServer) {
     boolean changes = false;
     for (ConsentAttributes update : fromServer) {
       final Consent newConsent = new Consent(update);
@@ -269,12 +271,12 @@ public final class ConsentOptions {
   private static String consentsToJson(Stream<Consent> consents) {
     return consentAttributesToJson(consents.map(consent -> consent.toConsentAttributes()));
   }
-  
+
   private static String consentAttributesToJson(Stream<ConsentAttributes> attributes) {
     final Gson gson = new GsonBuilder().disableHtmlEscaping().create();
     return gson.toJson(attributes.toArray());
   }
-  
+
   private static String confirmedConsentToExternalString(Stream<ConfirmedConsent> consents) {
     return StringUtil.join(consents/*.sorted(Comparator.comparing(confirmedConsent -> confirmedConsent.getId()))*/.map(c -> c.toExternalString()).collect(Collectors.toList()), ";");
   }

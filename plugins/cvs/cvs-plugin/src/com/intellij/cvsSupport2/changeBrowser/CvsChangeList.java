@@ -93,18 +93,22 @@ public class CvsChangeList implements CommittedChangeList {
     readFromStream(stream);
   }
 
+  @Override
   public String getCommitterName() {
     return myUser;
   }
 
+  @Override
   public Date getCommitDate() {
     return new Date(myDate);
   }
 
+  @Override
   public long getNumber() {
     return myNumber;
   }
 
+  @Override
   public AbstractVcs getVcs() {
     return CvsVcs2.getInstance(myProject);
   }
@@ -119,6 +123,7 @@ public class CvsChangeList implements CommittedChangeList {
     myDescription = newMessage;
   }
 
+  @Override
   @Nullable
   public String getBranch() {
     if (myRevisions.size() > 0) {
@@ -127,6 +132,7 @@ public class CvsChangeList implements CommittedChangeList {
     return null;
   }
 
+  @Override
   public Collection<Change> getChanges() {
     if (myChanges == null) {
       myChanges = new ArrayList<>();
@@ -165,11 +171,13 @@ public class CvsChangeList implements CommittedChangeList {
     return myChanges;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myDescription;
   }
 
+  @Override
   public String getComment() {
     return myDescription;
   }

@@ -24,7 +24,7 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 class ArrayInitializerAwareConversionDescriptor extends TypeConversionDescriptor {
-  public ArrayInitializerAwareConversionDescriptor(String stringToReplace,
+  ArrayInitializerAwareConversionDescriptor(String stringToReplace,
                                                    String replaceByString,
                                                    PsiExpression expression) {
     super(stringToReplace, replaceByString, expression);
@@ -34,7 +34,7 @@ class ArrayInitializerAwareConversionDescriptor extends TypeConversionDescriptor
   @Override
   protected PsiExpression adjustExpressionBeforeReplacement(@NotNull PsiExpression expression) {
     if (expression instanceof PsiArrayInitializerExpression) {
-      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+      PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(expression.getProject());
       return (PsiExpression)expression.replace(elementFactory.createExpressionFromText("new " +
                                                                                        TypeConversionUtil
                                                                                          .erasure(expression.getType()).getCanonicalText() +

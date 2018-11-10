@@ -177,7 +177,11 @@ def patch_args(args):
                 # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
                 original.insert(1, '--module')
             else:
-                if args[i].startswith('-'):
+                if args[i] == '-':
+                    # this is the marker that input is going to be from stdin for Python
+                    # for now we just disable the debugging here, don't crash but is not supported
+                    return args
+                elif args[i].startswith('-'):
                     new_args.append(args[i])
                 else:
                     break

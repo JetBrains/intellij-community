@@ -127,7 +127,7 @@ public class JavaVarTypeUtil {
             }
           }
         }
-        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, targetSubstitutor);
+        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, targetSubstitutor);
       }
       return classType;
     }
@@ -214,7 +214,7 @@ public class JavaVarTypeUtil {
             return PsiType.NULL;
           }
         }
-        return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, targetSubstitutor);
+        return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, targetSubstitutor);
       }
       return PsiType.NULL;
     }

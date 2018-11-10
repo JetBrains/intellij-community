@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.structuralsearch.MatchOptions;
@@ -20,16 +20,11 @@ public class ReplaceConfiguration extends Configuration {
     myReplaceOptions = new ReplaceOptions();
   }
 
-  ReplaceConfiguration(Configuration configuration) {
+  public ReplaceConfiguration(Configuration configuration) {
     super(configuration);
-    if (configuration instanceof ReplaceConfiguration) {
-      myReplaceOptions = ((ReplaceConfiguration)configuration).myReplaceOptions.copy();
-    }
-    else {
-      final MatchOptions matchOptions = configuration.getMatchOptions();
-      myReplaceOptions = new ReplaceOptions(matchOptions);
-      myReplaceOptions.setReplacement(matchOptions.getSearchPattern());
-    }
+    myReplaceOptions = configuration instanceof ReplaceConfiguration
+                       ? ((ReplaceConfiguration)configuration).myReplaceOptions.copy()
+                       : new ReplaceOptions(configuration.getMatchOptions().copy());
   }
 
   public ReplaceConfiguration(String name, String category) {
@@ -42,6 +37,7 @@ public class ReplaceConfiguration extends Configuration {
     return new ReplaceConfiguration(this);
   }
 
+  @Override
   public ReplaceOptions getReplaceOptions() {
     return myReplaceOptions;
   }

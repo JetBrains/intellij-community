@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.openapi.project.Project;
@@ -26,7 +14,12 @@ import org.jetbrains.annotations.NotNull;
 public enum ShortenCommandLine {
   NONE("none", "java [options] classname [args]"),
   MANIFEST("JAR manifest", "java -cp classpath.jar classname [args]"),
-  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile [args]"),
+  CLASSPATH_FILE("classpath file", "java WrapperClass classpathFile [args]"){
+    @Override
+    public boolean isApplicable(String jreRoot) {
+      return jreRoot == null || !JdkUtil.isModularRuntime(jreRoot);
+    }
+  },
   ARGS_FILE("@argFiles (java 9+)", "java @argFile [args]") {
     @Override
     public boolean isApplicable(String jreRoot) {
@@ -61,6 +54,7 @@ public enum ShortenCommandLine {
     return CLASSPATH_FILE;
   }
 
+  @Deprecated
   public static ShortenCommandLine readShortenClasspathMethod(@NotNull Element element) {
     Element mode = element.getChild("shortenClasspath");
     if (mode != null) {
@@ -69,6 +63,7 @@ public enum ShortenCommandLine {
     return null;
   }
 
+  @Deprecated
   public static void writeShortenClasspathMethod(@NotNull Element element, ShortenCommandLine shortenCommandLine) {
     if (shortenCommandLine != null) {
       element.addContent(new Element("shortenClasspath").setAttribute("name", shortenCommandLine.name()));

@@ -1,60 +1,46 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInspection.dataFlow.StandardMethodContract;
-import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 
-import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InOut;
+import static com.intellij.codeInspection.bytecodeAnalysis.Direction.InThrow;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
  * @author lambdamix
  */
 public class BytecodeAnalysisConverter {
-
-  private static final ThreadLocalCachedValue<MessageDigest> HASHER_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
+  private static final ThreadLocalCachedValue<MessageDigest> DIGEST_CACHE = new ThreadLocalCachedValue<MessageDigest>() {
+    @NotNull
     @Override
     public MessageDigest create() {
       try {
         return MessageDigest.getInstance("MD5");
-      } catch (NoSuchAlgorithmException exception) {
+      }
+      catch (NoSuchAlgorithmException exception) {
         throw new RuntimeException(exception);
       }
     }
 
     @Override
-    protected void init(MessageDigest value) {
+    protected void init(@NotNull MessageDigest value) {
       value.reset();
     }
   };
 
   public static MessageDigest getMessageDigest() {
-    return HASHER_CACHE.getValue();
+    return DIGEST_CACHE.getValue();
   }
 
   /**
@@ -63,60 +49,50 @@ public class BytecodeAnalysisConverter {
    */
   @Nullable
   public static EKey psiKey(@NotNull PsiMethod psiMethod, @NotNull Direction direction) {
-    final PsiClass psiClass = psiMethod.getContainingClass();
-    if (psiClass == null) {
-      return null;
+    PsiClass psiClass = psiMethod.getContainingClass();
+    if (psiClass != null) {
+      String className = descriptor(psiClass, 0, false);
+      String methodSig = methodSignature(psiMethod, psiClass);
+      if (className != null && methodSig != null) {
+        String methodName = psiMethod.getReturnType() == null ? "<init>" : psiMethod.getName();
+        return new EKey(new Member(className, methodName, methodSig), direction, true, false);
+      }
     }
-    String className = descriptor(psiClass, 0, false);
-    String methodSig = methodSignature(psiMethod);
-    if (className == null || methodSig == null) {
-      return null;
-    }
-    String methodName = psiMethod.getReturnType() == null ? "<init>" : psiMethod.getName();
-    return new EKey(new Member(className, methodName, methodSig), direction, true, false);
+    return null;
   }
 
   @Nullable
-  private static String methodSignature(@NotNull PsiMethod psiMethod) {
+  private static String methodSignature(@NotNull PsiMethod psiMethod, @NotNull PsiClass psiClass) {
     StringBuilder sb = new StringBuilder();
-    final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class, false);
-    if (psiClass == null) {
-      return null;
-    }
-    PsiClass outerClass = psiClass.getContainingClass();
-    boolean isInnerClassConstructor = psiMethod.isConstructor() && (outerClass != null) && !psiClass.hasModifierProperty(PsiModifier.STATIC);
-    PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    PsiType returnType = psiMethod.getReturnType();
 
     sb.append('(');
-
-    String desc;
-
-    if (isInnerClassConstructor) {
-      desc = descriptor(outerClass, 0, true);
-      if (desc == null) {
-        return null;
+    if (psiMethod.isConstructor() && !psiClass.hasModifierProperty(PsiModifier.STATIC)) {
+      PsiClass outerClass = psiClass.getContainingClass();
+      if (outerClass != null) {
+        String desc = descriptor(outerClass, 0, true);
+        if (desc == null) return null;
+        sb.append(desc);
       }
-      sb.append(desc);
     }
-    for (PsiParameter parameter : parameters) {
-      desc = descriptor(parameter.getType());
+    for (PsiParameter parameter : psiMethod.getParameterList().getParameters()) {
+      String desc = descriptor(parameter.getType());
       if (desc == null) {
         return null;
       }
       sb.append(desc);
     }
     sb.append(')');
+
+    PsiType returnType = psiMethod.getReturnType();
     if (returnType == null) {
       sb.append('V');
-    } else {
-      desc = descriptor(returnType);
-      if (desc == null) {
-        return null;
-      } else {
-        sb.append(desc);
-      }
     }
+    else {
+      String desc = descriptor(returnType);
+      if (desc == null) return null;
+      sb.append(desc);
+    }
+
     return sb.toString();
   }
 
@@ -136,7 +112,8 @@ public class BytecodeAnalysisConverter {
     String className;
     if (packageName.length() > 0) {
       className = qname.substring(packageName.length() + 1).replace('.', '$');
-    } else {
+    }
+    else {
       className = qname.replace('.', '$');
     }
     StringBuilder sb = new StringBuilder();
@@ -180,7 +157,7 @@ public class BytecodeAnalysisConverter {
     else if (psiType instanceof PsiPrimitiveType) {
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < dimensions; i++) {
-         sb.append('[');
+        sb.append('[');
       }
       if (PsiType.VOID.equals(psiType)) {
         sb.append('V');
@@ -218,7 +195,7 @@ public class BytecodeAnalysisConverter {
   /**
    * Given a PSI method and its primary Key enumerate all contract keys for it.
    *
-   * @param psiMethod psi method
+   * @param psiMethod  psi method
    * @param primaryKey primary stable keys
    * @return corresponding (stable!) keys
    */
@@ -233,7 +210,8 @@ public class BytecodeAnalysisConverter {
         keys.add(primaryKey.withDirection(new InOut(i, Value.Null)));
         keys.add(primaryKey.withDirection(new InThrow(i, Value.NotNull)));
         keys.add(primaryKey.withDirection(new InThrow(i, Value.Null)));
-      } else if (PsiType.BOOLEAN.equals(parameters[i].getType())) {
+      }
+      else if (PsiType.BOOLEAN.equals(parameters[i].getType())) {
         keys.add(primaryKey.withDirection(new InOut(i, Value.True)));
         keys.add(primaryKey.withDirection(new InOut(i, Value.False)));
         keys.add(primaryKey.withDirection(new InThrow(i, Value.True)));
@@ -243,117 +221,22 @@ public class BytecodeAnalysisConverter {
     return keys;
   }
 
-  /**
-   * Given `solution` of all dependencies of a method with the `methodKey`, converts this solution into annotations.
-   *
-   * @param solution solution of equations
-   * @param methodAnnotations annotations to which corresponding solutions should be added
-   * @param methodKey a primary key of a method being analyzed. not it is stable
-   * @param arity arity of this method (hint for constructing @Contract annotations)
-   */
-  public static void addMethodAnnotations(@NotNull Map<EKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull EKey methodKey, int arity) {
-    List<StandardMethodContract> contractClauses = new ArrayList<>();
-    Set<EKey> notNulls = methodAnnotations.notNulls;
-    Set<EKey> pures = methodAnnotations.pures;
-    Map<EKey, String> contracts = methodAnnotations.contractsValues;
-
-    for (Map.Entry<EKey, Value> entry : solution.entrySet()) {
-      // NB: keys from Psi are always stable, so we need to stabilize keys from equations
-      Value value = entry.getValue();
-      if (value == Value.Top || value == Value.Bot || (value == Value.Fail && !pures.contains(methodKey))) {
-        continue;
-      }
-      EKey key = entry.getKey().mkStable();
-      Direction direction = key.getDirection();
-      EKey baseKey = key.mkBase();
-      if (!methodKey.equals(baseKey)) {
-        continue;
-      }
-      if (value == Value.NotNull && direction == Out) {
-        notNulls.add(methodKey);
-      }
-      else if (value == Value.Pure && direction == Pure) {
-        pures.add(methodKey);
-      }
-      else if (direction instanceof ParamValueBasedDirection) {
-        contractClauses.add(contractElement(arity, (ParamValueBasedDirection)direction, value));
-      }
-    }
-
-    // no contract clauses for @NotNull methods
-    if (!notNulls.contains(methodKey) && !contractClauses.isEmpty()) {
-      Map<Boolean, List<StandardMethodContract>> partition =
-        StreamEx.of(contractClauses).partitioningBy(c -> c.getReturnValue().isFail());
-      List<StandardMethodContract> failingContracts = squashContracts(partition.get(true));
-      List<StandardMethodContract> nonFailingContracts = squashContracts(partition.get(false));
-      // Sometimes "null,_->!null;!null,_->!null" contracts are inferred for some reason
-      // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
-      if(nonFailingContracts.size() == 1) {
-        StandardMethodContract contract = nonFailingContracts.get(0);
-        if(contract.getReturnValue().isNotNull() && contract.isTrivial()) {
-          nonFailingContracts = Collections.emptyList();
-          notNulls.add(methodKey);
-        }
-      }
-      // Failing contracts go first
-      String result = StreamEx.of(failingContracts, nonFailingContracts)
-        .flatMap(list -> list.stream()
-          .map(Object::toString)
-          .map(str -> str.replace(" ", "")) // for compatibility with existing tests
-          .sorted())
-        .joining(";");
-      if(!result.isEmpty()) {
-        contracts.put(methodKey, '"'+result+'"');
-      }
-    }
-
-  }
-
-  @NotNull
-  private static List<StandardMethodContract> squashContracts(List<StandardMethodContract> contractClauses) {
-    // If there's a pair of contracts yielding the same value like "null,_->true", "!null,_->true"
-    // then trivial contract should be used like "_,_->true"
-    StandardMethodContract soleContract = StreamEx.ofPairs(contractClauses, (c1, c2) -> {
-      if (c1.getReturnValue() != c2.getReturnValue()) return null;
-      int idx = -1;
-      for (int i = 0; i < c1.getParameterCount(); i++) {
-        ValueConstraint left = c1.getParameterConstraint(i);
-        ValueConstraint right = c2.getParameterConstraint(i);
-        if (left == ValueConstraint.ANY_VALUE && right == ValueConstraint.ANY_VALUE) continue;
-        if (idx >= 0 || !right.canBeNegated() || left != right.negate()) return null;
-        idx = i;
-      }
-      return c1;
-    }).nonNull().findFirst().orElse(null);
-    if(soleContract != null) {
-      ValueConstraint[] constraints = StandardMethodContract.createConstraintArray(soleContract.getParameterCount());
-      contractClauses = Collections.singletonList(new StandardMethodContract(constraints, soleContract.getReturnValue()));
-    }
-    return contractClauses;
-  }
-
   public static void addEffectAnnotations(Map<EKey, Effects> puritySolutions,
                                           MethodAnnotations result,
                                           EKey methodKey,
                                           boolean constructor) {
     for (Map.Entry<EKey, Effects> entry : puritySolutions.entrySet()) {
-      Set<EffectQuantum> effects = entry.getValue().effects;
       EKey key = entry.getKey().mkStable();
       EKey baseKey = key.mkBase();
       if (!methodKey.equals(baseKey)) {
         continue;
       }
+      result.returnValue = entry.getValue().returnValue;
+      Set<EffectQuantum> effects = entry.getValue().effects;
       if (effects.isEmpty() || (constructor && effects.size() == 1 && effects.contains(EffectQuantum.ThisChangeQuantum))) {
         // Pure constructor is allowed to change "this" object as this is a new object anyways
         result.pures.add(methodKey);
       }
     }
-  }
-
-  private static StandardMethodContract contractElement(int arity, ParamValueBasedDirection inOut, Value value) {
-    final ValueConstraint[] constraints = new ValueConstraint[arity];
-    Arrays.fill(constraints, ValueConstraint.ANY_VALUE);
-    constraints[inOut.paramIndex] = inOut.inValue.toValueConstraint();
-    return new StandardMethodContract(constraints, value.toReturnValue());
   }
 }

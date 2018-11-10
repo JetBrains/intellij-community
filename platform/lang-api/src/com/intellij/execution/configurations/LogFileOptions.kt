@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations
 
 import com.intellij.openapi.components.BaseState
@@ -45,10 +43,10 @@ class LogFileOptions : BaseState {
   }
 
   @get:Attribute("alias")
-  var name by string()
+  var name: String? by string()
 
   @get:Attribute(value = "path", converter = PathConverter::class)
-  var pathPattern by string()
+  var pathPattern: String? by string()
 
   @get:Attribute("checked")
   var isEnabled by property(true)
@@ -125,13 +123,9 @@ class LogFileOptions : BaseState {
 }
 
 private class PathConverter : Converter<String>() {
-  override fun fromString(value: String): String? {
-    return FileUtilRt.toSystemDependentName(value)
-  }
+  override fun fromString(value: String) = FileUtilRt.toSystemDependentName(value)
 
-  override fun toString(value: String): String {
-    return FileUtilRt.toSystemIndependentName(value)
-  }
+  override fun toString(value: String) = FileUtilRt.toSystemIndependentName(value)
 }
 
 private class CharsetConverter : Converter<Charset>() {
@@ -142,10 +136,7 @@ private class CharsetConverter : Converter<Charset>() {
     catch (ignored: Exception) {
       Charset.defaultCharset()
     }
-
   }
 
-  override fun toString(value: Charset): String {
-    return value.name()
-  }
+  override fun toString(value: Charset) = value.name()
 }

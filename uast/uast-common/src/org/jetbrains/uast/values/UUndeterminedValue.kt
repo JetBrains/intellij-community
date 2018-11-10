@@ -17,7 +17,7 @@ package org.jetbrains.uast.values
 
 // Something with value that cannot be evaluated
 object UUndeterminedValue : UValueBase() {
-  override fun toString() = "Undetermined"
+  override fun toString(): String = "Undetermined"
 }
 
-fun UValue.ifUndetermined(block: () -> UValue) = if (this == UUndeterminedValue) block() else this
+fun UValue.ifUndetermined(block: () -> UValue): UValue = if (this == UUndeterminedValue) block() else this

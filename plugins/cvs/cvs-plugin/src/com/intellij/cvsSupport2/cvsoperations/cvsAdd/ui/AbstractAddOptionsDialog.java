@@ -53,14 +53,17 @@ public abstract class AbstractAddOptionsDialog extends OptionsDialog {
     UIUtil.setActionNameAndMnemonic(CvsBundle.message("button.text.add.to.cvs"), getOKAction());
   }
 
+  @Override
   protected boolean isToBeShown() {
     return myOptions.isToBeShown(myProject);
   }
 
+  @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     myOptions.setToBeShown(value, myProject, onOk);
   }
 
+  @Override
   protected boolean shouldSaveOptionsOnCancel() {
     return true;
   }

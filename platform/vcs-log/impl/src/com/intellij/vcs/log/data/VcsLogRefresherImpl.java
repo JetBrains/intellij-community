@@ -29,7 +29,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.index.VcsLogIndex;
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.GraphCommitImpl;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -50,9 +50,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   @NotNull private final VcsLogStorage myStorage;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myProviders;
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
-  @NotNull private final VcsLogIndex myIndex;
+  @NotNull private final VcsLogModifiableIndex myIndex;
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
-  @NotNull private final Consumer<Exception> myExceptionHandler;
+  @NotNull private final Consumer<? super Exception> myExceptionHandler;
   @NotNull private final VcsLogProgress myProgress;
 
   private final int myRecentCommitCount;
@@ -65,11 +65,11 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
                              @NotNull VcsLogStorage storage,
                              @NotNull Map<VirtualFile, VcsLogProvider> providers,
                              @NotNull VcsUserRegistryImpl userRegistry,
-                             @NotNull VcsLogIndex index,
+                             @NotNull VcsLogModifiableIndex index,
                              @NotNull VcsLogProgress progress,
                              @NotNull TopCommitsCache topCommitsDetailsCache,
-                             @NotNull Consumer<DataPack> dataPackUpdateHandler,
-                             @NotNull Consumer<Exception> exceptionHandler,
+                             @NotNull Consumer<? super DataPack> dataPackUpdateHandler,
+                             @NotNull Consumer<? super Exception> exceptionHandler,
                              int recentCommitsCount) {
     myProject = project;
     myStorage = storage;
@@ -95,7 +95,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   protected SingleTaskController.SingleTask startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
     LOG.debug("Starting a background task...");
-    ProgressIndicator indicator = myProgress.createProgressIndicator();
+    ProgressIndicator indicator = myProgress.createProgressIndicator(VcsLogData.DATA_PACK_REFRESH);
     Future<?> future = ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask, indicator,
                                                                                                                  null);
     return new SingleTaskController.SingleTaskImpl(future, indicator);
@@ -252,7 +252,9 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
             loadLogAndRefs(roots, currentRefs, commitCount);
             List<? extends GraphCommit<Integer>> compoundLog = multiRepoJoin(myLoadedInfo.getCommits());
             Map<VirtualFile, CompressedRefs> allNewRefs = getAllNewRefs(myLoadedInfo, currentRefs);
-            List<? extends GraphCommit<Integer>> joinedFullLog = join(compoundLog, permanentGraph.getAllCommits(), currentRefs, allNewRefs);
+            List<? extends GraphCommit<Integer>> joinedFullLog =
+              join(compoundLog, ContainerUtil.newArrayList(permanentGraph.getAllCommits()),
+                   currentRefs, allNewRefs);
             if (joinedFullLog == null) {
               commitCount *= 5;
             }
@@ -401,7 +403,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
   private static class CommitCountRequirements implements VcsLogProvider.Requirements {
     private final int myCommitCount;
 
-    public CommitCountRequirements(int commitCount) {
+    CommitCountRequirements(int commitCount) {
       myCommitCount = commitCount;
     }
 
@@ -413,17 +415,16 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     @NotNull
     Map<VirtualFile, VcsLogProvider.Requirements> asMap(@NotNull Collection<VirtualFile> roots) {
       return ContainerUtil
-        .map2Map(roots, root -> Pair.<VirtualFile, VcsLogProvider.Requirements>create(root, this));
+        .map2Map(roots, root -> Pair.create(root, this));
     }
   }
 
-  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   private static class LogInfo {
     private final VcsLogStorage myStorage;
     private final Map<VirtualFile, CompressedRefs> myRefs = ContainerUtil.newHashMap();
     private final Map<VirtualFile, List<GraphCommit<Integer>>> myCommits = ContainerUtil.newHashMap();
 
-    public LogInfo(VcsLogStorage storage) {
+    LogInfo(VcsLogStorage storage) {
       myStorage = storage;
     }
 

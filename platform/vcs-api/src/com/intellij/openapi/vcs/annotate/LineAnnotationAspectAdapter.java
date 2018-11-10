@@ -39,6 +39,7 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
     myShowByDefault = showByDefault;
   }
 
+  @Override
   public String getTooltipText(int lineNumber) {
     return null;
   }
@@ -53,6 +54,7 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
     return myShowByDefault;
   }
 
+  @Override
   public Cursor getCursor(final int lineNum) {
     return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
   }

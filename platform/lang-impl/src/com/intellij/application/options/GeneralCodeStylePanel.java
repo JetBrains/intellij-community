@@ -16,6 +16,8 @@
 
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
+import com.intellij.application.options.codeStyle.excludedFiles.ExcludedFilesList;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,8 +37,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -44,6 +46,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.ui.JBUI;
@@ -53,13 +56,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
-import static com.intellij.psi.codeStyle.CodeStyleSettings.MAX_RIGHT_MARGIN;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @SuppressWarnings("UnusedDeclaration")
@@ -80,20 +79,22 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JTextField myFormatterOnTagField;
   private JTextField myFormatterOffTagField;
   private JCheckBox myAcceptRegularExpressionsCheckBox;
-  private JPanel myMarkersPanel;
   private JBLabel myFormatterOffLabel;
   private JBLabel myFormatterOnLabel;
   private JPanel myMarkerOptionsPanel;
   private JPanel myAdditionalSettingsPanel;
   private JCheckBox myAutodetectIndentsBox;
-  private JCheckBox myShowDetectedIndentNotification;
   private JPanel myIndentsDetectionPanel;
   private CommaSeparatedIntegersField myVisualGuides;
   private JBLabel myVisualGuidesHint;
   private JBLabel myLineSeparatorHint;
   private JBLabel myVisualGuidesLabel;
+  private ExcludedFilesList myExcludedFilesList;
+  private JPanel myExcludedFilesPanel;
+  private JPanel myToolbarPanel;
+  private JBTabbedPane myTabbedPane;
   private final JScrollPane myScrollPane;
-
+  private static int ourSelectedTabIndex = -1;
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
     super(settings);
@@ -110,20 +111,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     myRightMarginField.setDefaultValue(settings.getDefaultRightMargin());
 
-    myEnableFormatterTags.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean tagsEnabled = myEnableFormatterTags.isSelected();
-        setFormatterTagControlsEnabled(tagsEnabled);
-      }
-    });
-
-    myAutodetectIndentsBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean isDetectIndent = myAutodetectIndentsBox.isSelected();
-        myShowDetectedIndentNotification.setEnabled(isDetectIndent);
-      }
+    myEnableFormatterTags.addActionListener(__ -> {
+      boolean tagsEnabled = myEnableFormatterTags.isSelected();
+      setFormatterTagControlsEnabled(tagsEnabled);
     });
 
     myIndentsDetectionPanel
@@ -149,7 +139,17 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorHint.setForeground(JBColor.GRAY);
     myLineSeparatorHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
-    myMarkersPanel.setBorder(JBUI.Borders.emptyLeft(30));
+    myExcludedFilesList.initModel();
+    myToolbarPanel.add(myExcludedFilesList.getDecorator().createPanel());
+    myExcludedFilesPanel
+      .setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.excluded.files")));
+    if (ourSelectedTabIndex >= 0) {
+      myTabbedPane.setSelectedIndex(ourSelectedTabIndex);
+    }
+    myTabbedPane.addChangeListener(__ -> {
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      ourSelectedTabIndex = myTabbedPane.getSelectedIndex();
+    });
   }
 
 
@@ -175,6 +175,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myVisualGuides.validateContent();
     myRightMarginField.validateContent();
     settings.setDefaultSoftMargins(myVisualGuides.getValue());
+    myExcludedFilesList.apply(settings);
 
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
 
@@ -191,9 +192,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     settings.setFormatterOnPattern(compilePattern(settings, myFormatterOnTagField, settings.FORMATTER_ON_TAG));
 
     settings.AUTODETECT_INDENTS = myAutodetectIndentsBox.isSelected();
-    if (myShowDetectedIndentNotification.isEnabled()) {
-      FileIndentOptionsProvider.setShowNotification(myShowDetectedIndentNotification.isSelected());
-    }
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.apply(settings);
@@ -201,8 +199,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   private void createUIComponents() {
-    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, MAX_RIGHT_MARGIN);
-    myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, MAX_RIGHT_MARGIN, "Optional");
+    myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, CodeStyleConstraints.MAX_RIGHT_MARGIN);
+    myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
+    myExcludedFilesList = new ExcludedFilesList();
   }
 
   @Nullable
@@ -230,10 +229,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     if (UNIX_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
       return "\n";
     }
-    else if (MACINTOSH_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
+    if (MACINTOSH_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
       return "\r";
     }
-    else if (WINDOWS_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
+    if (WINDOWS_STRING.equals(myLineSeparatorCombo.getSelectedItem())) {
       return "\r\n";
     }
     return null;
@@ -243,6 +242,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @Override
   public boolean isModified(CodeStyleSettings settings) {
     if (!myVisualGuides.getValue().equals(settings.getDefaultSoftMargins())) return true;
+
+    if (myExcludedFilesList.isModified(settings)) return true;
 
     if (!Comparing.equal(getSelectedLineSeparator(), settings.LINE_SEPARATOR)) {
       return true;
@@ -269,15 +270,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       if (option.isModified(settings)) return true;
     }
 
-    if (settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected()) return true;
-
-    if (myShowDetectedIndentNotification.isEnabled()
-        && FileIndentOptionsProvider.isShowNotification() != myShowDetectedIndentNotification.isSelected())
-    {
-      return true;
-    }
-
-    return false;
+    return settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected();
   }
 
   @Override
@@ -288,6 +281,8 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @Override
   protected void resetImpl(final CodeStyleSettings settings) {
     myVisualGuides.setValue(settings.getDefaultSoftMargins());
+
+    myExcludedFilesList.reset(settings);
 
     String lineSeparator = settings.LINE_SEPARATOR;
     if ("\n".equals(lineSeparator)) {
@@ -315,8 +310,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
 
     myAutodetectIndentsBox.setSelected(settings.AUTODETECT_INDENTS);
-    myShowDetectedIndentNotification.setEnabled(myAutodetectIndentsBox.isSelected());
-    myShowDetectedIndentNotification.setSelected(FileIndentOptionsProvider.isShowNotification());
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.reset(settings);
@@ -326,7 +319,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private void setFormatterTagControlsEnabled(boolean isEnabled) {
     myFormatterOffTagField.setEnabled(isEnabled);
     myFormatterOnTagField.setEnabled(isEnabled);
-    myMarkersPanel.setEnabled(isEnabled);
     myAcceptRegularExpressionsCheckBox.setEnabled(isEnabled);
     myFormatterOffLabel.setEnabled(isEnabled);
     myFormatterOnLabel.setEnabled(isEnabled);
@@ -335,7 +327,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   @Override
   protected EditorHighlighter createHighlighter(final EditorColorsScheme scheme) {
-    //noinspection NullableProblems
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
   }
 
@@ -355,5 +346,11 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     final RelativePoint point = new RelativePoint(field, p);
     balloon.show(point, Balloon.Position.below);
     Disposer.register(ProjectManager.getInstance().getDefaultProject(), balloon);
+  }
+
+  @Override
+  public void setModel(@NotNull CodeStyleSchemesModel model) {
+    super.setModel(model);
+    myExcludedFilesList.setSchemesModel(model);
   }
 }

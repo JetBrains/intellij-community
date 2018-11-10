@@ -16,7 +16,9 @@
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.DiffIterable;
+import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
+import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import gnu.trove.TIntArrayList;
@@ -53,6 +55,32 @@ public class ByChar {
 
     FairDiffIterable nonSpaceChanges = diff(chars1.characters, chars2.characters, indicator);
     return matchAdjustmentSpaces(chars1, chars2, text1, text2, nonSpaceChanges, indicator);
+  }
+
+  @NotNull
+  public static DiffIterable compareTrimWhitespaces(@NotNull CharSequence text1,
+                                                    @NotNull CharSequence text2,
+                                                    @NotNull ProgressIndicator indicator) {
+    FairDiffIterable iterable = compareTwoStep(text1, text2, indicator);
+
+    IntPair trim1 = TrimUtil.trim(text1, 0, text1.length());
+    IntPair trim2 = TrimUtil.trim(text2, 0, text2.length());
+
+    List<Range> ranges = new ArrayList<>();
+    for (Range ch : iterable.iterateChanges()) {
+      int start1 = Math.max(ch.start1, trim1.val1);
+      int end1 = Math.min(ch.end1, trim1.val2);
+      int start2 = Math.max(ch.start2, trim2.val1);
+      int end2 = Math.min(ch.end2, trim2.val2);
+
+      if (end1 < start1) start1 = end1 = ch.start1;
+      if (end2 < start2) start2 = end2 = ch.start2;
+
+      if (start1 != end1 || start2 != end2) {
+        ranges.add(new Range(start1, end1, start2, end2));
+      }
+    }
+    return DiffIterableUtil.create(ranges, text1.length(), text2.length());
   }
 
   @NotNull
@@ -232,7 +260,7 @@ public class ByChar {
     public final int[] characters;
     public final int[] offsets;
 
-    public CharOffsets(int[] characters, int[] offsets) {
+    CharOffsets(int[] characters, int[] offsets) {
       this.characters = characters;
       this.offsets = offsets;
     }

@@ -104,7 +104,7 @@ public class DetectedFrameworksComponent {
   public enum GroupByOption { TYPE, DIRECTORY }
 
   private static class GroupByListCellRenderer extends ListCellRendererWrapper<GroupByOption> {
-    public GroupByListCellRenderer() {
+    GroupByListCellRenderer() {
       super();
     }
 

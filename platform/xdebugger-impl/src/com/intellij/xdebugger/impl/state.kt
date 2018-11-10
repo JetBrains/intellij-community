@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.components.BaseState
@@ -20,16 +18,15 @@ class BreakpointManagerState : BaseState() {
   @get:XCollection(propertyElementName = "default-breakpoints")
   var defaultBreakpoints by list<BreakpointState<*, *, *>>()
 
-  @get:XCollection(elementTypes = arrayOf(BreakpointState::class, LineBreakpointState::class), style = XCollection.Style.v2)
+  @get:XCollection(elementTypes = [BreakpointState::class, LineBreakpointState::class], style = XCollection.Style.v2)
   var breakpoints by list<BreakpointState<*, *, *>>()
 
-  @get:XCollection(propertyElementName = "breakpoints-defaults", elementTypes = arrayOf(BreakpointState::class, LineBreakpointState::class))
+  @get:XCollection(propertyElementName = "breakpoints-defaults", elementTypes = [BreakpointState::class, LineBreakpointState::class])
   var breakpointsDefaults by list<BreakpointState<*, *, *>>()
 
   @get:Tag("breakpoints-dialog")
-  var breakpointsDialogProperties: XBreakpointsDialogState? = null
+  var breakpointsDialogProperties by property<XBreakpointsDialogState>()
 
-  var time by property(0L)
   var defaultGroup by string()
 }
 

@@ -153,7 +153,9 @@ public class RootsAsVirtualFilePointers implements RootProvider {
     Element composite = composites.get(0);
 
     VirtualFilePointerContainer container = myRoots.get(type);
-    assert container != null : "unknown root type: " + type;
+    if (container == null) {
+      LOG.error("unknown root type: " + type);
+    }
     container.readExternal(composite, "root", false);
   }
 

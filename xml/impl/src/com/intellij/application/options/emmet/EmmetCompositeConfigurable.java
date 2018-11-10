@@ -22,13 +22,13 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -62,7 +62,7 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
   @Nullable
   @Override
   public JComponent createComponent() { 
-    final JPanel rootPanel = new JPanel(new GridLayoutManager(myInnerConfigurables.length + 1, 1, new Insets(0, 0, 0, 0), -1, -1, false, false));
+    final JPanel rootPanel = new JPanel(new GridLayoutManager(myInnerConfigurables.length + 1, 1, JBUI.emptyInsets(), -1, -1, false, false));
     rootPanel.add(myTemplateExpandShortcutPanel, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
                                                                      GridConstraints.FILL_HORIZONTAL,
                                                                      GridConstraints.SIZEPOLICY_CAN_GROW |
@@ -98,7 +98,7 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
   public void apply() throws ConfigurationException {
     EmmetOptions.getInstance().setEmmetExpandShortcut(myTemplateExpandShortcutPanel.getSelectedChar());
     for (Configurable configurable : myInnerConfigurables) {
-      configurable.reset();
+      configurable.apply();
     }
     super.apply();
   }

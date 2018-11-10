@@ -26,7 +26,7 @@ public class CustomResourceBundlePropertiesFileNode extends PsiFileNode implemen
   }
 
   @Override
-  public void update(PresentationData data) {
+  public void update(@NotNull PresentationData data) {
     super.update(data);
     data.setLocationString(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", getResourceBundle().getBaseName()));
   }

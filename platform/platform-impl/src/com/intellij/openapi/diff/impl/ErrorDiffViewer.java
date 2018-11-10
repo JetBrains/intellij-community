@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.diff.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.diff.*;
 import com.intellij.util.ui.JBUI;
@@ -43,7 +42,6 @@ public class ErrorDiffViewer implements DiffViewer {
 
     myPanel = new JPanel(new BorderLayout());
     myPanel.setFocusable(true);
-    DataManager.registerDataProvider(myPanel, dataId -> myRequest.getGenericData().get(dataId));
 
     final ActionManager actionManager = ActionManager.getInstance();
     myToolbar = new DiffToolbarComponent(myPanel);
@@ -56,8 +54,6 @@ public class ErrorDiffViewer implements DiffViewer {
       }
     };
     myToolbar.resetToolbar(addons);
-    final DiffToolbarImpl toolbar = myToolbar.getToolbar();
-    myRequest.customizeToolbar(toolbar);
     /*group.addAction(actionManager.getAction("Diff.PrevChange"));
     group.addAction(actionManager.getAction("Diff.NextChange"));*/
 
@@ -117,11 +113,6 @@ public class ErrorDiffViewer implements DiffViewer {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myPanel;
-  }
-
-  @Override
-  public int getContentsNumber() {
-    return 0;
   }
 
   @Override

@@ -12,6 +12,8 @@ public interface ProgressDialog extends Disposable {
 
   void changeCancelButtonText(String text);
 
+  void cancel();
+
   void enableCancelButtonIfNeeded(boolean enable);
 
   void update();

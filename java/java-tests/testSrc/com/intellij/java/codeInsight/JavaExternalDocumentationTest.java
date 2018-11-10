@@ -6,6 +6,7 @@ package com.intellij.java.codeInsight;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -34,6 +35,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
@@ -188,20 +190,20 @@ public class JavaExternalDocumentationTest extends PlatformTestCase {
   private static class MockDocumentationComponent extends DocumentationComponent {
     private String myText;
 
-    public MockDocumentationComponent(DocumentationManager manager) {
+    MockDocumentationComponent(DocumentationManager manager) {
       super(manager);
     }
 
     @Override
-    public void setText(String text, PsiElement element, boolean clean, boolean clearHistory) {
+    public void setData(@Nullable PsiElement element,
+                        @NotNull String text,
+                        @Nullable String effectiveExternalUrl,
+                        @Nullable String ref,
+                        @Nullable DocumentationProvider provider) {
       myText = text;
     }
 
     @Override
-    public void setData(PsiElement _element, String text, boolean clearHistory, String effectiveExternalUrl, String ref) {
-      myText = text;
-    }
-
     public String getText() {
       return myText;
     }

@@ -3,22 +3,32 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.editor.EditorOptionsProvider;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
 
-public class CodeCompletionOptions implements SearchableConfigurable, EditorOptionsProvider {
+public class CodeCompletionOptions extends CompositeConfigurable<UnnamedConfigurable> implements EditorOptionsProvider {
+  private static final ExtensionPointName<CodeCompletionConfigurableEP> EP_NAME = ExtensionPointName.create("com.intellij.codeCompletionConfigurable");
+
   private CodeCompletionPanel myPanel;
 
   @Override
   public boolean isModified() {
-    return myPanel != null && myPanel.isModified();
+    return super.isModified() || myPanel != null && myPanel.isModified();
   }
 
   @Override
   public JComponent createComponent() {
-    myPanel = new CodeCompletionPanel();
+    List<UnnamedConfigurable> configurables = getConfigurables();
+    List<JComponent> components = ContainerUtil.map(configurables, UnnamedConfigurable::createComponent);
+    myPanel = new CodeCompletionPanel(components);
     return myPanel.myPanel;
   }
 
@@ -29,17 +39,26 @@ public class CodeCompletionOptions implements SearchableConfigurable, EditorOpti
 
   @Override
   public void reset() {
+    super.reset();
     myPanel.reset();
   }
 
   @Override
-  public void apply() {
+  public void apply() throws ConfigurationException {
+    super.apply();
     myPanel.apply();
   }
 
   @Override
   public void disposeUIResources() {
     myPanel = null;
+    super.disposeUIResources();
+  }
+
+  @NotNull
+  @Override
+  protected List<UnnamedConfigurable> createConfigurables() {
+    return ConfigurableWrapper.createConfigurables(EP_NAME);
   }
 
   @Override

@@ -24,7 +24,7 @@ abstract class ChangeDiffIterableBase implements DiffIterable {
   private final int myLength1;
   private final int myLength2;
 
-  public ChangeDiffIterableBase(int length1, int length2) {
+  ChangeDiffIterableBase(int length1, int length2) {
     myLength1 = length1;
     myLength2 = length2;
   }

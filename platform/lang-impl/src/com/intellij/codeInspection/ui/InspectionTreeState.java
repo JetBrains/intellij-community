@@ -65,7 +65,7 @@ public class InspectionTreeState {
     private final Object[] myPath;
     private final int[] myIndices;
 
-    public InspectionTreeSelectionPath(TreePath path) {
+    InspectionTreeSelectionPath(TreePath path) {
       myPath = path.getPath();
       myIndices = new int[myPath.length];
       for (int i = 0; i < myPath.length - 1; i++) {

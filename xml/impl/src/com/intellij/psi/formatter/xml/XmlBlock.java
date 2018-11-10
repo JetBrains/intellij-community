@@ -258,7 +258,7 @@ public class XmlBlock extends AbstractXmlBlock {
       return getSpacesInsideText(type1, type2);
 
     }
-    else if (elementType == XmlElementType.XML_ATTRIBUTE) {
+    else if (isAttributeElementType(elementType)) {
       return getSpacesInsideAttribute(type1, type2);
     }
 
@@ -270,10 +270,14 @@ public class XmlBlock extends AbstractXmlBlock {
       return createDefaultSpace(true, false);
     }
 
+    if (type1 == XmlElementType.XML_COMMENT) {
+      return createDefaultSpace(true, false);
+    }
+
     return createDefaultSpace(false, false);
   }
 
-  private Spacing getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
+  protected Spacing getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
     if (type1 == XmlTokenType.XML_EQ || type2 == XmlTokenType.XML_EQ) {
       int spaces = myXmlFormattingPolicy.getShouldAddSpaceAroundEqualityInAttribute() ? 1 : 0;
       return Spacing

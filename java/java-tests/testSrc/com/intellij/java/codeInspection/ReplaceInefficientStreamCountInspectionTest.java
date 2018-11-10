@@ -20,19 +20,12 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ReplaceInefficientStreamCountInspection;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class ReplaceInefficientStreamCountInspectionTest extends LightQuickFixParameterizedTestCase {
 
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new ReplaceInefficientStreamCountInspection()};
-  }
-
-  public void test() {
-    doAllTests();
   }
 
   @Override

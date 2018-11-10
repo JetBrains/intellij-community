@@ -33,7 +33,7 @@ public class DummyStorageImpl implements Storage {
   }
 
   @Override
-  public Address bulkStore(@NotNull Tree tree, Novelty.@NotNull Accessor novelty) {
+  public Address bulkStore(@NotNull Tree tree, @NotNull Novelty.Accessor novelty) {
     throw new UnsupportedOperationException();
   }
 

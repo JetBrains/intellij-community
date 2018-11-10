@@ -466,6 +466,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     configureByTestName();
     assertStringItems("aac", "aab", "hashCode");
   }
+
+  public void testNoUninitializedSuperFieldsInConstructor() {
+    configureByTestName();
+    assertStringItems("input", "baseConstant");
+  }
+
   public void testFieldsSetInAnotherConstructor() { doTest(); }
   public void testFieldsSetAbove() { doTest(); }
 
@@ -847,7 +853,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testInsertOverride() {
-    JavaCodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(getProject());
     styleSettings.INSERT_OVERRIDE_ANNOTATION = true;
     doItemTest();
   }
@@ -1044,7 +1050,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNewAbstractInsideAnonymous() { doTest(); }
 
-  public void testFilterPrivateConstructors() { doTest(); }
+  public void testFilterPrivateConstructors() { doAntiTest(); }
 
   public void testExplicitMethodTypeParametersQualify() { doTest(); }
   public void testExplicitMethodTypeParametersOverZealous() { doTest(); }
@@ -1133,15 +1139,10 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testInnerClassImports() {
-    JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.INSERT_INNER_CLASS_IMPORTS = true;
-    try {
-      myFixture.addClass("package java.awt.geom; public class Point2D { public static class Double {} }");
-      doActionTest();
-    }
-    finally {
-      settings.INSERT_INNER_CLASS_IMPORTS = false;
-    }
+    myFixture.addClass("package java.awt.geom; public class Point2D { public static class Double {} }");
+    doActionTest();
   }
 
   public void testCastWithGenerics() {
@@ -1173,6 +1174,11 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testSuggestMethodReturnType() { 
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "Serializable", "CharSequence", "Object");
+  }
+
+  public void testSuggestMethodReturnTypeAnonymous() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "Object");
   }
 
   public void testSuggestCastReturnTypeByCalledMethod() { doTest(); }
@@ -1282,4 +1288,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testNewMapTypeArguments() { doTest(); }
   public void testNewMapObjectTypeArguments() { doTest(); }
 
+  public void testNoUnrelatedMethodSuggestion() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "this");
+  }
 }

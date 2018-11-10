@@ -42,7 +42,7 @@ abstract class BaseInspectionProfileManager(messageBus: MessageBus) :  Inspectio
     }
   }
 
-  open protected fun schemeRemoved(scheme: InspectionProfileImpl) {
+  protected open fun schemeRemoved(scheme: InspectionProfileImpl) {
   }
 
   abstract fun fireProfileChanged(profile: InspectionProfileImpl)

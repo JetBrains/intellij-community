@@ -27,7 +27,6 @@ import static org.jetbrains.idea.maven.utils.ManifestBuilder.getClasspathPrefix;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/26/2014
  */
 public abstract class ManifestImporter {
   public static final ExtensionPointName<ManifestImporter> EXTENSION_POINT_NAME =

@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,7 +111,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     };
   }
 
-  @Nullable
+  @Contract("_,_,!null -> !null")
   public static NamedScopesHolder getHolder(Project project, String scopeName, NamedScopesHolder defaultHolder) {
     NamedScopesHolder[] holders = getAllNamedScopeHolders(project);
     for (NamedScopesHolder holder : holders) {

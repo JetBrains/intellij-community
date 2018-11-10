@@ -1,9 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus.collectors;
 
-import com.intellij.internal.statistic.service.fus.beans.FSContent;
-import com.intellij.internal.statistic.service.fus.beans.FSGroup;
-import com.intellij.internal.statistic.service.fus.beans.FSSession;
+import com.intellij.internal.statistic.service.fus.beans.*;
+import com.intellij.internal.statistic.service.fus.beans.legacy.FSLegacyContent;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -45,8 +44,8 @@ public class FUStatisticsStateService implements UsagesCollectorConsumer {
         if (allDataFromCollectorsSessions != null) {
           for (FSSession actualSession : allDataFromCollectorsSessions) {
             for (FSGroup actualGroup : getActualGroupsToMerge(differenceSenders, actualSession.getGroups())) {
-              Map<String, Integer> persistedMetrics = getPersistedMetrics(getPreviousSession(previousStateContent, actualSession),
-                                                                          actualGroup.id);
+              Set<FSMetric> persistedMetrics = getPersistedMetrics(getPreviousSession(previousStateContent, actualSession),
+                                                                          actualGroup);
               if (!persistedMetrics.isEmpty()) {
                 updateDifferenceSenderMetricsData(actualGroup.getMetrics(), persistedMetrics);
               }
@@ -71,23 +70,31 @@ public class FUStatisticsStateService implements UsagesCollectorConsumer {
     return Collections.emptySet();
   }
 
-  private static void updateDifferenceSenderMetricsData(@NotNull Map<String, Integer> actualMetrics,
-                                                        @NotNull Map<String, Integer> persistedMetrics) {
-    Set<String> keysToRemove = ContainerUtil.newHashSet();
-    for (Map.Entry<String, Integer> entry : actualMetrics.entrySet()) {
-      Integer persistedValue = persistedMetrics.get(entry.getKey());
+  private static void updateDifferenceSenderMetricsData(@NotNull Set<FSMetric> actualMetrics,
+                                                        @NotNull Set<FSMetric> persistedMetrics) {
+    Set<FSMetric> toRemove = ContainerUtil.newHashSet();
+    for (FSMetric actualMetric : actualMetrics) {
+      FSMetric persistedValue = findMetric(persistedMetrics, actualMetric.id, actualMetric);
       if (persistedValue != null) {
-        Integer actualValue = entry.getValue();
-        if (actualValue > persistedValue) {
-          entry.setValue(actualValue - persistedValue);
+        int actualValue = actualMetric.value;
+        if (actualValue > persistedValue.value) {
+          actualMetric.value = actualValue - persistedValue.value;
         }
-        else if (actualValue.intValue() == persistedValue.intValue()) {
-          keysToRemove.add(entry.getKey());
+        else if (actualValue == persistedValue.value) {
+          toRemove.add(actualMetric);
         }
       }
     }
 
-    if (!keysToRemove.isEmpty()) actualMetrics.keySet().removeAll(keysToRemove);
+    if (!toRemove.isEmpty()) actualMetrics.removeAll(toRemove);
+  }
+
+  @Nullable
+  private static FSMetric findMetric(@NotNull Set<FSMetric> persistedMetrics, @NotNull String id, @NotNull FSContextProvider contextProvider) {
+    for (FSMetric metric : persistedMetrics) {
+      if ( id.equals(metric.id) && Objects.equals(contextProvider.context, metric.context)) return metric;
+    }
+    return null;
   }
 
   public Set<String> getFUStatisticsDifferenceSenders(@NotNull Set<String> approvedGroups) {
@@ -111,6 +118,10 @@ public class FUStatisticsStateService implements UsagesCollectorConsumer {
 
   @Nullable
   public static FSContent loadContent() {
+    String legacyContent = FUStatisticsPersistence.getLegacyStateContent();
+    if (legacyContent != null) {
+      return FSLegacyContent.migrate(legacyContent);
+    }
     String content = FUStatisticsPersistence.getPreviousStateContent();
     if (content == null) return null;
     return FSContent.fromJson(content);
@@ -129,15 +140,15 @@ public class FUStatisticsStateService implements UsagesCollectorConsumer {
   }
 
   @NotNull
-  public static Map<String, Integer> getPersistedMetrics(@Nullable FSSession persistedSession, @NotNull String groupId) {
+  public static Set<FSMetric> getPersistedMetrics(@Nullable FSSession persistedSession, @NotNull FSGroup actualGroup) {
     if (persistedSession != null) {
       List<FSGroup> persistedGroups = persistedSession.getGroups();
       if (persistedGroups != null) {
         for (FSGroup group : persistedGroups) {
-          if (groupId.equals(group.id)) return group.getMetrics();
+          if (actualGroup.id.equals(group.id) && Objects.equals(actualGroup.context, group.context)) return group.getMetrics();
         }
       }
     }
-    return Collections.emptyMap();
+    return Collections.emptySet();
   }
 }

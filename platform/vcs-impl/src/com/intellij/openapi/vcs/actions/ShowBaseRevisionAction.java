@@ -94,13 +94,13 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
 
   @Override
   protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
-    presentation.setEnabled(AbstractShowDiffAction.isEnabled(vcsContext, null));
+    presentation.setEnabled(AbstractShowDiffAction.isEnabled(vcsContext, false));
   }
 
   static class NotificationPanel extends JPanel {
     protected final JEditorPane myLabel;
 
-    public NotificationPanel() {
+    NotificationPanel() {
       super(new BorderLayout());
 
       myLabel = new JEditorPane(UIUtil.HTML_MIME, "");

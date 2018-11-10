@@ -21,10 +21,11 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.FilePsiMutation;
+import org.jetbrains.annotations.NotNull;
 
 class MakeAllMethodsVoid extends FilePsiMutation {
 
-  MakeAllMethodsVoid(PsiFile file) {
+  MakeAllMethodsVoid(@NotNull PsiFile file) {
     super(file);
   }
 

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.project.MavenProject;
 
@@ -61,7 +62,7 @@ public class MavenFilteredPropertyPsiReference extends MavenPropertyPsiReference
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     String newText = myRange.replace(myElement.getText(), newElementName);
     PsiFile psiFile = myElement.getContainingFile();
     String newFileText = myElement.getTextRange().replace(psiFile.getText(), newText);

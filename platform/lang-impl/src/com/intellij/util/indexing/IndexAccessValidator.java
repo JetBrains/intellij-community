@@ -17,6 +17,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
@@ -24,17 +25,25 @@ import java.text.MessageFormat;
 public class IndexAccessValidator {
   private final ThreadLocal<ID<?, ?>> ourAlreadyProcessingIndices = new ThreadLocal<>();
 
-  public void checkAccessingIndexDuringOtherIndexProcessing(@NotNull ID<?, ?> indexKey) {
+  private void checkAccessingIndexDuringOtherIndexProcessing(@NotNull ID<?, ?> indexKey) {
     final ID<?, ?> alreadyProcessingIndex = ourAlreadyProcessingIndices.get();
     if (alreadyProcessingIndex != null && alreadyProcessingIndex != indexKey) {
       final String message = MessageFormat.format("Accessing ''{0}'' during processing ''{1}''. Nested different indices processing may cause deadlock",
                 indexKey.getName(),
-                alreadyProcessingIndex.getUniqueId());
+                alreadyProcessingIndex.getName());
       if (ApplicationManager.getApplication().isUnitTestMode()) throw new RuntimeException(message);
       Logger.getInstance(FileBasedIndexImpl.class).error(message); // RuntimeException to skip rebuild
     }
   }
 
-  public void startedProcessingActivityForIndex(ID<?,?> indexId) { ourAlreadyProcessingIndices.set(indexId); }
-  public void stoppedProcessingActivityForIndex(ID<?,?> indexId) { ourAlreadyProcessingIndices.set(null); }
+  public <T,E extends Throwable> T validate(@NotNull ID<?, ?> indexKey, @NotNull ThrowableComputable<T, E> runnable) throws E {
+    checkAccessingIndexDuringOtherIndexProcessing(indexKey);
+    ourAlreadyProcessingIndices.set(indexKey);
+    try {
+      return runnable.compute();
+    }
+    finally {
+      ourAlreadyProcessingIndices.set(null);
+    }
+  }
 }

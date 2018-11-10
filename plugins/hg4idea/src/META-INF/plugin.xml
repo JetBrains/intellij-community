@@ -27,6 +27,7 @@
     <vcsRepositoryCreator implementation="org.zmlx.hg4idea.repo.HgRepositoryCreator"/>
     <pushSupport implementation="org.zmlx.hg4idea.push.HgPushSupport"/>
     <vcsChangesViewRefresher implementation="org.zmlx.hg4idea.provider.HgIgnoredFileHolder$Provider"/>
+    <vcs.branchStateProvider implementation="org.zmlx.hg4idea.branch.HgBranchStateProvider"/>
     <cherryPicker implementation="org.zmlx.hg4idea.cherrypick.HgCherryPicker"/>
     <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
     <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
@@ -53,6 +54,7 @@
   <actions>
     <action id="Hg.Init" class="org.zmlx.hg4idea.action.HgInit" text="Create Mercurial Repository">
       <add-to-group group-id="Vcs.Import"/>
+      <add-to-group group-id="Vcs.Operations.Popup.NonVcsAware" relative-to-action="Start.Use.Vcs" anchor="before"/>
     </action>
 
     <group id="hg4idea.file.menu" popup="true" class="org.zmlx.hg4idea.action.HgMercurialMenu">
@@ -131,7 +133,7 @@
         <keyboard-shortcut first-keystroke="alt shift D" keymap="$default"/>
       </action>
       <action class="com.intellij.openapi.actionSystem.EmptyAction" id="hg4idea.QDelete" text="Delete"
-              description="Delete selected patches" icon="AllIcons.Vcs.Remove" use-shortcut-of="$Delete"/>
+              description="Delete selected patches" icon="AllIcons.General.Remove" use-shortcut-of="$Delete"/>
     </group>
 
 
@@ -158,7 +160,6 @@
     <action id="Hg.Commit.And.Push.Executor" class="org.zmlx.hg4idea.action.HgCommitAndPushExecutorAction" text="Commit and &amp;Push...">
       <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
       <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="meta alt K" keymap="Xcode" remove="true"/>
     </action>
   </actions>
 

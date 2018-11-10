@@ -4,11 +4,12 @@ YAML file
     PsiElement(Eol)('\n')
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('foo:')
+        PsiElement(scalar key)('foo')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML scalar text
           PsiElement(scalar text)('>')
-          PsiElement(Eol)('\n')
+          PsiElement(block scalar EOL)('\n')
           PsiElement(indent)('  ')
           PsiElement(scalar text)('first text line')
           PsiElement(block scalar EOL)('\n')
@@ -27,9 +28,10 @@ YAML file
           PsiElement(block scalar EOL)('\n')
           PsiElement(indent)('  ')
           PsiElement(scalar text)('- indent tells.')
-          PsiElement(block scalar EOL)('\n')
+      PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('bar:')
+        PsiElement(scalar key)('bar')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('zoo')

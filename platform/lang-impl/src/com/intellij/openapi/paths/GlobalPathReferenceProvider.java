@@ -59,7 +59,7 @@ public class GlobalPathReferenceProvider implements PathReferenceProvider {
 
   public boolean createUrlReference(@NotNull PsiElement psiElement,
                                     String url,
-                                    TextRange rangeInElement, @NotNull List<PsiReference> references) {
+                                    TextRange rangeInElement, @NotNull List<? super PsiReference> references) {
     if (isWebReferenceUrl(url)) {
       references.add(new WebReference(psiElement, rangeInElement, url));
       return true;

@@ -37,11 +37,11 @@ public abstract class AbstractFavoritesListProvider<T> implements FavoritesListP
   protected final List<AbstractTreeNode<T>> myChildren = new ArrayList<>();
   protected final FavoritesListNode myNode;
 
-  protected AbstractFavoritesListProvider(@NotNull Project project, final String listName) {
+  protected AbstractFavoritesListProvider(@NotNull Project project, @NotNull String listName) {
     this(project, listName, null);
   }
 
-  protected AbstractFavoritesListProvider(@NotNull Project project, final String listName, @Nullable String description) {
+  protected AbstractFavoritesListProvider(@NotNull Project project, @NotNull String listName, @Nullable String description) {
     myProject = project;
     myListName = listName;
     myNode = new FavoritesListNode(project, listName, description) {
@@ -91,9 +91,7 @@ public abstract class AbstractFavoritesListProvider<T> implements FavoritesListP
 
   @Override
   public int compareTo(FavoritesListProvider o) {
-    if (getWeight() > o.getWeight()) return 1;
-    if (getWeight() < o.getWeight()) return -1;
-    return 0;
+    return Integer.compare(getWeight(), o.getWeight());
   }
 
   @Override

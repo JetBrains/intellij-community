@@ -51,9 +51,9 @@ public class StdArrangementSettingsToken extends ArrangementSettingsToken {
     return myTokenType;
   }
 
-  protected StdArrangementSettingsToken(@NotNull String id,
-                                        @NotNull String uiName,
-                                        @NotNull StdArrangementTokenType tokenType) {
+  public StdArrangementSettingsToken(@NotNull String id,
+                                     @NotNull String uiName,
+                                     @NotNull StdArrangementTokenType tokenType) {
     super(id, uiName);
     myTokenType = tokenType;
   }

@@ -8,6 +8,7 @@ public class Test {
     String sb;
     System.out.println("hello");
       sb = list.stream().filter(s -> !s.isEmpty()).map(String::trim).collect(Collectors.joining());
-    return sb.length() == 0 ? null : sb;
+      //comment
+      return sb.length() == 0 ? null : sb;
   }
 }

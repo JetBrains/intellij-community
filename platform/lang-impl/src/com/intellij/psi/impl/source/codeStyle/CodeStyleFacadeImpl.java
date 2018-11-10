@@ -28,12 +28,15 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.joinLines.JoinedLinesSpacingCalculator;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static java.lang.Math.max;
 
 public class CodeStyleFacadeImpl extends CodeStyleFacade {
   private final @Nullable Project myProject;
@@ -74,13 +77,25 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   @Override
-  public String getLineSeparator() {
-    return CodeStyle.getProjectOrDefaultSettings(myProject).getLineSeparator();
+  public int getJoinedLinesSpacing(@NotNull Editor editor, @Nullable Language language, int offset, boolean allowDocCommit) {
+    if (myProject == null) return 0;
+    LineIndentProvider lineIndentProvider = LineIndentProviderEP.findLineIndentProvider(language);
+    int space = lineIndentProvider instanceof JoinedLinesSpacingCalculator
+                ? ((JoinedLinesSpacingCalculator)lineIndentProvider).getJoinedLinesSpacing(myProject, editor, language, offset)
+                : -1;
+    if (space < 0 && allowDocCommit) {
+      final Document document = editor.getDocument();
+      PsiDocumentManager.getInstance(myProject).commitDocument(document);
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+      if (file == null) return 0;
+      return max(0, CodeStyleManager.getInstance(myProject).getSpacing(file, offset));
+    }
+    return max(0, space);
   }
 
   @Override
-  public boolean projectUsesOwnSettings() {
-    return myProject != null && CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS;
+  public String getLineSeparator() {
+    return CodeStyle.getProjectOrDefaultSettings(myProject).getLineSeparator();
   }
 
   @Override
@@ -96,11 +111,6 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   @Override
   public int getTabSize(final FileType fileType) {
     return CodeStyle.getProjectOrDefaultSettings(myProject).getTabSize(fileType);
-  }
-
-  @Override
-  public boolean isSmartTabs(final FileType fileType) {
-    return CodeStyle.getProjectOrDefaultSettings(myProject).isSmartTabs(fileType);
   }
 
   @Override

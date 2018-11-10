@@ -134,7 +134,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     private JLabel myLastCheckedDate;
     @SuppressWarnings("unused") private ActionLink myIgnoredBuildsLink;
 
-    public UpdatesSettingsPanel(boolean checkNowEnabled) {
+    UpdatesSettingsPanel(boolean checkNowEnabled) {
       mySettings = UpdateSettings.getInstance();
 
       ChannelStatus current = mySettings.getSelectedActiveChannel();
@@ -149,7 +149,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
         myChannelWarning.setVisible(true);
         myChannelWarning.setBorder(new JBEmptyBorder(0, 0, 10, 0));
       }
-      else if (ApplicationInfoEx.getInstanceEx().isEAP() && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
+      else if (ApplicationInfoEx.getInstanceEx().isMajorEAP() && UpdateStrategyCustomization.getInstance().forceEapUpdateChannelForEapBuilds()) {
         myUpdateChannels.setEnabled(false);
         myUpdateChannels.setToolTipText(IdeBundle.message("updates.settings.channel.locked"));
       }
@@ -184,7 +184,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     private void createUIComponents() {
       myIgnoredBuildsLink = new ActionLink(IdeBundle.message("updates.settings.ignored"), new AnAction() {
         @Override
-        public void actionPerformed(AnActionEvent e) {
+        public void actionPerformed(@NotNull AnActionEvent e) {
           List<String> buildNumbers = mySettings.getIgnoredBuildNumbers();
           String text = StringUtil.join(buildNumbers, "\n");
           String result = Messages.showMultilineInputDialog(null, null, IdeBundle.message("updates.settings.ignored.title"), text, null, null);

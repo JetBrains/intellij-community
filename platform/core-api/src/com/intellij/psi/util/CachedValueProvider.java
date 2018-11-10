@@ -94,6 +94,7 @@ public interface CachedValueProvider<T> {
      * Creates a result
      * @see #getDependencyItems()
      */
+    @NotNull
     public static <T> Result<T> createSingleDependency(@Nullable T value, @NotNull Object dependency) {
       return create(value, dependency);
     }
@@ -102,6 +103,7 @@ public interface CachedValueProvider<T> {
      * Creates a result
      * @see #getDependencyItems()
      */
+    @NotNull
     public static <T> Result<T> create(@Nullable T value, @NotNull Object... dependencies) {
       return new Result<>(value, dependencies);
     }
@@ -110,6 +112,7 @@ public interface CachedValueProvider<T> {
      * Creates a result
      * @see #getDependencyItems()
      */
+    @NotNull
     public static <T> Result<T> create(@Nullable T value, @NotNull Collection<?> dependencies) {
       return new Result<>(value, ArrayUtil.toObjectArray(dependencies));
     }

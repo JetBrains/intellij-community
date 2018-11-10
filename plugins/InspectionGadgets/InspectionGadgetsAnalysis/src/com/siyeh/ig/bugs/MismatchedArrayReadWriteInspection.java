@@ -298,8 +298,9 @@ public class MismatchedArrayReadWriteInspection extends BaseInspection {
                   }
                 }
                 else if (CommonClassNames.JAVA_UTIL_ARRAYS.equals(qualifiedName)) {
-                  if ("fill".equals(methodName) || "parallelPrefix".equals(methodName) || "parallelSetAll".equals(methodName) ||
-                      "parallelSort".equals(methodName) || "setAll".equals(methodName) || "sort".equals(methodName)) {
+                  if (("fill".equals(methodName) || "parallelPrefix".equals(methodName) || "parallelSetAll".equals(methodName) ||
+                      "parallelSort".equals(methodName) || "setAll".equals(methodName) || "sort".equals(methodName)) &&
+                      PsiTreeUtil.isAncestor(expressionList.getExpressions()[0], expression, false)) {
                     myWritten = true;
                   }
                   else {

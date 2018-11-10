@@ -8,6 +8,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.ref.Reference;
@@ -43,7 +44,7 @@ public class TabbedContentTabLabel extends ContentTabLabel {
       popup.showUnderneathOf(this);
       popup.addListener(new JBPopupAdapter() {
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           repaint();
         }
       });
@@ -77,6 +78,12 @@ public class TabbedContentTabLabel extends ContentTabLabel {
       @Override
       public boolean getAvailable() {
         return hasMultipleTabs();
+      }
+
+      @Nullable
+      @Override
+      public Runnable getAction() {
+        return () -> selectContent();
       }
     });
     super.fillIcons(icons);

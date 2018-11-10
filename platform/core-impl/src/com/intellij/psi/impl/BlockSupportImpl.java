@@ -300,7 +300,10 @@ public class BlockSupportImpl extends BlockSupport {
                                    @NotNull ProgressIndicator indicator,
                                    @NotNull CharSequence lastCommittedText) {
     if (newRoot instanceof FileElement) {
-      ((FileElement)newRoot).setCharTable(fileImpl.getTreeElement().getCharTable());
+      FileElement fileImplElement = fileImpl.getTreeElement();
+      if (fileImplElement != null) {
+        ((FileElement)newRoot).setCharTable(fileImplElement.getCharTable());
+      }
     }
 
     try {

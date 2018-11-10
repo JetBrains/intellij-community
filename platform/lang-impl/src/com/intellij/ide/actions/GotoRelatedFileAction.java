@@ -17,11 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.navigation.GotoRelatedItem;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.psi.PsiElement;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -30,21 +26,15 @@ import java.util.List;
  * todo [neuro] REMOVE-ME when September Ends..
  * @author gregsh
  */
+@Deprecated
 public class GotoRelatedFileAction {
 
   /**
    * @deprecated
    * @see com.intellij.codeInsight.navigation.NavigationUtil#getRelatedItemsPopup(java.util.List, String)
    */
+  @Deprecated
   public static JBPopup createPopup(List<? extends GotoRelatedItem> items, final String title) {
     return NavigationUtil.getRelatedItemsPopup(items, title);
-  }
-
-  /**
-   * @deprecated
-   * @see com.intellij.codeInsight.navigation.NavigationUtil#collectRelatedItems(com.intellij.psi.PsiElement, com.intellij.openapi.actionSystem.DataContext)
-   */
-  public static List<GotoRelatedItem> getItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
-    return NavigationUtil.collectRelatedItems(contextElement, dataContext);
   }
 }

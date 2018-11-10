@@ -2,14 +2,18 @@
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.io.MappingFailedException;
@@ -35,18 +39,32 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (ourLoggerBroken) return false;
 
     try {
+      final Application app = ApplicationManager.getApplication();
+      if (app.isDisposed() || app.isDisposeInProgress()) {
+        return false;
+      }
+
       UpdateChecker.checkForUpdate(event);
 
       boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
 
-      ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
+      Throwable t = event.getThrowable();
+      PluginId pluginId = IdeErrorsDialog.findPluginId(t);
+      if (pluginId != null && !pluginId.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID)) {
+        FUSApplicationUsageTrigger.getInstance().trigger(PluginExceptionStatisticCollector.class, pluginId.getIdString(), null);
+      }
+
+      ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(t, pluginId);
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
+
+      boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
+      boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
 
       return notificationEnabled ||
              showPluginError ||
              ApplicationManagerEx.getApplicationEx().isInternal() ||
-             getOOMErrorKind(event.getThrowable()) != null ||
-             event.getThrowable() instanceof MappingFailedException;
+             isOOM ||
+             isMappingFailed;
     }
     catch (LinkageError e) {
       if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.IdeErrorsDialog")) {
@@ -62,7 +80,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
     try {
       Throwable throwable = event.getThrowable();
-      final MemoryKind kind = getOOMErrorKind(throwable);
+      MemoryKind kind = getOOMErrorKind(throwable);
       if (kind != null) {
         ourOomOccurred = true;
         SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
@@ -71,8 +89,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         processMappingFailed(event);
       }
       else if (!ourOomOccurred) {
-        MessagePool messagePool = MessagePool.getInstance();
-        messagePool.addIdeFatalMessage(event);
+        MessagePool.getInstance().addIdeFatalMessage(event);
       }
     }
     catch (Throwable e) {
@@ -86,7 +103,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   }
 
   @Nullable
-  private static MemoryKind getOOMErrorKind(Throwable t) {
+  static MemoryKind getOOMErrorKind(Throwable t) {
     String message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {

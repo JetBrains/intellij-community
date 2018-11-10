@@ -35,4 +35,5 @@ public abstract class IGInspectionTestCase extends InspectionTestCase {
   public void doTest(@NotNull @NonNls final String folderName, @NotNull final LocalInspectionTool tool) {
     super.doTest(folderName, new LocalInspectionToolWrapper(tool), "java 1.5");
   }
+
 }

@@ -23,7 +23,7 @@ import com.intellij.execution.CantRunException;
 import com.intellij.openapi.project.Project;
 
 /** @deprecated use {@link SimpleJavaParameters#toCommandLine()} (to be removed in IDEA 2019) */
-@SuppressWarnings("unused")
+@Deprecated
 public class CommandLineBuilder {
   private CommandLineBuilder() { }
 

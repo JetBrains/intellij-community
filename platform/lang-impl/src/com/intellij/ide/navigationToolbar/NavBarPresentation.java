@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
@@ -59,12 +44,11 @@ public class NavBarPresentation {
     myProject = project;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public Icon getIcon(final Object object) {
     if (!NavBarModel.isValid(object)) return null;
 
-    for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+    for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       Icon icon = modelExtension.getIcon(object);
       if (icon != null) {
         return icon;
@@ -96,13 +80,12 @@ public class NavBarPresentation {
     return null;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected String getPresentableText(final Object object) {
     if (!NavBarModel.isValid(object)) {
       return IdeBundle.message("node.structureview.invalid");
     }
-    for (NavBarModelExtension modelExtension : Extensions.getExtensions(NavBarModelExtension.EP_NAME)) {
+    for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
       String text = modelExtension.getPresentableText(object);
       if (text != null) {
         return text.length() > 50 ? text.substring(0, 47) + "..." : text;

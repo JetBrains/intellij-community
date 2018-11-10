@@ -31,7 +31,6 @@ import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
  * Thread-safe.
  *
  * @author Denis Zhdanov
- * @since Apr 21, 2010
  */
 public class JavaChildWrapArranger {
   /**
@@ -52,7 +51,6 @@ public class JavaChildWrapArranger {
    * @return                        wrap to use for the given {@code 'child'} node if it's possible to define the one;
    *                                {@code null} otherwise
    */
-  @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public Wrap arrange(ASTNode child,
                       ASTNode parent,
@@ -224,7 +222,8 @@ public class JavaChildWrapArranger {
     }
 
     else if (nodeType == JavaElementType.DO_WHILE_STATEMENT) {
-      if (role == ChildRole.LOOP_BODY || role == ChildRole.WHILE_KEYWORD) {
+      if (role == ChildRole.LOOP_BODY ||
+          role == ChildRole.WHILE_KEYWORD && isAfterNonBlockStatement(child)) {
         return Wrap.createWrap(WrapType.NORMAL, true);
       }
     }
@@ -239,6 +238,13 @@ public class JavaChildWrapArranger {
     }
 
     return suggestedWrap;
+  }
+
+
+  private static boolean isAfterNonBlockStatement(@NotNull ASTNode node) {
+    ASTNode prev = node.getTreePrev();
+    if (prev instanceof PsiWhiteSpace) prev = prev.getTreePrev();
+    return prev != null && prev.getElementType() != JavaElementType.BLOCK_STATEMENT;
   }
 
   private static boolean isTypeAnnotationOrFalseIfDumb(@NotNull ASTNode child) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.execution.BeforeRunTaskProvider;
@@ -60,6 +46,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     myProject = project;
   }
 
+  @Override
   public Key<MavenBeforeRunTask> getId() {
     return ID;
   }
@@ -102,14 +89,17 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     return MavenProjectsManager.getInstance(myProject).findProject(file);
   }
 
+  @Override
   public boolean isConfigurable() {
     return true;
   }
 
+  @Override
   public MavenBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
     return new MavenBeforeRunTask();
   }
 
+  @Override
   public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull MavenBeforeRunTask task) {
     MavenEditGoalDialog dialog = new MavenEditGoalDialog(myProject);
 
@@ -161,7 +151,8 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     return task.getGoal() != null && task.getProjectPath() != null;
   }
 
-  public boolean executeTask(final DataContext context,
+  @Override
+  public boolean executeTask(@NotNull final DataContext context,
                              @NotNull RunConfiguration configuration,
                              @NotNull ExecutionEnvironment env,
                              @NotNull final MavenBeforeRunTask task) {
@@ -181,6 +172,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
 
         targetDone.down();
         new Task.Backgroundable(project, TasksBundle.message("maven.tasks.executing"), true) {
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             try {
               MavenRunnerParameters params = new MavenRunnerParameters(

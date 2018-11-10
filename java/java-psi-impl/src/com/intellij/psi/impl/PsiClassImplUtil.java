@@ -19,6 +19,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -57,7 +58,6 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author ik
- * @since 24.10.2003
  */
 public class PsiClassImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiClassImplUtil");
@@ -324,7 +324,7 @@ public class PsiClassImplUtil {
     String name = method.getName();
     if (!("main".equals(name) || "premain".equals(name) || "agentmain".equals(name))) return false;
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(method.getProject());
     MethodSignature signature = method.getSignature(PsiSubstitutor.EMPTY);
     try {
       MethodSignature main = createSignatureFromText(factory, "void main(String[] args);");
@@ -471,7 +471,7 @@ public class PsiClassImplUtil {
   private static boolean processCachedMembersByName(@NotNull final PsiClass aClass,
                                                     @NotNull PsiScopeProcessor processor,
                                                     @NotNull ResolveState state,
-                                                    @Nullable Set<PsiClass> visited,
+                                                    @Nullable Set<? super PsiClass> visited,
                                                     PsiElement last,
                                                     @NotNull final PsiElement place,
                                                     final boolean isRaw,
@@ -482,7 +482,7 @@ public class PsiClassImplUtil {
                                                     final GlobalSearchScope resolveScope) {
     Function<PsiMember, PsiSubstitutor> finalSubstitutor = new Function<PsiMember, PsiSubstitutor>() {
       final ScopedClassHierarchy hierarchy = ScopedClassHierarchy.getHierarchy(aClass, resolveScope);
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
       @Override
       public PsiSubstitutor fun(PsiMember member) {
         PsiClass containingClass = ObjectUtils.assertNotNull(member.getContainingClass());
@@ -652,6 +652,7 @@ public class PsiClassImplUtil {
                                                              final boolean isRaw,
                                                              @NotNull final LanguageLevel languageLevel,
                                                              @NotNull final GlobalSearchScope resolveScope) {
+    ProgressManager.checkCanceled();
     if (visited == null) visited = new THashSet<>();
     if (!visited.add(aClass)) return true;
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, aClass);
@@ -672,7 +673,7 @@ public class PsiClassImplUtil {
       }
     }
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
 
     if (classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.METHOD)) {
       PsiSubstitutor baseSubstitutor = state.get(PsiSubstitutor.KEY);
@@ -735,7 +736,7 @@ public class PsiClassImplUtil {
                                    @NotNull PsiElementFactory factory,
                                    @NotNull LanguageLevel languageLevel,
                                    GlobalSearchScope resolveScope,
-                                   PairProcessor<PsiClass, PsiSubstitutor> processor) {
+                                   PairProcessor<? super PsiClass, ? super PsiSubstitutor> processor) {
     boolean resolved = false;
     for (PsiClassType.ClassResolveResult superTypeResolveResult : getScopeCorrectedSuperTypes(aClass, resolveScope)) {
       PsiClass superClass = superTypeResolveResult.getElement();
@@ -991,13 +992,13 @@ public class PsiClassImplUtil {
   @NotNull
   public static PsiClassType[] getExtendsListTypes(@NotNull PsiClass psiClass) {
     if (psiClass.isEnum()) {
-      PsiClassType enumSuperType = getEnumSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory());
+      PsiClassType enumSuperType = getEnumSuperType(psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()));
       return enumSuperType == null ? PsiClassType.EMPTY_ARRAY : new PsiClassType[]{enumSuperType};
     }
     if (psiClass.isAnnotationType()) {
-      return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory())};
+      return new PsiClassType[]{getAnnotationSuperType(psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()))};
     }
-    PsiType upperBound = TypeConversionUtil.getUpperBound(psiClass);
+    PsiType upperBound = psiClass instanceof PsiTypeParameter ? TypeConversionUtil.getInferredUpperBoundForSynthetic((PsiTypeParameter)psiClass) : null;
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
       upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
@@ -1040,7 +1041,7 @@ public class PsiClassImplUtil {
     if (psiClass.isAnnotationType()) {
       return CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(baseClass.getQualifiedName());
     }
-    PsiType upperBound = TypeConversionUtil.getUpperBound(psiClass);
+    PsiType upperBound = psiClass instanceof PsiTypeParameter ? TypeConversionUtil.getInferredUpperBoundForSynthetic((PsiTypeParameter)psiClass) : null;
     if (upperBound == null && psiClass instanceof PsiTypeParameter) {
       upperBound = LambdaUtil.getFunctionalTypeMap().get(psiClass);
     }
@@ -1148,8 +1149,8 @@ public class PsiClassImplUtil {
       return true;
     }
 
-    final PsiFile file1 = aClass.getContainingFile().getOriginalFile();
-    final PsiFile file2 = another.getContainingFile().getOriginalFile();
+    final PsiFile file1 = getOriginalFile(aClass);
+    final PsiFile file2 = getOriginalFile((PsiClass)another);
 
     //see com.intellij.openapi.vcs.changes.PsiChangeTracker
     //see com.intellij.psi.impl.PsiFileFactoryImpl#createFileFromText(CharSequence,PsiFile)
@@ -1166,6 +1167,16 @@ public class PsiClassImplUtil {
     boolean lib2 = fileIndex.isInLibraryClasses(vfile2);
 
     return (fileIndex.isInSource(vfile1) || lib1) && (fileIndex.isInSource(vfile2) || lib2);
+  }
+
+  @NotNull
+  private static PsiFile getOriginalFile(@NotNull PsiClass aClass) {
+    PsiFile file = aClass.getContainingFile();
+    if (file == null) {
+      PsiUtilCore.ensureValid(aClass);
+      throw new IllegalStateException("No containing file for " + aClass.getLanguage() + " " + aClass.getClass());
+    }
+    return file.getOriginalFile();
   }
 
   private static boolean compareClassSeqNumber(@NotNull PsiClass aClass, @NotNull PsiClass another) {
@@ -1227,7 +1238,7 @@ public class PsiClassImplUtil {
     return true;
   }
 
-  private static boolean compareParamTypes(@NotNull PsiManager manager, @NotNull PsiType type1, @NotNull PsiType type2, Set<String> visited) {
+  private static boolean compareParamTypes(@NotNull PsiManager manager, @NotNull PsiType type1, @NotNull PsiType type2, Set<? super String> visited) {
     if (type1 instanceof PsiArrayType) {
       if (type2 instanceof PsiArrayType) {
         final PsiType componentType1 = ((PsiArrayType)type1).getComponentType();

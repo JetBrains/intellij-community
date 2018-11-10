@@ -43,6 +43,10 @@ public class FieldAccessedNotGuardedInspectionTest extends LightCodeInsightFixtu
     doTest();
   }
 
+  public void testIncompleteCode() {
+    doTest();
+  }
+
   public void testStaticSyncOnClass() {
     doTest();
   }

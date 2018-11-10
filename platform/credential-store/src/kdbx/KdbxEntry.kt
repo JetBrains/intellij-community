@@ -15,86 +15,118 @@
  */
 package com.intellij.credentialStore.kdbx
 
-import com.intellij.credentialStore.SecureString
-import com.intellij.util.element
 import com.intellij.util.getOrCreate
+import com.intellij.util.text.nullize
 import org.jdom.Element
 
-private const val VALUE_ELEMENT_NAME = "Value"
-
-class KdbxEntry(private val element: Element, private val database: KeePassDatabase, internal @Volatile var group: KdbxGroup?) {
-  @Volatile var title: String? = element.removeProperty("Title")
+internal class KdbxEntry(internal val entryElement: Element, private val database: KeePassDatabase, @Volatile internal var group: KdbxGroup?) {
+  var title: String?
+    get() = getProperty(KdbxEntryElementNames.title)
     set(value) {
-      if (field != value) {
-        field = value
-        touch()
-        database.isDirty = true
-      }
+      setProperty(entryElement, value, KdbxEntryElementNames.title)
     }
 
-  @Volatile var userName: String? = element.removeProperty("UserName")
+  var userName: String?
+    get() = getProperty(KdbxEntryElementNames.userName)
     set(value) {
-      if (field != value) {
-        field = value
-        touch()
-        database.isDirty = true
-      }
+      setProperty(entryElement, value, KdbxEntryElementNames.userName)
     }
 
-  @Volatile var password =  element.removeProperty("Password")?.let(::SecureString)
-    set(value) {
-      if (field != value) {
-        field = value
-        touch()
-        database.isDirty = true
-      }
+  @Synchronized
+  private fun getProperty(propertyName: String): String? {
+    val valueElement = getPropertyElement(entryElement, propertyName)?.getChild(KdbxEntryElementNames.value)
+    if (valueElement == null) {
+      return null
     }
 
-  fun toXml(): Element {
-    val element = element.clone()
-    element.setProperty("Title", title)
-    element.ensureProperty("URL")
-    element.setProperty("UserName", userName)
-    element.setProperty("Password", password?.get()?.toString())
-    element.ensureProperty("Notes")
-    return element
+    val value = valueElement.text.nullize()
+    if (isValueProtected(valueElement)) {
+      throw UnsupportedOperationException("$propertyName protection is not supported")
+    }
+    else {
+      return value
+    }
   }
 
+  @Synchronized
+  private fun setProperty(entryElement: Element, value: String?, propertyName: String): Element? {
+    val normalizedValue = value.nullize()
+    var propertyElement = getPropertyElement(entryElement, propertyName)
+    if (propertyElement == null) {
+      if (normalizedValue == null) {
+        return null
+      }
+
+      propertyElement = createPropertyElement(entryElement, propertyName)
+    }
+
+    val valueElement = propertyElement.getOrCreate(KdbxEntryElementNames.value)
+    if (valueElement.text.nullize() == normalizedValue) {
+      return null
+    }
+
+    valueElement.text = value
+    if (entryElement === this.entryElement) {
+      touch()
+    }
+    return valueElement
+  }
+
+  var password: SecureString?
+    @Synchronized
+    get() {
+      val valueElement = getPropertyElement(entryElement, KdbxEntryElementNames.password)?.getChild(KdbxEntryElementNames.value) ?: return null
+      val value = valueElement.content.firstOrNull() ?: return null
+      if (value is SecureString) {
+        return value
+      }
+
+      // if value was not originally protected, protect it
+      valueElement.setAttribute(KdbxAttributeNames.protected, "True")
+      val result = UnsavedProtectedValue(database.protectValue(value.value))
+      valueElement.setContent(result)
+      return result
+    }
+    @Synchronized
+    set(value) {
+      if (value == null) {
+        val iterator = entryElement.getChildren(KdbxEntryElementNames.string).iterator()
+        for (element in iterator) {
+          if (element.getChildText(KdbxEntryElementNames.key) == KdbxEntryElementNames.password) {
+            iterator.remove()
+            touch()
+          }
+        }
+        return
+      }
+
+      val valueElement = getOrCreatePropertyElement(KdbxEntryElementNames.password).getOrCreate(KdbxEntryElementNames.value)
+      valueElement.setAttribute(KdbxAttributeNames.protected, "True")
+      val oldValue = valueElement.content.firstOrNull()
+      if (oldValue === value) {
+        return
+      }
+
+      valueElement.setContent(UnsavedProtectedValue(value as StringProtectedByStreamCipher))
+      touch()
+    }
+
+  private fun getOrCreatePropertyElement(@Suppress("SameParameterValue") name: String) = getPropertyElement(entryElement, name) ?: createPropertyElement(entryElement, name)
+
+  @Synchronized
   private fun touch() {
-    element.getOrCreate("Times").getOrCreate("LastModificationTime").text = formattedNow()
+    entryElement.getOrCreate("Times").getOrCreate("LastModificationTime").text = formattedNow()
+    database.isDirty = true
   }
 }
 
-private fun Element.ensureProperty(name: String) {
-  val property = getPropertyContainer(name, false)
-  if (property == null) {
-    val container = element("String")
-    container.element("Key").addContent(name)
-    container.element("Value")
-  }
+private fun getPropertyElement(element: Element, name: String): Element? {
+  return element.getChildren(KdbxEntryElementNames.string).firstOrNull { it.getChildText(KdbxEntryElementNames.key) == name }
 }
 
-private fun Element.getPropertyContainer(name: String, remove: Boolean): Element? {
-  val iterator = getChildren("String").iterator()
-  for (element in iterator) {
-    if (element.getChildText("Key") == name) {
-      if (remove) {
-        iterator.remove()
-      }
-      return element
-    }
-  }
-  return null
-}
-
-private fun Element.removeProperty(name: String) = getPropertyContainer(name, true)?.getChildText(VALUE_ELEMENT_NAME)
-
-private fun Element.setProperty(name: String, value: String?) {
-  var item = getPropertyContainer(name, false)
-  if (item == null) {
-    item = element("String")
-    item.element("Key").addContent(name)
-  }
-
-  item.getOrCreate(VALUE_ELEMENT_NAME).text = value
+private fun createPropertyElement(parentElement: Element, propertyName: String): Element {
+  val propertyElement = Element(KdbxEntryElementNames.string)
+  propertyElement.addContent(Element(KdbxEntryElementNames.key).setText(propertyName))
+  parentElement.addContent(propertyElement)
+  return propertyElement
 }

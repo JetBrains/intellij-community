@@ -46,7 +46,6 @@ public final class SvnOptionsTopHitProvider extends OptionsTopHitProvider {
         if ("Subversion".equals(descriptor.getDisplayName())) {
           final SvnConfiguration config = SvnConfiguration.getInstance(project);
           return Collections.unmodifiableCollection(Arrays.asList(
-            option(config, "Subversion: Update administrative information only in changed subtrees", "isUpdateLockOnDemand", "setUpdateLockOnDemand"),
             option(config, "Subversion: Check svn:mergeinfo in target subtree when preparing for merge", "isCheckNestedForQuickMerge", "setCheckNestedForQuickMerge"),
             option(config, "Subversion: Show merge source in history and annotations", "isShowMergeSourcesInAnnotate", "setShowMergeSourcesInAnnotate"),
             option(config, "Subversion: Ignore whitespace differences in annotations", "isIgnoreSpacesInAnnotate", "setIgnoreSpacesInAnnotate"),

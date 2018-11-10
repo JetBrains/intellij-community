@@ -1,20 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
@@ -25,6 +14,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -188,14 +178,35 @@ public class ExecutionUtil {
   }
 
   public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
-    doRunConfiguration(configuration, executor, null);
+    doRunConfiguration(configuration, executor, null, null, null);
   }
 
   public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, @NotNull ExecutionTarget target) {
-    doRunConfiguration(configuration, executor, target);
+    doRunConfiguration(configuration, executor, target, null, null);
   }
-  
-  private static void doRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, @Nullable ExecutionTarget targetOrNullForDefault) {
+
+  /**
+   * @param executionId Id that will be set for {@link ExecutionEnvironment} that is created to run configuration.
+   */
+  public static void runConfiguration(
+    @NotNull RunnerAndConfigurationSettings configuration,
+    @NotNull Executor executor,
+    @NotNull ExecutionTarget target,
+    long executionId
+  ) {
+    doRunConfiguration(configuration, executor, target, executionId, null);
+  }
+
+  public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, long executionId) {
+    doRunConfiguration(configuration, executor, null, executionId, null);
+  }
+
+  public static void doRunConfiguration(
+    @NotNull RunnerAndConfigurationSettings configuration,
+    @NotNull Executor executor,
+    @Nullable ExecutionTarget targetOrNullForDefault,
+    @Nullable Long executionId,
+    @Nullable DataContext dataContext) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
     if (builder != null) {
       if (targetOrNullForDefault != null) {
@@ -203,6 +214,12 @@ public class ExecutionUtil {
       }
       else {
         builder.activeTarget();
+      }
+      if (executionId != null) {
+        builder.executionId(executionId);
+      }
+      if (dataContext != null) {
+        builder.dataContext(dataContext);
       }
       ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
     }
@@ -214,13 +231,14 @@ public class ExecutionUtil {
       return ExecutionEnvironmentBuilder.create(executor, settings);
     }
     catch (ExecutionException e) {
-      Project project = settings.getConfiguration().getProject();
+      RunConfiguration configuration = settings.getConfiguration();
+      Project project = configuration.getProject();
       RunContentManager manager = ExecutionManager.getInstance(project).getContentManager();
-      String toolWindowId = manager.getContentDescriptorToolWindowId(settings);
+      String toolWindowId = manager.getContentDescriptorToolWindowId(configuration);
       if (toolWindowId == null) {
         toolWindowId = executor.getToolWindowId();
       }
-      handleExecutionError(project, toolWindowId, settings.getConfiguration().getName(), e);
+      handleExecutionError(project, toolWindowId, configuration.getName(), e);
       return null;
     }
   }

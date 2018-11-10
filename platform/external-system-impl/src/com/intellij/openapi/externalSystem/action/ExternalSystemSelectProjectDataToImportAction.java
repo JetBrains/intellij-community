@@ -22,23 +22,25 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.ui.ExternalProjectDataSelectorDialog;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/12/2015
  */
 public class ExternalSystemSelectProjectDataToImportAction extends ExternalSystemAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getProject(e);
     final ProjectSystemId projectSystemId = getSystemId(e);
+    ExternalSystemActionsCollector.trigger(project, projectSystemId, this, e);
 
     final List<ExternalSystemNode> selectedNodes = ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext());
 

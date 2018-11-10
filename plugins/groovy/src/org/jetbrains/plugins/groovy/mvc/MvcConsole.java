@@ -134,7 +134,7 @@ public class MvcConsole implements Disposable {
 
     private OSProcessHandler myHandler;
 
-    public MyProcessInConsole(final Module module,
+    MyProcessInConsole(final Module module,
                               final GeneralCommandLine commandLine,
                               @Nullable final Runnable onDone,
                               final boolean showConsole,
@@ -330,7 +330,7 @@ public class MvcConsole implements Disposable {
   private class MyKillProcessAction extends AnAction {
     private OSProcessHandler myHandler = null;
 
-    public MyKillProcessAction() {
+    MyKillProcessAction() {
       super("Kill process", "Kill process", AllIcons.Debugger.KillProcess);
     }
 
@@ -339,13 +339,13 @@ public class MvcConsole implements Disposable {
     }
 
     @Override
-    public void update(final AnActionEvent e) {
+    public void update(@NotNull final AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(isEnabled());
     }
 
     @Override
-    public void actionPerformed(final AnActionEvent e) {
+    public void actionPerformed(@NotNull final AnActionEvent e) {
       if (myHandler != null) {
         final Process process = myHandler.getProcess();
         process.destroy();

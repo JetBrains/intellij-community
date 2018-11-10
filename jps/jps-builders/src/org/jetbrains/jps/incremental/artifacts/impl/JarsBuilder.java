@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -35,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
@@ -210,7 +196,14 @@ public class JarsBuilder {
         myBuiltJars.remove(jar);
       }
       else {
-        jarOutputStream.close();
+        try {
+          jarOutputStream.close();
+        }
+        catch (IOException e) {
+          String messageText = "Cannot create '" + jar.getPresentableDestination() + "': " + e.getMessage();
+          myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, messageText));
+          LOG.debug(e);
+        }
       }
     }
   }
@@ -238,7 +231,6 @@ public class JarsBuilder {
           if (manifestFile.exists()) {
             final String fullManifestPath = FileUtil.toSystemIndependentName(manifestFile.getAbsolutePath());
             packedFilePaths.add(fullManifestPath);
-            //noinspection IOResourceOpenedButNotSafelyClosed
             return createManifest(new FileInputStream(manifestFile), manifestFile);
           }
         }
@@ -279,10 +271,10 @@ public class JarsBuilder {
     }
   }
 
-  private static void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
-                                             final String relativeOutputPath, final Set<String> writtenPaths)
+  private void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
+                                      final String relativeOutputPath, final Set<String> writtenPaths)
     throws IOException {
-    final long timestamp = FileSystemUtil.lastModified(root.getRootFile());
+    final long timestamp = FSOperations.lastModified(root.getRootFile());
     root.processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath, ZipEntry entry) throws IOException {
@@ -304,7 +296,15 @@ public class JarsBuilder {
           }
           jarOutputStream.putNextEntry(newEntry);
           FileUtil.copy(inputStream, jarOutputStream);
-          jarOutputStream.closeEntry();
+          try {
+            jarOutputStream.closeEntry();
+          }
+          catch (IOException e) {
+            String messageText = "Cannot extract '" + pathInJar + "' from '" + root.getRootFile().getAbsolutePath() + "' while building '" +
+                                 root.getTarget().getArtifact().getName() + "' artifact: " + e.getMessage();
+            myContext.processMessage(new CompilerMessage(IncArtifactBuilder.BUILDER_NAME, BuildMessage.Kind.ERROR, messageText));
+            LOG.debug(e);
+          }
         }
       }
     });
@@ -387,10 +387,14 @@ public class JarsBuilder {
   }
 
   private class JarsGraph implements InboundSemiGraph<JarInfo> {
+    @Override
+    @NotNull
     public Collection<JarInfo> getNodes() {
       return myJarsToBuild;
     }
 
+    @NotNull
+    @Override
     public Iterator<JarInfo> getIn(final JarInfo n) {
       Set<JarInfo> ins = new HashSet<>();
       final DestinationInfo destination = n.getDestination();

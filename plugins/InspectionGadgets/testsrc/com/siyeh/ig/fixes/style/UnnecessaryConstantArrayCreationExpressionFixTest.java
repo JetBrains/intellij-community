@@ -22,6 +22,7 @@ import com.siyeh.ig.style.UnnecessaryConstantArrayCreationExpressionInspection;
 public class UnnecessaryConstantArrayCreationExpressionFixTest extends IGQuickFixesTestCase {
 
   public void testPrimitive() { doTest("int[]"); }
+  public void testParenthesized() { doTest("int[]"); }
   public void testTwoDimension() { doTest("Map[][]"); }
   public void testInitializerWithoutNew() { assertQuickfixNotAvailable(); }
 

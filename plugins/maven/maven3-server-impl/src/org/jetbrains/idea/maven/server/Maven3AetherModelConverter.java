@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Comparing;
 import gnu.trove.THashMap;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
@@ -37,7 +37,6 @@ import java.util.*;
  * {@link Maven3AetherModelConverter} provides adapted methods of {@link MavenModelConverter} for aether models conversion
  *
  * @author Vladislav.Soroka
- * @since 9/24/2014
  */
 public class Maven3AetherModelConverter extends MavenModelConverter {
 
@@ -45,9 +44,9 @@ public class Maven3AetherModelConverter extends MavenModelConverter {
   public static MavenModel convertModelWithAetherDependencyTree(Model model,
                                                                 List<String> sources,
                                                                 List<String> testSources,
-                                                                Collection<Artifact> dependencies,
-                                                                Collection<DependencyNode> dependencyTree,
-                                                                Collection<Artifact> extensions,
+                                                                Collection<? extends Artifact> dependencies,
+                                                                Collection<? extends DependencyNode> dependencyTree,
+                                                                Collection<? extends Artifact> extensions,
                                                                 File localRepository) throws RemoteException {
     MavenModel result = new MavenModel();
     result.setMavenId(new MavenId(model.getGroupId(), model.getArtifactId(), model.getVersion()));
@@ -76,7 +75,7 @@ public class Maven3AetherModelConverter extends MavenModelConverter {
   }
 
   public static List<MavenArtifactNode> convertAetherDependencyNodes(MavenArtifactNode parent,
-                                                                     Collection<DependencyNode> nodes,
+                                                                     Collection<? extends DependencyNode> nodes,
                                                                      Map<Artifact, MavenArtifact> nativeToConvertedMap,
                                                                      File localRepository) {
     List<MavenArtifactNode> result = new ArrayList<MavenArtifactNode>(nodes.size());
@@ -100,7 +99,7 @@ public class Maven3AetherModelConverter extends MavenModelConverter {
         Artifact winnerArtifact = toArtifact(winnerNode.getDependency());
         relatedArtifact = convertArtifact(winnerArtifact, nativeToConvertedMap, localRepository);
         nativeToConvertedMap.put(a, relatedArtifact);
-        if (!StringUtil.equals(each.getVersion().toString(), winnerNode.getVersion().toString())) {
+        if (!Comparing.equal(each.getVersion().toString(), winnerNode.getVersion().toString())) {
           state = MavenArtifactState.CONFLICT;
         }
         else {

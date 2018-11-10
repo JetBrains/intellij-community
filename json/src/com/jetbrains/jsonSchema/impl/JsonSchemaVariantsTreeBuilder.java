@@ -18,7 +18,6 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.json.psi.JsonContainer;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,11 +34,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.jetbrains.jsonSchema.JsonPointerUtil.*;
+
 /**
  * @author Irina.Chernushina on 4/20/2017.
  */
 public class JsonSchemaVariantsTreeBuilder {
-  private static final Logger LOG = Logger.getInstance(JsonSchemaVariantsTreeBuilder.class);
 
   public static JsonSchemaTreeNode buildTree(@NotNull final JsonSchemaObject schema,
                                       @Nullable final List<Step> position,
@@ -115,16 +115,14 @@ public class JsonSchemaVariantsTreeBuilder {
   }
 
   public static List<Step> buildSteps(@NotNull String nameInSchema) {
-    final List<String> chain = StringUtil.split(JsonSchemaService.normalizeId(nameInSchema).replace("\\", "/"), "/");
+    final List<String> chain = split(normalizeSlashes(JsonSchemaService.normalizeId(nameInSchema)));
     List<Step> steps = ContainerUtil.newArrayListWithCapacity(chain.size());
     for (String s: chain) {
-      if (!StringUtil.isEmpty(s)) {
-        try {
-          steps.add(Step.createArrayElementStep(Integer.parseInt(s)));
-        }
-        catch (NumberFormatException e) {
-          steps.add(Step.createPropertyStep(s));
-        }
+      try {
+        steps.add(Step.createArrayElementStep(Integer.parseInt(s)));
+      }
+      catch (NumberFormatException e) {
+        steps.add(Step.createPropertyStep(unescapeJsonPointerPart(s)));
       }
     }
     return steps;
@@ -210,7 +208,7 @@ public class JsonSchemaVariantsTreeBuilder {
     public void map(@NotNull final Set<JsonContainer> visited) {
       JsonSchemaObject current = mySourceNode;
       while (!StringUtil.isEmptyOrSpaces(current.getRef())) {
-        final JsonSchemaObject definition = getSchemaFromDefinition(current, myService);
+        final JsonSchemaObject definition = current.resolveRefSchema(myService);
         if (definition == null) {
           myState = SchemaResolveState.brokenDefinition;
           return;
@@ -245,9 +243,9 @@ public class JsonSchemaVariantsTreeBuilder {
 
     @Override
     public void map(@NotNull final Set<JsonContainer> visited) {
-      assert mySourceNode.getAllOf() != null;
-      myChildOperations.addAll(mySourceNode.getAllOf().stream()
-                                           .map(sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)).collect(Collectors.toList()));
+      List<JsonSchemaObject> allOf = mySourceNode.getAllOf();
+      assert allOf != null;
+      myChildOperations.addAll(ContainerUtil.map(allOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
     }
 
     private static <T> int maxSize(List<List<T>> items) {
@@ -309,7 +307,10 @@ public class JsonSchemaVariantsTreeBuilder {
   private static List<JsonSchemaObject> andGroup(@NotNull JsonSchemaObject object, @NotNull List<JsonSchemaObject> group) {
     List<JsonSchemaObject> list = ContainerUtil.newArrayListWithCapacity(group.size());
     for (JsonSchemaObject s: group) {
-      list.add(merge(object, s, s));
+      JsonSchemaObject schemaObject = merge(object, s, s);
+      if (schemaObject.isValidByExclusion()) {
+        list.add(schemaObject);
+      }
     }
     return list;
   }
@@ -324,12 +325,11 @@ public class JsonSchemaVariantsTreeBuilder {
 
     @Override
     public void map(@NotNull final Set<JsonContainer> visited) {
-      assert mySourceNode.getOneOf() != null;
-      myChildOperations.addAll(mySourceNode.getOneOf().stream()
-                                           .map(sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)).collect(Collectors.toList()));
+      List<JsonSchemaObject> oneOf = mySourceNode.getOneOf();
+      assert oneOf != null;
+      myChildOperations.addAll(ContainerUtil.map(oneOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
     }
 
-    @SuppressWarnings("Duplicates")
     @Override
     public void reduce() {
       final List<JsonSchemaObject> oneOf = new SmartList<>();
@@ -353,12 +353,11 @@ public class JsonSchemaVariantsTreeBuilder {
 
     @Override
     public void map(@NotNull final Set<JsonContainer> visited) {
-      assert mySourceNode.getAnyOf() != null;
-      myChildOperations.addAll(mySourceNode.getAnyOf().stream()
-                                           .map(sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)).collect(Collectors.toList()));
+      List<JsonSchemaObject> anyOf = mySourceNode.getAnyOf();
+      assert anyOf != null;
+      myChildOperations.addAll(ContainerUtil.map(anyOf, sourceNode -> new ProcessDefinitionsOperation(sourceNode, myService)));
     }
 
-    @SuppressWarnings("Duplicates")
     @Override
     public void reduce() {
       for (Operation op : myChildOperations) {
@@ -372,46 +371,7 @@ public class JsonSchemaVariantsTreeBuilder {
     }
   }
 
-  @Nullable
-  private static JsonSchemaObject getSchemaFromDefinition(@NotNull final JsonSchemaObject schema,
-                                                          @NotNull JsonSchemaService service) {
-    final String ref = schema.getRef();
-    assert !StringUtil.isEmptyOrSpaces(ref);
-
-    final VirtualFile schemaFile = schema.getSchemaFile();
-    final SchemaUrlSplitter splitter = new SchemaUrlSplitter(ref);
-    if (splitter.getSchemaId() != null) {
-      final VirtualFile refFile = service.findSchemaFileByReference(splitter.getSchemaId(), schemaFile);
-      if (refFile == null) {
-        LOG.debug(String.format("Schema file not found by reference: '%s' from %s", splitter.getSchemaId(), schemaFile.getPath()));
-        return null;
-      }
-      final JsonSchemaObject refSchema = service.getSchemaObjectForSchemaFile(refFile);
-      if (refSchema == null) {
-        LOG.debug(String.format("Schema object not found by reference: '%s' from %s", splitter.getSchemaId(), schemaFile.getPath()));
-        return null;
-      }
-      return findRelativeDefinition(refSchema, splitter);
-    }
-    final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
-    if (rootSchema == null) {
-      LOG.debug(String.format("Schema object not found for %s", schemaFile.getPath()));
-      return null;
-    }
-    return findRelativeDefinition(rootSchema, splitter);
-  }
-
-  private static JsonSchemaObject findRelativeDefinition(@NotNull final JsonSchemaObject schema,
-                                                         @NotNull final SchemaUrlSplitter splitter) {
-    final String path = splitter.getRelativePath();
-    if (StringUtil.isEmptyOrSpaces(path)) return schema;
-    final JsonSchemaObject definition = schema.findRelativeDefinition(path);
-    if (definition == null) {
-      LOG.debug(String.format("Definition not found by reference: '%s' in file %s", path, schema.getSchemaFile().getPath()));
-    }
-    return definition;
-  }
-
+  @NotNull
   public static JsonSchemaObject merge(@NotNull JsonSchemaObject base,
                                        @NotNull JsonSchemaObject other,
                                        @NotNull JsonSchemaObject pointTo) {
@@ -467,13 +427,17 @@ public class JsonSchemaVariantsTreeBuilder {
       return myName;
     }
 
+    public int getIdx() {
+      return myIdx;
+    }
+
     @NotNull
     public Pair<ThreeState, JsonSchemaObject> step(@NotNull JsonSchemaObject parent, boolean acceptAdditionalPropertiesSchemas) {
       if (myName != null) {
         return propertyStep(parent, acceptAdditionalPropertiesSchemas);
       } else {
         assert myIdx >= 0;
-        return arrayElementStep(parent, acceptAdditionalPropertiesSchemas);
+        return arrayOrNumericPropertyElementStep(parent, acceptAdditionalPropertiesSchemas);
       }
     }
 
@@ -549,7 +513,7 @@ public class JsonSchemaVariantsTreeBuilder {
     private static boolean isInMainSchema(@NotNull JsonSchemaObject parent) {
       final VirtualFile schemaFile = parent.getSchemaFile();
       final JsonSchemaService service = JsonSchemaService.Impl.get(parent.getJsonObject().getProject());
-      if (!service.isSchemaFile(schemaFile)) return false;
+      if (!service.isApplicableToFile(schemaFile) || !service.isSchemaFile(schemaFile)) return false;
 
       final JsonSchemaObject rootSchema = service.getSchemaObjectForSchemaFile(schemaFile);
       if (rootSchema == null) return false;
@@ -558,8 +522,8 @@ public class JsonSchemaVariantsTreeBuilder {
     }
 
     @NotNull
-    private Pair<ThreeState, JsonSchemaObject> arrayElementStep(@NotNull JsonSchemaObject parent,
-                                                                boolean acceptAdditionalPropertiesSchemas) {
+    private Pair<ThreeState, JsonSchemaObject> arrayOrNumericPropertyElementStep(@NotNull JsonSchemaObject parent,
+                                                                                 boolean acceptAdditionalPropertiesSchemas) {
       if (parent.getItemsSchema() != null) {
         return Pair.create(ThreeState.UNSURE, parent.getItemsSchema());
       }
@@ -568,6 +532,14 @@ public class JsonSchemaVariantsTreeBuilder {
         if (myIdx >= 0 && myIdx < list.size()) {
           return Pair.create(ThreeState.UNSURE, list.get(myIdx));
         }
+      }
+      final String keyAsString = String.valueOf(myIdx);
+      if (parent.getProperties().containsKey(keyAsString)) {
+        return Pair.create(ThreeState.UNSURE, parent.getProperties().get(keyAsString));
+      }
+      final JsonSchemaObject matchingPatternPropertySchema = parent.getMatchingPatternPropertySchema(keyAsString);
+      if (matchingPatternPropertySchema != null) {
+        return Pair.create(ThreeState.UNSURE, matchingPatternPropertySchema);
       }
       if (parent.getAdditionalItemsSchema() != null && acceptAdditionalPropertiesSchemas) {
         return Pair.create(ThreeState.UNSURE, parent.getAdditionalItemsSchema());
@@ -586,7 +558,7 @@ public class JsonSchemaVariantsTreeBuilder {
     private final String myRelativePath;
 
     public SchemaUrlSplitter(@NotNull final String ref) {
-      if ("#".equals(ref)) {
+      if (isSelfReference(ref)) {
         mySchemaId = null;
         myRelativePath = "";
         return;

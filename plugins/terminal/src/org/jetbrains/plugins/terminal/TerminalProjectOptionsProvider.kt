@@ -7,7 +7,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.SystemInfo
 import java.io.File
 import kotlin.reflect.KMutableProperty1
@@ -54,16 +54,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     }
 
 
-  private fun currentProjectFolder(): String? {
-    val projectRootManager = ProjectRootManager.getInstance(project)
-
-    val roots = projectRootManager.contentRoots
-    if (roots.size == 1) {
-      roots[0].canonicalPath
-    }
-    val baseDir = project.baseDir
-    return baseDir?.canonicalPath
-  }
+  private fun currentProjectFolder() = if (project.isDefault) null else project.guessProjectDir()?.canonicalPath
 
   val defaultShellPath: String
     get() {
@@ -97,7 +88,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
 }
 
-// TODO: In Kotlin 1.1 it will be possible to pass references to instance properties. Until then we need 'state' argument as a reciever for
+// TODO: In Kotlin 1.1 it will be possible to pass references to instance properties. Until then we need 'state' argument as a receiver for
 // to property to apply
 class ValueWithDefault<S>(val prop: KMutableProperty1<S, String?>, val state: S, val default: () -> String?) {
   operator fun getValue(thisRef: Any?, property: KProperty<*>): String? {

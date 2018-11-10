@@ -20,7 +20,6 @@ import java.util.Comparator;
 
 /**
  * @author stathik
- * @since Dec 11, 2003
  */
 public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, String> {
   public static final int COLUMN_NAME = 0;
@@ -51,6 +50,7 @@ public class PluginManagerColumnInfo extends ColumnInfo<IdeaPluginDescriptor, St
     myModel = model;
   }
 
+  @Override
   public String valueOf(IdeaPluginDescriptor base) {
     if (columnIdx == COLUMN_NAME) {
       return base.getName();

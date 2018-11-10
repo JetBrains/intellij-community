@@ -29,14 +29,17 @@ public final class LwTabbedPane extends LwContainer implements ITabbedPane {
     super(className);
   }
 
+  @Override
   protected LayoutManager createInitialLayout() {
     return null;
   }
 
+  @Override
   public void read(final Element element, final PropertiesProvider provider) throws Exception {
     readNoLayout(element, provider);
   }
 
+  @Override
   protected void readConstraintsForChild(final Element element, final LwComponent component) {
     final Element constraintsElement = LwXmlReader.getRequiredChild(element, UIFormXmlConstants.ELEMENT_CONSTRAINTS);
     final Element tabbedPaneChild = LwXmlReader.getRequiredChild(constraintsElement, UIFormXmlConstants.ELEMENT_TABBEDPANE);
@@ -99,6 +102,7 @@ public final class LwTabbedPane extends LwContainer implements ITabbedPane {
     }
   }
 
+  @Override
   public StringDescriptor getTabProperty(IComponent component, final String propName) {
     LwComponent lwComponent = (LwComponent) component;
     LwTabbedPane.Constraints constraints = (LwTabbedPane.Constraints) lwComponent.getCustomLayoutConstraints();
@@ -108,6 +112,7 @@ public final class LwTabbedPane extends LwContainer implements ITabbedPane {
     return constraints.getProperty(propName);
   }
 
+  @Override
   public boolean areChildrenExclusive() {
     return true;
   }

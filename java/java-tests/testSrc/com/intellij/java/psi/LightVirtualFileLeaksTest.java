@@ -19,15 +19,12 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,12 +34,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public class LightVirtualFileLeaksTest extends LightCodeInsightFixtureTestCase {
   private Key<Boolean> myKey;
-  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-    public Sdk getSdk() {
-      return PsiTestUtil.addJdkAnnotations(super.getSdk());
-    }
-  };
 
   @Override
   protected void setUp() throws Exception {
@@ -53,7 +44,7 @@ public class LightVirtualFileLeaksTest extends LightCodeInsightFixtureTestCase {
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PROJECT_DESCRIPTOR;
+    return JAVA_1_7_ANNOTATED;
   }
 
   public void testDoNotLeakViaDocument() {

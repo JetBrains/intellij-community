@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class ThrowExceptionAction extends DebuggerAction {
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
@@ -121,6 +122,7 @@ public class ThrowExceptionAction extends DebuggerAction {
     }
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     JavaStackFrame stackFrame = PopFrameAction.getStackFrame(e);
     boolean enable = stackFrame != null && stackFrame.getDescriptor().getUiIndex() == 0;

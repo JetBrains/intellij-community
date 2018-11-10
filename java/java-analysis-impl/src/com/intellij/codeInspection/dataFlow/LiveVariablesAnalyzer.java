@@ -26,8 +26,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.util.PairFunction;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.Queue;
+import com.intellij.util.containers.*;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +42,7 @@ public class LiveVariablesAnalyzer {
   private final Instruction[] myInstructions;
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final Map<PsiElement, List<DfaVariableValue>> myClosureReads =
+  private final Map<PsiElement, List<DfaVariableValue>> myClosureReads =
     FactoryMap.create(closure -> {
       final Set<DfaVariableValue> result = ContainerUtil.newLinkedHashSet();
       closure.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -68,7 +68,7 @@ public class LiveVariablesAnalyzer {
   }
 
   private List<Instruction> getSuccessors(Instruction ins) {
-    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).mapToObj(i -> myInstructions[i]).toList();
+    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).elements(myInstructions).toList();
   }
 
   private MultiMap<Instruction, Instruction> calcBackwardMap() {
@@ -256,7 +256,7 @@ public class LiveVariablesAnalyzer {
   }
 
   private static class InstructionState extends Pair<Instruction, BitSet> {
-    public InstructionState(Instruction first, BitSet second) {
+    InstructionState(Instruction first, BitSet second) {
       super(first, second);
     }
   }

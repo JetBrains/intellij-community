@@ -31,7 +31,6 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -175,13 +174,13 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
       }
 
       @Override
-      public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+      public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
         PsiIdentifier nameIdentifier = getNameIdentifier();
         if (nameIdentifier != null) {
           PsiImplUtil.setName(nameIdentifier, newElementName);
         }
         else if (ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(getNode().getFirstChildNode().getElementType())) {
-          PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+          PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
           nameIdentifier = factory.createIdentifier(newElementName);
           addBefore(nameIdentifier, SourceTreeToPsiMap.treeElementToPsi(getNode().getFirstChildNode()));
         }
@@ -195,14 +194,8 @@ public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStu
       }
 
       @Override
-      public boolean isReferenceTo(PsiElement element) {
+      public boolean isReferenceTo(@NotNull PsiElement element) {
         return element instanceof PsiMethod && element.equals(resolve());
-      }
-
-      @Override
-      @NotNull
-      public Object[] getVariants() {
-        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
 
       @Override

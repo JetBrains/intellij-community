@@ -38,19 +38,16 @@ public class CleanUnshelvedAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     CleanUnshelvedFilterDialog dialog = new CleanUnshelvedFilterDialog(project);
     dialog.show();
     if (dialog.isOK()) {
       if (dialog.isUnshelvedWithFilterSelected()) {
-        ShelveChangesManager.getInstance(project).cleanUnshelved(false, dialog.getTimeLimitInMillis());
-      }
-      else if (dialog.isAllUnshelvedSelected()) {
-        ShelveChangesManager.getInstance(project).clearRecycled();
+        ShelveChangesManager.getInstance(project).cleanUnshelved(dialog.getTimeLimitInMillis());
       }
       else {
-        ShelveChangesManager.getInstance(project).cleanUnshelved(true, System.currentTimeMillis());
+        ShelveChangesManager.getInstance(project).clearRecycled();
       }
     }
   }

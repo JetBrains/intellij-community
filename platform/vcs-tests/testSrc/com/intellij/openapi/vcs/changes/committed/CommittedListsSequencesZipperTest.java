@@ -121,7 +121,7 @@ public class CommittedListsSequencesZipperTest {
         group.add(location);
       }
 
-      return Pair.create(Collections.singletonList(group), Collections.<RepositoryLocation>emptyList());
+      return Pair.create(Collections.singletonList(group), Collections.emptyList());
     }
 
     @Override

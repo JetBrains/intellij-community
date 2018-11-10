@@ -2,12 +2,14 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -22,28 +24,37 @@ import java.nio.file.Paths
 import javax.swing.UIManager
 
 object UpdateInstaller {
-  private val patchesUrl: String
-    get() = System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl
+  const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
+
+  private val patchesUrl: URL
+    get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl)
 
   @JvmStatic
   @Throws(IOException::class)
-  fun downloadPatchFile(patch: PatchInfo,
-                        toBuild: BuildNumber,
-                        forceHttps: Boolean,
-                        indicator: ProgressIndicator): File {
+  fun downloadPatchChain(chain: List<BuildNumber>, forceHttps: Boolean, indicator: ProgressIndicator): List<File> {
     indicator.text = IdeBundle.message("update.downloading.patch.progress")
 
+    val files = mutableListOf<File>()
     val product = ApplicationInfo.getInstance().build.productCode
-    val from = patch.fromBuild.asStringWithoutProductCode()
-    val to = toBuild.asStringWithoutProductCode()
     val jdk = if (System.getProperty("idea.java.redist", "").lastIndexOf("NoJavaDistribution") >= 0) "-no-jdk" else ""
-    val patchName = "${product}-${from}-${to}-patch${jdk}-${patch.osSuffix}.jar"
+    val share = 1.0 / (chain.size - 1)
 
-    val baseUrl = patchesUrl
-    val url = URL(URL(if (baseUrl.endsWith('/')) baseUrl else "${baseUrl}/"), patchName)
-    val patchFile = File(getTempDir(), "patch.jar")
-    HttpRequests.request(url.toString()).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, indicator)
-    return patchFile
+    for (i in 1 until chain.size) {
+      val from = chain[i - 1].withoutProductCode().asString()
+      val to = chain[i].withoutProductCode().asString()
+      val patchName = "${product}-${from}-${to}-patch${jdk}-${PatchInfo.OS_SUFFIX}.jar"
+      val patchFile = File(getTempDir(), "patch${i}.jar")
+      val url = URL(patchesUrl, patchName).toString()
+      val partIndicator = object : DelegatingProgressIndicator(indicator) {
+        override fun setFraction(fraction: Double) {
+          super.setFraction((i - 1) * share + fraction / share)
+        }
+      }
+      HttpRequests.request(url).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, partIndicator)
+      files += patchFile
+    }
+
+    return files
   }
 
   @JvmStatic
@@ -69,8 +80,8 @@ object UpdateInstaller {
 
     var installed = false
 
-    try {
-      indicator.startNonCancelableSection()
+
+    ProgressManager.getInstance().executeNonCancelableSection {
       for (downloader in readyToInstall) {
         try {
           downloader.install()
@@ -81,10 +92,6 @@ object UpdateInstaller {
         }
       }
     }
-    finally {
-      indicator.finishNonCancelableSection()
-    }
-
     return installed
   }
 
@@ -96,7 +103,14 @@ object UpdateInstaller {
 
   @JvmStatic
   @Throws(IOException::class)
-  fun preparePatchCommand(patchFile: File): Array<String> {
+  fun preparePatchCommand(patchFile: File, indicator: ProgressIndicator): Array<String> =
+    preparePatchCommand(listOf(patchFile), indicator)
+
+  @JvmStatic
+  @Throws(IOException::class)
+  fun preparePatchCommand(patchFiles: List<File>, indicator: ProgressIndicator): Array<String> {
+    indicator.text = IdeBundle.message("update.preparing.patch.progress")
+
     val log4j = findLib("log4j.jar")
     val jna = findLib("jna.jar")
     val jnaUtils = findLib("jna-platform.jar")
@@ -132,9 +146,9 @@ object UpdateInstaller {
     }
 
     args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
-    args += "-Xmx750m"
+    args += "-Xmx900m"
     args += "-cp"
-    args += arrayOf(patchFile.path, log4jCopy.path, jnaCopy.path, jnaUtilsCopy.path).joinToString(File.pathSeparator)
+    args += arrayOf(patchFiles.last().path, log4jCopy.path, jnaCopy.path, jnaUtilsCopy.path).joinToString(File.pathSeparator)
 
     args += "-Djna.nosys=true"
     args += "-Djna.boot.library.path="
@@ -144,9 +158,12 @@ object UpdateInstaller {
     args += "-Didea.updater.log=${PathManager.getLogPath()}"
     args += "-Dswing.defaultlaf=${UIManager.getSystemLookAndFeelClassName()}"
 
-    args += "com.intellij.updater.Runner"
-    args += "install"
+    args += UPDATER_MAIN_CLASS
+    args += if (patchFiles.size == 1) "install" else "batch-install"
     args += PathManager.getHomePath()
+    if (patchFiles.size > 1) {
+      args += patchFiles.joinToString(File.pathSeparator)
+    }
 
     return ArrayUtil.toStringArray(args)
   }

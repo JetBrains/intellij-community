@@ -156,7 +156,7 @@ public class StandardPatterns {
   }
 
   @NotNull
-  private static <E> ObjectPattern.Capture<E> composeInitialConditions(final List<InitialPatternCondition> initial) {
+  private static <E> ObjectPattern.Capture<E> composeInitialConditions(final List<? extends InitialPatternCondition> initial) {
     return new ObjectPattern.Capture<>(new InitialPatternCondition(Object.class) {
       @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {

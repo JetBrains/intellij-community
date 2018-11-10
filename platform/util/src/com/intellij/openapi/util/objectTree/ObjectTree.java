@@ -172,7 +172,7 @@ public final class ObjectTree<T> {
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
   static <T> void executeActionWithRecursiveGuard(@NotNull T object,
                                                   @NotNull List<T> recursiveGuard,
-                                                  @NotNull final ObjectTreeAction<T> action) {
+                                                  @NotNull final ObjectTreeAction<? super T> action) {
     synchronized (recursiveGuard) {
       if (ArrayUtil.indexOf(recursiveGuard, object, ContainerUtil.<T>identityStrategy()) != -1) return;
       recursiveGuard.add(object);
@@ -190,7 +190,7 @@ public final class ObjectTree<T> {
     }
   }
 
-  private void executeUnregistered(@NotNull final T object, @NotNull final ObjectTreeAction<T> action) {
+  private void executeUnregistered(@NotNull final T object, @NotNull final ObjectTreeAction<? super T> action) {
     executeActionWithRecursiveGuard(object, myExecutedUnregisteredNodes, action);
   }
 
@@ -233,7 +233,7 @@ public final class ObjectTree<T> {
     myRootObjects.remove(object);
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public void assertIsEmpty(boolean throwError) {
     synchronized (treeLock) {
       for (T object : myRootObjects) {

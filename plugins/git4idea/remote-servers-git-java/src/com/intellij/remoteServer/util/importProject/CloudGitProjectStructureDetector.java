@@ -62,7 +62,7 @@ public class CloudGitProjectStructureDetector extends ProjectStructureDetector {
     return DirectoryProcessingResult.PROCESS_CHILDREN;
   }
 
-  private static void detectApplicationRoot(@NotNull File dir, @NotNull List<DetectedProjectRoot> result) {
+  private static void detectApplicationRoot(@NotNull File dir, @NotNull List<? super DetectedProjectRoot> result) {
     VirtualFile repositoryRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     if (repositoryRoot == null) {
       return;
@@ -86,7 +86,7 @@ public class CloudGitProjectStructureDetector extends ProjectStructureDetector {
                                                     @NotNull File dir,
                                                     @NotNull File[] children,
                                                     @NotNull File base,
-                                                    @NotNull List<DetectedProjectRoot> result) {
+                                                    @NotNull List<? super DetectedProjectRoot> result) {
     List<DetectedProjectRoot> detectedJavaRoots = new ArrayList<>();
     DirectoryProcessingResult processingResult = myJavaDetector.detectRoots(dir, children, base, detectedJavaRoots);
     for (DetectedProjectRoot detectedJavaRoot : detectedJavaRoots) {

@@ -12,9 +12,6 @@ import java.util.function.Predicate;
 
 import static com.siyeh.ig.psiutils.ExpressionUtils.getCallForQualifier;
 
-/**
- * @author Tagir Valeev
- */
 public class StreamApiUtil {
   @Contract("null -> null")
   public static PsiType getStreamElementType(PsiType type) {
@@ -104,8 +101,8 @@ public class StreamApiUtil {
    */
   @Nullable
   public static PsiMethodCallExpression findSubsequentCall(PsiMethodCallExpression call,
-                                                           Predicate<String> isWantedCall,
-                                                           Predicate<String> isAllowedIntermediateCall) {
+                                                           Predicate<? super String> isWantedCall,
+                                                           Predicate<? super String> isAllowedIntermediateCall) {
     return findSubsequentCall(call, isWantedCall, c -> false, isAllowedIntermediateCall);
   }
 
@@ -122,9 +119,9 @@ public class StreamApiUtil {
    */
   @Nullable
   public static PsiMethodCallExpression findSubsequentCall(PsiMethodCallExpression call,
-                                                           Predicate<String> isWantedCall,
-                                                           Predicate<PsiMethodCallExpression> isWantedCollector,
-                                                           Predicate<String> isAllowedIntermediateCall) {
+                                                           Predicate<? super String> isWantedCall,
+                                                           Predicate<? super PsiMethodCallExpression> isWantedCollector,
+                                                           Predicate<? super String> isAllowedIntermediateCall) {
     for (PsiMethodCallExpression chainCall = getCallForQualifier(call); chainCall != null;
          chainCall = getCallForQualifier(chainCall)) {
       String name = chainCall.getMethodExpression().getReferenceName();

@@ -15,7 +15,6 @@
  */
 package git4idea;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
@@ -25,13 +24,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
-import com.intellij.vcs.log.impl.VcsStatusDescriptor;
-import git4idea.history.GitChangeType;
+import com.intellij.vcs.log.impl.VcsFileStatusInfo;
 import git4idea.history.GitChangesParser;
-import git4idea.history.GitLogStatusInfo;
 import git4idea.history.GitLogUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.List;
@@ -42,12 +38,13 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public final class GitCommit extends VcsChangesLazilyParsedDetails {
-  private static final Logger LOG = Logger.getInstance(GitCommit.class);
   @NotNull private final GitLogUtil.DiffRenameLimit myRenameLimit;
 
   public GitCommit(Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
                    @NotNull String subject, @NotNull VcsUser author, @NotNull String message, @NotNull VcsUser committer,
-                   long authorTime, @NotNull List<List<GitLogStatusInfo>> reportedChanges, @NotNull GitLogUtil.DiffRenameLimit renameLimit) {
+                   long authorTime,
+                   @NotNull List<List<VcsFileStatusInfo>> reportedChanges,
+                   @NotNull GitLogUtil.DiffRenameLimit renameLimit) {
     super(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
     myRenameLimit = renameLimit;
     myChanges.set(reportedChanges.isEmpty() ? EMPTY_CHANGES : new UnparsedChanges(project, reportedChanges));
@@ -88,28 +85,15 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     return size;
   }
 
-  private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges<GitLogStatusInfo> {
-    @NotNull private final String myRootPath = getRoot().getPath();
-
+  private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges {
     private UnparsedChanges(@NotNull Project project,
-                            @NotNull List<List<GitLogStatusInfo>> changesOutput) {
-      super(project, changesOutput, new GitChangesDescriptor());
-    }
-
-    @Override
-    @NotNull
-    protected String absolutePath(@NotNull String path) {
-      try {
-        return myRootPath + "/" + GitUtil.unescapePath(path);
-      }
-      catch (VcsException e) {
-        return myRootPath + "/" + path;
-      }
+                            @NotNull List<List<VcsFileStatusInfo>> changesOutput) {
+      super(project, changesOutput);
     }
 
     @NotNull
     @Override
-    protected List<Change> parseStatusInfo(@NotNull List<GitLogStatusInfo> changes, int parentIndex) throws VcsException {
+    protected List<Change> parseStatusInfo(@NotNull List<VcsFileStatusInfo> changes, int parentIndex) throws VcsException {
       String parentHash = null;
       if (parentIndex < getParents().size()) {
         parentHash = getParents().get(parentIndex).asString();
@@ -119,77 +103,21 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
 
     int getRenameLimitEstimate() {
       int size = 0;
-      for (List<GitLogStatusInfo> changesWithParent : myChangesOutput) {
+      for (List<VcsFileStatusInfo> changesWithParent : myChangesOutput) {
         int sources = 0;
         int targets = 0;
-        for (GitLogStatusInfo info : changesWithParent) {
-          GitChangeType type = info.getType();
-          if (ContainerUtil.set(GitChangeType.DELETED, GitChangeType.RENAMED).contains(type)) {
+        for (VcsFileStatusInfo info : changesWithParent) {
+          Change.Type type = info.getType();
+          if (ContainerUtil.set(Change.Type.DELETED, Change.Type.MOVED).contains(type)) {
             sources++;
           }
-          if (ContainerUtil.set(GitChangeType.ADDED).contains(type)) {
+          if (ContainerUtil.set(Change.Type.NEW).contains(type)) {
             targets++;
           }
         }
         size = Math.max(Math.max(sources, targets), size);
       }
       return size;
-    }
-  }
-
-  private static class GitChangesDescriptor extends VcsStatusDescriptor<GitLogStatusInfo> {
-    @NotNull
-    @Override
-    protected GitLogStatusInfo createStatus(@NotNull Change.Type type, @NotNull String path, @Nullable String secondPath) {
-      return new GitLogStatusInfo(getType(type), path, secondPath);
-    }
-
-    @NotNull
-    private static GitChangeType getType(@NotNull Change.Type type) {
-      switch (type) {
-        case MODIFICATION:
-          return GitChangeType.MODIFIED;
-        case NEW:
-          return GitChangeType.ADDED;
-        case DELETED:
-          return GitChangeType.DELETED;
-        case MOVED:
-          return GitChangeType.RENAMED;
-      }
-      return null;
-    }
-
-    @NotNull
-    @Override
-    public String getFirstPath(@NotNull GitLogStatusInfo info) {
-      return info.getFirstPath();
-    }
-
-    @Nullable
-    @Override
-    public String getSecondPath(@NotNull GitLogStatusInfo info) {
-      return info.getSecondPath();
-    }
-
-    @NotNull
-    @Override
-    public Change.Type getType(@NotNull GitLogStatusInfo info) {
-      switch (info.getType()) {
-        case ADDED:
-          return Change.Type.NEW;
-        case MODIFIED:
-        case TYPE_CHANGED:
-          return Change.Type.MODIFICATION;
-        case DELETED:
-          return Change.Type.DELETED;
-        case COPIED:
-        case RENAMED:
-          return Change.Type.MOVED;
-        default:
-        case UNRESOLVED:
-          LOG.error("Unsupported status info " + info);
-          throw new RuntimeException(info.toString());
-      }
     }
   }
 }

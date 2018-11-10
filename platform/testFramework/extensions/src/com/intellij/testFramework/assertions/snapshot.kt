@@ -42,8 +42,8 @@ private class DumpRepresenter : Representer() {
 
 @Throws(FileComparisonFailure::class)
 fun compareFileContent(actual: Any, snapshotFile: Path) {
-  val expectedContent = StringUtilRt.convertLineSeparators(snapshotFile.readText())
-  val actualContent = if (actual is String) actual else dumpData(actual)
+  val expectedContent = StringUtilRt.convertLineSeparators(snapshotFile.readText().trimEnd())
+  val actualContent = if (actual is String) actual.trimEnd() else dumpData(actual).trimEnd()
   if (actualContent != expectedContent) {
     throw FileComparisonFailure(null, expectedContent, actualContent, snapshotFile.toString())
   }

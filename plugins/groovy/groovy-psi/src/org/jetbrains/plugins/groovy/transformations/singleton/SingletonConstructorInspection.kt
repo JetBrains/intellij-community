@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.transformations.message
 
 class SingletonConstructorInspection : LocalInspectionTool() {
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : PsiElementVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
 
     override fun visitElement(element: PsiElement) {
       if (element.node.elementType !== GroovyTokenTypes.mIDENT) return

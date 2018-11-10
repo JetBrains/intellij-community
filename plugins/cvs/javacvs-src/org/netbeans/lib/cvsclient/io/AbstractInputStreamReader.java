@@ -41,13 +41,15 @@ public abstract class AbstractInputStreamReader extends Reader {
 
 	// Implemented ============================================================
 
-	public final int read() throws IOException {
+	@Override
+        public final int read() throws IOException {
 		ensureOpen();
 
 		return readChar(inputStream);
 	}
 
-	public final int read(char buffer[], int startOffset, int length) throws IOException {
+	@Override
+        public final int read(char buffer[], int startOffset, int length) throws IOException {
 		if (startOffset < 0
 		        || startOffset > buffer.length
 		        || length < 0
@@ -71,7 +73,8 @@ public abstract class AbstractInputStreamReader extends Reader {
 		return charsRead > 0 ? charsRead : -1;
 	}
 
-	public final boolean ready() throws IOException {
+	@Override
+        public final boolean ready() throws IOException {
 		ensureOpen();
 		try {
 			return inputStream.available() > 0;
@@ -81,7 +84,8 @@ public abstract class AbstractInputStreamReader extends Reader {
 		}
 	}
 
-	public final void close() throws IOException {
+	@Override
+        public final void close() throws IOException {
 		if (inputStream == null) {
 			return;
 		}

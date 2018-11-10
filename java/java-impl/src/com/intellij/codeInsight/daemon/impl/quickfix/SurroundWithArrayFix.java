@@ -92,7 +92,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
           final PsiType paramType = psiParameters[idx].getType();
           if (paramType instanceof PsiArrayType) {
             final PsiType expressionType = TypeConversionUtil.erasure(expression.getType());
-            if (expressionType != null && PsiTypesUtil.isDenotableType(expressionType) && expressionType != PsiType.NULL) {
+            if (expressionType != null && PsiTypesUtil.isDenotableType(expressionType, element) && expressionType != PsiType.NULL) {
               final PsiType componentType = ((PsiArrayType)paramType).getComponentType();
               if (TypeConversionUtil.isAssignable(componentType, expressionType)) {
                 return expression;
@@ -114,7 +114,7 @@ public class SurroundWithArrayFix extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     final PsiExpression expression = getExpression(element);
     assert expression != null;
     final PsiExpression toReplace = elementFactory.createExpressionFromText(getArrayCreation(expression), element);

@@ -28,14 +28,14 @@ import java.util.NoSuchElementException;
  *  @author dyoma
  */
 public class FilteringIterator<Dom, E extends Dom> implements PeekableIterator<E> {
-  private final Iterator<Dom> myDelegate;
+  private final Iterator<? extends Dom> myDelegate;
   private final Condition<? super Dom> myCondition;
   private boolean myNextObtained;
   private boolean myCurrentIsValid;
   private Dom myCurrent;
   private Boolean myCurrentPassedFilter;
 
-  public FilteringIterator(@NotNull Iterator<Dom> delegate, @NotNull Condition<? super Dom> condition) {
+  public FilteringIterator(@NotNull Iterator<? extends Dom> delegate, @NotNull Condition<? super Dom> condition) {
     myDelegate = delegate;
     myCondition = condition;
   }

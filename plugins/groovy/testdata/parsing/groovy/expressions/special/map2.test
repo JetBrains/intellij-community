@@ -13,7 +13,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Named argument
       Argument label
-        PsiElement(Gstring)('"b"')
+        PsiElement(double quoted string)('"b"')
       PsiElement(:)(':')
       Literal
         PsiElement(Integer)('2')
@@ -21,7 +21,7 @@ Groovy script
     PsiWhiteSpace(' ')
     Named argument
       Argument label
-        PsiElement(string)(''c'')
+        PsiElement(single quoted string)(''c'')
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
       Literal

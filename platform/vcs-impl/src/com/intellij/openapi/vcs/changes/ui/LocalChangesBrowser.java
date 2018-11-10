@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,7 +57,7 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
       lists = ContainerUtil.filter(lists, list -> myChangeListNames.contains(list.getName()));
     }
 
-    return TreeModelBuilder.buildFromChangeLists(myProject, getGrouping(), lists);
+    return TreeModelBuilder.buildFromChangeLists(myProject, getGrouping(), lists, Registry.is("vcs.skip.single.default.changelist"));
   }
 
 
@@ -107,19 +108,19 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
 
   private class ToggleChangeDiffAction extends CheckboxAction implements DumbAware {
-    public ToggleChangeDiffAction() {
+    ToggleChangeDiffAction() {
       super("&Include");
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return false;
       return myViewer.isIncluded(change);
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (change == null) return;
 

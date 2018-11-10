@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
@@ -259,24 +260,27 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   @Nullable
   public List<String> getSlots(@Nullable TypeEvalContext context) {
-    final List<String> ownSlots = getOwnSlots();
-    if (ownSlots == null) {
-      return null;
-    }
+    final Set<String> result = new LinkedHashSet<>();
 
-    final Set<String> result = new LinkedHashSet<>(ownSlots);
+    final PyClassType currentType = new PyClassTypeImpl(this, true);
+    final TypeEvalContext contextToUse = context != null ? context : TypeEvalContext.codeInsightFallback(getProject());
 
-    for (PyClass cls : getAncestorClasses(context)) {
+    for (PyClassLikeType type : Iterables.concat(Collections.singletonList(currentType), getAncestorTypes(contextToUse))) {
+      if (!(type instanceof PyClassType)) return null;
+
+      final PyClass cls = ((PyClassType)type).getPyClass();
       if (PyUtil.isObjectClass(cls)) {
         continue;
       }
 
-      final List<String> ancestorSlots = cls.getOwnSlots();
-      if (ancestorSlots == null) {
+      if (!cls.isNewStyleClass(contextToUse)) return null;
+
+      final List<String> ownSlots = cls.getOwnSlots();
+      if (ownSlots == null || ownSlots.contains(PyNames.DICT)) {
         return null;
       }
 
-      result.addAll(ancestorSlots);
+      result.addAll(ownSlots);
     }
 
     return new ArrayList<>(result);
@@ -517,7 +521,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     private int myLastResultIndex = -1;
     private PyClass myLastVisitedClass = null;
 
-    public NameFinder(String... names) {
+    NameFinder(String... names) {
       myNames = names;
       myResult = null;
     }
@@ -565,7 +569,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     @Nullable
     private PyClass myLastVisitedClass;
 
-    public MultiNameFinder(@NotNull String... names) {
+    MultiNameFinder(@NotNull String... names) {
       myResult = new ArrayList<>();
       myNames = names;
       myLastVisitedClass = null;
@@ -1505,11 +1509,9 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return null;
     }
     try {
-      final String abcMeta = "abc." + PyNames.ABC_META_CLASS;
-
       return classTypes
         .stream()
-        .filter(t -> !abcMeta.equals(t.getClassQName()))
+        .filter(t -> !PyNames.ABC_META.equals(t.getClassQName()))
         .max(
           (t1, t2) -> {
             if (Objects.equals(t1, t2)) {
@@ -1707,7 +1709,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Nullable
   private static PyClassLikeType classTypeFromQName(@NotNull QualifiedName qualifiedName, @NotNull PyFile containingFile,
                                                     @NotNull TypeEvalContext context) {
-    final PsiElement element = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInFile(qualifiedName, containingFile, context));
+    final PsiElement element = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, containingFile, context));
     if (element instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)element);
       if (type instanceof PyClassLikeType) {

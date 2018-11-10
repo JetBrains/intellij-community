@@ -6,5 +6,5 @@ Foo.attr = 'spam'
 print(Foo.attr)
 
 foo = Foo()
-foo.attr = 'spam'
+<warning descr="'Foo' object attribute 'attr' is read-only">foo.attr</warning> = 'spam'
 print(foo.attr)

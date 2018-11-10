@@ -35,34 +35,42 @@ public class MoveInnerRefactoringImpl extends RefactoringImpl<MoveInnerProcessor
     super(new MoveInnerProcessor(project, innerClass, name, passOuterClass, parameterName, targetContainer));
   }
 
+  @Override
   public PsiClass getInnerClass() {
     return myProcessor.getInnerClass();
   }
 
+  @Override
   public String getNewClassName() {
     return myProcessor.getNewClassName();
   }
 
+  @Override
   public boolean shouldPassParameter() {
     return myProcessor.shouldPassParameter();
   }
 
+  @Override
   public String getParameterName() {
     return myProcessor.getParameterName();
   }
 
+  @Override
   public void setSearchInComments(boolean value) {
     myProcessor.setSearchInComments(value);
   }
 
+  @Override
   public void setSearchInNonJavaFiles(boolean value) {
     myProcessor.setSearchInNonJavaFiles(value);
   }
 
+  @Override
   public boolean isSearchInComments() {
     return myProcessor.isSearchInComments();
   }
 
+  @Override
   public boolean isSearchInNonJavaFiles() {
     return myProcessor.isSearchInNonJavaFiles();
   }

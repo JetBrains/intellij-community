@@ -36,7 +36,7 @@ import com.intellij.util.FunctionUtil;
 import java.util.Set;
 
 abstract class JUnitTestDiscoveryRunnableState extends TestObject {
-  public JUnitTestDiscoveryRunnableState(JUnitConfiguration configuration, ExecutionEnvironment environment) {
+  JUnitTestDiscoveryRunnableState(JUnitConfiguration configuration, ExecutionEnvironment environment) {
     super(configuration, environment);
   }
 

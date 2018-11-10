@@ -10,7 +10,7 @@ except:
   try:
     import py
   except:
-    raise NameError("No py.test runner found in selected interpreter")
+    raise NameError("No pytest runner found in selected interpreter")
 
 def get_plugin_manager():
   try:

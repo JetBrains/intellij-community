@@ -224,6 +224,10 @@ public interface Configurable extends UnnamedConfigurable {
   }
 
   interface TopComponentProvider {
+    default boolean isAvailable() {
+      return true;
+    }
+
     @NotNull
     Component getCenterComponent(@NotNull TopComponentController controller);
   }

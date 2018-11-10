@@ -17,7 +17,6 @@ package com.intellij.openapi.externalSystem.model.project;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/24/2015
  */
 public interface OrderAware {
   int getOrder();

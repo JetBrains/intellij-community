@@ -7,50 +7,34 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.todo.HighlightedRegionProvider;
 import com.intellij.ide.todo.TodoTreeBuilder;
 import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.file.SourceRootIconProvider;
-import com.intellij.ui.HighlightedRegion;
-import com.intellij.usageView.UsageTreeColors;
-import com.intellij.usageView.UsageTreeColorsScheme;
+import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRegionProvider {
-  private final ArrayList<HighlightedRegion> myHighlightedRegions;
+public final class TodoDirNode extends PsiDirectoryNode  {
   private final TodoTreeBuilder myBuilder;
 
 
   public TodoDirNode(Project project,
-                     PsiDirectory directory,
+                     @NotNull PsiDirectory directory,
                      TodoTreeBuilder builder) {
     super(project, directory, ViewSettings.DEFAULT);
     myBuilder = builder;
-    myHighlightedRegions = new ArrayList<>(2);
   }
 
   @Override
-  public ArrayList<HighlightedRegion> getHighlightedRegions() {
-    return myHighlightedRegions;
-  }
-
-  @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     super.updateImpl(data);
     int fileCount = getFileCount(getValue());
     if (getValue() == null || !getValue().isValid() || fileCount == 0) {
@@ -62,25 +46,8 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
     boolean isProjectRoot = !ProjectRootManager.getInstance(getProject()).getFileIndex().isInContent(directory);
     String newName = isProjectRoot || getStructure().getIsFlattenPackages() ? getValue().getVirtualFile().getPresentableUrl() : getValue().getName();
 
-    int nameEndOffset = newName.length();
     int todoItemCount = getTodoItemCount(getValue());
-    newName = IdeBundle.message("node.todo.group", newName, todoItemCount, fileCount);
-
-    myHighlightedRegions.clear();
-
-    TextAttributes textAttributes = new TextAttributes();
-    Color newColor = FileStatusManager.getInstance(getProject()).getStatus(getValue().getVirtualFile()).getColor();
-
-    if (CopyPasteManager.getInstance().isCutElement(getValue())) {
-      newColor = CopyPasteManager.CUT_COLOR;
-    }
-    textAttributes.setForegroundColor(newColor);
-    myHighlightedRegions.add(new HighlightedRegion(0, nameEndOffset, textAttributes));
-
-    EditorColorsScheme colorsScheme = UsageTreeColorsScheme.getInstance().getScheme();
-    myHighlightedRegions.add(
-      new HighlightedRegion(nameEndOffset, newName.length(), colorsScheme.getAttributes(UsageTreeColors.NUMBER_OF_USAGES)));
-
+    data.setLocationString(IdeBundle.message("node.todo.group", todoItemCount));
     data.setPresentableText(newName);
   }
 

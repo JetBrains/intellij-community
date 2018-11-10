@@ -2,7 +2,6 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
  * This class holds those markers and utility method for working with them.
  *
  * @author Denis Zhdanov
- * @since 5/2/12 12:57 PM
  */
 public class StoragePathMacros {
   /**
@@ -22,11 +20,13 @@ public class StoragePathMacros {
    * {@code 'Workspace file'} holds settings that are local to a particular environment and should not be shared with another
    * team members.
    */
-  @NonNls
   @NotNull
   public static final String WORKSPACE_FILE = "$WORKSPACE_FILE$";
 
-  @NonNls @NotNull public static final String MODULE_FILE = "$MODULE_FILE$";
+  public static final String CACHE_FILE = "$CACHE_FILE$";
+
+  @NotNull
+  public static final String MODULE_FILE = "$MODULE_FILE$";
 
   private StoragePathMacros() {
   }

@@ -80,7 +80,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
   }
 
   @Override
-  public void updateLayoutLater(@Nullable final List<UsageInfo> infos) {
+  public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
     if (infos == null) {
       removeAll();
       JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview", myPresentation.getUsagesWord()), SwingConstants.CENTER);
@@ -135,11 +135,6 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
       }
 
       @Override
-      public boolean isToShowCloseButton() {
-        return false;
-      }
-
-      @Override
       public boolean isAutoScroll() {
         return false;
       }
@@ -159,7 +154,7 @@ public class UsageContextDataflowToPanel extends UsageContextPanelBase {
     };
   }
 
-  private static PsiElement getElementToSliceOn(@NotNull List<UsageInfo> infos) {
+  private static PsiElement getElementToSliceOn(@NotNull List<? extends UsageInfo> infos) {
     UsageInfo info = infos.get(0);
     return info.getElement();
   }

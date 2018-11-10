@@ -38,15 +38,17 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     LOG.assertTrue(mySubstitutor != null);
   }
 
+  @Override
   public PsiClass getReferencedElement() {
     return (PsiClass)super.getReferencedElement();
   }
 
+  @Override
   public void deleteElement() throws IncorrectOperationException {
     final PsiElement parent = getElement().getParent();
     LOG.assertTrue(parent instanceof PsiReferenceList);
     final PsiClass refClass = getReferencedElement();
-    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(refClass.getProject()).getElementFactory();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(refClass.getProject());
 
     boolean targetTypeParameter = myExtendingClass instanceof PsiTypeParameter;
     copyExtendsList(refClass.getExtendsList(), refClass.isInterface() == myExtendingClass.isInterface() || targetTypeParameter, elementFactory);
@@ -71,6 +73,7 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     }
   }
 
+  @Override
   public boolean isSafeDelete() {
     if (getElement() == null) return false;
     final PsiClass refClass = getReferencedElement();

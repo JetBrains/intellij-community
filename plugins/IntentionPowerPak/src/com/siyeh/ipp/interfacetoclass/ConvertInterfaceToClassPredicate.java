@@ -25,6 +25,7 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ConvertInterfaceToClassPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiClass)) {

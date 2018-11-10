@@ -41,7 +41,7 @@ class PersistentIntList implements Disposable {
   public int gap; // bytes lost due to fragmentation
   private IntArray pointers;
 
-  public PersistentIntList(@NotNull File dataFile, int initialSize) throws IOException {
+  PersistentIntList(@NotNull File dataFile, int initialSize) throws IOException {
     data = new RandomAccessFile(dataFile, "rw").getChannel();
     int pointersBase;
     int initialCapacity = Math.min((initialSize+1)*2, initialSize + 256);
@@ -93,7 +93,7 @@ class PersistentIntList implements Disposable {
   }
 
   private static class Empty extends IntArray{
-    public Empty(FileChannel data) {
+    Empty(FileChannel data) {
       super(data);
     }
 
@@ -115,7 +115,7 @@ class PersistentIntList implements Disposable {
     private int size;
     private final int capacity;
 
-    public IntArray(FileChannel data, int base) throws IOException {
+    IntArray(FileChannel data, int base) throws IOException {
       this.data = data;
       this.base = base;
       size = readInt(data, base);

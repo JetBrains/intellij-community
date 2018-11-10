@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.module.JpsModule
@@ -29,6 +16,8 @@ import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameter
 import org.junit.runners.Parameterized.Parameters
 import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 
 class CommunityImageResourcesSanityTest : ImageResourcesTestBase() {
@@ -117,7 +106,7 @@ abstract class ImageResourcesTestBase {
                                        ignoreSkipTag: Boolean = false): List<Array<Any?>> {
       val model = loadProjectModel(root)
       val modules = collectModules(root, model)
-      val checker = MyOptimumSizeChecker(File(PathManager.getHomePath()), iconsOnly, ignoreSkipTag)
+      val checker = MyOptimumSizeChecker(Paths.get(PathManager.getHomePath()), iconsOnly, ignoreSkipTag)
       modules.forEach {
         checker.checkOptimumSizes(it)
       }
@@ -193,18 +182,15 @@ private class MySanityChecker(projectHome: File, ignoreSkipTag: Boolean) : Image
   }
 }
 
-private class MyOptimumSizeChecker(val projectHome: File, val iconsOnly: Boolean, val ignoreSkipTag: Boolean) {
-  val failures = ArrayList<FailedTest>()
-
+private class MyOptimumSizeChecker(val projectHome: Path, val iconsOnly: Boolean, val ignoreSkipTag: Boolean) {
+  val failures = ContainerUtil.createConcurrentList<FailedTest>()
   fun checkOptimumSizes(module: JpsModule) {
     val allImages = ImageCollector(projectHome, iconsOnly, ignoreSkipTag).collect(module)
-    val images = allImages.filter { it.file != null }
-
-    images.forEach { image ->
-      image.files.forEach { file ->
+    allImages.parallelStream().filter { it.file != null }.forEach { image ->
+      image.files.parallelStream().forEach { file ->
         val optimized = ImageSizeOptimizer.optimizeImage(file)
         if (optimized != null && !optimized.hasOptimumSize) {
-          failures.add(FailedTest(module, "image size can be optimized: ${optimized.compressionStats}", image, file))
+          failures.add(FailedTest(module, "image size can be optimized: ${optimized.compressionStats}", image, file.toFile()))
         }
       }
     }
@@ -219,7 +205,7 @@ private class MyIconClassFileChecker(val projectHome: File, val util: JpsModule)
     generator.processModule(module)
 
     generator.getModifiedClasses().forEach { (module, file, details) ->
-      failures.add(FailedTest(module, "image class file should be regenerated", file, details))
+      failures.add(FailedTest(module, "icon class file should be regenerated (run \"Generate icon classes\" configuration)", file, details))
     }
   }
 }
@@ -229,10 +215,10 @@ class FailedTest internal constructor(val module: String, val message: String, v
     this(module.name, message, image.id, file.absolutePath)
 
   internal constructor(module: JpsModule, message: String, image: ImagePaths) :
-    this(module.name, message, image.id, image.files.map { it.absolutePath }.joinToString("\n"))
+    this(module.name, message, image.id, image.files.map { it.toAbsolutePath().toString() }.joinToString("\n"))
 
-  internal constructor(module: JpsModule, message: String, file: File, details: String) :
-    this(module.name, message, file.name, "${file.path}\n\n$details")
+  internal constructor(module: JpsModule, message: String, file: Path, details: CharSequence) :
+    this(module.name, message, file.fileName.toString(), "$file\n\n$details")
 
   fun getTestName(): String = "'${module}' - $id - ${message.substringBefore('\n')}"
   fun getException(): Throwable = Exception("${message}\n\n$details".trim())

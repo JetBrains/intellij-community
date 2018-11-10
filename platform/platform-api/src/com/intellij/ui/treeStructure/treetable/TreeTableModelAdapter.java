@@ -15,7 +15,9 @@
  */
 package com.intellij.ui.treeStructure.treetable;
 
-import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
@@ -37,10 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Scott Violet
  */
 public class TreeTableModelAdapter extends AbstractTableModel {
-
   private final AtomicInteger modificationStamp = new AtomicInteger();
-  private final TransferToEDTQueue<Runnable> laterInvocator =
-    TransferToEDTQueue.createRunnableMerger("TreeTableModelAdapter later invocator");
 
   private final JTree tree;
   private final TreeTableModel treeTableModel;
@@ -55,10 +54,12 @@ public class TreeTableModelAdapter extends AbstractTableModel {
     tree.addTreeExpansionListener(new TreeExpansionListener() {
       // Don't use fireTableRowsInserted() here; the selection model
       // would get updated twice.
+      @Override
       public void treeExpanded(TreeExpansionEvent event) {
         fireTableDataChanged();
       }
 
+      @Override
       public void treeCollapsed(TreeExpansionEvent event) {
         fireTableDataChanged();
       }
@@ -69,18 +70,22 @@ public class TreeTableModelAdapter extends AbstractTableModel {
     // not be guaranteed the tree will have finished processing
     // the event before us.
     treeTableModel.addTreeModelListener(new TreeModelListener() {
+      @Override
       public void treeNodesChanged(TreeModelEvent e) {
         delayedFireTableDataChanged();
       }
 
+      @Override
       public void treeNodesInserted(TreeModelEvent e) {
         delayedFireTableDataChanged();
       }
 
+      @Override
       public void treeNodesRemoved(TreeModelEvent e) {
         delayedFireTableDataChanged();
       }
 
+      @Override
       public void treeStructureChanged(TreeModelEvent e) {
         delayedFireTableDataChanged();
       }
@@ -89,18 +94,22 @@ public class TreeTableModelAdapter extends AbstractTableModel {
 
   // Wrappers, implementing TableModel interface.
 
+  @Override
   public int getColumnCount() {
     return treeTableModel.getColumnCount();
   }
 
+  @Override
   public String getColumnName(int column) {
     return treeTableModel.getColumnName(column);
   }
 
+  @Override
   public Class getColumnClass(int column) {
     return treeTableModel.getColumnClass(column);
   }
 
+  @Override
   public int getRowCount() {
     return tree.getRowCount();
   }
@@ -110,16 +119,19 @@ public class TreeTableModelAdapter extends AbstractTableModel {
     return treePath == null ? null : treePath.getLastPathComponent();
   }
 
+  @Override
   public Object getValueAt(int row, int column) {
     final Object o = nodeForRow(row);
     return o == null? null : treeTableModel.getValueAt(o, column);
   }
 
+  @Override
   public boolean isCellEditable(int row, int column) {
     final Object o = nodeForRow(row);
     return o != null && treeTableModel.isCellEditable(o, column);
   }
 
+  @Override
   public void setValueAt(Object value, int row, int column) {
     final Object o = nodeForRow(row);
     if (o != null) treeTableModel.setValueAt(value, o, column);
@@ -131,12 +143,13 @@ public class TreeTableModelAdapter extends AbstractTableModel {
    */
   protected void delayedFireTableDataChanged() {
     long stamp = modificationStamp.incrementAndGet();
-    laterInvocator.offer(() -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
       if (stamp != modificationStamp.get()) return;
       fireTableDataChanged();
-    });
+    }, ModalityState.any());
   }
 
+  @Override
   public void fireTableDataChanged() {
     // have to restore table selection since AbstractDataModel.fireTableDataChanged() clears all selection
     final TreePath[] treePaths = tree.getSelectionPaths();

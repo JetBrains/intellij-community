@@ -16,7 +16,6 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -25,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -75,7 +75,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       if (!MethodUtils.isComparatorCompare(method) || ControlFlowUtils.methodAlwaysThrowsException(method)) {
         return;
       }
-      check(method.getParameterList(), method.getBody());
+      check(method);
     }
 
     @Override
@@ -86,10 +86,12 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
           ControlFlowUtils.lambdaExpressionAlwaysThrowsException(lambda)) {
         return;
       }
-      check(lambda.getParameterList(), lambda.getBody());
+      check(lambda);
     }
 
-    private void check(PsiParameterList parameterList, PsiElement body) {
+    private void check(PsiParameterListOwner owner) {
+      PsiParameterList parameterList = owner.getParameterList();
+      PsiElement body = owner.getBody();
       if (body == null || parameterList.getParametersCount() != 2) return;
       // comparator like "(a, b) -> 0" fulfills the comparator contract, so no need to warn its parameters are not used
       if (body instanceof PsiExpression && ExpressionUtils.isZero((PsiExpression)body)) return;
@@ -99,20 +101,12 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       }
       PsiMethodCallExpression soleCall = ObjectUtils.tryCast(LambdaUtil.extractSingleExpressionFromBody(body), PsiMethodCallExpression.class);
       if (soleCall != null) {
-        PsiMethod method = soleCall.resolveMethod();
-        if (method != null) {
-          List<? extends MethodContract> contracts = ControlFlowAnalyzer.getMethodCallContracts(method, soleCall);
-          if (contracts.size() == 1) {
-            MethodContract contract = contracts.get(0);
-            if (contract.isTrivial() && contract.getReturnValue().isFail()) {
-              return;
-            }
-          }
-        }
+        MethodContract contract = ContainerUtil.getOnlyItem(JavaMethodContractUtil.getMethodCallContracts(soleCall));
+        if (contract != null && contract.isTrivial() && contract.getReturnValue().isFail()) return;
       }
       PsiParameter[] parameters = parameterList.getParameters();
       checkParameterList(parameters, body);
-      checkReflexivity(parameters, body);
+      checkReflexivity(owner, parameters, body);
     }
 
     private void checkParameterList(PsiParameter[] parameters, PsiElement context) {
@@ -124,7 +118,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       }
     }
 
-    private void checkReflexivity(PsiParameter[] parameters, PsiElement body) {
+    private void checkReflexivity(PsiParameterListOwner owner, PsiParameter[] parameters, PsiElement body) {
       StandardDataFlowRunner runner = new StandardDataFlowRunner(false, body) {
         @NotNull
         @Override
@@ -137,20 +131,25 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
           return state;
         }
       };
-      ComparatorVisitor visitor = new ComparatorVisitor();
+      ComparatorVisitor visitor = new ComparatorVisitor(owner);
       if (runner.analyzeMethod(body, visitor) != RunnerResult.OK) return;
-      if (visitor.myRange.contains(0)) return;
+      if (visitor.myRange.contains(0) || visitor.myContexts.isEmpty()) return;
       PsiElement context = null;
       if (visitor.myContexts.size() == 1) {
         context = visitor.myContexts.iterator().next();
       }
       else {
-        PsiElement parent = PsiTreeUtil.getParentOfType(body, PsiMethod.class, PsiLambdaExpression.class);
-        if (parent instanceof PsiMethod) {
-          context = ((PsiMethod)parent).getNameIdentifier();
-        }
-        else if (parent instanceof PsiLambdaExpression) {
-          context = ((PsiLambdaExpression)parent).getParameterList();
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(visitor.myContexts.toArray(PsiElement.EMPTY_ARRAY));
+        if (commonParent instanceof PsiExpression) {
+          context = commonParent;
+        } else {
+          PsiParameterListOwner parent = PsiTreeUtil.getParentOfType(body, PsiMethod.class, PsiLambdaExpression.class);
+          if (parent instanceof PsiMethod) {
+            context = ((PsiMethod)parent).getNameIdentifier();
+          }
+          else if (parent instanceof PsiLambdaExpression) {
+            context = parent.getParameterList();
+          }
         }
       }
       registerError(context != null ? context : body,
@@ -158,18 +157,23 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     private static class ComparatorVisitor extends StandardInstructionVisitor {
+      private final PsiParameterListOwner myOwner;
+      private final Set<PsiElement> myContexts = new HashSet<>();
       LongRangeSet myRange = LongRangeSet.empty();
-      Set<PsiElement> myContexts = new HashSet<>();
+
+      private ComparatorVisitor(PsiParameterListOwner owner) {
+        myOwner = owner;
+      }
 
       @Override
-      public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
-                                                         DataFlowRunner runner,
-                                                         DfaMemoryState memState) {
-        myContexts.add(instruction.getReturn());
-        DfaValue value = memState.peek();
-        LongRangeSet range = memState.getValueFact(value, DfaFactType.RANGE);
-        myRange = range == null ? LongRangeSet.all() : myRange.union(range);
-        return super.visitCheckReturnValue(instruction, runner, memState);
+      protected void checkReturnValue(@NotNull DfaValue value,
+                                      @NotNull PsiExpression expression,
+                                      @NotNull PsiParameterListOwner owner,
+                                      @NotNull DfaMemoryState state) {
+        if (owner != myOwner) return;
+        myContexts.add(expression);
+        LongRangeSet range = state.getValueFact(value, DfaFactType.RANGE);
+        myRange = range == null ? LongRangeSet.all() : myRange.unite(range);
       }
     }
 

@@ -62,7 +62,7 @@ public class BTreeForwardIndexStorage<V> implements PersistentMap<Integer, V> {
   }
 
   @Override
-  public boolean processKeys(Processor<Integer> processor) {
+  public boolean processKeys(Processor<? super Integer> processor) {
     final byte[] startingKey = new byte[6];
     ByteUtils.writeUnsignedShort(id ^ 0x8000, startingKey, 0);
     ByteUtils.writeUnsignedInt(0, startingKey, 2);

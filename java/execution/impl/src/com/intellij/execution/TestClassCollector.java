@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,7 +49,7 @@ public class TestClassCollector {
   public static String[] collectClassFQNames(String packageName,
                                              @Nullable Path rootPath,
                                              JavaTestConfigurationBase configuration,
-                                             Function<ClassLoader, Predicate<Class<?>>> predicateProducer) {
+                                             Function<? super ClassLoader, ? extends Predicate<Class<?>>> predicateProducer) {
     Module module = configuration.getConfigurationModule().getModule();
     ClassLoader classLoader = createUsersClassLoader(configuration);
     Set<String> classes = new HashSet<>();
@@ -136,15 +135,14 @@ public class TestClassCollector {
   }
 
   @Nullable
-  public static Path getRootPath(Module module, final boolean chooseSingleModule) {
+  public static VirtualFile[] getRootPath(Module module, final boolean chooseSingleModule) {
     if (chooseSingleModule) {
-      CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(module);
-      if (moduleExtension != null) {
-        VirtualFile tests = moduleExtension.getCompilerOutputPathForTests();
-        if (tests != null) {
-          return Paths.get(VfsUtilCore.virtualToIoFile(tests).toURI());
-        }
-      }
+      return OrderEnumerator.orderEntries(module)
+        .withoutSdk()
+        .withoutLibraries()
+        .withoutDepModules()
+        .classes()
+        .getRoots();
     }
     return null;
   }

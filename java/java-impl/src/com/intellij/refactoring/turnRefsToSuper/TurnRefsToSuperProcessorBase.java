@@ -739,12 +739,12 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
       return ((VisitMark)x).myVisited == myVisited;
     }
 
-    public VisitMark(VisitMark m) {
+    VisitMark(VisitMark m) {
       myVisited = false;
       myElement = m.myElement;
     }
 
-    public VisitMark(PsiElement e) {
+    VisitMark(PsiElement e) {
       myVisited = false;
       myElement = e;
     }
@@ -766,7 +766,7 @@ public abstract class TurnRefsToSuperProcessorBase extends BaseRefactoringProces
     private final HashSet<Node> mySuccessors = new HashSet<>();
     private VisitMark myMark;
 
-    public Node(PsiElement x) {
+    Node(PsiElement x) {
       super();
       myMark = new VisitMark(x);
     }

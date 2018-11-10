@@ -60,7 +60,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   private long myCurrentTaskIndex = 0;
 
   @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<>();
-  @NotNull private final VcsLogIndex myIndex;
+  @NotNull protected final VcsLogIndex myIndex;
 
   AbstractDataGetter(@NotNull VcsLogStorage storage,
                      @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
@@ -94,7 +94,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   @Override
   @NotNull
-  public T getCommitData(@NotNull Integer hash, @NotNull Iterable<Integer> neighbourHashes) {
+  public T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes) {
     assert EventQueue.isDispatchThread();
     T details = getFromCache(hash);
     if (details != null) {
@@ -109,11 +109,6 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   @Override
-  public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer, @Nullable ProgressIndicator indicator) {
-    assert EventQueue.isDispatchThread();
-    loadCommitsData(hashes, consumer, Consumer.EMPTY_CONSUMER, indicator);
-  }
-
   public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer,
                               @NotNull Consumer<Throwable> errorConsumer, @Nullable ProgressIndicator indicator) {
     assert EventQueue.isDispatchThread();

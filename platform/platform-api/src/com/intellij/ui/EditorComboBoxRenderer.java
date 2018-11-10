@@ -26,11 +26,12 @@ import java.awt.*;
  */
 public class EditorComboBoxRenderer extends BasicComboBoxRenderer {
   private final ComboBoxEditor myEditor;
-          
+
   public EditorComboBoxRenderer(ComboBoxEditor editor) {
     myEditor = editor;
   }
 
+  @Override
   public Component getListCellRendererComponent(JList list,
                                                 Object value,
                                                 int index,

@@ -21,13 +21,13 @@ package org.jetbrains.uast
 open class UastCallKind(val name: String) {
   companion object {
     @JvmField
-    val METHOD_CALL = UastCallKind("method_call")
+    val METHOD_CALL: UastCallKind = UastCallKind("method_call")
 
     @JvmField
-    val CONSTRUCTOR_CALL = UastCallKind("constructor_call")
+    val CONSTRUCTOR_CALL: UastCallKind = UastCallKind("constructor_call")
 
     @JvmField
-    val NEW_ARRAY_WITH_DIMENSIONS = UastCallKind("new_array_with_dimensions")
+    val NEW_ARRAY_WITH_DIMENSIONS: UastCallKind = UastCallKind("new_array_with_dimensions")
 
     /**
      * Initializer parts are available in call expression as value arguments.
@@ -35,10 +35,10 @@ open class UastCallKind(val name: String) {
      *  have type of [NESTED_ARRAY_INITIALIZER].
      */
     @JvmField
-    val NEW_ARRAY_WITH_INITIALIZER = UastCallKind("new_array_with_initializer")
+    val NEW_ARRAY_WITH_INITIALIZER: UastCallKind = UastCallKind("new_array_with_initializer")
 
     @JvmField
-    val NESTED_ARRAY_INITIALIZER = UastCallKind("array_initializer")
+    val NESTED_ARRAY_INITIALIZER: UastCallKind = UastCallKind("array_initializer")
   }
 
   override fun toString(): String {

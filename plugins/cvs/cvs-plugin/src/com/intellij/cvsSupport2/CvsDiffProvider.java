@@ -42,12 +42,14 @@ public class CvsDiffProvider implements DiffProvider{
     myProject = project;
   }
 
+  @Override
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
     final Entry entry = CvsEntriesManager.getInstance().getEntryFor(file);
     if (entry == null) return null;
     return new CvsRevisionNumber(entry.getRevision());
   }
 
+  @Override
   public ItemLatestState getLastRevision(VirtualFile virtualFile) {
     //return getLastRevision(CvsVfsUtil.getFileFor(virtualFile));
     if (virtualFile.getParent() == null) {
@@ -56,6 +58,7 @@ public class CvsDiffProvider implements DiffProvider{
     return getLastState(virtualFile.getParent(), virtualFile.getName());
   }
 
+  @Override
   public ContentRevision createFileContent(final VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
     if ((revisionNumber instanceof CvsRevisionNumber)) {
       final CvsConnectionSettings settings = CvsEntriesManager.getInstance().getCvsConnectionSettingsFor(selectedFile.getParent());
@@ -81,6 +84,7 @@ public class CvsDiffProvider implements DiffProvider{
     }
   }
 
+  @Override
   public ItemLatestState getLastRevision(FilePath filePath) {
     //return getLastRevision(filePath.getIOFile());
     VirtualFile parent = filePath.getVirtualFileParent();
@@ -93,6 +97,7 @@ public class CvsDiffProvider implements DiffProvider{
     return new ItemLatestState(new CvsRevisionNumber("HEAD"), true, true);
   }
 
+  @Override
   public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
     // todo
     return null;

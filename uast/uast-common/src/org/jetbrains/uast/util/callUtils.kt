@@ -20,25 +20,25 @@ package org.jetbrains.uast.util
 
 import org.jetbrains.uast.*
 
-fun UElement.isConstructorCall() = (this as? UCallExpression)?.kind == UastCallKind.CONSTRUCTOR_CALL
+fun UElement.isConstructorCall(): Boolean = (this as? UCallExpression)?.kind == UastCallKind.CONSTRUCTOR_CALL
 
-fun UElement.isMethodCall() = (this as? UCallExpression)?.kind == UastCallKind.METHOD_CALL
+fun UElement.isMethodCall(): Boolean = (this as? UCallExpression)?.kind == UastCallKind.METHOD_CALL
 
-fun UElement.isNewArray() = isNewArrayWithDimensions() || isNewArrayWithInitializer()
+fun UElement.isNewArray(): Boolean = isNewArrayWithDimensions() || isNewArrayWithInitializer()
 
-fun UElement.isNewArrayWithDimensions() = (this as? UCallExpression)?.kind == UastCallKind.NEW_ARRAY_WITH_DIMENSIONS
+fun UElement.isNewArrayWithDimensions(): Boolean = (this as? UCallExpression)?.kind == UastCallKind.NEW_ARRAY_WITH_DIMENSIONS
 
-fun UElement.isNewArrayWithInitializer() = (this as? UCallExpression)?.kind == UastCallKind.NEW_ARRAY_WITH_INITIALIZER
+fun UElement.isNewArrayWithInitializer(): Boolean = (this as? UCallExpression)?.kind == UastCallKind.NEW_ARRAY_WITH_INITIALIZER
 
 @Deprecated("Use isArrayInitializer()", ReplaceWith("isArrayInitializer()"))
-fun UElement.isNestedArrayInitializer() = isArrayInitializer()
+fun UElement.isNestedArrayInitializer(): Boolean = isArrayInitializer()
 
-fun UElement.isArrayInitializer() = (this as? UCallExpression)?.kind == UastCallKind.NESTED_ARRAY_INITIALIZER
+fun UElement.isArrayInitializer(): Boolean = (this as? UCallExpression)?.kind == UastCallKind.NESTED_ARRAY_INITIALIZER
 
-fun UElement.isTypeCast() = (this as? UBinaryExpressionWithType)?.operationKind is UastBinaryExpressionWithTypeKind.TypeCast
+fun UElement.isTypeCast(): Boolean = (this as? UBinaryExpressionWithType)?.operationKind is UastBinaryExpressionWithTypeKind.TypeCast
 
-fun UElement.isInstanceCheck() = (this as? UBinaryExpressionWithType)?.operationKind is UastBinaryExpressionWithTypeKind.InstanceCheck
+fun UElement.isInstanceCheck(): Boolean = (this as? UBinaryExpressionWithType)?.operationKind is UastBinaryExpressionWithTypeKind.InstanceCheck
 
-fun UElement.isAssignment() = (this as? UBinaryExpression)?.operator is UastBinaryOperator.AssignOperator
+fun UElement.isAssignment(): Boolean = (this as? UBinaryExpression)?.operator is UastBinaryOperator.AssignOperator
 
-fun UVariable.isResourceVariable() = uastParent is UTryExpression
+fun UVariable.isResourceVariable(): Boolean = uastParent is UTryExpression

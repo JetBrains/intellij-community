@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 class AnalysisCanceledSoftException extends RuntimeException {
   private final PsiElement myErrorElement;
 
-  public AnalysisCanceledSoftException(PsiElement errorElement) {
+  AnalysisCanceledSoftException(PsiElement errorElement) {
     myErrorElement = errorElement;
   }
 

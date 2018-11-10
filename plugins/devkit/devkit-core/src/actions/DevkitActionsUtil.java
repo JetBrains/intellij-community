@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -96,6 +97,24 @@ public final class DevkitActionsUtil {
     return null;
   }
 
+  /**
+   * @throws IncorrectOperationException
+   */
+  public static void checkCanCreateClass(PsiDirectory directory, String name) {
+    PsiDirectory currentDir = directory;
+    String packageName = StringUtil.getPackageName(name);
+    if (!packageName.isEmpty()) {
+      for (String dir : packageName.split("\\.")) {
+        PsiDirectory childDir = currentDir.findSubdirectory(dir);
+        if (childDir == null) {
+          return;
+        }
+        currentDir = childDir;
+      }
+    }
+    JavaDirectoryService.getInstance().checkCreateClass(currentDir, StringUtil.getShortName(name));
+  }
+
   public static PsiClass createSingleClass(String name, String classTemplateName, PsiDirectory directory) {
     return createSingleClass(name, classTemplateName, directory, Collections.emptyMap());
   }
@@ -137,7 +156,7 @@ public final class DevkitActionsUtil {
 
 
   private static class ChoosePluginModuleDialog extends ChooseModulesDialog {
-    public ChoosePluginModuleDialog(Project project, List<? extends Module> items, String title, @Nullable String description) {
+    ChoosePluginModuleDialog(Project project, List<? extends Module> items, String title, @Nullable String description) {
       super(project, items, title, description);
     }
 

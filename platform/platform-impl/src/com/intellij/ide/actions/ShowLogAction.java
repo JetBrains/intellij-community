@@ -29,13 +29,13 @@ import java.io.File;
  */
 public class ShowLogAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final File logFile = new File(PathManager.getLogPath(), "idea.log");
     ShowFilePathAction.openFile(logFile);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setVisible(ShowFilePathAction.isSupported());
     presentation.setText(getActionName());

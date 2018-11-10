@@ -34,6 +34,7 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenPro
     super(builder);
   }
 
+  @Override
   @Nullable
   public String[] getSupportedExtensions() {
     return MavenConstants.POM_NAMES;
@@ -44,6 +45,7 @@ public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenPro
     return super.canOpenProject(file) || MavenUtil.isPomFile(file);
   }
 
+  @Override
   public boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
     getBuilder().setFiles(Collections.singletonList(file));
 

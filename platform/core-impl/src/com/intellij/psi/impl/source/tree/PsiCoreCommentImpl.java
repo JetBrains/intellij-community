@@ -40,6 +40,7 @@ public class PsiCoreCommentImpl extends LeafPsiElement implements PsiComment {
     visitor.visitComment(this);
   }
 
+  @Override
   public String toString(){
     return "PsiComment(" + getElementType().toString() + ")";
   }
@@ -47,6 +48,6 @@ public class PsiCoreCommentImpl extends LeafPsiElement implements PsiComment {
   @Override
   @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiComment.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 }

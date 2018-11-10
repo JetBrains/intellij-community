@@ -69,7 +69,6 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   private static final boolean ourClassPathIndexEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
-  private final ClassLoader myFallback;
 
   @NotNull
   protected ClassPath getClassPath() {
@@ -94,27 +93,47 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myPreload = true;
     private boolean myAllowBootstrapResources;
     private boolean myErrorOnMissingJar = true;
+    private boolean myLazyClassloadingCaches;
     @Nullable private CachePoolImpl myCachePool;
     @Nullable private CachingCondition myCachingCondition;
-    private ClassLoader myFallback;
 
     private Builder() { }
 
-    public Builder urls(List<URL> urls) { myURLs = urls; return this; }
-    public Builder urls(URL... urls) { myURLs = Arrays.asList(urls); return this; }
+    @NotNull
+    public Builder urls(@NotNull List<URL> urls) { myURLs = urls; return this; }
+    @NotNull
+    public Builder urls(@NotNull URL... urls) { myURLs = Arrays.asList(urls); return this; }
+    @NotNull
     public Builder parent(ClassLoader parent) { myParent = parent; return this; }
+    
+    /**
+     * ZipFile handles opened in JarLoader will be kept in SoftReference. Depending on OS, the option significantly speeds up classloading 
+     * from libraries. Caveat: for Windows opened handle will lock the file preventing its modification
+     * Thus, the option is recommended when jars are not modified or process that uses this option is transient
+     */
+    @NotNull
     public Builder allowLock() { myLockJars = true; return this; }
+    @NotNull
     public Builder allowLock(boolean lockJars) { myLockJars = lockJars; return this; }
+    
+    /** 
+     * Build backward index of packages / class or resource names that allows to avoid IO during classloading 
+     */
+    @NotNull
     public Builder useCache() { myUseCache = true; return this; }
+    @NotNull
     public Builder useCache(boolean useCache) { myUseCache = useCache; return this; }
 
-    // Instruction for FileLoader to save list of files / packages under its root and use this information instead of walking filesystem for
-    // speedier classloading. Should be used only when the caches could be properly invalidated, e.g. when new file appears under
-    // FileLoader's root. Currently the flag is used for faster unit test / developed Idea running, because Idea's make (as of 14.1) ensures deletion of
-    // such information upon appearing new file for output root.
-    // N.b. Idea make does not ensure deletion of cached information upon deletion of some file under local root but false positives are not a
-    // logical error since code is prepared for that and disk access is performed upon class / resource loading.
-    // See also Builder#usePersistentClasspathIndexForLocalClassDirectories.
+    /**
+     * FileLoader will save list of files / packages under its root and use this information instead of walking filesystem for
+     * speedier classloading. Should be used only when the caches could be properly invalidated, e.g. when new file appears under
+     * FileLoader's root. Currently the flag is used for faster unit test / developed Idea running, because Idea's make (as of 14.1) ensures deletion of
+     * such information upon appearing new file for output root.
+     * N.b. Idea make does not ensure deletion of cached information upon deletion of some file under local root but false positives are not a
+     * logical error since code is prepared for that and disk access is performed upon class / resource loading.
+     * See also Builder#usePersistentClasspathIndexForLocalClassDirectories.
+     */
+    @NotNull
     public Builder usePersistentClasspathIndexForLocalClassDirectories() {
       myUsePersistentClasspathIndex = ourClassPathIndexEnabled;
       return this;
@@ -130,6 +149,7 @@ public class UrlClassLoader extends ClassLoader {
      *
      * @see #createCachePool()
      */
+    @NotNull
     public Builder useCache(@NotNull CachePool pool, @NotNull CachingCondition condition) {
       myUseCache = true;
       myCachePool = (CachePoolImpl)pool;
@@ -137,24 +157,28 @@ public class UrlClassLoader extends ClassLoader {
       return this;
     }
 
+    @NotNull
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
+    @NotNull
     public Builder noPreload() { myPreload = false; return this; }
+    @NotNull
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
+    @NotNull
     public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
+    
+    /**
+     * Package contents information in Jar/File loaders will be lazily retrieved / cached upon classloading. 
+     * Important: this option will result in much smaller initial overhead but for bulk classloading (like complete IDE start) it is less 
+     * efficient (in number of disk / native code accesses / CPU spent) than combination of useCache / usePersistentClasspathIndexForLocalClassDirectories.
+     */
+    @NotNull
+    public Builder useLazyClassloadingCaches(boolean pleaseBeLazy) { myLazyClassloadingCaches = pleaseBeLazy; return this; }
 
-    /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
-    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    /** @deprecated use {@link #noPreload()} (to be removed in IDEA 2018) */
-    public Builder preload(boolean preload) { myPreload = preload; return this; }
-
+    @NotNull
     public UrlClassLoader get() { return new UrlClassLoader(this); }
-
-    public Builder fallback(ClassLoader fallback) {
-      myFallback = fallback;
-      return this;
-    }
   }
 
+  @NotNull
   public static Builder build() {
     return new Builder();
   }
@@ -165,14 +189,15 @@ public class UrlClassLoader extends ClassLoader {
   private final boolean myAllowBootstrapResources;
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
+  @Deprecated
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
-           .usePersistentClasspathIndexForLocalClassDirectories());
+           .usePersistentClasspathIndexForLocalClassDirectories()
+           .useLazyClassloadingCaches(SystemProperties.getBooleanProperty("idea.lazy.classloading.caches", false)));
   }
 
   protected UrlClassLoader(@NotNull Builder builder) {
     super(builder.myParent);
-    myFallback = builder.myFallback;
     myURLs = ContainerUtil.map(builder.myURLs, new Function<URL, URL>() {
       @Override
       public URL fun(URL url) {
@@ -188,7 +213,7 @@ public class UrlClassLoader extends ClassLoader {
   protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
                                 builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
-                                builder.myErrorOnMissingJar);
+                                builder.myErrorOnMissingJar, builder.myLazyClassloadingCaches);
   }
 
   public static URL internProtocol(@NotNull URL url) {
@@ -209,9 +234,9 @@ public class UrlClassLoader extends ClassLoader {
    * @deprecated Adding additional urls to classloader at runtime could lead to hard-to-debug errors
    * <b>Note:</b> Used via reflection because of classLoaders incompatibility
    */
-  @SuppressWarnings({"unused", "deprecation"})
+  @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
   @Deprecated
-  public void addURL(URL url) {
+  public void addURL(@NotNull URL url) {
     getClassPath().addURL(url);
     myURLs.add(url);
   }
@@ -227,35 +252,19 @@ public class UrlClassLoader extends ClassLoader {
 
   @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
-    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION, false);
-    if (res == null) {
-      if (myFallback != null) {
-        return myFallback.loadClass(name);
-      } else {
-        throw new ClassNotFoundException(name);
-      }
+    Class clazz = _findClass(name);
+    
+    if (clazz == null) {
+      throw new ClassNotFoundException(name);
     }
 
-    try {
-      return defineClass(name, res);
-    }
-    catch (IOException e) {
-      throw new ClassNotFoundException(name, e);
-    }
+    return clazz;
   }
 
   @Nullable
-  protected Class _findClass(@NotNull String name) {
-    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION, false);
+  protected final Class _findClass(@NotNull String name) {
+    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (res == null) {
-      if (myFallback != null) {
-        try {
-          return myFallback.loadClass(name);
-        }
-        catch (ClassNotFoundException e) {
-          return null;
-        }
-      }
       return null;
     }
 
@@ -299,18 +308,17 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @Override
-  @Nullable  // Accessed from PluginClassLoader via reflection // TODO do we need it?
-  public URL findResource(final String name) {
+  public URL findResource(String name) {
     Resource res = findResourceImpl(name);
-    return res == null ? (myFallback == null ? null : myFallback.getResource(name)) : res.getURL();
+    return res != null ? res.getURL() : null;
   }
 
   @Nullable
   private Resource findResourceImpl(String name) {
     String n = FileUtil.toCanonicalUriPath(name);
-    Resource resource = getClassPath().getResource(n, true);
+    Resource resource = getClassPath().getResource(n);
     if (resource == null && n.startsWith("/")) { // compatibility with existing code, non-standard classloader behavior
-      resource = getClassPath().getResource(n.substring(1), true);
+      resource = getClassPath().getResource(n.substring(1));
     }
     return resource;
   }
@@ -323,14 +331,7 @@ public class UrlClassLoader extends ClassLoader {
     }
     try {
       Resource res = findResourceImpl(name);
-      if (res == null) {
-        if (myFallback == null ) {
-          return null;
-        } else {
-          return myFallback.getResourceAsStream(name);
-        }
-      }
-      return res.getInputStream();
+      return res != null ? res.getInputStream() : null;
     }
     catch (IOException e) {
       return null;
@@ -339,7 +340,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
-    return getClassPath().getResources(name, true);
+    return getClassPath().getResources(name);
   }
 
   public static void loadPlatformLibrary(@NotNull String libName) {
@@ -361,7 +362,8 @@ public class UrlClassLoader extends ClassLoader {
     System.load(libPath);
   }
 
-  private static String mapLibraryName(String libName) {
+  @NotNull
+  private static String mapLibraryName(@NotNull String libName) {
     String baseName = libName;
     if (SystemInfo.is64Bit) {
       baseName = baseName.replace("32", "") + "64";
@@ -375,6 +377,7 @@ public class UrlClassLoader extends ClassLoader {
 
   // called by a parent class on Java 7+
   @SuppressWarnings("unused")
+  @NotNull
   protected Object getClassLoadingLock(String className) {
     //noinspection RedundantStringConstructorCall
     return myClassNameInterner != null ? myClassNameInterner.intern(new String(className)) : this;

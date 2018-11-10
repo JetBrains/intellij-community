@@ -50,6 +50,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveInstanceMethod.MoveInstanceMethodHandler");
   static final String REFACTORING_NAME = RefactoringBundle.message("move.instance.method.title");
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -71,6 +72,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     invoke(project, new PsiElement[]{element}, dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     if (elements.length != 1 || !(elements[0] instanceof PsiMethod)) return;
     final PsiMethod method = (PsiMethod)elements[0];
@@ -176,7 +178,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
 
   public static String suggestParameterNameForThisClass(final PsiClass thisClass) {
     PsiManager manager = thisClass.getManager();
-    PsiType type = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createType(thisClass);
+    PsiType type = JavaPsiFacade.getElementFactory(manager.getProject()).createType(thisClass);
     final SuggestedNameInfo suggestedNameInfo = JavaCodeStyleManager.getInstance(manager.getProject())
       .suggestVariableName(VariableKind.PARAMETER, null, null, type);
     return suggestedNameInfo.names.length > 0 ? suggestedNameInfo.names[0] : "";

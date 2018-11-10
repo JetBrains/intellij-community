@@ -8,19 +8,22 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Validate logstash_configs variable')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('assert:')
+            PsiElement(scalar key)('assert')
+            PsiElement(:)(':')
             PsiElement(Eol)('\n')
             PsiElement(indent)('    ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('that:')
+                PsiElement(scalar key)('that')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('    ')
                 YAML sequence
@@ -35,21 +38,24 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('stat:')
+            PsiElement(scalar key)('stat')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('path={{ logstash_configs }}/config')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('delegate_to:')
+            PsiElement(scalar key)('delegate_to')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('127.0.0.1')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('register:')
+            PsiElement(scalar key)('register')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('p')
@@ -59,19 +65,22 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Validate config subdirectory')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('assert:')
+            PsiElement(scalar key)('assert')
+            PsiElement(:)(':')
             PsiElement(Eol)('\n')
             PsiElement(indent)('    ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('that:')
+                PsiElement(scalar key)('that')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('    ')
                 YAML sequence

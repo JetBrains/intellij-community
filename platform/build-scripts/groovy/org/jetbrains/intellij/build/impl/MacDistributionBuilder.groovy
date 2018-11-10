@@ -15,11 +15,9 @@
  */
 package org.jetbrains.intellij.build.impl
 
-
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.JvmArchitecture
-import org.jetbrains.intellij.build.MacDistributionCustomizer
+import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
+import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
 import java.time.LocalDate
 
@@ -32,17 +30,19 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   private final String targetIcnsFileName
 
   MacDistributionBuilder(BuildContext buildContext, MacDistributionCustomizer customizer, File ideaProperties) {
-    super(BuildOptions.OS_MAC, "macOS", buildContext)
+    super(buildContext)
     this.ideaProperties = ideaProperties
     this.customizer = customizer
     targetIcnsFileName = "${buildContext.productProperties.baseFileName}.icns"
   }
 
   @Override
-  String copyFilesForOsDistribution() {
-    buildContext.messages.progress("Building distributions for macOS")
-    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.mac"
-    def docTypes = (customizer.associateIpr ? """
+  OsFamily getTargetOs() {
+    return OsFamily.MACOS
+  }
+
+  String getDocTypes() {
+    def iprAssociation = (customizer.associateIpr ? """
       <dict>
         <key>CFBundleTypeExtensions</key>
         <array>
@@ -55,7 +55,32 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
       </dict>
-""" : "") + customizer.additionalDocTypes
+""" : "")
+    def associations = ""
+    if (!customizer.fileAssociations.empty) {
+      associations = """<dict>
+        <key>CFBundleTypeExtensions</key>
+        <array>
+"""
+      customizer.fileAssociations.each {
+        associations += "          <string>${it}</string>\n"
+      }
+      associations +=  """        </array>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleTypeIconFile</key>
+        <string>$targetIcnsFileName</string>        
+      </dict>
+"""
+    }
+    return iprAssociation + associations + customizer.additionalDocTypes;
+  }
+
+  @Override
+  String copyFilesForOsDistribution() {
+    buildContext.messages.progress("Building distributions for $targetOs.osName")
+    String macDistPath = "$buildContext.paths.buildOutputRoot/dist.$targetOs.distSuffix"
+    def docTypes = getDocTypes()
     Map<String, String> customIdeaProperties = [:]
     if (buildContext.productProperties.toolsJarRequired) {
       customIdeaProperties["idea.jre.check"] = "true"
@@ -118,9 +143,6 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           include(name: "libyjpagent.jnilib")
         }
       }
-    }
-    buildContext.ant.copy(todir: "$target/lib/libpty/macosx") {
-      fileset(dir: "$buildContext.paths.communityHome/lib/libpty/macosx")
     }
 
     buildContext.ant.copy(todir: target) {
@@ -259,9 +281,15 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     return buildContext.messages.block("Build zip archive for macOS") {
       def extraBins = customizer.extraExecutables
       def allPaths = [buildContext.paths.distAll, macDistPath]
-      String zipRoot = "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
-      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.mac.zip"
+      String zipRoot = getZipRoot(buildContext, customizer)
+      String suffix = buildContext.bundledJreManager.jreSuffix()
+      def targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}${suffix}.mac.zip"
       buildContext.messages.progress("Building zip archive for macOS")
+
+      def productJsonDir = new File(buildContext.paths.temp, "mac.dist.product-info.json.zip").absolutePath
+      generateProductJson(buildContext, productJsonDir, null)
+      allPaths += [productJsonDir]
+
       buildContext.ant.zip(zipfile: targetPath) {
         allPaths.each {
           zipfileset(dir: it, prefix: zipRoot) {
@@ -301,9 +329,22 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
         zipfileset(file: "$macDistPath/bin/idea.properties", prefix: "$zipRoot/bin")
       }
+      new ProductInfoValidator(buildContext).checkInArchive(targetPath, "$zipRoot/Resources")
       return targetPath
     }
   }
+
+  static String getZipRoot(BuildContext buildContext, MacDistributionCustomizer customizer) {
+    "${customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)}/Contents"
+  }
+
+  static void generateProductJson(BuildContext buildContext, String productJsonDir, String javaExecutablePath) {
+    String executable = buildContext.productProperties.baseFileName
+    new ProductInfoGenerator(buildContext).generateProductJson("$productJsonDir/Resources", "../bin", null,
+                                                               "../MacOS/${executable}", javaExecutablePath,
+                                                               "../bin/${executable}.vmoptions", OsFamily.MACOS)
+  }
+
 
   private static String submapToXml(Map<String, String> properties, List<String> keys) {
 // generate properties description for Info.plist

@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
@@ -29,7 +16,6 @@ import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -45,14 +31,15 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   @Nullable private final Date myAuthorTime;
   @NotNull private final Collection<String> myParents;
   @Nullable private final VirtualFile myRoot;
+  private final boolean myIsDeleted;
 
   public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision) {
-    this(project, null, path, revision, null, null, null, null, Collections.emptyList());
+    this(project, null, path, revision, null, null, null, null, Collections.emptyList(), false);
   }
 
   public GitFileRevision(@NotNull Project project, @Nullable VirtualFile root, @NotNull FilePath path, @NotNull GitRevisionNumber revision,
                          @Nullable Couple<Couple<String>> authorAndCommitter, @Nullable String message,
-                         @Nullable String branch, @Nullable final Date authorTime, @NotNull Collection<String> parents) {
+                         @Nullable String branch, @Nullable final Date authorTime, @NotNull Collection<String> parents, boolean isDeleted) {
     myProject = project;
     myRoot = root;
     myPath = path;
@@ -62,6 +49,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     myBranch = branch;
     myAuthorTime = authorTime;
     myParents = parents;
+    myIsDeleted = isDeleted;
   }
 
   @Override
@@ -76,65 +64,60 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     return null;
   }
 
+  @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevision;
   }
 
+  @Override
   public Date getRevisionDate() {
     return myRevision.getTimestamp();
   }
 
+  @Override
   @Nullable
   public Date getAuthorDate() {
     return myAuthorTime;
   }
 
+  @Override
   @Nullable
   public String getAuthor() {
-    if (myAuthorAndCommitter != null) {
-      return myAuthorAndCommitter.getFirst().getFirst();
-    }
-    return null;
+    return Pair.getFirst(Pair.getFirst(myAuthorAndCommitter));
   }
 
   @Nullable
   @Override
   public String getAuthorEmail() {
-    if (myAuthorAndCommitter != null) {
-      return myAuthorAndCommitter.getFirst().getSecond();
-    }
-    return null;
+    return Pair.getSecond(Pair.getFirst(myAuthorAndCommitter));
   }
 
   @Nullable
   @Override
   public String getCommitterName() {
-    if (myAuthorAndCommitter != null) {
-      return myAuthorAndCommitter.getSecond() == null ? null : myAuthorAndCommitter.getSecond().getFirst();
-    }
-    return null;
+    return Pair.getFirst(Pair.getSecond(myAuthorAndCommitter));
   }
 
   @Nullable
   @Override
   public String getCommitterEmail() {
-    if (myAuthorAndCommitter != null) {
-      return myAuthorAndCommitter.getSecond() == null ? null : myAuthorAndCommitter.getSecond().getSecond();
-    }
-    return null;
+    return Pair.getSecond(Pair.getSecond(myAuthorAndCommitter));
   }
 
+  @Override
   @Nullable
   public String getCommitMessage() {
     return myMessage;
   }
 
+  @Override
   @Nullable
   public String getBranchName() {
     return myBranch;
   }
 
+  @Override
   public synchronized byte[] loadContent() throws VcsException {
     VirtualFile root = getRoot();
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myPath));
@@ -144,10 +127,12 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     return myRoot != null ? myRoot : GitUtil.getGitRoot(myPath);
   }
 
+  @Override
   public synchronized byte[] getContent() throws VcsException {
     return loadContent();
   }
 
+  @Override
   public int compareTo(VcsFileRevision rev) {
     if (rev instanceof GitFileRevision) return myRevision.compareTo(((GitFileRevision)rev).myRevision);
     return getRevisionDate().compareTo(rev.getRevisionDate());
@@ -166,5 +151,10 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   @NotNull
   public String getHash() {
     return myRevision.getRev();
+  }
+
+  @Override
+  public boolean isDeleted() {
+    return myIsDeleted;
   }
 }

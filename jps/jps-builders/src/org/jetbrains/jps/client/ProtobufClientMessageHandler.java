@@ -42,7 +42,7 @@ final class ProtobufClientMessageHandler<T extends ProtobufResponseHandler> exte
   private final SimpleProtobufClient myClient;
   private final Executor myAsyncExec;
 
-  public ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter, SimpleProtobufClient client, Executor asyncExec) {
+  ProtobufClientMessageHandler(@NotNull UUIDGetter uuidGetter, SimpleProtobufClient client, Executor asyncExec) {
     myUuidGetter = uuidGetter;
     myClient = client;
     myAsyncExec = asyncExec;

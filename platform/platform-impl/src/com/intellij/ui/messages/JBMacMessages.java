@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
+import com.intellij.BundleBase;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
@@ -32,12 +33,19 @@ public class JBMacMessages extends MacMessagesEmulation {
     if (window == null) {
       window = getForemostWindow(null);
     }
+    String defaultButtonCleaned = defaultButton.replace(BundleBase.MNEMONIC_STRING, "");
+    String otherButtonCleaned = otherButton.replace(BundleBase.MNEMONIC_STRING, "");
+    String alternateButtonCleaned = alternateButton.replace(BundleBase.MNEMONIC_STRING, "");
     SheetMessage sheetMessage = new SheetMessage(window, title, message, UIUtil.getQuestionIcon(),
-                                                 new String [] {defaultButton, otherButton, alternateButton},
+                                                 new String [] {
+                                                   defaultButtonCleaned,
+                                                   otherButtonCleaned,
+                                                   alternateButtonCleaned
+                                                 },
                                                  doNotAskOption, defaultButton, alternateButton);
 
     String resultString = sheetMessage.getResult();
-    int result = resultString.equals(defaultButton) ? Messages.YES : resultString.equals(alternateButton) ? Messages.NO : Messages.CANCEL;
+    int result = resultString.equals(defaultButtonCleaned) ? Messages.YES : resultString.equals(alternateButtonCleaned) ? Messages.NO : Messages.CANCEL;
     if (doNotAskOption != null) {
         doNotAskOption.setToBeShown(sheetMessage.toBeShown(), result);
     }

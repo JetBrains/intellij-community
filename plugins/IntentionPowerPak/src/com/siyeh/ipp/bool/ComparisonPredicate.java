@@ -17,23 +17,17 @@ package com.siyeh.ipp.bool;
 
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiExpression;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 
 class ComparisonPredicate implements PsiElementPredicate {
 
   @Override
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiBinaryExpression)) {
-      return false;
-    }
-    final PsiBinaryExpression expression = (PsiBinaryExpression)element;
-    if (!ComparisonUtils.isComparison(expression)) {
-      return false;
-    }
-    final PsiExpression rhs = expression.getROperand();
-    return rhs != null && !(element.getNextSibling() instanceof PsiErrorElement);
+    return element instanceof PsiBinaryExpression &&
+           ComparisonUtils.isComparison((PsiExpression)element) &&
+           !ErrorUtil.containsDeepError(element);
   }
 }

@@ -34,14 +34,17 @@ public class ListProperty<T> extends AbstractProperty<List<T>> {
     return new ListProperty<>(name);
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public List<T> getDefault(AbstractProperty.AbstractPropertyContainer container) {
     return Collections.emptyList();
   }
 
+  @Override
   public List<T> copy(List<T> value) {
     return Collections.unmodifiableList(value);
   }

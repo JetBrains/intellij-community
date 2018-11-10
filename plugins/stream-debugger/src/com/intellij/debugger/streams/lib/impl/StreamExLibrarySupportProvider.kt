@@ -5,6 +5,7 @@ import com.intellij.debugger.streams.lib.LibrarySupport
 import com.intellij.debugger.streams.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl
 import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder
+import com.intellij.debugger.streams.psi.impl.PackageChainDetector
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
@@ -16,12 +17,15 @@ import com.intellij.openapi.project.Project
  * @author Vitaliy.Bibaev
  */
 class StreamExLibrarySupportProvider : LibrarySupportProvider {
+  private val librarySupport = StreamExLibrarySupport()
+  private val javaDsl = DslImpl(JavaStatementFactory())
   override fun getLanguageId(): String = "JAVA"
 
-  override fun getLibrarySupport(): LibrarySupport = StreamExLibrarySupport()
+  override fun getLibrarySupport(): LibrarySupport = librarySupport
 
   override fun getExpressionBuilder(project: Project): TraceExpressionBuilder =
-    JavaTraceExpressionBuilder(project, librarySupport.createHandlerFactory(DslImpl(JavaStatementFactory())))
+    JavaTraceExpressionBuilder(project, librarySupport.createHandlerFactory(javaDsl), javaDsl)
 
-  override fun getChainBuilder(): StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl(), "one.util.streamex")
+  override fun getChainBuilder(): StreamChainBuilder =
+    JavaStreamChainBuilder(JavaChainTransformerImpl(), PackageChainDetector.forJavaStreams("one.util.streamex"))
 }

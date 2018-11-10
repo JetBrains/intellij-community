@@ -21,6 +21,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +33,6 @@ import static com.intellij.openapi.keymap.KeyMapBundle.message;
 import static com.intellij.openapi.util.SystemInfo.isMac;
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.util.text.StringUtil.naturalCompare;
-import static java.util.stream.Collectors.toList;
 
 /**
  * This class operates with the KeymapManager.
@@ -66,7 +66,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     return copyScheme(scheme, name).getMutable();
   }
 
-  void visitMutableKeymaps(Consumer<Keymap> consumer) {
+  void visitMutableKeymaps(Consumer<? super Keymap> consumer) {
     for (KeymapScheme scheme : list) {
       if (scheme.isMutable()) {
         consumer.accept(scheme.getMutable());
@@ -170,7 +170,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
    * @param predicate a predicate to test a scheme
    * @return a first scheme that belongs to the specified predicate, or {@code null}
    */
-  private KeymapScheme find(@NotNull Predicate<KeymapScheme> predicate) {
+  private KeymapScheme find(@NotNull Predicate<? super KeymapScheme> predicate) {
     for (KeymapScheme scheme : list) {
       if (predicate.test(scheme)) return scheme;
     }
@@ -207,7 +207,7 @@ final class KeymapSchemeManager extends AbstractSchemeActions<KeymapScheme> impl
     }
     KeymapScheme selected = selector.getSelectedScheme();
     Keymap active = selected == null ? null : selected.getOriginal();
-    List<Keymap> keymaps = list.stream().map(scheme -> scheme.apply()).collect(toList());
+    List<Keymap> keymaps = ContainerUtil.map(list, scheme -> scheme.apply());
     KeymapManagerImpl manager = (KeymapManagerImpl)KeymapManager.getInstance();
     manager.setKeymaps(keymaps, active, FILTER);
     selector.notifyConsumer(selected);

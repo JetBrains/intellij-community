@@ -16,12 +16,12 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.DfaFactMap;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -33,10 +33,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DfaVariableValue extends DfaValue {
+public final class DfaVariableValue extends DfaValue {
 
   public static class Factory {
-    private final MultiMap<Trinity<Boolean,String,DfaVariableValue>,DfaVariableValue> myExistingVars = new MultiMap<>();
+    private final MultiMap<Pair<String, DfaVariableValue>, DfaVariableValue> myExistingVars = new MultiMap<>();
     private final DfaValueFactory myFactory;
 
     Factory(DfaValueFactory factory) {
@@ -70,27 +70,19 @@ public class DfaVariableValue extends DfaValue {
 
     @NotNull
     public DfaVariableValue createVariableValue(@NotNull DfaVariableSource source, @Nullable PsiType varType) {
-      return createVariableValue(source, varType, false, null);
+      return createVariableValue(source, varType, null);
     }
 
     @NotNull
     public DfaVariableValue createVariableValue(@NotNull DfaVariableSource source,
                                                 @Nullable PsiType varType,
                                                 @Nullable DfaVariableValue qualifier) {
-      return createVariableValue(source, varType, false, qualifier);
-    }
-
-    @NotNull
-    DfaVariableValue createVariableValue(@NotNull DfaVariableSource source,
-                                         @Nullable PsiType varType,
-                                         boolean isNegated,
-                                         @Nullable DfaVariableValue qualifier) {
-      Trinity<Boolean, String, DfaVariableValue> key = Trinity.create(isNegated, source.toString(), qualifier);
+      Pair<String, DfaVariableValue> key = Pair.create(source.toString(), qualifier);
       for (DfaVariableValue aVar : myExistingVars.get(key)) {
-        if (aVar.hardEquals(source, varType, isNegated, qualifier)) return aVar;
+        if (aVar.hardEquals(source, varType, qualifier)) return aVar;
       }
 
-      DfaVariableValue result = new DfaVariableValue(source, varType, isNegated, myFactory, qualifier);
+      DfaVariableValue result = new DfaVariableValue(source, varType, myFactory, qualifier);
       myExistingVars.putValue(key, result);
       while (qualifier != null) {
         qualifier.myDependents.add(result);
@@ -103,20 +95,16 @@ public class DfaVariableValue extends DfaValue {
   @NotNull private final DfaVariableSource mySource;
   private final PsiType myVarType;
   @Nullable private final DfaVariableValue myQualifier;
-  private DfaVariableValue myNegatedValue;
-  private final boolean myIsNegated;
   private DfaFactMap myInherentFacts;
   private final DfaPsiType myDfaType;
   private final List<DfaVariableValue> myDependents = new SmartList<>();
 
   private DfaVariableValue(@NotNull DfaVariableSource source,
                            @Nullable PsiType varType,
-                           boolean isNegated,
                            DfaValueFactory factory,
                            @Nullable DfaVariableValue qualifier) {
     super(factory);
     mySource = source;
-    myIsNegated = isNegated;
     myQualifier = qualifier;
     myVarType = varType;
     myDfaType = varType == null ? null : myFactory.createDfaType(varType);
@@ -140,26 +128,15 @@ public class DfaVariableValue extends DfaValue {
     return mySource;
   }
 
+  @Override
   @Nullable
-  public PsiType getVariableType() {
+  public PsiType getType() {
     return myVarType;
   }
 
-  public boolean isNegated() {
-    return myIsNegated;
-  }
-
-  @Nullable
-  public DfaVariableValue getNegatedValue() {
-    return myNegatedValue;
-  }
-
   @Override
-  public DfaVariableValue createNegated() {
-    if (myNegatedValue != null) {
-      return myNegatedValue;
-    }
-    return myNegatedValue = myFactory.getVarFactory().createVariableValue(mySource, myVarType, !myIsNegated, myQualifier);
+  public DfaValue createNegated() {
+    return myFactory.createCondition(this, DfaRelationValue.RelationType.EQ, myFactory.getBoolean(false));
   }
 
   /**
@@ -170,20 +147,28 @@ public class DfaVariableValue extends DfaValue {
     return myDependents;
   }
 
+  public int getDepth() {
+    int depth = 0;
+    DfaVariableValue qualifier = getQualifier();
+    while (qualifier != null) {
+      depth++;
+      qualifier = qualifier.getQualifier();
+    }
+    return depth;
+  }
+
   @NotNull
+  @Contract(pure = true)
   public DfaVariableValue withQualifier(DfaVariableValue newQualifier) {
-    return myFactory.getVarFactory().createVariableValue(mySource, myVarType, myIsNegated, newQualifier);
+    return newQualifier == myQualifier ? this : myFactory.getVarFactory().createVariableValue(mySource, myVarType, newQualifier);
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    return (myIsNegated ? "!" : "") + (myQualifier == null ? "" : myQualifier + ".") + mySource;
+    return (myQualifier == null ? "" : myQualifier + ".") + mySource;
   }
 
-  private boolean hardEquals(DfaVariableSource source, PsiType varType, boolean negated, DfaVariableValue qualifier) {
-    return source.equals(mySource) &&
-           negated == myIsNegated &&
-           qualifier == myQualifier &&
+  private boolean hardEquals(DfaVariableSource source, PsiType varType, DfaVariableValue qualifier) {
+    return source.equals(mySource) && qualifier == myQualifier &&
            Comparing.equal(TypeConversionUtil.erasure(varType), TypeConversionUtil.erasure(myVarType));
   }
 
@@ -201,8 +186,8 @@ public class DfaVariableValue extends DfaValue {
   }
 
   @NotNull
-  public Nullness getInherentNullability() {
-    return NullnessUtil.fromBoolean(getInherentFacts().get(DfaFactType.CAN_BE_NULL));
+  public Nullability getInherentNullability() {
+    return DfaNullability.toNullability(getInherentFacts().get(DfaFactType.NULLABILITY));
   }
 
   public boolean isFlushableByCalls() {

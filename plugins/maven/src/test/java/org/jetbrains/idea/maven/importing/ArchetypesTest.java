@@ -46,7 +46,6 @@ public class ArchetypesTest extends MavenTestCase {
     props.put("archetypeVersion", "1.0");
     props.put("interactiveMode", "false");
     props.put("groupId", "foo");
-    props.put("groupId", "foo");
     props.put("artifactId", "bar");
 
     settings.setMavenProperties(props);

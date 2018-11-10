@@ -27,7 +27,7 @@ import com.intellij.xdebugger.XSourcePosition
 class SourceInfo @JvmOverloads constructor(private val file: VirtualFile, private val line: Int, val column: Int = -1, private var offset: Int = -1, val functionName: String? = null, url: Url? = null) : XSourcePosition {
   private var _url = url
 
-  override fun getFile() = file
+  override fun getFile(): VirtualFile = file
 
   val url: Url
     get() {
@@ -39,7 +39,7 @@ class SourceInfo @JvmOverloads constructor(private val file: VirtualFile, privat
       return result
     }
 
-  override fun getLine() = line
+  override fun getLine(): Int = line
 
   override fun getOffset(): Int {
     if (offset == -1) {
@@ -49,7 +49,7 @@ class SourceInfo @JvmOverloads constructor(private val file: VirtualFile, privat
     return offset
   }
 
-  override fun createNavigatable(project: Project) = OpenFileDescriptor(project, file, line, column)
+  override fun createNavigatable(project: Project): OpenFileDescriptor = OpenFileDescriptor(project, file, line, column)
 
-  override fun toString() = file.path + ":" + line + if (column == -1) "" else ":" + column
+  override fun toString(): String = file.path + ":" + line + if (column == -1) "" else ":" + column
 }

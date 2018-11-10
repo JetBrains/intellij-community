@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ChooseByNameModelEx extends ChooseByNameModel {
-  void processNames(Processor<String> processor, boolean inLibraries);
+  void processNames(Processor<? super String> processor, boolean inLibraries);
 
   /**
    * @return the item provider to be used by ChooseByName components with this model. By default it's {@link DefaultChooseByNameItemProvider}.

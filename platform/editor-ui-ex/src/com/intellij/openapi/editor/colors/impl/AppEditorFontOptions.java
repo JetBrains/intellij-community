@@ -36,7 +36,6 @@ public class AppEditorFontOptions implements PersistentStateComponent<AppEditorF
     /**
      * Serialization constructor.
      */
-    @SuppressWarnings("unused")
     private PersistentFontPreferences() {
     }
 

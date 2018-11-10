@@ -52,6 +52,7 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
     myCachedRevisionNumber = currentRevisionNumber;
   }
 
+  @Override
   public List<VcsFileRevision> getRevisionList() {
     return myRevisions;
   }
@@ -68,15 +69,18 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
   @Nullable
   protected abstract VcsRevisionNumber calcCurrentRevisionNumber();
 
+  @Override
   public final VcsRevisionNumber getCurrentRevisionNumber() {
     return getCachedRevision();
   }
 
+  @Override
   public boolean isCurrentRevision(VcsRevisionNumber rev) {
     VcsRevisionNumber revNumber = getCurrentRevisionNumber();
     return revNumber != null && revNumber.compareTo(rev) == 0;
   }
 
+  @Override
   public synchronized boolean shouldBeRefreshed() {
     final VcsRevisionNumber oldValue = getCachedRevision();
     final VcsRevisionNumber newNumber = calcCurrentRevisionNumber();
@@ -84,6 +88,7 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
     return !Comparing.equal(oldValue, newNumber);
   }
 
+  @Override
   public boolean isContentAvailable(VcsFileRevision revision) {
     return true;
   }

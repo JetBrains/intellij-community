@@ -40,7 +40,7 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
   }
 
   @Override
-  public void update(final AnActionEvent event) {
+  public void update(@NotNull final AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     boolean hidden = isHidden(event);
     if (hidden) {
@@ -74,7 +74,7 @@ public abstract class XDebuggerActionBase extends AnAction implements AnAction.T
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     performWithHandler(e);
   }
 

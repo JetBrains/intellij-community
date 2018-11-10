@@ -3,12 +3,11 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.UiTestRule
 import com.intellij.ui.changeLafIfNeed
-import net.miginfocom.layout.LayoutUtil
+import com.intellij.ui.layout.migLayout.patched.*
 import org.junit.*
 import org.junit.Assume.assumeTrue
 import org.junit.rules.TestName
@@ -47,7 +46,8 @@ class UiDslTest {
   @Before
   fun beforeMethod() {
     if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      assumeTrue("macOS or Windows 10 are required", SystemInfoRt.isMac || SystemInfo.isWin10OrNewer)
+      // let's for now to see how it is going on macOS
+      assumeTrue("macOS or Windows 10 are required", SystemInfo.isMacOSHighSierra /* || SystemInfo.isWin10OrNewer */)
     }
 
     System.setProperty("idea.ui.comment.copyable", "false")
@@ -84,19 +84,33 @@ class UiDslTest {
     doTest { visualPaddingsPanel() }
   }
 
+  @Test
+  fun `vertical buttons`() {
+    doTest { withVerticalButtons() }
+  }
+
+  @Test
+  fun `do not add visual paddings for titled border`() {
+    doTest { commentAndPanel() }
+  }
+
+  @Test
+  fun `titled rows`() {
+    // failed on TC but for now no 10.14 agents to test
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      // let's for now to see how it is going on macOS
+      assumeTrue("macOS 10.14 or Windows 10 are required", SystemInfo.isMacOSMojave /* || SystemInfo.isWin10OrNewer */)
+    }
+
+    doTest { titledRows() }
+  }
+
   private fun doTest(panelCreator: () -> JPanel) {
     invokeAndWaitIfNeed {
-      // otherwise rectangles are not set
-      LayoutUtil.setGlobalDebugMillis(1000)
       val panel = panelCreator()
-      try {
-        uiRule.validate(panel, testName, lafName)
-      }
-      finally {
-        LayoutUtil.setGlobalDebugMillis(0)
-        // as result, MigLayout will stop debug timer
-        panel.doLayout()
-      }
+      // otherwise rectangles are not set
+      (panel.layout as MigLayout).isDebugEnabled = true
+      uiRule.validate(panel, testName, lafName)
     }
   }
 }

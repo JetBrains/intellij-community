@@ -45,6 +45,58 @@ public class SimplifiableBooleanExpressionFixTest extends IGQuickFixesTestCase {
                  "}");
   }
 
+  public void testAndOrExpression3() {
+    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+                 "boolean fff(boolean a, boolean b, boolean c) {" +
+                 "    return a && b && c/**/|| !a;" +
+                 "}",
+                 "boolean fff(boolean a, boolean b, boolean c) {" +
+                 "    return !a || b && c;" +
+                 "}");
+  }
+
+  public void testAndOrExpression3Middle() {
+    // While this particular case could be safely transformed to "a && c || !b", the order of execution is changed which may
+    // affect dereferencing (e.g. "a != null && b != null && a.foo(b.bar()) || b == null") is safe, but replacement is not.
+    // Proper replacement would be "(a || !b) && (!b || c)", but it's not shorter than the original code
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+                 "class X {\n" +
+                 "  boolean fff(boolean a, boolean b, boolean c) { \n" +
+                 "    return a && b && c/**/ || !b;\n" +
+                 "  }\n" +
+                 "}");
+  }
+
+  public void testAndOrExpression3Parentheses() {
+    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+                 "boolean fff(boolean a, boolean b, boolean c) {" +
+                 "    return (a && b && !c)/**/|| c;" +
+                 "}",
+                 "boolean fff(boolean a, boolean b, boolean c) {" +
+                 "    return (a && b) || c;" +
+                 "}");
+  }
+
+  public void testAndOrExpressionComparisons() {
+    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+                 "boolean fff(int a, int b, int c) {" +
+                 "    return a > b && b > c /**/|| a <= b;" +
+                 "}",
+                 "boolean fff(int a, int b, int c) {" +
+                 "    return a <= b || b > c;" +
+                 "}");
+  }
+
+  public void testAndOrNonNegated() {
+    doMemberTest(InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix"),
+                 "boolean fff(int a, int b, int c) {" +
+                 "    return a > b && b > c && b > 0 /**/|| (b > c);" +
+                 "}",
+                 "boolean fff(int a, int b, int c) {" +
+                 "    return b > c;" +
+                 "}");
+  }
+
   @Override
   protected BaseInspection getInspection() {
     return new SimplifiableBooleanExpressionInspection();

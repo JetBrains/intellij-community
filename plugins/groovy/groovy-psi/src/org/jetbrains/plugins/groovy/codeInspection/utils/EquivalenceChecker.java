@@ -40,8 +40,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
-@SuppressWarnings({"OverlyComplexMethod",
-    "MethodWithMultipleLoops",
+@SuppressWarnings({
+  "MethodWithMultipleLoops",
     "OverlyComplexMethod",
     "OverlyLongMethod",
     "SwitchStatementWithTooManyBranches",
@@ -293,11 +293,17 @@ public class EquivalenceChecker {
                                                  @Nullable GrForClause statement2) {
     if (statement1 == null && statement2 == null) return true;
     if (statement1 == null || statement2 == null) return false;
-    final GrVariable var1 = statement1.getDeclaredVariable();
-    final GrVariable var2 = statement2.getDeclaredVariable();
-    if (var1 == null && var2 == null) return true;
-    if (var1 == null || var2 == null) return false;
-    return variablesAreEquivalent(var1, var2);
+    GrVariable[] variables1 = statement1.getDeclaredVariables();
+    GrVariable[] variables2 = statement2.getDeclaredVariables();
+    if (variables1.length != variables2.length) return false;
+    for (int i = 0; i < variables1.length; i++) {
+      final GrVariable var1 = variables1[i];
+      final GrVariable var2 = variables2[i];
+      if (var1 == null && var2 == null) return true;
+      if (var1 == null || var2 == null) return false;
+      if (!variablesAreEquivalent(var1, var2)) return false;
+    }
+    return true;
   }
 
   private static boolean switchStatementsAreEquivalent(@NotNull GrSwitchStatement statement1,
@@ -515,8 +521,9 @@ public class EquivalenceChecker {
   }
 
   private static boolean listOrMapExpressionsAreEquivalent(GrListOrMap expression1, GrListOrMap expression2) {
-    return expressionListsAreEquivalent(expression1.getInitializers(), expression2.getInitializers()) &&
-        namedArgumentListsAreEquivalent(expression1.getNamedArguments(), expression2.getNamedArguments());
+    return expression1.isMap() == expression2.isMap() &&
+           expressionListsAreEquivalent(expression1.getInitializers(), expression2.getInitializers()) &&
+           namedArgumentListsAreEquivalent(expression1.getNamedArguments(), expression2.getNamedArguments());
   }
 
   private static boolean arrayDeclarationsAreEquivalent(GrArrayDeclaration expression1,

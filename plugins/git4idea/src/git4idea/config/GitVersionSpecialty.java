@@ -62,6 +62,14 @@ public enum GitVersionSpecialty {
     }
   },
 
+  CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.getType().equals(GitVersion.Type.MSYS) &&
+             version.isLaterOrEqual(new GitVersion(2, 3, 0, 0));
+    }
+  },
+
   STARTED_USING_RAW_BODY_IN_FORMAT {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
@@ -115,6 +123,13 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 7, 9, 0));
+    }
+  },
+
+  CLONE_RECURSE_SUBMODULES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 11, 0));
     }
   },
 
@@ -223,6 +238,20 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 0, 0, 0));
+    }
+  },
+
+  CAT_FILE_SUPPORTS_FILTERS {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 11, 0, 0));
+    }
+  },
+
+  CAT_FILE_SUPPORTS_TEXTCONV {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 2, 0, 0));
     }
   };
 

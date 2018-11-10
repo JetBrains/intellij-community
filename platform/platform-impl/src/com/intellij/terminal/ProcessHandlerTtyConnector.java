@@ -31,6 +31,7 @@ import java.nio.charset.Charset;
  * @author traff
  */
 public class ProcessHandlerTtyConnector implements TtyConnector {
+
   private final OSProcessHandler myProcessHandler;
   private final PtyProcess myPtyProcess;
   protected Charset myCharset;

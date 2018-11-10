@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateState;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author ven
@@ -24,11 +25,11 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 public abstract class TemplateEditingAdapter implements TemplateEditingListener {
 
   @Override
-  public void beforeTemplateFinished(final TemplateState state, final Template template) {
+  public void beforeTemplateFinished(@NotNull final TemplateState state, final Template template) {
   }
 
   @Override
-  public void templateFinished(Template template, boolean brokenOff) {
+  public void templateFinished(@NotNull Template template, boolean brokenOff) {
   }
 
   @Override
@@ -36,7 +37,7 @@ public abstract class TemplateEditingAdapter implements TemplateEditingListener 
   }
 
   @Override
-  public void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex) {
+  public void currentVariableChanged(@NotNull TemplateState templateState, Template template, int oldIndex, int newIndex) {
   }
 
   @Override

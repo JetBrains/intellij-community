@@ -21,11 +21,11 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 public class PeekableIteratorWrapper<T> implements PeekableIterator<T> {
-  @NotNull private final Iterator<T> myIterator;
+  @NotNull private final Iterator<? extends T> myIterator;
   private T myValue = null;
   private boolean myValidValue = false;
 
-  public PeekableIteratorWrapper(@NotNull Iterator<T> iterator) {
+  public PeekableIteratorWrapper(@NotNull Iterator<? extends T> iterator) {
     myIterator = iterator;
     advance();
   }

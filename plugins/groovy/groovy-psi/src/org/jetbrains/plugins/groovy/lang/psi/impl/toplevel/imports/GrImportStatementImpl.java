@@ -1,5 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.toplevel.imports;
 
 import com.intellij.lang.ASTNode;
@@ -44,10 +43,11 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitImportStatement(this);
   }
 
+  @Override
   public String toString() {
     return "Import statement";
   }
@@ -74,12 +74,18 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
 
   @Override
   public GrCodeReferenceElement getImportReference() {
-    GrImportStatementStub stub = getStub();
-    if (stub != null) {
-      return stub.getReference();
-    }
-
     return (GrCodeReferenceElement)findChildByType(GroovyElementTypes.REFERENCE_ELEMENT);
+  }
+
+  @Nullable
+  @Override
+  public String getImportFqn() {
+    GrImportStatementStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.getFqn();
+    }
+    GrCodeReferenceElement reference = getImportReference();
+    return reference == null ? null : reference.getQualifiedReferenceName();
   }
 
   @Override
@@ -94,10 +100,8 @@ public class GrImportStatementImpl extends GrStubElementBase<GrImportStatementSt
         return name;
       }
 
-      String referenceText = stub.getReferenceText();
-      if (referenceText == null) return null;
-
-      return StringUtil.getShortName(referenceText);
+      String referenceText = stub.getFqn();
+      return referenceText == null ? null : StringUtil.getShortName(referenceText);
     }
 
     GrImportAlias alias = getAlias();

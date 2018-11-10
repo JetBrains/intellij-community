@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
@@ -50,6 +51,16 @@ import java.util.Set;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    if (Registry.is("new.search.everywhere") && e.getProject() != null) {
+      showInSearchEverywherePopup(ActionSearchEverywhereContributor.class.getSimpleName(), e, false);
+    } else {
+      super.actionPerformed(e);
+    }
+  }
+
   @Override
   public void gotoActionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -323,7 +334,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
         }
 
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-          if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {
+          if (action instanceof ActionGroup && !((ActionGroup)action).canBePerformed(context)) {
             ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
               event.getPresentation().getText(), (ActionGroup)action, context, false, callback, -1);
             Window window = SwingUtilities.getWindowAncestor(component);

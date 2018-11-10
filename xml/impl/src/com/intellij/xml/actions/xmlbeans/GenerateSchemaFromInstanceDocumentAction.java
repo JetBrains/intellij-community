@@ -32,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlBundle;
 import org.apache.xmlbeans.impl.inst2xsd.Inst2Xsd;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,7 +58,7 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
   //private static final
   
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
     final boolean enabled = isAcceptableFile(file);
     e.getPresentation().setEnabled(enabled);
@@ -67,7 +68,7 @@ public class GenerateSchemaFromInstanceDocumentAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 

@@ -42,7 +42,6 @@ import java.util.*;
 
 /**
  * @author anna
- * @since Jul 30, 2010
  */
 public class PsiDiamondTypeImpl extends PsiDiamondType {
   private static final Logger LOG = Logger.getInstance(PsiDiamondTypeImpl.class);
@@ -284,12 +283,12 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final MethodCandidatesProcessor
       processor = new MethodCandidatesProcessor(argumentList, argumentList.getContainingFile(), conflictResolvers, candidates) {
       @Override
-      protected boolean isAccepted(PsiMethod candidate) {
+      protected boolean isAccepted(@NotNull PsiMethod candidate) {
         return true;
       }
 
       @Override
-      protected PsiClass getContainingClass(PsiMethod method) {
+      protected PsiClass getContainingClass(@NotNull PsiMethod method) {
         return psiClass;
       }
 
@@ -524,7 +523,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   private static class InferredAnonymousTypeVisitor extends PsiTypeVisitor<Boolean> {
     private final PsiElement myExpression;
 
-    public InferredAnonymousTypeVisitor(PsiElement expression) {
+    InferredAnonymousTypeVisitor(PsiElement expression) {
       myExpression = expression;
     }
 

@@ -57,6 +57,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
 
     myEnableCheckBox = new JCheckBox(ApplicationBundle.message("checkbox.enable.javadoc.formatting"));
     myEnableCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         update();
       }
@@ -72,6 +73,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     return LanguageCodeStyleSettingsProvider.SettingsType.LANGUAGE_SPECIFIC;
   }
 
+  @Override
   public JComponent getPanel() {
     return myJavaDocPanel;
   }
@@ -81,6 +83,7 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     myEnableCheckBox.setEnabled(true);
   }
 
+  @Override
   protected void initTables() {
     initCustomOptions(ALIGNMENT_GROUP);
     initCustomOptions(BLANK_LINES_GROUP);
@@ -89,10 +92,12 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     initCustomOptions(OTHER_GROUP);
   }
 
+  @Override
   protected int getRightMargin() {
     return 47;
   }
 
+  @Override
   protected String getPreviewText() {                    //| Margin is here
     return "package sample;\n" +
            "public class Sample {\n" +
@@ -136,22 +141,26 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     }
   }
 
+  @Override
   public void apply(CodeStyleSettings settings) {
     super.apply(settings);
     settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING = myEnableCheckBox.isSelected();
   }
 
+  @Override
   protected void resetImpl(final CodeStyleSettings settings) {
     super.resetImpl(settings);
     myEnableCheckBox.setSelected(settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING);
     update();
   }
 
+  @Override
   public boolean isModified(CodeStyleSettings settings) {
     return super.isModified(settings) ||
            myEnableCheckBox.isSelected() != settings.getCustomSettings(JavaCodeStyleSettings.class).ENABLE_JAVADOC_FORMATTING;
   }
 
+  @Override
   @NotNull
   protected final FileType getFileType() {
     return StdFileTypes.JAVA;

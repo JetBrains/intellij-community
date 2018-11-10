@@ -187,6 +187,11 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           .setRequestFocus(hintHint.isRequestFocus())
           .setHint(true);
         myComponent.validate();
+        Border border = hintHint.getComponentBorder();
+        if (border != null) {
+          tooltip.setComponentBorder(border);
+        }
+
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, hintHint.isShowImmediately(), hintHint.isAnimationEnabled());
       }
       else {
@@ -211,8 +216,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       }
 
       myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(actualComponent, myFocusRequestor)
-        .setRequestFocus(myFocusRequestor != null)
-        .setFocusable(myFocusRequestor != null)
+        .setRequestFocus(myFocusRequestor != null || hintHint.isRequestFocus())
+        .setFocusable(myFocusRequestor != null || hintHint.isRequestFocus())
         .setResizable(myResizable)
         .setMovable(myTitle != null)
         .setTitle(myTitle)
@@ -451,12 +456,9 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     }
     else {
       if (myCurrentIdeTooltip != null) {
-        Point screenPoint = point.getScreenPoint();
-        if (!screenPoint.equals(new RelativePoint(myCurrentIdeTooltip.getComponent(), myCurrentIdeTooltip.getPoint()).getScreenPoint())) {
-          myCurrentIdeTooltip.setPoint(point.getPoint());
-          myCurrentIdeTooltip.setComponent(point.getComponent());
-          IdeTooltipManager.getInstance().show(myCurrentIdeTooltip, true, false);
-        }
+        myCurrentIdeTooltip.setPoint(point.getPoint());
+        myCurrentIdeTooltip.setComponent(point.getComponent());
+        IdeTooltipManager.getInstance().show(myCurrentIdeTooltip, true, false);
       }
       else {
         Point targetPoint = point.getPoint(myComponent.getParent());
@@ -511,6 +513,8 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       while (c != null) {
         if (c.getParent() instanceof JLayeredPane) {
           c.setSize(c.getPreferredSize());
+          c.revalidate();
+          c.repaint();
           break;
         }
         c = c.getParent();

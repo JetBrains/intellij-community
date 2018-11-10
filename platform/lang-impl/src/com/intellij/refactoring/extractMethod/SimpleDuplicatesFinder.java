@@ -101,7 +101,7 @@ public class SimpleDuplicatesFinder {
     }
   }
 
-  private void findPatternOccurrences(@NotNull final List<SimpleMatch> array, @NotNull final PsiElement scope,
+  private void findPatternOccurrences(@NotNull final List<? super SimpleMatch> array, @NotNull final PsiElement scope,
                                       @NotNull final PsiElement generatedMethod) {
     if (scope == generatedMethod) return;
     final PsiElement[] children = scope.getChildren();

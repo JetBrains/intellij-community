@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode;
 
@@ -28,7 +15,7 @@ import java.util.Set;
 class HardCodedPurity {
   static final boolean AGGRESSIVE_HARDCODED_PURITY = Registry.is("java.annotations.inference.aggressive.hardcoded.purity", true);
 
-  private static final Set<Couple<String>> ownedFields = ContainerUtil.set(
+  private static final Set<Couple<String>> ownedFields = Collections.singleton(
     new Couple<>("java/lang/AbstractStringBuilder", "value")
   );
   private static final Set<Member> thisChangingMethods = ContainerUtil.set(
@@ -73,7 +60,7 @@ class HardCodedPurity {
       return new Effects(isBuilderChainCall(method) ? DataValue.ThisDataValue : DataValue.UnknownDataValue1, thisChange);
     }
     else if (isPureMethod(method)) {
-      return new Effects(DataValue.LocalDataValue, Collections.emptySet());
+      return new Effects(getReturnValueForPureMethod(method), Collections.emptySet());
     }
     else {
       Set<EffectQuantum> effects = solutions.get(method);
@@ -93,12 +80,20 @@ class HardCodedPurity {
            method.methodName.startsWith("append");
   }
 
+  DataValue getReturnValueForPureMethod(Member method) {
+    String type = StringUtil.substringAfter(method.methodDesc, ")");
+    if (type != null && (type.length() == 1 || type.equals("Ljava/lang/String;") || type.equals("Ljava/lang/Class;"))) {
+      return DataValue.UnknownDataValue1;
+    }
+    return DataValue.LocalDataValue;
+  }
+
   boolean isPureMethod(Member method) {
-    if(pureMethods.contains(method)) {
+    if (pureMethods.contains(method)) {
       return true;
     }
     // Array clone() method is a special beast: it's qualifier class is array itself
-    if(method.internalClassName.startsWith("[") && method.methodName.equals("clone") && method.methodDesc.equals("()Ljava/lang/Object;")) {
+    if (method.internalClassName.startsWith("[") && method.methodName.equals("clone") && method.methodDesc.equals("()Ljava/lang/Object;")) {
       return true;
     }
     return false;

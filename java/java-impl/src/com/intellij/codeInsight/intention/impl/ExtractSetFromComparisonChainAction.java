@@ -19,6 +19,7 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.WriteAction;
@@ -32,7 +33,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,9 +55,6 @@ import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntentionAction {
   private static final String GUAVA_IMMUTABLE_SET = "com.google.common.collect.ImmutableSet";
   private static final String INITIALIZER_FORMAT_GUAVA = GUAVA_IMMUTABLE_SET + ".of({0})";
@@ -113,7 +110,7 @@ public class ExtractSetFromComparisonChainAction extends PsiElementBaseIntention
                       (PsiUtil.isLanguageLevel5OrHigher(containingClass) ? "<" + elementType.getCanonicalText() + ">" : "");
         PsiField field = factory.createFieldFromText(modifiers + type + " " + name + "=" + initializer + ";", containingClass);
         field = (PsiField)containingClass.add(field);
-        PsiDiamondTypeUtil.removeRedundantTypeArguments(field);
+        RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(field);
         CodeStyleManager.getInstance(project).reformat(manager.shortenClassReferences(field));
 
         SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);

@@ -38,15 +38,15 @@ public class StreamKnownSource {
       System.out.println("Probably");
     }
 
-    boolean emptyAll = Stream.empty().allMatch(Objects::nonNull);
+    boolean emptyAll = <warning descr="Result of 'Stream.empty().allMatch(Objects::nonNull)' is always 'true'">Stream.empty().allMatch(Objects::nonNull)</warning>;
     if (<warning descr="Condition 'emptyAll' is always 'true'">emptyAll</warning>) {
       System.out.println("True");
     }
-    boolean emptyAny = Stream.empty().anyMatch(Objects::nonNull);
+    boolean emptyAny = <warning descr="Result of 'Stream.empty().anyMatch(Objects::nonNull)' is always 'false'">Stream.empty().anyMatch(Objects::nonNull)</warning>;
     if (<warning descr="Condition 'emptyAny' is always 'false'">emptyAny</warning>) {
       System.out.println("False");
     }
-    boolean emptyNone = Stream.empty().noneMatch(Objects::nonNull);
+    boolean emptyNone = <warning descr="Result of 'Stream.empty().noneMatch(Objects::nonNull)' is always 'true'">Stream.empty().noneMatch(Objects::nonNull)</warning>;
     if (<warning descr="Condition 'emptyNone' is always 'true'">emptyNone</warning>) {
       System.out.println("True");
     }
@@ -77,7 +77,7 @@ public class StreamKnownSource {
   }
 
   void testStreamOf(int[] arr) {
-    if(Stream.of().count() > 0) {
+    if(<warning descr="Condition 'Stream.of().count() > 0' is always 'false'">Stream.of().count() > 0</warning>) {
       System.out.println("Impossible");
     }
     if(<warning descr="Condition 'Stream.of(\"foo\", \"bar\").findFirst().isPresent()' is always 'true'">Stream.of("foo", "bar").findFirst().isPresent()</warning>) {
@@ -119,7 +119,7 @@ public class StreamKnownSource {
       return;
     }
 
-    boolean hasNoNulls = list.stream().allMatch(Objects::nonNull);
+    boolean hasNoNulls = <warning descr="Result of 'list.stream().allMatch(Objects::nonNull)' is always 'true'">list.stream().allMatch(Objects::nonNull)</warning>;
 
     if(<warning descr="Condition 'hasNoNulls' is always 'true'">hasNoNulls</warning>) {
       System.out.println("Always");

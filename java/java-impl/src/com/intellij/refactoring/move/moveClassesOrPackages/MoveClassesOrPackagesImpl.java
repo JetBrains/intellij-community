@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.history.LocalHistory;
@@ -45,34 +30,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class MoveClassesOrPackagesImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesImpl");
 
-  public static void doMove(final Project project,
-                            PsiElement[] adjustedElements,
-                            PsiElement initialTargetElement,
-                            final MoveCallback moveCallback) {
+  public static void doMove(Project project, PsiElement[] adjustedElements, PsiElement initialTargetElement, MoveCallback moveCallback) {
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements), true)) {
       return;
     }
 
-    final String initialTargetPackageName = getInitialTargetPackageName(initialTargetElement, adjustedElements);
-    final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, adjustedElements);
-    final boolean isTargetDirectoryFixed = initialTargetDirectory == null;
-
-    boolean searchTextOccurences = false;
-    for (int i = 0; i < adjustedElements.length && !searchTextOccurences; i++) {
-      PsiElement psiElement = adjustedElements[i];
-      searchTextOccurences = TextOccurrencesUtil.isSearchTextOccurencesEnabled(psiElement);
-    }
-    final MoveClassesOrPackagesDialog moveDialog =
-      new MoveClassesOrPackagesDialog(project, searchTextOccurences, adjustedElements, initialTargetElement, moveCallback);
+    String initialTargetPackageName = getInitialTargetPackageName(initialTargetElement, adjustedElements);
+    PsiDirectory initialTargetDirectory = getInitialTargetDirectory(initialTargetElement, adjustedElements);
+    boolean searchTextOccurrences = Stream.of(adjustedElements).anyMatch(TextOccurrencesUtil::isSearchTextOccurencesEnabled);
     boolean searchInComments = JavaRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS;
-    boolean searchForTextOccurences = JavaRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
-    moveDialog.setData(adjustedElements, initialTargetPackageName, initialTargetDirectory, isTargetDirectoryFixed, initialTargetElement == null, searchInComments,
-                       searchForTextOccurences, HelpID.getMoveHelpID(adjustedElements[0]));
-    moveDialog.show();
+    boolean searchForTextOccurrences = JavaRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT;
+    new MoveClassesOrPackagesDialog(
+      project, searchTextOccurrences, adjustedElements, initialTargetElement, moveCallback, initialTargetPackageName,
+      initialTargetDirectory, searchInComments, searchForTextOccurrences
+    ).show();
   }
 
   @Nullable
@@ -387,5 +363,4 @@ public class MoveClassesOrPackagesImpl {
       MoveClassesOrPackagesUtil.moveDirectoryRecursively(directory, moveTarget);
     }
   }
-
 }

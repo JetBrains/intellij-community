@@ -33,14 +33,17 @@ public class InheritorRenamer extends AutomaticRenamer {
     suggestAllNames(aClass.getName(), newClassName);
   }
 
+  @Override
   public String getDialogTitle() {
     return RefactoringBundle.message("rename.inheritors.title");
   }
 
+  @Override
   public String getDialogDescription() {
     return RefactoringBundle.message("rename.inheritors.with.the.following.names.to");
   }
 
+  @Override
   public String entityName() {
     return RefactoringBundle.message("entity.name.inheritor");
   }

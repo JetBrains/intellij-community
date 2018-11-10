@@ -36,7 +36,7 @@ final class MessageNode extends DefaultMutableTreeNode {
   private Document myEditorDocument;
   private boolean myAllowToShowPosition;
 
-  public MessageNode(final AntMessage message, final Project project, final boolean allowToShowPosition) {
+  MessageNode(final AntMessage message, final Project project, final boolean allowToShowPosition) {
     ApplicationManager.getApplication().runReadAction(() -> {
       myMessage = message;
       myText = message.getTextLines();

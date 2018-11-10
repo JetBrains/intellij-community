@@ -81,7 +81,6 @@ public class Utils {
     }
   }
 
-  @SuppressWarnings("BusyWait")
   private static void tryDelete(Path path) throws IOException {
     for (int i = 0; i < 10; i++) {
       try {
@@ -164,6 +163,31 @@ public class Utils {
         setExecutable(to);
       }
     }
+  }
+
+  public static void copyDirectory(Path from, Path to) throws IOException {
+    Runner.logger().info(from + " -> " + to);
+
+    CopyOption[] options = {LinkOption.NOFOLLOW_LINKS, StandardCopyOption.COPY_ATTRIBUTES};
+    Files.walkFileTree(from, new SimpleFileVisitor<Path>() {
+      @Override
+      public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+        if (dir != from || !Files.exists(to)) {
+          Path copy = to.resolve(from.relativize(dir));
+          Runner.logger().info("  " + dir + " -> " + copy);
+          Files.createDirectory(copy);
+        }
+        return FileVisitResult.CONTINUE;
+      }
+
+      @Override
+      public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        Path copy = to.resolve(from.relativize(file));
+        Runner.logger().info("  " + file + " -> " + copy);
+        Files.copy(file, copy, options);
+        return FileVisitResult.CONTINUE;
+      }
+    });
   }
 
   public static void copyFileToStream(File from, OutputStream out) throws IOException {
@@ -249,7 +273,7 @@ public class Utils {
     return result;
   }
 
-  private static void collectRelativePaths(File dir, LinkedHashSet<String> result, String parentPath) {
+  private static void collectRelativePaths(File dir, LinkedHashSet<? super String> result, String parentPath) {
     File[] children = dir.listFiles();
     if (children == null) return;
 

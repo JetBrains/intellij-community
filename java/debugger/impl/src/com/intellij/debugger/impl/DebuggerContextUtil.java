@@ -32,12 +32,7 @@ public class DebuggerContextUtil {
 
     final DebuggerSession session = context.getDebuggerSession();
     if (session != null) {
-      session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl() {
-        @Override
-        public Priority getPriority() {
-          return Priority.HIGH;
-        }
-
+      session.getProcess().getManagerThread().schedule(new DebuggerCommandImpl(PrioritizedTask.Priority.HIGH) {
         @Override
         protected void action() {
           SuspendContextImpl threadSuspendContext =

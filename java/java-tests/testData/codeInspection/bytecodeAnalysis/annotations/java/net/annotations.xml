@@ -205,6 +205,9 @@
         </annotation>
     </item>
     <item name='java.net.InetAddress java.lang.Object readResolve()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.InetAddress java.lang.String getHostAddress()'>
@@ -267,11 +270,26 @@
     <item name='java.net.InetAddress java.net.InetAddress[] getAllByName(java.lang.String, java.net.InetAddress) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.net.InetAddress java.net.InetAddress[] getAllByName0(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='java.net.InetAddress java.net.InetAddress[] getAllByName0(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='java.net.InetAddress java.net.InetAddress[] getAllByName0(java.lang.String, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='java.net.InetAddress java.net.InetAddress[] getAllByName0(java.lang.String, boolean) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='java.net.InetAddress java.net.InetAddress[] getAllByName0(java.lang.String, java.net.InetAddress, boolean)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;new&quot;"/>
+        </annotation>
     </item>
     <item name='java.net.InetAddress java.net.InetAddress[] getAllByName0(java.lang.String, java.net.InetAddress, boolean) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -295,6 +313,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.InetAddress.Cache java.net.InetAddress.Cache put(java.lang.String, java.net.InetAddress[])'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;this&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.InetAddress.Cache java.net.InetAddress.CacheEntry get(java.lang.String)'>
@@ -365,6 +386,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.net.ServerSocket java.net.Socket accept()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.ServerSocket void implAccept(java.net.Socket) 0'>
@@ -633,7 +657,7 @@
     </item>
     <item name='java.net.URI java.lang.String normalize(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+            <val val="&quot;_-&gt;!null;_-&gt;null&quot;"/>
         </annotation>
     </item>
     <item name='java.net.URI java.lang.String normalize(java.lang.String) 0'>
@@ -681,12 +705,18 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.net.URI java.net.URI create(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URI java.net.URI normalize(java.net.URI) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URI java.net.URI parseServerAuthority()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;this&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URI java.net.URI relativize(java.net.URI) 0'>
@@ -702,6 +732,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URI java.net.URL toURL()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URI long highMask(char, char)'>
@@ -912,9 +945,15 @@
         </annotation>
     </item>
     <item name='java.net.URL java.net.URI toURI()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URL java.net.URL fabricateNewURL()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.net.URL void readObject(java.io.ObjectInputStream) 0'>

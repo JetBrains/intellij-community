@@ -19,6 +19,7 @@ import com.google.common.collect.FluentIterable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.extenstions.PsiElementExtKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +54,7 @@ public final class PsiQuery<T extends PsiElement> {
     this(Arrays.asList(elementsToStart));
   }
 
-  public PsiQuery(@NotNull final List<T> elementsToStart) {
+  public PsiQuery(@NotNull final List<? extends T> elementsToStart) {
     myElements = Collections.unmodifiableList(elementsToStart);
   }
 
@@ -137,13 +138,11 @@ public final class PsiQuery<T extends PsiElement> {
   }
 
   @NotNull
-  private <R extends PsiElement> PsiQuery<R> getQueryWithProducer(@NotNull final Function<T, Collection<R>> elementsProducer,
+  private <R extends PsiElement> PsiQuery<R> getQueryWithProducer(@NotNull final Function<? super T, ? extends Collection<R>> elementsProducer,
                                                                   @NotNull final PsiFilter<R> filter) {
     final Set<R> result = new LinkedHashSet<>(); // Set to get rid of duplicates but preserve order
     asStream()
-      .map(o -> elementsProducer.apply(o)
-        .stream().filter(o2 -> !o2.equals(o)) // Filter out same element in case of siblings
-        .collect(Collectors.toList()))
+      .map(o -> ContainerUtil.filter(elementsProducer.apply(o), o2 -> !o2.equals(o)))
       .forEach(result::addAll);
     return new PsiQuery<>(new ArrayList<>(filter.filter(result)));
   }
@@ -178,20 +177,20 @@ public final class PsiQuery<T extends PsiElement> {
   public static class PsiFilter<T extends PsiElement> {
     public static final PsiFilter<PsiElement> ANY = new PsiFilter<>(PsiElement.class);
     @NotNull
-    private final Class<T> myClass;
+    private final Class<? extends T> myClass;
     @NotNull
-    private final Predicate<T> myPredicate;
+    private final Predicate<? super T> myPredicate;
 
     /**
      * Include current element in result set, or not (false by default)
      */
 
-    public PsiFilter(@NotNull final Class<T> aClass, @NotNull final Predicate<T> predicate) {
+    public PsiFilter(@NotNull final Class<? extends T> aClass, @NotNull final Predicate<? super T> predicate) {
       myClass = aClass;
       myPredicate = predicate;
     }
 
-    public PsiFilter(@NotNull final Class<T> aClass) {
+    public PsiFilter(@NotNull final Class<? extends T> aClass) {
       this(aClass, o -> true);
     }
 
@@ -213,7 +212,7 @@ public final class PsiQuery<T extends PsiElement> {
       return new PsiNameFilter<>(PsiNamedElement.class, name);
     }
 
-    public PsiNameFilter(@NotNull final Class<T> type, @NotNull final String name) {
+    public PsiNameFilter(@NotNull final Class<? extends T> type, @NotNull final String name) {
       super(type, o -> name.equals(o.getName()));
     }
   }

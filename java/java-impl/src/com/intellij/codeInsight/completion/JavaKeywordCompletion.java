@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.pom.java.LanguageLevel;
@@ -33,6 +34,7 @@ import static com.intellij.psi.SyntaxTraverser.psiApi;
 
 public class JavaKeywordCompletion {
   public static final ElementPattern<PsiElement> AFTER_DOT = psiElement().afterLeaf(".");
+  private static final ElementPattern<PsiElement> AFTER_DOUBLE_COLON = psiElement().afterLeaf("::");
 
   static final ElementPattern<PsiElement> VARIABLE_AFTER_FINAL = psiElement().afterLeaf(PsiKeyword.FINAL).inside(PsiDeclarationStatement.class);
 
@@ -96,13 +98,13 @@ public class JavaKeywordCompletion {
     psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(
       not(
         or(
-           psiElement(PsiSwitchLabelStatement.class),
            psiElement(PsiExpressionStatement.class),
            psiElement(PsiPrefixExpression.class)
         )
       )
     )),
-    not(psiElement().afterLeaf("."))
+    not(psiElement().afterLeaf(".")),
+    not(JavaCompletionContributor.IN_SWITCH_LABEL)
   );
 
   private final CompletionParameters myParameters;
@@ -115,7 +117,8 @@ public class JavaKeywordCompletion {
   JavaKeywordCompletion(CompletionParameters parameters, JavaCompletionSession session) {
     myParameters = parameters;
     mySession = session;
-    myKeywordMatcher = new FixingLayoutPlainMatcher(session.getMatcher().getPrefix());
+    myKeywordMatcher = Registry.is("ide.completion.typo.tolerance") ? session.getMatcher()
+                                                                    : new FixingLayoutPlainMatcher(session.getMatcher().getPrefix());
     myPosition = parameters.getPosition();
     myPrevLeaf = prevSignificantLeaf(myPosition);
 
@@ -401,7 +404,7 @@ public class JavaKeywordCompletion {
             }
 
             @Override
-            public void handleInsert(InsertionContext context, LookupElement item) {
+            public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
               super.handleInsert(context, item);
               TailType.insertChar(context.getEditor(), context.getTailOffset(), ';');
             }
@@ -415,10 +418,12 @@ public class JavaKeywordCompletion {
   }
 
   private void addExpressionKeywords(boolean statementPosition) {
-    if (psiElement(JavaTokenType.DOUBLE_COLON).accepts(myPrevLeaf)) {
+    if (AFTER_DOUBLE_COLON.accepts(myPosition)) {
       PsiMethodReferenceExpression parent = PsiTreeUtil.getParentOfType(myPosition, PsiMethodReferenceExpression.class);
-      TailType tail = parent != null && !LambdaHighlightingUtil.insertSemicolon(parent.getParent()) ? TailType.SEMICOLON : TailType.NONE;
-      addKeyword(new OverridableSpace(createKeyword(PsiKeyword.NEW), tail));
+      if (parent != null && canUseConstructorReference(parent)) {
+        TailType tail = !LambdaHighlightingUtil.insertSemicolon(parent.getParent()) ? TailType.SEMICOLON : TailType.NONE;
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.NEW), tail));
+      }
       return;
     }
 
@@ -438,6 +443,17 @@ public class JavaKeywordCompletion {
     if (isQualifiedNewContext()) {
       addKeyword(createKeyword(PsiKeyword.NEW));
     }
+  }
+
+  private static boolean canUseConstructorReference(PsiMethodReferenceExpression ref) {
+    PsiTypeElement qualifierType = ref.getQualifierType();
+    if (qualifierType == null) {
+      PsiElement qualifier = ref.getQualifier();
+      return qualifier instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)qualifier).resolve() != null;
+    }
+
+    if (qualifierType instanceof PsiClassType) return ((PsiClassType)qualifierType).resolve() != null;
+    return qualifierType instanceof PsiArrayType;
   }
 
   private boolean isQualifiedNewContext() {
@@ -490,7 +506,7 @@ public class JavaKeywordCompletion {
         createKeyword(PsiKeyword.INSTANCEOF),
         new InsertHandler<LookupElementDecorator<LookupElement>>() {
           @Override
-          public void handleInsert(InsertionContext context, LookupElementDecorator<LookupElement> item) {
+          public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
             TailType tailType = TailType.HUMBLE_SPACE_BEFORE_WORD;
             if (tailType.isApplicable(context)) {
               tailType.processTail(context.getEditor(), context.getTailOffset());
@@ -640,8 +656,9 @@ public class JavaKeywordCompletion {
            isAfterPrimitiveOrArrayType(position);
   }
 
-  static void addPrimitiveTypes(Consumer<LookupElement> result, PsiElement position, JavaCompletionSession session) {
+  static void addPrimitiveTypes(Consumer<? super LookupElement> result, PsiElement position, JavaCompletionSession session) {
     if (AFTER_DOT.accepts(position) ||
+        AFTER_DOUBLE_COLON.accepts(position) ||
         psiElement().inside(psiAnnotation()).accepts(position) && !expectsClassLiteral(position)) {
       return;
     }

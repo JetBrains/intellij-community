@@ -46,12 +46,14 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
     this.project = project;
   }
 
+  @Override
   public String getRollbackOperationName() {
     return HgVcsMessages.message("hg4idea.revert");
   }
 
+  @Override
   public void rollbackChanges(List<Change> changes, List<VcsException> vcsExceptions,
-    @NotNull RollbackProgressListener listener) {
+                              @NotNull RollbackProgressListener listener) {
     if (changes == null || changes.isEmpty()) {
       return;
     }
@@ -80,19 +82,18 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
           final File ioFile = file.getIOFile();
           if (ioFile.exists()) {
             if (!ioFile.delete()) {
-              //noinspection ThrowableInstanceNeverThrown
               vcsExceptions.add(new VcsException("Unable to delete file: " + file));
             }
           }
         }
         catch (Exception e) {
-          //noinspection ThrowableInstanceNeverThrown
           vcsExceptions.add(new VcsException("Unable to delete file: " + file, e));
         }
       }
     }
   }
 
+  @Override
   public void rollbackMissingFileDeletion(List<FilePath> files,
                                           List<VcsException> exceptions, RollbackProgressListener listener) {
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(project, getRollbackOperationName())) {
@@ -100,8 +101,9 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
     }
   }
 
+  @Override
   public void rollbackModifiedWithoutCheckout(List<VirtualFile> files,
-    List<VcsException> exceptions, RollbackProgressListener listener) {
+                                              List<VcsException> exceptions, RollbackProgressListener listener) {
   }
 
   public List<VcsException> rollbackMissingFileDeletion(List<FilePath> files) {
@@ -112,6 +114,7 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
     return null;
   }
 
+  @Override
   public void rollbackIfUnchanged(VirtualFile file) {
   }
 

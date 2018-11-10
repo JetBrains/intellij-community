@@ -14,8 +14,6 @@ import org.junit.Test
 import java.io.File
 import java.io.FileOutputStream
 import java.io.ObjectOutputStream
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class StartupActionScriptManagerTest : BareTestFixtureTestCase() {
   @Rule @JvmField val tempDir = TempDirectory()

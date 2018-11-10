@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.HelpID;
@@ -20,7 +6,6 @@ import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.compiler.ant.BuildProperties;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -37,7 +22,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.Table;
 import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -139,11 +123,13 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     properties.setValue(OUTPUT_FILE_NAME_PROPERTY, StringUtil.nullize(getOutputFileName()));
   }
 
+  @Override
   public void dispose() {
     saveSettings();
     super.dispose();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final ButtonGroup group = new ButtonGroup();
     group.add(myRbGenerateMultipleFilesBuild);
@@ -195,6 +181,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     myChunksPanel.add(scrollPane, BorderLayout.CENTER);
   }
 
+  @Override
   protected void doOKAction() {
     if (myTable != null) {
       TableCellEditor cellEditor = myTable.getCellEditor();
@@ -235,18 +222,18 @@ public class GenerateAntBuildDialog extends DialogWrapper {
   public boolean isIdeaHomeGenerated() {
     return myGenerateIdeaHomeProperty.isSelected();
   }
-  
+
   public String getOutputFileName() {
     return myOutputFileNameField.getText().trim();
   }
-  
+
   private static class MyTableModel extends AbstractTableModel {
     private static final int NUMBER_COLUMN = 0;
     private static final int NAME_COLUMN = 1;
 
     private final List<Pair<String, ListWithSelection>> myItems = new ArrayList<>();
 
-    private MyTableModel(List<Chunk<Module>> chunks) {
+    private MyTableModel(List<? extends Chunk<Module>> chunks) {
       for (final Chunk<Module> chunk : chunks) {
         final ListWithSelection<String> item = new ListWithSelection<>();
         for (final Module module : chunk.getNodes()) {
@@ -257,7 +244,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
       }
     }
 
-    private static String createCycleName(Chunk<Module> chunk) {
+    private static String createCycleName(Chunk<? extends Module> chunk) {
       final StringBuilder buf = new StringBuilder();
       for (Module module : chunk.getNodes()) {
         if (buf.length() > 0) {
@@ -279,18 +266,22 @@ public class GenerateAntBuildDialog extends DialogWrapper {
       return names;
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public int getRowCount() {
       return myItems.size();
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex == 1;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       switch (columnIndex) {
         case NUMBER_COLUMN:
@@ -302,6 +293,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case NUMBER_COLUMN:
@@ -313,12 +305,14 @@ public class GenerateAntBuildDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       if (columnIndex == NAME_COLUMN) {
         myItems.get(rowIndex).getSecond().select(aValue);
       }
     }
 
+    @Override
     public String getColumnName(int columnIndex) {
       switch (columnIndex) {
         case NUMBER_COLUMN:
@@ -331,6 +325,7 @@ public class GenerateAntBuildDialog extends DialogWrapper {
   }
 
   private static class MyTableCellRenderer extends DefaultTableCellRenderer {
+    @Override
     public Component getTableCellRendererComponent(JTable table,
                                                    Object value,
                                                    boolean isSelected,
@@ -346,12 +341,8 @@ public class GenerateAntBuildDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(HelpID.GENERATE_ANT_BUILD);
+  @Override
+  protected String getHelpId() {
+    return HelpID.GENERATE_ANT_BUILD;
   }
 }

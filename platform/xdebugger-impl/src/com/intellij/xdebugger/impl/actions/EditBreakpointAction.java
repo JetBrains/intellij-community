@@ -45,7 +45,7 @@ public class EditBreakpointAction extends XDebuggerActionBase implements DumbAwa
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
       Project project = getEventProject(e);
       if (editor == null || project == null) return;

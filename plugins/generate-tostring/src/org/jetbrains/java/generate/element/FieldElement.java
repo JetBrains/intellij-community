@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
  *
  * @see ElementFactory
  */
-@SuppressWarnings({"JavaDoc"})
 public class FieldElement extends AbstractElement implements Element {
 
     private boolean isConstant;
@@ -32,6 +31,7 @@ public class FieldElement extends AbstractElement implements Element {
     private boolean isModifierVolatile;
     private String accessor;
 
+  @Override
   public String getAccessor() {
         return accessor;
     }

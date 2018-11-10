@@ -58,6 +58,7 @@ public class LightKeyword extends LightElement implements PsiKeyword, PsiJavaTok
     return new LightKeyword(getManager(), myText);
   }
 
+  @Override
   public String toString(){
     return "PsiKeyword:" + getText();
   }

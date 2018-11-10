@@ -7,7 +7,10 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -31,6 +34,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,17 +45,13 @@ import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
 import java.util.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- */
 @State(
   name = "WindowManager",
   defaultStateAsResource = true,
   storages = @Storage(value = "window.manager.xml", roamingType = RoamingType.DISABLED)
 )
-public final class WindowManagerImpl extends WindowManagerEx implements NamedComponent, PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
+public final class WindowManagerImpl extends WindowManagerEx implements PersistentStateComponent<Element> {
+  private static final Logger LOG = Logger.getInstance(WindowManagerImpl.class);
 
   @NonNls public static final String FULL_SCREEN = "ide.frame.full.screen";
 
@@ -176,11 +176,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @Override
   public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
     return ScreenUtil.getAllScreensShape().contains(x, y, width, 1);
-  }
-
-  @Override
-  public final boolean isInsideScreenBounds(final int x, final int y) {
-    return ScreenUtil.getAllScreensShape().contains(x, y);
   }
 
   @Override
@@ -354,11 +349,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   @Override
-  public StatusBar getStatusBar(@NotNull Component c) {
-    return getStatusBar(c, null);
-  }
-
-  @Override
   public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {
     Component parent = UIUtil.findUltimateParent(c);
     if (parent instanceof IdeFrame) {
@@ -465,6 +455,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
     frame.setVisible(true);
     addFrameStateListener(frame);
+    IdeMenuBar.installAppMenuIfNeeded(frame);
   }
 
   @Override
@@ -507,6 +498,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       addFrameStateListener(frame);
     }
     myEventDispatcher.getMulticaster().frameCreated(frame);
+    IdeMenuBar.installAppMenuIfNeeded(frame);
 
     return frame;
   }
@@ -535,7 +527,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   @Override
-  public final void releaseFrame(final IdeFrameImpl frame) {
+  public final void releaseFrame(@NotNull final IdeFrameImpl frame) {
     myEventDispatcher.getMulticaster().beforeFrameReleased(frame);
 
     final Project project = frame.getProject();
@@ -665,7 +657,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   int updateFrameBounds(@NotNull IdeFrameImpl frame) {
     int extendedState = frame.getExtendedState();
     if (SystemInfo.isMacOSLion) {
-      ComponentPeer peer = frame.getPeer();
+      ComponentPeer peer = AWTAccessor.getComponentAccessor().getPeer(frame);
       if (peer instanceof FramePeer) {
         // frame.state is not updated by jdk so get it directly from peer
         extendedState = ((FramePeer)peer).getState();
@@ -692,12 +684,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @Override
   public final void setLayout(final DesktopLayout layout) {
     myLayout.copyFrom(layout);
-  }
-
-  @Override
-  @NotNull
-  public final String getComponentName() {
-    return "WindowManager";
   }
 
   public WindowWatcher getWindowWatcher() {

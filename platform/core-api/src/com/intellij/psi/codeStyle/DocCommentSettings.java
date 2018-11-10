@@ -40,6 +40,17 @@ public interface DocCommentSettings {
    */
   boolean isLeadingAsteriskEnabled();
 
+  /**
+   * @return True if at least some empty tags can to be removed.
+   */
+  boolean isRemoveEmptyTags();
+
+  /**
+   * Force or disable empty tags removal.
+   * @param removeEmptyTags True if all empty tags must be removed, false if all of them must be preserved.
+   */
+  void setRemoveEmptyTags(boolean removeEmptyTags);
+
   final class Defaults implements DocCommentSettings {
 
     @Override
@@ -54,6 +65,15 @@ public interface DocCommentSettings {
     @Override
     public boolean isLeadingAsteriskEnabled() {
       return true;
+    }
+
+    @Override
+    public boolean isRemoveEmptyTags() {
+      return false;
+    }
+
+    @Override
+    public void setRemoveEmptyTags(boolean removeEmptyTags) {
     }
   }
 }

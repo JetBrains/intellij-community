@@ -1,4 +1,3 @@
-import pydevconsole
 import sys
 
 if sys.version_info[0] >= 3:
@@ -100,7 +99,6 @@ class Completer:
 
         """
 
-
         def get_item(obj, attr):
             return obj[attr]
 
@@ -109,7 +107,7 @@ class Completer:
         filtered_builtin = {}
         for (key, val) in dict_iter_items(__builtin__.__dict__):
             # do not use dict comprehension for Py2.6 compatibility
-            if val not in (True, False, None):
+            if not ((val is True) or (val is False) or (val is None)):
                 filtered_builtin[key] = val
 
         for dict_with_comps in [filtered_builtin, self.namespace, self.global_namespace]: #@UndefinedVariable
@@ -170,12 +168,9 @@ def generate_completions_as_xml(frame, act_tok):
     updated_globals.update(frame.f_globals)
     updated_globals.update(frame.f_locals) #locals later because it has precedence over the actual globals
 
-    if pydevconsole.IPYTHON:
-        completions = pydevconsole.get_completions(act_tok, act_tok, updated_globals, frame.f_locals)
-    else:
-        completer = Completer(updated_globals, None)
-        #list(tuple(name, descr, parameters, type))
-        completions = completer.complete(act_tok)
+    completer = Completer(updated_globals, None)
+    #list(tuple(name, descr, parameters, type))
+    completions = completer.complete(act_tok)
 
     valid_xml = pydevd_xml.make_valid_xml_value
     quote = pydevd_xml.quote

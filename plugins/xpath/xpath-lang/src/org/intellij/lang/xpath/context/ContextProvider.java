@@ -124,7 +124,6 @@ public abstract class ContextProvider {
         return contextElement != null && contextElement.isValid();
     }
 
-    @SuppressWarnings({ "ClassReferencesSubclass" })
     private static ContextProvider getFromExtensionOrDefault(PsiFile psiFile) {
         if (psiFile instanceof XPathFile) {
             final ContextProvider instance = ContextProviderExtension.getInstance((XPathFile)psiFile);
@@ -136,7 +135,6 @@ public abstract class ContextProvider {
         return new DefaultProvider(PsiTreeUtil.getContextOfType(psiFile, XmlElement.class, true), psiFile.getLanguage());
     }
 
-    @SuppressWarnings({ "ClassReferencesSubclass" })
     @NotNull
     public static ContextProvider getContextProvider(PsiElement element) {
         return element instanceof XPathElement ?
@@ -248,31 +246,37 @@ public abstract class ContextProvider {
           }
         }
 
+        @Override
         @NotNull
         public ContextType getContextType() {
             return myContextType;
         }
 
+        @Override
         @Nullable
         public XmlElement getContextElement() {
             return myContextElement;
         }
 
+        @Override
         @Nullable
         public NamespaceContext getNamespaceContext() {
           return myNamespaceContext;
         }
 
+        @Override
         @Nullable
         public VariableContext getVariableContext() {
             return null;
         }
 
+        @Override
         @Nullable
         public Set<QName> getAttributes(boolean forValidation) {
             return null;
         }
 
+        @Override
         @Nullable
         public Set<QName> getElements(boolean forValidation) {
             return null;

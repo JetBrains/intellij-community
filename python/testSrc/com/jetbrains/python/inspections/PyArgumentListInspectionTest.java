@@ -275,6 +275,20 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-26007
+  public void testInitializingCollectionsNamedTupleInheritor() {
+    doTestByText("from collections import namedtuple\n" +
+                 "\n" +
+                 "nt = namedtuple(\"nt\", \"f1 f2\")\n" +
+                 "\n" +
+                 "class mynt(nt):\n" +
+                 "    def __new__(cls, p1):\n" +
+                 "        # expected: explicit namedtuple's __init__ and __new__ are not supported yet\n" +
+                 "        return nt.__new__(cls, p1, <warning descr=\"Unexpected argument\">10</warning>)\n" +
+                 "\n" +
+                 "mynt(1)");
+  }
+
   // PY-22971
   public void testOverloadsAndImplementationInClass() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
@@ -346,5 +360,15 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   // PY-25497
   public void testObjectMethodInPossiblyInheritanceChain() {
     doTest();
+  }
+
+  // PY-28127
+  public void testInitializingTypeVar() {
+    doTest();
+  }
+
+  // PY-30182
+  public void testAnotherMethodIsWrappedIntoStatic() {
+    doMultiFileTest();
   }
 }

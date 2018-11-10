@@ -123,7 +123,7 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
   private static class ScriptSourceMapCalculator implements CachedValueProvider<Map<File, String>> {
     private final Module myModule;
 
-    public ScriptSourceMapCalculator(Module module) {
+    ScriptSourceMapCalculator(Module module) {
       myModule = module;
     }
 

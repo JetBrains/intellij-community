@@ -26,7 +26,7 @@ public class CoverageListNode extends AbstractTreeNode {
   private final FileStatusManager myFileStatusManager;
 
   public CoverageListNode(Project project, 
-                          final PsiNamedElement classOrPackage,
+                          @NotNull PsiNamedElement classOrPackage,
                           CoverageSuitesBundle bundle,
                           CoverageViewManager.StateBean stateBean) {
     super(project, classOrPackage);
@@ -44,7 +44,7 @@ public class CoverageListNode extends AbstractTreeNode {
   }
 
   @Override
-  protected void update(final PresentationData presentation) {
+  protected void update(@NotNull final PresentationData presentation) {
     ApplicationManager.getApplication().runReadAction(() -> {
       final Object value = getValue();
       if (value instanceof PsiNamedElement) {

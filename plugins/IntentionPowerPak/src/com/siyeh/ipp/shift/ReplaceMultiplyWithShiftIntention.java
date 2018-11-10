@@ -15,9 +15,10 @@
  */
 package com.siyeh.ipp.shift;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.siyeh.IntentionPowerPackBundle;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
 
+  @Override
   protected String getTextForElement(PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       final PsiBinaryExpression exp = (PsiBinaryExpression)element;
@@ -39,9 +41,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
       else {
         operatorString = ">>";
       }
-      return IntentionPowerPackBundle.message(
-        "replace.some.operator.with.other.intention.name",
-        sign.getText(), operatorString);
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", sign.getText(), operatorString);
     }
     else {
       final PsiAssignmentExpression exp =
@@ -55,17 +55,17 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
       else {
         assignString = ">>=";
       }
-      return IntentionPowerPackBundle.message(
-        "replace.some.operator.with.other.intention.name",
-        sign.getText(), assignString);
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", sign.getText(), assignString);
     }
   }
 
+  @Override
   @NotNull
   public PsiElementPredicate getElementPredicate() {
     return new MultiplyByPowerOfTwoPredicate();
   }
 
+  @Override
   public void processIntention(PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       replaceMultiplyOrDivideWithShift((PsiBinaryExpression)element);
@@ -78,7 +78,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
 
   private static void replaceMultiplyOrDivideAssignWithShiftAssign(PsiAssignmentExpression expression) {
     final PsiExpression lhs = expression.getLExpression();
-    final PsiExpression rhs = expression.getRExpression();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getRExpression());
     final IElementType tokenType = expression.getOperationTokenType();
     final String assignString;
     if (tokenType.equals(JavaTokenType.ASTERISKEQ)) {
@@ -94,7 +94,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
 
   private static void replaceMultiplyOrDivideWithShift(PsiBinaryExpression expression) {
     final PsiExpression lhs = expression.getLOperand();
-    final PsiExpression rhs = expression.getROperand();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
     final IElementType tokenType = expression.getOperationTokenType();
     final String operatorString;
     if (tokenType.equals(JavaTokenType.ASTERISK)) {

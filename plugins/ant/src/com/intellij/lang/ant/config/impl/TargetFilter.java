@@ -47,11 +47,13 @@ public final class TargetFilter implements JDOMExternalizable {
     myVisible = isVisible;
   }
 
+  @Override
   public void readExternal(Element element) {
     myTargetName = element.getAttributeValue(FILTER_TARGET_NAME);
     myVisible = Boolean.valueOf(element.getAttributeValue(FILTER_IS_VISIBLE));
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     final String targetName = getTargetName();
     if (targetName == null) {

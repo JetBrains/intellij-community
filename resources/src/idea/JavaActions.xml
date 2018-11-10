@@ -118,7 +118,9 @@
 
     <group id="ToggleBreakpointAction">
       <action id="ToggleMethodBreakpoint" class="com.intellij.debugger.actions.ToggleMethodBreakpointAction"/>
-      <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction"/>
+      <action id="ToggleFieldBreakpoint" class="com.intellij.debugger.actions.ToggleFieldBreakpointAction">
+        <add-to-group group-id="XDebugger.ValueGroup" anchor="after" relative-to-action="Debugger.AddToWatch"/>
+      </action>
       <!--Moved to XDebugger <action id="ToggleBreakpointEnabled" class="com.intellij.debugger.actions.ToggleBreakpointEnabledAction"/>-->
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
     </group>
@@ -139,24 +141,20 @@
       <add-to-group group-id="Internal.Errors"/>
     </action>
 
-    <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
-            text="Generate Hierarchy Visitor...">
-      <add-to-group group-id="Internal"/>
-    </action>
+    <group id="Internal.Java" text="Java" popup="true" internal="true" compact="true">
+      <action id="GenerateVisitorByHierarchy" internal="true" class="com.intellij.internal.GenerateVisitorByHierarchyAction"
+              text="Generate Hierarchy Visitor..."/>
 
-    <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"
-            text="List Used Icons">
-      <add-to-group group-id="Internal"/>
-    </action>
-    <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"
-            text="Collect Java Expression Statistics">
-      <add-to-group group-id="Internal"/>
-    </action>
+      <action id="UsedIconsListing" internal="true" class="com.intellij.internal.UsedIconsListingAction"
+              text="List Used Icons"/>
+      <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"
+              text="Collect Java Expression Statistics"/>
 
-    <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
-            text="List Static Field Initializers">
+      <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"
+              text="List Static Field Initializers"/>
+
       <add-to-group group-id="Internal"/>
-    </action>
+    </group>
 
     <group id="JavaDebuggerActions">
       <action id="Debugger.CustomizeContextView" class="com.intellij.debugger.actions.CustomizeContextViewAction">
@@ -234,7 +232,7 @@
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
 
-      <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction" text="Async Stacktraces">
+      <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction" text="Async Stack Traces">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       </action>
       <action id="Debugger.SwitchToTheNextContext" class="com.intellij.debugger.actions.SwitchToTheNextContextAction"

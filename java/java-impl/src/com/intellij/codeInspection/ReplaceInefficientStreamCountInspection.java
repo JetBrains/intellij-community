@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -18,9 +19,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
-/**
- * @author Tagir Valeev
- */
 public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STREAM_COUNT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "count").parameterCount(0);
@@ -248,7 +246,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       String replacementText = (addCast ? "(long) " : "") + ct.text(methodExpression)+"()";
       PsiElement replacement = ct.replaceAndRestoreComments(toReplace, replacementText);
       if (replacement instanceof PsiTypeCastExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)replacement)) {
-        RedundantCastUtil.removeCast((PsiTypeCastExpression)replacement);
+        RemoveRedundantCastUtil.removeCast((PsiTypeCastExpression)replacement);
       }
     }
 

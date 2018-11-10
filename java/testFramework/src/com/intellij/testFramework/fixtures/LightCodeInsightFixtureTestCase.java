@@ -13,10 +13,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,15 +24,22 @@ import java.io.File;
  */
 public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   protected static class ProjectDescriptor extends DefaultLightProjectDescriptor {
-    private final LanguageLevel myLanguageLevel;
+    protected final LanguageLevel myLanguageLevel;
+    private final boolean myWithAnnotations;
 
     public ProjectDescriptor(@NotNull LanguageLevel languageLevel) {
+      this(languageLevel, false);
+    }
+
+    public ProjectDescriptor(@NotNull LanguageLevel languageLevel, boolean withAnnotations) {
       myLanguageLevel = languageLevel;
+      myWithAnnotations = withAnnotations;
     }
 
     @Override
     public Sdk getSdk() {
-      return IdeaTestUtil.getMockJdk(myLanguageLevel.toJavaVersion());
+      Sdk jdk = IdeaTestUtil.getMockJdk(myLanguageLevel.toJavaVersion());
+      return myWithAnnotations ? PsiTestUtil.addJdkAnnotations(jdk) : jdk;
     }
 
     @Override
@@ -48,11 +52,16 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   @NotNull public static final LightProjectDescriptor JAVA_1_5 = new ProjectDescriptor(LanguageLevel.JDK_1_5);
   @NotNull public static final LightProjectDescriptor JAVA_1_6 = new ProjectDescriptor(LanguageLevel.JDK_1_6);
   @NotNull public static final LightProjectDescriptor JAVA_1_7 = new ProjectDescriptor(LanguageLevel.JDK_1_7);
+  @NotNull public static final LightProjectDescriptor JAVA_1_7_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_1_7, true);
   @NotNull public static final LightProjectDescriptor JAVA_8 = new ProjectDescriptor(LanguageLevel.JDK_1_8);
+  @NotNull public static final LightProjectDescriptor JAVA_8_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_1_8, true);
   @NotNull public static final LightProjectDescriptor JAVA_9 = new ProjectDescriptor(LanguageLevel.JDK_1_9);
+  @NotNull public static final LightProjectDescriptor JAVA_9_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_1_9, true);
   @NotNull public static final LightProjectDescriptor JAVA_10 = new ProjectDescriptor(LanguageLevel.JDK_10);
+  @NotNull public static final LightProjectDescriptor JAVA_10_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_10, true);
   @NotNull public static final LightProjectDescriptor JAVA_11 = new ProjectDescriptor(LanguageLevel.JDK_11);
-  @NotNull public static final LightProjectDescriptor JAVA_11_PREVIEW = new ProjectDescriptor(LanguageLevel.JDK_11_PREVIEW);
+  @NotNull public static final LightProjectDescriptor JAVA_12 = new ProjectDescriptor(LanguageLevel.JDK_12_PREVIEW);
+  @NotNull public static final LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X);
 
   public static final LightProjectDescriptor JAVA_LATEST = new ProjectDescriptor(LanguageLevel.HIGHEST) {
     @Override
@@ -73,8 +82,8 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
 
-    myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
 
     myModule = myFixture.getModule();
 
@@ -82,7 +91,6 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   }
 
   @Override
-  @SuppressWarnings("Duplicates")
   protected void tearDown() throws Exception {
     try {
       myFixture.tearDown();
@@ -130,7 +138,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase {
   }
 
   public PsiElementFactory getElementFactory() {
-    return JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    return JavaPsiFacade.getElementFactory(getProject());
   }
 
   protected PsiFile createLightFile(FileType fileType, String text) {

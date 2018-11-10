@@ -1,27 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs;
 
-import com.intellij.notification.impl.ui.StickyButton;
-import com.intellij.notification.impl.ui.StickyButtonUI;
 import com.intellij.ui.ColorChooser;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +16,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -145,52 +129,14 @@ public class ColorSelectionComponent extends JPanel {
     setSelectedColor(selectedColorName);
   }
 
-  private class ColorButton extends StickyButton {
-    protected Color myColor;
-
-    protected ColorButton(final String text, final Color color) {
-      super(FileColorManagerImpl.getAlias(text));
-      setUI(new ColorButtonUI());
-      myColor = color;
-      addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          doPerformAction(e);
-        }
-      });
-
-      setOpaque(false);
-      setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+  private class ColorButton extends ColorButtonBase {
+    protected ColorButton(String text, Color color) {
+      super(text, color);
     }
 
+    @Override
     protected void doPerformAction(ActionEvent e) {
       stateChanged();
-    }
-
-    Color getColor() {
-      return myColor;
-    }
-
-    public void setColor(Color color) {
-      myColor = color;
-    }
-
-    @Override
-    public Color getForeground() {
-      if (getModel().isSelected()) {
-        return JBColor.foreground();
-      }
-      else if (getModel().isRollover()) {
-        return JBColor.GRAY;
-      }
-      else {
-        return getColor();
-      }
-    }
-
-    @Override
-    protected ButtonUI createUI() {
-      return new ColorButtonUI();
     }
   }
 
@@ -202,7 +148,7 @@ public class ColorSelectionComponent extends JPanel {
 
   private class CustomColorButton extends ColorButton {
     private CustomColorButton() {
-      super(CUSTOM_COLOR_NAME, Color.WHITE);
+      super(CUSTOM_COLOR_NAME, JBColor.WHITE);
       myColor = null;
     }
 
@@ -217,41 +163,26 @@ public class ColorSelectionComponent extends JPanel {
     }
 
     @Override
-    public Color getForeground() {
-      return getModel().isSelected() ? Color.BLACK : JBColor.GRAY;
+    protected ButtonUI createUI() {
+      return new ColorButtonUI() {
+        @Nullable
+        @Override
+        protected Color getUnfocusedBorderColor(@NotNull ColorButtonBase button) {
+          if (UIUtil.isUnderDarcula()) return JBColor.GRAY;
+          return super.getUnfocusedBorderColor(button);
+        }
+      };
     }
 
+    @Override
+    public Color getForeground() {
+      return getModel().isSelected() ? JBColor.BLACK : JBColor.GRAY;
+    }
+
+    @NotNull
     @Override
     Color getColor() {
-      return myColor == null ? Color.WHITE : myColor;
-    }
-  }
-
-  private static class ColorButtonUI extends StickyButtonUI<ColorButton> {
-
-    @Override
-    protected Color getBackgroundColor(final ColorButton button) {
-      return button.getColor();
-    }
-
-    @Override
-    protected Color getFocusColor(ColorButton button) {
-      return button.getColor().darker();
-    }
-
-    @Override
-    protected Color getSelectionColor(ColorButton button) {
-      return button.getColor();
-    }
-
-    @Override
-    protected Color getRolloverColor(ColorButton button) {
-      return button.getColor();
-    }
-
-    @Override
-    protected int getArcSize() {
-      return 20;
+      return myColor == null ? JBColor.WHITE : myColor;
     }
   }
 }

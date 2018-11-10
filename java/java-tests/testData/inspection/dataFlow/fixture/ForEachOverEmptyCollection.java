@@ -16,6 +16,13 @@ public class ForEachOverEmptyCollection {
     }
   }
 
+  void testParens(Collection<?> c) {
+    if(!c.isEmpty()) return;
+    for (Object o : (<warning descr="Collection 'c' is always empty">c</warning>)) {
+      System.out.println(o);
+    }
+  }
+
   void testArrayAfter(String[] arr) {
     int count = 0;
     boolean hasItem = false;

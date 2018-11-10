@@ -34,14 +34,14 @@ public interface PackageSet {
    * Applies given {@code transformation} to all inner {@code PackageSet} of this instance and returns the modified instance or {@code this}
    * if no modification in inner {@code PackageSet} were made.
    */
-  default PackageSet map(Function<PackageSet, PackageSet> transformation) {
+  default PackageSet map(@NotNull Function<? super PackageSet, ? extends PackageSet> transformation) {
     return transformation.apply(this);
   }
 
   /**
    * @return {@code true} if any inner {@code PackageSet} of this instance matched given predicate
    */
-  default boolean anyMatches(Predicate<PackageSet> predicate) {
+  default boolean anyMatches(@NotNull Predicate<? super PackageSet> predicate) {
     return predicate.test(this);
   }
 }

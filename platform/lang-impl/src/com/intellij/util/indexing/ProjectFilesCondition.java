@@ -27,7 +27,7 @@ class ProjectFilesCondition implements Condition<VirtualFile> {
   private int myFilesFromOtherProjects;
   private final FileBasedIndexImpl.ProjectIndexableFilesFilter myIndexableFilesFilter;
 
-  public ProjectFilesCondition(FileBasedIndexImpl.ProjectIndexableFilesFilter indexableFilesFilter,
+  ProjectFilesCondition(FileBasedIndexImpl.ProjectIndexableFilesFilter indexableFilesFilter,
                                GlobalSearchScope filter,
                                VirtualFile restrictedTo,
                                boolean includeFilesFromOtherProjects

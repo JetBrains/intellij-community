@@ -30,14 +30,17 @@ public class ValueProperty<T> extends AbstractProperty<T> {
     myDefault = defaultValue;
   }
 
+  @Override
   public T copy(T value) {
     return value;
   }
 
+  @Override
   public T getDefault(AbstractProperty.AbstractPropertyContainer container) {
     return myDefault;
   }
 
+  @Override
   public String getName() {
     return myName;
   }

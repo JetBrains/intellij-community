@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User : ktisha
  */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class RestFormattingModelBuilder implements FormattingModelBuilderEx, CustomFormattingModelBuilder {
 
   @Override
@@ -53,7 +52,7 @@ public class RestFormattingModelBuilder implements FormattingModelBuilderEx, Cus
                                      @NotNull CodeStyleSettings settings,
                                      @NotNull FormattingMode mode) {
 
-    final RestBlock block = new RestBlock(null, element.getNode(), null, Indent.getNoneIndent(), null);
+    final RestBlock block = new RestBlock(element.getNode(), null, Indent.getNoneIndent(), null);
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
   }
 

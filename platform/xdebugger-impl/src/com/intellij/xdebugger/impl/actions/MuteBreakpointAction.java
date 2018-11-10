@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class MuteBreakpointAction extends ToggleAction {
   @Override
-  public boolean isSelected(final AnActionEvent e) {
+  public boolean isSelected(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {
@@ -41,7 +41,7 @@ public class MuteBreakpointAction extends ToggleAction {
   }
 
   @Override
-  public void setSelected(final AnActionEvent e, final boolean state) {
+  public void setSelected(@NotNull final AnActionEvent e, final boolean state) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       for (DebuggerSupport support : DebuggerSupport.getDebuggerSupports()) {

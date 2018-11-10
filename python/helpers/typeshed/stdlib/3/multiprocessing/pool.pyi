@@ -1,22 +1,24 @@
-# Stubs for multiprocessing.pool
-
-# NOTE: These are incomplete!
-
 from typing import (
-    Any, Callable, ContextManager, Iterable, Mapping, Optional, Dict, List,
-    TypeVar,
+    Any, Callable, ContextManager, Iterable, Mapping, Optional, List,
+    TypeVar, Generic,
 )
 
-_T = TypeVar('_T', bound='Pool')
+_PT = TypeVar('_PT', bound='Pool')
+_S = TypeVar('_S')
+_T = TypeVar('_T')
 
-class AsyncResult():
-    def get(self, timeout: Optional[float] = ...) -> Any: ...
+class AsyncResult(Generic[_T]):
+    def get(self, timeout: Optional[float] = ...) -> _T: ...
     def wait(self, timeout: Optional[float] = ...) -> None: ...
     def ready(self) -> bool: ...
     def successful(self) -> bool: ...
 
-class IMapIterator(Iterable[Any]):
-    def next(self, timeout: Optional[float] = ...) -> Any: ...
+_IMIT = TypeVar('_IMIT', bound=IMapIterator)
+
+class IMapIterator(Iterable[_T]):
+    def __iter__(self: _IMIT) -> _IMIT: ...
+    def next(self, timeout: Optional[float] = ...) -> _T: ...
+    def __next__(self, timeout: Optional[float] = ...) -> _T: ...
 
 class Pool(ContextManager[Pool]):
     def __init__(self, processes: Optional[int] = ...,
@@ -25,46 +27,46 @@ class Pool(ContextManager[Pool]):
                  maxtasksperchild: Optional[int] = ...,
                  context: Optional[Any] = ...) -> None: ...
     def apply(self,
-              func: Callable[..., Any],
+              func: Callable[..., _T],
               args: Iterable[Any] = ...,
-              kwds: Dict[str, Any] = ...) -> Any: ...
+              kwds: Mapping[str, Any] = ...) -> _T: ...
     def apply_async(self,
-                func: Callable[..., Any],
+                func: Callable[..., _T],
                 args: Iterable[Any] = ...,
-                kwds: Dict[str, Any] = ...,
-                callback: Optional[Callable[..., None]] = ...,
-                error_callback: Optional[Callable[[BaseException], None]] = ...) -> AsyncResult: ...
+                kwds: Mapping[str, Any] = ...,
+                callback: Optional[Callable[[_T], None]] = ...,
+                error_callback: Optional[Callable[[BaseException], None]] = ...) -> AsyncResult[_T]: ...
     def map(self,
-            func: Callable[..., Any],
-            iterable: Iterable[Any] = ...,
-            chunksize: Optional[int] = ...) -> List[Any]: ...
-    def map_async(self, func: Callable[..., Any],
-                  iterable: Iterable[Any] = ...,
+            func: Callable[[_S], _T],
+            iterable: Iterable[_S] = ...,
+            chunksize: Optional[int] = ...) -> List[_T]: ...
+    def map_async(self, func: Callable[[_S], _T],
+                  iterable: Iterable[_S] = ...,
                   chunksize: Optional[int] = ...,
-                  callback: Optional[Callable[..., None]] = ...,
-                  error_callback: Optional[Callable[[BaseException], None]] = ...) -> AsyncResult: ...
+                  callback: Optional[Callable[[_T], None]] = ...,
+                  error_callback: Optional[Callable[[BaseException], None]] = ...) -> AsyncResult[List[_T]]: ...
     def imap(self,
-             func: Callable[..., Any],
-             iterable: Iterable[Any] = ...,
-             chunksize: Optional[int] = ...) -> IMapIterator: ...
+             func: Callable[[_S], _T],
+             iterable: Iterable[_S] = ...,
+             chunksize: Optional[int] = ...) -> IMapIterator[_T]: ...
     def imap_unordered(self,
-                       func: Callable[..., Any],
-                       iterable: Iterable[Any] = ...,
-                       chunksize: Optional[int] = ...) -> IMapIterator: ...
+                       func: Callable[[_S], _T],
+                       iterable: Iterable[_S] = ...,
+                       chunksize: Optional[int] = ...) -> IMapIterator[_T]: ...
     def starmap(self,
-                func: Callable[..., Any],
+                func: Callable[..., _T],
                 iterable: Iterable[Iterable[Any]] = ...,
-                chunksize: Optional[int] = ...) -> List[Any]: ...
+                chunksize: Optional[int] = ...) -> List[_T]: ...
     def starmap_async(self,
-                      func: Callable[..., Any],
+                      func: Callable[..., _T],
                       iterable: Iterable[Iterable[Any]] = ...,
                       chunksize: Optional[int] = ...,
-                      callback: Optional[Callable[..., None]] = ...,
-                      error_callback: Optional[Callable[[BaseException], None]] = ...) -> AsyncResult: ...
+                      callback: Optional[Callable[[_T], None]] = ...,
+                      error_callback: Optional[Callable[[BaseException], None]] = ...) -> AsyncResult[List[_T]]: ...
     def close(self) -> None: ...
     def terminate(self) -> None: ...
     def join(self) -> None: ...
-    def __enter__(self: _T) -> _T: ...
+    def __enter__(self: _PT) -> _PT: ...
 
 
 class ThreadPool(Pool, ContextManager[ThreadPool]):

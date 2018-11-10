@@ -50,19 +50,23 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
    * @param e the action event representing the place and context in which the selected state is queried.
    * @return true if the action is selected, false otherwise
    */
-  public abstract boolean isSelected(AnActionEvent e);
+  public abstract boolean isSelected(@NotNull AnActionEvent e);
 
   /**
    * Sets the selected state of the action to the specified value.
    * @param e     the action event which caused the state change.
    * @param state the new selected state of the action.
    */
-  public abstract void setSelected(AnActionEvent e, boolean state);
+  public abstract void setSelected(@NotNull AnActionEvent e, boolean state);
 
   @Override
   public void update(@NotNull final AnActionEvent e){
     boolean selected = isSelected(e);
     final Presentation presentation = e.getPresentation();
     presentation.putClientProperty(SELECTED_PROPERTY, selected);
+    if (e.isFromContextMenu()) {
+      //force to show check marks instead of toggled icons in context menu
+      presentation.setIcon(null);
+    }
   }
 }

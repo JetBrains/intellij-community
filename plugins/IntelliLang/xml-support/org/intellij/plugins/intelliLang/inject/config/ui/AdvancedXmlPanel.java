@@ -40,24 +40,28 @@ public class AdvancedXmlPanel extends AbstractInjectionPanel<AbstractTagInjectio
     $$$setupUI$$$(); // see IDEA-9987
   }
 
+  @Override
   protected void apply(AbstractTagInjection other) {
     other.setValuePattern(myValuePattern.getText());
     other.setSingleFile(mySingleFileCheckBox.isSelected());
     other.setXPathCondition(myXPathCondition.getText());
   }
 
+  @Override
   protected void resetImpl() {
     myValuePattern.setText(myOrigInjection.getValuePattern());
     mySingleFileCheckBox.setSelected(myOrigInjection.isSingleFile());
     myXPathCondition.setText(myOrigInjection.getXPathCondition());
   }
 
+  @Override
   public JPanel getComponent() {
     return myRoot;
   }
 
   private void createUIComponents() {
     myValuePattern = new LanguageTextField(RegExpLanguage.INSTANCE, myProject, myOrigInjection.getValuePattern(), new LanguageTextField.SimpleDocumentCreator() {
+      @Override
       public void customizePsiFile(PsiFile psiFile) {
         psiFile.putCopyableUserData(ValueRegExpAnnotator.KEY, Boolean.TRUE);
       }
@@ -67,6 +71,7 @@ public class AdvancedXmlPanel extends AbstractInjectionPanel<AbstractTagInjectio
     final XPathSupportProxy proxy = XPathSupportProxy.getInstance();
     myXPathCondition = new LanguageTextField(proxy != null ? InjectedLanguage.findLanguageById("XPath") : null, myProject,
                                              myOrigInjection.getXPathCondition(), new LanguageTextField.SimpleDocumentCreator() {
+        @Override
         public void customizePsiFile(PsiFile psiFile) {
           // important to get proper validation & completion for Jaxen's built-in and PSI functions
           // like lower-case(), file-type(), file-ext(), file-name(), etc.

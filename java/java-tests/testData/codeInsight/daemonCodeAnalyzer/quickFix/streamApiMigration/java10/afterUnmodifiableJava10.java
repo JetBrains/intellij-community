@@ -16,7 +16,7 @@ class Test {
   }
 
   Set<String> test4(String[] array) {
-      Set<String> result = Arrays.stream(array).filter(s -> !s.isEmpty()).collect(Collectors.toCollection(TreeSet::new));
+    Set<String> result = Arrays.stream(array).filter(s -> !s.isEmpty()).collect(Collectors.toCollection(TreeSet::new));
       // toUnmodifiableSet will not preserve order; not suggested here
     return Collections.unmodifiableSet(result);
   }
@@ -26,7 +26,7 @@ class Test {
   }
 
   Map<String, Integer> map1(List<String> input) {
-      Map<String, Integer> result = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toMap(s -> s, String::length, (a, b) -> b, TreeMap::new));
+    Map<String, Integer> result = input.stream().filter(s -> !s.isEmpty()).collect(Collectors.toMap(s -> s, String::length, (a, b) -> b, TreeMap::new));
       return Collections.unmodifiableMap(result);
   }
 

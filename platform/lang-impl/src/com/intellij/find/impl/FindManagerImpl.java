@@ -57,6 +57,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StringPattern;
@@ -82,8 +83,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -215,6 +216,7 @@ public class FindManagerImpl extends FindManager {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
+    myFindInProjectModel.setMultiline(Registry.is("ide.find.as.popup") && Registry.is("ide.find.as.popup.allow.multiline"));
     myFindInProjectModel.setSearchInProjectFiles(false);
     return myFindInProjectModel;
   }
@@ -288,7 +290,7 @@ public class FindManagerImpl extends FindManager {
     return findStringLoop(text, offset, model, file, getFindContextPredicate(model, file, text));
   }
 
-  private FindResult findStringLoop(CharSequence text, int offset, FindModel model, VirtualFile file, @Nullable Predicate<FindResult> filter) {
+  private FindResult findStringLoop(CharSequence text, int offset, FindModel model, VirtualFile file, @Nullable Predicate<? super FindResult> filter) {
     final char[] textArray = CharArrayUtil.fromSequenceWithoutCopying(text);
     while(true) {
       FindResult result = doFindString(text, textArray, offset, model, file);
@@ -449,6 +451,7 @@ public class FindManagerImpl extends FindManager {
         newStringToFind = StringUtil.replace(s, "\n", "\\n\\s*"); // add \\s* for convenience
       } else {
         newStringToFind = StringUtil.escapeToRegexp(s);
+        newStringToFind = newStringToFind.replaceAll("\\\\n\\s*", "\\\\n\\\\s*");
         model.setRegularExpressions(true);
       }
       model.setStringToFind(newStringToFind);
@@ -653,6 +656,8 @@ public class FindManagerImpl extends FindManager {
               }
             }
           }
+          
+          final int tokenContentStart = start;
 
           while (true) {
             FindResultImpl findResult = null;
@@ -671,16 +676,18 @@ public class FindManagerImpl extends FindManager {
               }
             }
             else if (start <= end) {
-              data.matcher.reset(StringPattern.newBombedCharSequence(text.subSequence(start, end)));
+              data.matcher.reset(StringPattern.newBombedCharSequence(text.subSequence(tokenContentStart, end)));
+              data.matcher.region(start - tokenContentStart, end - tokenContentStart);
+              data.matcher.useTransparentBounds(true);
               if (data.matcher.find()) {
-                final int matchEnd = start + data.matcher.end();
-                int matchStart = start + data.matcher.start();
+                final int matchEnd = tokenContentStart + data.matcher.end();
+                int matchStart = tokenContentStart + data.matcher.start();
                 if (matchStart >= offset || !scanningForward) {
                   findResult = new FindResultImpl(matchStart, matchEnd);
                 }
                 else {
                   int diff = 0;
-                  if (start == end) {
+                  if (start == end || start == matchEnd) {
                     diff = scanningForward ? 1 : -1;
                   }
                   start = matchEnd + diff;
@@ -776,7 +783,6 @@ public class FindManagerImpl extends FindManager {
           ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
         String content = stringToFind + " produced stack overflow when matching content of the file";
         LOG.info(content);
-        //noinspection SSBasedInspection
         GROUP.createNotification("Regular expression failed to match",
                                      content + " " + file.getPath(),
                                      NotificationType.ERROR,

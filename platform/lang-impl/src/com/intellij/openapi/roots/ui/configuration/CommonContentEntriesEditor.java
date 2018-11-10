@@ -67,7 +67,6 @@ import java.util.Map;
 public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor");
   public static final String NAME = ProjectBundle.message("module.paths.title");
-  private static final Color BACKGROUND_COLOR = UIUtil.getListBackground();
 
   protected ContentEntryTreeEditor myRootTreeEditor;
   private MyContentEntryEditorListener myContentEntryEditorListener;
@@ -165,7 +164,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     group.add(action);
 
     myEditorsPanel = new ScrollablePanel(new VerticalStackLayout());
-    myEditorsPanel.setBackground(BACKGROUND_COLOR);
+    myEditorsPanel.setBackground(UIUtil.getListBackground());
     JScrollPane myScrollPane = ScrollPaneFactory.createScrollPane(myEditorsPanel, true);
     final ToolbarPanel toolbarPanel = new ToolbarPanel(myScrollPane, group);
     int border = myWithBorders ? 1 : 0;
@@ -416,7 +415,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private class AddContentEntryAction extends IconWithTextAction implements DumbAware {
     private final FileChooserDescriptor myDescriptor;
 
-    public AddContentEntryAction() {
+    AddContentEntryAction() {
       super(ProjectBundle.message("module.paths.add.content.action"),
             ProjectBundle.message("module.paths.add.content.action.description"), AllIcons.General.Add);
       myDescriptor = new FileChooserDescriptor(false, true, true, false, true, true) {
@@ -432,7 +431,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       FileChooser.chooseFiles(myDescriptor, myProject, myLastSelectedDir, files -> {
         myLastSelectedDir = files.get(0);
         addContentEntries(VfsUtilCore.toVirtualFileArray(files));

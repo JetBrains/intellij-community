@@ -19,7 +19,8 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
   }
 
   fun generateCommandsAndEvents() {
-    for (command in domain.commands()) {
+    val commands = domain.commands().sortedBy(ProtocolMetaModel.Command::name)
+    for (command in commands) {
       val hasResponse = command.returns != null
       val returnType = if (hasResponse) generator.naming.commandResult.getShortName(command.name()) else "Unit"
       generateTopLevelOutputClass(generator.naming.params, command.name(), command.description, "${generator.naming.requestClassName}<$returnType>", {
@@ -38,7 +39,8 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
     }
 
     if (domain.events != null) {
-      for (event in domain.events!!) {
+      val events = domain.events!!.sortedBy(ProtocolMetaModel.Event::name)
+      for (event in events) {
         generateEvenData(event)
         generator.jsonProtocolParserClassNames.add(generator.naming.eventData.getFullName(domain.domain(), event.name()).getFullText())
         generator.parserRootInterfaceItems.add(ParserRootInterfaceItem(domain.domain(), event.name(), generator.naming.eventData))
@@ -284,4 +286,4 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
   }
 }
 
-fun subMessageType(namePath: NamePath) = StandaloneType(namePath, "writeMessage", null)
+fun subMessageType(namePath: NamePath): StandaloneType = StandaloneType(namePath, "writeMessage", null)

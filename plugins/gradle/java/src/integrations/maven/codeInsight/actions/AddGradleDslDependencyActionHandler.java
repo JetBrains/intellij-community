@@ -41,7 +41,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/23/13
  */
 class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
 
@@ -66,7 +65,7 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
       List<GrMethodCall> closableBlocks = PsiTreeUtil.getChildrenOfTypeAsList(file, GrMethodCall.class);
       GrCall dependenciesBlock = ContainerUtil.find(closableBlocks, call -> {
         GrExpression expression = call.getInvokedExpression();
-        return expression != null && "dependencies".equals(expression.getText());
+        return "dependencies".equals(expression.getText());
       });
 
       if (dependenciesBlock == null) {
@@ -86,7 +85,6 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
           }
         }
       }
-      ;
     });
   }
 

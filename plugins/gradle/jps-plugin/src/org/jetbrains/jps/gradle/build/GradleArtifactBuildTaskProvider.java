@@ -24,7 +24,6 @@ import java.util.jar.JarFile;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/12/2016
  */
 public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   @NotNull
@@ -45,19 +44,17 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
 
   @Nullable
   private static JpsGradleArtifactExtension getArtifactExtension(JpsArtifact artifact, ArtifactBuildPhase buildPhase) {
-    switch (buildPhase) {
-      case PRE_PROCESSING:
-        return JpsGradleExtensionService.getArtifactExtension(artifact);
-      default:
-        return null;
+    if (buildPhase == ArtifactBuildPhase.PRE_PROCESSING) {
+      return JpsGradleExtensionService.getArtifactExtension(artifact);
     }
+    return null;
   }
 
   private abstract static class GradleGenerationBuildTask extends BuildTask {
     protected final JpsArtifact myArtifact;
     protected final GradleArtifactExtensionProperties myProperties;
 
-    public GradleGenerationBuildTask(@NotNull JpsArtifact artifact, @NotNull GradleArtifactExtensionProperties properties) {
+    GradleGenerationBuildTask(@NotNull JpsArtifact artifact, @NotNull GradleArtifactExtensionProperties properties) {
       myArtifact = artifact;
       myProperties = properties;
     }
@@ -66,7 +63,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   private static class GradleManifestGenerationBuildTask extends GradleGenerationBuildTask {
     private static final Logger LOG = Logger.getInstance(GradleManifestGenerationBuildTask.class);
 
-    public GradleManifestGenerationBuildTask(@NotNull JpsArtifact artifact,
+    GradleManifestGenerationBuildTask(@NotNull JpsArtifact artifact,
                                              @NotNull GradleArtifactExtensionProperties properties) {
       super(artifact, properties);
     }
@@ -89,7 +86,7 @@ public class GradleArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
   private static class GradleAdditionalFilesGenerationBuildTask extends GradleGenerationBuildTask {
     private static final Logger LOG = Logger.getInstance(GradleAdditionalFilesGenerationBuildTask.class);
 
-    public GradleAdditionalFilesGenerationBuildTask(@NotNull JpsArtifact artifact,
+    GradleAdditionalFilesGenerationBuildTask(@NotNull JpsArtifact artifact,
                                                     @NotNull GradleArtifactExtensionProperties properties) {
       super(artifact, properties);
     }

@@ -113,7 +113,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
 
   @Override
   public void update(@NotNull VcsContext e, @NotNull Presentation presentation) {
-    AbstractShowDiffAction.updateDiffAction(presentation, e, VcsBackgroundableActions.COMPARE_WITH);
+    AbstractShowDiffAction.updateDiffAction(presentation, e);
   }
 
 
@@ -133,8 +133,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
                          }
                          else {
                            showListPopup(revisions, project,
-                                         revision -> DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project,
-                                                                                 VcsBackgroundableActions.COMPARE_WITH), true);
+                                         revision -> DiffActionExecutor.showDiff(vcs.getDiffProvider(), revision.getRevisionNumber(), file, project), true);
                          }
                        });
   }
@@ -150,7 +149,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
       }
       VcsFileRevision revision = getRevisionAt(treeTable, index);
       if (revision != null) {
-        DiffActionExecutor.showDiff(diffProvider, revision.getRevisionNumber(), file, project, VcsBackgroundableActions.COMPARE_WITH);
+        DiffActionExecutor.showDiff(diffProvider, revision.getRevisionNumber(), file, project);
       }
     };
 
@@ -217,7 +216,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
     return textArea;
   }
 
-  public static void showListPopup(final List<VcsFileRevision> revisions, final Project project, final Consumer<VcsFileRevision> selectedRevisionConsumer,
+  public static void showListPopup(final List<VcsFileRevision> revisions, final Project project, final Consumer<? super VcsFileRevision> selectedRevisionConsumer,
                                    final boolean showComments) {
     ColumnInfo[] columns = new ColumnInfo[] { REVISION_TABLE_COLUMN, DATE_TABLE_COLUMN, AUTHOR_TABLE_COLUMN };
     for(VcsFileRevision revision: revisions) {
@@ -317,7 +316,7 @@ public class CompareWithSelectedRevisionAction extends AbstractVcsAction {
   private static class TreeNodeAdapter extends DefaultMutableTreeNode {
     private final TreeItem<VcsFileRevision> myRevision;
 
-    public TreeNodeAdapter(TreeNodeAdapter parent, TreeItem<VcsFileRevision> revision, List<TreeItem<VcsFileRevision>> children) {
+    TreeNodeAdapter(TreeNodeAdapter parent, TreeItem<VcsFileRevision> revision, List<TreeItem<VcsFileRevision>> children) {
       if (parent != null) {
         parent.add(this);
       }

@@ -3,6 +3,6 @@ import java.util.stream.Collectors;
 
 class Foo {
   void m() {
-    Arrays.asList("a", "b").stream().collect(Collectors.toCollection(<caret>))
+    Arrays.asList(1, 2).stream().collect(Collectors.toCollection(<caret>))
   }
 }

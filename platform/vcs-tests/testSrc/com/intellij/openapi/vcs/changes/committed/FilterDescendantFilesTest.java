@@ -55,7 +55,7 @@ public class FilterDescendantFilesTest extends PlatformTestCase {
     Assert.assertEquals(2, list.size());
   }
 
-  private final List<VirtualFile> convert(final File[] files) {
+  private List<VirtualFile> convert(final File[] files) {
     final List<VirtualFile> result = new ArrayList<>();
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     for (File file : files) {

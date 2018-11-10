@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class Modifier {
   private final ChangeListWorker myWorker;
-  private boolean myInsideUpdate;
+  private volatile boolean myInsideUpdate;
   private final List<ChangeListCommand> myCommandQueue;
   private final DelayedNotificator myNotificator;
 
@@ -77,6 +77,12 @@ public class Modifier {
     EditComment command = new EditComment(fromName, newComment);
     impl(command);
     return command.getOldComment();
+  }
+
+  public boolean editData(@NotNull String fromName, @Nullable ChangeListData newData) {
+    EditData command = new EditData(fromName, newData);
+    impl(command);
+    return command.isResult();
   }
 
 

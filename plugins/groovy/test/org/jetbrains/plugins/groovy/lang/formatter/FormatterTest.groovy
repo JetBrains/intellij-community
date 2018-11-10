@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.formatter
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -71,6 +55,8 @@ class FormatterTest extends GroovyFormatterTestCase {
   void testDoc2() throws Throwable { doTest() }
 
   void testDoc3() throws Throwable { doTest() }
+
+  void testInlineTag() { doTest() }
 
   void testDockter() throws Throwable { doTest() }
 
@@ -216,12 +202,6 @@ class FormatterTest extends GroovyFormatterTestCase {
 
   void _testLabelIndent() throws Throwable {
     groovySettings.indentOptions.LABEL_INDENT_SIZE = -2
-    doTest()
-  }
-
-  void _testLabelIndentAbsolute() throws Throwable {
-    groovySettings.indentOptions.LABEL_INDENT_ABSOLUTE = true
-    groovySettings.indentOptions.LABEL_INDENT_SIZE = 1
     doTest()
   }
 
@@ -417,9 +397,9 @@ while (abc) return 2
 while (abc) return 2
 ''')
     checkFormatting('''\
-for (abc) return 2
+for (abc in abc) return 2
 ''', '''\
-for (abc) return 2
+for (abc in abc) return 2
 ''')
 
     groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
@@ -845,41 +825,6 @@ print abc ? cde
           : xyz''')
   }
 
-  void testLabelsInBasicMode() {
-    groovySettings.indentOptions.INDENT_SIZE = 4
-    groovySettings.indentOptions.LABEL_INDENT_SIZE = -2
-    groovyCustomSettings.INDENT_LABEL_BLOCKS = false
-
-    checkFormatting('''\
-def bar() {
-  abc:
-  foo()
-  bar()
-}
-''', '''\
-def bar() {
-  abc:
-    foo()
-    bar()
-}
-''')
-  }
-
-  void testLabels() {
-    groovyCustomSettings.INDENT_LABEL_BLOCKS = false
-    checkFormatting('''\
-def foo() {
-abc:foo()
-bar()
-}
-''', '''\
-def foo() {
-  abc: foo()
-  bar()
-}
-''')
-  }
-
   void testGdocAsterisks() {
     checkFormatting('''\
 /*****
@@ -904,23 +849,6 @@ def foo() {
   void testSpreadArg() { doTest() }
 
   void testExtraLines() { doTest() }
-
-  void testLabelWithDescription() {
-    GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class)
-    CommonCodeStyleSettings commonSettings = myTempSettings.getCommonSettings(GroovyLanguage.INSTANCE)
-
-    boolean indentLabelBlocks = customSettings.INDENT_LABEL_BLOCKS
-    int labelIndentSize = commonSettings.indentOptions.LABEL_INDENT_SIZE
-    try {
-      customSettings.INDENT_LABEL_BLOCKS = true
-      commonSettings.indentOptions.LABEL_INDENT_SIZE = 2
-      doTest()
-    }
-    finally {
-      customSettings.INDENT_LABEL_BLOCKS = indentLabelBlocks
-      commonSettings.indentOptions.LABEL_INDENT_SIZE = labelIndentSize
-    }
-  }
 
   void testNoLineFeedsInGString() { doTest() }
 

@@ -63,11 +63,9 @@ public class InspectionProfileSchemesPanel extends AbstractDescriptionAwareSchem
       @Override
       protected void onProfileRemoved(@NotNull SingleInspectionProfilePanel profilePanel) {
         myConfigurable.removeProfilePanel(profilePanel);
-        final List<InspectionProfileModifiableModel> currentProfiles = getModel()
-          .getProfilePanels()
-          .stream()
-          .map(SingleInspectionProfilePanel::getProfile)
-          .collect(Collectors.toList());
+        final List<InspectionProfileModifiableModel> currentProfiles = ContainerUtil.map(getModel()
+                                                                                           .getProfilePanels(),
+                                                                                         SingleInspectionProfilePanel::getProfile);
         resetSchemes(currentProfiles);
         selectScheme(ContainerUtil.getFirstItem(currentProfiles));
       }

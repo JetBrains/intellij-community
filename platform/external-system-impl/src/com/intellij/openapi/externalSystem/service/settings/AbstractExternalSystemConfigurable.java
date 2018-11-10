@@ -58,7 +58,6 @@ import java.util.List;
  * </pre>
  * 
  * @author Denis Zhdanov
- * @since 4/30/13 12:50 PM
  */
 public abstract class AbstractExternalSystemConfigurable<
   ProjectSettings extends ExternalProjectSettings,
@@ -144,7 +143,6 @@ public abstract class AbstractExternalSystemConfigurable<
     }
 
     myProjectsList.addListSelectionListener(new ListSelectionListener() {
-      @SuppressWarnings("unchecked")
       @Override
       public void valueChanged(ListSelectionEvent e) {
         if (e.getValueIsAdjusting()) {
@@ -187,7 +185,6 @@ public abstract class AbstractExternalSystemConfigurable<
   @NotNull
   protected abstract ExternalSystemSettingsControl<ProjectSettings> createProjectSettingsControl(@NotNull ProjectSettings settings);
   
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected String getProjectName(@NotNull String path) {
     File file = new File(path);
@@ -269,6 +266,9 @@ public abstract class AbstractExternalSystemConfigurable<
   public void disposeUIResources() {
     for (ExternalSystemSettingsControl<ProjectSettings> control : myProjectSettingsControls) {
       control.disposeUIResources();
+    }
+    if (mySystemSettingsControl != null) {
+      mySystemSettingsControl.disposeUIResources();
     }
     myProjectSettingsControls.clear();
     myComponent = null;

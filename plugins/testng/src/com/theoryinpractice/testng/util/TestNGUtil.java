@@ -26,6 +26,7 @@ import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +45,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Hani Suleiman
- * @since Jul 20, 2005
  */
 public class TestNGUtil {
   public static final String TESTNG_GROUP_NAME = "TestNG";
@@ -245,7 +245,8 @@ public class TestNGUtil {
   }
 
   public static boolean isDisabled(PsiAnnotation annotation) {
-    final PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("enabled");
+    PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(annotation, "enabled");
+    final PsiAnnotationMemberValue attributeValue = attribute != null ? attribute.getDetachedValue() : null;
     return attributeValue != null && attributeValue.textMatches("false");
   }
 
@@ -342,19 +343,11 @@ public class TestNGUtil {
   }
 
   private static Collection<String> extractValuesFromParameter(PsiAnnotationMemberValue value) {
-    Collection<String> results = new ArrayList<>();
-    if (value instanceof PsiArrayInitializerMemberValue) {
-      for (PsiElement child : value.getChildren()) {
-        if (child instanceof PsiLiteralExpression) {
-          results.add((String) ((PsiLiteralExpression) child).getValue());
-        }
-      }
-    } else {
-      if (value instanceof PsiLiteralExpression) {
-        results.add((String) ((PsiLiteralExpression) value).getValue());
-      }
-    }
-    return results;
+    return JBIterable.from(AnnotationUtil.arrayAttributeValues(value))
+                     .filter(PsiLiteralExpression.class)
+                     .map(PsiLiteralExpression::getValue)
+                     .filter(String.class)
+                     .toList();
   }
 
   @Nullable
@@ -450,10 +443,16 @@ public class TestNGUtil {
     return aListenerClass != null && psiClass.isInheritor(aListenerClass, true);
   }
 
-  public static boolean isTestngXML(final VirtualFile virtualFile) {
-    if ("xml".equalsIgnoreCase(virtualFile.getExtension()) && virtualFile.isInLocalFileSystem() && virtualFile.isValid()) {
-      final String result = NanoXmlUtil.parseHeader(virtualFile).getRootTagLocalName();
-      if (result != null && result.equals(SUITE_TAG_NAME)) {
+  public static boolean isTestngSuiteFile(final VirtualFile virtualFile) {
+    if (virtualFile.isInLocalFileSystem() && virtualFile.isValid()) {
+      String extension = virtualFile.getExtension();
+      if ("xml".equalsIgnoreCase(extension)) {
+        final String result = NanoXmlUtil.parseHeader(virtualFile).getRootTagLocalName();
+        if (result != null && result.equals(SUITE_TAG_NAME)) {
+          return true;
+        }
+      }
+      else if ("yaml".equals(extension)) {
         return true;
       }
     }

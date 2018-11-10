@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
@@ -8,7 +9,6 @@ import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
-import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -21,17 +21,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.List;
 
 /**
  * Basic run configuration type for external system tasks.
- *
- * @author Denis Zhdanov
- * @since 23.05.13 17:43
  */
 public abstract class AbstractExternalSystemTaskConfigurationType implements ConfigurationType {
-
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private final ConfigurationFactory[] myFactories = new ConfigurationFactory[1];
 
@@ -69,16 +64,15 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     return myFactories[0];
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   protected ExternalSystemRunConfiguration doCreateConfiguration(@NotNull ProjectSystemId externalSystemId,
                                                                  @NotNull Project project,
                                                                  @NotNull ConfigurationFactory factory,
-                                                                 @NotNull String name)
-  {
+                                                                 @NotNull String name) {
     return new ExternalSystemRunConfiguration(externalSystemId, project, factory, name);
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return myExternalSystemId.getReadableName();
@@ -110,19 +104,6 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     return generateName(
       project, settings.getExternalSystemId(), settings.getExternalProjectPath(), settings.getTaskNames(), settings.getExecutionName()
     );
-  }
-
-  @NotNull
-  public static String generateName(@NotNull Project project, @NotNull ExternalTaskPojo task, @NotNull ProjectSystemId externalSystemId) {
-    return generateName(project, externalSystemId, task.getLinkedExternalProjectPath(), Collections.singletonList(task.getName()));
-  }
-
-  @NotNull
-  public static String generateName(@NotNull Project project,
-                                    @NotNull ProjectSystemId externalSystemId,
-                                    @Nullable String externalProjectPath,
-                                    @NotNull List<String> taskNames) {
-    return generateName(project, externalSystemId, externalProjectPath, taskNames, null);
   }
 
   @NotNull

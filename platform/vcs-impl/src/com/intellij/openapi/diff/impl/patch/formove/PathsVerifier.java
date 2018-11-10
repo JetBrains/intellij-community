@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl.patch.formove;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -47,7 +33,7 @@ public class PathsVerifier {
   // in
   private final Project myProject;
   private final VirtualFile myBaseDirectory;
-  private final List<FilePatch> myPatches;
+  private final List<? extends FilePatch> myPatches;
   // temp
   private final Map<VirtualFile, MovedFileData> myMovedFiles;
   private final List<FilePath> myBeforePaths;
@@ -65,7 +51,7 @@ public class PathsVerifier {
 
   public PathsVerifier(@NotNull Project project,
                        @NotNull VirtualFile baseDirectory,
-                       @NotNull List<FilePatch> patches) {
+                       @NotNull List<? extends FilePatch> patches) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
@@ -232,6 +218,7 @@ public class PathsVerifier {
       super(path);
     }
 
+    @Override
     protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile, DelayedPrecheckContext context) {
       if (beforeFile == null) {
         context.addSkip(getMappedFilePath(myBeforeName), myPatch);
@@ -239,6 +226,7 @@ public class PathsVerifier {
       return true;
     }
 
+    @Override
     protected boolean check() {
       final VirtualFile beforeFile = getMappedFile(myBeforeName);
       if (! checkExistsAndValid(beforeFile, myBeforeName)) {
@@ -259,6 +247,7 @@ public class PathsVerifier {
       super(path);
     }
 
+    @Override
     protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile, DelayedPrecheckContext context) {
       if (afterFile != null) {
         context.addOverrideExisting(myPatch, VcsUtil.getFilePath(afterFile));
@@ -266,6 +255,7 @@ public class PathsVerifier {
       return true;
     }
 
+    @Override
     public boolean check() throws IOException {
       final String[] pieces = RelativePathCalculator.split(myAfterName);
       final VirtualFile parent = makeSureParentPathExists(pieces);
@@ -298,6 +288,7 @@ public class PathsVerifier {
     }
 
     // before exists; after does not exist
+    @Override
     protected boolean precheck(final VirtualFile beforeFile, final VirtualFile afterFile, final DelayedPrecheckContext context) {
       if (beforeFile == null) {
         setErrorMessage(fileNotFoundMessage(myBeforeName));
@@ -307,6 +298,7 @@ public class PathsVerifier {
       return beforeFile != null && afterFile == null;
     }
 
+    @Override
     public boolean check() throws IOException {
       final String[] pieces = RelativePathCalculator.split(myAfterName);
       final VirtualFile afterFileParent = makeSureParentPathExists(pieces);
@@ -331,7 +323,7 @@ public class PathsVerifier {
     protected final FilePatch myPatch;
     private String myErrorMessage;
 
-    public CheckPath(final FilePatch path) {
+    CheckPath(final FilePatch path) {
       myPatch = path;
       myBeforeName = path.getBeforeName();
       myAfterName = path.getAfterName();

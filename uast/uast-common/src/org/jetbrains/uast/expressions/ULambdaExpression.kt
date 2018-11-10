@@ -48,10 +48,10 @@ interface ULambdaExpression : UExpression {
     visitor.afterVisitLambdaExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitLambdaExpression(this, data)
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
   override fun asRenderString(): String {
     val renderedValueParameters = if (valueParameters.isEmpty())

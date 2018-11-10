@@ -8,6 +8,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -94,7 +95,8 @@ public class TargetOptionsComponent extends JPanel {
     combo.setEditor(new BasicComboBoxEditor() {
       @Override
       protected JTextField createEditorComponent() {
-        HintTextField editor = new HintTextField(COMPILER_DEFAULT, 12);
+        JBTextField editor = new JBTextField(COMPILER_DEFAULT, 12);
+        editor.getEmptyText().setText(COMPILER_DEFAULT);
         editor.setBorder(null);
         return editor;
       }
@@ -162,36 +164,6 @@ public class TargetOptionsComponent extends JPanel {
         }
       }
       return component;
-    }
-  }
-
-  private static class HintTextField extends JTextField {
-    private final char[] myHint;
-
-    private HintTextField(String hint, int columns) {
-      super(hint, columns);
-      myHint = hint.toCharArray();
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-      boolean isFocused = isFocusOwner();
-      if (!isFocused && getText().isEmpty()) {
-        Color oldColor = g.getColor();
-        Font oldFont = g.getFont();
-        try {
-          g.setColor(JBColor.GRAY);
-          FontMetrics metrics = g.getFontMetrics();
-          int x = Math.abs(getWidth() - metrics.charsWidth(myHint, 0, myHint.length)) / 2;
-          int y = Math.abs(getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
-          g.drawChars(myHint, 0, myHint.length, x, y);
-        }
-        finally {
-          g.setColor(oldColor);
-          g.setFont(oldFont);
-        }
-      }
     }
   }
 }

@@ -77,6 +77,7 @@ public abstract class AdditionalLibraryRootsProvider {
   /**
    * @deprecated use {@link #getAdditionalProjectLibraries(Project)} instead
    */
+  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   public Collection<VirtualFile> getAdditionalProjectLibrarySourceRoots(@NotNull Project project) {

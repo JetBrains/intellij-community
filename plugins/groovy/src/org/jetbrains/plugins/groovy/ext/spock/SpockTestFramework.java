@@ -25,22 +25,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework;
 
-import java.util.Collections;
-import java.util.List;
-
 import static com.intellij.psi.util.InheritanceUtil.isInheritor;
 
 /**
  * @author Sergey Evdokimov
  */
 public class SpockTestFramework extends GroovyTestFramework {
-  private static final ExternalLibraryDescriptor SPOCK_DESCRIPTOR = new ExternalLibraryDescriptor("org.spockframework", "spock-core") {
-    @NotNull
-    @Override
-    public List<String> getLibraryClassesRoots() {
-      return Collections.emptyList();
-    }
-  };
+  private static final ExternalLibraryDescriptor SPOCK_DESCRIPTOR = new ExternalLibraryDescriptor("org.spockframework", "spock-core");
 
   @NotNull
   @Override

@@ -34,7 +34,7 @@ public class PropertyExpander {
   public interface PropertyExpansionListener {
     void onPropertyExpanded(String propName, String propValue);
   }
-  
+
   public PropertyExpander(final @NotNull String str) {
     this(str, Collections.emptySet());
   }
@@ -108,9 +108,9 @@ public class PropertyExpander {
 
   private static class Resolver implements Iterator<String> {
     private int myCurrentIndex = -1;
-    private List<Pair<String /*property name without ${} characters*/, Integer /*offset of property occurrence including '$' char*/>> myPropertyNames; 
+    private List<Pair<String /*property name without ${} characters*/, Integer /*offset of property occurrence including '$' char*/>> myPropertyNames;
     private final StringBuilder myBuilder;
-    
+
     private Resolver(final String str, Set<String> namesToSkip) {
       myBuilder = new StringBuilder(str);
       int startProp = 0;
@@ -178,14 +178,17 @@ public class PropertyExpander {
       return value;
     }
 
+    @Override
     public boolean hasNext() {
       return (myCurrentIndex + 1) < myPropertyNames.size();
     }
 
+    @Override
     public String next() {
       return getPropertyName(++myCurrentIndex);
     }
 
+    @Override
     public void remove() {
       replace("");
     }

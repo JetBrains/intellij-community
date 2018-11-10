@@ -4,8 +4,8 @@ package com.intellij.execution.configurations;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -15,7 +15,6 @@ import javax.swing.*;
  * @see ConfigurationTypeBase
  */
 public interface ConfigurationType extends PossiblyDumbAware {
-
   ExtensionPointName<ConfigurationType> CONFIGURATION_TYPE_EP = ExtensionPointName.create("com.intellij.configurationType");
 
   /**
@@ -24,7 +23,7 @@ public interface ConfigurationType extends PossiblyDumbAware {
    *
    * @return the display name of the configuration type.
    */
-  @Nls
+  @NotNull
   String getDisplayName();
 
   /**
@@ -43,13 +42,20 @@ public interface ConfigurationType extends PossiblyDumbAware {
   Icon getIcon();
 
   /**
-   * Returns the ID of the configuration type. The ID is used to store run configuration settings in a project or workspace file and
+   * The ID of the configuration type. Should be camel-cased without dashes, underscores, spaces and quotation marks.
+   * The ID is used to store run configuration settings in a project or workspace file and
    * must not change between plugin versions.
-   *
-   * @return the configuration type ID.
    */
-  @NonNls @NotNull
+  @NotNull
   String getId();
+
+  /**
+   * The name of the run configuration group in a configuration file. The same rules as for id. Useful when id cannot be changed.
+   */
+  @NotNull
+  default String getTag() {
+    return getId();
+  }
 
   /**
    * Returns the configuration factories used by this configuration type. Normally each configuration type provides just a single factory.
@@ -59,6 +65,16 @@ public interface ConfigurationType extends PossiblyDumbAware {
    * @return the run configuration factories.
    */
   ConfigurationFactory[] getConfigurationFactories();
+
+  /**
+   * Returns the topic in the help file or in Web Help which is shown when help for configurations of this type is requested.
+   *
+   * @return the help topic, or {@code null} if no help is available
+   */
+  @Nullable
+  default String getHelpTopic() {
+    return null;
+  }
 
   /**
    * Is configuration fully managed by RunManager.

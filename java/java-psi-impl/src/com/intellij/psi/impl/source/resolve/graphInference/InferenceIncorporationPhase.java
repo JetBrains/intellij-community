@@ -44,7 +44,7 @@ public class InferenceIncorporationPhase {
     myCaptures.add(Pair.create(typeParameters, rightType));
   }
 
-  public void forgetCaptures(List<InferenceVariable> variables) {
+  public void forgetCaptures(List<? extends InferenceVariable> variables) {
     for (InferenceVariable variable : variables) {
       for (Iterator<Pair<InferenceVariable[], PsiClassType>> iterator = myCaptures.iterator(); iterator.hasNext(); ) {
         Pair<InferenceVariable[], PsiClassType> capture = iterator.next();
@@ -55,7 +55,7 @@ public class InferenceIncorporationPhase {
     }
   }
 
-  public boolean hasCaptureConstraints(Iterable<InferenceVariable> variables) {
+  public boolean hasCaptureConstraints(Iterable<? extends InferenceVariable> variables) {
     for (InferenceVariable variable : variables) {
       for (Pair<InferenceVariable[], PsiClassType> capture : myCaptures) {
         if (isCapturedVariable(variable, capture)) {
@@ -75,7 +75,7 @@ public class InferenceIncorporationPhase {
     return false;
   }
 
-  public void collectCaptureDependencies(InferenceVariable variable, Set<InferenceVariable> dependencies) {
+  public void collectCaptureDependencies(InferenceVariable variable, Set<? super InferenceVariable> dependencies) {
     for (Pair<InferenceVariable[], PsiClassType> capture : myCaptures) {
       if (isCapturedVariable(variable, capture)) {
         mySession.collectDependencies(capture.second, dependencies);
@@ -227,10 +227,10 @@ public class InferenceIncorporationPhase {
     return true;
   }
 
-  protected void upDown(List<PsiType> lowerBounds,
-                        Collection<PsiType> changedLowerBounds,
-                        List<PsiType> upperBounds,
-                        Collection<PsiType> changedUpperBounds) {
+  protected void upDown(List<? extends PsiType> lowerBounds,
+                        Collection<? extends PsiType> changedLowerBounds,
+                        List<? extends PsiType> upperBounds,
+                        Collection<? extends PsiType> changedUpperBounds) {
     if (changedLowerBounds != null) {
       upDown(changedLowerBounds, upperBounds);
     }
@@ -270,8 +270,8 @@ public class InferenceIncorporationPhase {
    * a < b & S <: a & b <: T imply S <: b & a <: T 
    */
   private boolean crossVariables(InferenceVariable inferenceVariable,
-                                 Collection<PsiType> upperBounds,
-                                 Collection<PsiType> lowerBounds,
+                                 Collection<? extends PsiType> upperBounds,
+                                 Collection<? extends PsiType> lowerBounds,
                                  InferenceBound inferenceBound) {
 
     final InferenceBound oppositeBound = inferenceBound == InferenceBound.LOWER 
@@ -303,7 +303,7 @@ public class InferenceIncorporationPhase {
    *           or
    * S <: a & a <: T imply S <: T
    */
-  private void upDown(Collection<PsiType> eqBounds, Collection<PsiType> upperBounds) {
+  private void upDown(Collection<? extends PsiType> eqBounds, Collection<? extends PsiType> upperBounds) {
     for (PsiType upperBound : upperBounds) {
       if (upperBound == null || PsiType.NULL.equals(upperBound) || upperBound instanceof PsiWildcardType) continue;
 
@@ -333,7 +333,7 @@ public class InferenceIncorporationPhase {
   /**
    * a = S & a = T imply S = T
    */
-  private void eqEq(List<PsiType> eqBounds, Collection<PsiType> changedEqBounds) {
+  private void eqEq(List<? extends PsiType> eqBounds, Collection<? extends PsiType> changedEqBounds) {
     for (int i = 0; i < eqBounds.size(); i++) {
       PsiType sBound = eqBounds.get(i);
       boolean changed = changedEqBounds.contains(sBound);
@@ -352,7 +352,7 @@ public class InferenceIncorporationPhase {
    * there exists a supertype (4.10) of S of the form G<S1, ..., Sn> and a supertype of T of the form G<T1, ..., Tn>, 
    * then for all i, 1 <= i <= n, if Si and Ti are types (not wildcards), the constraint (Si = Ti) is implied.
    */
-  private boolean upUp(List<PsiType> upperBounds) {
+  private boolean upUp(List<? extends PsiType> upperBounds) {
     return InferenceSession.findParameterizationOfTheSameGenericClass(upperBounds, pair -> {
       final PsiType sType = pair.first;
       final PsiType tType = pair.second;

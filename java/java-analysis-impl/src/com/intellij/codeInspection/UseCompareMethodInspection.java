@@ -4,7 +4,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -13,6 +12,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -26,9 +26,6 @@ import java.util.Map;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
@@ -65,7 +62,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
 
       private void register(CompareInfo info, PsiElement nameElement) {
         holder.registerProblem(nameElement, "Can be replaced with '" + info.myClass.getClassName() + ".compare'",
-                               new ReplaceWithPrimitiveCompareFix(info.myClass.getCanonicalText()));
+                               new ReplaceWithPrimitiveCompareFix(info.getReplacementText()));
       }
     };
   }
@@ -182,7 +179,8 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
         return null;
       }
     }
-    PsiClassType boxedType = ((PsiPrimitiveType)leftType).getBoxedType(expression);
+    PsiClassType boxedType = leftType instanceof PsiPrimitiveType ? ((PsiPrimitiveType)leftType).getBoxedType(expression) :
+                             tryCast(leftType, PsiClassType.class);
     if (boxedType == null) return null;
     return new CompareInfo(template, expression, canonicalPair.getFirst(), canonicalPair.getSecond(), boxedType);
   }
@@ -276,9 +274,10 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
 
   @Contract("null, _ -> false")
   private static boolean isTypeConvertible(PsiType type, PsiElement context) {
-    return type instanceof PsiPrimitiveType && (PsiType.DOUBLE.equals(type) ||
-                                                PsiType.FLOAT.equals(type) ||
-                                                PsiUtil.isLanguageLevel7OrHigher(context));
+    type = PsiPrimitiveType.getOptionallyUnboxedType(type);
+    return type != null && (PsiType.DOUBLE.equals(type) ||
+                            PsiType.FLOAT.equals(type) ||
+                            PsiUtil.isLanguageLevel7OrHigher(context));
   }
 
   static class CompareInfo {
@@ -301,7 +300,12 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     private void replace(PsiElement toReplace, CommentTracker ct) {
-      String replacement = this.myClass.getCanonicalText() + ".compare(" + ct.text(this.myLeft) + "," + ct.text(this.myRight) + ")";
+      String replacement;
+      if (this.myLeft.getType() instanceof PsiClassType) {
+        replacement = ct.text(this.myLeft, ParenthesesUtils.METHOD_CALL_PRECEDENCE) + ".compareTo(" + ct.text(this.myRight) + ")";
+      } else {
+        replacement = this.myClass.getCanonicalText() + ".compare(" + ct.text(this.myLeft) + "," + ct.text(this.myRight) + ")";
+      }
       if(toReplace == myTemplate) {
         ct.replaceAndRestoreComments(myToReplace, replacement);
       } else {
@@ -309,27 +313,32 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
         ct.replaceAndRestoreComments(toReplace, myTemplate);
       }
     }
+
+    public String getReplacementText() {
+      String methodName = this.myLeft.getType() instanceof PsiClassType ? "compareTo" : "compare";
+      return myClass.getName()+"."+methodName+"()";
+    }
   }
 
   private static class ReplaceWithPrimitiveCompareFix implements LocalQuickFix {
-    private final String myClassName;
+    private final String myReplacementText;
 
-    public ReplaceWithPrimitiveCompareFix(String className) {
-      myClassName = className;
+    ReplaceWithPrimitiveCompareFix(String replacementText) {
+      myReplacementText = replacementText;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return "Replace with '" + StringUtil.getShortName(myClassName) + ".compare'";
+      return CommonQuickFixBundle.message("fix.replace.with.x", myReplacementText);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return "Replace with static 'compare' method";
+      return "Replace with single comparison method";
     }
 
     @Override

@@ -1,5 +1,5 @@
 <component name="RunManager" selected="Application.UI">
-  <configuration default="false" name="OutAndErr" type="Application" factoryName="Application" folderName="1" temporary="true">
+  <configuration name="OutAndErr" type="Application" factoryName="Application" folderName="1" temporary="true">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <option name="MAIN_CLASS_NAME" value="OutAndErr"/>
     <option name="VM_PARAMETERS" value=""/>
@@ -22,7 +22,7 @@
     <ConfigurationWrapper RunnerId="Run"/>
     <method/>
   </configuration>
-  <configuration default="false" name="C148C_TersePrincess" type="Application" factoryName="Application" folderName="1" temporary="true">
+  <configuration name="C148C_TersePrincess" type="Application" factoryName="Application" folderName="1" temporary="true">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <option name="MAIN_CLASS_NAME" value="C148C_TersePrincess"/>
     <option name="VM_PARAMETERS" value=""/>
@@ -45,7 +45,7 @@
     <ConfigurationWrapper RunnerId="Run"/>
     <method/>
   </configuration>
-  <configuration default="false" name="Periods" type="Application" factoryName="Application" folderName="2" temporary="true">
+  <configuration name="Periods" type="Application" factoryName="Application" folderName="2" temporary="true">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
       <pattern>
         <option name="PATTERN" value="v.*"/>
@@ -73,7 +73,7 @@
     <ConfigurationWrapper RunnerId="Run"/>
     <method/>
   </configuration>
-  <configuration default="false" name="ErrAndOut" type="Application" factoryName="Application" folderName="3" temporary="true">
+  <configuration name="ErrAndOut" type="Application" factoryName="Application" folderName="3" temporary="true">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <option name="MAIN_CLASS_NAME" value="ErrAndOut"/>
     <option name="VM_PARAMETERS" value=""/>
@@ -155,7 +155,7 @@
     <envs/>
     <method/>
   </configuration>
-  <configuration default="false" name="CodeGenerator" type="Application" factoryName="Application" folderName="1">
+  <configuration name="CodeGenerator" type="Application" factoryName="Application" folderName="1">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
       <pattern>
         <option name="PATTERN" value="codegen.*"/>
@@ -177,7 +177,7 @@
     <ConfigurationWrapper RunnerId="Run"/>
     <method/>
   </configuration>
-  <configuration default="false" name="Renamer" type="Application" factoryName="Application" folderName="1">
+  <configuration name="Renamer" type="Application" factoryName="Application" folderName="1">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <option name="MAIN_CLASS_NAME" value="Renamer"/>
     <option name="VM_PARAMETERS" value=""/>
@@ -200,7 +200,7 @@
     <ConfigurationWrapper RunnerId="Run"/>
     <method/>
   </configuration>
-  <configuration default="false" name="UI" type="Application" factoryName="Application" folderName="1">
+  <configuration name="UI" type="Application" factoryName="Application" folderName="1">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <option name="MAIN_CLASS_NAME" value="UI"/>
     <option name="VM_PARAMETERS" value=""/>
@@ -223,7 +223,7 @@
     <ConfigurationWrapper RunnerId="Run"/>
     <method/>
   </configuration>
-  <configuration default="false" name="AuTest" type="Application" factoryName="Application" folderName="1">
+  <configuration name="AuTest" type="Application" factoryName="Application" folderName="1">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
       <pattern>
         <option name="PATTERN" value="au.*"/>
@@ -251,7 +251,7 @@
     <ConfigurationWrapper RunnerId="Run"/>
     <method/>
   </configuration>
-  <configuration default="false" name="Simples" type="Application" factoryName="Application" folderName="1">
+  <configuration name="Simples" type="Application" factoryName="Application" folderName="1">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <option name="MAIN_CLASS_NAME" value="Simples"/>
     <option name="VM_PARAMETERS" value=""/>
@@ -274,7 +274,7 @@
     <ConfigurationWrapper RunnerId="Run"/>
     <method/>
   </configuration>
-  <configuration default="false" name="C148E_Porcelain" type="Application" factoryName="Application" folderName="3">
+  <configuration name="C148E_Porcelain" type="Application" factoryName="Application" folderName="3">
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <option name="MAIN_CLASS_NAME" value="C148E_Porcelain"/>
     <option name="VM_PARAMETERS" value=""/>
@@ -297,7 +297,7 @@
     <ConfigurationWrapper RunnerId="Run"/>
     <method/>
   </configuration>
-  <configuration default="false" name="All in titled" type="JUnit" factoryName="JUnit" folderName="4">
+  <configuration name="All in titled" type="JUnit" factoryName="JUnit" folderName="4">
     <output_file path="C:/tst.txt" is_save="true"/>
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <module name="titled"/>
@@ -329,7 +329,7 @@
       <option name="Make" enabled="true"/>
     </method>
   </configuration>
-  <configuration default="false" name="All in titled2" type="JUnit" factoryName="JUnit" folderName="4">
+  <configuration name="All in titled2" type="JUnit" factoryName="JUnit" folderName="4">
     <output_file path="C:/tst.txt" is_save="true"/>
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <module name="titled"/>
@@ -361,7 +361,7 @@
       <option name="Make" enabled="true"/>
     </method>
   </configuration>
-  <configuration default="false" name="All in titled3" type="JUnit" factoryName="JUnit" folderName="5">
+  <configuration name="All in titled3" type="JUnit" factoryName="JUnit" folderName="5">
     <output_file path="C:/tst.txt" is_save="true"/>
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <module name="titled"/>
@@ -393,7 +393,7 @@
       <option name="Make" enabled="true"/>
     </method>
   </configuration>
-  <configuration default="false" name="All in titled4" type="JUnit" factoryName="JUnit" folderName="5">
+  <configuration name="All in titled4" type="JUnit" factoryName="JUnit" folderName="5">
     <output_file path="C:/tst.txt" is_save="true"/>
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <module name="titled"/>
@@ -425,7 +425,7 @@
       <option name="Make" enabled="true"/>
     </method>
   </configuration>
-  <configuration default="false" name="All in titled5" type="JUnit" factoryName="JUnit" temporary="true">
+  <configuration name="All in titled5" type="JUnit" factoryName="JUnit" temporary="true">
     <output_file path="C:/tst.txt" is_save="true"/>
     <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea"/>
     <module name="titled"/>

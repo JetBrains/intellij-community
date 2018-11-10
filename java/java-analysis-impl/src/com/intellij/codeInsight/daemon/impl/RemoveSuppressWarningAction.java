@@ -22,7 +22,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -30,6 +29,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,22 +42,14 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
 
   @NotNull
   private final String myID;
-  private final String myProblemLine;
-
-  public RemoveSuppressWarningAction(@NotNull String ID, final String problemLine) {
-    myID = ID;
-    myProblemLine = problemLine;
-  }
 
   public RemoveSuppressWarningAction(@NotNull String id) {
     final int idx = id.indexOf(";");
     if (idx > -1) {
       myID = id.substring(0, idx);
-      myProblemLine = id.substring(idx);
     }
     else {
       myID = id;
-      myProblemLine = null;
     }
   }
 
@@ -72,29 +64,37 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     try {
       if (element != null) {
-        final PsiJavaDocumentedElement commentOwner = PsiTreeUtil.getParentOfType(element, PsiJavaDocumentedElement.class);
-        if (commentOwner != null) {
-          final PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
-          if (psiElement instanceof PsiAnnotation) {
-            removeFromAnnotation((PsiAnnotation)psiElement);
-          } else if (psiElement instanceof PsiDocComment) {
-            removeFromJavaDoc((PsiDocComment)psiElement);
-          } else { //try to remove from all comments
-            final Set<PsiComment> comments = new HashSet<>();
-            commentOwner.accept(new PsiRecursiveElementWalkingVisitor() {
-              @Override public void visitComment(final PsiComment comment) {
-                super.visitComment(comment);
-                if (comment.getText().contains(myID)) {
-                  comments.add(comment);
+        if (element instanceof PsiComment) {
+          removeFromComment((PsiComment)element);
+        }
+        else {
+          final PsiModifierListOwner commentOwner = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class, false);
+          if (commentOwner != null) {
+            final PsiElement psiElement = JavaSuppressionUtil.getElementMemberSuppressedIn(commentOwner, myID);
+            if (psiElement instanceof PsiAnnotation) {
+              removeFromAnnotation((PsiAnnotation)psiElement);
+            }
+            else if (psiElement instanceof PsiDocComment) {
+              removeFromJavaDoc((PsiDocComment)psiElement);
+            }
+            else { //try to remove from all comments
+              final Set<PsiComment> comments = new HashSet<>();
+              commentOwner.accept(new PsiRecursiveElementWalkingVisitor() {
+                @Override
+                public void visitComment(final PsiComment comment) {
+                  super.visitComment(comment);
+                  if (comment.getText().contains(myID)) {
+                    comments.add(comment);
+                  }
                 }
-              }
-            });
-            for (PsiComment comment : comments) {
-              try {
-                removeFromComment(comment, comments.size() > 1);
-              }
-              catch (IncorrectOperationException e) {
-                LOG.error(e);
+              });
+              for (PsiComment comment : comments) {
+                try {
+                  removeFromComment(comment);
+                }
+                catch (IncorrectOperationException e) {
+                  LOG.error(e);
+                }
               }
             }
           }
@@ -112,19 +112,26 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     return QuickFixBundle.message("remove.suppression.action.name", myID);
   }
 
-  private void removeFromComment(final PsiComment comment, final boolean checkLine) throws IncorrectOperationException {
-    if (checkLine) {
-      final PsiStatement statement = PsiTreeUtil.getNextSiblingOfType(comment, PsiStatement.class);
-      if (statement != null && !Comparing.strEqual(statement.getText(), myProblemLine)) return;
+  private void removeFromComment(final PsiComment comment) throws IncorrectOperationException {
+    String commentText = comment.getText();
+    int secondCommentIdx = commentText.indexOf("//", 2);
+    String suffix = "";
+    if (secondCommentIdx > 0) {
+      suffix = commentText.substring(secondCommentIdx);
     }
     String newText = removeFromElementText(comment);
     if (newText != null) {
       if (newText.isEmpty()) {
-        comment.delete();
+        if (suffix.isEmpty()) {
+          comment.delete();
+        }
+        else {
+          comment.replace(JavaPsiFacade.getElementFactory(comment.getProject()).createCommentFromText(suffix, comment));
+        }
       }
       else {
-        PsiComment newComment = JavaPsiFacade.getInstance(comment.getProject()).getElementFactory()
-          .createCommentFromText("// " + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME +" "+newText, comment);
+        PsiComment newComment = JavaPsiFacade.getElementFactory(comment.getProject())
+          .createCommentFromText("// " + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME +" "+newText + suffix, comment);
         comment.replace(newComment);
       }
     }
@@ -139,7 +146,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     }
     else if (newText != null) {
       newText = "@" + SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME + " " + newText;
-      PsiDocTag newTag = JavaPsiFacade.getInstance(tag.getProject()).getElementFactory().createDocTagFromText(newText);
+      PsiDocTag newTag = JavaPsiFacade.getElementFactory(tag.getProject()).createDocTagFromText(newText);
       tag.replace(newTag);
     }
   }
@@ -151,6 +158,10 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
       text += StringUtil.trimStart(element.getText(), "//").trim();
     }
     text = StringUtil.trimStart(text, "@").trim();
+    int secondCommentIdx = text.indexOf("//");
+    if (secondCommentIdx > 0) {
+      text = text.substring(0, secondCommentIdx);
+    }
     text = StringUtil.trimStart(text, SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME).trim();
     List<String> ids = StringUtil.split(text, ",");
     int i = ArrayUtil.find(ids.toArray(), myID);
@@ -179,7 +190,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     text = StringUtil.trimEnd(text, "\"");
     if (myID.equals(text)) {
       if (removeParent) {
-        parent.delete();
+        new CommentTracker().deleteAndRestoreComments(parent);
       }
       else {
         value.delete();

@@ -1,41 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.render;
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ObjectUtils;
@@ -60,7 +31,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.vcs.log.ui.render.RectanglePainter.LABEL_ARC;
+import static com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent.getBranchPresentationBackground;
 
 public class LabelPainter {
   private static final JBValueGroup JBVG = new JBValueGroup();
@@ -70,13 +41,12 @@ public class LabelPainter {
   public static final JBValue LEFT_PADDING = JBVG.value(4);
   public static final JBValue COMPACT_MIDDLE_PADDING = JBVG.value(2);
   public static final JBValue MIDDLE_PADDING = JBVG.value(12);
+  public static final JBValue LABEL_ARC = JBVG.value(6);
   private static final int MAX_LENGTH = 22;
   private static final String THREE_DOTS = "...";
   private static final String TWO_DOTS = "..";
   private static final String SEPARATOR = "/";
-  @SuppressWarnings("UseJBColor") private static final JBColor BACKGROUND = new JBColor(Color.BLACK, Color.WHITE);
-  private static final float BALANCE = 0.08f;
-  private static final JBColor TEXT_COLOR = new JBColor(new Color(0x7a7a7a), new Color(0x909090));
+  private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final JComponent myComponent;
@@ -105,7 +75,7 @@ public class LabelPainter {
   }
 
   @Nullable
-  public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<VcsRef> references) {
+  public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<? extends VcsRef> references) {
     if (!references.isEmpty()) {
       VirtualFile root = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(references)).getRoot();
       return logData.getLogProvider(root).getReferenceManager();
@@ -286,7 +256,7 @@ public class LabelPainter {
                                                boolean isSelected,
                                                boolean isCompact) {
     if (isSelected) return null;
-    if (!isCompact) return ColorUtil.mix(background, BACKGROUND, BALANCE);
+    if (!isCompact) return getBranchPresentationBackground(background);
 
     boolean paintGreyBackground;
     for (RefGroup group : refGroups) {
@@ -297,7 +267,7 @@ public class LabelPainter {
         paintGreyBackground = !group.getName().isEmpty();
       }
 
-      if (paintGreyBackground) return ColorUtil.mix(background, BACKGROUND, BALANCE);
+      if (paintGreyBackground) return getBranchPresentationBackground(background);
     }
 
     return null;
@@ -356,7 +326,8 @@ public class LabelPainter {
         g2.setColor(myGreyBackground);
         g2.fill(new RoundRectangle2D.Double(x - MIDDLE_PADDING.get() / 3, y + baseLine - fontMetrics.getAscent() - TOP_TEXT_PADDING.get(),
                                             icon.getIconWidth() + fontMetrics.stringWidth(text) + 2 * MIDDLE_PADDING.get() / 3,
-                                            fontMetrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get(), LABEL_ARC.get(), LABEL_ARC.get()));
+                                            fontMetrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get(), LABEL_ARC.get(),
+                                            LABEL_ARC.get()));
       }
 
       icon.paintIcon(null, g2, x, y + (height - icon.getIconHeight()) / 2);
@@ -380,7 +351,7 @@ public class LabelPainter {
   }
 
   public static Font getReferenceFont() {
-    Font font = RectanglePainter.getFont();
+    Font font = GraphCommitCellRenderer.getLabelFont();
     return font.deriveFont(font.getSize() - 1f);
   }
 

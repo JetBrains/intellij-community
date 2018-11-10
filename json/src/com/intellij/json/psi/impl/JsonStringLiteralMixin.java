@@ -37,4 +37,9 @@ public abstract class JsonStringLiteralMixin extends JsonLiteralImpl implements 
       }
     };
   }
+
+  @Override
+  public void subtreeChanged() {
+    putUserData(JsonPsiImplUtils.STRING_FRAGMENTS, null);
+  }
 }

@@ -13,6 +13,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
   public CreateDirectoryOrPackageAction() {
@@ -20,7 +21,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     final Project project = e.getData(CommonDataKeys.PROJECT);
 
@@ -48,7 +49,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
 
     Project project = event.getData(CommonDataKeys.PROJECT);

@@ -22,7 +22,6 @@ import java.util.Arrays;
 
 /**
  * @author Denis Zhdanov
- * @since 11/9/12 4:48 PM
  */
 @SuppressWarnings("unchecked")
 public class IntObjectMap<V> {

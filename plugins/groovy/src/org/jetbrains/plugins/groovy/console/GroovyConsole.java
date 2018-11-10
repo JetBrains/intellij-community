@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.runner.DefaultGroovyScriptRunner;
@@ -97,7 +98,7 @@ public class GroovyConsole {
 
   public static void getOrCreateConsole(@NotNull final Project project,
                                         @NotNull final VirtualFile contentFile,
-                                        @NotNull final Consumer<GroovyConsole> callback) {
+                                        @NotNull final Consumer<? super GroovyConsole> callback) {
     final GroovyConsole existingConsole = contentFile.getUserData(GROOVY_CONSOLE);
     if (existingConsole != null) return;
 
@@ -143,7 +144,7 @@ public class GroovyConsole {
     actionGroup.addAll(consoleView.createConsoleActions());
     actionGroup.add(new CloseAction(defaultExecutor, descriptor, project) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         processHandler.destroyProcess(); // use force
         super.actionPerformed(e);
       }
@@ -182,6 +183,12 @@ public class GroovyConsole {
         @Override
         public boolean isSilentlyDestroyOnClose() {
           return true;
+        }
+
+        @NotNull
+        @Override
+        protected BaseOutputReader.Options readerOptions() {
+          return BaseOutputReader.Options.forMostlySilentProcess();
         }
       };
     }

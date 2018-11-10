@@ -15,6 +15,8 @@
  */
 package com.intellij.ui;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.event.ChangeListener;
 import java.util.EventListener;
 
@@ -23,6 +25,6 @@ import java.util.EventListener;
  */
 public interface UserActivityProviderComponent extends EventListener {
 
-  void addChangeListener(final ChangeListener changeListener);
-  void removeChangeListener(final ChangeListener changeListener);
+  void addChangeListener(@NotNull ChangeListener changeListener);
+  void removeChangeListener(@NotNull ChangeListener changeListener);
 }

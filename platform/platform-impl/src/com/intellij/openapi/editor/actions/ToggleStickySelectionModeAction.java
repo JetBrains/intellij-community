@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 4/20/11 3:28 PM
  */
 public class ToggleStickySelectionModeAction extends EditorAction {
 

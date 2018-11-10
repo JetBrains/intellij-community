@@ -180,7 +180,6 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
 
   @Override
   protected boolean wasObjectStored(Object editableObject) {
-    //noinspection RedundantCast
     return myProjectJdksModel.getProjectSdks().containsKey((Sdk)editableObject);
   }
 

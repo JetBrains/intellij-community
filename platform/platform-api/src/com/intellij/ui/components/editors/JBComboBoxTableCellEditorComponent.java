@@ -32,6 +32,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -71,7 +72,6 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private Function<Object, String> myToString = StringUtil.createToStringFunction(Object.class);
   private final List<ActionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @SuppressWarnings({"GtkPreferredJComboBoxRenderer"})
   private ListCellRenderer myRenderer = new DefaultListCellRenderer() {
     private boolean myChecked;
     public Icon myEmptyIcon;
@@ -195,13 +195,13 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
       })
       .addListener(new JBPopupAdapter() {
         @Override
-        public void beforeShown(LightweightWindowEvent event) {
+        public void beforeShown(@NotNull LightweightWindowEvent event) {
           super.beforeShown(event);
           myTable.setSurrendersFocusOnKeystroke(false);
         }
 
         @Override
-        public void onClosed(LightweightWindowEvent event) {
+        public void onClosed(@NotNull LightweightWindowEvent event) {
           myTable.setSurrendersFocusOnKeystroke(surrendersFocusOnKeystrokeOldValue);
           super.onClosed(event);
         }

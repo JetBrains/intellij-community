@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.util;
 
 import java.util.Collection;
@@ -14,7 +14,7 @@ public class FastSparseSetFactory<E> {
 
   private int lastMask;
 
-  public FastSparseSetFactory(Collection<E> set) {
+  public FastSparseSetFactory(Collection<? extends E> set) {
 
     int block = -1;
     int mask = -1;
@@ -317,6 +317,7 @@ public class FastSparseSetFactory<E> {
       return data.length == 0 || (next[0] == 0 && data[0] == 0);
     }
 
+    @Override
     public Iterator<E> iterator() {
       return new FastSparseSetIterator<>(this);
     }
@@ -407,11 +408,13 @@ public class FastSparseSetFactory<E> {
       return -1;
     }
 
+    @Override
     public boolean hasNext() {
       next_pointer = getNextIndex(pointer);
       return (next_pointer >= 0);
     }
 
+    @Override
     public E next() {
       if (next_pointer >= 0) {
         pointer = next_pointer;
@@ -427,6 +430,7 @@ public class FastSparseSetFactory<E> {
       return pointer < size ? colValuesInternal.getKey(pointer) : null;
     }
 
+    @Override
     public void remove() {
       int[] index = colValuesInternal.get(pointer);
       data[index[0]] &= ~index[1];

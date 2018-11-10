@@ -29,7 +29,7 @@ public class BTreeIndexStorageManagerDelegatingIndexStorage<Key, Value> implemen
   }
 
   @Override
-  public boolean processKeys(@NotNull Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter)
+  public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter)
     throws StorageException {
     return delegate().processKeys(processor, scope, idFilter == null ? null : new IdFilter() {
       @Override

@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.util.documentation;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import java.util.HashSet;
-import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -98,13 +82,12 @@ public class HtmlDescriptorsTable {
     }
   }
 
-  private static void loadHtmlElements(final String resourceName, Collection<String> htmlTagNames) throws JDOMException, IOException {
-    final Document document = JDOMUtil.loadDocument(HtmlDescriptorsTable.class.getResourceAsStream(resourceName));
-    final List elements = document.getRootElement().getChildren(TAG_ELEMENT_NAME);
-    final String baseHtmlExtDocUrl = document.getRootElement().getAttribute(BASE_HELP_REF_ATTR).getValue();
+  private static void loadHtmlElements(final String resourceName, Collection<? super String> htmlTagNames) throws JDOMException, IOException {
+    final Element rootElement = JDOMUtil.load(HtmlDescriptorsTable.class.getResourceAsStream(resourceName));
+    final List<Element> elements = rootElement.getChildren(TAG_ELEMENT_NAME);
+    final String baseHtmlExtDocUrl = rootElement.getAttribute(BASE_HELP_REF_ATTR).getValue();
 
-    for (Object object : elements) {
-      final Element element = (Element)object;
+    for (Element element : elements) {
       String htmlTagName = element.getAttributeValue(NAME_ATTR);
       htmlTagNames.add(htmlTagName);
 
@@ -124,9 +107,8 @@ public class HtmlDescriptorsTable {
       }
     }
 
-    final List attributes = document.getRootElement().getChildren(ATTRIBUTE_ELEMENT_NAME);
-    for (Object attribute : attributes) {
-      final Element element = (Element)attribute;
+    final List<Element> attributes = rootElement.getChildren(ATTRIBUTE_ELEMENT_NAME);
+    for (Element element : attributes) {
       String attrName = element.getAttributeValue(NAME_ATTR);
 
       HtmlAttributeDescriptor value = new HtmlAttributeDescriptor();

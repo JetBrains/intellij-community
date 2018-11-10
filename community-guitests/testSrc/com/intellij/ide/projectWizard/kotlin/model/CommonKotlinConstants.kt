@@ -1,159 +1,166 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard.kotlin.model
 
-import com.intellij.openapi.application.ex.PathManagerEx
-import java.io.File
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
+import java.io.Serializable
 
-val PATH_TO_TESTDATA = "/platform/kotlin-gui-tests/src/testData"
-
-val KOTLIN_PLUGIN_VERSION = "${KotlinTestProperties.kotlin_plugin_version_main}-${KotlinTestProperties.ide_tested}-${KotlinTestProperties.kotlin_plugin_version_micro}"
-val KOTLIN_PLUGIN_ZIP = "kotlin-plugin-$KOTLIN_PLUGIN_VERSION.zip"
-val KOTLIN_PLUGIN_INSTALL_PATH = KotlinTestProperties.kotlin_plugin_download_path + File.separator + KOTLIN_PLUGIN_ZIP
 const val KOTLIN_PLUGIN_NAME = "Kotlin"
 
-enum class KotlinKind { JVM, JS, Common }
 enum class ProjectStructure { Java, Kotlin, Gradle, Maven }
 enum class BuildSystem { Gradle, Maven, IDEA }
 
 typealias ArtifactType = Map<String, List<String>>
 
-fun ArtifactType.getJars() = this.keys.sortedDescending()
-                               .firstOrNull { KotlinTestProperties.kotlin_artifact_version >= it }
-                               ?.let { this[it]!! }
-                             ?: emptyList()
+fun ArtifactType.getJars(kotlinVersion: String) = this.keys.sortedDescending()
+                                                    .firstOrNull { kotlinVersion >= it }
+                                                    ?.let { this[it]!! }
+                                                  ?: emptyList()
+
+operator fun ArtifactType.plus(right: ArtifactType): ArtifactType =
+  (keys + right.keys).asSequence().sorted().map {
+    Pair(it, (getJars(it) + right.getJars(it)).asSequence().toSet().toList())
+  }.toMap()
 
 data class ProjectProperties(
-  val group: String,
-  val frameworkName: String,
+  val group: NewProjectDialogModel.Groups, // on the New Project dialog
+  val frameworkName: String, // on the New Project dialog
+  val isKotlinDsl: Boolean = false, // on the New Project dialog, only for Gradle group
+  // for Gradle and Maven based projects: shown in the Project Structure dialog, tab Libraries
+  // for Idea based projects: list of jar files containing the library specified by libName property
   val jars: ArtifactType,
-  val libName: String? = null
-)
+  // for Gradle and Maven based projects: null (not used)
+  // for Idea based projects: shown in the Project Structure dialog, tab Libraries
+  val libName: String? = null,
+  // Idea based projects: not used
+  // Gradle/Maven based projects: used for multimodule projects
+  val modules: Set<TargetPlatform> = emptySet(),
+  // Idea, Gradle or Maven
+  val buildSystem: BuildSystem
+) : Serializable
 
 enum class Projects(val title: String) {
-  Kind("kind"),
   JavaProject("javaProject"),
-  KotlinProject("kotlinProject"),
-  KotlinMPProject("kotlinMPProject"),
-  GradleGProject("gradleGProject"),
-  GradleKProject("gradleKProject"),
-  GradleGMPProject("gradleGMPProject"),
-  MavenProject("mavenProject"),
+  KotlinProjectJvm("kotlinProjectJvm"),
+  KotlinProjectJs("kotlinProjectJs"),
+  KotlinProjectNative("kotlinProjectNative"),
+  KotlinMPProjectLibrary("kotlinMPProjectLibrary"),
+  KotlinMPProjectClientServer("kotlinMPProjectClientServer"),
+  KotlinMPProjectMobileAndroidIos("KotlinMPProjectMobileAndroidIos"),
+  KotlinMPProjectMobileLibrary("KotlinMPProjectMobileLibrary"),
+  GradleGProjectJvm("gradleGProjectJvm"),
+  GradleGProjectJs("gradleGProjectJs"),
+  GradleKProjectJvm("gradleKProjectJvm"),
+  GradleKProjectJs("gradleKProjectJs"),
+  MavenProjectJvm("mavenProjectJvm"),
+  MavenProjectJs("mavenProjectJs"),
   ;
 
   override fun toString() = title
 }
 
-data class KotlinLib(private val map: Map<String, Any?>) {
-  val kind: KotlinKind by map
-  val javaProject: ProjectProperties by map
-  val kotlinProject: ProjectProperties by map
-  val kotlinMPProject: ProjectProperties by map
-  val gradleGProject: ProjectProperties by map
-  val gradleKProject: ProjectProperties by map
-  val gradleGMPProject: ProjectProperties by map
-  val mavenProject: ProjectProperties by map
-}
-
-private val kotlinJvm = KotlinLib(mapOf(
-  Projects.Kind.title to KotlinKind.JVM,
-  Projects.JavaProject.title to ProjectProperties(
-    group = "Java",
-    frameworkName = "Kotlin/JVM",
+val kotlinProjects = mapOf(
+  Projects.JavaProject to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Java,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinJvm,
     libName = "KotlinJavaRuntime",
-    jars = kotlinJvmJavaKotlinJars
+    jars = kotlinJvmJavaKotlinJars,
+    buildSystem = BuildSystem.IDEA
   ),
-  Projects.KotlinProject.title to ProjectProperties(
-    group = "Kotlin",
-    frameworkName = "Kotlin/JVM",
+  Projects.KotlinProjectJvm to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinJvm,
     libName = "KotlinJavaRuntime",
-    jars = kotlinJvmJavaKotlinJars
+    jars = kotlinJvmJavaKotlinJars,
+    buildSystem = BuildSystem.IDEA
   ),
-  Projects.KotlinMPProject.title to ProjectProperties(
-    group = "Kotlin",
-    frameworkName = "Kotlin (Multiplatform - Experimental)",
-    jars = kotlinJvmMppKotlin
+  Projects.KotlinProjectJs to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinJs,
+    libName = "KotlinJavaScript",
+    jars = kotlinJsJavaKotlinLibs,
+    buildSystem = BuildSystem.IDEA
   ),
-  Projects.GradleGProject.title to ProjectProperties(
-    group = "Gradle",
-    frameworkName = "Kotlin (Java)",
-    jars = kotlinJvmGradleLibs
+  Projects.KotlinProjectNative to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinNative,
+    modules = setOf(TargetPlatform.Native),
+    jars = kotlinNativeMpp,
+    buildSystem = BuildSystem.Gradle
   ),
-  Projects.GradleGMPProject.title to ProjectProperties(
-    group = "Gradle",
-    frameworkName = "Kotlin (Multiplatform JVM - Experimental)",
-    jars = kotlinJvmMppGradle
+  Projects.KotlinMPProjectLibrary to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinMppLibrary,
+    modules = setOf(TargetPlatform.JVM16, TargetPlatform.Common, TargetPlatform.JavaScript, TargetPlatform.Native),
+    jars = kotlinJvmMppGradle + kotlinJsGradleLibs + kotlinNativeMpp + kotlinCommonMpp,
+    buildSystem = BuildSystem.Gradle
   ),
-  Projects.MavenProject.title to ProjectProperties(
-    group = "Maven",
+  Projects.KotlinMPProjectClientServer to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinMppClientServer,
+    modules = setOf(TargetPlatform.JVM16, TargetPlatform.Common, TargetPlatform.JavaScript),
+    jars = kotlinJvmMppGradle + kotlinJsGradleLibs + kotlinCommonMpp,
+    buildSystem = BuildSystem.Gradle
+  ),
+  // Android project structure!
+  Projects.KotlinMPProjectMobileAndroidIos to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinMppMobileAndroidIos,
+    modules = setOf(TargetPlatform.Native, TargetPlatform.Common),
+    jars = kotlinNativeMpp + kotlinCommonMpp,
+    buildSystem = BuildSystem.Gradle
+  ),
+  Projects.KotlinMPProjectMobileLibrary to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Kotlin,
+    frameworkName = NewProjectDialogModel.Constants.itemKotlinMppMobileSharedLibrary,
+    modules = setOf(TargetPlatform.JVM16, TargetPlatform.Common, TargetPlatform.Native),
+    jars = kotlinJvmMobileLibrary + kotlinCommonMpp + kotlinNativeMpp,
+    buildSystem = BuildSystem.Gradle
+  ),
+  Projects.GradleGProjectJvm to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Gradle,
+    frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJvm,
+    modules = setOf(TargetPlatform.JVM18),
+    jars = kotlinJvmGradleLibs,
+    buildSystem = BuildSystem.Gradle
+  ),
+  Projects.GradleGProjectJs to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Gradle,
+    frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJs,
+    modules = setOf(TargetPlatform.JavaScript),
+    // TODO: change back to kotlinJsGradleLibs after KT-21166 fixing
+    jars = kotlinJsGradleKLibs,
+    buildSystem = BuildSystem.Gradle
+  ),
+  Projects.GradleKProjectJvm to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Gradle,
+    frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJvm,
+    isKotlinDsl = true,
+    modules = setOf(TargetPlatform.JVM18),
+    jars = kotlinJvmGradleLibs,
+    buildSystem = BuildSystem.Gradle
+  ),
+  Projects.GradleKProjectJs to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Gradle,
+    frameworkName = NewProjectDialogModel.Constants.itemGradleKotlinJs,
+    isKotlinDsl = true,
+    modules = setOf(TargetPlatform.JavaScript),
+    jars = kotlinJsGradleKLibs,
+    buildSystem = BuildSystem.Gradle
+  ),
+  Projects.MavenProjectJvm to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Maven,
     frameworkName = "kotlin-archetype-jvm",
-    jars = kotlinJvmMavenLibs
+    modules = setOf(TargetPlatform.JVM16),
+    jars = kotlinJvmMavenLibs,
+    buildSystem = BuildSystem.Maven
   ),
-  Projects.GradleKProject.title to ProjectProperties(
-    group = "Gradle",
-    frameworkName = "Kotlin (Java)",
-    jars = kotlinJvmGradleLibs
-  )
-))
-
-private val kotlinJs = KotlinLib(mapOf(
-  Projects.Kind.title to KotlinKind.JS,
-  Projects.JavaProject.title to ProjectProperties(
-    group = "Java",
-    frameworkName = "Kotlin/JS",
-    libName = "KotlinJavaScript",
-    jars = kotlinJsJavaKotlinLibs
-  ),
-  Projects.KotlinProject.title to ProjectProperties(
-    group = "Kotlin",
-    frameworkName = "Kotlin/JS",
-    libName = "KotlinJavaScript",
-    jars = kotlinJsJavaKotlinLibs
-  ),
-  Projects.KotlinMPProject.title to ProjectProperties(
-    group = "Kotlin",
-    frameworkName = "Kotlin (Multiplatform - Experimental)",
-    jars = kotlinJsGradleLibs
-  ),
-  Projects.GradleGProject.title to ProjectProperties(
-    group = "Gradle",
-    frameworkName = "Kotlin (JavaScript)",
-    jars = kotlinJsGradleLibs
-  ),
-  Projects.GradleGMPProject.title to ProjectProperties(
-    group = "Gradle",
-    frameworkName = "Kotlin (Multiplatform JS - Experimental)",
-    jars = kotlinJsMavenLibs
-  ),
-  Projects.MavenProject.title to ProjectProperties(
-    group = "Maven",
+  Projects.MavenProjectJs to ProjectProperties(
+    group = NewProjectDialogModel.Groups.Maven,
     frameworkName = "kotlin-archetype-js",
-    jars = kotlinJsMavenLibs
-  ),
-  Projects.GradleKProject.title to ProjectProperties(
-    group = "Gradle",
-    frameworkName = "Kotlin (JavaScript)",
-    jars = kotlinJsGradleKLibs
+    modules = setOf(TargetPlatform.JavaScript),
+    jars = kotlinJsMavenLibs,
+    buildSystem = BuildSystem.Maven
   )
-))
-
-private val kotlinCommon = KotlinLib(mapOf(
-  Projects.Kind.title to KotlinKind.Common,
-  Projects.KotlinMPProject.title to ProjectProperties(
-    group = "Kotlin",
-    frameworkName = "Kotlin (Multiplatform - Experimental)",
-    jars = kotlinCommonMpp
-  ),
-  Projects.GradleGMPProject.title to ProjectProperties(
-    group = "Gradle",
-    frameworkName = "Kotlin (Multiplatform Common - Experimental)",
-    jars = kotlinCommonMpp
-  )
-))
-
-val kotlinLibs = mapOf(
-  kotlinJvm.kind to kotlinJvm,
-  kotlinJs.kind to kotlinJs,
-  kotlinCommon.kind to kotlinCommon
 )
 
 /**
@@ -161,7 +168,7 @@ val kotlinLibs = mapOf(
  * */
 val pathKotlinInConfig = "/plugins/Kotlin/kotlinc/lib".normalizeSeparator()
 
-data class ProjectRoots(val sourceRoot: String, val testRoot: String)
+data class ProjectRoots(val sourceRoot: String, val testRoot: String) : Serializable
 
 val sourceRoots = mapOf(
   ProjectStructure.Java to ProjectRoots("src",
@@ -187,8 +194,7 @@ val versionFromArtifact: LanguageVersion by lazy {
   getVersionFromString(KotlinTestProperties.kotlin_artifact_version)
 }
 val versionFromPlugin: LanguageVersion by lazy {
-  getVersionFromString(
-    KotlinTestProperties.kotlin_plugin_version_main)
+  getVersionFromString(KotlinTestProperties.kotlin_plugin_version_main)
 }
 
 val defaultFacetSettings = mapOf(
@@ -209,6 +215,11 @@ val defaultFacetSettings = mapOf(
     languageVersion = versionFromArtifact,
     apiVersion = versionFromArtifact
   ),
+  TargetPlatform.Native to FacetStructure(
+    targetPlatform = TargetPlatform.Native,
+    languageVersion = versionFromArtifact,
+    apiVersion = versionFromArtifact
+  ),
   TargetPlatform.JavaScript to FacetStructure(
     targetPlatform = TargetPlatform.JavaScript,
     languageVersion = versionFromArtifact,
@@ -216,17 +227,3 @@ val defaultFacetSettings = mapOf(
     jsOptions = FacetStructureJS()
   )
 )
-
-object MPPModules {
-  fun mppFullSet() = setOf(KotlinKind.Common,
-                           KotlinKind.JVM,
-                           KotlinKind.JS)
-
-  fun mppJs() = setOf(KotlinKind.Common,
-                      KotlinKind.JS)
-
-  fun mppJvm() = setOf(KotlinKind.Common,
-                       KotlinKind.JVM)
-
-  fun mppCommonOnly() = setOf(KotlinKind.Common)
-}

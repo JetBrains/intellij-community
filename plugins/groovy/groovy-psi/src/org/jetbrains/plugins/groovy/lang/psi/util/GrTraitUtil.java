@@ -14,17 +14,20 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +40,6 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 
 /**
  * @author Max Medvedev
- * @since 16.05.2014
  */
 public class GrTraitUtil {
   private static final Logger LOG = Logger.getInstance(GrTraitUtil.class);
@@ -50,11 +52,12 @@ public class GrTraitUtil {
 
   @Contract("null -> false")
   public static boolean isInterface(@Nullable PsiClass aClass) {
-    return aClass != null && aClass.isInterface() && !isTrait(aClass);
+    return aClass != null && aClass.isInterface() && !(aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait());
   }
 
   public static boolean isMethodAbstract(@NotNull PsiMethod method) {
-    return method.getModifierList().hasExplicitModifier(ABSTRACT) || isInterface(method.getContainingClass());
+    return method.getModifierList().hasExplicitModifier(ABSTRACT) ||
+           isInterface(method.getContainingClass()) && !method.hasModifierProperty(PsiModifier.DEFAULT);
   }
 
   public static List<PsiClass> getSelfTypeClasses(@NotNull PsiClass trait) {
@@ -94,7 +97,17 @@ public class GrTraitUtil {
   @Contract("null -> false")
   public static boolean isTrait(@Nullable PsiClass aClass) {
     return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait() ||
-           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, 0);
+           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, 0) ||
+           getDefaultMethods(aClass).length != 0;
+
+  }
+
+  public static GrMethod[] getDefaultMethods(@Nullable PsiClass aClass) {
+    if ( !(aClass instanceof GrTypeDefinition) || !aClass.isInterface()) return GrMethod.EMPTY_ARRAY;
+    GrTypeDefinition grTypeDefinition = (GrTypeDefinition) aClass;
+    return Arrays.stream(grTypeDefinition.getCodeMethods())
+                 .filter(m -> m.getModifierList().hasExplicitModifier(PsiModifier.DEFAULT))
+                 .toArray(GrMethod[]::new);
   }
 
   @NotNull
@@ -106,7 +119,7 @@ public class GrTraitUtil {
     });
   }
 
-  private static void doCollectCompiledTraitMethods(final ClsClassImpl trait, final Collection<PsiMethod> result) {
+  private static void doCollectCompiledTraitMethods(final ClsClassImpl trait, final Collection<? super PsiMethod> result) {
     for (PsiMethod method : trait.getMethods()) {
       if (AnnotationUtil.isAnnotated(method, GROOVY_TRAIT_IMPLEMENTED, 0)) {
         result.add(method);
@@ -198,12 +211,12 @@ public class GrTraitUtil {
     });
   }
 
-  private static void doCollectCompiledTraitFields(ClsClassImpl trait, Collection<GrField> result) {
+  private static void doCollectCompiledTraitFields(ClsClassImpl trait, Collection<? super GrField> result) {
     VirtualFile traitFile = trait.getContainingFile().getVirtualFile();
     if (traitFile == null) return;
     VirtualFile helperFile = traitFile.getParent().findChild(trait.getName() + GroovyTraitFieldsFileIndex.HELPER_SUFFIX);
     if (helperFile == null) return;
-    int key = FileBasedIndex.getFileId(helperFile);
+    int key = SingleEntryFileBasedIndexExtension.getFileKey(helperFile);
     final List<Collection<TraitFieldDescriptor>> values = FileBasedIndex.getInstance().getValues(
       GroovyTraitFieldsFileIndex.INDEX_ID, key, trait.getResolveScope()
     );

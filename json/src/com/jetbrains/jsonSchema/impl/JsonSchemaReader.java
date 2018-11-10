@@ -5,6 +5,7 @@ import com.intellij.json.psi.*;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,13 +41,21 @@ public class JsonSchemaReader {
     myQueue = new ArrayDeque<>();
   }
 
-  public static JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile key) throws Exception {
-    if (!key.isValid()) throw new Exception(String.format("Can not load JSON Schema file '%s'", key.getName()));
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(key);
-    if (!(psiFile instanceof JsonFile)) throw new Exception(String.format("Can not load PSI for JSON Schema file '%s'", key.getName()));
+  @NotNull
+  public static JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile file) throws Exception {
+    if (!file.isValid()) {
+      throw new Exception(String.format("Can not load JSON Schema file '%s'", file.getName()));
+    }
+
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    if (!(psiFile instanceof JsonFile)) {
+      throw new Exception(String.format("Can not load code model for JSON Schema file '%s'", file.getName()));
+    }
+
     final JsonObject value = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
-    if (value == null)
-      throw new Exception(String.format("JSON Schema file '%s' must contain only one top-level object", key.getName()));
+    if (value == null) {
+      throw new Exception(String.format("JSON Schema file '%s' must contain only one top-level object", file.getName()));
+    }
     return new JsonSchemaReader().read(value);
   }
 
@@ -80,7 +89,7 @@ public class JsonSchemaReader {
       if (jsonObject instanceof JsonObject) {
         final List<JsonProperty> list = ((JsonObject)jsonObject).getPropertyList();
         for (JsonProperty property : list) {
-          if (StringUtil.isEmptyOrSpaces(property.getName()) || property.getValue() == null) continue;
+          if (property.getValue() == null) continue;
           final MyReader reader = READERS_MAP.get(property.getName());
           if (reader != null) {
             reader.read(property.getValue(), currentSchema, myQueue);
@@ -270,9 +279,9 @@ public class JsonSchemaReader {
         final JsonSchemaType type = parseType(StringUtil.unquoteString(element.getText()));
         if (type != null) object.setType(type);
       } else if (element instanceof JsonArray) {
-        final List<JsonSchemaType> typeList = ((JsonArray)element).getValueList().stream()
+        final Set<JsonSchemaType> typeList = ((JsonArray)element).getValueList().stream()
           .filter(notEmptyString()).map(el -> parseType(StringUtil.unquoteString(el.getText())))
-          .filter(el -> el != null).collect(Collectors.toList());
+          .filter(el -> el != null).collect(Collectors.toSet());
         if (!typeList.isEmpty()) object.setTypeVariants(typeList);
       }
     };
@@ -297,6 +306,13 @@ public class JsonSchemaReader {
       return ((JsonBooleanLiteral)value).getValue();
     } else if (value instanceof JsonNullLiteral) {
       return "null";
+    } else if (value instanceof JsonArray) {
+      return new EnumArrayValueWrapper(((JsonArray)value).getValueList().stream().map(v -> readEnumValue(v)).filter(v -> v != null).toArray());
+    } else if (value instanceof JsonObject) {
+      return new EnumObjectValueWrapper(((JsonObject)value).getPropertyList().stream()
+        .map(p -> Pair.create(p.getName(), readEnumValue(p.getValue())))
+        .filter(p -> p.second != null)
+        .collect(Collectors.toMap(p -> p.first, p -> p.second)));
     }
     return null;
   }
@@ -308,7 +324,8 @@ public class JsonSchemaReader {
         final List<JsonValue> list = ((JsonArray)element).getValueList();
         for (JsonValue value : list) {
           Object enumValue = readEnumValue(value);
-          if (enumValue != null) objects.add(enumValue);
+          if (enumValue == null) return; // don't validate if we have unsupported entity kinds
+          objects.add(enumValue);
         }
         object.setEnum(objects);
       }
@@ -334,7 +351,7 @@ public class JsonSchemaReader {
 
         final List<JsonProperty> list = ((JsonObject)element).getPropertyList();
         for (JsonProperty property : list) {
-          if (StringUtil.isEmptyOrSpaces(property.getName()) || property.getValue() == null) continue;
+          if (property.getValue() == null) continue;
           if (property.getValue() instanceof JsonArray) {
             final List<String> dependencies = ((JsonArray)property.getValue()).getValueList().stream()
               .filter(notEmptyString())
@@ -393,7 +410,7 @@ public class JsonSchemaReader {
       if (element instanceof JsonArray) {
         object.setRequired(((JsonArray)element).getValueList().stream()
                              .filter(notEmptyString())
-                             .map(el -> StringUtil.unquoteString(el.getText())).collect(Collectors.toList()));
+                             .map(el -> StringUtil.unquoteString(el.getText())).collect(Collectors.toSet()));
       }
     };
   }
@@ -464,7 +481,7 @@ public class JsonSchemaReader {
     final List<JsonProperty> properties = element.getPropertyList();
     final Map<String, JsonSchemaObject> map = new HashMap<>();
     for (JsonProperty property : properties) {
-      if (StringUtil.isEmptyOrSpaces(property.getName()) || !(property.getValue() instanceof JsonObject)) continue;
+      if (!(property.getValue() instanceof JsonObject)) continue;
       final JsonSchemaObject child = new JsonSchemaObject((JsonObject)property.getValue());
       queue.add(child);
       map.put(property.getName(), child);

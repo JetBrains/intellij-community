@@ -30,8 +30,6 @@ public class SafeVarargsCanBeUsedTest extends LightQuickFixParameterizedTestCase
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/safeVarargs";

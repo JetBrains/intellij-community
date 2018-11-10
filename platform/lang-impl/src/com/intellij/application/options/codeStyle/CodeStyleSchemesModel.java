@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   private final List<CodeStyleScheme> mySchemes = new ArrayList<>();
@@ -40,7 +39,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   private final CodeStyleScheme myDefault;
   private final Map<CodeStyleScheme, CodeStyleSettings> mySettingsToClone = new HashMap<>();
 
-  private final EventDispatcher<CodeStyleSettingsListener> myDispatcher = EventDispatcher.create(CodeStyleSettingsListener.class);
+  private final EventDispatcher<CodeStyleSchemesModelListener> myDispatcher = EventDispatcher.create(CodeStyleSchemesModelListener.class);
   private final Project myProject;
   private boolean myUiEventsEnabled = true;
 
@@ -87,7 +86,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     return mySelectedScheme;
   }
 
-  public void addListener(CodeStyleSettingsListener listener) {
+  public void addListener(CodeStyleSchemesModelListener listener) {
     myDispatcher.addListener(listener);
   }
 
@@ -163,7 +162,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   private @NotNull List<CodeStyleScheme> getIdeSchemes() {
-    return mySchemes.stream().filter(scheme -> !(scheme instanceof ProjectScheme)).collect(Collectors.toList());
+    return ContainerUtil.filter(mySchemes, scheme -> !(scheme instanceof ProjectScheme));
   }
 
   @SuppressWarnings("unused")
@@ -176,7 +175,9 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     if (myUiEventsEnabled) myDispatcher.getMulticaster().beforeCurrentSettingsChanged();
   }
 
-  public void fireSchemeChanged(CodeStyleScheme scheme) {
+  void updateScheme(CodeStyleScheme scheme) {
+    CodeStyleSettings clonedSettings = getCloneSettings(scheme);
+    clonedSettings.copyFrom(scheme.getCodeStyleSettings());
     myDispatcher.getMulticaster().schemeChanged(scheme);
   }
 
@@ -276,7 +277,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   }
 
   private class ProjectScheme extends CodeStyleSchemeImpl {
-    public ProjectScheme() {
+    ProjectScheme() {
       super(CodeStyleScheme.PROJECT_SCHEME_NAME, false, CodeStyleSchemes.getInstance().getDefaultScheme());
       CodeStyleSettings perProjectSettings = getProjectSettings().getMainProjectCodeStyle();
       if (perProjectSettings != null) setCodeStyleSettings(perProjectSettings);

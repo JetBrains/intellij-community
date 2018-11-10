@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui
 
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.SmartList
 import com.intellij.util.ui.JBUI
 import org.apache.xmlgraphics.java2d.GenericGraphicsDevice
@@ -47,11 +48,19 @@ class UiTestRule(private val testDataRoot: Path) : RequireHeadlessMode() {
       validateBounds(panel, snapshotDir, snapshotName)
     }
     catch (e: Throwable) {
+      if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+        // TC doesn't support MultipleFailureException correctly
+        throw e
+      }
+
       errors.add(e)
     }
 
     try {
-      compareSnapshot(svgRenderer.svgFileDir.resolve("$snapshotName.svg"), svgRenderer.render(panel), isUpdateSnapshotsGlobal)
+      compareSvgSnapshot(svgRenderer.svgFileDir.resolve("$snapshotName.svg"), svgRenderer.render(panel), isUpdateSnapshotsGlobal)
+    }
+    catch (e: MultipleFailureException) {
+      errors.addAll(e.failures)
     }
     catch (e: Throwable) {
       errors.add(e)

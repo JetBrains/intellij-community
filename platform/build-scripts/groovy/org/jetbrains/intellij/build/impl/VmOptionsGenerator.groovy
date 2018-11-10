@@ -40,7 +40,7 @@ class VmOptionsGenerator {
   static String computeCommonVmOptions(boolean isEAP) {
     String options = COMMON_VM_OPTIONS
     if (isEAP) {
-      options += " -XX:MaxJavaStackTraceDepth=-1"
+      options += " -XX:MaxJavaStackTraceDepth=10000"
     }
     return options
   }

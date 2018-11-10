@@ -120,8 +120,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
   @NotNull
   public static BufferedImage readImageFromBytes(@NotNull byte[] content) throws IOException {
     InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
-    ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
-    try {
+    try (ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream)) {
       Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);
       if (imageReaders.hasNext()) {
         ImageReader imageReader = imageReaders.next();
@@ -138,9 +137,6 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
           imageReader.dispose();
         }
       }
-    }
-    finally {
-      imageInputStream.close();
     }
     throw new IOException("Can't read image from given content");
   }

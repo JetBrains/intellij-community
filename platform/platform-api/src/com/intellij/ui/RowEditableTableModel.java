@@ -24,6 +24,7 @@ import javax.swing.table.TableModel;
  *  @deprecated
  * @see com.intellij.util.ui.EditableModel
  */
+@Deprecated
 public interface RowEditableTableModel extends TableModel {
   void addRow();
   void removeRow(int index);

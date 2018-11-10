@@ -35,7 +35,7 @@ import java.util.List;
 public class MvcProjectNode extends AbstractProjectNode {
   private final MvcToolWindowDescriptor myDescriptor;
 
-  public MvcProjectNode(final Project project, final ViewSettings viewSettings, MvcToolWindowDescriptor descriptor) {
+  public MvcProjectNode(@NotNull Project project, final ViewSettings viewSettings, MvcToolWindowDescriptor descriptor) {
     super(project, project, viewSettings);
     myDescriptor = descriptor;
   }
@@ -59,13 +59,15 @@ public class MvcProjectNode extends AbstractProjectNode {
     return true;
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroup(final Module module) throws InstantiationException {
+  protected AbstractTreeNode createModuleGroup(@NotNull final Module module) throws InstantiationException {
     return createTreeNode(MvcProjectNode.class, getProject(), module, getSettings());
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup) throws InstantiationException {
+  protected AbstractTreeNode createModuleGroupNode(@NotNull final ModuleGroup moduleGroup) throws InstantiationException {
     return createTreeNode(MvcProjectNode.class, getProject(), moduleGroup, getSettings());
   }
 

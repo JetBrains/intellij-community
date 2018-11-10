@@ -20,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public abstract class MethodSignatureBase implements MethodSignature {
 
@@ -104,17 +105,12 @@ public abstract class MethodSignatureBase implements MethodSignature {
     return result;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     String s = getClass().getSimpleName() + ": ";
     final PsiTypeParameter[] typeParameters = getTypeParameters();
     if (typeParameters.length != 0) {
-      String sep = "<";
-      for (PsiTypeParameter typeParameter : typeParameters) {
-        s += sep + typeParameter.getName();
-        sep = ", ";
-      }
-      s += ">";
+      s += Arrays.stream(typeParameters).map(PsiTypeParameter::getName)
+              .collect(Collectors.joining(", ", "<", ">"));
     }
     s += getName() + "(" + Arrays.asList(getParameterTypes()) + ")";
     return s;

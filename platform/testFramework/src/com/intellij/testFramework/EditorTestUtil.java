@@ -22,7 +22,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.impl.CurrentEditorProvider;
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
@@ -453,16 +453,34 @@ public class EditorTestUtil {
   public static Inlay addInlay(@NotNull Editor editor, int offset, boolean relatesToPrecedingText) {
     return editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, new EditorCustomElementRenderer() {
       @Override
-      public int calcWidthInPixels(@NotNull Editor editor) { return 1; }
+      public int calcWidthInPixels(@NotNull Inlay inlay) { return 1; }
 
       @Override
-      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r, @NotNull TextAttributes textAttributes) {}
+      public void paint(@NotNull Inlay inlay,
+                        @NotNull Graphics g,
+                        @NotNull Rectangle targetRegion,
+                        @NotNull TextAttributes textAttributes) {}
+    });
+  }
+
+  public static Inlay addBlockInlay(@NotNull Editor editor, int offset) {
+    return editor.getInlayModel().addBlockElement(offset, false, false, 0, new EditorCustomElementRenderer() {
+      @Override
+      public int calcWidthInPixels(@NotNull Inlay inlay) { return 0;}
+
+      @Override
+      public void paint(@NotNull Inlay inlay,
+                        @NotNull Graphics g,
+                        @NotNull Rectangle targetRegion,
+                        @NotNull TextAttributes textAttributes) {}
     });
   }
 
   public static void waitForLoading(Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (editor == null) return;
+    UIUtil.dispatchAllInvocationEvents(); // if editor is loaded synchronously,
+                                          // background loading thread stays blocked in 'invokeAndWait' call
     while (!AsyncEditorLoader.isEditorLoaded(editor)) {
       LockSupport.parkNanos(100_000_000);
       UIUtil.dispatchAllInvocationEvents();

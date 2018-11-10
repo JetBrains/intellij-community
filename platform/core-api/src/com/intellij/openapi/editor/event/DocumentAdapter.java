@@ -16,7 +16,7 @@
 package com.intellij.openapi.editor.event;
 
 /**
- * @deprecated Use DocumentListener
+ * @deprecated Use {@link DocumentListener} instead
  */
 @Deprecated
 public abstract class DocumentAdapter implements DocumentListener {

@@ -141,20 +141,6 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   }
 
   @Override
-  public void startNonCancelableSection() {
-    super.startNonCancelableSection();
-
-    delegateProgressChange(ProgressIndicator::startNonCancelableSection);
-  }
-
-  @Override
-  public void finishNonCancelableSection() {
-    super.finishNonCancelableSection();
-
-    delegateProgressChange(ProgressIndicator::finishNonCancelableSection);
-  }
-
-  @Override
   protected boolean isReuseable() {
     return myReusable;
   }
@@ -182,8 +168,8 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   }
 
   @Override
-  public final void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
-    myStateDelegates.remove(delegate);
+  public void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
+
   }
 
   protected void delegateProgressChange(@NotNull IndicatorAction action) {

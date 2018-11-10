@@ -146,18 +146,21 @@ public class AppEngineForbiddenCodeInspection extends AbstractBaseJavaLocalInspe
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return "Google App Engine";
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Forbidden code in App Engine applications";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "AppEngineForbiddenCode";

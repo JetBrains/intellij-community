@@ -22,5 +22,5 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
 
 class GroovyFileTreeModel(file: GroovyFileBase, editor: Editor?) : JavaFileTreeModel(file, editor) {
 
-  override fun getNodeProviders() = listOf(JavaInheritedMembersNodeProvider())
+  override fun getNodeProviders(): List<JavaInheritedMembersNodeProvider> = listOf(JavaInheritedMembersNodeProvider())
 }

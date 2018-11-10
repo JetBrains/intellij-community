@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBCheckBox;
@@ -61,7 +62,6 @@ import static com.intellij.openapi.externalSystem.service.execution.ExternalSyst
 
 /**
  * @author Vladislav.Soroka
- * @since 2/24/2015
  */
 public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSettingsControlBuilder {
 
@@ -102,7 +102,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Nullable
   private JBRadioButton myUseWrapperWithVerificationButton;
-  @SuppressWarnings("FieldCanBeLocal") // Used implicitly by reflection at disposeUIResources() and showUi()
+  // Used implicitly by reflection at disposeUIResources() and showUi()
   @Nullable
   private JBLabel myUseWrapperVerificationLabel;
   private boolean dropCustomizableWrapperButton;
@@ -114,9 +114,14 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @Nullable
   private JBRadioButton myUseBundledDistributionButton;
   private boolean dropUseBundledDistributionButton;
+
   @Nullable
   private JBCheckBox myResolveModulePerSourceSetCheckBox;
   private boolean dropResolveModulePerSourceSetCheckBox;
+
+  @Nullable
+  private JBCheckBox myResolveExternalAnnotationsCheckBox;
+  private boolean dropResolveExternalAnnotationsCheckBox = !Registry.is("external.system.import.resolve.annotations", false);
 
   @Nullable
   private JBCheckBox myStoreExternallyCheckBox;
@@ -204,6 +209,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
+  public IdeaGradleProjectSettingsControlBuilder dropResolveExternalAnnotationsCheckBox() {
+    dropResolveExternalAnnotationsCheckBox = true;
+    return this;
+  }
+
   public IdeaGradleProjectSettingsControlBuilder dropStoreExternallyCheckBox() {
     dropStoreExternallyCheckBox = true;
     return this;
@@ -219,6 +229,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     ExternalSystemUiUtil.showUi(this, show);
   }
 
+  @Override
   @NotNull
   public GradleProjectSettings getInitialSettings() {
     return myInitialSettings;
@@ -254,6 +265,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (!dropResolveModulePerSourceSetCheckBox) {
       myResolveModulePerSourceSetCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.create.module.per.sourceset"));
       content.add(myResolveModulePerSourceSetCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
+    }
+
+    if (!dropResolveExternalAnnotationsCheckBox) {
+      myResolveExternalAnnotationsCheckBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.resolve.external.annotations"));
+      content.add(myResolveExternalAnnotationsCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     }
 
     if (!dropStoreExternallyCheckBox && myInitialSettings.getStoreProjectFilesExternally() != ThreeState.UNSURE) {
@@ -292,7 +308,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   public IdeaGradleProjectSettingsControlBuilder addGradleJdkComponents(PaintAwarePanel content, int indentLevel) {
     if(!dropGradleJdkComponents) {
       myGradleJdkLabel = new JBLabel(GradleBundle.message("gradle.settings.text.jvm.path"));
-      myGradleJdkComboBox = new ExternalSystemJdkComboBox().withoutJre();
+      myGradleJdkComboBox = new ExternalSystemJdkComboBox();
+      Sdk internalJdk = ExternalSystemJdkUtil.getJdk(null, ExternalSystemJdkUtil.USE_INTERNAL_JAVA);
+      if (internalJdk == null || !ExternalSystemJdkUtil.isValidJdk(internalJdk.getHomePath())) {
+        myGradleJdkComboBox.withoutJre();
+      }
 
       content.add(myGradleJdkLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
       myGradleJdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac ? 0 : 2, 0));
@@ -411,6 +431,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       settings.setResolveModulePerSourceSet(myResolveModulePerSourceSetCheckBox.isSelected());
     }
 
+    if (myResolveExternalAnnotationsCheckBox != null) {
+      settings.setResolveExternalAnnotations(myResolveExternalAnnotationsCheckBox.isSelected());
+    }
+
     if (myStoreExternallyCheckBox != null) {
       settings.setStoreProjectFilesExternally(ThreeState.fromBoolean(myStoreExternallyCheckBox.isSelected()));
     }
@@ -455,6 +479,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       return true;
     }
 
+    if (myResolveExternalAnnotationsCheckBox != null &&
+        (myResolveExternalAnnotationsCheckBox.isSelected() != myInitialSettings.isResolveExternalAnnotations())) {
+      return true;
+    }
+
     if (myStoreExternallyCheckBox != null && ThreeState.fromBoolean(myStoreExternallyCheckBox.isSelected()) != myInitialSettings.getStoreProjectFilesExternally()) {
       return true;
     }
@@ -491,6 +520,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (myResolveModulePerSourceSetCheckBox != null) {
       myResolveModulePerSourceSetCheckBox.setSelected(settings.isResolveModulePerSourceSet());
     }
+    if (myResolveExternalAnnotationsCheckBox != null) {
+      myResolveExternalAnnotationsCheckBox.setSelected(settings.isResolveExternalAnnotations());
+    }
     if (myStoreExternallyCheckBox != null) {
       myStoreExternallyCheckBox.setSelected(settings.getStoreProjectFilesExternally() == ThreeState.YES);
     }
@@ -524,6 +556,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     resetWrapperControls(linkedProjectPath, settings, isDefaultModuleCreation);
     if (myResolveModulePerSourceSetCheckBox != null) {
       myResolveModulePerSourceSetCheckBox.setSelected(settings.isResolveModulePerSourceSet());
+    }
+    if (myResolveExternalAnnotationsCheckBox != null) {
+      myResolveExternalAnnotationsCheckBox.setSelected(settings.isResolveExternalAnnotations());
     }
   }
 

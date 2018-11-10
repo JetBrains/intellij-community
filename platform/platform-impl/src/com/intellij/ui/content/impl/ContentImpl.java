@@ -23,8 +23,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
-  private static Icon ourEmptyPinIcon;
-
   private String myDisplayName;
   private String myDescription;
   private JComponent myComponent;
@@ -32,7 +30,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
   private ContentManager myManager;
   private boolean myIsLocked;
-  private boolean myPinnable = true;
+  private boolean myPinnable;
   private Icon myLayeredIcon = new LayeredIcon(2);
   private Disposable myDisposer;
   private boolean myShouldDisposeContent = true;
@@ -91,7 +89,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   public void setIcon(Icon icon) {
     Icon oldValue = getIcon();
     myIcon = icon;
-    myLayeredIcon = LayeredIcon.create(myIcon, AllIcons.Nodes.PinToolWindow);
+    myLayeredIcon = LayeredIcon.create(myIcon, AllIcons.Nodes.TabPin);
     myChangeSupport.firePropertyChange(PROP_ICON, oldValue, getIcon());
   }
 
@@ -105,14 +103,18 @@ public class ContentImpl extends UserDataHolderBase implements Content {
     }
   }
 
-  @NotNull
-  private static Icon getEmptyPinIcon() {
-    if (ourEmptyPinIcon == null) {
-      Icon icon = AllIcons.Nodes.PinToolWindow;
+  private static class IconHolder {
+    private static final Icon ourEmptyPinIcon;
+    static {
+      Icon icon = AllIcons.Nodes.TabPin;
       int width = icon.getIconWidth();
       ourEmptyPinIcon = IconUtil.cropIcon(icon, new Rectangle(width / 2, 0, width - width / 2, icon.getIconHeight()));
     }
-    return ourEmptyPinIcon;
+  }
+
+  @NotNull
+  private static Icon getEmptyPinIcon() {
+    return IconHolder.ourEmptyPinIcon;
   }
 
   @Override

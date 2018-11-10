@@ -152,8 +152,7 @@ public abstract class RenamePsiElementProcessor {
 
   @NotNull
   public static RenamePsiElementProcessor forElement(@NotNull PsiElement element) {
-    RenamePsiElementProcessor[] extensions = Extensions.getExtensions(EP_NAME);
-    for (RenamePsiElementProcessor processor : extensions) {
+    for (RenamePsiElementProcessor processor : EP_NAME.getExtensionList()) {
       if (processor.canProcessElement(element)) {
         return processor;
       }

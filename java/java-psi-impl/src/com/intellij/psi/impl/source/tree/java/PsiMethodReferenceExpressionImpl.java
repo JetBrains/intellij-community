@@ -163,17 +163,22 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
     PsiMethod[] methods = null;
     if (element instanceof PsiIdentifier) {
       final String identifierName = element.getText();
-      final List<PsiMethod> result = new ArrayList<>();
-      for (HierarchicalMethodSignature signature : containingClass.getVisibleSignatures()) {
-        if (identifierName.equals(signature.getName())) {
-          result.add(signature.getMethod());
+      // findMethodsByName is supposed to be faster than getVisibleSignatures
+      methods = containingClass.findMethodsByName(identifierName, true);
+      if (methods.length == 0) return null;
+      if (methods.length > 1) {
+        final List<PsiMethod> result = new ArrayList<>();
+        for (HierarchicalMethodSignature signature : containingClass.getVisibleSignatures()) {
+          if (identifierName.equals(signature.getName())) {
+            result.add(signature.getMethod());
+          }
         }
-      }
 
-      if (result.isEmpty()) {
-        return null;
+        if (result.isEmpty()) {
+          return null;
+        }
+        methods = result.toArray(PsiMethod.EMPTY_ARRAY);
       }
-      methods = result.toArray(PsiMethod.EMPTY_ARRAY);
     }
     else if (isConstructor()) {
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
@@ -293,7 +298,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   }
 
   @Override
-  public boolean isReferenceTo(final PsiElement element) {
+  public boolean isReferenceTo(@NotNull final PsiElement element) {
     if (!(element instanceof PsiMethod)) return false;
     final PsiMethod method = (PsiMethod)element;
 
@@ -335,7 +340,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     PsiElement oldIdentifier = findChildByType(JavaTokenType.IDENTIFIER);
     if (oldIdentifier == null) {
       oldIdentifier = findChildByType(JavaElementType.REFERENCE_EXPRESSION);
@@ -350,7 +355,7 @@ public class PsiMethodReferenceExpressionImpl extends JavaStubPsiElement<Functio
         Comparing.strEqual(oldRefName, newElementName)) {
       return this;
     }
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
+    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }

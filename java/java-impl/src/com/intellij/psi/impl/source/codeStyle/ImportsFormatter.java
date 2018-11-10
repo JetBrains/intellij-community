@@ -88,7 +88,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
   }
 
   private String formatImports(final int startOffset, final String value) {
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     String offset = calcOffset(startOffset);
     final String[] imports = value.split(",");
     if (imports.length >=1) {

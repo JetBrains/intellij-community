@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
@@ -13,7 +13,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
@@ -63,7 +62,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       result.add(GlobalSearchScope.allScope(project));
     }
 
-    for (SearchScopeProvider each : Extensions.getExtensions(SearchScopeProvider.EP, project)) {
+    for (SearchScopeProvider each : SearchScopeProvider.EP.getExtensions(project)) {
       result.addAll(each.getGeneralProjectScopes());
     }
 
@@ -178,11 +177,6 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
               }
 
               @Override
-              public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-                return 0;
-              }
-
-              @Override
               public boolean isSearchInModuleContent(@NotNull Module aModule) {
                 return true;
               }
@@ -231,11 +225,6 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
           }
 
           @Override
-          public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
-            return 0;
-          }
-
-          @Override
           public boolean isSearchInModuleContent(@NotNull final Module aModule) {
             return true;
           }
@@ -253,7 +242,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     return ContainerUtil.newArrayList(result);
   }
 
-  private static void addHierarchyScope(@NotNull Project project, Collection<SearchScope> result) {
+  private static void addHierarchyScope(@NotNull Project project, Collection<? super SearchScope> result) {
     final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.HIERARCHY);
     if (toolWindow == null) {
       return;
@@ -287,7 +276,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     return null;
   }
 
-  protected static Set<VirtualFile> collectFiles(Set<Usage> usages, boolean findFirst) {
+  @NotNull
+  protected static Set<VirtualFile> collectFiles(Set<? extends Usage> usages, boolean findFirst) {
     final Set<VirtualFile> files = new HashSet<>();
     for (Usage usage : usages) {
       if (usage instanceof PsiElementUsage) {

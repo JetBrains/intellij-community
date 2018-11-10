@@ -42,11 +42,6 @@ public class RunConfigurationDashboardGroupingRule implements RunDashboardGroupi
   }
 
   @Override
-  public int getPriority() {
-    return Priorities.BY_RUN_CONFIG;
-  }
-
-  @Override
   public boolean isAlwaysEnabled() {
     return true;
   }

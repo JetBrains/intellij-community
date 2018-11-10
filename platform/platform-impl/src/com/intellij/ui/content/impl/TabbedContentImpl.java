@@ -33,10 +33,11 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class TabbedContentImpl extends ContentImpl implements TabbedContent {
-  private final List<Pair<String, JComponent>> myTabs = new ArrayList<Pair<String, JComponent>>();
+  private final List<Pair<String, JComponent>> myTabs = new ArrayList<>();
+  @NotNull
   private String myPrefix;
 
-  public TabbedContentImpl(JComponent component, String displayName, boolean isPinnable, String titlePrefix) {
+  public TabbedContentImpl(JComponent component, @NotNull String displayName, boolean isPinnable, @NotNull String titlePrefix) {
     super(component, displayName, isPinnable);
     myPrefix = titlePrefix;
     addContent(component, displayName, true);
@@ -96,6 +97,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     setComponent(tab.second);
   }
 
+  @Override
   public int getSelectedIndex() {
     JComponent selected = getComponent();
     for (int i = 0; i < myTabs.size(); i++) {
@@ -116,11 +118,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
 
   @Override
   public String getTabName() {
-    String selected = findTabNameByComponent(getComponent());
-    if (myPrefix != null) {
-      selected = myPrefix + ": " + selected;
-    }
-    return selected;
+    return myPrefix + ": " + findTabNameByComponent(getComponent());
   }
 
   private String findTabNameByComponent(JComponent c) {
@@ -132,6 +130,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
     return null;
   }
 
+  @NotNull
   @Override
   public List<Pair<String, JComponent>> getTabs() {
     return Collections.unmodifiableList(myTabs);
@@ -149,7 +148,7 @@ public class TabbedContentImpl extends ContentImpl implements TabbedContent {
 
   @Override
   public void split() {
-    List<Pair<String, JComponent>> copy = new ArrayList<Pair<String, JComponent>>(myTabs);
+    List<Pair<String, JComponent>> copy = new ArrayList<>(myTabs);
     int selectedTab = ContentUtilEx.getSelectedTab(this);
     ContentManager manager = getManager();
     String prefix = getTitlePrefix();

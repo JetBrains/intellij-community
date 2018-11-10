@@ -23,6 +23,7 @@ import com.intellij.psi.PsiTypeVisitorEx;
  * @author db
  */
 public abstract class PsiExtendedTypeVisitor<X> extends PsiTypeVisitorEx<X> {
+  @Override
   public X visitClassType(final PsiClassType classType) {
     super.visitClassType(classType);
     final PsiClassType.ClassResolveResult result = classType.resolveGenerics();

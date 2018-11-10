@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.icons.AllIcons;
@@ -40,9 +26,10 @@ import java.util.Map;
  * A UI control which consists of two lists with ability to move elements between them.
  * <p/>
  * It looks as <a href="http://openfaces.org/documentation/developersGuide/twolistselection.html">here</a>.
- * 
+ *
  * @author Konstantin Bulenkov
  */
+@Deprecated
 public class JBMovePanel extends JBPanel {
 
   public static final String MOVE_PANEL_PLACE = "MOVE_PANEL";
@@ -169,12 +156,12 @@ public class JBMovePanel extends JBPanel {
   public void setLeftInsertionStrategy(@NotNull InsertPositionStrategy leftInsertionStrategy) {
     myLeftInsertionStrategy = leftInsertionStrategy;
   }
-  
+
   // Commented to preserve green code policy until this method is not used. Uncomment when necessary.
   //public void setRightInsertionStrategy(@NotNull InsertPositionStrategy rightInsertionStrategy) {
   //  myRightInsertionStrategy = rightInsertionStrategy;
   //}
-  
+
   @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
@@ -239,7 +226,7 @@ public class JBMovePanel extends JBPanel {
     if (indices.length <= 0) {
       return;
     }
-    
+
     final Object[] values = from.getSelectedValues();
     for (int i = indices.length - 1; i >= 0; i--) {
       ((DefaultListModel)from.getModel()).remove(indices[i]);
@@ -285,7 +272,7 @@ public class JBMovePanel extends JBPanel {
     test.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     test.setVisible(true);
   }
-  
+
   public interface InsertPositionStrategy {
     int getInsertionIndex(@NotNull Object data, @NotNull JList list);
   }
@@ -321,27 +308,27 @@ public class JBMovePanel extends JBPanel {
       }
     }
   }
-  
+
   private class LeftAction extends AnAction {
 
     LeftAction() {
-      getTemplatePresentation().setIcon(AllIcons.Actions.Left);
+      getTemplatePresentation().setIcon(AllIcons.General.ArrowLeft);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      doLeft(); 
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      doLeft();
     }
   }
 
   private class RightAction extends AnAction {
 
     RightAction() {
-      getTemplatePresentation().setIcon(AllIcons.Actions.Right);
+      getTemplatePresentation().setIcon(AllIcons.General.ArrowRight);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doRight();
     }
   }
@@ -353,7 +340,7 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doAllLeft();
     }
   }
@@ -365,31 +352,31 @@ public class JBMovePanel extends JBPanel {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       doAllRight();
     }
   }
-  
+
   private class UpAction extends AnAction {
-    
+
     UpAction() {
-      getTemplatePresentation().setIcon(AllIcons.Actions.UP);
+      getTemplatePresentation().setIcon(AllIcons.General.ArrowUp);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
-      ListUtil.moveSelectedItemsUp(myRightList); 
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      ListUtil.moveSelectedItemsUp(myRightList);
     }
   }
 
   private class DownAction extends AnAction {
 
     DownAction() {
-      getTemplatePresentation().setIcon(AllIcons.Actions.Down);
+      getTemplatePresentation().setIcon(AllIcons.General.ArrowDown);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ListUtil.moveSelectedItemsDown(myRightList);
     }
   }

@@ -3,7 +3,14 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
+
 public interface TreeExpander {
+  default boolean isVisible(@NotNull AnActionEvent event) {
+    return true;
+  }
+
   default void expandAll() {
   }
 

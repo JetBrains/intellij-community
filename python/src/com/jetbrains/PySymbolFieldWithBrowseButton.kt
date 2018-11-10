@@ -43,7 +43,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  * Only source based packages are supported.
  * [PySymbolFieldWithBrowseButton] use this function to get list of root names
  */
-fun isPythonModule(element: PsiElement) = element is PyFile || (element as? PsiDirectory)?.let {
+fun isPythonModule(element: PsiElement): Boolean = element is PyFile || (element as? PsiDirectory)?.let {
   it.findFile(PyNames.INIT_DOT_PY) != null
 } ?: false
 
@@ -77,7 +77,7 @@ class PySymbolFieldWithBrowseButton(contextAnchor: ContextAnchor,
     childComponent.setText(text)
   }
 
-  override fun getText() = childComponent.text
+  override fun getText(): String = childComponent.text
 }
 
 private fun PyType.getVariants(element: PsiElement): Array<LookupElement> =

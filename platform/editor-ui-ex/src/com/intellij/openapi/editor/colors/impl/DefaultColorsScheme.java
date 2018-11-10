@@ -41,7 +41,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme implements ReadOnl
 
   @Nullable
   public TextAttributes getAttributes(@NotNull TextAttributesKey key, boolean useDefaults) {
-    TextAttributes attrs = myAttributesMap.get(key);
+    TextAttributes attrs = myAttributesMap.get(key.getExternalName());
     if (attrs != null) return attrs;
 
     TextAttributesKey fallbackKey = key.getFallbackAttributeKey();

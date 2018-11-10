@@ -79,6 +79,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     return StringUtil.trimEnd(className, ".java");
   }
 
+  @NotNull
   @Override
   protected String getErrorTitle() {
     return IdeBundle.message("title.cannot.create.class");
@@ -86,7 +87,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
 
 
   @Override
-  protected String getActionName(PsiDirectory directory, String newName, String templateName) {
+  protected String getActionName(PsiDirectory directory, @NotNull String newName, String templateName) {
     return IdeBundle.message("progress.creating.class", StringUtil.getQualifiedName(JavaDirectoryService.getInstance().getPackage(directory).getQualifiedName(), newName));
   }
 
@@ -95,6 +96,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     return false;
   }
 
+  @Override
   protected final PsiClass doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
     return JavaDirectoryService.getInstance().createClass(dir, className, templateName, true);
   }

@@ -15,9 +15,11 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -36,13 +38,13 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
   public static final UnixPythonSdkFlavor INSTANCE = new UnixPythonSdkFlavor();
 
   @Override
-  public Collection<String> suggestHomePaths() {
+  public Collection<String> suggestHomePaths(@Nullable Module module) {
     Set<String> candidates = new HashSet<>();
     collectUnixPythons("/usr/bin", candidates);
     return candidates;
   }
 
-  public static void collectUnixPythons(String path, Set<String> candidates) {
+  public static void collectUnixPythons(String path, Set<? super String> candidates) {
     VirtualFile rootDir = LocalFileSystem.getInstance().findFileByPath(path);
     if (rootDir != null) {
       if (rootDir instanceof NewVirtualFile) {

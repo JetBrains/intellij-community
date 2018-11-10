@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -103,6 +104,7 @@ public class DependenciesPanelTest extends TestSourceBasedTestCase {
     return "dependencies";
   }
 
+  @NotNull
   @Override
   protected String getTestDirectoryName() {
     return "dependencies";

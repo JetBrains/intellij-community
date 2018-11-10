@@ -26,7 +26,7 @@ class SimpleStringConcatenationPredicate implements PsiElementPredicate {
 
   private final boolean excludeConcatenationsInsideAnnotations;
 
-  public SimpleStringConcatenationPredicate(boolean excludeConcatenationsInsideAnnotations) {
+  SimpleStringConcatenationPredicate(boolean excludeConcatenationsInsideAnnotations) {
     this.excludeConcatenationsInsideAnnotations = excludeConcatenationsInsideAnnotations;
   }
 

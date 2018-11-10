@@ -511,8 +511,9 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
         myTransparentPane.repaint();
 
         if (myPreviouslyFocusedComponent != null) {
+          Component component = myPreviouslyFocusedComponent;
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myPreviouslyFocusedComponent, true);
+            IdeFocusManager.getGlobalInstance().requestFocus(component, true);
           });
           myPreviouslyFocusedComponent = null;
         }
@@ -605,7 +606,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
 
     @Override
-    public Object getData(@NonNls final String dataId) {
+    public Object getData(@NotNull @NonNls final String dataId) {
       final DialogWrapper wrapper = myDialogWrapper.get();
       if (wrapper instanceof DataProvider) {
         return ((DataProvider) wrapper).getData(dataId);

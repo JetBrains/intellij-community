@@ -95,7 +95,7 @@ public class ReductionSystem {
 
   @SuppressWarnings({"StringConcatenationInsideStringBufferAppend"})
   public String toString() {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    @NonNls StringBuilder buffer = new StringBuilder();
 
     buffer.append("Victims:\n");
 
@@ -167,11 +167,11 @@ public class ReductionSystem {
       Constraint myConstraint;
       Set<Node> myNeighbours = new HashSet<>();
 
-      public Node() {
+      Node() {
         myConstraint = null;
       }
 
-      public Node(final Constraint c) {
+      Node(final Constraint c) {
         myConstraint = c;
       }
 
@@ -359,7 +359,7 @@ public class ReductionSystem {
                 (x, y) -> x.compareTo(y));
 
 
-    final StringBuffer repr = new StringBuffer();
+    final StringBuilder repr = new StringBuilder();
 
     for (String aData : data) {
       repr.append(aData);
@@ -447,7 +447,7 @@ public class ReductionSystem {
             theSubst = theSubst.put(parm, substitute(type));
           }
 
-          return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass, theSubst);
+          return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass, theSubst);
         }
         else {
           return t;
@@ -472,7 +472,7 @@ public class ReductionSystem {
                 (x, y) -> x.compareTo(y));
 
 
-    final StringBuffer repr = new StringBuffer();
+    final StringBuilder repr = new StringBuilder();
 
     for (String aData : data) {
       repr.append(aData);

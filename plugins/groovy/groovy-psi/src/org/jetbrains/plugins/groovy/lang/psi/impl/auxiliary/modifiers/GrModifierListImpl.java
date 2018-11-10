@@ -1,7 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers;
 
 import com.intellij.lang.ASTNode;
@@ -34,6 +31,8 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.GrModifierListStub;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtilKt;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -41,7 +40,9 @@ import java.util.Map;
  * @date: 18.03.2007
  */
 @SuppressWarnings({"StaticFieldReferencedViaSubclass"})
-public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> implements GrModifierList, StubBasedPsiElement<GrModifierListStub> {
+public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub>
+  implements GrModifierList, StubBasedPsiElement<GrModifierListStub>, PsiListLikeElement {
+
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<>();
   public static final Map<String, IElementType> NAME_TO_MODIFIER_ELEMENT_TYPE = ContainerUtil.newHashMap();
 
@@ -61,6 +62,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.TRANSIENT, GrModifierFlags.TRANSIENT_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.VOLATILE, GrModifierFlags.VOLATILE_MASK);
     NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.DEF, GrModifierFlags.DEF_MASK);
+    NAME_TO_MODIFIER_FLAG_MAP.put(GrModifier.DEFAULT, GrModifierFlags.DEFAULT_MASK);
 
 
     PRIORITY.put(GrModifier.PUBLIC,           0);
@@ -69,6 +71,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     PRIORITY.put(GrModifier.PACKAGE_LOCAL,    0);
     PRIORITY.put(GrModifier.STATIC,           1);
     PRIORITY.put(GrModifier.ABSTRACT,         1);
+    PRIORITY.put(GrModifier.DEFAULT,          1);
     PRIORITY.put(GrModifier.FINAL,            2);
     PRIORITY.put(GrModifier.NATIVE,           3);
     PRIORITY.put(GrModifier.SYNCHRONIZED,     3);
@@ -79,6 +82,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
 
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.PUBLIC, GroovyTokenTypes.kPUBLIC);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.ABSTRACT, GroovyTokenTypes.kABSTRACT);
+    NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.DEFAULT, GroovyTokenTypes.kDEFAULT);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.PRIVATE, GroovyTokenTypes.kPRIVATE);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.PROTECTED, GroovyTokenTypes.kPROTECTED);
     NAME_TO_MODIFIER_ELEMENT_TYPE.put(GrModifier.SYNCHRONIZED, GroovyTokenTypes.kSYNCHRONIZED);
@@ -104,10 +108,11 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitModifierList(this);
   }
 
+  @Override
   public String toString() {
     return "Modifiers";
   }
@@ -282,7 +287,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   @Nullable
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
     for (GrAnnotation annotation : getAnnotations()) {
-      if (qualifiedName.equals(annotation.getQualifiedName())) {
+      if (annotation.hasQualifiedName(qualifiedName)) {
         return annotation;
       }
     }
@@ -316,5 +321,11 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
 
     return annotation;
+  }
+
+  @NotNull
+  @Override
+  public List<? extends PsiElement> getComponents() {
+    return Arrays.asList(getModifiers());
   }
 }

@@ -3,11 +3,12 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.util.DiffPlaces;
-import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.ide.TreeExpander;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
+import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -19,6 +20,7 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -30,7 +32,7 @@ import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -38,6 +40,7 @@ import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
@@ -61,11 +64,17 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager.unshelveSilentlyWithDnd;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
+import static com.intellij.ui.IdeBorderFactory.createBorder;
+import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.util.containers.ContainerUtil.newHashSet;
 import static com.intellij.util.containers.ContainerUtil.set;
+import static com.intellij.util.ui.JBUI.Panels.simplePanel;
+import static com.intellij.util.ui.UIUtil.addBorder;
+import static com.intellij.vcsUtil.VcsImplUtil.isNonModalCommit;
 import static java.util.stream.Collectors.toList;
 
 @State(
@@ -96,6 +105,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @NotNull private final PropertyChangeListener myGroupingChangeListener;
   private MyChangeViewContent myContent;
   private boolean myModelUpdateInProgress;
+  private MyTreeExpander myTreeExpander;
 
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
@@ -106,7 +116,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myProject = project;
     myContentManager = contentManager;
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
-    myView = new ChangesListView(project);
+    myView = new ChangesListView(project, isNonModalCommit());
+    myTreeExpander = new MyTreeExpander();
+    myView.setTreeExpander(myTreeExpander);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myTsl = new TreeSelectionListener() {
       @Override
@@ -137,7 +149,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   public void projectOpened() {
     ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), myProject);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
-    myContent = new MyChangeViewContent(createChangeViewComponent(), ChangesViewContentManager.LOCAL_CHANGES, false);
+
+    JComponent panel = createChangeViewComponent();
+    myContent = new MyChangeViewContent(panel, ChangesViewContentManager.LOCAL_CHANGES, false);
     myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
@@ -163,63 +177,75 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   }
 
   private JComponent createChangeViewComponent() {
-    SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true);
+    ActionToolbar changesToolbar = createChangesToolbar();
+    addBorder(changesToolbar.getComponent(), createBorder(JBColor.border(), SideBorder.RIGHT));
+    BorderLayoutPanel changesPanel = simplePanel(createScrollPane(myView)).addToLeft(changesToolbar.getComponent());
 
-    EmptyAction.registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), panel);
-    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.Rename",CommonShortcuts.getRename() , panel);
-    EmptyAction.registerWithShortcutSet("ChangesView.SetDefault", new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), panel);
-    EmptyAction.registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), panel);
+    BorderLayoutPanel contentPanel = new BorderLayoutPanel() {
+      @Override
+      public Dimension getMinimumSize() {
+        return isMinimumSizeSet() ? super.getMinimumSize() : changesToolbar.getComponent().getPreferredSize();
+      }
+    };
+    contentPanel.addToCenter(changesPanel);
+    if (isNonModalCommit()) {
+      contentPanel.addToBottom(new ChangesViewCommitPanel(myProject));
+    }
 
-    DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewToolbar");
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
-    toolbar.setTargetComponent(myView);
-    JComponent toolbarComponent = toolbar.getComponent();
-    JPanel toolbarPanel = new JPanel(new BorderLayout());
-    toolbarPanel.add(toolbarComponent, BorderLayout.WEST);
-
-    DefaultActionGroup visualActionsGroup = new DefaultActionGroup();
-    final Expander expander = new Expander();
-    visualActionsGroup.add(CommonActionsManager.getInstance().createExpandAllAction(expander, panel));
-    visualActionsGroup.add(CommonActionsManager.getInstance().createCollapseAllAction(expander, panel));
-
-    visualActionsGroup.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
-    visualActionsGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
-    visualActionsGroup.add(new ToggleShowIgnoredAction());
-    visualActionsGroup.add(new IgnoredSettingsAction());
-    visualActionsGroup.add(new ToggleDetailsAction());
-
-    ActionToolbar visualActionsToolbar =
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, visualActionsGroup, false);
-    visualActionsToolbar.setTargetComponent(myView);
-    toolbarPanel.add(visualActionsToolbar.getComponent(), BorderLayout.CENTER);
-
-    myView.setMenuActions((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
-    myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
-
-    myProgressLabel = new JPanel(new BorderLayout());
-
-    panel.setToolbar(toolbarPanel);
-
-    final JPanel content = new JPanel(new BorderLayout());
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myView);
-    final JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(scrollPane, BorderLayout.CENTER);
     MyChangeProcessor changeProcessor = new MyChangeProcessor(myProject);
-    mySplitterComponent =
-      new PreviewDiffSplitterComponent(wrapper, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
-                                       myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
+    mySplitterComponent = new PreviewDiffSplitterComponent(contentPanel, changeProcessor, CHANGES_VIEW_PREVIEW_SPLITTER_PROPORTION,
+                                                           myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN);
 
-    content.add(mySplitterComponent, BorderLayout.CENTER);
-    content.add(myProgressLabel, BorderLayout.SOUTH);
-    panel.setContent(content);
-
+    myView.installPopupHandler((DefaultActionGroup)ActionManager.getInstance().getAction("ChangesViewPopupMenu"));
+    myView.getGroupingSupport().setGroupingKeysOrSkip(myState.groupingKeys);
     ChangesDnDSupport.install(myProject, myView);
     myView.addTreeSelectionListener(myTsl);
     myView.addGroupingChangeListener(myGroupingChangeListener);
+
+    SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
+      @NotNull
+      @Override
+      public List<AnAction> getActions(boolean originalProvider) {
+        return changesToolbar.getActions();
+      }
+    };
+    myProgressLabel = simplePanel();
+    panel.setContent(simplePanel(mySplitterComponent).addToBottom(myProgressLabel));
+    registerShortcuts(panel);
     return panel;
+  }
+
+  private static void registerShortcuts(@NotNull JComponent component) {
+    registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), component);
+    registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
+    registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
+    registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), component);
+    registerWithShortcutSet("ChangesView.SetDefault",
+                            new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_DOWN_MASK | ctrlMask())), component);
+    registerWithShortcutSet(IdeActions.ACTION_SHOW_DIFF_COMMON, CommonShortcuts.getDiff(), component);
+  }
+
+  @NotNull
+  private ActionToolbar createChangesToolbar() {
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(CustomActionsSchema.getInstance().getCorrectedAction(ActionPlaces.CHANGES_VIEW_TOOLBAR));
+
+    group.addSeparator();
+    group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
+
+    DefaultActionGroup ignoreGroup = new DefaultActionGroup("Ignored Files", true);
+    ignoreGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
+    ignoreGroup.add(new ToggleShowIgnoredAction());
+    ignoreGroup.add(new IgnoredSettingsAction());
+    group.add(ignoreGroup);
+    group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
+    group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
+    group.addSeparator();
+    group.add(new ToggleDetailsAction());
+
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.CHANGES_VIEW_TOOLBAR, group, false);
+    toolbar.setTargetComponent(myView);
+    return toolbar;
   }
 
   @JdkConstants.InputEventMask
@@ -270,6 +296,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
+  public void refreshImmediately() {
+    myRepaintAlarm.cancelAllRequests();
+    refreshView();
+  }
+
   private void refreshView() {
     if (myDisposed || !myProject.isInitialized() || ApplicationManager.getApplication().isUnitTestMode()) return;
     if (!ProjectLevelVcsManager.getInstance(myProject).hasActiveVcss()) return;
@@ -277,7 +308,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
 
     TreeModelBuilder treeModelBuilder = new TreeModelBuilder(myProject, myView.getGrouping())
-      .setChangeLists(changeListManager.getChangeListsCopy())
+      .setChangeLists(changeListManager.getChangeListsCopy(), Registry.is("vcs.skip.single.default.changelist"))
       .setLocallyDeletedPaths(changeListManager.getDeletedFiles())
       .setModifiedWithoutEditing(changeListManager.getModifiedWithoutEditing())
       .setSwitchedFiles(changeListManager.getSwitchedFilesMap())
@@ -347,23 +378,11 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   public void selectChanges(@NotNull List<Change> changes) {
     List<TreePath> paths = new ArrayList<>();
 
-    DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
     for (Change change : changes) {
-      ContainerUtil.addIfNotNull(paths, findObjectInTree(root, change));
+      ContainerUtil.addIfNotNull(paths, myView.findNodePathInTree(change));
     }
 
-    if (!paths.isEmpty()) {
-      TreeUtil.selectPaths(myView, paths);
-    }
-  }
-
-  @Nullable
-  private static TreePath findObjectInTree(@NotNull DefaultMutableTreeNode root, Object userObject) {
-    DefaultMutableTreeNode objectNode =
-      userObject instanceof ChangeListChange
-      ? TreeUtil.findNode(root, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject))
-      : TreeUtil.findNodeWithObject(root, userObject);
-    return objectNode != null ? TreeUtil.getPathFromRoot(objectNode) : null;
+    TreeUtil.selectPaths(myView, paths);
   }
 
 
@@ -395,8 +414,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     if (dropPath == null) return null;
 
     ChangesBrowserNode dropNode = (ChangesBrowserNode)dropPath.getLastPathComponent();
-    while (!((ChangesBrowserNode)dropNode.getParent()).isRoot()) {
-      dropNode = (ChangesBrowserNode)dropNode.getParent();
+    while (!dropNode.getParent().isRoot()) {
+      dropNode = dropNode.getParent();
     }
     return dropNode;
   }
@@ -442,15 +461,9 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     }
   }
 
-  private class Expander implements TreeExpander {
-    @Override
-    public void expandAll() {
-      TreeUtil.expandAll(myView);
-    }
-
-    @Override
-    public boolean canExpand() {
-      return true;
+  private class MyTreeExpander extends DefaultTreeExpander {
+    MyTreeExpander() {
+      super(myView);
     }
 
     @Override
@@ -458,27 +471,23 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
       TreeUtil.collapseAll(myView, 2);
       TreeUtil.expand(myView, 1);
     }
-
-    @Override
-    public boolean canCollapse() {
-      return true;
-    }
   }
 
+
   private class ToggleShowIgnoredAction extends ToggleAction implements DumbAware {
-    public ToggleShowIgnoredAction() {
+    ToggleShowIgnoredAction() {
       super(VcsBundle.message("changes.action.show.ignored.text"),
             VcsBundle.message("changes.action.show.ignored.description"),
             AllIcons.Actions.ShowHiddens);
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myState.myShowIgnored;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myState.myShowIgnored = state;
       refreshView();
     }
@@ -486,34 +495,35 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private class ToggleDetailsAction extends ShowDiffPreviewAction {
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       mySplitterComponent.setDetailsOn(state);
       myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = state;
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
     }
   }
 
   private class MyChangeProcessor extends ChangeViewDiffRequestProcessor {
-    public MyChangeProcessor(@NotNull Project project) {
+    MyChangeProcessor(@NotNull Project project) {
       super(project, DiffPlaces.CHANGES_VIEW);
       Disposer.register(project, this);
-    }
 
-    @Override
-    public boolean isWindowFocused() {
-      return DiffUtil.isFocusedComponent(myProject, myContent.getComponent());
+      putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
     }
 
     @NotNull
     @Override
     protected List<Wrapper> getSelectedChanges() {
-      List<Wrapper> result = wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
-      if (result.isEmpty()) result = getAllChanges();
-      return result;
+      boolean hasSelection = myView.getSelectionCount() != 0;
+      if (hasSelection) {
+        return wrap(myView.getSelectedChanges(), myView.getSelectedUnversionedFiles());
+      }
+      else {
+        return getAllChanges();
+      }
     }
 
     @NotNull
@@ -524,8 +534,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
     @Override
     protected void selectChange(@NotNull Wrapper change) {
-      DefaultMutableTreeNode root = (DefaultMutableTreeNode)myView.getModel().getRoot();
-      TreePath path = findObjectInTree(root, change.getUserObject());
+      TreePath path = myView.findNodePathInTree(change.getUserObject());
       if (path != null) {
         TreeUtil.selectPath(myView, path, false);
       }
@@ -539,7 +548,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
 
   private class MyChangeViewContent extends DnDActivateOnHoldTargetContent {
   
-    private MyChangeViewContent(JComponent component, String displayName, boolean isLockable) {
+    private MyChangeViewContent(JComponent component, @NotNull String displayName, boolean isLockable) {
       super(myProject, component, displayName, isLockable);
     }
 

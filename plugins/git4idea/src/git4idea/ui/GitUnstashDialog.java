@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui;
 
 import com.intellij.CommonBundle;
@@ -36,7 +22,10 @@ import com.intellij.ui.DocumentAdapter;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
@@ -90,27 +79,32 @@ public class GitUnstashDialog extends DialogWrapper {
     myStashList.setModel(new DefaultListModel());
     refreshStashList();
     myGitRootComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         refreshStashList();
         updateDialogState();
       }
     });
     myStashList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         updateDialogState();
       }
     });
     myBranchTextField.getDocument().addDocumentListener(new DocumentAdapter() {
-      protected void textChanged(final DocumentEvent e) {
+      @Override
+      protected void textChanged(@NotNull final DocumentEvent e) {
         updateDialogState();
       }
     });
     myPopStashCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateDialogState();
       }
     });
     myClearButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (Messages.YES == Messages.showYesNoDialog(GitUnstashDialog.this.getContentPane(),
                                                      GitBundle.message("git.unstash.clear.confirmation.message"),
@@ -137,6 +131,7 @@ public class GitUnstashDialog extends DialogWrapper {
       }
     });
     myDropButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final StashInfo stash = getSelectedStash();
         if (Messages.YES == Messages.showYesNoDialog(GitUnstashDialog.this.getContentPane(),
@@ -148,7 +143,7 @@ public class GitUnstashDialog extends DialogWrapper {
             public void run(@NotNull ProgressIndicator indicator) {
               final GitLineHandler h = dropHandler(stash.getStash());
               try {
-                Git.getInstance().runCommand(h).getOutputOrThrow();
+                Git.getInstance().runCommand(h).throwOnError();
               }
               catch (final VcsException ex) {
                 ApplicationManager.getApplication().invokeLater(() -> GitUIUtil.showOperationError(myProject, ex, h.printableCommandLine()), current);
@@ -167,6 +162,7 @@ public class GitUnstashDialog extends DialogWrapper {
       }
     });
     myViewButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final VirtualFile root = getGitRoot();
         String resolvedStash;
@@ -291,6 +287,7 @@ public class GitUnstashDialog extends DialogWrapper {
     return (StashInfo)myStashList.getSelectedValue();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myPanel;
   }
@@ -334,15 +331,15 @@ public class GitUnstashDialog extends DialogWrapper {
     private final VirtualFile myRoot;
     private final StashInfo myStashInfo;
 
-    public UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
+    UnstashConflictResolver(Project project, VirtualFile root, StashInfo stashInfo) {
       super(project, Git.getInstance(),
-            Collections.singleton(root), makeParams(stashInfo));
+            Collections.singleton(root), makeParams(project, stashInfo));
       myRoot = root;
       myStashInfo = stashInfo;
     }
-    
-    private static Params makeParams(StashInfo stashInfo) {
-      Params params = new Params();
+
+    private static Params makeParams(Project project, StashInfo stashInfo) {
+      Params params = new Params(project);
       params.setErrorNotificationTitle("Unstashed with conflicts");
       params.setMergeDialogCustomizer(new UnstashMergeDialogCustomizer(stashInfo));
       return params;
@@ -370,20 +367,23 @@ public class GitUnstashDialog extends DialogWrapper {
 
     private final StashInfo myStashInfo;
 
-    public UnstashMergeDialogCustomizer(StashInfo stashInfo) {
+    UnstashMergeDialogCustomizer(StashInfo stashInfo) {
       myStashInfo = stashInfo;
     }
 
+    @NotNull
     @Override
     public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return "<html>Conflicts during unstashing <code>" + myStashInfo.getStash() + "\"" + myStashInfo.getMessage() + "\"</code></html>";
     }
 
+    @NotNull
     @Override
     public String getLeftPanelTitle(@NotNull VirtualFile file) {
       return "Local changes";
     }
 
+    @NotNull
     @Override
     public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return "Changes from stash";

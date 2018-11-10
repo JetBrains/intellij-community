@@ -135,12 +135,12 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  protected boolean isEnabledOnDataContext(DataContext dataContext) {
+  protected boolean isEnabledOnDataContext(@NotNull DataContext dataContext) {
     return false;
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setVisible(true);
     presentation.setEnabled(true);
@@ -200,7 +200,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
   }
 
-  private static void hideAction(AnActionEvent e) {
+  private static void hideAction(@NotNull AnActionEvent e) {
     e.getPresentation().setVisible(false);
     disableAction(e);
   }
@@ -233,7 +233,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     return caret;
   }
 
-  private static void disableAction(AnActionEvent e) {
+  private static void disableAction(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(false);
   }
 

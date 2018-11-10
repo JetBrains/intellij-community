@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
@@ -18,6 +19,7 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
 
   private String myPassword;
 
+  @Override
   @Attribute("email")
   public String getEmail() {
     return myEmail;
@@ -27,6 +29,7 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
     myEmail = email;
   }
 
+  @Override
   @Attribute("password")
   public String getPassword() {
     return myPassword;

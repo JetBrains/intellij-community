@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import one.util.streamex.StreamEx;
@@ -12,12 +13,10 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnTrue;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
+import static com.intellij.psi.CommonClassNames.*;
 
 /**
  * Represents a method which is handled as a field in DFA.
@@ -28,9 +27,7 @@ public enum SpecialField implements DfaVariableSource {
   ARRAY_LENGTH(null, "length", true, LongRangeSet.indexRange()) {
     @Override
     boolean isMyAccessor(PsiMember accessor) {
-      return accessor instanceof PsiField && "length".equals(accessor.getName()) &&
-             JavaPsiFacade.getElementFactory(accessor.getProject()).getArrayClass(PsiUtil.getLanguageLevel(accessor)) ==
-             accessor.getContainingClass();
+      return accessor instanceof PsiField && "length".equals(accessor.getName()) && PsiUtil.isArrayClass(accessor.getContainingClass());
     }
 
     @Override
@@ -54,7 +51,7 @@ public enum SpecialField implements DfaVariableSource {
       return null;
     }
   },
-  STRING_LENGTH(CommonClassNames.JAVA_LANG_STRING, "length", true, LongRangeSet.indexRange()) {
+  STRING_LENGTH(JAVA_LANG_STRING, "length", true, LongRangeSet.indexRange()) {
     @Override
     DfaValue fromInitializer(DfaValueFactory factory, PsiExpression initializer) {
       Object value = ExpressionUtils.computeConstantExpression(initializer);
@@ -69,8 +66,30 @@ public enum SpecialField implements DfaVariableSource {
       return obj instanceof String ? factory.getInt(((String)obj).length()) : null;
     }
   },
-  COLLECTION_SIZE(CommonClassNames.JAVA_UTIL_COLLECTION, "size", false, LongRangeSet.indexRange()),
-  MAP_SIZE(CommonClassNames.JAVA_UTIL_MAP, "size", false, LongRangeSet.indexRange());
+  COLLECTION_SIZE(JAVA_UTIL_COLLECTION, "size", false, LongRangeSet.indexRange()),
+  MAP_SIZE(JAVA_UTIL_MAP, "size", false, LongRangeSet.indexRange()),
+  UNBOX(null, "unbox", true, null) {
+    private final CallMatcher UNBOXING_CALL = CallMatcher.anyOf(
+      CallMatcher.exactInstanceCall(JAVA_LANG_INTEGER, "intValue").parameterCount(0),
+      CallMatcher.exactInstanceCall(JAVA_LANG_LONG, "longValue").parameterCount(0),
+      CallMatcher.exactInstanceCall(JAVA_LANG_SHORT, "shortValue").parameterCount(0),
+      CallMatcher.exactInstanceCall(JAVA_LANG_BYTE, "byteValue").parameterCount(0),
+      CallMatcher.exactInstanceCall(JAVA_LANG_CHARACTER, "charValue").parameterCount(0),
+      CallMatcher.exactInstanceCall(JAVA_LANG_BOOLEAN, "booleanValue").parameterCount(0),
+      CallMatcher.exactInstanceCall(JAVA_LANG_FLOAT, "floatValue").parameterCount(0),
+      CallMatcher.exactInstanceCall(JAVA_LANG_DOUBLE, "doubleValue").parameterCount(0)
+    );
+
+    @Override
+    PsiPrimitiveType getType(DfaVariableValue variableValue) {
+      return PsiPrimitiveType.getUnboxedType(variableValue.getType());
+    }
+
+    @Override
+    boolean isMyAccessor(PsiMember accessor) {
+      return accessor instanceof PsiMethod && UNBOXING_CALL.methodMatches((PsiMethod)accessor);
+    }
+  };
 
   private final String myClassName;
   private final String myMethodName;
@@ -89,6 +108,7 @@ public enum SpecialField implements DfaVariableSource {
     return myFinal;
   }
 
+  @Nullable
   public LongRangeSet getRange() {
     return myRange;
   }
@@ -127,6 +147,18 @@ public enum SpecialField implements DfaVariableSource {
    * @return a DfaValue which represents this special field
    */
   public DfaValue createValue(DfaValueFactory factory, DfaValue qualifier) {
+    return createValue(factory, qualifier, null);
+  }
+
+  /**
+   * Returns a DfaValue which represents this special field
+   *
+   * @param factory a factory to create new values if necessary
+   * @param qualifier a known qualifier value
+   * @param targetType a type of created value
+   * @return a DfaValue which represents this special field
+   */
+  public DfaValue createValue(DfaValueFactory factory, DfaValue qualifier, PsiType targetType) {
     if (qualifier instanceof DfaVariableValue) {
       DfaVariableValue variableValue = (DfaVariableValue)qualifier;
       PsiModifierListOwner psiVariable = variableValue.getPsiVariable();
@@ -142,7 +174,7 @@ public enum SpecialField implements DfaVariableSource {
           }
         }
       }
-      return factory.getVarFactory().createVariableValue(this, PsiType.INT, variableValue);
+      return factory.getVarFactory().createVariableValue(this, targetType == null ? getType(variableValue) : targetType, variableValue);
     }
     if(qualifier instanceof DfaConstValue) {
       Object obj = ((DfaConstValue)qualifier).getValue();
@@ -156,6 +188,10 @@ public enum SpecialField implements DfaVariableSource {
     return factory.getFactValue(DfaFactType.RANGE, myRange);
   }
 
+  PsiPrimitiveType getType(DfaVariableValue variableValue) {
+    return PsiType.INT;
+  }
+
   DfaValue fromInitializer(DfaValueFactory factory, PsiExpression initializer) {
     return null;
   }
@@ -167,18 +203,18 @@ public enum SpecialField implements DfaVariableSource {
   /**
    * @return a list of method contracts which equivalent to checking this special field for zero
    */
-  public List<MethodContract> getEmptyContracts() {
+  public MethodContract[] getEmptyContracts() {
     ContractValue thisValue = ContractValue.qualifier().specialField(this);
-    return Arrays
-      .asList(MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, ContractValue.zero(), returnTrue()),
-              MethodContract.trivialContract(returnFalse()));
+    return new MethodContract[]{
+      MethodContract.singleConditionContract(thisValue, DfaRelationValue.RelationType.EQ, ContractValue.zero(), returnTrue()),
+      MethodContract.trivialContract(returnFalse())};
   }
 
-  public List<MethodContract> getEqualsContracts() {
-    return Arrays.asList(new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
+  public MethodContract[] getEqualsContracts() {
+    return new MethodContract[]{new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
                          MethodContract.singleConditionContract(
                            ContractValue.qualifier().specialField(this), DfaRelationValue.RelationType.NE,
-                           ContractValue.argument(0).specialField(this), returnFalse()));
+                           ContractValue.argument(0).specialField(this), returnFalse())};
   }
 
   @Override

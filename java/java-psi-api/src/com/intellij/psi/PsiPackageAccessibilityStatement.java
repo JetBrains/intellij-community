@@ -30,11 +30,18 @@ public interface PsiPackageAccessibilityStatement extends PsiStatement {
 
   enum Role {EXPORTS, OPENS}
 
-  @NotNull Role getRole();
+  @NotNull
+  Role getRole();
 
-  @Nullable PsiJavaCodeReferenceElement getPackageReference();
-  @Nullable String getPackageName();
+  @Nullable
+  PsiJavaCodeReferenceElement getPackageReference();
 
-  @NotNull Iterable<PsiJavaModuleReferenceElement> getModuleReferences();
-  @NotNull List<String> getModuleNames();
+  @Nullable
+  String getPackageName();
+
+  @NotNull
+  Iterable<PsiJavaModuleReferenceElement> getModuleReferences();
+
+  @NotNull
+  List<String> getModuleNames();
 }

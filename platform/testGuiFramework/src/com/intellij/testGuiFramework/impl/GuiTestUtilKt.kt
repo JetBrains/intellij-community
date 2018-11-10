@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.testGuiFramework.framework.Timeouts
+import com.intellij.testGuiFramework.framework.toPrintable
+import com.intellij.testGuiFramework.util.FinderPredicate
+import com.intellij.testGuiFramework.util.Predicate
 import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
@@ -37,6 +27,7 @@ import java.awt.Container
 import java.awt.Window
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.swing.JCheckBox
 import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JRadioButton
@@ -88,7 +79,7 @@ object GuiTestUtilKt {
 
       return tree
     }
-    catch(e: Exception) {
+    catch (e: Exception) {
       throw Exception("Unable to build a tree from given data. Check indents and ")
     }
   }
@@ -135,14 +126,14 @@ object GuiTestUtilKt {
       return child
     }
 
-    fun countChildren() = children.count()
+    fun countChildren(): Int = children.count()
 
-    fun isLeaf() = (children.count() == 0)
+    fun isLeaf(): Boolean = (children.count() == 0)
 
   }
 
   fun Component.isTextComponent(): Boolean {
-    val textComponentsTypes = arrayOf(JLabel::class.java, JRadioButton::class.java)
+    val textComponentsTypes = arrayOf(JLabel::class.java, JRadioButton::class.java, JCheckBox::class.java)
     return textComponentsTypes.any { it.isInstance(this) }
   }
 
@@ -150,31 +141,40 @@ object GuiTestUtilKt {
     when (this) {
       is JLabel -> return this.text
       is JRadioButton -> return this.text
+      is JCheckBox -> return this.text
       else -> return null
     }
   }
 
-  fun findComponentByText(robot: Robot, container: Container, text: String): Component {
-    return withPauseWhenNull { robot.finder().findAll(container, ComponentMatcher { component ->
-      component!!.isShowing && component.isTextComponent() && component.getComponentText() == text }).firstOrNull() }
+  private fun findComponentByText(robot: Robot, container: Container, text: String, timeout: Timeout = Timeouts.seconds30): Component {
+    return withPauseWhenNull(timeout = timeout) {
+      robot.finder().findAll(container, ComponentMatcher { component ->
+        component!!.isShowing && component.isTextComponent() && component.getComponentText() == text
+      }).firstOrNull()
+    }
   }
 
-  fun <BoundedComponent> findBoundedComponentByText(robot: Robot, container: Container, text: String, componentType: Class<BoundedComponent>): BoundedComponent {
-    val componentWithText = findComponentByText(robot, container, text)
+  fun <BoundedComponent> findBoundedComponentByText(robot: Robot,
+                                                    container: Container,
+                                                    text: String,
+                                                    componentType: Class<BoundedComponent>,
+                                                    timeout: Timeout = Timeouts.seconds30): BoundedComponent {
+    val componentWithText = findComponentByText(robot, container, text, timeout)
     if (componentWithText is JLabel && componentWithText.labelFor != null) {
       val labeledComponent = componentWithText.labelFor
       if (componentType.isInstance(labeledComponent)) return labeledComponent as BoundedComponent
       return robot.finder().find(labeledComponent as Container) { component -> componentType.isInstance(component) } as BoundedComponent
     }
     try {
-      return withPauseWhenNull {
+      return withPauseWhenNull(timeout = timeout) {
         val componentsOfInstance = robot.finder().findAll(container, ComponentMatcher { component -> componentType.isInstance(component) })
         componentsOfInstance.filter { it.isShowing && it.onHeightCenter(componentWithText, true) }
           .sortedBy { it.bounds.x }
           .firstOrNull()
       } as BoundedComponent
-    } catch (e: WaitTimedOutError) {
-      throw ComponentLookupException("Unable to find component of type: ${componentType.simpleName} in $container by text: $text" )
+    }
+    catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("Unable to find component of type: ${componentType.simpleName} in $container by text: $text")
     }
   }
 
@@ -183,7 +183,7 @@ object GuiTestUtilKt {
     val centerXAxis = this.bounds.height / 2 + this.locationOnScreen.y
     val sideCheck =
       if (onLeft)
-        textComponent.locationOnScreen.x  < this.locationOnScreen.x
+        textComponent.locationOnScreen.x < this.locationOnScreen.x
       else
         textComponent.locationOnScreen.x > this.locationOnScreen.x
     return (textComponent.locationOnScreen.y <= centerXAxis)
@@ -200,24 +200,59 @@ object GuiTestUtilKt {
   }
 
   /**
-   * waits for 30 sec timeout when testWithPause() not return null
+   * waits for 30 sec timeout when functionProbeToNull() not return null
+   *
+   * @throws WaitTimedOutError with the text: "Timed out waiting for $timeout second(s) until {@code conditionText} will be not null"
    */
-  fun <ReturnType> withPauseWhenNull(timeoutInSeconds: Int = 30, testWithPause: () -> ReturnType?): ReturnType {
-    val ref = Ref<ReturnType>()
-    Pause.pause(object: Condition("With pause...") {
-      override fun test(): Boolean {
-        val testWithPauseResult = testWithPause()
-        if (testWithPauseResult != null) ref.set(testWithPauseResult)
-        return (testWithPauseResult != null)
-      }
-    }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
-    return ref.get()
+  fun <ReturnType> withPauseWhenNull(conditionText: String = "function to probe will",
+                                            timeout: Timeout = Timeouts.defaultTimeout,
+                                            functionProbeToNull: () -> ReturnType?): ReturnType {
+    var result: ReturnType? = null
+    waitUntil("$conditionText will be not null", timeout) {
+      result = functionProbeToNull()
+      result != null
+    }
+    return result!!
   }
 
-  fun waitUntil(condition: String, timeoutInSeconds: Int = 60, conditionalFunction: () -> Boolean) {
-    Pause.pause(object : Condition("Wait for $timeoutInSeconds until $condition") {
+  fun waitUntil(condition: String, timeout: Timeout = Timeouts.defaultTimeout, conditionalFunction: () -> Boolean) {
+    Pause.pause(object : Condition("${timeout.toPrintable()} until $condition") {
       override fun test() = conditionalFunction()
-    }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
+    }, timeout)
+  }
+
+  fun <R> tryWithPause(exceptionClass: Class<out Exception>,
+                   condition: String = "try block will not throw ${exceptionClass.name} exception",
+                   timeout: Timeout,
+                   tryBlock: () -> R): R {
+    val exceptionRef: Ref<Exception> = Ref.create()
+    try {
+      return withPauseWhenNull (condition, timeout) {
+        try {
+          tryBlock()
+        }
+        catch (e: Exception) {
+          if (exceptionClass.isInstance(e)) {
+            exceptionRef.set(e)
+            return@withPauseWhenNull null
+          }
+          throw e
+        }
+      }
+    }
+    catch (e: WaitTimedOutError) {
+      throw Exception("Timeout for $condition exceeded ${timeout.toPrintable()}", exceptionRef.get())
+    }
+  }
+
+  fun silentWaitUntil(condition: String, timeoutInSeconds: Int = 60, conditionalFunction: () -> Boolean) {
+    try {
+      Pause.pause(object : Condition("$timeoutInSeconds second(s) until $condition silently") {
+        override fun test() = conditionalFunction()
+      }, Timeout.timeout(timeoutInSeconds.toLong(), TimeUnit.SECONDS))
+    }
+    catch (ignore: WaitTimedOutError) {
+    }
   }
 
   fun <ComponentType : Component> findAllWithBFS(container: Container, clazz: Class<ComponentType>): List<ComponentType> {
@@ -230,7 +265,7 @@ object GuiTestUtilKt {
     }
 
     queue.add(container)
-    while(queue.isNotEmpty()) {
+    while (queue.isNotEmpty()) {
       val polled = queue.poll()
       check(polled)
       if (polled is Container)
@@ -241,58 +276,77 @@ object GuiTestUtilKt {
 
   }
 
-  fun <ComponentType : Component?> waitUntilGone(robot: Robot, timeoutInSeconds: Int = 30, root: Container? = null, matcher: GenericTypeMatcher<ComponentType>) {
-    return GuiTestUtil.waitUntilGone(robot, root, timeoutInSeconds, matcher)
+  fun <ComponentType : Component> waitUntilGone(robot: Robot,
+                                                timeout: Timeout = Timeouts.seconds30,
+                                                root: Container? = null,
+                                                matcher: GenericTypeMatcher<ComponentType>) {
+    return GuiTestUtil.waitUntilGone(root, timeout, matcher)
   }
 
-  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
-    waitProgressDialogUntilGone(this.robot(), dialogTitle, timeoutToAppearInSeconds, timeoutToGoneInSeconds)
+  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String,
+                                              predicate: FinderPredicate = Predicate.equality,
+                                              timeoutToAppear: Timeout = Timeouts.seconds05,
+                                              timeoutToGone: Timeout = Timeouts.defaultTimeout) {
+    waitProgressDialogUntilGone(this.robot(), dialogTitle, predicate, timeoutToAppear, timeoutToGone)
   }
 
-  fun waitProgressDialogUntilGone(robot: Robot, progressTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
+  fun waitProgressDialogUntilGone(robot: Robot,
+                                  progressTitle: String,
+                                  predicate: FinderPredicate = Predicate.equality,
+                                  timeoutToAppear: Timeout = Timeouts.seconds30,
+                                  timeoutToGone: Timeout = Timeouts.defaultTimeout) {
     //wait dialog appearance. In a bad case we could pass dialog appearance.
     var dialog: JDialog? = null
     try {
-      waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppearInSeconds) {
-        dialog = findProgressDialog(robot, progressTitle)
+      waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppear) {
+        dialog = findProgressDialog(robot, progressTitle, predicate)
         dialog != null
       }
-    } catch (timeoutError: WaitTimedOutError) { return }
-    waitUntil("progress dialog with title $progressTitle will gone", timeoutToGoneInSeconds) { dialog == null || !dialog!!.isShowing }
+    }
+    catch (timeoutError: WaitTimedOutError) {
+      return
+    }
+    waitUntil("progress dialog with title $progressTitle will gone", timeoutToGone) { dialog == null || !dialog!!.isShowing }
   }
 
-  fun findProgressDialog(robot: Robot, progressTitle: String): JDialog? {
-    return robot.finder().findAll(typeMatcher(JDialog::class.java) {
-      findAllWithBFS(it, EngravedLabel::class.java).filter { it.isShowing && it.text == progressTitle }.any()
-    } ).firstOrNull()
+  fun findProgressDialog(robot: Robot, progressTitle: String, predicate: FinderPredicate = Predicate.equality): JDialog? {
+    return robot.finder().findAll(typeMatcher(JDialog::class.java) { dialog: JDialog ->
+      findAllWithBFS(dialog, EngravedLabel::class.java).filter { it.isShowing && predicate(it.text, progressTitle) }.any()
+    }).firstOrNull()
   }
 
   fun <ComponentType : Component?> typeMatcher(componentTypeClass: Class<ComponentType>,
-                                                       matcher: (ComponentType) -> Boolean): GenericTypeMatcher<ComponentType> {
+                                               matcher: (ComponentType) -> Boolean): GenericTypeMatcher<ComponentType> {
     return object : GenericTypeMatcher<ComponentType>(componentTypeClass) {
       override fun isMatching(component: ComponentType): Boolean = matcher(component)
     }
   }
 
 
-  fun <ReturnType> computeOnEdt(query: () -> ReturnType): ReturnType?
-    = GuiActionRunner.execute(object : GuiQuery<ReturnType>() {
+  fun <ReturnType> computeOnEdt(query: () -> ReturnType): ReturnType? = GuiActionRunner.execute(object : GuiQuery<ReturnType>() {
     override fun executeInEDT(): ReturnType = query()
   })
 
   fun <ReturnType> computeOnEdtWithTry(query: () -> ReturnType?): ReturnType? {
     val result = GuiActionRunner.execute(object : GuiQuery<Pair<ReturnType?, Throwable?>>() {
       override fun executeInEDT(): kotlin.Pair<ReturnType?, Throwable?> {
-        try {
-          return Pair(query(), null)
+        return try {
+          Pair(query(), null)
         }
         catch (e: Exception) {
-          return Pair(null, e)
+          Pair(null, e)
         }
       }
     })
     if (result?.second != null) throw result.second!!
     return result?.first
+  }
+
+  inline fun <T> ignoreComponentLookupException(action: () -> T): T? = try {
+    action()
+  }
+  catch (ignore: ComponentLookupException) {
+    null
   }
 
   fun ensureCreateHasDone(guiTestCase: GuiTestCase) {
@@ -319,8 +373,8 @@ object GuiTestUtilKt {
     val freshErrorMessages = errorMessages.filter { it.date > afterDate }
     val errors = mutableListOf<Error>()
     for (errorMessage in freshErrorMessages) {
-      val messageBuilder = StringBuilder(errorMessage.message)
-      val additionalInfo : String? = errorMessage.additionalInfo
+      val messageBuilder = StringBuilder(errorMessage.message ?: "")
+      val additionalInfo: String? = errorMessage.additionalInfo
       if (additionalInfo != null && additionalInfo.isNotEmpty())
         messageBuilder.append(System.getProperty("line.separator")).append("Additional Info: ").append(additionalInfo)
       val error = Error(messageBuilder.toString(), errorMessage.throwable)

@@ -27,6 +27,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitId;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.CommonUiProperties;
@@ -40,12 +41,12 @@ import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.List;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -65,7 +66,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
                           @NotNull FilePath filePath) {
     myUi = ui;
     myFilePath = filePath;
-    myRoot = notNull(VcsUtil.getVcsRootFor(logData.getProject(), myFilePath));
+    myRoot = notNull(VcsLogUtil.getActualRoot(logData.getProject(), myFilePath));
     myGraphTable = new VcsLogGraphTable(myUi, logData, visiblePack, myUi::requestMore) {
       @Override
       protected boolean isSpeedSearchEnabled() {
@@ -94,7 +95,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
     myDetailsSplitter = new OnePixelSplitter(true, "vcs.log.history.details.splitter.proportion", 0.7f);
     JComponent tableWithProgress = VcsLogUiUtil.installProgress(VcsLogUiUtil.setupScrolledGraph(myGraphTable, SideBorder.LEFT),
-                                                                logData, this);
+                                                                logData, ui.getId(), this);
     myDetailsSplitter.setFirstComponent(tableWithProgress);
     myDetailsSplitter.setSecondComponent(myUi.getProperties().get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
@@ -106,10 +107,22 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     add(createActionsToolbar(), BorderLayout.WEST);
 
     PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
-    EmptyAction.wrap(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION)).
-      registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, tableWithProgress);
+    invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
 
     Disposer.register(myUi, this);
+  }
+
+  private void invokeOnDoubleClick(@NotNull AnAction action, @NotNull JComponent component) {
+    new EmptyAction.MyDelegatingAction(action) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        if (e.getInputEvent() instanceof MouseEvent && myGraphTable.isResizingColumns()) {
+          // disable action during columns resize
+          return;
+        }
+        super.actionPerformed(e);
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.DOUBLE_CLICK_1, component);
   }
 
   @NotNull
@@ -117,7 +130,8 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     DefaultActionGroup toolbarGroup = new DefaultActionGroup();
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogActionPlaces.FILE_HISTORY_TOOLBAR_ACTION_GROUP));
 
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_HISTORY_TOOLBAR_PLACE, toolbarGroup, false);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(VcsLogActionPlaces.VCS_HISTORY_TOOLBAR_PLACE,
+                                                                            toolbarGroup, false);
     toolbar.setTargetComponent(myGraphTable);
     return toolbar.getComponent();
   }
@@ -137,22 +151,26 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
 
   @Nullable
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (VcsDataKeys.CHANGES.is(dataId) || VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
+      Change change = myUi.getSelectedChange();
+      if (change != null) {
+        return new Change[]{change};
+      }
       List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
       if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
-      return ArrayUtil.toObjectArray(myUi.collectChanges(details, true), Change.class);
+      return ArrayUtil.toObjectArray(VcsLogUtil.collectChanges(details, detail -> myUi.collectRelevantChanges(detail)), Change.class);
     }
     else if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.is(dataId)) {
       return myUi.getProperties();
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {
-      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
       if (details.isEmpty()) return null;
       return myUi.createRevision(getFirstItem(details));
     }
     else if (VcsDataKeys.VCS_FILE_REVISIONS.is(dataId)) {
-      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
       if (details.isEmpty() || details.size() > VcsLogUtil.MAX_SELECTED_COMMITS) return null;
       return ArrayUtil.toObjectArray(ContainerUtil.mapNotNull(details, myUi::createRevision), VcsFileRevision.class);
     }
@@ -160,10 +178,10 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       return myFilePath;
     }
     else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
-      List<VcsFullCommitDetails> details = myUi.getVcsLog().getSelectedDetails();
+      List<VcsCommitMetadata> details = myUi.getVcsLog().getSelectedShortDetails();
       if (details.isEmpty()) return null;
-      VcsFullCommitDetails detail = notNull(getFirstItem(details));
-      Object revision = myUi.createVcsVirtualFile(detail);
+      VcsCommitMetadata detail = notNull(getFirstItem(details));
+      Object revision = FileHistoryUtil.createVcsVirtualFile(myUi.createRevision(detail));
       if (revision != null) return revision;
     }
     else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {

@@ -40,18 +40,19 @@ public abstract class LwIntrospectedProperty implements IProperty {
 
   /**
    * @return never null
-   */ 
+   */
+  @Override
   public final String getName(){
     return myName;
   }
 
   /**
    * @return never null
-   */ 
+   */
   public final String getPropertyClassName(){
     return myPropertyClassName;
   }
-  
+
   public final String getReadMethodName() {
     return "get" + Character.toUpperCase(myName.charAt(0)) + myName.substring(1);
   }
@@ -79,6 +80,7 @@ public abstract class LwIntrospectedProperty implements IProperty {
    */
   public abstract Object read(Element element) throws Exception;
 
+  @Override
   public Object getPropertyValue(final IComponent component) {
     return ((LwComponent) component).getPropertyValue(this);
   }

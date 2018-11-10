@@ -137,11 +137,11 @@ public class FieldMayBeFinal {
         private final int j = i++;
     }
 
-    static class AssigmentInForeach {
+    static class AssignmentInForeach {
         private boolean b, c;
         private int j;
 
-        AssigmentInForeach(int[][] is) {
+        AssignmentInForeach(int[][] is) {
             b = false;
             for (int i : is[j]) {
                 b = c = i == 10;
@@ -1082,5 +1082,40 @@ class T75 {
     private int innerField;
 
     private Inner() {innerField = 0;}
+  }
+}
+// IDEA-193896
+class T76 {
+  private T76 a;
+  T76(T76 other) {
+    a = other;
+    other.a = null;
+  }
+}
+class RefThroughThis {
+  private int k;
+
+  public RefThroughThis() {
+    RefThroughThis.this.k = 0;
+  }
+  
+  void m() {
+    System.out.println(k);
+  }
+}
+class Anonymous {
+  void test() {
+    Object obj = new Object() {
+      int <warning descr="Field 'x' may be 'final'">x</warning> = 5;
+      int z = 7;
+
+      void test() {z++;}
+    };
+    class X {
+      int z = 10;
+      int <warning descr="Field 't' may be 'final'">t</warning> = 10;
+    }
+    X x = new X();
+    x.z++;
   }
 }

@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.editor;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Action to be performed on a specific editor caret
  *
  * @see com.intellij.openapi.editor.CaretModel#runForEachCaret(com.intellij.openapi.editor.CaretAction)
  */
+@FunctionalInterface
 public interface CaretAction {
-  void perform(Caret caret);
+  void perform(@NotNull Caret caret);
 }

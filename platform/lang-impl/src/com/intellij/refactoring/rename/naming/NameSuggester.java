@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import gnu.trove.TIntIntHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -208,11 +209,12 @@ public class NameSuggester {
     return replacements;
   }
 
-  private static String suggestReplacement(String propertyWord, String newClassNameWords) {
+  private static String suggestReplacement(String propertyWord, @NotNull String newClassNameWords) {
     return decapitalizeProbably(newClassNameWords, propertyWord);
   }
 
-  private static String decapitalizeProbably(String word, String originalWord) {
+  @NotNull
+  private static String decapitalizeProbably(@NotNull String word, String originalWord) {
     if (originalWord.length() == 0) return word;
     if (Character.isLowerCase(originalWord.charAt(0))) {
       return StringUtil.decapitalize(word);
@@ -250,7 +252,7 @@ public class NameSuggester {
     final int newFirst;
     final int newLast;
 
-    public OriginalToNewChange(int firstInOld, int lastInOld, int firstInNew, int lastInNew) {
+    OriginalToNewChange(int firstInOld, int lastInOld, int firstInNew, int lastInNew) {
       oldFirst = firstInOld;
       oldLast = lastInOld;
       newFirst = firstInNew;
@@ -269,6 +271,7 @@ public class NameSuggester {
       return buffer.toString();
     }
 
+    @NotNull
     String getNewString() {
       final StringBuilder buffer = new StringBuilder();
       for (int i = newFirst; i <= newLast; i++) {
@@ -283,7 +286,7 @@ public class NameSuggester {
     final int propertyNameIndex;
     final String propertyWord;
 
-    public Match(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
+    Match(int oldClassNameIndex, int propertyNameIndex, String propertyWord) {
       this.oldClassNameIndex = oldClassNameIndex;
       this.propertyNameIndex = propertyNameIndex;
       this.propertyWord = propertyWord;

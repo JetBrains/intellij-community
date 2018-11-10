@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.designSurface;
 
 import com.intellij.openapi.actionSystem.*;
@@ -93,6 +79,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
     );
   }
 
+  @Override
   protected void processKeyEvent(final KeyEvent e){
     myEditor.myProcessor.processKeyEvent(e);
     if (!e.isConsumed()) {
@@ -100,6 +87,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
     }
   }
 
+  @Override
   protected void processMouseEvent(final MouseEvent e){
     if(e.getID() == MouseEvent.MOUSE_PRESSED){
       requestFocusInWindow();
@@ -112,6 +100,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
     }
   }
 
+  @Override
   protected void processMouseMotionEvent(final MouseEvent e){
     myLastMousePosition = e.getPoint();
     try {
@@ -134,7 +123,8 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
    * Provides {@link PlatformDataKeys#NAVIGATABLE} to navigate to
    * binding of currently selected component (if any)
    */
-  public Object getData(final String dataId) {
+  @Override
+  public Object getData(@NotNull final String dataId) {
     if(CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
       if (componentTree != null) {
@@ -144,6 +134,7 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
     return null;
   }
 
+  @Override
   @Nullable
   public Point getBestPopupPosition() {
     final ArrayList<RadComponent> selection = FormEditingUtil.getSelectedComponents(myEditor);

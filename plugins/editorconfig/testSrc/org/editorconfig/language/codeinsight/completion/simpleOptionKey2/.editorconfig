@@ -1,0 +1,4 @@
+[foo]
+indent_size = 2
+<caret>
+indent_style = space

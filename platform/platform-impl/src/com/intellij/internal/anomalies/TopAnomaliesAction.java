@@ -38,15 +38,7 @@ public class TopAnomaliesAction extends ActionGroup {
     if (i != 0) {
       return i;
     }
-    int h1 = o1.hashCode();
-    int h2 = o2.hashCode();
-    if (h1 > h2) {
-      return 1;
-    }
-    if (h1 < h2) {
-      return -1;
-    }
-    return 0;
+    return Integer.compare(o1.hashCode(), o2.hashCode());
   };
   private static final int LIMIT = 10;
 
@@ -55,7 +47,7 @@ public class TopAnomaliesAction extends ActionGroup {
     TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Top " + LIMIT + " Component Parents");
     }
 
@@ -66,7 +58,7 @@ public class TopAnomaliesAction extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       old = new TreeSet<>(top);
       top.clear();
       Window[] windows = Window.getWindows();
@@ -103,7 +95,7 @@ public class TopAnomaliesAction extends ActionGroup {
     TreeSet<Pair<JComponent, Integer>> old = new TreeSet<>(COMPARATOR);
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setText("Top " + LIMIT + " ClientProperties");
     }
 
@@ -114,7 +106,7 @@ public class TopAnomaliesAction extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       old = new TreeSet<>(top);
       top.clear();
       Window[] windows = Window.getWindows();
@@ -163,7 +155,7 @@ public class TopAnomaliesAction extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       for (ResettableAction action : CHILDREN) {
         action.reset();
       }
@@ -173,7 +165,7 @@ public class TopAnomaliesAction extends ActionGroup {
   private static final ResettableAction[] CHILDREN = {TOP_PARENTS, TOP_UI_PROPERTIES, RESET_THEM_ALL};
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setText("Top " + LIMIT);
   }
 

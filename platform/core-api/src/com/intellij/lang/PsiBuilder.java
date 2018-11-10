@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang;
 
 import com.intellij.openapi.project.Project;
@@ -32,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  * @see PsiParser
  * @see ASTNode
  */
+@SuppressWarnings("deprecation")
 public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   /**
    * Returns a project for which PSI builder was created (see {@link PsiBuilderFactory}).
@@ -44,6 +31,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @return the text being parsed
    */
+  @NotNull
   CharSequence getOriginalText();
 
   /**
@@ -189,7 +177,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      * @param before       marker to complete this one before.
      * @param errorMessage for error element.
      */
-    void doneBefore(@NotNull IElementType type, @NotNull Marker before, String errorMessage);
+    void doneBefore(@NotNull IElementType type, @NotNull Marker before, @NotNull String errorMessage);
 
     /**
      * Completes this marker and labels it as error element with specified message. Before calling this method,
@@ -197,7 +185,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      *
      * @param message for error element.
      */
-    void error(String message);
+    void error(@NotNull String message);
 
     /**
      * Like {@linkplain #error(String)}, but the marker is completed before specified one.
@@ -205,7 +193,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
      * @param message for error element.
      * @param before  marker to complete this one before.
      */
-    void errorBefore(String message, @NotNull Marker before);
+    void errorBefore(@NotNull String message, @NotNull Marker before);
 
     /**
      * Allows to define custom edge token binders instead of default ones. If any of parameters is null
@@ -232,7 +220,7 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
    *
    * @param messageText the text of the error message displayed to the user.
    */
-  void error(String messageText);
+  void error(@NotNull String messageText);
 
   /**
    * Checks if the lexer has reached the end of file.

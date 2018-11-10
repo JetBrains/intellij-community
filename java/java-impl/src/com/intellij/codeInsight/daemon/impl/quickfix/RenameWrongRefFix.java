@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -54,7 +55,7 @@ public class RenameWrongRefFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myRefExpr.isValid() || !myRefExpr.getManager().isInProject(myRefExpr)) return false;
+    if (!myRefExpr.isValid() || !ScratchFileService.isInProjectOrScratch(myRefExpr)) return false;
     int offset = editor.getCaretModel().getOffset();
     PsiElement refName = myRefExpr.getReferenceNameElement();
     if (refName == null) return false;

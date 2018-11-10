@@ -15,12 +15,14 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.lang.LanguageASTFactory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PythonASTFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -41,6 +43,7 @@ public class PythonParsingTest extends ParsingTestCase {
     super.setUp();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
+    addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), new PythonASTFactory());
     PythonDialectsTokenSetProvider.reset();
   }
 
@@ -366,10 +369,6 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
-  public void doTest() {
-    doTest(LanguageLevel.PYTHON26);
-  }
-
   public void testCompoundStatementAfterSemicolon() {  // PY-7660
     doTest();
   }
@@ -504,8 +503,353 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON35);
   }
 
-  // PY-18972
   public void testFStrings() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testEmptyFStrings() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringWithSimpleFragment() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+  
+  public void testFStringGluedWithLiteralStringNodes() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringEscapedBraces() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringExpressionContainBraces() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentWithLiteralFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentWithInterpolatedFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentWithNotParenthesizedLambda() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentWithParenthesizedLambda() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentWithDictLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentTypeConversion() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentIllegalTypeConversion() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentIncompleteTypeConversionBeforeColon() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+  
+  public void testFStringFragmentIncompleteTypeConversionBeforeClosingBrace() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentIncompleteTypeConversionBeforeClosingQuote() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentTypeConversionAfterFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringFragmentDuplicateTypeConversion() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringIncompleteFragment() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringIncompleteFragmentWithTypeConversion() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringIncompleteFragmentWithFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringIncompleteFragmentWithTypeConversionAndFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfNestedStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideNestedStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfFStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideFStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfNestedFStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideNestedFStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfNestedStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideNestedStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfFStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideFStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteOfNestedFStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInsideNestedFStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInNestedLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByQuoteInNestedFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+  
+  public void testFStringTerminatedByLineBreakInNestedLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+  
+  public void testFStringTerminatedByLineBreakInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+  
+  public void testFStringTerminatedByLineBreakInNestedFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInNestedExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInExpressionInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInNestedExpressionInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  // not possible to come up with such case without escaping: triple-quoted string inside
+  // two nested f-strings with different types of quotes
+  public void testFStringTerminatedByEscapedLineBreakInNestedStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTerminatedByLineBreakInNestedStringLiteralInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testMultilineFStringTerminatedByQuotesOfStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testMultilineFStringTerminatedByQuotesInsideParenthesizedExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testMultilineFStringContainingMultilineExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testMultilineFStringContainingMultilineExpressionAfterStatementBreak() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testNestedMultilineFStringsWithMultilineExpressions() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testSingleQuotedFStringInsideMultilineFStringTerminatedByLineBreakInText() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testSingleQuotedFStringInsideMultilineFStringTerminatedByLineBreakInExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testSingleQuotedFStringInsideMultilineFStringTerminatedByLineBreakInExpressionInParentheses() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringAllKindsNested() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringBackslashInsteadOfExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringBackslashAfterExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringBackslashBeforeExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringBackslashInsideMultilineExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testSingleLineFStringContainsCommentInsideExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testSingleLineFStringContainsCommentInsteadOfExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringContainsHashSignInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringContainsHashInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testUnterminatedFStringWithTrailingBackslashInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testUnterminatedFStringWithTrailingBackslashInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testMultilineFStringContainsCommentInsideExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testMultilineFStringContainsCommentInsteadOfExpression() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringNamedUnicodeEscapeInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringIncompleteNamedUnicodePrecedingFragment() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringNamedUnicodeEscapeInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringNamedUnicodeEscapeInStringLiteral() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringEscapeSequenceInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringEscapeSequenceInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringEscapedSlashBeforeClosingQuoteInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringSingleSlashBeforeLeftBraceInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringSingleSlashesBeforeBracesInFormatPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringEscapedLineBreakInLiteralPart() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringDeeplyNestedEmptyFragments() {
+    doTest(LanguageLevel.PYTHON36);
+  }
+
+  public void testFStringTrailingWhitespaceInIncompleteFragmentInFormatPart() {
     doTest(LanguageLevel.PYTHON36);
   }
 
@@ -547,6 +891,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void doTest() {
+    doTest(LanguageLevel.PYTHON26);
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;
@@ -560,7 +908,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   @Override
-  protected PsiFile createFile(String name, String text) {
+  protected PsiFile createFile(@NotNull String name, @NotNull String text) {
     final PsiFile file = super.createFile(name, text);
     file.getVirtualFile().putUserData(LanguageLevel.KEY, myLanguageLevel);
     return file;

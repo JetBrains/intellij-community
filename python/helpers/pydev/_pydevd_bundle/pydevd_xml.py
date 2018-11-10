@@ -1,12 +1,16 @@
+"""Contains methods for building XML structures for interacting with IDE
+
+The methods from this file are used for the debugger interaction. Please note
+that Python console now uses Thrift structures with the similar methods
+contained in `pydevd_thrift.py` file.
+"""
 from _pydev_bundle import pydev_log
 import traceback
 from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 import sys
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
-    BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_ASYNC, \
-    DEFAULT_VALUE
-
+    BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, ValuesPolicy, DEFAULT_VALUES_DICT
 from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 
@@ -89,6 +93,13 @@ def _create_default_type_map():
         try:
             from collections import deque
             default_type_map.append((deque, pydevd_resolver.dequeResolver))
+        except:
+            pass
+
+        try:
+            from collections import OrderedDict
+            default_type_map.insert(0, (OrderedDict, pydevd_resolver.orderedDictResolver))
+            # we should put it before dict
         except:
             pass
 
@@ -232,7 +243,7 @@ def is_builtin(x):
 
 
 def should_evaluate_full_value(val):
-    return not LOAD_VALUES_ASYNC or (is_builtin(type(val)) and not isinstance(val, (list, tuple, dict)))
+    return LOAD_VALUES_POLICY == ValuesPolicy.SYNC or (is_builtin(type(val)) and not isinstance(val, (list, tuple, dict)))
 
 
 def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
@@ -289,7 +300,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
     _type, typeName, resolver = get_type(v)
     type_qualifier = getattr(_type, "__module__", "")
     if not evaluate_full_value:
-        value = DEFAULT_VALUE
+        value = DEFAULT_VALUES_DICT[LOAD_VALUES_POLICY]
     else:
         try:
             str_from_provider = _str_from_providers(v, _type, typeName)
@@ -299,7 +310,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
                 if v.__class__ == frame_type:
                     value = pydevd_resolver.frameResolver.get_frame_name(v)
 
-                elif v.__class__ in (list, tuple):
+                elif v.__class__ in (list, tuple, set, frozenset, dict):
                     if len(v) > 300:
                         value = '%s: %s' % (str(v.__class__), '<Too big to print. Len: %s>' % (len(v),))
                     else:

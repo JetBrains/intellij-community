@@ -38,7 +38,7 @@ class Test {
 
   private static void testOrNotFail(boolean a, boolean b, boolean c) {
     if(b) {
-      assert <warning descr="Condition '!(a || b || c)' is always 'false'">!(a || <warning descr="Condition 'b' is always 'true'">b</warning> || c)</warning>;
+      assert <warning descr="Condition '!(a || b || c)' is always 'false'">!(<warning descr="Condition 'a || b || c' is always 'true'">a || <warning descr="Condition 'b' is always 'true'">b</warning> || c</warning>)</warning>;
     }
   }
 
@@ -78,6 +78,11 @@ class Test {
     <warning descr="The call to 'assertTrue' always fails, according to its method contracts">assertTrue</warning>(<warning descr="Condition 'foo == null' is always 'false'">foo == null</warning>);
   }
 
+  private static void testNull(Object obj) {
+    if(obj != null) return;
+    assertNull(obj);
+  }
+
   static final void assertTrue(boolean x) {
     if(!x) throw new AssertionError();
   }
@@ -85,4 +90,6 @@ class Test {
   static final void assertFalse(boolean x) {
     if(x) throw new AssertionError();
   }
+
+  static final void assertNull(Object x) { if(x != null) throw new AssertionError(); }
 }

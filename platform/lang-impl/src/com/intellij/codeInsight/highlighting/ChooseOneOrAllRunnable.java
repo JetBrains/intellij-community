@@ -47,8 +47,6 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
   @Override
   public void run() {
     if (myClasses.length == 1) {
-      //TODO: cdr this place should produce at least warning
-      // selected(myClasses[0]);
       selected((T[])ArrayUtil.toObjectArray(myClasses[0].getClass(), myClasses[0]));
     }
     else if (myClasses.length > 0) {
@@ -71,10 +69,10 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setItemChosenCallback((selectedValue) -> {
           if (selectedValue.equals(selectAll)) {
-            selected((T[])ArrayUtil.toObjectArray(selectedValue.getClass(), selectedValue));
+            selected(myClasses);
           }
           else {
-            selected(myClasses);
+            selected((T[])ArrayUtil.toObjectArray(selectedValue.getClass(), selectedValue));
           }
         })
         .setTitle(myTitle);

@@ -15,11 +15,13 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
 
+@ReviseWhenPortedToJDK("9")
 public class StringFactory {
   // String(char[], boolean). Works since JDK1.7, earlier JDKs have too slow reflection anyway
   private static final Constructor<String> ourConstructor;

@@ -31,14 +31,12 @@ import java.util.Collection;
  * and provides entry points for project data management.
  *
  * @author Vladislav Soroka
- * @since 4/16/13 11:38 AM
  */
 public interface ProjectDataManager {
   static ProjectDataManager getInstance() {
     return ServiceManager.getService(ProjectDataManager.class);
   }
 
-  @SuppressWarnings("unchecked")
   void importData(@NotNull Collection<DataNode<?>> nodes,
                   @NotNull Project project,
                   @NotNull IdeModifiableModelsProvider modelsProvider,

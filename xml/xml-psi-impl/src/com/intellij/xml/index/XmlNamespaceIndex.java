@@ -15,6 +15,9 @@
  */
 package com.intellij.xml.index;
 
+import com.intellij.ide.highlighter.DTDFileType;
+import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
@@ -25,10 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileContent;
-import com.intellij.util.indexing.ID;
+import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.CharArrayUtil;
@@ -79,7 +79,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(@Nullable final Module module,
                                                                                            @NotNull Project project,
-                                                                                           @Nullable NullableFunction<List<IndexedRelevantResource<String, XsdNamespaceBuilder>>, IndexedRelevantResource<String, XsdNamespaceBuilder>> chooser) {
+                                                                                           @Nullable NullableFunction<List<IndexedRelevantResource<String, XsdNamespaceBuilder>>, ? extends IndexedRelevantResource<String, XsdNamespaceBuilder>> chooser) {
     return IndexedRelevantResource.getAllResources(NAME, module, project, chooser);
   }
 
@@ -89,6 +89,20 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   @NotNull
   public ID<String, XsdNamespaceBuilder> getName() {
     return NAME;
+  }
+
+  @NotNull
+  @Override
+  public FileBasedIndex.InputFilter getInputFilter() {
+    return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE, DTDFileType.INSTANCE) {
+      @Override
+      public boolean acceptInput(@NotNull final VirtualFile file) {
+        FileType fileType = file.getFileType();
+        final String extension = file.getExtension();
+        return XmlFileType.INSTANCE.equals(fileType) && "xsd".equals(extension) ||
+               DTDFileType.INSTANCE.equals(fileType) && "dtd".equals(extension);
+      }
+    };
   }
 
   @Override
@@ -148,7 +162,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Override
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
   @Nullable

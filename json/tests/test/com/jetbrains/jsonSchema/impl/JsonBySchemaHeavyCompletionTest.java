@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
-import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonObject;
@@ -13,17 +11,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest;
-import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
-
-import java.util.Collections;
 
 /**
  * @author Irina.Chernushina on 3/4/2017.
  */
-public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest {
+public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletionTestBase {
+  @Override
+  protected String getExtensionWithoutDot() {
+    return "json";
+  }
+
   @Override
   protected String getBasePath() {
     return "/tests/testData/jsonSchema/completion";
@@ -61,6 +59,10 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
     baseInsertTest("insertPropertyName", "testObjectType");
   }
 
+  public void testInsertArrayType() throws Exception {
+    baseInsertTest("insertPropertyName", "testArrayType");
+  }
+
   public void testInsertBooleanType() throws Exception {
     baseInsertTest("insertPropertyName", "testBooleanType");
   }
@@ -91,6 +93,10 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
     baseInsertTest("insertPropertyName", "testNameWithDefaultStringValueComma");
   }
 
+  public void testWhitespaceAfterColon() throws Exception {
+    baseInsertTest("addWhitespaceAfterColon", "colon");
+  }
+
   public void testArrayLiteral() throws Exception {
     baseInsertTest("insertArrayOrObjectLiteral", "arrayLiteral");
     complete();
@@ -105,6 +111,20 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
 
   public void testOneOfWithNotFilledPropertyValue() throws Exception {
     baseCompletionTest("oneOfWithEnumValue", "oneOfWithEmptyPropertyValue", "\"business\"", "\"home\"");
+  }
+
+  public void testRequiredPropsFirst() throws Exception {
+    baseTestNoSchema("requiredProps", "requiredPropsFirst", () -> {
+      complete();
+      assertStringItems("a", "b");
+    });
+  }
+
+  public void testRequiredPropsLast() throws Exception {
+    baseTestNoSchema("requiredProps", "requiredPropsLast", () -> {
+      complete();
+      assertStringItems("b");
+    });
   }
 
   public void testEditingSchemaAffectsCompletion() throws Exception {
@@ -133,52 +153,11 @@ public class JsonBySchemaHeavyCompletionTest extends JsonSchemaHeavyAbstractTest
     });
   }
 
-  private void baseCompletionTest(@SuppressWarnings("SameParameterValue") final String folder,
-                                  @SuppressWarnings("SameParameterValue") final String testFile, @NotNull String... items) throws Exception {
-    baseTest(folder, testFile, () -> {
-      complete();
-      assertStringItems(items);
-    });
+  public void testGuessType() throws Exception {
+    baseInsertTest("guessType", "test");
   }
 
-  private void baseInsertTest(@SuppressWarnings("SameParameterValue") final String folder, final String testFile) throws Exception {
-    baseTest(folder, testFile, () -> {
-      final CodeCompletionHandlerBase handlerBase = new CodeCompletionHandlerBase(CompletionType.BASIC);
-      handlerBase.invokeCompletion(getProject(), getEditor());
-      if (myItems != null) {
-        selectItem(myItems[0]);
-      }
-      try {
-        checkResultByFile("/" + folder + "/" + testFile + "_after.json");
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
-  }
-
-  private void baseTest(@NotNull final String folder, @NotNull final String testFile, @NotNull final Runnable checker) throws Exception {
-    skeleton(new Callback() {
-      @Override
-      public void registerSchemes() {
-        final String moduleDir = getModuleDir(getProject());
-
-        final UserDefinedJsonSchemaConfiguration base =
-          new UserDefinedJsonSchemaConfiguration("base", JsonSchemaVersion.SCHEMA_4, moduleDir + "/Schema.json", false,
-                                                 Collections.singletonList(new UserDefinedJsonSchemaConfiguration.Item(testFile + ".json", true, false))
-          );
-        addSchema(base);
-      }
-
-      @Override
-      public void configureFiles() {
-        configureByFiles(null, "/" + folder + "/" + testFile + ".json", "/" + folder + "/Schema.json");
-      }
-
-      @Override
-      public void doCheck() {
-        checker.run();
-      }
-    });
+  public void testDontGuessType() throws Exception {
+    baseInsertTest("dontGuessType", "test");
   }
 }

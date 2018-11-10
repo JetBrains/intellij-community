@@ -47,6 +47,7 @@ public interface TabbedContent extends Content {
    */
   void selectContent(int index);
 
+  @NotNull
   List<Pair<String, JComponent>> getTabs();
 
   default boolean hasMultipleTabs() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tasks.impl;
 
@@ -20,8 +6,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,14 +25,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -71,30 +55,30 @@ public class TaskUtil {
     // empty
   }
 
-  public static String formatTask(@NotNull Task task, String format, boolean forCommit) {
+  public static String formatTask(@NotNull Task task, String format) {
 
-    if (forCommit && task instanceof LocalTask) {
-      format = formatFromExtensions((LocalTask)task, format);
+    Map map = formatFromExtensions(task instanceof LocalTask ? (LocalTask)task : new LocalTaskImpl(task));
+    format = updateToVelocity(format);
+    try {
+      return FileTemplateUtil.mergeTemplate(map, format, false);
     }
-
-    return format
-      .replace("{id}", task.getPresentableId())
-      .replace("{number}", task.getNumber())
-      .replace("{project}", StringUtil.notNullize(task.getProject()))
-      .replace("{summary}", task.getSummary());
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  private static String formatFromExtensions(@NotNull LocalTask task, String format) {
-    for (CommitPlaceholderProvider extension : Extensions.getExtensions(CommitPlaceholderProvider.EXTENSION_POINT_NAME)) {
+  private static Map formatFromExtensions(@NotNull LocalTask task) {
+    HashMap map = new HashMap();
+    for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(task.getRepository());
       for (String placeholder : placeholders) {
         String value = extension.getPlaceholderValue(task, placeholder);
         if (value != null) {
-          format = format.replace("{" + placeholder + "}", value);
+          map.put(placeholder, value);
         }
       }
     }
-    return format;
+    return map;
   }
 
   public static String getChangeListComment(Task task) {
@@ -107,7 +91,7 @@ public class TaskUtil {
     if (repository == null || !repository.isShouldFormatCommitMessage()) {
       return null;
     }
-    return formatTask(task, repository.getCommitMessageFormat(), forCommit);
+    return formatTask(task, repository.getCommitMessageFormat());
   }
 
   public static String getTrimmedSummary(Task task) {
@@ -214,7 +198,7 @@ public class TaskUtil {
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull InputStream xml) {
     if (logger.isDebugEnabled()) {
       try {
-        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JDOMUtil.loadDocument(xml)));
+        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JDOMUtil.load(xml)));
       }
       catch (Exception e) {
         logger.debug(e);
@@ -281,7 +265,7 @@ public class TaskUtil {
     }
   }
 
-  public static List<Task> filterTasks(final String pattern, final List<Task> tasks) {
+  public static List<Task> filterTasks(final String pattern, final List<? extends Task> tasks) {
     final com.intellij.util.text.Matcher matcher = getMatcher(pattern);
     return ContainerUtil.mapNotNull(tasks,
                                     (NullableFunction<Task, Task>)task -> matcher.matches(task.getPresentableId()) || matcher.matches(task.getSummary()) ? task : null);
@@ -298,5 +282,9 @@ public class TaskUtil {
     }
 
     return NameUtil.buildMatcher(builder.toString(), NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
+  static String updateToVelocity(String format) {
+    return format.replaceAll("\\{", "\\$\\{").replaceAll("\\$\\$\\{", "\\$\\{");
   }
 }

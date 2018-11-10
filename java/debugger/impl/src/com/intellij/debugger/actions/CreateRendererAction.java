@@ -38,13 +38,14 @@ import java.util.List;
 
 public class CreateRendererAction extends AnAction {
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     final List<JavaValue> values = ViewAsGroup.getSelectedValues(e);
     if (values.size() != 1) {
       e.getPresentation().setEnabledAndVisible(false);
     }
   }
 
+  @Override
   public void actionPerformed(@NotNull final AnActionEvent event) {
     final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(event.getDataContext());
     final List<JavaValue> values = ViewAsGroup.getSelectedValues(event);

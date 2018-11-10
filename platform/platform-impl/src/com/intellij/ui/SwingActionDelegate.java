@@ -2,6 +2,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -27,12 +28,12 @@ public class SwingActionDelegate extends AnAction {
   }
 
   @Override
-  public final void update(AnActionEvent event) {
+  public final void update(@NotNull AnActionEvent event) {
     event.getPresentation().setEnabled(null != getSwingAction(getComponent(event)));
   }
 
   @Override
-  public final void actionPerformed(AnActionEvent event) {
+  public final void actionPerformed(@NotNull AnActionEvent event) {
     JComponent component = getComponent(event);
     Action action = getSwingAction(component);
     if (action != null) action.actionPerformed(new ActionEvent(component, ActionEvent.ACTION_PERFORMED, mySwingActionId));

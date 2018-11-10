@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.FilenameIndex;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -38,7 +39,7 @@ public class ShowImageDuplicatesAction extends AnAction {
   private static final List<String> IMAGE_EXTENSIONS = Arrays.asList("png", "jpg", "jpeg", "gif", "tiff", "bmp");
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     assert project != null;
     ProgressManager.getInstance()
@@ -95,7 +96,7 @@ public class ShowImageDuplicatesAction extends AnAction {
         indicator.setFraction((double)seek / (double)count);
         try {
           ReadAction.run(() -> {
-            final String md5 = getMD5Checksum(file.getInputStream());
+            final String md5 = getMD5Checksum(file);
             realDuplicates.computeIfAbsent(md5, k -> new HashSet<>()).add(file);
           });
         }
@@ -118,22 +119,23 @@ public class ShowImageDuplicatesAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabledAndVisible(getEventProject(e) != null);
   }
 
-  public static byte[] createChecksum(InputStream fis) throws Exception {
-      byte[] buffer = new byte[1024];
-      MessageDigest md5 = MessageDigest.getInstance("MD5");
-      int read;
+  private static byte[] createChecksum(VirtualFile file) throws Exception {
+    byte[] buffer = new byte[1024];
+    MessageDigest md5 = MessageDigest.getInstance("MD5");
+    int read;
 
+    try (InputStream fis = file.getInputStream()) {
       while ((read = fis.read(buffer)) > 0) md5.update(buffer, 0, read);
 
-      fis.close();
       return md5.digest();
+    }
   }
 
-  public static String getMD5Checksum(InputStream fis) throws Exception {
+  private static String getMD5Checksum(VirtualFile fis) throws Exception {
     byte[] bytes = createChecksum(fis);
     StringBuilder md5 = new StringBuilder();
 

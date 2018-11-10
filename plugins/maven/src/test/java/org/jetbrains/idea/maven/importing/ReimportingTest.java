@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -382,7 +383,7 @@ public class ReimportingTest extends MavenImportingTestCase {
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
 
     configConfirmationForYesAnswer();
-    importProjectWithMaven3();
+    importProject();
     assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule("project")));
     assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule("m1")));
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule("project")));
@@ -390,7 +391,7 @@ public class ReimportingTest extends MavenImportingTestCase {
 
     createProjectPom(String.format(parentPomTemplate, "1.7"));
 
-    importProjectWithMaven3();
+    importProject();
     assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule("project")));
     assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule("m1")));
     assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("project")));
@@ -433,13 +434,13 @@ public class ReimportingTest extends MavenImportingTestCase {
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(myProject);
 
     configConfirmationForYesAnswer();
-    importProjectWithMaven3();
+    importProject();
     assertEquals(LanguageLevel.JDK_1_8, getEffectiveLanguageLevel(getModule("m1")));
     assertEquals("1.8", compilerConfiguration.getBytecodeTargetLevel(getModule("m1")));
 
     createModulePom("m1", String.format(m1pomTemplate, "1.7"));
 
-    importProjectWithMaven3();
+    importProject();
     assertEquals(LanguageLevel.JDK_1_7, getEffectiveLanguageLevel(getModule("m1")));
     assertEquals("1.7", compilerConfiguration.getBytecodeTargetLevel(getModule("m1")));
   }

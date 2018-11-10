@@ -28,9 +28,6 @@ import java.util.Locale;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.*;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java8MapApiInspection.class);
   public static final String SHORT_NAME = "Java8MapApi";
@@ -273,8 +270,9 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
 
             if(mapKeyType != null && keyType != null && keyType.isAssignableFrom(mapKeyType)) {
               PsiElement target = ((PsiReferenceExpression)key).resolve();
-              refs = StreamEx.of(PsiTreeUtil.collectElementsOfType(value, PsiReferenceExpression.class))
-                .filter(ref -> ref.getQualifierExpression() == null && ref.isReferenceTo(target)).toList();
+              refs = target == null ? Collections.emptyList() :
+                     StreamEx.of(PsiTreeUtil.collectElementsOfType(value, PsiReferenceExpression.class))
+                       .filter(ref -> ref.getQualifierExpression() == null && ref.isReferenceTo(target)).toList();
               if (!refs.isEmpty()) {
                 nameCandidate = getNameCandidate(((PsiReferenceExpression)key).getReferenceName());
               }
@@ -310,7 +308,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
         LambdaCanBeMethodReferenceInspection.replaceLambdaWithMethodReference((PsiLambdaExpression)newArg);
       }
       if(PsiTreeUtil.isAncestor(conditional, result, true)) {
-        result = ct.replaceAndRestoreComments(conditional, ct.markUnchanged(result));
+        result = ct.replaceAndRestoreComments(conditional, result);
       } else {
         ct.deleteAndRestoreComments(conditional);
       }

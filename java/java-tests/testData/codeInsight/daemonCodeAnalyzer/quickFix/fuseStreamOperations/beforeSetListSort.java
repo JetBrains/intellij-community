@@ -6,8 +6,8 @@ import java.util.stream.Stream;
 public class Test {
   public void testSetListSort(String[] args) {
     Set<String> set = Arrays.stream(args).co<caret>llect(Collectors.toSet());
-    List<String> list = new ArrayList<>(set);
-    list.sort(null);
-    System.out.println(list.toArray());
+    List<String> list = new ArrayList<>(set); // foo
+    list.sort(null); // bar
+    System.out.println(list.toArray(/*baz*/));
   }
 }

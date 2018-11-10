@@ -12,12 +12,12 @@ import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.TraceUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Vitaliy.Bibaev
@@ -60,9 +60,8 @@ public class TracingResultImpl implements TracingResult {
   public ResolvedTracingResult resolve(@NotNull ResolverFactory resolverFactory) {
     assert myTrace.size() == mySourceChain.length();
 
-    List<ValuesOrderResolver.Result> resolvedTraces = myTrace.stream()
-      .map(x -> resolverFactory.getResolver(x.getCall().getName()).resolve(x))
-      .collect(Collectors.toList());
+    List<ValuesOrderResolver.Result> resolvedTraces =
+      ContainerUtil.map(myTrace, x -> resolverFactory.getResolver(x.getCall().getName()).resolve(x));
 
     final TraceInfo firstCallTrace = myTrace.get(0);
     final List<IntermediateStreamCall> intermediateCalls = mySourceChain.getIntermediateCalls();

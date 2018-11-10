@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.impl
 
 import com.intellij.ide.browsers.OpenInBrowserRequest
@@ -20,7 +6,7 @@ import com.intellij.ide.browsers.WebBrowserService
 import com.intellij.ide.browsers.WebBrowserUrlProvider
 import com.intellij.ide.browsers.createOpenInBrowserRequest
 import com.intellij.lang.xml.XMLLanguage
-import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightVirtualFile
@@ -29,11 +15,13 @@ import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.xml.util.HtmlUtil
 
+private val URL_PROVIDER_EP: ExtensionPointName<WebBrowserUrlProvider> = ExtensionPointName.create<WebBrowserUrlProvider>("com.intellij.webBrowserUrlProvider")
+
 class WebBrowserServiceImpl : WebBrowserService() {
   companion object {
     fun getProvider(request: OpenInBrowserRequest): WebBrowserUrlProvider? {
       val dumbService = DumbService.getInstance(request.project)
-      for (urlProvider in WebBrowserUrlProvider.EP_NAME.extensions) {
+      for (urlProvider in URL_PROVIDER_EP.extensionList) {
         if ((!dumbService.isDumb || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
           return urlProvider
         }
@@ -59,18 +47,14 @@ class WebBrowserServiceImpl : WebBrowserService() {
     }
 
     @JvmStatic
-    fun getDebuggableUrl(context: PsiElement?) = ContainerUtil.getFirstItem(getDebuggableUrls(context))
+    fun getDebuggableUrl(context: PsiElement?): Url? = ContainerUtil.getFirstItem(getDebuggableUrls(context))
   }
 
   override fun getUrlsToOpen(request: OpenInBrowserRequest, preferLocalUrl: Boolean): Collection<Url> {
-    var isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile(request.file.viewProvider.baseLanguage)
-    if (!isHtmlOrXml && request.file.fileType is LanguageFileType) {
-      isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile((request.file.fileType as LanguageFileType).language)
-    }
-
+    val isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile(request.file)
     if (!preferLocalUrl || !isHtmlOrXml) {
       val dumbService = DumbService.getInstance(request.project)
-      for (urlProvider in WebBrowserUrlProvider.EP_NAME.extensions) {
+      for (urlProvider in URL_PROVIDER_EP.extensionList) {
         if ((!dumbService.isDumb || DumbService.isDumbAware(urlProvider)) && urlProvider.canHandleElement(request)) {
           val urls = getUrls(urlProvider, request)
           if (!urls.isEmpty()) {
@@ -79,7 +63,7 @@ class WebBrowserServiceImpl : WebBrowserService() {
         }
       }
 
-      if (!isHtmlOrXml) {
+      if (!isHtmlOrXml && !request.isForceFileUrlIfNoUrlProvider) {
         return emptyList()
       }
     }

@@ -108,14 +108,6 @@ public class WizardContext extends UserDataHolderBase {
     }
   }
 
-  /**
-   * Use {@link #WizardContext(Project, Disposable)}.
-   */
-  @Deprecated
-  public WizardContext(@Nullable Project project) {
-    this(project, null);
-  }
-
   @Nullable
   public Project getProject() {
     return myProject;
@@ -131,7 +123,6 @@ public class WizardContext extends UserDataHolderBase {
       return lastProjectLocation.replace('/', File.separatorChar);
     }
     final String userHome = SystemProperties.getUserHome();
-    //noinspection HardCodedStringLiteral
     String productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
     return userHome.replace('/', File.separatorChar) + File.separator + productName.replace(" ", "") + "Projects";
   }

@@ -21,10 +21,9 @@ Groovy script
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('f')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
+          PsiElement(()('(')
+          PsiElement())(')')
         PsiWhiteSpace(' ')
         Throw clause
           PsiElement(throws)('throws')
@@ -37,10 +36,9 @@ Groovy script
           PsiElement(def)('def')
         PsiWhiteSpace(' ')
         PsiElement(identifier)('g')
-        PsiElement(()('(')
         Parameter list
-          <empty list>
-        PsiElement())(')')
+          PsiElement(()('(')
+          PsiElement())(')')
         PsiWhiteSpace(' ')
         Throw clause
           PsiElement(throws)('throws')

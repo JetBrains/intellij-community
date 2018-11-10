@@ -32,12 +32,12 @@ import static com.intellij.openapi.keymap.KeyMapBundle.message;
  */
 final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
   private KeymapSchemeManager manager;
-  private final Consumer<Keymap> consumer;
+  private final Consumer<? super Keymap> consumer;
   private String messageReplacement;
   private boolean messageShown;
   private boolean internal;
 
-  KeymapSelector(Consumer<Keymap> consumer) {
+  KeymapSelector(Consumer<? super Keymap> consumer) {
     super(0);
     this.consumer = consumer;
   }

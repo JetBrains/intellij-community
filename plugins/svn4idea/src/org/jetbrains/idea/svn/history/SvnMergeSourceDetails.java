@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ModalityState;
@@ -10,7 +8,7 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListRenderer;
-import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
+import com.intellij.openapi.vcs.changes.ui.CommittedChangeListPanel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -74,6 +72,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     }
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return null;
@@ -99,6 +98,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
     private final static int ourMaxWidth = 100;
     private final static String ourDots = "(...)";
 
+    @Override
     public void customizeCellRenderer(final JTree tree,
                                       final Object value,
                                       final boolean selected,
@@ -167,13 +167,16 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       myListsMap = listsMap;
     }
 
+    @Override
     public void setDisplayName(final String name) {
     }
 
+    @Override
     public SvnFileRevision getEditableObject() {
       return myRevision;
     }
 
+    @Override
     public String getBannerSlogan() {
       return myRevision.getRevisionNumber().asString();
     }
@@ -187,24 +190,25 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       return list;
     }
 
+    @Override
     public JComponent createOptionsPanel() {
       if (myPanel == null) {
         final SvnChangeList list = getList();
         if (list == null) {
           myPanel = new JPanel();
         } else {
-          ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, list);
-          // TODO: Temporary memory leak fix - rewrite this part not to create dialog if only createCenterPanel(), but not show() is invoked
-          Disposer.register(myProject, dialog.getDisposable());
-          myPanel = dialog.createCenterPanel();
+          CommittedChangeListPanel panel = new CommittedChangeListPanel(myProject);
+          panel.setChangeList(list);
+          myPanel = panel;
         }
       }
       return myPanel;
     }
 
+    @Override
     @Nls
     public String getDisplayName() {
-      return getBannerSlogan();  
+      return getBannerSlogan();
     }
 
     @Override
@@ -212,10 +216,12 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       return null;
     }
 
+    @Override
     public boolean isModified() {
       return false;
     }
 
+    @Override
     public void apply() {
     }
 
@@ -238,6 +244,7 @@ public class SvnMergeSourceDetails extends MasterDetailsComponent {
       init();
     }
 
+    @Override
     public JComponent createCenterPanel() {
       final JComponent component = new SvnMergeSourceDetails(myProject, myRevision, myFile).createComponent();
       component.setMinimumSize(new Dimension(300, 200));

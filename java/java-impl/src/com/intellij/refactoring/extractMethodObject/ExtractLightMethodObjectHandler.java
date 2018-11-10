@@ -80,7 +80,7 @@ public class ExtractLightMethodObjectHandler {
   public static ExtractedData extractLightMethodObject(final Project project,
                                                        @Nullable PsiElement originalContext,
                                                        @NotNull final PsiCodeFragment fragment,
-                                                       final String methodName,
+                                                       @NotNull String methodName,
                                                        @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
@@ -127,8 +127,11 @@ public class ExtractLightMethodObjectHandler {
     // expand lambda to code block if needed
     PsiElement containingMethod = PsiTreeUtil.getParentOfType(originalAnchor, PsiMember.class, PsiLambdaExpression.class);
     if (containingMethod instanceof PsiLambdaExpression) {
-      PsiCodeBlock newBody = RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)containingMethod);
-      originalAnchor = newBody.getStatements()[0];
+      PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)containingMethod;
+      if (lambdaExpression.getBody() instanceof PsiExpression) {
+        PsiCodeBlock newBody = RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
+        originalAnchor = newBody.getStatements()[0];
+      }
     }
 
     PsiElement anchor = RefactoringUtil.getParentStatement(originalAnchor, false);
@@ -322,13 +325,15 @@ public class ExtractLightMethodObjectHandler {
 
   private static class LightExtractMethodObjectDialog implements AbstractExtractDialog {
     private final ExtractMethodObjectProcessor myProcessor;
+    @NotNull
     private final String myMethodName;
 
-    public LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, String methodName) {
+    LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, @NotNull String methodName) {
       myProcessor = processor;
       myMethodName = methodName;
     }
 
+    @NotNull
     @Override
     public String getChosenMethodName() {
       return myMethodName;

@@ -186,7 +186,7 @@ public class PyCodeFragmentUtil {
     private final int outerLoopBreaks;
     private final int yieldExpressions;
 
-    public AnalysisResult(int starImports, int targetInstructions, int returns, int regularExits, int outerLoopBreaks, int yieldExpressions) {
+    AnalysisResult(int starImports, int targetInstructions, int returns, int regularExits, int outerLoopBreaks, int yieldExpressions) {
       this.starImports = starImports;
       this.targetInstructions = targetInstructions;
       this.regularExits = regularExits;

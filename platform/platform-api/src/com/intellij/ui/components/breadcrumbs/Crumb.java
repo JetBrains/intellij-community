@@ -5,8 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Action;
-import javax.swing.Icon;
+import javax.swing.*;
 import java.util.List;
 
 import static java.util.Arrays.asList;

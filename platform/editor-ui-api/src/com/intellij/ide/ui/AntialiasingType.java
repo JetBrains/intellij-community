@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,7 +51,7 @@ public enum AntialiasingType {
   }
 
   public Object getTextInfo() {
-    return isEnabled ? GraphicsUtil.createAATextInfo(myHint) : null;
+    return isEnabled || SystemInfo.isJetBrainsJvm ? GraphicsUtil.createAATextInfo(myHint) : null;
   }
 
   @Override

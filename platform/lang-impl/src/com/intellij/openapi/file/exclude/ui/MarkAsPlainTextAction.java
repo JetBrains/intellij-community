@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.file.exclude.ui;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager.isApplicableFor;
 
@@ -32,7 +19,7 @@ import static com.intellij.openapi.file.exclude.EnforcedPlainTextFileTypeManager
  */
 public class MarkAsPlainTextAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     if (project == null || typeManager == null) return;
@@ -43,7 +30,7 @@ public class MarkAsPlainTextAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     JBIterable<VirtualFile> selectedFiles =
       typeManager == null ? JBIterable.empty() :
@@ -51,7 +38,7 @@ public class MarkAsPlainTextAction extends DumbAwareAction {
         .filter(file -> isApplicableFor(file) && !typeManager.isMarkedAsPlainText(file));
     boolean enabled = e.getProject() != null && !selectedFiles.isEmpty();
     e.getPresentation().setEnabledAndVisible(enabled);
-    e.getPresentation().setIcon(EnforcedPlainTextFileTypeFactory.ENFORCED_PLAIN_TEXT_ICON);
+    e.getPresentation().setIcon(EnforcedPlainTextFileTypeFactory.getEnforcedPlainTextIcon());
   }
     
 }

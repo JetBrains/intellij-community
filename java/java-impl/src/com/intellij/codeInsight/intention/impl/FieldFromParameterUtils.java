@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -109,10 +110,22 @@ public final class FieldFromParameterUtils {
 
   @Nullable
   public static PsiField getParameterAssignedToField(final PsiParameter parameter) {
+    return getParameterAssignedToField(parameter, true);
+  }
+
+  @Nullable
+  public static PsiField getParameterAssignedToField(final PsiParameter parameter, boolean findIndirectAssignments) {
     for (PsiReference reference : ReferencesSearch.search(parameter, new LocalSearchScope(parameter.getDeclarationScope()), false)) {
       if (!(reference instanceof PsiReferenceExpression)) continue;
       final PsiReferenceExpression expression = (PsiReferenceExpression)reference;
-      PsiAssignmentExpression assignmentExpression = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class, true, PsiClass.class);
+      PsiAssignmentExpression assignmentExpression;
+      if (findIndirectAssignments) {
+        assignmentExpression = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class, true, PsiClass.class);
+      }
+      else {
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+        assignmentExpression = parent instanceof PsiAssignmentExpression ? (PsiAssignmentExpression)parent : null;
+      }
       if (assignmentExpression == null) continue;
       if (!PsiTreeUtil.isAncestor(assignmentExpression.getRExpression(), expression, false)) continue;
       final PsiExpression lExpression = assignmentExpression.getLExpression();
@@ -124,7 +137,7 @@ public final class FieldFromParameterUtils {
   }
 
   public static int findFieldAssignmentAnchor(final PsiStatement[] statements,
-                                              final @Nullable Ref<Pair<PsiField, Boolean>> anchorRef,
+                                              final @Nullable Ref<? super Pair<PsiField, Boolean>> anchorRef,
                                               final PsiClass targetClass,
                                               final PsiParameter myParameter) {
     int i = 0;
@@ -256,17 +269,26 @@ public final class FieldFromParameterUtils {
     }
   }
 
-  public static boolean isAvailable(@Nullable PsiParameter myParameter, @Nullable PsiType type, @Nullable PsiClass targetClass) {
+  public static boolean isAvailable(@Nullable PsiParameter myParameter,
+                                  @Nullable PsiType type,
+                                  @Nullable PsiClass targetClass) {
+    return isAvailable(myParameter, type, targetClass, true);
+  }
+
+  public static boolean isAvailable(@Nullable PsiParameter myParameter, 
+                                    @Nullable PsiType type, 
+                                    @Nullable PsiClass targetClass, 
+                                    boolean findIndirectAssignments) {
     return myParameter != null
            && myParameter.isValid()
-           && myParameter.getManager().isInProject(myParameter)
+           && ScratchFileService.isInProjectOrScratch(myParameter)
            && myParameter.getDeclarationScope() instanceof PsiMethod
            && ((PsiMethod)myParameter.getDeclarationScope()).getBody() != null
            && type != null
            && type.isValid()
            && targetClass != null
            && !targetClass.isInterface()
-           && getParameterAssignedToField(myParameter) == null;
+           && getParameterAssignedToField(myParameter, findIndirectAssignments) == null;
   }
 
   private FieldFromParameterUtils() { }

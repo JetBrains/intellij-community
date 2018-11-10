@@ -8,7 +8,6 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 import org.jetbrains.annotations.Nullable;
@@ -37,28 +36,6 @@ public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> impleme
     myTypeCommentAnnotation = typeCommentAnnotation;
     myAnnotation = annotation;
     myDefaultValueText = defaultValueText;
-  }
-
-  /**
-   * @deprecated Use {@link PyNamedParameterStubImpl#PyNamedParameterStubImpl(String, boolean, boolean, String, String, String, StubElement, IStubElementType)} instead.
-   * This constructor will be removed in 2018.2.
-   */
-  @Deprecated
-  public PyNamedParameterStubImpl(String name,
-                                  boolean isPositionalContainer,
-                                  boolean isKeywordContainer,
-                                  boolean hasDefaultValue,
-                                  @Nullable String typeCommentAnnotation,
-                                  StubElement parent,
-                                  IStubElementType stubElementType) {
-    this(name,
-         isPositionalContainer,
-         isKeywordContainer,
-         hasDefaultValue ? PyNames.ELLIPSIS : null,
-         typeCommentAnnotation,
-         null,
-         parent,
-         stubElementType);
   }
 
   @Override

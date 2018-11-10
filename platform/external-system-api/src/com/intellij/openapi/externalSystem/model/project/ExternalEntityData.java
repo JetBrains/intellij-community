@@ -14,7 +14,6 @@ import java.io.Serializable;
  * override {@link #equals(Object)} and {@link #hashCode()}.
  * 
  * @author Denis Zhdanov
- * @since 8/12/11 12:50 PM
  */
 public interface ExternalEntityData extends Serializable {
 

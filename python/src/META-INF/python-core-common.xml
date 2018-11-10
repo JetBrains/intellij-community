@@ -10,6 +10,7 @@
   <xi:include href="/META-INF/command-line.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationInitializedListener implementation="com.jetbrains.python.testing.PyTestLegacyInteropInitializer"/>
     <psi.treeChangePreprocessor implementation="com.jetbrains.python.PythonPsiManager"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
     <renameHandler implementation="com.jetbrains.python.magicLiteral.PyMagicLiteralRenameHandler"/>
@@ -26,6 +27,7 @@
     <lang.foldingBuilder language="Python" implementationClass="com.jetbrains.python.PythonFoldingBuilder"/>
     <lang.findUsagesProvider language="Python" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
+    <lang.ast.factory language="Python" implementationClass="com.jetbrains.python.psi.impl.PythonASTFactory"/>
     <preFormatProcessor implementation="com.jetbrains.python.formatter.PyPreFormatProcessor"/>
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyTrailingBlankLinesPostFormatProcessor"/>
     <postFormatProcessor implementation="com.jetbrains.python.formatter.PyFromImportPostFormatProcessor"/>
@@ -68,6 +70,8 @@
     <basicWordSelectionFilter implementation="com.jetbrains.python.editor.selectWord.PyBasicWordSelectionFilter"/>
     <stripTrailingSpacesFilterFactory implementation="com.jetbrains.python.editor.PyStripTrailingSpacesFilterFactory"/>
     <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.python.testing.PyTestParameterCompletionContributor"/>
+    <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyKeywordCompletionContributor"/>
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PySpecialMethodNamesCompletionContributor"/>
@@ -86,7 +90,7 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStructuralTypeAttributesCompletionContributor"/>
     <completion.contributor language="Python"
-                            implementationClass="com.jetbrains.python.codeInsight.completion.PyDataclassPostInitCompletionContributor"/>
+                            implementationClass="com.jetbrains.python.codeInsight.completion.PyDataclassCompletionContributor"/>
 
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyStringFormatCompletionContributor" />
@@ -103,7 +107,7 @@
                   />
 
     <projectService serviceImplementation="com.jetbrains.python.inspections.PyCompatibilityInspectionAdvertiserSettings"/>
-
+    <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.findUsages.PyFindUsagesOptions"/>
 
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
@@ -349,7 +353,10 @@
     <testCreator language="Python" implementationClass="com.jetbrains.python.codeInsight.testIntegration.PyTestCreator"/>
 
     <stubElementTypeHolder class="com.jetbrains.python.PyElementTypes"/>
-
+    <localInspection language="Python" shortName="PyTestParametrizedInspection" suppressId="PyTestParametrized"
+                     bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.pytest-parametrized" groupKey="INSP.GROUP.python"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspection"/>
     <localInspection language="Python" shortName="PyArgumentListInspection" suppressId="PyArgumentList" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.incorrect.call.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyArgumentListInspection"/>
     <localInspection language="Python" shortName="PyRedeclarationInspection" suppressId="PyRedeclaration" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.redeclaration" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyRedeclarationInspection"/>
     <localInspection language="Python" shortName="PyUnresolvedReferencesInspection" suppressId="PyUnresolvedReferences" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.unresolved.refs" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection"/>
@@ -424,6 +431,10 @@
     <localInspection language="Python" shortName="PyNamedTupleInspection" suppressId="PyNamedTuple" displayName="Namedtuple definition" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNamedTupleInspection"/>
     <localInspection language="Python" shortName="PyDataclassInspection" suppressId="PyDataclass" displayName="Dataclass definition and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyDataclassInspection"/>
     <localInspection language="Python" shortName="PyProtocolInspection" suppressId="PyProtocol" displayName="Protocol definition and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyProtocolInspection"/>
+    <localInspection language="Python" shortName="PyTypeHintsInspection" suppressId="PyTypeHints" displayName="Type hints definitions and usages" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTypeHintsInspection"/>
+    <localInspection language="Python" shortName="PyAsyncCallInspection" suppressId="PyAsyncCall" displayName="Coroutine is not awaited" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyAsyncCallInspection"/>
+    <localInspection language="Python" shortName="PyStubPackagesAdvertiser" suppressId="PyStubPackagesAdvertiser" displayName="Stub packages advertiser" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiser"/>
+    <localInspection language="Python" shortName="PyStubPackagesCompatibilityInspection" suppressId="PyStubPackagesCompatibility" displayName="Stub packages compatibility inspection" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.codeInsight.typing.PyStubPackagesCompatibilityInspection"/>
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
     <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType$General"/>
@@ -509,7 +520,6 @@
 
     <lang.importOptimizer language="Python" implementationClass="com.jetbrains.python.codeInsight.imports.PyImportOptimizer"/>
 
-    <codeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyCodeStyleSettingsProvider"/>
     <langCodeStyleSettingsProvider implementation="com.jetbrains.python.formatter.PyLanguageCodeStyleSettingsProvider"/>
 
     <lang.elementManipulator forClass="com.jetbrains.python.psi.PyStringLiteralExpression"
@@ -518,6 +528,7 @@
                              implementationClass="com.jetbrains.python.psi.impl.PyKeywordArgumentManipulator"/>
 
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
+    <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PyRemoteAnalyzeStacktraceFilter"/>
 
     <internalFileTemplate name="Python Script"/>
     <internalFileTemplate name="Python Unit Test"/>
@@ -532,6 +543,7 @@
     <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySpecificSmartKeysOptions"/>
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyStdReferenceContributor"/>
+    <psi.referenceContributor implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureReferenceContributor"/>
 
     <applicationService serviceInterface="com.jetbrains.python.documentation.PythonDocumentationMap"
                         serviceImplementation="com.jetbrains.python.documentation.PythonDocumentationMap"/>
@@ -572,13 +584,12 @@
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
+    <applicationService serviceImplementation="com.jetbrains.python.codeInsight.typing.PyStubPackagesAdvertiserCache"/>
+    <projectService serviceImplementation="com.jetbrains.python.codeInsight.typing.PyStubPackagesInstallingStatus"/>
 
     <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
 
     <externalAnnotator language="Python" implementationClass="com.jetbrains.python.validation.Pep8ExternalAnnotator"/>
-
-    <statistics.usagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
-    <statistics.usagesCollector implementation="com.jetbrains.python.statistics.PyPackageUsagesCollector"/>
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/PythonDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/PythonDarcula.xml"/>
@@ -626,9 +637,6 @@
     <applicationService serviceInterface="com.jetbrains.python.PythonFoldingSettings"
                         serviceImplementation="com.jetbrains.python.PythonFoldingSettings"/>
 
-    <!-- f-strings -->
-    <multiHostInjector implementation="com.jetbrains.python.codeInsight.fstrings.PyFStringsInjector"/>
-
     <!-- postfix templates!-->
     <codeInsight.template.postfixTemplateProvider language="Python"
                                                   implementationClass="com.jetbrains.python.codeInsight.postfix.PyPostfixTemplateProvider"/>
@@ -638,12 +646,32 @@
 
     <projectService serviceInterface="com.jetbrains.python.debugger.containerview.PyDataView" serviceImplementation="com.jetbrains.python.debugger.containerview.PyDataView"/>
     <createFromTemplateHandler implementation="com.jetbrains.python.packaging.setupPy.PyCreateSetupPyFromTemplateHandler"/>
-    <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
 
+    <consoleHistoryModelProvider implementation="com.jetbrains.python.console.PyConsoleHistoryModelProvider"/>
+    <scratch.rootType implementation="com.jetbrains.python.console.PyConsoleRootType" />
     <consoleFilterProvider implementation="com.jetbrains.python.run.PyMessageFilterProvider"/>
+
+    <controlFlowProvider implementation="com.jetbrains.python.codeInsight.controlflow.PyControlFlowProvider"/>
+
+    <!-- Run Anything -->
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyRunAnythingProvider"/>
+    <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider" implementation="com.jetbrains.python.run.runAnything.PyConsoleRunAnythingProvider"/>
+    <runAnything.helpGroup implementation="com.jetbrains.python.run.runAnything.PyRunAnythingHelpGroup"/>
+    <runAnything.commandCustomizer implementation="com.jetbrains.python.run.runAnything.PyRunAnythingCommandCustomizer"/>
+
+    <!-- Statistics -->
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterRemoteUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterVersionUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyInterpreterTypeUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.jetbrains.python.statistics.PyPackageVersionUsagesCollector"/>
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.pyReferenceCustomTargetChecker" interface="com.jetbrains.python.psi.impl.references.PyReferenceCustomTargetChecker"/>
+    <extensionPoint qualifiedName="Pythonid.pyTestFixtureExtension" interface="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureExtension"/>
+    <extensionPoint qualifiedName="Pythonid.pyTestConfigurationSelector"  interface="com.jetbrains.python.testing.PyTestConfigurationSelector"/>
     <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider" interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider"/>
     <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider" interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider"/>
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
@@ -692,9 +720,11 @@
     <extensionPoint qualifiedName="Pythonid.pyPregeneratedSkeletonsProvider"
                     interface="com.jetbrains.python.sdk.skeletons.PyPregeneratedSkeletonsProvider"/>
     <extensionPoint qualifiedName="Pythonid.pyAddSdkProvider" interface="com.jetbrains.python.sdk.add.PyAddSdkProvider"/>
+    <extensionPoint qualifiedName="Pythonid.packageManagerProvider" interface="com.jetbrains.python.packaging.PyPackageManagerProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
+    <pyReferenceCustomTargetChecker implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureTargetChecker"/>
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.search.PySuperMethodsSearchExecutor"/>
     <pyClassInheritorsSearch implementation="com.jetbrains.python.psi.search.PyClassInheritorsSearchExecutor"/>
     <pyOverridingMethodsSearch implementation="com.jetbrains.python.psi.search.PyOverridingMethodsSearchExecutor"/>
@@ -714,10 +744,12 @@
 
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>
     <pyClassMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider"/>
+    <typeProvider implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassesTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTuplesTypeProvider"/>
-    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTuplesOverridingTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.testing.pyTestFixtures.PyTextFixtureTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyDataclassTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider"/>
+    <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyNamedTupleOverridingTypeProvider"/>
     <typeProvider implementation="com.jetbrains.python.psi.types.PyCollectionTypeByModificationsProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibModuleMembersProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibOverridingModuleMembersProvider"/>
@@ -734,6 +766,8 @@
     <visitorFilter language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiVisitorFilter"/>
     <inspectionExtension implementation="com.jetbrains.python.pyi.PyiInspectionExtension"/>
     <inspectionExtension implementation="com.jetbrains.python.codeInsight.typing.PyTypingInspectionExtension"/>
+    <inspectionExtension implementation="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureInspectionExtension"/>
+    <inspectionExtension implementation="com.jetbrains.python.testing.pyTestParametrized.PyTestParametrizedInspectionExtension"/>
     <customPackageIdentifier implementation="com.jetbrains.python.pyi.PyiCustomPackageIdentifier"/>
 
     <!-- User skeletons -->
@@ -750,6 +784,7 @@
     <typeProvider implementation="com.jetbrains.numpy.codeInsight.NumpyDocStringTypeProvider"/>
     <resolveResultRater implementation="com.jetbrains.numpy.codeInsight.NumpyResolveRater"/>
     <pyClassMembersProvider implementation="com.jetbrains.numpy.codeInsight.NumpyClassMembersProvider"/>
+    <documentationLinkProvider implementation="com.jetbrains.numpy.codeInsight.SciPyDocumentationLinkProvider"/>
 
     <!-- PyDocstring -->
     <typeProvider implementation="com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider"/>
@@ -772,6 +807,11 @@
     <visitorFilter language="PyFunctionTypeComment"
                    implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationVisitorFilter"/>
 
+    <!-- Pipenv -->
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyAddPipEnvSdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
+
+    <!-- Other -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
     <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
   </extensions>
@@ -918,8 +958,11 @@
     <component>
       <implementation-class>com.jetbrains.python.testing.VFSTestFrameworkListener</implementation-class>
     </component>
-    <component>
-      <implementation-class>com.jetbrains.python.testing.PyTestLegacyInteropInitializer</implementation-class>
-    </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcherComponent</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>

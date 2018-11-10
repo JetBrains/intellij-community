@@ -51,19 +51,19 @@ public class MergeActionGroup extends ActionGroup {
   private static class SelectSuggestionAction extends AnAction {
     private final MergeOperations myOperations;
 
-    public SelectSuggestionAction(MergeOperations operations) {
+    SelectSuggestionAction(MergeOperations operations) {
       super(DiffBundle.message("diff.dialog.select.change.action.name"),
             DiffBundle.message("diff.dialog.select.change.action.description"), null);
       myOperations = operations;
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myOperations.selectSuggestion();
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(myOperations.getCurrentFragment() != null);
     }
   }
@@ -77,7 +77,7 @@ public class MergeActionGroup extends ActionGroup {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myOperation.perform(e.getProject());
     }
   }

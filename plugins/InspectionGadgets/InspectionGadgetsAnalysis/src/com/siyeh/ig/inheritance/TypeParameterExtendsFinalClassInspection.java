@@ -28,6 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +73,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
       if (parent instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)parent;
         replaceTypeParameterUsagesWithType(typeParameter);
-        typeParameter.delete();
+        new CommentTracker().deleteAndRestoreComments(typeParameter);
       }
       else if (parent instanceof PsiTypeElement) {
         final PsiTypeElement typeElement = (PsiTypeElement)parent;
@@ -80,7 +81,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
         if (lastChild == null) {
           return;
         }
-        typeElement.replace(lastChild);
+        new CommentTracker().replaceAndRestoreComments(typeElement, lastChild);
       }
     }
 
@@ -141,6 +142,12 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
         return;
       }
       final PsiClassType classType = (PsiClassType)extendsBound;
+      for (PsiType typeParameter : classType.getParameters()) {
+        if (typeParameter instanceof PsiWildcardType) {
+          // if nested type has wildcard type parameter too, leave it
+          return;
+        }
+      }
       final PsiClass aClass = classType.resolve();
       if (aClass == null || !aClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
@@ -181,7 +188,9 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
             return true; // incomplete code
           }
           final PsiParameter iterationParameter = foreachStatement.getIterationParameter();
-          return isWildcardRequired(typeElement, iterationParameter.getTypeElement(), JavaGenericsUtil.getCollectionItemType(iteratedValue));
+          final PsiTypeElement foreachTypeElement = iterationParameter.getTypeElement();
+          assert foreachTypeElement != null;
+          return isWildcardRequired(typeElement, foreachTypeElement, JavaGenericsUtil.getCollectionItemType(iteratedValue));
         }
       }
       else if (ancestor instanceof PsiLocalVariable) {

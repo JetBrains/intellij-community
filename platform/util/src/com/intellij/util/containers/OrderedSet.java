@@ -29,7 +29,7 @@ public class OrderedSet<T> extends ArrayList<T> implements Set<T>, RandomAccess 
     this(ContainerUtil.<T>canonicalStrategy());
   }
 
-  public OrderedSet(@NotNull Collection<T> set) {
+  public OrderedSet(@NotNull Collection<? extends T> set) {
     super(set.size());
     myHashSet = new OpenTHashSet<T>(set.size());
     addAll(set);

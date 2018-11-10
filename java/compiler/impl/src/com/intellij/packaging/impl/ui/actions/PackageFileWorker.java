@@ -66,12 +66,12 @@ public class PackageFileWorker {
     myPackIntoArchives = packIntoArchives;
   }
 
-  public static void startPackagingFiles(Project project, List<VirtualFile> files, Artifact[] artifacts, final @NotNull Runnable onFinishedInAwt) {
+  public static void startPackagingFiles(Project project, List<? extends VirtualFile> files, Artifact[] artifacts, final @NotNull Runnable onFinishedInAwt) {
     startPackagingFiles(project, files, artifacts, true).doWhenProcessed(
       () -> ApplicationManager.getApplication().invokeLater(onFinishedInAwt));
   }
 
-  public static ActionCallback startPackagingFiles(final Project project, final List<VirtualFile> files,
+  public static ActionCallback startPackagingFiles(final Project project, final List<? extends VirtualFile> files,
                                                    final Artifact[] artifacts, final boolean packIntoArchives) {
     final ActionCallback callback = new ActionCallback();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Packaging Files") {
@@ -159,14 +159,11 @@ public class PackageFileWorker {
     final File archiveFile = new File(archivePath);
     if (parents.isEmpty()) {
       LOG.debug("  adding to archive " + archivePath);
-      JBZipFile file = getOrCreateZipFile(archiveFile);
-      try {
-        final String fullPathInArchive = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, myRelativeOutputPath));
+      try (JBZipFile file = getOrCreateZipFile(archiveFile)) {
+        final String fullPathInArchive =
+          DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, myRelativeOutputPath));
         final JBZipEntry entry = file.getOrCreateEntry(fullPathInArchive);
         entry.setDataFromFile(myFile);
-      }
-      finally {
-        file.close();
       }
       return;
     }
@@ -175,8 +172,7 @@ public class PackageFileWorker {
     final String nextPathInArchive = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, element.getName()));
     final List<CompositePackagingElement<?>> parentsTrail = parents.subList(1, parents.size());
     if (element instanceof ArchivePackagingElement) {
-      JBZipFile zipFile = getOrCreateZipFile(archiveFile);
-      try {
+      try (JBZipFile zipFile = getOrCreateZipFile(archiveFile)) {
         final JBZipEntry entry = zipFile.getOrCreateEntry(nextPathInArchive);
         LOG.debug("  extracting to temp file: " + nextPathInArchive + " from " + archivePath);
         final File tempFile = FileUtil.createTempFile("packageFile" + FileUtil.sanitizeFileName(nextPathInArchive),
@@ -189,9 +185,6 @@ public class PackageFileWorker {
         packFile(FileUtil.toSystemIndependentName(tempFile.getAbsolutePath()), "", parentsTrail);
         entry.setDataFromFile(tempFile);
         FileUtil.delete(tempFile);
-      }
-      finally {
-        zipFile.close();
       }
     }
     else {

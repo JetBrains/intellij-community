@@ -63,32 +63,26 @@ public class FrameworkDetectorRegistryImpl extends FrameworkDetectorRegistry {
       LOG.debug("loading framework detectors registry from " + file.toAbsolutePath());
       List<String> unknownIds = new ArrayList<>();
       boolean versionChanged = false;
-      try {
-        DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(file)));
-        try {
-          input.readInt();
-          myDetectorsVersion = input.readInt();
-          int size = input.readInt();
-          while (size-- > REGISTRY_VERSION) {
-            final String stringId = input.readUTF();
-            int intId = input.readInt();
-            maxId = Math.max(maxId, intId);
-            final int version = input.readInt();
-            final FrameworkDetector detector = newDetectors.remove(stringId);
-            if (detector != null) {
-              if (version != detector.getDetectorVersion()) {
-                LOG.info("Version of framework detector '" + stringId + "' changed: " + version + " -> " + detector.getDetectorVersion());
-                versionChanged = true;
-              }
-              myDetectorIds.put(stringId, intId);
+      try (DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(file)))) {
+        input.readInt();
+        myDetectorsVersion = input.readInt();
+        int size = input.readInt();
+        while (size-- > REGISTRY_VERSION) {
+          final String stringId = input.readUTF();
+          int intId = input.readInt();
+          maxId = Math.max(maxId, intId);
+          final int version = input.readInt();
+          final FrameworkDetector detector = newDetectors.remove(stringId);
+          if (detector != null) {
+            if (version != detector.getDetectorVersion()) {
+              LOG.info("Version of framework detector '" + stringId + "' changed: " + version + " -> " + detector.getDetectorVersion());
+              versionChanged = true;
             }
-            else {
-              unknownIds.add(stringId);
-            }
+            myDetectorIds.put(stringId, intId);
           }
-        }
-        finally {
-          input.close();
+          else {
+            unknownIds.add(stringId);
+          }
         }
       }
       catch (IOException e) {

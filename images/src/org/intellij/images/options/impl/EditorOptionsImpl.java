@@ -44,28 +44,34 @@ final class EditorOptionsImpl implements EditorOptions, JDOMExternalizable {
         zoomOptions = new ZoomOptionsImpl(propertyChangeSupport);
     }
 
+    @Override
     public GridOptions getGridOptions() {
         return gridOptions;
     }
 
+    @Override
     public TransparencyChessboardOptions getTransparencyChessboardOptions() {
         return transparencyChessboardOptions;
     }
 
+    @Override
     public ZoomOptions getZoomOptions() {
         return zoomOptions;
     }
 
+    @Override
     public EditorOptions clone() throws CloneNotSupportedException {
         return (EditorOptions)super.clone();
     }
 
+    @Override
     public void inject(EditorOptions options) {
         gridOptions.inject(options.getGridOptions());
         transparencyChessboardOptions.inject(options.getTransparencyChessboardOptions());
         zoomOptions.inject(options.getZoomOptions());
     }
 
+    @Override
     public boolean setOption(String name, Object value) {
         return gridOptions.setOption(name, value) ||
                    transparencyChessboardOptions.setOption(name, value) ||
@@ -92,6 +98,7 @@ final class EditorOptionsImpl implements EditorOptions, JDOMExternalizable {
         return fileSizeVisible;
     }
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
         ((JDOMExternalizable)gridOptions).readExternal(element);
         ((JDOMExternalizable)transparencyChessboardOptions).readExternal(element);
@@ -102,6 +109,7 @@ final class EditorOptionsImpl implements EditorOptions, JDOMExternalizable {
         fileSizeVisible = fileNameVisibleAttr == null || Boolean.parseBoolean(fileSizeVisibleAttr);
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
         ((JDOMExternalizable)gridOptions).writeExternal(element);
         ((JDOMExternalizable)transparencyChessboardOptions).writeExternal(element);

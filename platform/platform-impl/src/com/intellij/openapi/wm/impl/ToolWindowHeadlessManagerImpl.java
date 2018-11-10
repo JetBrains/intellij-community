@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -18,7 +16,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ArrayUtil;
@@ -32,10 +29,9 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.beans.PropertyChangeListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
-@SuppressWarnings("ConstantConditions")
 public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   private final Map<String, ToolWindow> myToolWindows = new HashMap<>();
   private final Project myProject;
@@ -195,20 +191,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @Override
   public void initToolWindow(@NotNull ToolWindowEP bean) {
-
-  }
-
-  @Override
-  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
-
-  }
-
-  @Override
-  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener, @NotNull Disposable parentDisposable) {
-  }
-
-  @Override
-  public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
   }
 
   @Override
@@ -432,11 +414,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public ActionCallback getActivation() {
-      return ActionCallback.DONE;
-    }
-
-    @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
     }
 
@@ -464,6 +441,10 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
     @Override
     public void setTitleActions(AnAction... actions) {
+    }
+
+    @Override
+    public void setTabActions(AnAction... actions) {
     }
 
     @Override
@@ -502,11 +483,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
       myDispatcher.getMulticaster().contentAdded(e);
       if (mySelected == null) setSelectedContent(content);
-    }
-
-    @Override
-    public void addContent(@NotNull final Content content, final Object constraints) {
-      addContent(content);
     }
 
     @Override
@@ -646,7 +622,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       ContentManagerEvent e = new ContentManagerEvent(this, content, oldIndex, ContentManagerEvent.ContentOperation.remove);
       myDispatcher.getMulticaster().contentRemoved(e);
       Content item = ContainerUtil.getFirstItem(myContents);
-      if (item != null) setSelectedContent(item);
+      if (item != null) {
+        setSelectedContent(item);
+      }
+      else {
+        mySelected = null;
+      }
       return result;
     }
 

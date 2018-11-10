@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.findUsages.PyClassFindUsagesHandler;
 import com.jetbrains.python.findUsages.PyFunctionFindUsagesHandler;
 import com.jetbrains.python.psi.*;
@@ -78,6 +79,7 @@ public class PyStaticCallHierarchyUtil {
     return callees;
   }
 
+  @NotNull
   public static Collection<PsiElement> getCallers(@NotNull PyElement pyElement) {
     final List<PsiElement> callers = Lists.newArrayList();
     final Collection<UsageInfo> usages = findUsages(pyElement);
@@ -94,13 +96,17 @@ public class PyStaticCallHierarchyUtil {
       }
 
       if (element instanceof PyCallExpression) {
-        PsiElement caller = PsiTreeUtil.getParentOfType(element, PyParameterList.class, PyFunction.class);
+        final PyExpression receiver = ((PyCallExpression)element).getReceiver(null);
+        if (receiver instanceof PyCallExpression && ((PyCallExpression)receiver).isCalleeText(PyNames.SUPER)) {
+          continue;
+        }
+        final PsiElement caller = PsiTreeUtil.getParentOfType(element, PyParameterList.class, PyFunction.class);
         if (caller instanceof PyFunction) {
           callers.add(caller);
         }
         else if (caller instanceof PyParameterList) {
-          PsiElement innerFunction = PsiTreeUtil.getParentOfType(caller, PyFunction.class);
-          PsiElement outerFunction = PsiTreeUtil.getParentOfType(innerFunction, PyFunction.class);
+          final PsiElement innerFunction = PsiTreeUtil.getParentOfType(caller, PyFunction.class);
+          final PsiElement outerFunction = PsiTreeUtil.getParentOfType(innerFunction, PyFunction.class);
           if (innerFunction != null && outerFunction != null) {
             callers.add(outerFunction);
           }
@@ -126,7 +132,7 @@ public class PyStaticCallHierarchyUtil {
   }
 
   /**
-   * @see {@link com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#createFindUsagesHandler(com.intellij.psi.PsiElement, boolean) createFindUsagesHandler}
+   * @see com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#createFindUsagesHandler(PsiElement, boolean)
    */
   @Nullable
   private static FindUsagesHandler createFindUsageHandler(@NotNull final PsiElement element) {
@@ -152,7 +158,7 @@ public class PyStaticCallHierarchyUtil {
   }
 
   /**
-   * @see {@link com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#isInObject(com.jetbrains.python.psi.PyFunction) isInObject}
+   * @see com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#isInObject(PyFunction)
    */
   private static boolean isInObject(PyFunction fun) {
     final PyClass containingClass = fun.getContainingClass();

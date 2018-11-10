@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Represents a file or code fragment to which import statements can be added.
  */
@@ -25,5 +27,5 @@ public interface PsiImportHolder extends PsiFile {
    * @param aClass the class to import.
    * @return true if the import statement was added successfully, false otherwise.
    */
-  boolean importClass(PsiClass aClass);
+  boolean importClass(@NotNull PsiClass aClass);
 }

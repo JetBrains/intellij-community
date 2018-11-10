@@ -70,11 +70,11 @@ public class GlobalAnalyzer {
 
     final LinkedList<T> worklist = new LinkedList<>();
 
-    for (Iterator<T> i = init.iterator(); i.hasNext();) {
-      result = stepOneEnd(i.next(), worklist, functor) || result;
+    for (T anInit : init) {
+      result = stepOneEnd(anInit, worklist, functor) || result;
     }
 
-    while (worklist.size() > 0) {
+    while (!worklist.isEmpty()) {
       result = stepOneEnd(worklist.removeFirst(), worklist, functor) || result;
     }
 
@@ -86,11 +86,11 @@ public class GlobalAnalyzer {
 
     final LinkedList<T> worklist = new LinkedList<>();
 
-    for (Iterator<T> i = init.iterator(); i.hasNext();) {
-      result = stepTwoEnds(i.next(), worklist, functor) || result;
+    for (T anInit : init) {
+      result = stepTwoEnds(anInit, worklist, functor) || result;
     }
 
-    while (worklist.size() > 0) {
+    while (!worklist.isEmpty()) {
       result = stepTwoEnds(worklist.removeFirst(), worklist, functor) || result;
     }
 

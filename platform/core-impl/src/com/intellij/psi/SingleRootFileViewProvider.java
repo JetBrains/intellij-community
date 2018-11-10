@@ -15,7 +15,6 @@
  */
 package com.intellij.psi;
 
-import com.google.common.util.concurrent.Atomics;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,7 +22,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,6 +32,7 @@ import com.intellij.psi.impl.source.tree.FileElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,12 +40,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class SingleRootFileViewProvider extends AbstractFileViewProvider implements FileViewProvider {
   private static final Key<Boolean> OUR_NO_SIZE_LIMIT_KEY = Key.create("no.size.limit");
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.SingleRootFileViewProvider");
-  private final AtomicReference<PsiFile> myPsiFile = Atomics.newReference();
+  @SuppressWarnings("unused")
+  private volatile PsiFile myPsiFile;
+  private static final AtomicFieldUpdater<SingleRootFileViewProvider, PsiFile> myPsiFileUpdater = AtomicFieldUpdater.forFieldOfType(SingleRootFileViewProvider.class, PsiFile.class);
   @NotNull private final Language myBaseLanguage;
 
   public SingleRootFileViewProvider(@NotNull PsiManager manager, @NotNull VirtualFile file) {
@@ -115,15 +115,15 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     if (target != getBaseLanguage()) {
       return null;
     }
-    PsiFile psiFile = myPsiFile.get();
+    PsiFile psiFile = myPsiFile;
     if (psiFile == null) {
       psiFile = createFile();
       if (psiFile == null) {
         psiFile = PsiUtilCore.NULL_PSI_FILE;
       }
-      boolean set = myPsiFile.compareAndSet(null, psiFile);
+      boolean set = myPsiFileUpdater.compareAndSet(this, null, psiFile);
       if (!set && psiFile != PsiUtilCore.NULL_PSI_FILE) {
-        PsiFile alreadyCreated = myPsiFile.get();
+        PsiFile alreadyCreated = myPsiFile;
         if (alreadyCreated == psiFile) {
           LOG.error(this + ".createFile() must create new file instance but got the same: " + psiFile);
         }
@@ -142,7 +142,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   @Override
   public final PsiFile getCachedPsi(@NotNull Language target) {
     if (target != getBaseLanguage()) return null;
-    PsiFile file = myPsiFile.get();
+    PsiFile file = myPsiFile;
     return file == PsiUtilCore.NULL_PSI_FILE ? null : file;
   }
 
@@ -163,24 +163,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
 
   private PsiFile createFile() {
     try {
-      final VirtualFile vFile = getVirtualFile();
-      if (vFile.isDirectory()) return null;
-      if (isIgnored()) return null;
-
-      Project project = getManager().getProject();
-      if (isPhysical() && vFile.isInLocalFileSystem()) { // check directories consistency
-        final VirtualFile parent = vFile.getParent();
-        if (parent == null) return null;
-        final PsiDirectory psiDir = getManager().findDirectory(parent);
-        if (psiDir == null) {
-          FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
-          if (!indexFacade.isInLibrarySource(vFile) && !indexFacade.isInLibraryClasses(vFile)) {
-            return null;
-          }
-        }
-      }
-
-      return createFile(project, vFile, getFileType());
+      return shouldCreatePsi() ? createFile(getManager().getProject(), getVirtualFile(), getFileType()) : null;
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -189,11 +172,6 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
       LOG.error(e);
       return null;
     }
-  }
-
-  @Deprecated
-  public static boolean isTooLarge(@NotNull VirtualFile vFile) {
-    return isTooLargeForIntelligence(vFile);
   }
 
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile) {
@@ -206,7 +184,14 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
-    return !Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY));
+    if (Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY))) {
+      return false;
+    }
+    if (vFile instanceof LightVirtualFile) {
+      VirtualFile original = ((LightVirtualFile)vFile).getOriginalFile();
+      if (original != null) return checkFileSizeLimit(original);
+    }
+    return true;
   }
   public static void doNotCheckFileSizeLimit(@NotNull VirtualFile vFile) {
     vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
@@ -257,20 +242,16 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   public final void forceCachedPsi(@NotNull PsiFile psiFile) {
-    PsiFile prev = myPsiFile.getAndSet(psiFile);
-    if (prev != null && prev != psiFile && prev instanceof PsiFileEx) {
-      ((PsiFileEx)prev).markInvalidated();
+    while (true) {
+      PsiFile prev = myPsiFile;
+      // jdk 6 doesn't have getAndSet()
+      if (myPsiFileUpdater.compareAndSet(this, prev, psiFile)) {
+        if (prev != psiFile && prev instanceof PsiFileEx) {
+          ((PsiFileEx)prev).markInvalidated();
+        }
+        break;
+      }
     }
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);
   }
-
-  @Override
-  public final void markInvalidated() {
-    PsiFile psiFile = getCachedPsi(getBaseLanguage());
-    if (psiFile instanceof PsiFileEx) {
-      ((PsiFileEx)psiFile).markInvalidated();
-    }
-    super.markInvalidated();
-  }
-
 }

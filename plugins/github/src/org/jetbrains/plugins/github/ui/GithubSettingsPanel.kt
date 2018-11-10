@@ -11,8 +11,10 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.authentication.ui.GithubAccountsPanel
+import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.GithubImageResizer
 import org.jetbrains.plugins.github.util.GithubSettings
 import java.awt.Component.LEFT_ALIGNMENT
 import java.awt.GridLayout
@@ -20,9 +22,12 @@ import java.text.NumberFormat
 import javax.swing.*
 import javax.swing.text.NumberFormatter
 
-class GithubSettingsPanel(project: Project, accountInformationProvider: GithubAccountInformationProvider)
+class GithubSettingsPanel(project: Project,
+                          executorFactory: GithubApiRequestExecutor.Factory,
+                          avatarLoader: CachingGithubUserAvatarLoader,
+                          imageResizer: GithubImageResizer)
   : ConfigurableUi<GithubSettingsConfigurable.GithubSettingsHolder>, Disposable {
-  private val accountsPanel = GithubAccountsPanel(project, accountInformationProvider)
+  private val accountsPanel = GithubAccountsPanel(project, executorFactory, avatarLoader, imageResizer)
   private val timeoutField = JFormattedTextField(NumberFormatter(NumberFormat.getIntegerInstance()).apply {
     minimum = 0
     maximum = 60
@@ -33,7 +38,10 @@ class GithubSettingsPanel(project: Project, accountInformationProvider: GithubAc
   private val cloneUsingSshCheckBox = JBCheckBox("Clone git repositories using ssh")
 
   override fun reset(settings: GithubSettingsConfigurable.GithubSettingsHolder) {
-    accountsPanel.setAccounts(settings.applicationAccounts.accounts, settings.projectAccount.account)
+    val accountsMap = settings.applicationAccounts.accounts.map {
+      it to settings.applicationAccounts.getTokenForAccount(it)
+    }.toMap()
+    accountsPanel.setAccounts(accountsMap, settings.projectAccount.account)
     accountsPanel.clearNewTokens()
     accountsPanel.loadExistingAccountsDetails()
     timeoutField.value = settings.application.getConnectionTimeoutSeconds()

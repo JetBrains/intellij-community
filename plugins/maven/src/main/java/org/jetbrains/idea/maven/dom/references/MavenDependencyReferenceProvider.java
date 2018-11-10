@@ -79,7 +79,7 @@ public class MavenDependencyReferenceProvider extends PsiReferenceProvider imple
 
   private static class GroupReference extends PsiReferenceBase<PsiElement> {
 
-    public GroupReference(PsiElement element, TextRange range, boolean soft) {
+    GroupReference(PsiElement element, TextRange range, boolean soft) {
       super(element, range, soft);
     }
 

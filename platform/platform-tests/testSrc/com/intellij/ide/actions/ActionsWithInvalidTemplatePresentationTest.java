@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionStub;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
@@ -49,24 +50,19 @@ public class ActionsWithInvalidTemplatePresentationTest extends PlatformTestCase
       String text = presentation.getText();
       String description = presentation.getDescription();
 
-      if (IsInvalidText(text) || IsInvalidText(description)) {
-        failed.add(id);
+      if (!isValidText(text) || !isValidText(description)) {
+        Object aClass = action instanceof ActionStub ? "class "+((ActionStub)action).getClassName() : action.getClass();
+        failed.add(id + "; " + aClass + "; text: '" + text + "'; description: '" + description + "'\n");
       }
     }
-
-    for (String id : failed) {
-      AnAction action = mgr.getAction(id);
-      System.err.println(action + " ID: " + id + " Class: " + (action != null ? action.getClass() : "null"));
-    }
-    assertEmpty("The following actions might have invalid template presentation\n" +
-                "These are user-visible strings that can be used without any processing by AnAction.\n" +
-                "ex: 'Find Action' or 'Settings | Keymap'", failed);
+    System.err.println(failed);
+    assertEmpty("The following actions might have invalid template presentation:\n", failed);
   }
 
-  private static boolean IsInvalidText(@Nullable String text) {
-    if (text == null) return false;
-    if (text.contains("{")) return true; // MessageFormat template
-    if (text.contains("<")) return true; // HTML
-    return false;
+  private static boolean isValidText(@Nullable String text) {
+    if (text == null) return true;
+    if (text.contains("{")) return false; // MessageFormat template
+    if (text.contains("<")) return false; // HTML
+    return true;
   }
 }

@@ -38,14 +38,14 @@ import java.nio.file.Paths
  * @author traff
  */
 class AttachProjectAction : AnAction("Attach project..."), DumbAware {
-  override fun update(e: AnActionEvent?) {
-    e?.presentation?.isEnabledAndVisible = ProjectAttachProcessor.canAttachToProject() &&
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = ProjectAttachProcessor.canAttachToProject() &&
                                            GeneralSettings.getInstance().confirmOpenNewProject != GeneralSettings.OPEN_PROJECT_ASK
   }
 
-  override fun actionPerformed(e: AnActionEvent?) {
+  override fun actionPerformed(e: AnActionEvent) {
     val descriptor = OpenProjectFileChooserDescriptor(true)
-    val project = e?.getData(CommonDataKeys.PROJECT)
+    val project = e.getData(CommonDataKeys.PROJECT)
 
 
     FileChooser.chooseFiles(descriptor, project, null) { files ->

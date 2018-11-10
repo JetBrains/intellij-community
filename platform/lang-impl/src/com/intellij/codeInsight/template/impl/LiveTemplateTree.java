@@ -84,7 +84,7 @@ class LiveTemplateTree extends CheckboxTree implements DataProvider, CopyProvide
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId) || PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return this;
     }

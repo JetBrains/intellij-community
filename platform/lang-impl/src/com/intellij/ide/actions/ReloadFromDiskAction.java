@@ -28,10 +28,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.NotNull;
 
 public class ReloadFromDiskAction extends AnAction implements DumbAware {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     if (project == null || editor == null) return;
@@ -54,7 +55,7 @@ public class ReloadFromDiskAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent event) {
+  public void update(@NotNull AnActionEvent event) {
     boolean enabled = false;
 
     Project project = event.getProject();

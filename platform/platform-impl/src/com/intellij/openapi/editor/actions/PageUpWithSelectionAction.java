@@ -16,12 +16,11 @@
 
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.CaretAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.actionSystem.DataContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,12 +42,7 @@ public class PageUpWithSelectionAction extends EditorAction {
       }
       else {
         if (caret == null) {
-          editor.getCaretModel().runForEachCaret(new CaretAction() {
-            @Override
-            public void perform(Caret caret) {
-              EditorActionUtil.moveCaretPageUp(editor, true);
-            }
-          });
+          editor.getCaretModel().runForEachCaret(__ -> EditorActionUtil.moveCaretPageUp(editor, true));
         }
         else {
           // assuming caret is equal to CaretModel.getCurrentCaret()

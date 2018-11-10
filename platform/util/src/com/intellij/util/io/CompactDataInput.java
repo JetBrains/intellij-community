@@ -144,7 +144,7 @@ public class CompactDataInput implements DataInput {
   }
 
   @Override
-  public String readLine() throws IOException {
+  public String readLine() {
     throw new UnsupportedOperationException("readLine is not implemented!");
   }
 

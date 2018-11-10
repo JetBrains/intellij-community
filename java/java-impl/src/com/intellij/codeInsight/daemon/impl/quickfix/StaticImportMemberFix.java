@@ -23,6 +23,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -72,7 +73,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
            && getElement().isValid()
            && getQualifierExpression() == null
            && resolveRef() == null
-           && file.getManager().isInProject(file)
+           && ScratchFileService.isInProjectOrScratch(file)
            && !(candidates == null ? candidates = getMembersToImport(false, StaticMembersProcessor.SearchMode.MAX_2_MEMBERS) : candidates).isEmpty()
       ;
   }
@@ -86,7 +87,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
     return name != null && JavaProjectCodeInsightSettings.getSettings(method.getProject()).isExcluded(name);
   }
 
-  @NotNull protected abstract QuestionAction createQuestionAction(List<T> methodsToImport, @NotNull Project project, Editor editor);
+  @NotNull protected abstract QuestionAction createQuestionAction(List<? extends T> methodsToImport, @NotNull Project project, Editor editor);
 
   @Nullable protected abstract PsiElement getElement();
   @Nullable protected abstract PsiElement getQualifierExpression();

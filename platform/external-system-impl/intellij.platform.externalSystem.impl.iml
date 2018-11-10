@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/compatibilityResources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -32,5 +33,8 @@
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" />
     <orderEntry type="module" module-name="intellij.java.compiler.tests" scope="TEST" />
+    <orderEntry type="library" name="de.ruedigermoeller:fst" level="project" />
+    <orderEntry type="library" name="Objenesis" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
   </component>
 </module>

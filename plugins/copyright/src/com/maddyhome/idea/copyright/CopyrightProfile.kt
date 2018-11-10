@@ -22,14 +22,14 @@ class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : 
   // must be not private because otherwise binding is not created for private accessor
   @Suppress("MemberVisibilityCanBePrivate")
   @get:OptionTag("myName")
-  var profileName by string()
+  var profileName: String? by string()
 
-  var notice by property(DEFAULT_COPYRIGHT_NOTICE)
-  var keyword by property(EntityUtil.encode("Copyright"))
-  var allowReplaceRegexp by string()
+  var notice: String? by property(DEFAULT_COPYRIGHT_NOTICE)
+  var keyword: String? by property(EntityUtil.encode("Copyright"))
+  var allowReplaceRegexp: String? by string()
 
   @Deprecated("use allowReplaceRegexp instead", ReplaceWith(""))
-  var allowReplaceKeyword by string()
+  var allowReplaceKeyword: String? by string()
 
   init {
     // otherwise will be as default value and name will be not serialized
@@ -38,13 +38,13 @@ class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : 
 
   // ugly name to preserve compatibility
   @Transient
-  override fun getName() = profileName ?: ""
+  override fun getName(): String = profileName ?: ""
 
   override fun setName(value: String) {
     profileName = value
   }
 
-  override fun toString() = profileName ?: ""
+  override fun toString(): String = profileName ?: ""
 
   override fun writeScheme(): Element {
     val element = Element("copyright")

@@ -29,7 +29,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Vladislav.Soroka
- * @since 3/27/14
  */
 public class GradleNotificationExtension implements ExternalSystemNotificationExtension {
   @NotNull
@@ -43,7 +42,6 @@ public class GradleNotificationExtension implements ExternalSystemNotificationEx
                         @NotNull Project project,
                         @Nullable Throwable error) {
     if (error == null) return;
-    //noinspection ThrowableResultOfMethodCallIgnored
     Throwable unwrapped = RemoteUtil.unwrap(error);
     if (unwrapped instanceof ExternalSystemException) {
       updateNotification(notification, project, (ExternalSystemException)unwrapped);

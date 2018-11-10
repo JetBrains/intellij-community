@@ -65,7 +65,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     VirtualFile myFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean enabled = myFile != null && checkEnabled(myFile);
     e.getPresentation().setEnabled(enabled);
@@ -73,7 +73,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public final void actionPerformed(final AnActionEvent e) {
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
     ListPopup popup = createPopup(dataContext);
@@ -113,7 +113,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
                                               @Nullable final String clearItemText) {
     return new ChooseFileEncodingAction(myFile) {
      @Override
-     public void update(final AnActionEvent e) {
+     public void update(@NotNull final AnActionEvent e) {
      }
 
      @NotNull
@@ -164,8 +164,8 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
       IncompatibleEncodingDialog dialog = new IncompatibleEncodingDialog(virtualFile, charset, isSafeToReload, isSafeToConvert);
       dialog.show();
       if (dialog.getExitCode() == IncompatibleEncodingDialog.RELOAD_EXIT_CODE) {
-        undo = () -> EncodingUtil.reloadIn(virtualFile, oldCharset);
-        redo = () -> EncodingUtil.reloadIn(virtualFile, charset);
+        undo = () -> EncodingUtil.reloadIn(virtualFile, oldCharset, project);
+        redo = () -> EncodingUtil.reloadIn(virtualFile, charset, project);
       }
       else if (dialog.getExitCode() == IncompatibleEncodingDialog.CONVERT_EXIT_CODE) {
         undo = () -> EncodingUtil.saveIn(document, editor, virtualFile, oldCharset);

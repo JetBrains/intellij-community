@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
@@ -249,7 +250,7 @@ public class CodeInsightUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  private static void addExpressionOccurrences(PsiExpression expr, List<PsiExpression> array, PsiElement scope) {
+  private static void addExpressionOccurrences(PsiExpression expr, List<? super PsiExpression> array, PsiElement scope) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiExpression) {
@@ -270,7 +271,7 @@ public class CodeInsightUtil {
     return array.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
-  private static void addReferenceExpressions(List<PsiExpression> array, PsiElement scope, PsiElement referee) {
+  private static void addReferenceExpressions(List<? super PsiExpression> array, PsiElement scope, PsiElement referee) {
     PsiElement[] children = scope.getChildren();
     for (PsiElement child : children) {
       if (child instanceof PsiReferenceExpression) {
@@ -305,7 +306,7 @@ public class CodeInsightUtil {
                                      final PsiElement context,
                                      boolean getRawSubtypes,
                                      @NotNull final PrefixMatcher matcher,
-                                     Consumer<PsiType> consumer) {
+                                     Consumer<? super PsiType> consumer) {
     int arrayDim = psiType.getArrayDimensions();
 
     psiType = psiType.getDeepComponentType();
@@ -326,10 +327,12 @@ public class CodeInsightUtil {
 
     if (baseClass.hasModifierProperty(PsiModifier.FINAL)) return;
 
+    Set<PsiClass> imported = processImportedInheritors(context, baseClass, inheritorsProcessor);
+
     if (matcher.getPrefix().length() > 2) {
       JBTreeTraverser<PsiClass> traverser = JBTreeTraverser.of(PsiClass::getInnerClasses);
       AllClassesGetter.processJavaClasses(matcher, context.getProject(), scope, psiClass -> {
-        Iterable<PsiClass> inheritors = traverser.withRoot(psiClass).filter(c -> c.isInheritor(baseClass, true));
+        Iterable<PsiClass> inheritors = traverser.withRoot(psiClass).filter(c -> c.isInheritor(baseClass, true) && !imported.contains(c));
         return ContainerUtil.process(inheritors, inheritorsProcessor);
       });
     }
@@ -337,12 +340,29 @@ public class CodeInsightUtil {
       Query<PsiClass> baseQuery = ClassInheritorsSearch.search(baseClass, scope, true, true, false);
       Query<PsiClass> query = new FilteredQuery<>(baseQuery, psiClass ->
         !(psiClass instanceof PsiTypeParameter) &&
-        ContainerUtil.exists(JavaCompletionUtil.getAllLookupStrings(psiClass), matcher::prefixMatches));
+        ContainerUtil.exists(JavaCompletionUtil.getAllLookupStrings(psiClass), matcher::prefixMatches) &&
+        !imported.contains(psiClass));
       query.forEach(inheritorsProcessor);
     }
   }
 
-  private static void addContextTypeArguments(PsiElement context, PsiClassType baseType, Processor<PsiClass> inheritorsProcessor) {
+  @NotNull
+  private static Set<PsiClass> processImportedInheritors(PsiElement context, PsiClass baseClass, Processor<? super PsiClass> inheritorsProcessor) {
+    Set<PsiClass> visited = new HashSet<>();
+
+    context.getContainingFile().getOriginalFile().processDeclarations(new PsiScopeProcessor() {
+      @Override
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+        if (element instanceof PsiClass && ((PsiClass)element).isInheritor(baseClass, true) && visited.add((PsiClass)element)) {
+          return inheritorsProcessor.process((PsiClass)element);
+        }
+        return true;
+      }
+    }, ResolveState.initial(), null, context);
+    return visited;
+  }
+
+  private static void addContextTypeArguments(PsiElement context, PsiClassType baseType, Processor<? super PsiClass> inheritorsProcessor) {
     Set<String> usedNames = ContainerUtil.newHashSet();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.getProject());
     PsiElement each = context;
@@ -363,7 +383,7 @@ public class CodeInsightUtil {
                                                               PsiClassType baseType,
                                                               int arrayDim,
                                                               boolean getRawSubtypes,
-                                                              Consumer<PsiType> result,
+                                                              Consumer<? super PsiType> result,
                                                               @NotNull PsiClass baseClass,
                                                               PsiSubstitutor baseSubstitutor) {
     PsiManager manager = context.getManager();
@@ -404,7 +424,7 @@ public class CodeInsightUtil {
   @NotNull
   public static List<PsiType> getExpectedTypeArgs(PsiElement context,
                                                   PsiTypeParameterListOwner paramOwner,
-                                                  Iterable<PsiTypeParameter> typeParams, PsiClassType expectedType) {
+                                                  Iterable<? extends PsiTypeParameter> typeParams, PsiClassType expectedType) {
     if (paramOwner instanceof PsiClass) {
       return GenericsUtil.getExpectedTypeArguments(context, (PsiClass)paramOwner, typeParams, expectedType);
     }

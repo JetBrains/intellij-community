@@ -2,100 +2,113 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
+import com.intellij.testGuiFramework.framework.param.GuiTestSuiteParam
+import com.intellij.testGuiFramework.impl.mavenReimport
+import com.intellij.testGuiFramework.impl.waitAMoment
 import com.intellij.testGuiFramework.util.*
+import com.intellij.testGuiFramework.util.scenarios.openProjectStructureAndCheck
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
+import org.fest.swing.timing.Pause
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
+import java.io.Serializable
 
-class CreateMavenProjectWithKotlinGuiTest : KotlinGuiTestCase() {
+@RunWith(GuiTestSuiteParam::class)
+class CreateMavenProjectWithKotlinGuiTest(private val testParameters: TestParameters) : KotlinGuiTestCase() {
+
+  enum class KotlinKind{Jvm, Js}
+
+  data class TestParameters(
+    val projectName: String,
+    val archetype: String,
+    val kotlinKind: KotlinKind,
+    val expectedFacet: FacetStructure) : Serializable {
+    override fun toString() = projectName
+  }
+
   @Test
-  @JvmName("maven_with_jvm")
-  fun createMavenWithKotlinJvm() {
-    val groupName = "group_maven_jvm"
+  fun createMavenWithKotlin() {
     val projectName = testMethod.methodName
     val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val kotlinKind = KotlinKind.JVM
-    val extraTimeOut = 4000L
     if (!isIdeFrameRun()) return
     createMavenProject(
       projectPath = projectFolder,
-      group = groupName,
       artifact = projectName,
-      kotlinVersion = kotlinVersion,
-      archetype = kotlinLibs[kotlinKind]!!.mavenProject.frameworkName)
-    waitAMoment(extraTimeOut)
+      archetype = testParameters.archetype,
+      kotlinVersion = kotlinVersion)
+    waitAMoment()
     mavenReimport()
     // TODO: remove extra mavenReimport after GUI-72 fixing
-    waitAMoment(extraTimeOut)
+    Pause.pause(5000)
+    waitAMoment()
     mavenReimport()
-    waitAMoment(extraTimeOut)
+    waitAMoment()
 
-    checkInProjectStructure {
-      checkLibrariesFromMavenGradle(
-        buildSystem = BuildSystem.Maven,
-        kotlinVersion = kotlinVersion,
-        // TODO: use default set after fix KT-21230
-        expectedJars = listOf(
+    val expectedFacet = when(testParameters.kotlinKind) {
+      KotlinKind.Js -> {
+        val expectedOutput = "$projectFolder/target/classes/${projectName}.js".replace("\\", "/")
+        defaultFacetSettings[TargetPlatform.JavaScript]!!.copy(
+          cmdParameters = "-output $expectedOutput",
+          jsOptions = testParameters.expectedFacet.jsOptions?.copy(
+            generateSourceMap = true
+          )
+        )
+      }
+      KotlinKind.Jvm -> testParameters.expectedFacet
+    }
+
+    val expectedJars = when(testParameters.kotlinKind) {
+      KotlinKind.Js -> kotlinProjects.getValue(Projects.MavenProjectJs).jars.getJars(kotlinVersion)
+      KotlinKind.Jvm ->  // TODO: use default set after fix KT-21230
+        listOf(
           "org.jetbrains.kotlin:kotlin-stdlib:",
           "org.jetbrains.kotlin:kotlin-test:",
           "org.jetbrains:annotations:13.0"
         )
+    }
+
+    projectStructureDialogScenarios.openProjectStructureAndCheck {
+      projectStructureDialogModel.checkLibrariesFromMavenGradle(
+        buildSystem = BuildSystem.Maven,
+        kotlinVersion = kotlinVersion,
+        expectedJars = expectedJars
       )
-      checkFacetInOneModule(
-        defaultFacetSettings[TargetPlatform.JVM16]!!,
-        projectName, "Kotlin"
+      projectStructureDialogModel.checkFacetInOneModule(
+        expectedFacet = expectedFacet,
+        path = *arrayOf(projectName, "Kotlin")
       )
     }
 
   }
 
-  @Test
-  @JvmName("maven_with_js")
-  fun createMavenWithKotlinJs() {
-    val groupName = "group_maven_js"
-    val projectName = testMethod.methodName
-    val kotlinVersion = KotlinTestProperties.kotlin_artifact_version
-    val kotlinKind = KotlinKind.JS
-    val extraTimeOut = 4000L
-    if (!isIdeFrameRun()) return
-    createMavenProject(
-      projectPath = projectFolder,
-      group = groupName,
-      artifact = projectName,
-      kotlinVersion = kotlinVersion,
-      archetype = kotlinLibs[kotlinKind]!!.mavenProject.frameworkName)
-    waitAMoment(extraTimeOut)
-    mavenReimport()
-    // TODO: remove extra mavenReimport after GUI-72 fixing
-    waitAMoment(extraTimeOut)
-    mavenReimport()
-    waitAMoment(extraTimeOut)
-
-    val expectedOutput = "$projectFolder/target/classes/${testMethod.methodName}.js".replace("\\", "/")
-    val expectedFacet = defaultFacetSettings[TargetPlatform.JavaScript]!!.copy(
-      cmdParameters = "-output $expectedOutput",
-      jsOptions = defaultFacetSettings[TargetPlatform.JavaScript]!!.jsOptions?.copy(
-        generateSourceMap = true
-      )
-    )
-
-    checkInProjectStructure {
-      checkLibrariesFromMavenGradle(
-        buildSystem = BuildSystem.Maven,
-        kotlinVersion = kotlinVersion,
-        expectedJars = kotlinLibs[kotlinKind]!!.mavenProject.jars.getJars()
-      )
-      checkFacetInOneModule(
-        expectedFacet,
-        projectName, "Kotlin"
+  companion object {
+    @JvmStatic
+    @Parameterized.Parameters(name = "{0}")
+    fun data(): Collection<TestParameters> {
+      return listOf(
+        TestParameters(
+          projectName = "maven_with_jvm",
+          archetype = kotlinProjects.getValue(Projects.MavenProjectJvm).frameworkName,
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JVM16),
+          kotlinKind = KotlinKind.Jvm
+        ),
+        TestParameters(
+          projectName = "maven_with_js",
+          archetype = kotlinProjects.getValue(Projects.MavenProjectJs).frameworkName,
+          expectedFacet = defaultFacetSettings.getValue(TargetPlatform.JavaScript),
+          kotlinKind = KotlinKind.Js
+        )
       )
     }
-
   }
 
   override fun isIdeFrameRun(): Boolean =
-    if (!KotlinTestProperties.isActualKotlinUsed() || (KotlinTestProperties.isArtifactPresentInConfigureDialog /*&& !KotlinTestProperties.isArtifactOnlyInDevRep*/)) true
+    if (KotlinTestProperties.isArtifactFinalRelease) true
     else {
-      logInfo(
-        "There is no maven archetype for the tested artifact ${KotlinTestProperties.kotlin_artifact_version}. This is not a bug, but the test '${testMethod.methodName}' is skipped (though marked as passed)")
+      logInfo("Maven archetype for the tested artifact ${KotlinTestProperties.kotlin_artifact_version} is absent."+
+                 " This is not a bug, but the test '${testMethod.methodName}' is skipped (though marked as passed)")
       false
     }
 }

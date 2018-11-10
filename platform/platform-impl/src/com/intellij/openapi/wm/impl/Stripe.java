@@ -185,7 +185,7 @@ final class Stripe extends JPanel implements UISettingsListener {
 
   private LayoutData recomputeBounds(boolean setBounds, Dimension toFitWith, boolean noDrop) {
     final LayoutData data = new LayoutData();
-    final int horizontaloffset = getHeight() - 2;
+    final int horizontaloffset = getHeight();
 
     data.eachY = 0;
     data.size = new Dimension();
@@ -286,7 +286,6 @@ final class Stripe extends JPanel implements UISettingsListener {
     if (!sidesStarted && processDrop) {
       tryDroppingOnGap(data, gap, -1);
     }
-
 
     if (isDroppingButton()) {
       final Dimension dragSize = myDragButton.getPreferredSize();
@@ -520,6 +519,7 @@ final class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
+  @Override
   public String toString() {
     String anchor = null;
     switch (myAnchor) {

@@ -131,7 +131,7 @@ interface PathEdit {
   fun apply(entry: DirCacheEntry, repository: Repository)
 }
 
-abstract class PathEditBase(override final val path: ByteArray) : PathEdit
+abstract class PathEditBase(final override val path: ByteArray) : PathEdit
 
 private fun encodePath(path: String): ByteArray {
   val bytes = Constants.CHARSET.encode(path).toByteArray()
@@ -184,15 +184,15 @@ class AddLoadedFile(path: String, private val content: ByteArray, private val si
   }
 }
 
-fun DeleteFile(path: String) = DeleteFile(encodePath(path))
+fun DeleteFile(path: String): DeleteFile = DeleteFile(encodePath(path))
 
 class DeleteFile(path: ByteArray) : PathEditBase(path) {
-  override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
+  override fun apply(entry: DirCacheEntry, repository: Repository): Nothing = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 
 class DeleteDirectory(entryPath: String) : PathEditBase(
     encodePath(if (entryPath.endsWith('/') || entryPath.isEmpty()) entryPath else "$entryPath/")) {
-  override fun apply(entry: DirCacheEntry, repository: Repository) = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
+  override fun apply(entry: DirCacheEntry, repository: Repository): Nothing = throw UnsupportedOperationException(JGitText.get().noApplyInDelete)
 }
 
 fun Repository.edit(edit: PathEdit) {

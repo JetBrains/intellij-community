@@ -1,10 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -33,16 +30,20 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(getProjectDescriptor());
     IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
 
-    myFixture.setUp();
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    TempDirTestFixture tempDirFixture = policy != null
+        ? policy.createTempDirTestFixture()
+        : new LightTempDirTestFixtureImpl(true);
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, tempDirFixture);
+
     myFixture.setTestDataPath(getTestDataPath());
+    myFixture.setUp();
 
     myModule = myFixture.getModule();
   }
 
   @Override
-  @SuppressWarnings("Duplicates")
   protected void tearDown() throws Exception {
     try {
       myFixture.tearDown();
@@ -72,7 +73,7 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     * @see #getBasePath()
     */
    protected String getTestDataPath() {
-     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : PathManager.getHomePath();
+     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : IdeaTestExecutionPolicy.getHomePathWithPolicy();
      return StringUtil.trimEnd(FileUtil.toSystemIndependentName(path), "/") + '/' +
             StringUtil.trimStart(FileUtil.toSystemIndependentName(getBasePath()), "/");
    }

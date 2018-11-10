@@ -26,7 +26,6 @@ import static org.junit.Assert.assertArrayEquals;
 
 /**
  * @author Denis Zhdanov
- * @since 09/16/2010
  */
 public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorTest {
 

@@ -18,6 +18,7 @@ package com.intellij.lang.pratt;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 
@@ -117,7 +118,7 @@ public class MutableMarker {
     myStartMarker.rollbackTo();
   }
 
-  public void error(final String message) {
+  public void error(@NotNull String message) {
     assert myMode == Mode.READY : myMode;
     myMode = Mode.ERROR;
     myStartMarker.error(message);

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.streams.trace.TraceElement
@@ -9,9 +9,9 @@ import com.intellij.debugger.streams.ui.ValueWithPosition
  */
 data class ValueWithPositionImpl(override val traceElement: TraceElement) : ValueWithPosition {
   companion object {
-    val INVALID_POSITION = Int.MIN_VALUE
-    val DEFAULT_VISIBLE_VALUE = false
-    val DEFAULT_HIGHLIGHTING_VALUE = false
+    const val INVALID_POSITION: Int = Int.MIN_VALUE
+    const val DEFAULT_VISIBLE_VALUE: Boolean = false
+    const val DEFAULT_HIGHLIGHTING_VALUE: Boolean = false
   }
 
   private var myPosition: Int = INVALID_POSITION
@@ -36,7 +36,7 @@ data class ValueWithPositionImpl(override val traceElement: TraceElement) : Valu
   fun updateToInvalid(): Boolean =
     updateProperties(INVALID_POSITION, DEFAULT_VISIBLE_VALUE, DEFAULT_HIGHLIGHTING_VALUE)
 
-  fun setInvalid() =
+  fun setInvalid(): Unit =
     setProperties(INVALID_POSITION, DEFAULT_VISIBLE_VALUE, DEFAULT_HIGHLIGHTING_VALUE)
 
   fun updateProperties(position: Int, isVisible: Boolean, isHighlighted: Boolean): Boolean {

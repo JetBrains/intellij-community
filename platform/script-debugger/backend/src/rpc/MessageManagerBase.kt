@@ -15,10 +15,10 @@
  */
 package org.jetbrains.rpc
 
-const val CONNECTION_CLOSED_MESSAGE = "Connection closed"
+const val CONNECTION_CLOSED_MESSAGE: String = "Connection closed"
 
 abstract class MessageManagerBase {
-  @Volatile protected var closed = false
+  @Volatile protected var closed: Boolean = false
 
   protected fun rejectIfClosed(callback: RequestCallback<*>): Boolean {
     if (closed) {

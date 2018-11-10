@@ -115,6 +115,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       private final PsiMethod mySuperMethod;
 
       ParameterEquivalenceChecker(@NotNull PsiMethod method, @NotNull PsiMethod superMethod) {
+        super(true);
         myMethod = method;
         mySuperMethod = superMethod;
       }

@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
@@ -60,16 +61,18 @@ public class DfaValueFactory {
 
 
   @NotNull
-  public Nullness suggestNullabilityForNonAnnotatedMember(@NotNull PsiModifierListOwner member) {
-    if (myUnknownMembersAreNullable && MEMBER_OR_METHOD_PARAMETER.accepts(member) && AnnotationUtil.getSuperAnnotationOwners(member).isEmpty()) {
-      return Nullness.NULLABLE;
+  public Nullability suggestNullabilityForNonAnnotatedMember(@NotNull PsiModifierListOwner member) {
+    if (myUnknownMembersAreNullable &&
+        MEMBER_OR_METHOD_PARAMETER.accepts(member) &&
+        AnnotationUtil.getSuperAnnotationOwners(member).isEmpty()) {
+      return Nullability.NULLABLE;
     }
-    
-    return Nullness.UNKNOWN;
+
+    return Nullability.UNKNOWN;
   }
 
   @NotNull
-  public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullness nullability) {
+  public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullability nullability) {
     if (type == null) return DfaUnknownValue.getInstance();
     if (type instanceof PsiPrimitiveType) {
       LongRangeSet range = LongRangeSet.fromType(type);
@@ -77,8 +80,16 @@ public class DfaValueFactory {
         return getFactFactory().createValue(DfaFactType.RANGE, range);
       }
     }
-    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.EMPTY.withInstanceofValue(createDfaType(type)))
-      .with(DfaFactType.CAN_BE_NULL, NullnessUtil.toBoolean(nullability));
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, createDfaType(type).asConstraint())
+      .with(DfaFactType.NULLABILITY, DfaNullability.fromNullability(nullability));
+    return getFactFactory().createValue(facts);
+  }
+
+  @NotNull
+  public DfaValue createExactTypeValue(@Nullable PsiType type) {
+    if (type == null) return DfaUnknownValue.getInstance();
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.exact(createDfaType(type)))
+      .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL);
     return getFactFactory().createValue(facts);
   }
 
@@ -124,7 +135,7 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaConstValue getInt(int value) {
-    return getConstFactory().createFromValue(value, PsiType.INT, null);
+    return getConstFactory().createFromValue(value, PsiType.INT);
   }
 
   @Nullable
@@ -157,7 +168,7 @@ public class DfaValueFactory {
     }
     if (dfaLeft instanceof DfaFactMapValue &&
         dfaRight == getConstFactory().getNull() &&
-        Boolean.FALSE.equals(((DfaFactMapValue)dfaLeft).get(DfaFactType.CAN_BE_NULL))) {
+        DfaNullability.isNotNull(((DfaFactMapValue)dfaLeft).getFacts())) {
       if (relationType == RelationType.EQ) {
         return getConstFactory().getFalse();
       }
@@ -259,17 +270,17 @@ public class DfaValueFactory {
   public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
 
   @NotNull
-  public DfaValue createCommonValue(@NotNull PsiExpression[] expressions) {
+  public DfaValue createCommonValue(@NotNull PsiExpression[] expressions, PsiType targetType) {
     DfaValue loopElement = null;
     for (PsiExpression expression : expressions) {
       DfaValue expressionValue = createValue(expression);
       if (expressionValue == null) {
-        expressionValue = createTypeValue(expression.getType(), NullnessUtil.getExpressionNullness(expression));
+        expressionValue = createTypeValue(expression.getType(), NullabilityUtil.getExpressionNullability(expression));
       }
-      loopElement = loopElement == null ? expressionValue : loopElement.union(expressionValue);
+      loopElement = loopElement == null ? expressionValue : loopElement.unite(expressionValue);
       if (loopElement == DfaUnknownValue.getInstance()) break;
     }
-    return loopElement == null ? DfaUnknownValue.getInstance() : loopElement;
+    return loopElement == null ? DfaUnknownValue.getInstance() : DfaUtil.boxUnbox(loopElement, targetType);
   }
 
   private static class ClassInitializationInfo {

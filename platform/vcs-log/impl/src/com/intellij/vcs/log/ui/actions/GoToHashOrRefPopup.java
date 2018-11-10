@@ -1,14 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -19,7 +16,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
-import com.intellij.util.textCompletion.ValuesCompletionProvider;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -35,33 +31,34 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class GoToHashOrRefPopup {
   private static final Logger LOG = Logger.getInstance(GoToHashOrRefPopup.class);
 
   @NotNull private final TextFieldWithProgress myTextField;
-  @NotNull private final Function<String, Future> myOnSelectedHash;
-  @NotNull private final Function<VcsRef, Future> myOnSelectedRef;
+  @NotNull private final Function<? super String, ? extends Future> myOnSelectedHash;
+  @NotNull private final Function<? super VcsRef, ? extends Future> myOnSelectedRef;
   @NotNull private final JBPopup myPopup;
   @Nullable private Future myFuture;
   @Nullable private VcsRef mySelectedRef;
 
   public GoToHashOrRefPopup(@NotNull Project project,
                             @NotNull VcsLogRefs variants,
-                            @NotNull Collection<VirtualFile> roots,
-                            @NotNull Function<String, Future> onSelectedHash,
-                            @NotNull Function<VcsRef, Future> onSelectedRef,
+                            @NotNull Collection<? extends VirtualFile> roots,
+                            @NotNull Function<? super String, ? extends Future> onSelectedHash,
+                            @NotNull Function<? super VcsRef, ? extends Future> onSelectedRef,
                             @NotNull VcsLogColorManager colorManager,
-                            @NotNull Comparator<VcsRef> comparator) {
+                            @NotNull Comparator<? super VcsRef> comparator) {
     myOnSelectedHash = onSelectedHash;
     myOnSelectedRef = onSelectedRef;
+    VcsRefDescriptor vcsRefDescriptor = new VcsRefDescriptor(project, colorManager, comparator, roots);
+    VcsRefCompletionProvider completionProvider = new VcsRefCompletionProvider(variants, roots, vcsRefDescriptor);
     myTextField =
-      new TextFieldWithProgress(project, new VcsRefCompletionProvider(project, variants, roots, colorManager, comparator)) {
+      new TextFieldWithProgress(project, completionProvider) {
         @Override
         public void onOk() {
           if (myFuture == null) {
@@ -87,6 +84,7 @@ public class GoToHashOrRefPopup {
         }
       };
     myTextField.setAlignmentX(Component.LEFT_ALIGNMENT);
+    myTextField.setBorder(JBUI.Borders.empty(3));
 
     JBLabel label = new JBLabel("Enter hash or branch/tag name:");
     label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
@@ -103,7 +101,7 @@ public class GoToHashOrRefPopup {
       .setCancelOnClickOutside(true).setCancelOnWindowDeactivation(true).setCancelKeyEnabled(true).setRequestFocus(true).createPopup();
     myPopup.addListener(new JBPopupListener() {
       @Override
-      public void onClosed(LightweightWindowEvent event) {
+      public void onClosed(@NotNull LightweightWindowEvent event) {
         if (!event.isOk()) {
           if (myFuture != null) {
             myFuture.cancel(true);
@@ -127,75 +125,16 @@ public class GoToHashOrRefPopup {
     myPopup.showInCenterOf(anchor);
   }
 
-  private class VcsRefCompletionProvider extends ValuesCompletionProvider<VcsRef> {
-    private static final int TIMEOUT = 100;
-    @NotNull private final VcsLogRefs myRefs;
-    @NotNull private final Collection<VirtualFile> myRoots;
-
-    public VcsRefCompletionProvider(@NotNull Project project,
-                                    @NotNull VcsLogRefs refs,
-                                    @NotNull Collection<VirtualFile> roots,
-                                    @NotNull VcsLogColorManager colorManager,
-                                    @NotNull Comparator<VcsRef> comparator) {
-      super(new VcsRefDescriptor(project, colorManager, comparator, roots), ContainerUtil.emptyList());
-      myRefs = refs;
-      myRoots = roots;
-    }
-
-    @Override
-    public void fillCompletionVariants(@NotNull CompletionParameters parameters,
-                                       @NotNull String prefix,
-                                       @NotNull CompletionResultSet result) {
-      addValues(result, filterAndSort(result, myRefs.getBranches().stream()));
-
-      Future<List<VcsRef>> future = ApplicationManager.getApplication()
-        .executeOnPooledThread(() -> filterAndSort(result, myRefs.stream().filter(ref -> !ref.getType().isBranch())));
-      while (true) {
-        try {
-          List<VcsRef> tags = future.get(TIMEOUT, TimeUnit.MILLISECONDS);
-          if (tags != null) {
-            addValues(result, tags);
-            break;
-          }
-        }
-        catch (InterruptedException | CancellationException e) {
-          break;
-        }
-        catch (TimeoutException ignored) {
-        }
-        catch (ExecutionException e) {
-          LOG.error(e);
-          break;
-        }
-        ProgressManager.checkCanceled();
-      }
-      result.stopHere();
-    }
-
-    public void addValues(@NotNull CompletionResultSet result, @NotNull Collection<? extends VcsRef> values) {
-      for (VcsRef completionVariant : values) {
-        result.addElement(installInsertHandler(myDescriptor.createLookupBuilder(completionVariant)));
-      }
-    }
-
-    @NotNull
-    private List<VcsRef> filterAndSort(@NotNull CompletionResultSet result, @NotNull Stream<VcsRef> stream) {
-      return ContainerUtil
-        .sorted(stream.filter(ref -> myRoots.contains(ref.getRoot()) && result.getPrefixMatcher().prefixMatches(ref.getName()))
-                  .collect(Collectors.toList()), myDescriptor);
-    }
-  }
-
   private class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
     @NotNull private final Project myProject;
     @NotNull private final VcsLogColorManager myColorManager;
-    @NotNull private final Comparator<VcsRef> myReferenceComparator;
+    @NotNull private final Comparator<? super VcsRef> myReferenceComparator;
     @NotNull private final Map<VirtualFile, String> myCachedRootNames = ContainerUtil.newHashMap();
 
     private VcsRefDescriptor(@NotNull Project project,
                              @NotNull VcsLogColorManager manager,
-                             @NotNull Comparator<VcsRef> comparator,
-                             @NotNull Collection<VirtualFile> roots) {
+                             @NotNull Comparator<? super VcsRef> comparator,
+                             @NotNull Collection<? extends VirtualFile> roots) {
       myProject = project;
       myColorManager = manager;
       myReferenceComparator = comparator;

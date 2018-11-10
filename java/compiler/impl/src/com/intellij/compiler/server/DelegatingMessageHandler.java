@@ -1,6 +1,7 @@
 package com.intellij.compiler.server;
 
 import io.netty.channel.Channel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 
 import java.util.UUID;
@@ -13,7 +14,7 @@ abstract class DelegatingMessageHandler implements BuilderMessageHandler {
   protected abstract BuilderMessageHandler getDelegateHandler();
 
   @Override
-  public void buildStarted(UUID sessionId) {
+  public void buildStarted(@NotNull UUID sessionId) {
     getDelegateHandler().buildStarted(sessionId);
   }
 
@@ -23,12 +24,12 @@ abstract class DelegatingMessageHandler implements BuilderMessageHandler {
   }
 
   @Override
-  public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+  public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
     getDelegateHandler().handleFailure(sessionId, failure);
   }
 
   @Override
-  public void sessionTerminated(UUID sessionId) {
+  public void sessionTerminated(@NotNull UUID sessionId) {
     getDelegateHandler().sessionTerminated(sessionId);
   }
 }

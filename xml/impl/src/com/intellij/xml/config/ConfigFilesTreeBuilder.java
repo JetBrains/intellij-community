@@ -142,7 +142,7 @@ public class ConfigFilesTreeBuilder {
     return nonEmptyGroups > 1;
   }
 
-  private void addChildrenFiles(@NotNull Set<PsiFile> psiFiles, DefaultMutableTreeNode parentNode, @NotNull List<PsiFile> moduleFiles) {
+  private void addChildrenFiles(@NotNull Set<? super PsiFile> psiFiles, DefaultMutableTreeNode parentNode, @NotNull List<? extends PsiFile> moduleFiles) {
     Collections.sort(moduleFiles, FILE_COMPARATOR);
     for (PsiFile file : moduleFiles) {
       final DefaultMutableTreeNode fileNode = createFileNode(file);

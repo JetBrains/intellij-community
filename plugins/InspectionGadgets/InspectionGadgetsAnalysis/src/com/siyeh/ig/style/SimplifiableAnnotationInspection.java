@@ -63,7 +63,7 @@ public class SimplifiableAnnotationInspection extends BaseInspection implements 
 
   private static class SimplifiableAnnotationFix extends InspectionGadgetsFix {
 
-    public SimplifiableAnnotationFix() {}
+    SimplifiableAnnotationFix() {}
 
     @Override
     @NotNull

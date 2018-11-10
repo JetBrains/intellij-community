@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.testGuiFramework.framework.param.GuiTestLocalRunnerParam
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
+import com.intellij.testGuiFramework.launcher.GuiTestOptions.RESUME_LABEL
 import com.intellij.testGuiFramework.remote.JUnitClientListener
 import com.intellij.testGuiFramework.remote.client.ClientHandler
 import com.intellij.testGuiFramework.remote.client.JUnitClient
@@ -28,6 +16,8 @@ import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.junit.runner.JUnitCore
 import org.junit.runner.Request
+import org.junit.runners.model.TestClass
+import org.junit.runners.parameterized.TestWithParameters
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 
@@ -41,7 +31,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
   private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.impl.GuiTestThread")
 
   companion object {
-    val GUI_TEST_THREAD_NAME = "GuiTest Thread"
+    const val GUI_TEST_THREAD_NAME: String = "GuiTest Thread"
     var client: JUnitClient? = null
   }
 
@@ -49,7 +39,7 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
     client = JUnitClientImpl(host(), port(), createInitHandlers())
     client!!.addHandler(createCloseHandler())
 
-    val myListener = JUnitClientListener({ jUnitInfo -> client!!.send(TransportMessage(MessageType.JUNIT_INFO, jUnitInfo)) })
+    val myListener = JUnitClientListener { jUnitInfo -> client!!.send(TransportMessage(MessageType.JUNIT_INFO, jUnitInfo)) }
     core.addListener(myListener)
 
     try {
@@ -80,8 +70,9 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
 
       override fun handle(message: TransportMessage) {
         val content = (message.content as JUnitTestContainer)
-        if (content.additionalInfo.isEmpty()) throw Exception("Cannot resume test without any additional info (label where to resume) in JUnitTestContainer")
-        System.setProperty(GuiTestOptions.RESUME_LABEL, content.additionalInfo)
+        if (!content.additionalInfo.containsKey(RESUME_LABEL)) throw Exception(
+          "Cannot resume test without any additional info (label where to resume) in JUnitTestContainer")
+        System.setProperty(GuiTestOptions.RESUME_LABEL, content.additionalInfo[RESUME_LABEL].toString())
         System.setProperty(GuiTestOptions.RESUME_TEST, "${content.testClass.canonicalName}#${content.testName}")
         LOG.info("Added test to testQueue: $content")
         testQueue.add(content)
@@ -110,8 +101,18 @@ class GuiTestThread : Thread(GUI_TEST_THREAD_NAME) {
   private fun port(): Int = System.getProperty(GuiTestStarter.GUI_TEST_PORT).toInt()
 
   private fun runTest(testContainer: JUnitTestContainer) {
-    val request = Request.method(testContainer.testClass, testContainer.testName)
-    core.run(request)
+    if (testContainer.additionalInfo["parameters"] == null) {
+      //todo: replace request with a runner
+      val request = Request.method(testContainer.testClass, testContainer.testName)
+      core.run(request)
+    } else {
+      val runner = GuiTestLocalRunnerParam(TestWithParameters(testContainer.testName, TestClass(testContainer.testClass), testContainer.additionalInfo["parameters"] as MutableList<*>))
+      core.run(runner)
+    }
+  }
+
+  private fun String.getParameterisedPart(): String {
+    return Regex("\\[(.)*]").find(this)?.value ?: ""
   }
 
 }

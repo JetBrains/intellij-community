@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReplaceConstructorWithBuilderHandler implements RefactoringActionHandler {
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement element = file.findElementAt(offset);
@@ -62,6 +63,7 @@ public class ReplaceConstructorWithBuilderHandler implements RefactoringActionHa
     return psiClass;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     throw new UnsupportedOperationException();
   }

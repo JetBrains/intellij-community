@@ -18,7 +18,6 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.*;
@@ -44,21 +43,15 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  */
 public class ReferenceExpressionCompletionContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor");
-  public static final ElementPattern<PsiElement> IN_SWITCH_LABEL =
-    psiElement().withSuperParent(2, psiElement(PsiSwitchLabelStatement.class).withSuperParent(2, PsiSwitchStatement.class));
 
-  @NotNull 
+  @NotNull
   static ElementFilter getReferenceFilter(PsiElement element, boolean allowRecursion) {
     //throw foo
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(element)) {
       return TrueFilter.INSTANCE;
     }
 
-    if (psiElement().inside(
-      StandardPatterns.or(
-        psiElement(PsiAnnotationParameterList.class),
-        psiElement(PsiSwitchLabelStatement.class))
-    ).accepts(element)) {
+    if (psiElement().inside(StandardPatterns.or(psiElement(PsiAnnotationParameterList.class), JavaCompletionContributor.IN_SWITCH_LABEL)).accepts(element)) {
       return new ElementExtractorFilter(new AndFilter(
           new ClassFilter(PsiField.class),
           new ModifierFilter(PsiKeyword.STATIC, PsiKeyword.FINAL)
@@ -91,7 +84,7 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   @Nullable 
-  public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<LookupElement> result) {
+  public static Runnable fillCompletionVariants(final JavaSmartCompletionParameters parameters, final Consumer<? super LookupElement> result) {
     final PsiElement element = parameters.getPosition();
     if (JavaSmartCompletionContributor.INSIDE_TYPECAST_EXPRESSION.accepts(element)) return null;
     if (JavaKeywordCompletion.isAfterPrimitiveOrArrayType(element)) return null;
@@ -176,7 +169,7 @@ public class ReferenceExpressionCompletionContributor {
 
   @NotNull 
   public static Set<PsiField> findConstantsUsedInSwitch(@Nullable PsiElement position) {
-    return IN_SWITCH_LABEL.accepts(position)
+    return JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)
            ? findConstantsUsedInSwitch(ObjectUtils.assertNotNull(PsiTreeUtil.getParentOfType(position, PsiSwitchStatement.class)))
            : Collections.emptySet();
   }
@@ -202,7 +195,7 @@ public class ReferenceExpressionCompletionContributor {
   }
 
   static PsiExpression createExpression(String text, PsiElement element) {
-    return JavaPsiFacade.getInstance(element.getProject()).getElementFactory().createExpressionFromText(text, element);
+    return JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(text, element);
   }
 
   static String getQualifierText(@Nullable final PsiElement qualifier) {

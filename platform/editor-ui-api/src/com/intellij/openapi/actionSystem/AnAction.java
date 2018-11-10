@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -118,7 +103,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param icon Action's icon
    */
-  public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon){
+  public AnAction(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     Presentation presentation = getTemplatePresentation();
     presentation.setText(text);
     presentation.setDescription(description);
@@ -211,21 +196,35 @@ public abstract class AnAction implements PossiblyDumbAware {
   }
 
   /**
+   * Override with true returned if your action displays text in a smaller font (same as toolbar combobox font) when placed in the toolbar
+   */
+  public boolean useSmallerFontForTextInToolbar() {
+    return false;
+  }
+
+  /**
    * Updates the state of the action. Default implementation does nothing.
    * Override this method to provide the ability to dynamically change action's
    * state and(or) presentation depending on the context (For example
    * when your action state depends on the selection you can check for
-   * selection and change the state accordingly).
-   * This method can be called frequently, for instance, if an action is added to a toolbar,
-   * it will be updated twice a second. This means that this method is supposed to work really fast,
+   * selection and change the state accordingly).<p></p>
+   *
+   * This method can be called frequently, and on UI thread.
+   * This means that this method is supposed to work really fast,
    * no real work should be done at this phase. For example, checking selection in a tree or a list,
-   * is considered valid, but working with a file system is not. If you cannot understand the state of
-   * the action fast you should do it in the {@link #actionPerformed(AnActionEvent)} method and notify
-   * the user that action cannot be executed if it's the case.
+   * is considered valid, but working with a file system or PSI (especially resolve) is not.
+   * If you cannot determine the state of the action fast enough,
+   * you should do it in the {@link #actionPerformed(AnActionEvent)} method and notify
+   * the user that action cannot be executed if it's the case.<p></p>
+   *
+   * If the action is added to a toolbar, its "update" can be called twice a second, but only if there was
+   * any user activity or a focus transfer. If your action's availability is changed
+   * in absence of any of these events, please call {@code ActivityTracker.getInstance().inc()} to notify
+   * action subsystem to update all toolbar actions when your subsystem's determines that its actions' visibility might be affected.
    *
    * @param e Carries information on the invocation place and data available
    */
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
   }
 
   /**
@@ -264,7 +263,7 @@ public abstract class AnAction implements PossiblyDumbAware {
    *
    * @param e Carries information on the invocation place
    */
-  public abstract void actionPerformed(AnActionEvent e);
+  public abstract void actionPerformed(@NotNull AnActionEvent e);
 
   protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
     if (myIsGlobal && myShortcutSet != shortcutSet) {

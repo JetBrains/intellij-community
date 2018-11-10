@@ -51,6 +51,7 @@ public class Maven2ServerIndexFetcher implements ResourceFetcher {
     myListener = listener;
   }
 
+  @Override
   public void connect(String _ignoredContextId, String _ignoredUrl) throws IOException {
     final ArtifactRepository mirrorRepository = myWagonManager.getMirrorRepository(
       new DefaultArtifactRepository(myOriginalRepositoryId, myOriginalRepositoryUrl, null));
@@ -78,6 +79,7 @@ public class Maven2ServerIndexFetcher implements ResourceFetcher {
     }
   }
 
+  @Override
   public void disconnect() throws RemoteException {
     if (myWagon == null) return;
 
@@ -89,6 +91,7 @@ public class Maven2ServerIndexFetcher implements ResourceFetcher {
     }
   }
 
+  @Override
   public void retrieve(String name, File targetFile) throws IOException {
     try {
       myWagon.get(name, targetFile);

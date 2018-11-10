@@ -6,24 +6,28 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final CallMatcher PREDICATE_TEST = CallMatcher.instanceCall(
+    CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "test").parameterTypes("T");
+  private static final CallMatcher MATCHER_FIND = CallMatcher.instanceCall("java.util.regex.Matcher", "find").parameterCount(0);
+  private static final CallMatcher MATCHER_MATCHES = CallMatcher.instanceCall("java.util.regex.Matcher", "matches").parameterCount(0);
+  private static final CallMatcher PATTERN_MATCHER = CallMatcher.instanceCall("java.util.regex.Pattern", "matcher").parameterCount(1);
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
+    boolean java11 = PsiUtil.isLanguageLevel11OrHigher(holder.getFile());
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression lambda) {
@@ -41,7 +45,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
         if (parameters.length == 1) {
           PsiParameter parameter = parameters[0];
           if (ExpressionUtils.isReferenceTo(expression, parameter)) {
-            processFunctionIdentity(lambda, (PsiClassType)type);
+            handleFunctionIdentity(lambda, (PsiClassType)type);
           }
           if (expression instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
@@ -51,10 +55,27 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
               handlePatternAsPredicate(lambda, parameter, call);
             }
           }
+          handlePatternNegate(lambda, parameter, expression);
         }
       }
 
-      private void processFunctionIdentity(PsiLambdaExpression lambda, PsiClassType type) {
+      private void handlePatternNegate(PsiLambdaExpression lambda, PsiParameter parameter, PsiExpression expression) {
+        if (!BoolUtils.isNegation(expression)) return;
+        PsiMethodCallExpression negated = ObjectUtils.tryCast(BoolUtils.getNegated(expression), PsiMethodCallExpression.class);
+        if (!PREDICATE_TEST.test(negated)) return;
+        if (!ExpressionUtils.isReferenceTo(negated.getArgumentList().getExpressions()[0], parameter)) return;
+
+        PsiExpression qualifier = negated.getMethodExpression().getQualifierExpression();
+        if (!ExpressionUtils.isSafelyRecomputableExpression(qualifier) || ExpressionUtils.isReferenceTo(qualifier, parameter)) return;
+
+        PsiType lambdaType = ExpectedTypeUtils.findExpectedType(lambda, false);
+        if (lambdaType == null || qualifier.getType() == null || !lambdaType.isAssignableFrom(qualifier.getType())) return;
+
+        registerProblem(lambda, "Pattern.negate()",
+                        ParenthesesUtils.getText(qualifier, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE) + ".negate()");
+      }
+
+      private void handleFunctionIdentity(PsiLambdaExpression lambda, PsiClassType type) {
         PsiClass aClass = type.resolve();
         if (aClass == null || !CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION.equals(aClass.getQualifiedName())) return;
         PsiType[] typeParameters = type.getParameters();
@@ -65,23 +86,16 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
       }
 
       private void handlePatternAsPredicate(PsiLambdaExpression lambda, PsiParameter parameter, PsiMethodCallExpression call) {
-        if (MethodCallUtils.isCallToMethod(call, "java.util.regex.Matcher", PsiType.BOOLEAN, "find")) {
-          PsiExpression matcher = call.getMethodExpression().getQualifierExpression();
-          if (matcher instanceof PsiMethodCallExpression) {
-            PsiMethodCallExpression matcherCall = (PsiMethodCallExpression)matcher;
-            if (MethodCallUtils.isCallToMethod(matcherCall, "java.util.regex.Pattern", null, "matcher",
-                                               new PsiType[]{null})) {
-              PsiExpression[] matcherArgs = matcherCall.getArgumentList().getExpressions();
-              if (matcherArgs.length == 1 && ExpressionUtils.isReferenceTo(matcherArgs[0], parameter)) {
-                PsiExpression pattern = matcherCall.getMethodExpression().getQualifierExpression();
-                if (pattern != null && LambdaCanBeMethodReferenceInspection.checkQualifier(pattern)) {
-                  registerProblem(lambda, "Pattern.asPredicate()",
-                                  ParenthesesUtils.getText(pattern, ParenthesesUtils.POSTFIX_PRECEDENCE) + ".asPredicate()");
-                }
-              }
-            }
-          }
-        }
+        if (!MATCHER_FIND.test(call) && (!java11 || !MATCHER_MATCHES.test(call))) return;
+        PsiMethodCallExpression matcherCall = MethodCallUtils.getQualifierMethodCall(call);
+        if (!PATTERN_MATCHER.test(matcherCall)) return;
+        PsiExpression matcherArg = matcherCall.getArgumentList().getExpressions()[0];
+        if (!ExpressionUtils.isReferenceTo(matcherArg, parameter)) return;
+        PsiExpression pattern = matcherCall.getMethodExpression().getQualifierExpression();
+        if (pattern == null || !LambdaCanBeMethodReferenceInspection.checkQualifier(pattern)) return;
+        String methodName = "find".equalsIgnoreCase(call.getMethodExpression().getReferenceName()) ? "asPredicate" : "asMatchPredicate";
+        registerProblem(lambda, "Pattern." + methodName + "()",
+                        ParenthesesUtils.getText(pattern, ParenthesesUtils.POSTFIX_PRECEDENCE) + "." + methodName + "()");
       }
 
       private void handlePredicateIsEqual(PsiLambdaExpression lambda, PsiParameter parameter, PsiMethodCallExpression call) {
@@ -115,7 +129,7 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
     private final String myDisplayReplacement;
     private final String myReplacement;
 
-    public ReplaceWithFunctionCallFix(String replacement, String displayReplacement) {
+    ReplaceWithFunctionCallFix(String replacement, String displayReplacement) {
       myReplacement = replacement;
       myDisplayReplacement = displayReplacement;
     }

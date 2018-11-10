@@ -57,8 +57,9 @@ public class JavaPackageAccessibilityStatementElementType extends JavaStubElemen
     return new PackageAccessibilityStatementElement(this);
   }
 
+  @NotNull
   @Override
-  public PsiPackageAccessibilityStatementStub createStub(LighterAST tree, LighterASTNode node, StubElement parentStub) {
+  public PsiPackageAccessibilityStatementStub createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement parentStub) {
     String refText = null;
     List<String> to = ContainerUtil.newSmartList();
 

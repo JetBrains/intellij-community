@@ -1,27 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -128,14 +112,7 @@ public class RenameDialog extends RefactoringDialog {
     super.dispose();
   }
 
-  @SuppressWarnings("deprecation")
   protected boolean isToSearchForTextOccurrencesForRename() {
-    return isToSearchForTextOccurencesForRename();
-  }
-
-  /** @deprecated use/override {@link #isToSearchForTextOccurrencesForRename()} instead (to be deleted in IDEA 2018) */
-  @SuppressWarnings({"SpellCheckingInspection", "DeprecatedIsStillUsed"})
-  protected boolean isToSearchForTextOccurencesForRename() {
     return RenamePsiElementProcessor.forElement(myPsiElement).isToSearchForTextOccurrences(myPsiElement);
   }
 
@@ -180,8 +157,7 @@ public class RenameDialog extends RefactoringDialog {
       result.add(initialName);
     }
     result.add(UsageViewUtil.getShortName(myPsiElement));
-    final NameSuggestionProvider[] providers = Extensions.getExtensions(NameSuggestionProvider.EP_NAME);
-    for(NameSuggestionProvider provider: providers) {
+    for(NameSuggestionProvider provider: NameSuggestionProvider.EP_NAME.getExtensionList()) {
       SuggestedNameInfo info = provider.getSuggestedNames(myPsiElement, myNameSuggestionContext, result);
       if (info != null) {
         mySuggestedNameInfo = info;
@@ -191,6 +167,7 @@ public class RenameDialog extends RefactoringDialog {
     return ArrayUtil.toStringArray(result);
   }
 
+  @NotNull
   public String getNewName() {
     return myNameSuggestionsField.getEnteredName().trim();
   }
@@ -274,7 +251,7 @@ public class RenameDialog extends RefactoringDialog {
       myCbSearchTextOccurrences.setVisible(false);
     }
 
-    for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+    for(AutomaticRenamerFactory factory: AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
       if (factory.isApplicable(myPsiElement) && factory.getOptionName() != null) {
         gbConstraints.gridwidth = myAutoRenamerFactories.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
         gbConstraints.gridx = myAutoRenamerFactories.size() % 2;
@@ -292,8 +269,8 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp(myHelpID);
+  protected String getHelpId() {
+    return myHelpID;
   }
 
   @Override

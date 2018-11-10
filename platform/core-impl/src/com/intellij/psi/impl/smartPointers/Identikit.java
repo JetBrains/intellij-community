@@ -17,11 +17,10 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.google.common.base.MoreObjects;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.AbstractFileViewProvider;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class Identikit {
+  private static final Logger LOG = Logger.getInstance(Identikit.class);
   private static final WeakInterner<ByType> ourPlainInterner = new WeakInterner<>();
   private static final WeakInterner<ByAnchor> ourAnchorInterner = new WeakInterner<>();
 
@@ -85,16 +85,17 @@ public abstract class Identikit {
     public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
       Language actualLanguage = myFileLanguage != Language.ANY ? myFileLanguage : file.getViewProvider().getBaseLanguage();
       PsiFile actualLanguagePsi = file.getViewProvider().getPsi(actualLanguage);
+      if (actualLanguagePsi == null) {
+        LOG.error("getPsi("+actualLanguage+")=null; file="+file+"; myLanguage="+myFileLanguage+"; baseLanguage="+file.getViewProvider().getBaseLanguage());
+        return null;
+      }
       return findInside(actualLanguagePsi, startOffset, endOffset);
     }
 
     public PsiElement findInside(@NotNull PsiElement element, int startOffset, int endOffset) {
       PsiElement anchor = AbstractFileViewProvider.findElementAt(element, startOffset); // finds child in this tree only, unlike PsiElement.findElementAt()
       if (anchor == null && startOffset == element.getTextLength()) {
-        PsiElement lastChild = element.getLastChild();
-        if (lastChild != null) {
-          anchor = PsiTreeUtil.getDeepestLast(lastChild);
-        }
+        anchor = PsiTreeUtil.getDeepestLast(element);
       }
       if (anchor == null) return null;
 
@@ -118,7 +119,7 @@ public abstract class Identikit {
       if (range.getStartOffset() != startOffset) return null;
       while (range.getEndOffset() < endOffset) {
         anchor = anchor.getParent();
-        if (anchor == null || anchor.getTextRange() == null) {
+        if (anchor == null || anchor instanceof PsiDirectory) {
           return null;
         }
         range = anchor.getTextRange();
@@ -129,7 +130,7 @@ public abstract class Identikit {
           return anchor;
         }
         anchor = anchor.getParent();
-        if (anchor == null || anchor.getTextRange() == null) break;
+        if (anchor == null || anchor instanceof PsiDirectory) break;
         range = anchor.getTextRange();
       }
 

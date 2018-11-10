@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.idea.Bombed
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.SimpleLocalLineStatusTracker
@@ -10,38 +11,7 @@ import java.util.*
 class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
   private val FILE_1 = "file1.txt"
   private val FILE_2 = "file2.txt"
-
-  fun `test mock changes`() {
-    setBaseVersion(FILE_1, "oldText")
-    refreshCLM()
-    assertEquals(1, clm.allChanges.size)
-    assertEquals(Change.Type.DELETED, clm.allChanges.first().type)
-
-    addLocalFile(FILE_1, "text")
-    setBaseVersion(FILE_1, null)
-    refreshCLM()
-    assertEquals(1, clm.allChanges.size)
-    assertEquals(Change.Type.NEW, clm.allChanges.first().type)
-
-    setBaseVersion(FILE_1, "oldText")
-    refreshCLM()
-    assertEquals(1, clm.allChanges.size)
-    assertEquals(Change.Type.MODIFICATION, clm.allChanges.first().type)
-
-    removeLocalFile(FILE_1)
-    refreshCLM()
-    assertEquals(1, clm.allChanges.size)
-    assertEquals(Change.Type.DELETED, clm.allChanges.first().type)
-
-    removeBaseVersion(FILE_1)
-    refreshCLM()
-    assertEquals(0, clm.allChanges.size)
-
-    setBaseVersion(FILE_1, "oldText")
-    setBaseVersion(FILE_2, "oldText")
-    refreshCLM()
-    assertEquals(2, clm.allChanges.size)
-  }
+  private val FILE_3 = "file3.txt"
 
   fun `test partial tracker lifecycle - editor for unchanged file`() {
     createChangelist("Test")
@@ -122,7 +92,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       val ranges = tracker.getRanges()!!
       assertEquals(2, ranges.size)
       tracker.moveToChangelist(ranges[0], "Test".asListNameToList())
-      tracker.assertAffectedChangeLists("Default", "Test")
+      tracker.assertAffectedChangeLists(DEFAULT, "Test")
     }
     assertNotNull(file.tracker)
 
@@ -170,8 +140,71 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
       lstm.waitUntilBaseContentsLoaded()
 
-      tracker.assertAffectedChangeLists("Test", "Default")
+      tracker.assertAffectedChangeLists("Test", DEFAULT)
     }
+  }
+
+  fun `test tracker from non-default changelist - closed file modified during initialisation, edit unchanged line`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d1_e")
+    refreshCLM()
+
+    file.moveAllChangesTo("Test")
+    clm.waitUntilRefreshed()
+    assertNull(file.tracker)
+
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    lstm.waitUntilBaseContentsLoaded()
+
+    val tracker = file.tracker as PartialLocalLineStatusTracker
+    val ranges = tracker.getRanges()!!
+    assertEquals(2, ranges.size)
+    ranges[0].assertChangeList(DEFAULT)
+    ranges[1].assertChangeList("Test")
+  }
+
+  @Bombed(year = 2019, month = Calendar.MAY, day = 1, user = "Aleksey.Pivovarov")
+  fun `test tracker from non-default changelist - closed file modified during initialisation, edit line from non-active list`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a1_b_c_d_e")
+    refreshCLM()
+
+    file.moveAllChangesTo("Test")
+    clm.waitUntilRefreshed()
+    assertNull(file.tracker)
+
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    lstm.waitUntilBaseContentsLoaded()
+
+    file.assertAffectedChangeLists("Test")
+  }
+
+  @Bombed(year = 2019, month = Calendar.MAY, day = 1, user = "Aleksey.Pivovarov")
+  fun `test tracker from non-default changelist - closed file modified during initialisation, edit unchanged line and line from non-active list`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a1_b_c_d_e1")
+    setBaseVersion(FILE_1, "a_b_c_d_e")
+    refreshCLM()
+
+    file.moveAllChangesTo("Test")
+    clm.waitUntilRefreshed()
+    assertNull(file.tracker)
+
+    runCommand { file.document.replaceString(1, 2, "2") }
+    runCommand { file.document.replaceString(5, 6, "c1") }
+    lstm.waitUntilBaseContentsLoaded()
+
+    val tracker = file.tracker as PartialLocalLineStatusTracker
+    val ranges = tracker.getRanges()!!
+    assertEquals(3, ranges.size)
+    ranges[0].assertChangeList("Test")
+    ranges[1].assertChangeList(DEFAULT)
+    ranges[2].assertChangeList("Test")
   }
 
   fun `test tracker changes moves`() {
@@ -197,12 +230,57 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       tracker.moveToChangelist(tracker.getRanges()!![0], "Test #2".asListNameToList())
       tracker.assertAffectedChangeLists("Test #1", "Test #2")
 
-      file.moveChanges("Test #2", "Default")
-      tracker.assertAffectedChangeLists("Test #1", "Default")
+      file.moveChanges("Test #2", DEFAULT)
+      tracker.assertAffectedChangeLists("Test #1", DEFAULT)
 
       file.moveAllChangesTo("Test #2")
       tracker.assertAffectedChangeLists("Test #2")
     }
+  }
+
+  fun `test tracker when file is moved on top of another file`() {
+    createChangelist("Test #1")
+    createChangelist("Test #2")
+
+    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
+    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a1_b_c_d_e1")
+    setBaseVersion(FILE_2, "a1_b_c_d_e1")
+    refreshCLM()
+
+
+    file1.withOpenedEditor {
+      val tracker = file1.tracker as PartialLocalLineStatusTracker
+      lstm.waitUntilBaseContentsLoaded()
+
+      val ranges = tracker.getRanges()!!
+      tracker.moveToChangelist(ranges[0], "Test #2".asListNameToList())
+    }
+
+    file2.withOpenedEditor {
+      val tracker = file2.tracker as PartialLocalLineStatusTracker
+      lstm.waitUntilBaseContentsLoaded()
+
+      val ranges = tracker.getRanges()!!
+      tracker.moveToChangelist(ranges[1], "Test #2".asListNameToList())
+    }
+
+    releaseUnneededTrackers()
+    assertNotNull(file1.tracker)
+    assertNotNull(file2.tracker)
+
+    runWriteAction {
+      file1.delete(this)
+      file2.rename(this, file1.name)
+    }
+    assertNull(file1.tracker)
+
+    refreshCLM()
+    lstm.waitUntilBaseContentsLoaded()
+
+    file2.moveAllChangesTo("Test #1")
+    releaseUnneededTrackers()
+    assertNull(file2.tracker)
   }
 
   fun `test tracker changes moves - empty tracker`() {
@@ -228,7 +306,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       tracker.assertAffectedChangeLists("Test #2")
 
       runCommand { tracker.document.replaceString(0, 1, "a2") }
-      tracker.assertAffectedChangeLists("Default")
+      tracker.assertAffectedChangeLists(DEFAULT)
     }
   }
 
@@ -246,7 +324,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       tracker.assertAffectedChangeLists("Test")
 
       runCommand { tracker.document.replaceString(0, 1, "a2") }
-      tracker.assertAffectedChangeLists("Default", "Test")
+      tracker.assertAffectedChangeLists(DEFAULT, "Test")
 
       runCommand { tracker.document.replaceString(0, 2, "a") }
       tracker.assertAffectedChangeLists("Test")
@@ -274,14 +352,14 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       tracker.assertAffectedChangeLists("Test")
 
       runCommand { tracker.document.replaceString(0, 1, "a2") }
-      tracker.assertAffectedChangeLists("Default", "Test")
+      tracker.assertAffectedChangeLists(DEFAULT, "Test")
 
       assertFalse(tracker.isOperational())
       assertNull(tracker.getRanges())
 
       lstm.waitUntilBaseContentsLoaded()
       assertEquals(2, tracker.getRanges()!!.size)
-      tracker.assertAffectedChangeLists("Default", "Test")
+      tracker.assertAffectedChangeLists(DEFAULT, "Test")
     }
   }
 
@@ -299,14 +377,14 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       tracker.assertAffectedChangeLists("Test")
 
       runCommand { tracker.document.replaceString(0, 1, "a2") }
-      tracker.assertAffectedChangeLists("Default", "Test")
+      tracker.assertAffectedChangeLists(DEFAULT, "Test")
 
       assertFalse(tracker.isOperational())
       assertNull(tracker.getRanges())
 
       lstm.waitUntilBaseContentsLoaded()
       assertEquals(1, tracker.getRanges()!!.size)
-      tracker.assertAffectedChangeLists("Default")
+      tracker.assertAffectedChangeLists(DEFAULT)
     }
   }
 
@@ -324,14 +402,14 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       tracker.assertAffectedChangeLists("Test")
 
       runCommand { tracker.document.replaceString(0, 2, "a") }
-      tracker.assertAffectedChangeLists("Default", "Test")
+      tracker.assertAffectedChangeLists(DEFAULT, "Test")
 
       assertFalse(tracker.isOperational())
       assertNull(tracker.getRanges())
 
       lstm.waitUntilBaseContentsLoaded()
       assertEquals(0, tracker.getRanges()!!.size)
-      tracker.assertAffectedChangeLists("Default")
+      tracker.assertAffectedChangeLists(DEFAULT)
     }
   }
 
@@ -418,7 +496,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
     runCommand { file.document.replaceString(0, 1, "a2") }
     val tracker = file.tracker as PartialLocalLineStatusTracker
-    tracker.assertAffectedChangeLists("Default", "Test")
+    tracker.assertAffectedChangeLists(DEFAULT, "Test")
 
     setBaseVersion(FILE_1, "a2_b_c_d_e")
     refreshCLM()
@@ -443,7 +521,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     lstm.waitUntilBaseContentsLoaded()
 
     val tracker = file.tracker as PartialLocalLineStatusTracker
-    tracker.assertAffectedChangeLists("Default", "Test")
+    tracker.assertAffectedChangeLists(DEFAULT, "Test")
 
     setBaseVersion(FILE_1, "a2_b_c_d_e")
     refreshCLM()
@@ -499,6 +577,64 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     }
   }
 
+  fun `test vcs refresh - duplicated copies`() {
+    createChangelist("Test")
+
+    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2", FILE_3)
+    refreshCLM()
+    file1.moveAllChangesTo("Test")
+
+    assertEquals(1, clm.allChanges.size)
+    assertEquals(Change.Type.MOVED, clm.getChange(FILE_1.toFilePath)?.type)
+    file1.assertAffectedChangeLists("Test")
+
+    // FILE_2 is moved to "Test", because 'guessChangeListByPaths' finds FILE_3 (for FILE_1 change) is in this changelist.
+    // Probably, we should detect such cases and leave change in default changelist
+    // see `test vcs refresh - duplicated copies with tracker`
+    val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
+    setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_3)
+    refreshCLM()
+
+    assertEquals(2, clm.allChanges.size)
+    assertEquals(Change.Type.NEW, clm.getChange(FILE_1.toFilePath)?.type)
+    assertEquals(Change.Type.MOVED, clm.getChange(FILE_2.toFilePath)?.type)
+    file1.assertAffectedChangeLists("Test")
+    file2.assertAffectedChangeLists("Test")
+  }
+
+  fun `test vcs refresh - duplicated copies with tracker`() {
+    createChangelist("Test")
+
+    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2", FILE_3)
+    refreshCLM()
+    file1.moveAllChangesTo("Test")
+    file1.assertAffectedChangeLists("Test")
+
+    assertEquals(1, clm.allChanges.size)
+    assertEquals(Change.Type.MOVED, clm.getChange(FILE_1.toFilePath)?.type)
+
+    file1.withOpenedEditor {
+      // FILE_2 is NOT moved to "Test", because FILE_1 has an assigned tracker and is not used for 'guessChangeListByPaths' detection
+      // (see `test vcs refresh - duplicated copies`)
+      val file2 = addLocalFile(FILE_2, "a_b_c_d_e")
+      setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_3)
+      refreshCLM()
+
+      assertEquals(2, clm.allChanges.size)
+      assertEquals(Change.Type.NEW, clm.getChange(FILE_1.toFilePath)?.type)
+      assertEquals(Change.Type.MOVED, clm.getChange(FILE_2.toFilePath)?.type)
+      file1.assertAffectedChangeLists("Test")
+      file2.assertAffectedChangeLists(DEFAULT)
+    }
+
+    releaseUnneededTrackers()
+    FILE_1.toFilePath.assertAffectedChangeLists("Test")
+    FILE_2.toFilePath.assertAffectedChangeLists(DEFAULT)
+  }
+
+
   fun `test vcs refresh - tracker released during update (editor closed)`() {
     createChangelist("Test")
 
@@ -543,7 +679,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
     assertNotNull(file.tracker)
     assertTrue(file.tracker is PartialLocalLineStatusTracker)
-    file.assertAffectedChangeLists("Test", "Default")
+    file.assertAffectedChangeLists("Test", DEFAULT)
 
     setBaseVersion(FILE_1, "a_b_c_d_e3")
     changeProvider.awaitAndBlockRefresh().use {
@@ -579,12 +715,12 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
 
       assertNotNull(file.tracker)
       assertTrue(file.tracker is PartialLocalLineStatusTracker)
-      file.assertAffectedChangeLists("Test", "Default")
+      file.assertAffectedChangeLists("Test", DEFAULT)
     }
 
     clm.waitUntilRefreshed()
 
-    file.assertAffectedChangeLists("Test", "Default")
+    file.assertAffectedChangeLists("Test", DEFAULT)
   }
 
   fun `test vcs refresh - tracker created during update (changes moved via LST)`() {
@@ -602,11 +738,11 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       lstm.waitUntilBaseContentsLoaded()
 
       val tracker = file.tracker as PartialLocalLineStatusTracker
-      file.assertAffectedChangeLists("Test", "Default")
+      file.assertAffectedChangeLists("Test", DEFAULT)
 
       val range = tracker.getRanges()!![1]
-      tracker.moveToChangelist(range, "Default".asListNameToList())
-      file.assertAffectedChangeLists("Default")
+      tracker.moveToChangelist(range, DEFAULT.asListNameToList())
+      file.assertAffectedChangeLists(DEFAULT)
       assertNotNull(file.tracker)
     }
     assertNotNull(file.tracker)
@@ -616,7 +752,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     releaseUnneededTrackers()
 
     assertNull(file.tracker)
-    file.assertAffectedChangeLists("Default")
+    file.assertAffectedChangeLists(DEFAULT)
   }
 
   fun `test vcs refresh - tracker created during update (changes moved via CLM)`() {
@@ -635,7 +771,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       lstm.waitUntilBaseContentsLoaded()
 
       val tracker = file.tracker as PartialLocalLineStatusTracker
-      file.assertAffectedChangeLists("Test", "Default")
+      file.assertAffectedChangeLists("Test", DEFAULT)
 
       val range = tracker.getRanges()!![1]
       file.moveAllChangesTo("Test 2")
@@ -652,7 +788,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test 2")
   }
 
-  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
   fun `test vcs refresh - tracker created and released during update (changes moved via LST)`() {
     createChangelist("Test")
 
@@ -668,11 +804,11 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       lstm.waitUntilBaseContentsLoaded()
 
       val tracker = file.tracker as PartialLocalLineStatusTracker
-      file.assertAffectedChangeLists("Test", "Default")
+      file.assertAffectedChangeLists("Test", DEFAULT)
 
       val range = tracker.getRanges()!![1]
-      tracker.moveToChangelist(range, "Default".asListNameToList())
-      file.assertAffectedChangeLists("Default")
+      tracker.moveToChangelist(range, DEFAULT.asListNameToList())
+      file.assertAffectedChangeLists(DEFAULT)
 
       releaseUnneededTrackers()
       assertNull(file.tracker)
@@ -684,7 +820,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     releaseUnneededTrackers()
 
     assertNull(file.tracker)
-    file.assertAffectedChangeLists("Default")
+    file.assertAffectedChangeLists(DEFAULT)
   }
 
   fun `test vcs refresh - tracker created and released during update (changes moved via CLM)`() {
@@ -703,7 +839,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       lstm.waitUntilBaseContentsLoaded()
 
       val tracker = file.tracker as PartialLocalLineStatusTracker
-      file.assertAffectedChangeLists("Test", "Default")
+      file.assertAffectedChangeLists("Test", DEFAULT)
 
       val range = tracker.getRanges()!![1]
       file.moveAllChangesTo("Test 2")
@@ -737,7 +873,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
       lstm.waitUntilBaseContentsLoaded()
 
       val tracker = file.tracker as PartialLocalLineStatusTracker
-      file.assertAffectedChangeLists("Test", "Default")
+      file.assertAffectedChangeLists("Test", DEFAULT)
 
       val range = tracker.getRanges()!![0]
       tracker.moveToChangelist(range, "Test".asListNameToList())
@@ -753,7 +889,7 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     file.assertAffectedChangeLists("Test")
   }
 
-  @Bombed(year = 2018, month = Calendar.JUNE, day = 1, user = "Aleksey.Pivovarov")
+  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
   fun `test vcs refresh - tracker created and released during update  (changes moved via LST, no partial changes)`() {
     createChangelist("Test")
 
@@ -772,8 +908,8 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
         file.assertAffectedChangeLists("Test")
 
         val range = tracker.getRanges()!![0]
-        tracker.moveToChangelist(range, "Default".asListNameToList())
-        file.assertAffectedChangeLists("Default")
+        tracker.moveToChangelist(range, DEFAULT.asListNameToList())
+        file.assertAffectedChangeLists(DEFAULT)
       }
     }
     assertNull(file.tracker)
@@ -783,6 +919,156 @@ class LineStatusTrackerManagerTest : BaseLineStatusTrackerManagerTest() {
     releaseUnneededTrackers()
 
     assertNull(file.tracker)
-    file.assertAffectedChangeLists("Default")
+    file.assertAffectedChangeLists(DEFAULT)
+  }
+
+  fun `test file rename - no partial changes`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    file.assertAffectedChangeLists("Test")
+
+    runWriteAction {
+      file.rename(this, FILE_2)
+    }
+    setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_1)
+    refreshCLM()
+    file.assertAffectedChangeLists("Test")
+  }
+
+  fun `test file rename - with partial changes`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    lstm.waitUntilBaseContentsLoaded()
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    runWriteAction {
+      file.rename(this, FILE_2)
+    }
+    removeBaseVersion(FILE_1)
+    setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_1)
+    refreshCLM()
+    FILE_2.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+  }
+
+  fun `test file rename - with partial changes, while tracker not initialized`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    runWriteAction {
+      file.rename(this, FILE_2)
+    }
+    removeBaseVersion(FILE_1)
+    setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_1)
+    refreshCLM()
+
+    // It might be better to return ("Test", DEFAULT) here, but the case is tricky
+    FILE_2.toFilePath.assertAffectedChangeLists(DEFAULT)
+  }
+
+  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Aleksey.Pivovarov")
+  fun `test file rename - with partial changes, try release tracker during CLM refresh`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b_c_d_e2")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    runCommand { file.document.replaceString(0, 1, "a2") }
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    lstm.waitUntilBaseContentsLoaded()
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    runWriteAction {
+      file.rename(this, FILE_2)
+    }
+    removeBaseVersion(FILE_1)
+    setBaseVersion(FILE_2, "a_b_c_d_e2", FILE_1)
+
+    changeProvider.awaitAndBlockRefresh().use {
+      file.withOpenedEditor {
+        lstm.waitUntilBaseContentsLoaded()
+        releaseUnneededTrackers()
+
+        FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+      }
+    }
+
+    clm.waitUntilRefreshed()
+    lstm.waitUntilBaseContentsLoaded()
+    releaseUnneededTrackers()
+
+    FILE_2.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+  }
+
+  fun `test shelve-unshelve 1`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a1_b_c_d_e_f1")
+    setBaseVersion(FILE_1, "a_b_c_d_e_f")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    runCommand { file.document.replaceString(7, 8, "d2") }
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+
+      lstm.waitUntilBaseContentsLoaded()
+      FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+      val list = clm.findChangeList(DEFAULT)!!
+      val shelvedList = shelveManager.shelveChanges(list.changes, "X", true)
+      tracker.assertTextContentIs("a1_b_c_d_e_f1")
+      FILE_1.toFilePath.assertAffectedChangeLists("Test")
+
+      shelveManager.unshelveChangeList(shelvedList, null, null, list, false)
+      tracker.assertTextContentIs("a1_b_c_d2_e_f1")
+      FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+    }
+  }
+
+  fun `test shelve-unshelve 2`() {
+    createChangelist("Test")
+
+    val file = addLocalFile(FILE_1, "a1_b_c_d_e_f1")
+    setBaseVersion(FILE_1, "a_b_c_d_e_f")
+    refreshCLM()
+    file.moveAllChangesTo("Test")
+    runCommand { file.document.replaceString(7, 8, "d2") }
+    FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+
+      lstm.waitUntilBaseContentsLoaded()
+      FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+
+      val list = clm.findChangeList("Test")!!
+      val shelvedList = shelveManager.shelveChanges(list.changes, "X", true)
+      tracker.assertTextContentIs("a_b_c_d2_e_f")
+      FILE_1.toFilePath.assertAffectedChangeLists(DEFAULT)
+
+      shelveManager.unshelveChangeList(shelvedList, null, null, list, false)
+      tracker.assertTextContentIs("a1_b_c_d2_e_f1")
+      FILE_1.toFilePath.assertAffectedChangeLists("Test", DEFAULT)
+    }
   }
 }

@@ -134,6 +134,7 @@ public final class Entries {
 
   private static final class EntriesComparator implements Comparator<Entry> {
 
+    @Override
     public int compare(Entry entry1, Entry entry2) {
       if (entry1.isDirectory() != entry2.isDirectory()) {
         if (entry1.isDirectory()) {

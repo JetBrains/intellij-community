@@ -71,10 +71,12 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
 
   private void initFileList() {
     myFileList.setModel(new AbstractListModel<VirtualFile>() {
+      @Override
       public int getSize() {
         return myFiles.length;
       }
 
+      @Override
       public VirtualFile getElementAt(final int index) {
         return myFiles[index].getFile();
       }
@@ -179,7 +181,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
   }
 
   @NotNull
-  public static String getTheseFilesMessage(Collection<VirtualFile> files) {
+  public static String getTheseFilesMessage(Collection<? extends VirtualFile> files) {
     boolean dirsOnly = true;
     for (VirtualFile each : files) {
       if (!each.isDirectory()) {

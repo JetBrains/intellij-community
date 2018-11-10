@@ -172,13 +172,8 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
     File patternFile = new File(patternName);
 
     if (!patternFile.exists()) {
-      PrintWriter writer = new PrintWriter(new FileOutputStream(patternFile));
-      try {
+      try (PrintWriter writer = new PrintWriter(new FileOutputStream(patternFile))) {
         writer.print(report);
-        writer.close();
-      }
-      finally {
-        writer.close();
       }
 
       System.out.println("Pattern not found, file " + patternName + " created.");
@@ -188,13 +183,8 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
 
     File graFile = new File(FileUtil.getTempDirectory() + File.separator + rootDir + File.separator + itemName);
 
-    PrintWriter writer = new PrintWriter(new FileOutputStream(graFile));
-    try {
+    try (PrintWriter writer = new PrintWriter(new FileOutputStream(graFile))) {
       writer.print(report);
-      writer.close();
-    }
-    finally {
-      writer.close();
     }
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(graFile);
@@ -215,7 +205,7 @@ public abstract class TypeMigrationTestBase extends MultiFileTestCase {
   }
 
   private static class TestTypeMigrationProcessor extends TypeMigrationProcessor {
-    public TestTypeMigrationProcessor(final Project project, final PsiElement[] roots, final PsiType migrationType, final TypeMigrationRules rules) {
+    TestTypeMigrationProcessor(final Project project, final PsiElement[] roots, final PsiType migrationType, final TypeMigrationRules rules) {
       super(project, roots, Functions.constant(migrationType), rules, true);
     }
   }

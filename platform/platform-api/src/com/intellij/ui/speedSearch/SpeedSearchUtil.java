@@ -47,7 +47,7 @@ public final class SpeedSearchUtil {
     Iterable<TextRange> ranges = speedSearch == null ? null : speedSearch.matchingFragments(coloredComponent.getCharSequence(mainTextOnly).toString());
     Iterator<TextRange> rangesIterator = ranges != null ? ranges.iterator() : null;
     if (rangesIterator == null || !rangesIterator.hasNext()) return;
-    Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+    Color bg = UIUtil.getTreeBackground(selected, true);
 
     SimpleColoredComponent.ColoredIterator coloredIterator = coloredComponent.iterator();
     TextRange range = rangesIterator.next();
@@ -90,7 +90,7 @@ public final class SpeedSearchUtil {
       final Iterable<TextRange> fragments = speedSearch.matchingFragments(text);
       if (fragments != null) {
         final Color fg = attributes.getFgColor();
-        final Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        Color bg = UIUtil.getTreeBackground(selected, true);
         final int style = attributes.getStyle();
         final SimpleTextAttributes plain = new SimpleTextAttributes(style, fg);
         final SimpleTextAttributes highlighted = new SimpleTextAttributes(bg, fg, null, style | SimpleTextAttributes.STYLE_SEARCH_MATCH);
@@ -127,7 +127,7 @@ public final class SpeedSearchUtil {
 
   public static void appendColoredFragments(final SimpleColoredComponent simpleColoredComponent,
                                             final String text,
-                                            Iterable<TextRange> colored,
+                                            Iterable<? extends TextRange> colored,
                                             final SimpleTextAttributes plain, final SimpleTextAttributes highlighted) {
     final List<Pair<String, Integer>> searchTerms = new ArrayList<>();
     for (TextRange fragment : colored) {

@@ -58,14 +58,17 @@ public class ActiveIcon implements Icon {
     myActive = active;
   }
 
+  @Override
   public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
     getIcon().paintIcon(c, g, x, y);
   }
 
+  @Override
   public int getIconWidth() {
     return getIcon().getIconWidth();
   }
 
+  @Override
   public int getIconHeight() {
     return getIcon().getIconHeight();
   }

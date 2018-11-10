@@ -125,14 +125,14 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (myEditor.isDisposed()) return null;
 
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       // enable copying from editor in renderer mode
       return myEditor.getCopyProvider();
     }
-    
+
     if (myEditor.isRendererMode()) return null;
 
     if (CommonDataKeys.EDITOR.is(dataId)) {
@@ -188,7 +188,6 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
           myEditor.replaceInputMethodText(e);
           // No breaks over here.
 
-          //noinspection fallthrough
         case InputMethodEvent.CARET_POSITION_CHANGED:
           myEditor.inputMethodCaretPositionChanged(e);
           e.consume();
@@ -219,25 +218,20 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public void paintComponent(Graphics g) {
-    myApplication.editorPaintStart();
+    myEditor.measureTypingLatency();
 
-    try {
-      Graphics2D gg = (Graphics2D)g;
-      UIUtil.setupComposite(gg);
-      if (myEditor.useEditorAntialiasing()) {
-        EditorUIUtil.setupAntialiasing(gg);
-      }
-      else {
-        UISettings.setupAntialiasing(gg);
-      }
-      gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
-      AffineTransform origTx = PaintUtil.alignTxToInt(gg, true, false, RoundingMode.CEIL);
-      myEditor.paint(gg);
-      if (origTx != null) gg.setTransform(origTx);
+    Graphics2D gg = (Graphics2D)g;
+    UIUtil.setupComposite(gg);
+    if (myEditor.useEditorAntialiasing()) {
+      EditorUIUtil.setupAntialiasing(gg);
     }
-    finally {
-      myApplication.editorPaintFinish();
+    else {
+      UISettings.setupAntialiasing(gg);
     }
+    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
+    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
+    myEditor.paint(gg);
+    if (origTx != null) gg.setTransform(origTx);
   }
 
   public void repaintEditorComponent() {
@@ -837,8 +831,8 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
         .leanForward(bias != Position.Bias.Forward);
       Point point = myEditor.logicalPositionToXY(pos);
       Point pointNext = myEditor.logicalPositionToXY(posNext);
-      return point.y == pointNext.y 
-             ? new Rectangle(Math.min(point.x, pointNext.x), point.y, Math.abs(point.x - pointNext.x), myEditor.getLineHeight()) 
+      return point.y == pointNext.y
+             ? new Rectangle(Math.min(point.x, pointNext.x), point.y, Math.abs(point.x - pointNext.x), myEditor.getLineHeight())
              : new Rectangle(point.x, point.y, 0, myEditor.getLineHeight());
     }
 
@@ -899,7 +893,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
       implements AccessibleText, AccessibleEditableText, AccessibleExtendedText,
                  CaretListener, DocumentListener {
 
-    public AccessibleEditorComponentImpl() {
+    AccessibleEditorComponentImpl() {
       if (myEditor.isDisposed()) return;
 
       myEditor.getCaretModel().addCaretListener(this, myEditor.getDisposable());
@@ -918,7 +912,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     private int myCaretPos;
 
     @Override
-    public void caretPositionChanged(CaretEvent e) {
+    public void caretPositionChanged(@NotNull CaretEvent e) {
       Caret caret = e.getCaret();
       if (caret == null) {
         return;
@@ -951,7 +945,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     // ---- Implements DocumentListener ----
 
     @Override
-    public void documentChanged(final DocumentEvent event) {
+    public void documentChanged(@NotNull final DocumentEvent event) {
       final Integer pos = event.getOffset();
       if (ApplicationManager.getApplication().isDispatchThread()) {
         firePropertyChange(ACCESSIBLE_TEXT_PROPERTY, null, pos);

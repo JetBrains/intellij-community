@@ -85,7 +85,9 @@ class BundledJreManager {
       }
       buildContext.messages.progress("Extracting JRE from '$archive.name' archive")
       if (SystemInfo.isWindows) {
-        buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip')
+        buildContext.ant.untar(src: archive.absolutePath, dest: destination, compression: 'gzip') {
+          cutdirsmapper(dirs: 1)
+        }
       }
       else {
         //'tar' command is used instead of Ant task to ensure that executable flags will be preserved
@@ -109,7 +111,8 @@ class BundledJreManager {
     def jreVersion = getExpectedJreVersion(osName, dependenciesDir)
 
     String suffix = "${jreVersion}_$osName${arch == JvmArchitecture.x32 ? '_x86' : '_x64'}.tar.gz"
-    String prefix = buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
+    String prefix = buildContext.isBundledJreModular() ? vendor.modularJreNamePrefix :
+                    buildContext.productProperties.toolsJarRequired ? vendor.jreWithToolsJarNamePrefix : vendor.jreNamePrefix
     def jreArchive = new File(jreDir, "$prefix$suffix")
 
     if (!jreArchive.file || !jreArchive.exists()) {
@@ -140,18 +143,28 @@ class BundledJreManager {
         stream.close()
       }
     }
-    return dependencyVersions.get("jreBuild_${osName}" as String, dependencyVersions.get("jdkBuild", ""))
+    return dependencyVersions.get("jreBuild_${osName}" as String, buildContext.options.bundledJreBuild ?: dependencyVersions.get("jdkBuild", ""))
   }
 
   private enum JreVendor {
-    Oracle("jre8", "jdk8"), JetBrains("jbre8", "jbrex8")
+    Oracle("jre8", "jdk8", "jre9"), JetBrains("jbre8", "jbrex8", "jbre9")
 
     final String jreNamePrefix
     final String jreWithToolsJarNamePrefix
+    final String modularJreNamePrefix
 
-    JreVendor(String jreNamePrefix, String jreWithToolsJarNamePrefix) {
+    JreVendor(String jreNamePrefix, String jreWithToolsJarNamePrefix, String modularJreNamePrefix) {
       this.jreNamePrefix = jreNamePrefix
       this.jreWithToolsJarNamePrefix = jreWithToolsJarNamePrefix
+      this.modularJreNamePrefix = modularJreNamePrefix
     }
+  }
+
+  def jreSuffix() {
+    buildContext.options.bundledJreVersion > 8 ? "-bundled-jre${buildContext.options.bundledJreVersion}" : ""
+  }
+
+  def is32bitArchSupported() {
+    !buildContext.isBundledJreModular()
   }
 }

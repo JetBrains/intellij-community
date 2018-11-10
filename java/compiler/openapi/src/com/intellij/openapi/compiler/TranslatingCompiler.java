@@ -31,6 +31,7 @@ import java.util.Collection;
  * integrate into 'external build system' instead (https://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
  * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
+@Deprecated
 public interface TranslatingCompiler extends Compiler {
 
   /**
@@ -69,7 +70,7 @@ public interface TranslatingCompiler extends Compiler {
    * @param file    the file to check.
    * @param context the context for the current compile operation.
    * @return true if can compile the file, false otherwise. If the method returns false, {@code file}
-   *         will not be included in the list of files passed to {@link #compile(CompileContext,Chunk<Module>,com.intellij.openapi.vfs.VirtualFile[], com.intellij.openapi.compiler.TranslatingCompiler.OutputSink)}.
+   *         will not be included in the list of files passed to {@link #compile(CompileContext, Chunk, VirtualFile[], OutputSink)}.
    */
   boolean isCompilableFile(VirtualFile file, CompileContext context);
 

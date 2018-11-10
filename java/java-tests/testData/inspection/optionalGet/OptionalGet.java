@@ -375,3 +375,57 @@ class CtorTest {
     test = Optional.empty();
   }
 }
+
+class FinallyTest
+{
+  private Optional<String> optionalValue = Optional.of("StringValue");
+
+  // IDEA-195886
+  private void methodA()
+  {
+    if (optionalValue.isPresent()) {
+      System.out.println(optionalValue.get().toLowerCase());
+    }
+    if (optionalValue.isPresent()) {
+      System.out.println(optionalValue.get());
+    }
+  }
+
+  private void methodA1()
+  {
+    if (optionalValue.isPresent()) {
+      System.out.println(optionalValue.get().toLowerCase());
+    }
+    try {
+      methodB();
+    }
+    finally {
+      if (optionalValue.isPresent()) {
+        System.out.println(optionalValue.get());
+      }
+    }
+  }
+
+  private native void methodB();
+
+  void testPrimitive() {
+    OptionalInt a = OptionalInt.of(123);
+    int b = a.getAsInt();
+    OptionalLong c = OptionalLong.of(123);
+    long d = c.getAsLong();
+    OptionalDouble e = OptionalDouble.of(123);
+    double f = e.getAsDouble();
+  }
+
+  void testPrimitive2(OptionalInt a, OptionalLong c, OptionalDouble e) {
+    int b = a.<warning descr="'OptionalInt.getAsInt()' without 'isPresent()' check">getAsInt</warning>();
+    long d = c.<warning descr="'OptionalLong.getAsLong()' without 'isPresent()' check">getAsLong</warning>();
+    double f = e.<warning descr="'OptionalDouble.getAsDouble()' without 'isPresent()' check">getAsDouble</warning>();
+  }
+
+  void testPrimitive3(OptionalInt a) {
+    if (a.isPresent()) {
+      System.out.println(a.getAsInt());
+    }
+  }
+}

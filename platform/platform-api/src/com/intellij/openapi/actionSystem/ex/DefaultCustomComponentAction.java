@@ -10,19 +10,20 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class DefaultCustomComponentAction extends AnAction implements CustomComponentAction {
-  @NotNull private final Producer<JComponent> myProducer;
+  @NotNull private final Producer<? extends JComponent> myProducer;
 
-  public DefaultCustomComponentAction(@NotNull Producer<JComponent> producer) {
+  public DefaultCustomComponentAction(@NotNull Producer<? extends JComponent> producer) {
     myProducer = producer;
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     //do nothing
   }
 
+  @NotNull
   @Override
-  public JComponent createCustomComponent(Presentation presentation) {
+  public JComponent createCustomComponent(@NotNull Presentation presentation) {
     return myProducer.produce();
   }
 }

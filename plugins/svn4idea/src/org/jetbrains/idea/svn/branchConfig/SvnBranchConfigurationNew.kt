@@ -26,8 +26,8 @@ class SvnBranchConfigurationNew {
   private val myBranchMap: MutableMap<Url, InfoStorage<List<SvnBranchItem>>> = mutableMapOf()
   var isUserInfoInUrl: Boolean = false
 
-  val branchLocations get() = myBranchMap.keys.sortedBy { it.toDecodedString() }
-  val branchMap get() = myBranchMap
+  val branchLocations: List<Url> get() = myBranchMap.keys.sortedBy { it.toDecodedString() }
+  val branchMap: MutableMap<Url, InfoStorage<List<SvnBranchItem>>> get() = myBranchMap
 
   fun addBranches(branchLocation: Url, items: InfoStorage<List<SvnBranchItem>>) {
     val current = myBranchMap[branchLocation]
@@ -47,7 +47,7 @@ class SvnBranchConfigurationNew {
     current.accept(items)
   }
 
-  fun getBranches(branchLocation: Url) = myBranchMap[branchLocation]?.value ?: emptyList()
+  fun getBranches(branchLocation: Url): List<SvnBranchItem> = myBranchMap[branchLocation]?.value ?: emptyList()
 
   fun copy(): SvnBranchConfigurationNew {
     val result = SvnBranchConfigurationNew()
@@ -74,14 +74,14 @@ class SvnBranchConfigurationNew {
   }
 
   @Deprecated("use getBaseName(Url)")
-  fun getBaseName(url: String) = getBaseName(createUrl(url, false))
+  fun getBaseName(url: String): String? = getBaseName(createUrl(url, false))
 
-  fun getBaseName(url: Url) = getBaseUrl(url)?.tail
+  fun getBaseName(url: Url): String? = getBaseUrl(url)?.tail
 
-  fun getRelativeUrl(url: Url) = getBaseUrl(url)?.let { SvnUtil.getRelativeUrl(it, url) }
+  fun getRelativeUrl(url: Url): String? = getBaseUrl(url)?.let { SvnUtil.getRelativeUrl(it, url) }
 
   @Throws(SvnBindException::class)
-  fun getWorkingBranch(url: Url) = getBaseUrl(url)
+  fun getWorkingBranch(url: Url): Url? = getBaseUrl(url)
 
   // to retrieve mappings between existing in the project working copies and their URLs
   fun getUrl2FileMappings(project: Project, root: VirtualFile): Map<Url, File> {

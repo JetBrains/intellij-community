@@ -28,8 +28,7 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     final PsiElement resolved = expression.resolve();
     if (resolved instanceof PsiField) {
       final PsiField field = (PsiField)resolved;
-      String name = field.getName();
-      if (name != null && !Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field, expression)) {
+      if (!Objects.equals(field.getContainingClass(), getOuterClass()) && needReplace(field, expression)) {
         return new FieldDescriptor(field, expression);
       }
     }
@@ -96,7 +95,7 @@ public class FieldReflectionAccessor extends ReferenceReflectionAccessorBase<Fie
     String methodName = PsiReflectionAccessUtil.getUniqueMethodName(outerClass, "accessToField" + StringUtil.capitalize(fieldName));
     ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(methodName);
     if (FieldAccessType.GET.equals(accessType)) {
-      String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(resolveFieldType(descriptor));
+      String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(descriptor.expression, resolveFieldType(descriptor));
       if (returnType == null) {
         LOG.warn("Could not resolve field type");
         return null;

@@ -149,7 +149,7 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
     return flags;
   }
 
-  private static void processImport(PsiImportListStub el, List<IndexTree.Import> imports, Set<String> namesCache) {
+  private static void processImport(PsiImportListStub el, List<? super IndexTree.Import> imports, Set<String> namesCache) {
     for (StubElement<?> importElem : el.getChildrenStubs()) {
       PsiImportStatementStub imp = (PsiImportStatementStub)importElem;
       String importReferenceText = imp.getImportReferenceText();
@@ -162,7 +162,7 @@ public class JavaStubIndexer extends StubHierarchyIndexer {
     }
   }
 
-  private static String id(String s, Set<String> namesCache) {
+  private static String id(String s, Set<? super String> namesCache) {
     String id = PsiNameHelper.getQualifiedClassName(s, true);
     int index = id.indexOf('.');
     String firstId = index > 0 ? s.substring(0, index) : id;

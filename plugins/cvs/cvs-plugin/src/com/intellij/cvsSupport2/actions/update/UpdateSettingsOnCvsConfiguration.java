@@ -54,47 +54,57 @@ public class UpdateSettingsOnCvsConfiguration implements UpdateSettings{
     myResetSticky = resetSticky;
   }
 
+  @Override
   public boolean getPruneEmptyDirectories() {
     return myConfiguration.PRUNE_EMPTY_DIRECTORIES;
   }
 
+  @Override
   public String getBranch1ToMergeWith() {
     if (myConfiguration.MERGING_MODE == CvsConfiguration.DO_NOT_MERGE) return null;
     return myConfiguration.MERGE_WITH_BRANCH1_NAME;
   }
 
+  @Override
   public String getBranch2ToMergeWith() {
     if (myConfiguration.MERGING_MODE == CvsConfiguration.DO_NOT_MERGE) return null;
     if (myConfiguration.MERGING_MODE == CvsConfiguration.MERGE_WITH_BRANCH) return null;
     return myConfiguration.MERGE_WITH_BRANCH2_NAME;
   }
 
+  @Override
   public boolean getResetAllSticky() {
     return myResetSticky;
   }
 
+  @Override
   public boolean getDontMakeAnyChanges() {
     return false;
   }
 
+  @Override
   public boolean getCreateDirectories() {
     return myConfiguration.CREATE_NEW_DIRECTORIES;
   }
 
+  @Override
   public boolean getCleanCopy() {
     return myCleanCopy;
   }
 
+  @Override
   public KeywordSubstitution getKeywordSubstitution() {
     KeywordSubstitutionWrapper value = KeywordSubstitutionWrapper.getValue(myConfiguration.UPDATE_KEYWORD_SUBSTITUTION);
     if (value == null) return null;
     return value.getSubstitution();
   }
 
+  @Override
   public RevisionOrDate getRevisionOrDate() {
     return RevisionOrDateImpl.createOn(myConfiguration.UPDATE_DATE_OR_REVISION_SETTINGS);
   }
 
+  @Override
   public boolean getMakeNewFilesReadOnly() {
     return myConfiguration.MAKE_NEW_FILES_READONLY;
   }

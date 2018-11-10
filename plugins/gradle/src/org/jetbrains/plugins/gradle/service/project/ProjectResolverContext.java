@@ -31,7 +31,6 @@ import java.util.Collection;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/15/13
  */
 public interface ProjectResolverContext extends UserDataHolderEx {
   @NotNull

@@ -60,8 +60,12 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     (!SystemInfo.isWindows ? ".jdk" : SystemInfo.is64Bit ? "64.exe.jdk" : ".exe.jdk");
 
   @Override
-  public void actionPerformed(@Nullable AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e != null ? e.getProject() : null;
+    perform(project);
+  }
+
+  public void perform(Project project) {
     new Task.Modal(project, "Looking for Available JDKs", true) {
       private JdkBundleList myBundleList;
       private File myConfigFile;
@@ -304,7 +308,7 @@ public class SwitchBootJdkAction extends AnAction implements DumbAware {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       return PlatformDataKeys.COPY_PROVIDER.is(dataId) ? this : null;
     }
 

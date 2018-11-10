@@ -286,7 +286,7 @@ public class GuiUtils {
     }
   }
 
-  public static void iterateChildren(Component container, Consumer<Component> consumer, JComponent... excludeComponents) {
+  public static void iterateChildren(Component container, Consumer<? super Component> consumer, JComponent... excludeComponents) {
     if (excludeComponents != null && ArrayUtil.find(excludeComponents, container) != -1) return;
     consumer.consume(container);
     if (container instanceof Container) {
@@ -297,7 +297,7 @@ public class GuiUtils {
     }
   }
 
-  public static void iterateChildren(Consumer<Component> consumer, Component... components) {
+  public static void iterateChildren(Consumer<? super Component> consumer, Component... components) {
     for (final Component component : components) {
       iterateChildren(component, consumer);
     }

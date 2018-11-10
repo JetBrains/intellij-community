@@ -1,7 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -19,9 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
 import java.util.Set;
 
-/**
- * @author Tagir Valeev
- */
 public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
@@ -43,7 +43,6 @@ public class PsiElementConcatenationInspection extends AbstractBaseJavaLocalInsp
         checkOperand(arg, new HashSet<>());
       }
 
-      @SuppressWarnings("DialogTitleCapitalization")
       private void checkOperand(@Nullable PsiExpression operand, Set<PsiExpression> visited) {
         if(operand == null || !visited.add(operand)) return;
         if(operand instanceof PsiReferenceExpression) {

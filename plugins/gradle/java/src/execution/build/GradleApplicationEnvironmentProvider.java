@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
@@ -24,6 +11,7 @@ import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -48,9 +36,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.task.ExecuteRunConfigurationTask;
+import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashMap;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -62,7 +53,6 @@ import java.util.List;
  * TODO take into account applied 'application' gradle plugins or existing JavaExec tasks
  *
  * @author Vladislav.Soroka
- * @since 6/21/2016
  */
 public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvironmentProvider {
 
@@ -71,6 +61,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
     return task.getRunProfile() instanceof ApplicationConfiguration;
   }
 
+  @Override
   @Nullable
   public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
                                                          @NotNull ExecuteRunConfigurationTask executeRunConfigurationTask,
@@ -106,8 +97,11 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
     }
 
     ExternalSystemTaskExecutionSettings taskSettings = new ExternalSystemTaskExecutionSettings();
+    taskSettings.setPassParentEnvs(params.isPassParentEnvs());
+    taskSettings.setEnv(params.getEnv().isEmpty() ? Collections.emptyMap() : new THashMap<>(params.getEnv()));
     taskSettings.setExternalSystemIdString(GradleConstants.SYSTEM_ID.getId());
-    taskSettings.setExternalProjectPath(ExternalSystemApiUtil.getExternalProjectPath(module));
+    String projectPath = GradleRunnerUtil.resolveProjectPath(module);
+    taskSettings.setExternalProjectPath(projectPath);
     final String runAppTaskName = mainClass.getName() + ".main()";
     taskSettings.setTaskNames(Collections.singletonList(runAppTaskName));
 
@@ -117,7 +111,8 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
     if (environment != null) {
       RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
       assert runnerAndConfigurationSettings != null;
-      ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
+      ExternalSystemRunConfiguration gradleRunConfiguration =
+        (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
 
       final String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
       if (gradlePath == null) return null;
@@ -166,7 +161,13 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
                           "}\n";
       // @formatter:on
 
-      runConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
+      gradleRunConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
+      gradleRunConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, runAppTaskName);
+
+      // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
+      gradleRunConfiguration.setBeforeRunTasks(ContainerUtil.filter(
+        RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(applicationConfiguration),
+        task -> task.getProviderId() != CompileStepBeforeRun.ID));
       return environment;
     }
     else {
@@ -176,7 +177,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
 
   private static String createEscapedParameters(List<String> parameters, String prefix) {
     StringBuilder result = new StringBuilder();
-    for (String parameter : parameters) {
+    for (String parameter: parameters) {
       if (StringUtil.isEmpty(parameter)) continue;
       String escaped = StringUtil.escapeChars(parameter, '\\', '"', '\'');
       result.append(prefix).append(" '").append(escaped).append("'\n");

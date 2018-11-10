@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -280,7 +281,9 @@ public class JavaCompletionSorting {
     for (int i = 0; i < limit; i++) {
       String word = words.get(words.size() - i - 1);
       String expectedWord = expectedWords[expectedWords.length - i - 1];
-      if (word.equalsIgnoreCase(expectedWord)) {
+      if ( word.equalsIgnoreCase(expectedWord) || 
+           StringUtil.endsWithIgnoreCase(word, expectedWord) || 
+           StringUtil.endsWithIgnoreCase(expectedWord, word)) {
         max = Math.max(max, i + 1);
       }
       else {
@@ -424,7 +427,7 @@ public class JavaCompletionSorting {
   private static class PreferAccessible extends LookupElementWeigher {
     private final PsiElement myPosition;
 
-    public PreferAccessible(PsiElement position) {
+    PreferAccessible(PsiElement position) {
       super("accessible");
       myPosition = position;
     }
@@ -449,7 +452,7 @@ public class JavaCompletionSorting {
   }
 
   private static class PreferNonGeneric extends LookupElementWeigher {
-    public PreferNonGeneric() {
+    PreferNonGeneric() {
       super("nonGeneric");
     }
 
@@ -472,7 +475,7 @@ public class JavaCompletionSorting {
   }
 
   private static class PreferSimple extends LookupElementWeigher {
-    public PreferSimple() {
+    PreferSimple() {
       super("simple");
     }
 
@@ -493,7 +496,7 @@ public class JavaCompletionSorting {
     private final List<PsiType> myExpectedClasses = new SmartList<>();
     private final String myExpectedMemberName;
 
-    public PreferExpected(boolean constructorPossible, ExpectedTypeInfo[] expectedTypes, PsiElement position) {
+    PreferExpected(boolean constructorPossible, ExpectedTypeInfo[] expectedTypes, PsiElement position) {
       super("expectedType");
       myConstructorPossible = constructorPossible;
       myExpectedTypes = expectedTypes;
@@ -540,7 +543,7 @@ public class JavaCompletionSorting {
   private static class PreferSimilarlyEnding extends LookupElementWeigher {
     private final ExpectedTypeInfo[] myExpectedTypes;
 
-    public PreferSimilarlyEnding(ExpectedTypeInfo[] expectedTypes) {
+    PreferSimilarlyEnding(ExpectedTypeInfo[] expectedTypes) {
       super("nameEnd");
       myExpectedTypes = expectedTypes;
     }
@@ -556,7 +559,7 @@ public class JavaCompletionSorting {
   private static class PreferContainingSameWords extends LookupElementWeigher {
     private final ExpectedTypeInfo[] myExpectedTypes;
 
-    public PreferContainingSameWords(ExpectedTypeInfo[] expectedTypes) {
+    PreferContainingSameWords(ExpectedTypeInfo[] expectedTypes) {
       super("sameWords");
       myExpectedTypes = expectedTypes;
     }
@@ -587,7 +590,7 @@ public class JavaCompletionSorting {
   private static class PreferShorter extends LookupElementWeigher {
     private final ExpectedTypeInfo[] myExpectedTypes;
 
-    public PreferShorter(ExpectedTypeInfo[] expectedTypes) {
+    PreferShorter(ExpectedTypeInfo[] expectedTypes) {
       super("shorter");
       myExpectedTypes = expectedTypes;
     }
@@ -609,7 +612,7 @@ public class JavaCompletionSorting {
     final ProjectFileIndex fileIndex;
     private final PsiElement myPosition;
 
-    public LiftShorterClasses(PsiElement position) {
+    LiftShorterClasses(PsiElement position) {
       super("liftShorterClasses");
       myPosition = position;
       fileIndex = ProjectRootManager.getInstance(myPosition.getProject()).getFileIndex();

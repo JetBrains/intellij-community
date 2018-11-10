@@ -37,8 +37,14 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   @Override
   public String getInformationHint(@NotNull PsiExpression element) {
     PsiType type = element.getType();
+    if (type instanceof PsiLambdaExpressionType) {
+      type = ((PsiLambdaExpressionType)type).getExpression().getFunctionalInterfaceType();
+    }
+    else if (type instanceof PsiMethodReferenceType) {
+      type = ((PsiMethodReferenceType)type).getExpression().getFunctionalInterfaceType();
+    }
     String text = type == null ? "<unknown>" : type.getPresentableText();
-    return StringUtil.escapeXml(text);
+    return StringUtil.escapeXmlEntities(text);
   }
 
   @NotNull
@@ -92,12 +98,12 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
 
   private static <T> String formatFact(@NotNull DfaFactType<T> factType, @NotNull T value, @Nullable PsiType type) {
     String presentationText = factType.getPresentationText(value, type);
-    return presentationText.isEmpty() ? "" : makeHtmlRow(factType.getName(), StringUtil.escapeXml(presentationText));
+    return presentationText.isEmpty() ? "" : makeHtmlRow(factType.getName(), StringUtil.escapeXmlEntities(presentationText));
   }
 
-  private static String makeHtmlRow(String titleText, String contentHtml) {
+  private static String makeHtmlRow(@NotNull String titleText, String contentHtml) {
     String titleCell = "<td align='left' valign='top' style='color:" +
-                       ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR) + "'>" + StringUtil.escapeXml(titleText) + ":</td>";
+                       ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR) + "'>" + StringUtil.escapeXmlEntities(titleText) + ":</td>";
     String contentCell = "<td>" + contentHtml + "</td>";
     return "<tr>" + titleCell + contentCell + "</tr>";
   }

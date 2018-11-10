@@ -39,6 +39,7 @@ public class CvsBinaryContentRevision extends CvsContentRevision implements Bina
     super(file, localFile, revision, environment, project);
   }
 
+  @Override
   @Nullable
   public byte[] getBinaryContent() throws VcsException {
     return getContentAsBytes();

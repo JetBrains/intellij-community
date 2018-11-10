@@ -31,7 +31,7 @@ public class YAMLFlexLexer extends MergingLexerAdapter {
 
   /** This class is needed to reset lexer internal state */
   private static class LexerCustomisation extends _YAMLLexer {
-    public LexerCustomisation(Reader in) {
+    LexerCustomisation(Reader in) {
       super(in);
     }
 
@@ -46,7 +46,7 @@ public class YAMLFlexLexer extends MergingLexerAdapter {
 
     private boolean myStateCleanliness = false;
 
-    public MyFlexAdapter(_YAMLLexer flex) {
+    MyFlexAdapter(_YAMLLexer flex) {
       super(flex);
     }
 

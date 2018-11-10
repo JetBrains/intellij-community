@@ -25,7 +25,6 @@ import java.util.List;
 
 /**
  * @author Roman Shevchenko
- * @since 13.02.2012
  */
 public interface PathChooserDialog {
   DataKey<Boolean> PREFER_LAST_OVER_EXPLICIT = DataKey.create("prefer.last.over.explicit");

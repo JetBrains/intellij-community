@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
@@ -98,7 +99,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @Override
   public boolean processCommentsContainingIdentifier(@NotNull String identifier,
                                                      @NotNull SearchScope searchScope,
-                                                     @NotNull final Processor<PsiElement> processor) {
+                                                     @NotNull final Processor<? super PsiElement> processor) {
     TextOccurenceProcessor occurrenceProcessor = (element, offsetInElement) -> {
       if (CommentUtilCore.isCommentTextElement(element) && element.findReferenceAt(offsetInElement) == null) {
         return processor.process(element);
@@ -211,7 +212,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return progress;
   }
 
-  static boolean shouldProcessInjectedPsi(@NotNull SearchScope scope) {
+  public static boolean shouldProcessInjectedPsi(@NotNull SearchScope scope) {
     return !(scope instanceof LocalSearchScope) || !((LocalSearchScope)scope).isIgnoreInjectedPsi();
   }
 
@@ -289,7 +290,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
    * @param alreadyProcessedFiles the number of files scanned in previous pass.
    * @return true if completed
    */
-  private boolean processPsiFileRoots(@NotNull List<VirtualFile> files,
+  private boolean processPsiFileRoots(@NotNull List<? extends VirtualFile> files,
                                       final int totalSize,
                                       int alreadyProcessedFiles,
                                       @NotNull final ProgressIndicator progress,
@@ -301,7 +302,16 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       return processFilesConcurrentlyDespiteWriteActions(myManager.getProject(), files, progress, stopped, vfile -> {
         TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
-        processVirtualFile(vfile, localProcessor, stopped);
+        try {
+          processVirtualFile(vfile, localProcessor, stopped);
+        }
+        catch (ProcessCanceledException | IndexNotReadyException e) {
+          throw e;
+        }
+        catch (Throwable e) {
+          LOG.error("Error during processing of: " + vfile.getName(), e);
+          throw e;
+        }
         if (progress.isRunning()) {
           double fraction = (double)counter.incrementAndGet() / totalSize;
           progress.setFraction(fraction);
@@ -318,10 +328,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   // When encounters write action request, stops all threads, waits for write action to finish and re-starts all threads again.
   // {@code localProcessor} must be as idempotent as possible.
   public static boolean processFilesConcurrentlyDespiteWriteActions(@NotNull Project project,
-                                                                    @NotNull List<VirtualFile> files,
+                                                                    @NotNull List<? extends VirtualFile> files,
                                                                     @NotNull final ProgressIndicator progress,
                                                                     @NotNull AtomicBoolean stopped,
-                                                                    @NotNull final Processor<VirtualFile> localProcessor) {
+                                                                    @NotNull final Processor<? super VirtualFile> localProcessor) {
     ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
       CoreProgressManager.assertUnderProgress(progress);
@@ -330,34 +340,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     while (true) {
       ProgressManager.checkCanceled();
       List<VirtualFile> failedList = new SmartList<>();
-      final List<VirtualFile> failedFiles = Collections.synchronizedList(failedList);
-      final Processor<VirtualFile> processor = vfile -> {
-        ProgressManager.checkCanceled();
-        if (failedFiles.isEmpty()) {
-          try {
-            // wrap in unconditional impatient reader to bail early at write action start,
-            // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
-            app.executeByImpatientReader(() -> {
-              if (!localProcessor.process(vfile)) {
-                stopped.set(true);
-              }
-            });
-          }
-          catch (ApplicationUtil.CannotRunReadActionException action) {
-            failedFiles.add(vfile);
-          }
-        }
-        else {
-          // 1st: optimisation to avoid unnecessary processing if it's doomed to fail because some other task has failed already,
-          // and 2nd: bail out of fork/join task as soon as possible
-          failedFiles.add(vfile);
-        }
-        return !stopped.get();
-      };
+      List<VirtualFile> failedFiles = Collections.synchronizedList(failedList);
       boolean completed;
       if (app.isWriteAccessAllowed() || app.isReadAccessAllowed() && app.isWriteActionPending()) {
         // no point in processing in separate threads - they are doomed to fail to obtain read action anyway
-        completed = ContainerUtil.process(files, processor);
+        // do not wrap in impatient reader because every read action inside would trigger AU.CRRAE
+        completed = ContainerUtil.process(files, localProcessor);
       }
       else if (app.isWriteActionPending()) {
         completed = true;
@@ -365,6 +353,29 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         failedFiles.addAll(files);
       }
       else {
+        final Processor<VirtualFile> processor = vfile -> {
+          ProgressManager.checkCanceled();
+          if (failedFiles.isEmpty()) {
+            try {
+              // wrap in unconditional impatient reader to bail early at write action start,
+              // regardless of whether was called from highlighting (already impatient-wrapped) or Find Usages action
+              app.executeByImpatientReader(() -> {
+                if (!localProcessor.process(vfile)) {
+                  stopped.set(true);
+                }
+              });
+            }
+            catch (ApplicationUtil.CannotRunReadActionException action) {
+              failedFiles.add(vfile);
+            }
+          }
+          else {
+            // 1st: optimisation to avoid unnecessary processing if it's doomed to fail because some other task has failed already,
+            // and 2nd: bail out of fork/join task as soon as possible
+            failedFiles.add(vfile);
+          }
+          return !stopped.get();
+        };
         // try to run parallel read actions but fail as soon as possible
         completed = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(files, progress, processor);
       }
@@ -596,7 +607,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals = new MultiMap<>();
       final List<Computable<Boolean>> customs = ContainerUtil.newArrayList();
       final Set<RequestWithProcessor> locals = ContainerUtil.newLinkedHashSet();
-      Map<RequestWithProcessor, Processor<PsiElement>> localProcessors = new THashMap<>();
+      Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors = new THashMap<>();
       distributePrimitives(collectors, locals, globals, customs, localProcessors, progress);
       if (!processGlobalRequestsOptimized(globals, progress, localProcessors)) {
         return false;
@@ -660,7 +671,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   private boolean processGlobalRequestsOptimized(@NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> singles,
                                                  @NotNull ProgressIndicator progress,
-                                                 @NotNull final Map<RequestWithProcessor, Processor<PsiElement>> localProcessors) {
+                                                 @NotNull final Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors) {
     if (singles.isEmpty()) {
       return true;
     }
@@ -713,7 +724,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return result;
   }
 
-  private boolean processCandidates(@NotNull final Map<RequestWithProcessor, Processor<PsiElement>> localProcessors,
+  private boolean processCandidates(@NotNull final Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors,
                                     @NotNull final MultiMap<VirtualFile, RequestWithProcessor> candidateFiles,
                                     @NotNull ProgressIndicator progress,
                                     int totalSize,
@@ -724,7 +735,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       final VirtualFile vfile = psiRoot.getVirtualFile();
       for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
         ProgressManager.checkCanceled();
-        Processor<PsiElement> localProcessor = localProcessors.get(singleRequest);
+        Processor<? super PsiElement> localProcessor = localProcessors.get(singleRequest);
         if (!localProcessor.process(psiRoot)) {
           return false;
         }
@@ -776,7 +787,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           throw e;
         }
         catch (Exception | Error e) {
-          LOG.error(e);
+          PsiFile file = scope.getContainingFile();
+          LOG.error("Error during processing of: " + (file != null ? file.getName() : scope), e);
           return true;
         }
       }
@@ -830,7 +842,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
   @Nullable("null means we did not find common container files")
   private Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
-                                                              @NotNull Collection<RequestWithProcessor> data,
+                                                              @NotNull Collection<? extends RequestWithProcessor> data,
                                                               @NotNull Set<IdIndexEntry> keys) {
     String commonName = null;
     short searchContext = 0;
@@ -877,14 +889,14 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @NotNull
   private static GlobalSearchScope uniteScopes(@NotNull Collection<RequestWithProcessor> requests) {
     Set<GlobalSearchScope> scopes = ContainerUtil.map2LinkedSet(requests, r -> (GlobalSearchScope)r.request.searchScope);
-    return GlobalSearchScope.union(scopes.toArray(new GlobalSearchScope[0]));
+    return GlobalSearchScope.union(scopes.toArray(GlobalSearchScope.EMPTY_ARRAY));
   }
 
   private static void distributePrimitives(@NotNull Map<SearchRequestCollector, Processor<? super PsiReference>> collectors,
                                            @NotNull Set<RequestWithProcessor> locals,
                                            @NotNull MultiMap<Set<IdIndexEntry>, RequestWithProcessor> globals,
                                            @NotNull List<Computable<Boolean>> customs,
-                                           @NotNull Map<RequestWithProcessor, Processor<PsiElement>> localProcessors,
+                                           @NotNull Map<RequestWithProcessor, Processor<? super PsiElement>> localProcessors,
                                            @NotNull ProgressIndicator progress) {
     for (final Map.Entry<SearchRequestCollector, Processor<? super PsiReference>> entry : collectors.entrySet()) {
       ProgressManager.checkCanceled();
@@ -989,7 +1001,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                                        @NotNull final GlobalSearchScope scope,
                                                        @Nullable final Condition<Integer> checker,
                                                        @NotNull final Collection<IdIndexEntry> keys,
-                                                       @NotNull final Processor<VirtualFile> processor) {
+                                                       @NotNull final Processor<? super VirtualFile> processor) {
     final FileIndexFacade index = FileIndexFacade.getInstance(project);
     return DumbService.getInstance(project).runReadActionInSmartMode(
       () -> FileBasedIndex.getInstance().processFilesContainingAllKeys(IdIndex.NAME, keys, scope, checker,
@@ -1012,7 +1024,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public static boolean processTextOccurrences(@NotNull final PsiElement element,
                                                @NotNull String stringToSearch,
                                                @NotNull GlobalSearchScope searchScope,
-                                               @NotNull final Processor<UsageInfo> processor,
+                                               @NotNull final Processor<? super UsageInfo> processor,
                                                @NotNull final UsageInfoFactory factory) {
     PsiSearchHelper helper = ReadAction.compute(() -> PsiSearchHelper.getInstance(element.getProject()));
 

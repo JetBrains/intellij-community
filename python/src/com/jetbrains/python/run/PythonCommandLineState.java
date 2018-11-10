@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -36,7 +22,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -53,6 +38,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.remote.ProcessControlWithMappings;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.PlatformUtils;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -176,9 +162,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
   protected void addTracebackFilter(Project project, ConsoleView consoleView, ProcessHandler processHandler) {
     if (PySdkUtil.isRemote(myConfig.getSdk())) {
-      assert processHandler instanceof RemoteProcessControl;
+      assert processHandler instanceof ProcessControlWithMappings;
       consoleView
-        .addMessageFilter(new PyRemoteTracebackFilter(project, myConfig.getWorkingDirectory(), (RemoteProcessControl)processHandler));
+        .addMessageFilter(new PyRemoteTracebackFilter(project, myConfig.getWorkingDirectory(), (ProcessControlWithMappings)processHandler));
     }
     else {
       consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfig.getWorkingDirectorySafe()));
@@ -228,13 +214,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
     GeneralCommandLine commandLine = generateCommandLine(patchers);
 
     // Extend command line
-    PythonRunConfigurationExtensionsManager.getInstance()
+    PythonRunConfigurationExtensionsManager.Companion.getInstance()
       .patchCommandLine(myConfig, getRunnerSettings(), commandLine, getEnvironment().getRunner().getRunnerId());
 
     ProcessHandler processHandler = processStarter.start(myConfig, commandLine);
 
     // attach extensions
-    PythonRunConfigurationExtensionsManager.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
+    PythonRunConfigurationExtensionsManager.Companion.getInstance().attachExtensionsToProcess(myConfig, processHandler, getRunnerSettings());
 
     return processHandler;
   }
@@ -375,7 +361,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     buildPythonPath(project, commandLine, runParams, isDebug);
 
-    for (PythonCommandLineEnvironmentProvider envProvider : Extensions.getExtensions(PythonCommandLineEnvironmentProvider.EP_NAME)) {
+    for (PythonCommandLineEnvironmentProvider envProvider : PythonCommandLineEnvironmentProvider.EP_NAME.getExtensionList()) {
       envProvider.extendEnvironment(project, commandLine, runParams);
     }
   }
@@ -398,7 +384,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       for (Map.Entry<String, String> e : myConfig.getEnvs().entrySet()) {
         if (environment.containsKey(e.getKey())) {
           if ("PATH".equals(e.getKey())) {
-            env.put(e.getKey(), PythonEnvUtil.appendToPathEnvVar(env.get("PATH"), e.getValue()));
+            env.put(e.getKey(), PythonEnvUtil.addToPathEnvVar(env.get("PATH"), e.getValue(), true));
           }
           else {
             env.put(e.getKey(), e.getValue());

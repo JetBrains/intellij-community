@@ -477,6 +477,12 @@
   <action id="NextTab">
     <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
   </action>
+  <action id="Diff.PrevChange">
+    <keyboard-shortcut first-keystroke="meta shift OPEN_BRACKET"/>
+  </action>
+  <action id="Diff.NextChange">
+    <keyboard-shortcut first-keystroke="meta shift CLOSE_BRACKET"/>
+  </action>
   <action id="Back">
     <keyboard-shortcut first-keystroke="meta control LEFT"/>
     <mouse-shortcut keystroke="button4"/>
@@ -587,9 +593,19 @@
     <keyboard-shortcut first-keystroke="control meta E"/>
     <keyboard-shortcut first-keystroke="shift F6"/>
   </action>
+  <action id="Git.Commit.And.Push.Executor"/>
+  <action id="Hg.Commit.And.Push.Executor"/>
 
+  <action id="ChangesView.Rename">
+    <keyboard-shortcut first-keystroke="control meta E"/>
+    <keyboard-shortcut first-keystroke="shift F6"/>
+  </action>
   <action id="ShelvedChanges.Rename">
     <keyboard-shortcut first-keystroke="control meta E"/>
     <keyboard-shortcut first-keystroke="shift F6"/>
+  </action>
+  
+  <action id="ShowUmlDiagramPopup">
+    <keyboard-shortcut first-keystroke="meta alt control U"/>
   </action>
 </keymap>

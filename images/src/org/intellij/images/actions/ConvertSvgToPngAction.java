@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SVGLoader;
 import org.intellij.images.fileTypes.impl.SvgFileType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -33,7 +34,7 @@ import java.io.IOException;
  */
 public class ConvertSvgToPngAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     VirtualFile svgFile = e.getRequiredData(CommonDataKeys.VIRTUAL_FILE);
     try {
       Image image = SVGLoader.load(new File(svgFile.getPath()).toURI().toURL(), 1f);
@@ -46,7 +47,7 @@ public class ConvertSvgToPngAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean enabled = file != null && file.getFileType() == SvgFileType.INSTANCE;
     e.getPresentation().setEnabledAndVisible(enabled);

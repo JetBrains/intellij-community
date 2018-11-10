@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.net.ssl.UntrustedCertificateStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,10 +38,17 @@ public abstract class RequestBuilder {
    */
   public abstract RequestBuilder isReadResponseOnError(boolean isReadResponseOnError);
 
-  // Used in Rider
-  @SuppressWarnings("unused")
-  @NotNull
+  /** @deprecated wrap "connect" calls with {@link com.intellij.util.net.ssl.CertificateManager#runWithUntrustedCertificateStrategy} if needed */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
   public abstract RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy);
+
+  /**
+   * Whether to analyze response status code and throw an exception if it's an "error" code.
+   * Defaults to true.
+   */
+  @NotNull
+  public abstract RequestBuilder throwStatusCodeException(boolean shouldThrow);
 
   public abstract <T> T connect(@NotNull HttpRequests.RequestProcessor<T> processor) throws IOException;
 

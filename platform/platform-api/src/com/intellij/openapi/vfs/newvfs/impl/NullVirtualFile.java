@@ -26,6 +26,7 @@ public class NullVirtualFile extends StubVirtualFile {
 
   private NullVirtualFile() {}
 
+  @Override
   @NonNls
   public String toString() {
     return "VirtualFile.NULL_OBJECT";

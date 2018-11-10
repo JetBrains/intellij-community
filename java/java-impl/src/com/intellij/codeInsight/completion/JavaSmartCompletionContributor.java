@@ -124,7 +124,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
 
     extend(CompletionType.SMART, psiElement(), new CompletionProvider<CompletionParameters>() {
       @Override
-      protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+      protected void addCompletions(@NotNull final CompletionParameters parameters, @NotNull final ProcessingContext context, @NotNull final CompletionResultSet result) {
         if (SmartCastProvider.shouldSuggestCast(parameters)) return;
         
         final PsiElement element = parameters.getPosition();
@@ -215,12 +215,12 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   }
 
   @NotNull
-  private static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
+  private static Consumer<LookupElement> decorateWithoutTypeCheck(final CompletionResultSet result, final Collection<? extends ExpectedTypeInfo> infos) {
     return lookupElement -> result.addElement(decorate(lookupElement, infos));
   }
 
   private static void addExpectedTypeMembers(CompletionParameters params,
-                                             THashSet<ExpectedTypeInfo> mergedInfos,
+                                             THashSet<? extends ExpectedTypeInfo> mergedInfos,
                                              boolean quick,
                                              Consumer<LookupElement> consumer) {
     PsiElement position = params.getPosition();
@@ -243,7 +243,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     super.fillCompletionVariants(parameters, JavaCompletionSorting.addJavaSorting(parameters, result));
   }
 
-  public static SmartCompletionDecorator decorate(LookupElement lookupElement, Collection<ExpectedTypeInfo> infos) {
+  public static SmartCompletionDecorator decorate(LookupElement lookupElement, Collection<? extends ExpectedTypeInfo> infos) {
     return new SmartCompletionDecorator(lookupElement, infos);
   }
 
@@ -255,7 +255,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
   @NotNull
   public static ExpectedTypeInfo[] getExpectedTypes(PsiElement position, boolean voidable) {
     if (psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(PsiThrowStatement.class)).accepts(position)) {
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(position.getProject()).getElementFactory();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(position.getProject());
       final PsiClassType classType = factory
           .createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, position.getResolveScope());
       final List<ExpectedTypeInfo> result = new SmartList<>();

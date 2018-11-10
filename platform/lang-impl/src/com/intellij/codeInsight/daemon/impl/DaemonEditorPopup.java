@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -35,13 +21,11 @@ import com.intellij.util.ui.GraphicsUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class DaemonEditorPopup extends PopupHandler {
   private final PsiFile myPsiFile;
 
-  public DaemonEditorPopup(final PsiFile psiFile) {
+  DaemonEditorPopup(final PsiFile psiFile) {
     myPsiFile = psiFile;
   }
 
@@ -49,22 +33,13 @@ public class DaemonEditorPopup extends PopupHandler {
   public void invokePopup(final Component comp, final int x, final int y) {
     if (ApplicationManager.getApplication() == null) return;
     final JRadioButtonMenuItem errorsFirst = createRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.errors.first.radio"));
-    errorsFirst.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = errorsFirst.isSelected();
-      }
-    });
+    errorsFirst.addActionListener(
+      __ -> DaemonCodeAnalyzerSettings.getInstance().setNextErrorActionGoesToErrorsFirst(errorsFirst.isSelected()));
     final JPopupMenu popupMenu = new JBPopupMenu();
     popupMenu.add(errorsFirst);
 
     final JRadioButtonMenuItem next = createRadioButtonMenuItem(EditorBundle.message("errors.panel.go.to.next.error.warning.radio"));
-    next.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = !next.isSelected();
-      }
-    });
+    next.addActionListener(__ -> DaemonCodeAnalyzerSettings.getInstance().setNextErrorActionGoesToErrorsFirst(!next.isSelected()));
     popupMenu.add(next);
 
     ButtonGroup group = new ButtonGroup();
@@ -75,30 +50,24 @@ public class DaemonEditorPopup extends PopupHandler {
     final JMenuItem hLevel = new JBMenuItem(EditorBundle.message("customize.highlighting.level.menu.item"));
     popupMenu.add(hLevel);
 
-    final boolean isErrorsFirst = DaemonCodeAnalyzerSettings.getInstance().NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST;
+    final boolean isErrorsFirst = DaemonCodeAnalyzerSettings.getInstance().isNextErrorActionGoesToErrorsFirst();
     errorsFirst.setSelected(isErrorsFirst);
     next.setSelected(!isErrorsFirst);
-    hLevel.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        final PsiFile psiFile = myPsiFile;
-        if (psiFile == null) return;
-        final HectorComponent component = new HectorComponent(psiFile);
-        final Dimension dimension = component.getPreferredSize();
-        Point point = new Point(x, y);
-        component.showComponent(new RelativePoint(comp, new Point(point.x - dimension.width, point.y)));
-      }
+    hLevel.addActionListener(__ -> {
+      final PsiFile psiFile = myPsiFile;
+      if (psiFile == null) return;
+      final HectorComponent component = new HectorComponent(psiFile);
+      final Dimension dimension = component.getPreferredSize();
+      Point point = new Point(x, y);
+      component.showComponent(new RelativePoint(comp, new Point(point.x - dimension.width, point.y)));
     });
 
     final JBCheckboxMenuItem previewCheckbox = new JBCheckboxMenuItem(IdeBundle.message("checkbox.show.editor.preview.popup"), UISettings.getInstance().getShowEditorToolTip());
     popupMenu.addSeparator();
     popupMenu.add(previewCheckbox);
-    previewCheckbox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        UISettings.getInstance().setShowEditorToolTip(previewCheckbox.isSelected());
-        UISettings.getInstance().fireUISettingsChanged();
-      }
+    previewCheckbox.addActionListener(__ -> {
+      UISettings.getInstance().setShowEditorToolTip(previewCheckbox.isSelected());
+      UISettings.getInstance().fireUISettingsChanged();
     });
 
     PsiFile file = myPsiFile;

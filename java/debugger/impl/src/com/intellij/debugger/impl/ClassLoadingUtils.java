@@ -34,7 +34,7 @@ public class ClassLoadingUtils {
       Method ctorMethod = loaderClass.concreteMethodByName(JVMNameUtil.CONSTRUCTOR_NAME, "([Ljava/net/URL;Ljava/lang/ClassLoader;)V");
       ClassLoaderReference reference = (ClassLoaderReference)process.newInstance(context, loaderClass, ctorMethod,
                                                                                  Arrays.asList(emptyUrlArray, context.getClassLoader()));
-      DebuggerUtilsEx.keep(reference, context);
+      context.keep(reference);
       return reference;
     }
     catch (Exception e) {

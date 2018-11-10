@@ -1,26 +1,29 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.stream.Stream;
 
 public class MutationSignature {
   public static final String ATTR_MUTATES = "mutates";
-  private static final String CONTRACT_ANNOTATION = "org.jetbrains.annotations.Contract";
-  private static final MutationSignature UNKNOWN = new MutationSignature(false, new boolean[0]);
-  private static final MutationSignature PURE = new MutationSignature(false, new boolean[0]);
-  public static final String INVALID_TOKEN_MESSAGE = "Invalid token: %s; supported are 'this', 'arg1', 'arg2', etc.";
+  static final MutationSignature UNKNOWN = new MutationSignature(false, new boolean[0]);
+  static final MutationSignature PURE = new MutationSignature(false, new boolean[0]);
+  public static final String INVALID_TOKEN_MESSAGE = "Invalid token: %s; supported are 'this', 'param1', 'param2', etc.";
   private final boolean myThis;
-  private final boolean[] myArgs;
+  private final boolean[] myParameters;
 
-  private MutationSignature(boolean mutatesThis, boolean[] args) {
+  private MutationSignature(boolean mutatesThis, boolean[] params) {
     myThis = mutatesThis;
-    myArgs = args;
+    myParameters = params;
   }
 
   public boolean mutatesThis() {
@@ -28,7 +31,7 @@ public class MutationSignature {
   }
 
   public boolean mutatesArg(int n) {
-    return n < myArgs.length && myArgs[n];
+    return n < myParameters.length && myParameters[n];
   }
 
   public boolean preservesThis() {
@@ -37,6 +40,33 @@ public class MutationSignature {
 
   public boolean preservesArg(int n) {
     return this != UNKNOWN && !mutatesArg(n);
+  }
+
+  /**
+   * Returns a stream of expressions which are mutated by given signature assuming that supplied call
+   * resolves to the method with this signature.
+   *
+   * @param call a call which resolves to the method with this mutation signature
+   * @return a stream of expressions which are mutated by this call. If qualifier is omitted, but mutated,
+   * a non-physical {@link PsiThisExpression} might be returned.
+   */
+  public Stream<PsiExpression> mutatedExpressions(PsiMethodCallExpression call) {
+    PsiExpression[] args = call.getArgumentList().getExpressions();
+    StreamEx<PsiExpression> elements =
+      IntStreamEx.range(Math.min(myParameters.length, MethodCallUtils.isVarArgCall(call) ? args.length - 1 : args.length))
+        .filter(idx -> myParameters[idx]).elements(args);
+    return myThis ? elements.prepend(ExpressionUtils.getQualifierOrThis(call.getMethodExpression())) : elements;
+  }
+
+  /**
+   * @return true if known to mutate any parameter or receiver; false if pure or not known
+   */
+  public boolean mutatesAnything() {
+    if (myThis) return true;
+    for (boolean parameter : myParameters) {
+      if (parameter) return true;
+    }
+    return false;
   }
 
   /**
@@ -55,15 +85,15 @@ public class MutationSignature {
       if (part.equals("this")) {
         mutatesThis = true;
       }
-      else if (part.equals("arg")) {
+      else if (part.equals("param")) {
         if (args.length == 0) {
           args = new boolean[] {true};
         } else {
           args[0] = true;
         }
       }
-      else if (part.startsWith("arg")) {
-        int argNum = Integer.parseInt(part.substring("arg".length()));
+      else if (part.startsWith("param")) {
+        int argNum = Integer.parseInt(part.substring("param".length()));
         if (argNum < 0 || argNum > 255) {
           throw new IllegalArgumentException(String.format(INVALID_TOKEN_MESSAGE, part));
         }
@@ -93,11 +123,11 @@ public class MutationSignature {
         return "Static method cannot mutate 'this'";
       }
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (ms.myArgs.length > parameters.length) {
-        return "Reference to parameter #" + ms.myArgs.length + " is invalid";
+      if (ms.myParameters.length > parameters.length) {
+        return "Reference to parameter #" + ms.myParameters.length + " is invalid";
       }
-      for (int i = 0; i < ms.myArgs.length; i++) {
-        if (ms.myArgs[i]) {
+      for (int i = 0; i < ms.myParameters.length; i++) {
+        if (ms.myParameters[i]) {
           PsiType type = parameters[i].getType();
           if (ClassUtils.isImmutable(type)) {
             return "Parameter #" + (i + 1) + " has immutable type '" + type.getPresentableText() + "'";
@@ -114,21 +144,6 @@ public class MutationSignature {
   @NotNull
   public static MutationSignature fromMethod(@Nullable PsiMethod method) {
     if (method == null) return UNKNOWN;
-    PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, CONTRACT_ANNOTATION);
-    if (annotation == null) return UNKNOWN;
-    PsiAnnotationMemberValue value = annotation.findAttributeValue(ATTR_MUTATES);
-    if (value instanceof PsiLiteralExpression) {
-      Object text = ((PsiLiteralExpression)value).getValue();
-      if (text instanceof String) {
-        try {
-          return parse((String)text);
-        }
-        catch (IllegalArgumentException ignored) { }
-      }
-    }
-    if(ControlFlowAnalyzer.isPure(method)) {
-      return PURE;
-    }
-    return UNKNOWN;
+    return JavaMethodContractUtil.getContractInfo(method).getMutationSignature();
   }
 }

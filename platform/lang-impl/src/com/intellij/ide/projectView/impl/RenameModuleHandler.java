@@ -81,7 +81,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
   private static class MyInputValidator implements InputValidator {
     private final Project myProject;
     private final Module myModule;
-    public MyInputValidator(Project project, Module module) {
+    MyInputValidator(Project project, Module module) {
       myProject = project;
       myModule = module;
     }

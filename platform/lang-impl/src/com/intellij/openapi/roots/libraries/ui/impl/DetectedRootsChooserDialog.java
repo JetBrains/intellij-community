@@ -237,7 +237,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
       myFile = file;
     }
 
-    public VirtualFileCheckedTreeNode(SuggestedChildRootInfo rootInfo) {
+    VirtualFileCheckedTreeNode(SuggestedChildRootInfo rootInfo) {
       super(rootInfo);
       myFile = rootInfo.getDetectedRoot().getFile();
     }

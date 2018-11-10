@@ -22,6 +22,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorEx;
 import com.intellij.packaging.elements.CompositePackagingElementType;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -40,11 +41,11 @@ public class AddCompositeElementAction extends DumbAwareAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     myArtifactEditor.addNewPackagingElement(myElementType);
   }
 
-  public static void addCompositeCreateActions(List<AnAction> actions, final ArtifactEditorEx artifactEditor) {
+  public static void addCompositeCreateActions(List<? super AnAction> actions, final ArtifactEditorEx artifactEditor) {
     for (CompositePackagingElementType packagingElementType : PackagingElementFactory.getInstance().getCompositeElementTypes()) {
       actions.add(new AddCompositeElementAction(artifactEditor, packagingElementType));
     }

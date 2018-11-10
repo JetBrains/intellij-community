@@ -24,27 +24,35 @@ import com.intellij.psi.*;
 public class ClassReferenceVisitorAdapter implements ClassReferenceVisitor {
   public static final ClassReferenceVisitorAdapter INSTANCE = new ClassReferenceVisitorAdapter();
 
+  @Override
   public void visitReferenceExpression(PsiReferenceExpression referenceExpression) {
   }
 
+  @Override
   public void visitLocalVariableDeclaration(PsiLocalVariable variable, ClassReferenceVisitor.TypeOccurence occurence) {
   }
 
+  @Override
   public void visitFieldDeclaration(PsiField field, ClassReferenceVisitor.TypeOccurence occurence) {
   }
 
+  @Override
   public void visitParameterDeclaration(PsiParameter parameter, ClassReferenceVisitor.TypeOccurence occurence) {
   }
 
+  @Override
   public void visitMethodReturnType(PsiMethod method, ClassReferenceVisitor.TypeOccurence occurence) {
   }
 
+  @Override
   public void visitTypeCastExpression(PsiTypeCastExpression typeCastExpression, ClassReferenceVisitor.TypeOccurence occurence) {
   }
 
+  @Override
   public void visitNewExpression(PsiNewExpression newExpression, ClassReferenceVisitor.TypeOccurence occurence) {
   }
 
+  @Override
   public void visitOther(PsiElement ref) {
   }
 

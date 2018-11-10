@@ -26,8 +26,6 @@ public class GroovyCompilerGradleConfigurationHandler implements ConfigurationHa
 
     final GroovyCompilerConfiguration compilerConfiguration = GroovyCompilerConfiguration.getInstance(project);
 
-    asString(configurationMap.get("heapSize"), (String heapSize) -> compilerConfiguration.setHeapSize(heapSize));
-
     final ExcludedEntriesConfiguration excludesConfig = (ExcludedEntriesConfiguration)compilerConfiguration.getExcludeFromStubGeneration();
     asList(configurationMap.get("excludes"), list -> {
       for (Object o : list) {
@@ -47,12 +45,6 @@ public class GroovyCompilerGradleConfigurationHandler implements ConfigurationHa
         });
       }
     });
-  }
-
-  private static void asString(Object value, Consumer<String> consumer) {
-    if (value instanceof String) {
-      consumer.consume((String)value);
-    }
   }
 
   private static void asList(Object value, Consumer<List> consumer) {

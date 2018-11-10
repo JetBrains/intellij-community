@@ -1,29 +1,14 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.junit.Assert;
 
 /**
  * @author Dmitry Avdeev
@@ -34,17 +19,13 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myHistory = new IdeDocumentHistoryImpl(getProject(), EditorFactory.getInstance(),
-                                           myManager, VirtualFileManager.getInstance(), CommandProcessor.getInstance(), ToolWindowManager
-                                             .getInstance(getProject()));
-    myHistory.projectOpened();
+    myHistory = new IdeDocumentHistoryImpl(getProject(), myManager);
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      myHistory.projectClosed();
-      myHistory.disposeComponent();
+      Disposer.dispose(myHistory);
     }
     finally {
       myHistory = null;
@@ -76,5 +57,20 @@ public class NewDocumentHistoryTest extends HeavyFileEditorManagerTestCase {
     VirtualFile[] files = myManager.getSelectedFiles();
     assertEquals(1, files.length);
     assertEquals("1.txt", files[0].getName());
+  }
+
+  public void testMergingCommands() {
+    VirtualFile file1 = getFile("/src/1.txt");
+    VirtualFile file2 = getFile("/src/2.txt");
+    VirtualFile file3 = getFile("/src/3.txt");
+
+    myManager.openFile(file1, true);
+    myManager.openFile(file2, true);
+    Object group = new Object();
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> {}, null, group);
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> myManager.openFile(file3, true), null, group);
+    myHistory.back();
+    VirtualFile[] selectedFiles = myManager.getSelectedFiles();
+    Assert.assertArrayEquals(new VirtualFile[] {file2}, selectedFiles);
   }
 }

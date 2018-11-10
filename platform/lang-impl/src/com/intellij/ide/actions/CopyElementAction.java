@@ -26,6 +26,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
+import org.jetbrains.annotations.NotNull;
 
 public class CopyElementAction extends AnAction {
 
@@ -35,7 +36,7 @@ public class CopyElementAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
@@ -47,7 +48,8 @@ public class CopyElementAction extends AnAction {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
 
-    PsiDirectory defaultTargetDirectory;
+    PsiElement targetPsiElement = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
+    PsiDirectory defaultTargetDirectory = targetPsiElement instanceof PsiDirectory ? (PsiDirectory)targetPsiElement : null;
     if (editor != null) {
       PsiElement aElement = getTargetElement(editor, project);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -56,10 +58,8 @@ public class CopyElementAction extends AnAction {
       if (aElement == null || !CopyHandler.canCopy(elements)) {
         elements = new PsiElement[]{file};
       }
-      defaultTargetDirectory = file.getContainingDirectory();
-    } else {
-      PsiElement element = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
-      defaultTargetDirectory = element instanceof PsiDirectory ? (PsiDirectory)element : null;
+    }
+    else {
       elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     }
     doCopy(elements, defaultTargetDirectory);
@@ -70,7 +70,7 @@ public class CopyElementAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);

@@ -22,10 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface StatisticsService {
-
-  @Deprecated  // to be removed in 2018.1
-  ExtensionPointName<StatisticsServiceEP> EP_NAME = ExtensionPointName.create("com.intellij.statisticsService");
-
   StatisticsResult send();
 
   Notification createNotification(@NotNull String groupDisplayId, @Nullable NotificationListener listener);

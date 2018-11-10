@@ -142,11 +142,13 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     if (condition == null) {
       return;
     }
-    CommentTracker tr = new CommentTracker();
     PsiReturnStatement nextStatement = ControlFlowUtils.getNextReturnStatement(statement);
+    if (nextStatement == null) {
+      return;
+    }
+    CommentTracker tr = new CommentTracker();
     @NonNls final String newStatement = "return " + tr.text(condition) + ';';
     PsiReplacementUtil.replaceStatement(statement, newStatement, tr);
-    assert nextStatement != null;
     if (!ControlFlowUtils.isReachable(nextStatement)) {
       nextStatement.delete();
     }
@@ -219,7 +221,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
   private static void replaceSimplifiableImplicitAssignmentNegated(PsiIfStatement statement) {
     final PsiElement prevStatement = PsiTreeUtil.skipWhitespacesBackward(statement);
     final PsiExpression condition = statement.getCondition();
-    if (condition == null) {
+    if (condition == null || prevStatement == null) {
       return;
     }
     final String conditionText = BoolUtils.getNegatedExpressionText(condition);
@@ -234,7 +236,6 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final String lhsText = lhs.getText();
     PsiReplacementUtil.replaceStatement(statement, lhsText + operand + conditionText + ';');
-    assert prevStatement != null;
     prevStatement.delete();
   }
 
@@ -243,19 +244,23 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     if (condition == null) {
       return;
     }
-    final String conditionText = BoolUtils.getNegatedExpressionText(condition);
+    CommentTracker commentTracker = new CommentTracker();
+    final String conditionText = BoolUtils.getNegatedExpressionText(condition, commentTracker);
     final PsiReturnStatement nextStatement = ControlFlowUtils.getNextReturnStatement(statement);
     if (nextStatement == null) {
       return;
     }
-    final PsiElement nextSibling = statement.getNextSibling();
+    PsiElement nextSibling = statement.getNextSibling();
     if (nextSibling != nextStatement && nextStatement.getParent() == statement.getParent()) {
-      statement.getParent().deleteChildRange(nextSibling, nextStatement.getPrevSibling());
+      while (nextSibling != nextStatement && nextSibling != null) {
+        commentTracker.delete(nextSibling);
+        nextSibling = nextSibling.getNextSibling();
+      }
     }
     @NonNls final String newStatement = "return " + conditionText + ';';
-    PsiReplacementUtil.replaceStatement(statement, newStatement);
+    PsiReplacementUtil.replaceStatement(statement, newStatement, commentTracker);
     if (!ControlFlowUtils.isReachable(nextStatement)) {
-      nextStatement.delete();
+      new CommentTracker().deleteAndRestoreComments(nextStatement);
     }
   }
 

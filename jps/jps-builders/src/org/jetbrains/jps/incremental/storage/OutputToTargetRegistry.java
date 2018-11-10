@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.Ref;
@@ -20,7 +6,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IntInlineKeyDescriptor;
 import gnu.trove.TIntHashSet;
-import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -33,6 +18,7 @@ import java.util.Collections;
  */
 public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHashSet>{
   private static final DataExternalizer<TIntHashSet> DATA_EXTERNALIZER = new DataExternalizer<TIntHashSet>() {
+    @Override
     public void save(@NotNull final DataOutput out, TIntHashSet value) throws IOException {
       final Ref<IOException> exRef = Ref.create(null);
       value.forEach(value1 -> {
@@ -51,6 +37,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
       }
     }
 
+    @Override
     public TIntHashSet read(@NotNull DataInput in) throws IOException {
       final TIntHashSet result = new TIntHashSet();
       final DataInputStream stream = (DataInputStream)in;
@@ -60,15 +47,15 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
       return result;
     }
   };
-  
+
   OutputToTargetRegistry(File storePath) throws IOException {
     super(storePath, new IntInlineKeyDescriptor(), DATA_EXTERNALIZER);
   }
-  
+
   protected void addMapping(String outputPath, int buildTargetId) throws IOException {
     addMapping(Collections.singleton(outputPath), buildTargetId);
   }
-  
+
   protected void addMapping(Collection<String> outputPaths, int buildTargetId) throws IOException {
     final TIntHashSet set = new TIntHashSet();
     set.add(buildTargetId);
@@ -103,7 +90,7 @@ public class OutputToTargetRegistry extends AbstractStateStorage<Integer, TIntHa
       }
     }
   }
-  
+
   public Collection<String> getSafeToDeleteOutputs(Collection<String> outputPaths, int currentTargetId) throws IOException {
     final int size = outputPaths.size();
     if (size == 0) {

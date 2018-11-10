@@ -216,7 +216,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @NotNull private final String myChangelistId;
     private final boolean myIsExcludedFromCommit;
 
-    public MySimpleDiffChange(@NotNull LineFragment fragment,
+    MySimpleDiffChange(@NotNull LineFragment fragment,
                               boolean isExcluded,
                               boolean isSkipped,
                               @NotNull String changelistId,
@@ -248,7 +248,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     }
 
     private class ExcludeGutterOperation extends GutterOperation {
-      public ExcludeGutterOperation() {
+      ExcludeGutterOperation() {
         super(Side.RIGHT);
       }
 
@@ -259,7 +259,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         Icon icon = myIsExcludedFromCommit ? AllIcons.Diff.GutterCheckBox : AllIcons.Diff.GutterCheckBoxSelected;
         return new DiffGutterRenderer(icon, "Include into commit") {
           @Override
-          protected void performAction(AnActionEvent e) {
+          protected void performAction(@NotNull AnActionEvent e) {
             if (!isValid()) return;
 
             PartialLocalLineStatusTracker tracker = getViewer().getPartialTracker();
@@ -297,7 +297,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   private class MyLineStatusTrackerManagerListener extends LineStatusTrackerManager.ListenerAdapter {
     @NotNull private final PartialLocalLineStatusTracker.Listener myListener;
 
-    public MyLineStatusTrackerManagerListener(@NotNull PartialLocalLineStatusTracker.Listener trackerListener) {
+    MyLineStatusTrackerManagerListener(@NotNull PartialLocalLineStatusTracker.Listener trackerListener) {
       myListener = trackerListener;
     }
 
@@ -314,7 +314,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   private class MoveSelectedChangesToAnotherChangelistAction extends DumbAwareAction {
     private final boolean myShortcut;
 
-    public MoveSelectedChangesToAnotherChangelistAction(boolean shortcut) {
+    MoveSelectedChangesToAnotherChangelistAction(boolean shortcut) {
       myShortcut = shortcut;
       copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist"));
     }
@@ -347,7 +347,6 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       }
 
       e.getPresentation().setText(text);
-      e.getPresentation().setIcon(AllIcons.Actions.MoveToAnotherChangelist);
 
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(!selectedChanges.isEmpty());
@@ -385,7 +384,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
   private class ExcludeSelectedChangesFromCommitAction extends DumbAwareAction {
     private final boolean myShortcut;
 
-    public ExcludeSelectedChangesFromCommitAction(boolean shortcut) {
+    ExcludeSelectedChangesFromCommitAction(boolean shortcut) {
       myShortcut = shortcut;
       ActionUtil.copyFrom(this, "Vcs.Diff.ExcludeChangedLinesFromCommit");
     }
@@ -461,7 +460,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @NotNull public final List<String> affectedChangelist;
     @Nullable public final TrackerDiffData diffData;
 
-    public TrackerData(boolean isReleased,
+    TrackerData(boolean isReleased,
                        @NotNull List<String> affectedChangelist,
                        @Nullable TrackerDiffData diffData) {
       this.isReleased = isReleased;
@@ -476,7 +475,7 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
     @NotNull public final CharSequence vcsText;
     @NotNull public final CharSequence trackerVcsText;
 
-    public TrackerDiffData(@Nullable List<LocalRange> ranges,
+    TrackerDiffData(@Nullable List<LocalRange> ranges,
                            @NotNull CharSequence localText,
                            @NotNull CharSequence vcsText,
                            @NotNull CharSequence trackerVcsText) {

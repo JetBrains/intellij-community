@@ -32,7 +32,7 @@ public class FieldSelectioner extends WordSelectioner {
     return e instanceof PsiField && e.getLanguage() == JavaLanguage.INSTANCE;
   }
 
-  private static void addRangeElem(final List<TextRange> result,
+  private static void addRangeElem(final List<? super TextRange> result,
                                    CharSequence editorText,
                                    final PsiElement first,
                                    final int end) {

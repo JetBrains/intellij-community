@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class FormatTextRanges implements FormattingRangesInfo {
   private final List<TextRange> myInsertedRanges;
@@ -98,22 +97,16 @@ public class FormatTextRanges implements FormattingRangesInfo {
   }
 
   public List<TextRange> getTextRanges() {
-    return myStorage
-      .getRanges()
-      .stream()
-      .map(FormatTextRange::getTextRange)
-      .collect(Collectors.toList());
+    return ContainerUtil.map(myStorage
+                               .getRanges(), FormatTextRange::getTextRange);
   }
   
   public List<TextRange> getExtendedFormattingRanges() {
-    return myStorage
-      .getRanges()
-      .stream()
-      .map((range) -> {
-        TextRange textRange = range.getTextRange();
-        return new UnfairTextRange(textRange.getStartOffset() - 500, textRange.getEndOffset() + 500);
-      })
-      .collect(Collectors.toList());
+    return ContainerUtil.map(myStorage
+                               .getRanges(), (range) -> {
+      TextRange textRange = range.getTextRange();
+      return new UnfairTextRange(textRange.getStartOffset() - 500, textRange.getEndOffset() + 500);
+    });
   }
 
   private static List<TextRange> optimizedChangedRanges(@NotNull List<TextRange> allChangedRanges) {

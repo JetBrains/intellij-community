@@ -15,10 +15,12 @@
  */
 package com.intellij.codeInsight.actions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -33,6 +35,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
@@ -53,6 +56,7 @@ public class FileInEditorProcessor {
   private static final Logger LOG = Logger.getInstance(FileInEditorProcessor.class);
 
   private final Editor myEditor;
+  private final boolean myShouldCleanupCode;
 
   private boolean myNoChangesDetected = false;
   private final boolean myProcessChangesTextOnly;
@@ -74,6 +78,7 @@ public class FileInEditorProcessor {
     myProject = file.getProject();
     myEditor = editor;
 
+    myShouldCleanupCode = runOptions.isCodeCleanup();
     myShouldOptimizeImports = runOptions.isOptimizeImports();
     myShouldRearrangeCode = runOptions.isRearrangeCode();
     myProcessSelectedText = myEditor != null && runOptions.getTextRangeType() == SELECTED_TEXT;
@@ -81,6 +86,13 @@ public class FileInEditorProcessor {
   }
 
   public void processCode() {
+    if (!CodeStyle.isFormattingEnabled(myFile)) {
+      if (!isInHeadlessMode() && !myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
+        showHint(myEditor, new DisabledFormattingMessageBuilder());
+      }
+      return;
+    }
+
     if (myShouldOptimizeImports) {
       myProcessor = new OptimizeImportsProcessor(myProject, myFile);
     }
@@ -94,28 +106,31 @@ public class FileInEditorProcessor {
       myProcessor = mixWithRearrangeProcessor(myProcessor);
     }
 
+    if (myShouldCleanupCode) {
+      myProcessor = mixWithCleanupProcessor(myProcessor);
+    }
+
     if (shouldNotify()) {
       myProcessor.setCollectInfo(true);
       myProcessor.setPostRunnable(() -> {
-        String message = prepareMessage();
         if (!myEditor.isDisposed() && myEditor.getComponent().isShowing()) {
-          HyperlinkListener hyperlinkListener = new HyperlinkAdapter() {
-            @Override
-            protected void hyperlinkActivated(HyperlinkEvent e) {
-              AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
-              DataManager manager = DataManager.getInstance();
-              if (manager != null) {
-                DataContext context = manager.getDataContext(myEditor.getContentComponent());
-                action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
-              }
-            }
-          };
-          showHint(myEditor, message, hyperlinkListener);
+          showHint(myEditor, new FormattedMessageBuilder());
         }
       });
     }
 
     myProcessor.run();
+  }
+
+  @NotNull
+  private AbstractLayoutCodeProcessor mixWithCleanupProcessor(@NotNull AbstractLayoutCodeProcessor processor) {
+    if (myProcessSelectedText) {
+      processor = new CodeCleanupCodeProcessor(processor, myEditor.getSelectionModel());
+    }
+    else {
+      processor = new CodeCleanupCodeProcessor(processor);
+    }
+    return processor;
   }
 
   private AbstractLayoutCodeProcessor mixWithRearrangeProcessor(@NotNull AbstractLayoutCodeProcessor processor) {
@@ -150,53 +165,6 @@ public class FileInEditorProcessor {
   }
 
   @NotNull
-  private String prepareMessage() {
-    StringBuilder builder = new StringBuilder("<html>");
-    LayoutCodeInfoCollector notifications = myProcessor.getInfoCollector();
-    LOG.assertTrue(notifications != null);
-
-    if (notifications.isEmpty() && !myNoChangesDetected) {
-      if (myProcessChangesTextOnly) {
-        builder.append("No lines changed: changes since last revision are already properly formatted").append("<br>");
-      }
-      else {
-        builder.append("No lines changed: content is already properly formatted").append("<br>");
-      }
-    }
-    else {
-      if (notifications.hasReformatOrRearrangeNotification()) {
-        String reformatInfo = notifications.getReformatCodeNotification();
-        String rearrangeInfo = notifications.getRearrangeCodeNotification();
-
-        builder.append(joinWithCommaAndCapitalize(reformatInfo, rearrangeInfo));
-
-        if (myProcessChangesTextOnly) {
-          builder.append(" in changes since last revision");
-        }
-
-        builder.append("<br>");
-      }
-      else if (myNoChangesDetected) {
-        builder.append("No lines changed: no changes since last revision").append("<br>");
-      }
-
-      String optimizeImportsNotification = notifications.getOptimizeImportsNotification();
-      if (optimizeImportsNotification != null) {
-        builder.append(StringUtil.capitalize(optimizeImportsNotification)).append("<br>");
-      }
-    }
-
-    String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ShowReformatFileDialog"));
-    String color = ColorUtil.toHex(JBColor.gray);
-
-    builder.append("<span style='color:#").append(color).append("'>")
-           .append("<a href=''>Show</a> reformat dialog: ").append(shortcutText).append("</span>")
-           .append("</html>");
-
-    return builder.toString();
-  }
-
-  @NotNull
   private static String joinWithCommaAndCapitalize(String reformatNotification, String rearrangeNotification) {
     String firstNotificationLine = reformatNotification != null ? reformatNotification : rearrangeNotification;
     if (reformatNotification != null && rearrangeNotification != null) {
@@ -211,6 +179,10 @@ public class FileInEditorProcessor {
     Caret currentCaret = editor.getCaretModel().getCurrentCaret();
     Point caretPoint = editor.visualPositionToXY(currentCaret.getVisualPosition());
     return visibleArea.contains(caretPoint);
+  }
+
+  private static void showHint(@NotNull Editor editor, @NotNull MessageBuilder messageBuilder) {
+    showHint(editor, messageBuilder.getMessage(), messageBuilder.createHyperlinkListener());
   }
 
   public static void showHint(@NotNull Editor editor, @NotNull String info, @Nullable HyperlinkListener hyperlinkListener) {
@@ -256,11 +228,111 @@ public class FileInEditorProcessor {
   }
 
   private boolean shouldNotify() {
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() || (application.isHeadlessEnvironment() && !application.isOnAir())) {
-      return false;
-    }
+    if (isInHeadlessMode()) return false;
     EditorSettingsExternalizable.OptionSet editorOptions = EditorSettingsExternalizable.getInstance().getOptions();
     return editorOptions.SHOW_NOTIFICATION_AFTER_REFORMAT_CODE_ACTION && myEditor != null && !myProcessSelectedText;
+  }
+
+  private static boolean isInHeadlessMode() {
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() || (application.isHeadlessEnvironment() && !application.isOnAir())) {
+      return true;
+    }
+    return false;
+  }
+
+  private class DisabledFormattingMessageBuilder extends MessageBuilder {
+    @NotNull
+    @Override
+    public String getMessage() {
+      VirtualFile virtualFile = myFile.getVirtualFile();
+      String name = virtualFile != null ? virtualFile.getName() : "the file";
+      return "<html>" +
+             "Formatting is disabled for " + name +
+             "<p><span><a href=''>Show settings...</a></span>" +
+             "</html>";
+    }
+
+    @Override
+    public Runnable getHyperlinkRunnable() {
+      return () -> ShowSettingsUtilImpl.showSettingsDialog(myProject, "preferences.sourceCode", "Do not format");
+    }
+  }
+
+  private class FormattedMessageBuilder extends MessageBuilder {
+    @Override
+    @NotNull
+    public String getMessage() {
+      StringBuilder builder = new StringBuilder("<html>");
+      LayoutCodeInfoCollector notifications = myProcessor.getInfoCollector();
+      LOG.assertTrue(notifications != null);
+
+      if (notifications.isEmpty() && !myNoChangesDetected) {
+        if (myProcessChangesTextOnly) {
+          builder.append("No lines changed: changes since last revision are already properly formatted").append("<br>");
+        }
+        else {
+          builder.append("No lines changed: content is already properly formatted").append("<br>");
+        }
+      }
+      else {
+        if (notifications.hasReformatOrRearrangeNotification()) {
+          String reformatInfo = notifications.getReformatCodeNotification();
+          String rearrangeInfo = notifications.getRearrangeCodeNotification();
+
+          builder.append(joinWithCommaAndCapitalize(reformatInfo, rearrangeInfo));
+
+          if (myProcessChangesTextOnly) {
+            builder.append(" in changes since last revision");
+          }
+
+          builder.append("<br>");
+        }
+        else if (myNoChangesDetected) {
+          builder.append("No lines changed: no changes since last revision").append("<br>");
+        }
+
+        String optimizeImportsNotification = notifications.getOptimizeImportsNotification();
+        if (optimizeImportsNotification != null) {
+          builder.append(StringUtil.capitalize(optimizeImportsNotification)).append("<br>");
+        }
+      }
+
+      String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("ShowReformatFileDialog"));
+      String color = ColorUtil.toHex(JBColor.gray);
+
+      builder.append("<span style='color:#").append(color).append("'>")
+        .append("<a href=''>Show</a> reformat dialog: ").append(shortcutText).append("</span>")
+        .append("</html>");
+
+      return builder.toString();
+    }
+
+    @Override
+    public Runnable getHyperlinkRunnable() {
+      return () -> {
+        AnAction action = ActionManager.getInstance().getAction("ShowReformatFileDialog");
+        DataManager manager = DataManager.getInstance();
+        if (manager != null) {
+          DataContext context = manager.getDataContext(myEditor.getContentComponent());
+          action.actionPerformed(AnActionEvent.createFromAnAction(action, null, "", context));
+        }
+      };
+    }
+  }
+
+  private abstract static class MessageBuilder {
+    public abstract String getMessage();
+
+    public abstract Runnable getHyperlinkRunnable();
+
+    public final HyperlinkListener createHyperlinkListener() {
+      return new HyperlinkAdapter() {
+        @Override
+        protected void hyperlinkActivated(HyperlinkEvent e) {
+          getHyperlinkRunnable().run();
+        }
+      };
+    }
   }
 }

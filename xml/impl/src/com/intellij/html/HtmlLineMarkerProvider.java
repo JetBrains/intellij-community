@@ -22,6 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +35,8 @@ import java.util.Map;
  * @author Maxim.Mossienko
  */
 public class HtmlLineMarkerProvider implements LineMarkerProvider {
-  private final Map<Language, List<LineMarkerProvider>> embeddedLanguagesLineMarkerProviders = new THashMap<>();
+
+  private final Map<Language, List<LineMarkerProvider>> embeddedLanguagesLineMarkerProviders = ContainerUtil.newConcurrentMap();
 
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
@@ -44,6 +46,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
     if (!(language instanceof XMLLanguage)) {
       List<LineMarkerProvider> markerProviders = getAllLineMarkerProvidersForLanguage(language, embeddedLanguagesLineMarkerProviders);
       for (LineMarkerProvider provider : markerProviders) {
+        if (provider instanceof HtmlLineMarkerProvider) continue;
         LineMarkerInfo info = provider.getLineMarkerInfo(element);
         if (info != null) {
           return info;
@@ -83,6 +86,7 @@ public class HtmlLineMarkerProvider implements LineMarkerProvider {
         List<LineMarkerProvider> lineMarkerProviders = getAllLineMarkerProvidersForLanguage(language,
                                                                                             localEmbeddedLanguagesLineMarkerProviders);
         for (LineMarkerProvider provider : lineMarkerProviders) {
+          if (provider instanceof HtmlLineMarkerProvider) continue;
           if (embeddedLineMarkersWorkItems == null) embeddedLineMarkersWorkItems = new THashMap<>();
           List<PsiElement> elementList = embeddedLineMarkersWorkItems.computeIfAbsent(provider, k -> new ArrayList<>(5));
 

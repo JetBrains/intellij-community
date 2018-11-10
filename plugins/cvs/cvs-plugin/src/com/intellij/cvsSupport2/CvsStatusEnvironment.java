@@ -27,9 +27,9 @@ import com.intellij.openapi.cvsIntegration.CvsResult;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.update.*;
-import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -42,10 +42,12 @@ public class CvsStatusEnvironment implements UpdateEnvironment {
 
   }
 
+  @Override
   public void fillGroups(UpdatedFiles updatedFiles) {
     CvsUpdatePolicy.fillGroups(updatedFiles);
   }
 
+  @Override
   @NotNull
   public UpdateSession updateDirectories(@NotNull FilePath[] contentRoots, final UpdatedFiles updatedFiles,
                                          ProgressIndicator progressIndicator,
@@ -61,10 +63,12 @@ public class CvsStatusEnvironment implements UpdateEnvironment {
     return new UpdateSessionAdapter(result.getErrorsAndWarnings(), result.isCanceled());
   }
 
+  @Override
   public Configurable createConfigurable(Collection<FilePath> files) {
     return null;
   }
 
+  @Override
   public boolean validateOptions(final Collection<FilePath> roots) {
     return true;
   }

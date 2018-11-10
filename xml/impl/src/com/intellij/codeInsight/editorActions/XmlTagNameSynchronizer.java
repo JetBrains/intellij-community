@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
-import com.intellij.codeInsight.completion.XmlTagInsertHandler;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction;
@@ -29,16 +14,14 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
+import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -67,7 +50,8 @@ import java.util.Set;
 /**
  * @author Dennis.Ushakov
  */
-public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
+public class XmlTagNameSynchronizer implements CommandListener {
+  private static final Key<Boolean> SKIP_COMMAND = Key.create("tag.name.synchronizer.skip.command");
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<Language> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE,
                                                                              XMLLanguage.INSTANCE,
@@ -76,15 +60,15 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
   private static final Key<TagNameSynchronizer> SYNCHRONIZER_KEY = Key.create("tag_name_synchronizer");
   private final FileDocumentManager myFileDocumentManager;
 
-  public XmlTagNameSynchronizer(EditorFactory editorFactory, FileDocumentManager manager, CommandProcessor processor) {
+  public XmlTagNameSynchronizer(EditorFactory editorFactory, FileDocumentManager manager) {
     myFileDocumentManager = manager;
-    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+    editorFactory.addEditorFactoryListener(new EditorFactoryListener() {
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         installSynchronizer(event.getEditor());
       }
     }, ApplicationManager.getApplication());
-    processor.addCommandListener(this);
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(CommandListener.TOPIC, this);
   }
 
   private void installSynchronizer(final Editor editor) {
@@ -111,12 +95,6 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
   }
 
   @NotNull
-  @Override
-  public String getComponentName() {
-    return "XmlTagNameSynchronizer";
-  }
-
-  @NotNull
   private static TagNameSynchronizer[] findSynchronizers(final Document document) {
     if (!WebEditorOptions.getInstance().isSyncTagEditing() || document == null) return TagNameSynchronizer.EMPTY;
     final Editor[] editors = EditorFactory.getInstance().getEditors(document);
@@ -125,10 +103,20 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
   }
 
   @Override
-  public void beforeCommandFinished(CommandEvent event) {
+  public void beforeCommandFinished(@NotNull CommandEvent event) {
     final TagNameSynchronizer[] synchronizers = findSynchronizers(event.getDocument());
     for (TagNameSynchronizer synchronizer : synchronizers) {
       synchronizer.beforeCommandFinished();
+    }
+  }
+
+  public static void runWithoutCancellingSyncTagsEditing(@NotNull Document document, @NotNull Runnable runnable) {
+    document.putUserData(SKIP_COMMAND, Boolean.TRUE);
+    try {
+      runnable.run();
+    }
+    finally {
+      document.putUserData(SKIP_COMMAND, null);
     }
   }
 
@@ -143,7 +131,7 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
     private State myState = State.INITIAL;
     private final List<Couple<RangeMarker>> myMarkers = new SmartList<>();
 
-    public TagNameSynchronizer(Editor editor, Project project, Language language) {
+    private TagNameSynchronizer(Editor editor, Project project, Language language) {
       myEditor = editor;
       myLanguage = language;
       final Disposable disposable = ((EditorImpl)editor).getDisposable();
@@ -154,7 +142,7 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
     }
 
     @Override
-    public void beforeDocumentChange(DocumentEvent event) {
+    public void beforeDocumentChange(@NotNull DocumentEvent event) {
       if (!WebEditorOptions.getInstance().isSyncTagEditing()) return;
 
       final Document document = event.getDocument();
@@ -168,8 +156,9 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
       final CharSequence fragment = event.getNewFragment();
       final int newLength = event.getNewLength();
 
-      if (document.getUserData(XmlTagInsertHandler.ENFORCING_TAG) == Boolean.TRUE) {
+      if (document.getUserData(SKIP_COMMAND) == Boolean.TRUE) {
         // xml completion inserts extra space after tag name to ensure correct parsing
+        // js auto-import may change beginning of the document when component is imported
         // we need to ignore it
         return;
       }

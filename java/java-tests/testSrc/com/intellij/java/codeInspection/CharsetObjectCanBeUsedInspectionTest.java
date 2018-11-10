@@ -8,9 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class CharsetObjectCanBeUsedInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override
@@ -21,10 +18,6 @@ public class CharsetObjectCanBeUsedInspectionTest extends LightQuickFixParameter
   @Override
   protected Sdk getProjectJDK() {
     return IdeaTestUtil.getMockJdk9();
-  }
-
-  public void test() {
-    doAllTests();
   }
 
   @Override

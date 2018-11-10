@@ -46,6 +46,7 @@ public abstract class LookupArranger implements WeighingContext {
     item.putUserData(myMatcherKey, matcher);
   }
 
+  @Override
   @NotNull
   public String itemPattern(@NotNull LookupElement element) {
     String prefix = itemMatcher(element).getPrefix();
@@ -53,6 +54,7 @@ public abstract class LookupArranger implements WeighingContext {
     return additionalPrefix.isEmpty() ? prefix : prefix + additionalPrefix;
   }
 
+  @Override
   @NotNull
   public PrefixMatcher itemMatcher(@NotNull LookupElement item) {
     PrefixMatcher matcher = item.getUserData(myMatcherKey);

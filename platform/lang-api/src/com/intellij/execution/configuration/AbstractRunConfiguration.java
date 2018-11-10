@@ -1,12 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configuration;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.openapi.project.Project;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -15,7 +14,7 @@ import java.util.Map;
 /**
  * @author traff
  */
-public abstract class AbstractRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule> {
+public abstract class AbstractRunConfiguration extends ModuleBasedConfiguration<RunConfigurationModule, Element> {
   private final Map<String, String> myEnvs = new LinkedHashMap<>();
   private boolean myPassParentEnvs = true;
 

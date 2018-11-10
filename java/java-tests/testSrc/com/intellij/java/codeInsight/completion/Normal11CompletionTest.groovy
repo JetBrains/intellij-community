@@ -5,7 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.LightProjectDescriptor 
 
 class Normal11CompletionTest extends NormalCompletionTestCase {
-  final LightProjectDescriptor projectDescriptor = JAVA_11_PREVIEW
+  final LightProjectDescriptor projectDescriptor = JAVA_11
 
   void "test local var"() {
     assert completeVar("{ <caret> }")

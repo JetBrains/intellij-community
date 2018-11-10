@@ -53,7 +53,7 @@ class MojoAnnotationInfo implements JavadocTagInfo {
 
   private final String myName;
 
-  public MojoAnnotationInfo(@NotNull String name) {
+  MojoAnnotationInfo(@NotNull String name) {
     myName = name;
   }
 

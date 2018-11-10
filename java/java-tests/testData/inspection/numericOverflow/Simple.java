@@ -86,4 +86,10 @@ class c {
   public void checkDonotOverlap(long lower) {
       final long upper =  lower + <warning descr="Numeric overflow in expression">1000 * 31536000</warning>;
   }
+
+  int shiftNeg = 1 << 31;
+  int shiftOverflow = <warning descr="Numeric overflow in expression">2 << 31</warning>;
+  long shiftLongNeg = 1L << 63;
+  long shiftLongOk = 2L << 31;
+  long shiftLongOverflow = <warning descr="Numeric overflow in expression">2L << 63</warning>;
 }

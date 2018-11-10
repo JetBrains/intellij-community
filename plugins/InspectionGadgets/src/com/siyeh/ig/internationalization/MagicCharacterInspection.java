@@ -15,13 +15,74 @@
  */
 package com.siyeh.ig.internationalization;
 
+import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiType;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceConstantFix;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.NotNull;
 
-public class MagicCharacterInspection extends MagicCharacterInspectionBase {
+public class MagicCharacterInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new IntroduceConstantFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message("magic.character.display.name");
+  }
+
+  @Override
+  @NotNull
+  public String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "magic.character.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new CharacterLiteralsShouldBeExplicitlyDeclaredVisitor();
+  }
+
+  private static class CharacterLiteralsShouldBeExplicitlyDeclaredVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitLiteralExpression(
+      @NotNull PsiLiteralExpression expression) {
+      super.visitLiteralExpression(expression);
+      final PsiType type = expression.getType();
+      if (type == null) {
+        return;
+      }
+      if (!type.equals(PsiType.CHAR)) {
+        return;
+      }
+      final String text = expression.getText();
+      if (text == null) {
+        return;
+      }
+      if (text.equals(" ")) {
+        return;
+      }
+      if (ExpressionUtils.isDeclaredConstant(expression)) {
+        return;
+      }
+      if (NonNlsUtils.isNonNlsAnnotatedUse(expression)) {
+        return;
+      }
+      registerError(expression);
+    }
   }
 }

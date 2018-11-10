@@ -93,7 +93,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
     else {
       PsiManagerEx manager = getManager();
-      PsiReferenceExpression classRef = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory().createReferenceExpression(
+      PsiReferenceExpression classRef = JavaPsiFacade.getElementFactory(manager.getProject()).createReferenceExpression(
         qualifierClass);
       final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
       LeafElement dot = Factory.createSingleLeafElement(JavaTokenType.DOT, ".", 0, 1, treeCharTab, manager);
@@ -107,9 +107,10 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     assert importList != null;
     final String qualifiedName  = qualifierClass.getQualifiedName();
     final List<PsiJavaCodeReferenceElement> refs = getImportsFromClass(importList, qualifiedName);
-    if (refs.size() < JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject()).getNamesCountToUseImportOnDemand() ||
+    JavaCodeStyleSettingsFacade javaCodeStyleSettingsFacade = JavaCodeStyleSettingsFacade.getInstance(qualifierClass.getProject());
+    if (!javaCodeStyleSettingsFacade.isToImportInDemand(qualifiedName) && refs.size() + 1 < javaCodeStyleSettingsFacade.getNamesCountToUseImportOnDemand() || 
         JavaCodeStyleManager.getInstance(qualifierClass.getProject()).hasConflictingOnDemandImport((PsiJavaFile)importList.getContainingFile(), qualifierClass, staticName)) {
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass, staticName));
+      importList.add(JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createImportStaticStatement(qualifierClass, staticName));
     } else {
       for (PsiJavaCodeReferenceElement ref : refs) {
         final PsiImportStaticStatement importStatement = PsiTreeUtil.getParentOfType(ref, PsiImportStaticStatement.class);
@@ -117,7 +118,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
           importStatement.delete();
         }
       }
-      importList.add(JavaPsiFacade.getInstance(qualifierClass.getProject()).getElementFactory().createImportStaticStatement(qualifierClass,
+      importList.add(JavaPsiFacade.getElementFactory(qualifierClass.getProject()).createImportStaticStatement(qualifierClass,
                                                                                                                             "*"));
     }
   }
@@ -437,7 +438,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     IElementType i = getLastChildNode().getElementType();
     boolean resolvingToMethod = element instanceof PsiMethod;
     if (i == JavaTokenType.IDENTIFIER) {
@@ -459,13 +460,6 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     if (parentIsMethodCall != resolvingToMethod) return false;
 
     return element.getManager().areElementsEquivalent(element, advancedResolve(true).getElement());
-  }
-
-  @NotNull
-  @Override
-  public Object[] getVariants() {
-    // this reference's variants are rather obtained with processVariants()
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
@@ -496,10 +490,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
         if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
           myVarNames.add(element.getName());
         }
-        if (element instanceof PsiField && myVarNames.contains(element.getName())) {
-          return false;
-        }
-        return true;
+        return !(element instanceof PsiField) || !myVarNames.contains(element.getName());
       }
 
       private boolean shouldProcessMethod(@NotNull PsiMethod method) {
@@ -614,7 +605,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     if (getQualifierExpression() != null) {
       return renameDirectly(newElementName);
     }
@@ -636,7 +627,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
     final PsiClass psiClass = importStaticStatement.resolveTargetClass();
     if (psiClass == null) return renameDirectly(newElementName);
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
     final PsiReferenceExpression expression = (PsiReferenceExpression)factory.createExpressionFromText("X." + newElementName, this);
     final PsiReferenceExpression result = (PsiReferenceExpression)replace(expression);
     ((PsiReferenceExpression)result.getQualifierExpression()).bindToElement(psiClass);
@@ -650,7 +641,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
     final String oldRefName = oldIdentifier.getText();
     if (PsiKeyword.THIS.equals(oldRefName) || PsiKeyword.SUPER.equals(oldRefName) || Comparing.strEqual(oldRefName, newElementName)) return this;
-    PsiIdentifier identifier = JavaPsiFacade.getInstance(getProject()).getElementFactory().createIdentifier(newElementName);
+    PsiIdentifier identifier = JavaPsiFacade.getElementFactory(getProject()).createIdentifier(newElementName);
     oldIdentifier.replace(identifier);
     return this;
   }

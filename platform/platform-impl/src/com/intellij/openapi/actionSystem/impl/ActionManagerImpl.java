@@ -6,12 +6,12 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider;
-import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -43,6 +43,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.ui.UIUtil;
@@ -50,61 +51,61 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.Timer;
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.text.MessageFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 public final class ActionManagerImpl extends ActionManagerEx implements Disposable {
-  @NonNls public static final String ACTION_ELEMENT_NAME = "action";
-  @NonNls public static final String GROUP_ELEMENT_NAME = "group";
-  @NonNls public static final String CLASS_ATTR_NAME = "class";
-  @NonNls public static final String ID_ATTR_NAME = "id";
-  @NonNls public static final String INTERNAL_ATTR_NAME = "internal";
-  @NonNls public static final String ICON_ATTR_NAME = "icon";
-  @NonNls public static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
-  @NonNls public static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
-  @NonNls public static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
-  @NonNls public static final String DESCRIPTION = "description";
-  @NonNls public static final String TEXT_ATTR_NAME = "text";
-  @NonNls public static final String POPUP_ATTR_NAME = "popup";
-  @NonNls public static final String COMPACT_ATTR_NAME = "compact";
-  @NonNls public static final String SEPARATOR_ELEMENT_NAME = "separator";
-  @NonNls public static final String REFERENCE_ELEMENT_NAME = "reference";
-  @NonNls public static final String ABBREVIATION_ELEMENT_NAME = "abbreviation";
-  @NonNls public static final String GROUPID_ATTR_NAME = "group-id";
-  @NonNls public static final String ANCHOR_ELEMENT_NAME = "anchor";
-  @NonNls public static final String FIRST = "first";
-  @NonNls public static final String LAST = "last";
-  @NonNls public static final String BEFORE = "before";
-  @NonNls public static final String AFTER = "after";
-  @NonNls public static final String SECONDARY = "secondary";
-  @NonNls public static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
-  @NonNls public static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
-  @NonNls public static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
-  @NonNls public static final String REMOVE_SHORTCUT_ATTR_NAME = "remove";
-  @NonNls public static final String REPLACE_SHORTCUT_ATTR_NAME = "replace-all";
-  @NonNls public static final String KEYMAP_ATTR_NAME = "keymap";
-  @NonNls public static final String KEYSTROKE_ATTR_NAME = "keystroke";
-  @NonNls public static final String REF_ATTR_NAME = "ref";
-  @NonNls public static final String VALUE_ATTR_NAME = "value";
-  @NonNls public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
-  @NonNls public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
-  @NonNls public static final String OVERRIDES_ATTR_NAME = "overrides";
-  @NonNls public static final String KEEP_CONTENT_ATTR_NAME = "keep-content";
-  @NonNls public static final String PROJECT_TYPE = "project-type";
+  public static final String ACTION_ELEMENT_NAME = "action";
+  public static final String GROUP_ELEMENT_NAME = "group";
+  public static final String CLASS_ATTR_NAME = "class";
+  public static final String ID_ATTR_NAME = "id";
+  public static final String INTERNAL_ATTR_NAME = "internal";
+  public static final String ICON_ATTR_NAME = "icon";
+  public static final String ADD_TO_GROUP_ELEMENT_NAME = "add-to-group";
+  public static final String SHORTCUT_ELEMENT_NAME = "keyboard-shortcut";
+  public static final String MOUSE_SHORTCUT_ELEMENT_NAME = "mouse-shortcut";
+  public static final String DESCRIPTION = "description";
+  public static final String TEXT_ATTR_NAME = "text";
+  public static final String POPUP_ATTR_NAME = "popup";
+  public static final String COMPACT_ATTR_NAME = "compact";
+  public static final String SEPARATOR_ELEMENT_NAME = "separator";
+  public static final String REFERENCE_ELEMENT_NAME = "reference";
+  public static final String ABBREVIATION_ELEMENT_NAME = "abbreviation";
+  public static final String GROUPID_ATTR_NAME = "group-id";
+  public static final String ANCHOR_ELEMENT_NAME = "anchor";
+  public static final String FIRST = "first";
+  public static final String LAST = "last";
+  public static final String BEFORE = "before";
+  public static final String AFTER = "after";
+  public static final String SECONDARY = "secondary";
+  public static final String RELATIVE_TO_ACTION_ATTR_NAME = "relative-to-action";
+  public static final String FIRST_KEYSTROKE_ATTR_NAME = "first-keystroke";
+  public static final String SECOND_KEYSTROKE_ATTR_NAME = "second-keystroke";
+  public static final String REMOVE_SHORTCUT_ATTR_NAME = "remove";
+  public static final String REPLACE_SHORTCUT_ATTR_NAME = "replace-all";
+  public static final String KEYMAP_ATTR_NAME = "keymap";
+  public static final String KEYSTROKE_ATTR_NAME = "keystroke";
+  public static final String REF_ATTR_NAME = "ref";
+  public static final String VALUE_ATTR_NAME = "value";
+  public static final String ACTIONS_BUNDLE = "messages.ActionsBundle";
+  public static final String USE_SHORTCUT_OF_ATTR_NAME = "use-shortcut-of";
+  public static final String OVERRIDES_ATTR_NAME = "overrides";
+  public static final String KEEP_CONTENT_ATTR_NAME = "keep-content";
+  public static final String PROJECT_TYPE = "project-type";
+  public static final String UNREGISTER_ELEMENT_NAME = "unregister";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionManagerImpl");
   private static final int DEACTIVATED_TIMER_DELAY = 5000;
   private static final int TIMER_DELAY = 500;
   private static final int UPDATE_DELAY_AFTER_TYPING = 500;
+
   private final Object myLock = new Object();
   private final Map<String,AnAction> myId2Action = new THashMap<>();
   private final Map<PluginId, THashSet<String>> myPlugin2Id = new THashMap<>();
@@ -126,12 +127,14 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private long myLastTimeEditorWasTypedIn;
   private boolean myTransparentOnlyUpdate;
   private final Map<OverridingAction, AnAction> myBaseActions = new HashMap<>();
+  private final AnActionListener messageBusPublisher;
 
-  ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager) {
+  ActionManagerImpl(@NotNull KeymapManager keymapManager, DataManager dataManager, @NotNull MessageBus messageBus) {
     myKeymapManager = (KeymapManagerEx)keymapManager;
     myDataManager = dataManager;
 
     registerPluginActions();
+    messageBusPublisher = messageBus.syncPublisher(AnActionListener.TOPIC);
   }
 
   @Nullable
@@ -142,21 +145,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       Class<?> aClass = Class.forName(className, true, stub.getLoader());
       obj = ReflectionUtil.newInstance(aClass);
     }
-    catch (ClassNotFoundException e) {
-      throw error(stub, e, "class with name ''{0}'' not found", className);
-    }
-    catch (NoClassDefFoundError e) {
-      throw error(stub, e, "class with name ''{0}'' cannot be loaded", className);
-    }
-    catch(UnsupportedClassVersionError e) {
-      throw error(stub, e, "error loading class ''{0}''", className);
-    }
-    catch (Exception e) {
-      throw error(stub, e, "cannot create class ''{0}''", className);
+    catch (Throwable e) {
+      LOG.error(new PluginException(e, stub.getPluginId()));
+      return null;
     }
 
     if (!(obj instanceof AnAction)) {
-      LOG.error("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj);
+      LOG.error(new PluginException("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj, stub.getPluginId()));
       return null;
     }
 
@@ -173,17 +168,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return anAction;
   }
 
-  @NotNull
-  @Contract(pure = true)
-  private static RuntimeException error(@NotNull ActionStub stub, @NotNull Throwable original, @NotNull String template, @NotNull String className) {
-    PluginId pluginId = stub.getPluginId();
-    String text = MessageFormat.format(template, className);
-    if (pluginId == null) {
-      return new IllegalStateException(text);
-    }
-    return new PluginException(text, original, pluginId);
-  }
-
   private static void processAbbreviationNode(Element e, String id) {
     final String abbr = e.getAttributeValue(VALUE_ATTR_NAME);
     if (!StringUtil.isEmpty(abbr)) {
@@ -194,7 +178,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Nullable
   private static ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
-    @NonNls final String resBundleName = plugin != null && !"com.intellij".equals(plugin.getPluginId().getIdString())
+    final String resBundleName = plugin != null && !"com.intellij".equals(plugin.getPluginId().getIdString())
                                          ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {
@@ -261,7 +245,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static String loadDescriptionForElement(final Element element, final ResourceBundle bundle, final String id, String elementType) {
     final String value = element.getAttributeValue(DESCRIPTION);
     if (bundle != null) {
-      @NonNls final String key = elementType + "." + id + ".description";
+      final String key = elementType + "." + id + ".description";
       return CommonBundle.messageOrDefault(bundle, key, value == null ? "" : value);
     } else {
       return value;
@@ -344,15 +328,23 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static void reportActionError(final PluginId pluginId, @NonNls @NotNull String message) {
-    if (pluginId == null) {
-      LOG.error(message);
+  private static void reportActionError(PluginId pluginId, @NotNull String message) {
+    reportActionError(pluginId, message, null);
+  }
+
+  private static void reportActionError(PluginId pluginId, @NotNull String message, @Nullable Throwable cause) {
+    if (pluginId != null) {
+      LOG.error(new PluginException(message, cause, pluginId));
+    }
+    else if (cause != null) {
+      LOG.error(message, cause);
     }
     else {
-      LOG.error(new PluginException(message, null, pluginId));
+      LOG.error(message);
     }
   }
-  private static void reportActionWarning(final PluginId pluginId, @NonNls @NotNull String message) {
+
+  private static void reportActionWarning(PluginId pluginId, @NotNull String message) {
     if (pluginId == null) {
       LOG.warn(message);
     }
@@ -361,7 +353,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  @NonNls
   private static String getPluginInfo(@Nullable PluginId id) {
     if (id != null) {
       final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
@@ -376,6 +367,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return "";
   }
 
+  @NotNull
   private static DataContext getContextBy(Component contextComponent) {
     final DataManager dataManager = DataManager.getInstance();
     return contextComponent != null ? dataManager.getDataContext(contextComponent) : dataManager.getDataContext();
@@ -438,7 +430,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @NotNull
   @Override
-  public ActionToolbar createActionToolbar(final String place, @NotNull final ActionGroup group, final boolean horizontal) {
+  public ActionToolbar createActionToolbar(@NotNull final String place, @NotNull final ActionGroup group, final boolean horizontal) {
     return createActionToolbar(place, group, horizontal, false);
   }
 
@@ -477,7 +469,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
     AnAction converted = convertStub((ActionStub)action);
-    if (converted == null) return null;
+    if (converted == null) {
+      unregisterAction(id);
+      return null;
+    }
 
     synchronized (myLock) {
       action = myId2Action.get(id);
@@ -575,7 +570,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     String iconPath = element.getAttributeValue(ICON_ATTR_NAME);
 
     if (text == null) {
-      @NonNls String message = "'text' attribute is mandatory (action ID=" + id + ";" +
+      String message = "'text' attribute is mandatory (action ID=" + id + ";" +
                                (plugin == null ? "" : " plugin path: "+plugin.getPath()) + ")";
       reportActionError(pluginId, message);
       return null;
@@ -644,6 +639,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return null;
     }
+    boolean customClass = false;
     String className = element.getAttributeValue(CLASS_ATTR_NAME);
     if (className == null) { // use default group if class isn't specified
       if ("true".equals(element.getAttributeValue(COMPACT_ATTR_NAME))) {
@@ -673,6 +669,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
             return null;
           }
         }
+        customClass = true;
         group = (ActionGroup)obj;
       }
       // read ID and register loaded group
@@ -712,6 +709,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       if (popup != null) {
         group.setPopup(Boolean.valueOf(popup).booleanValue());
       }
+      if (id != null && customClass && element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME) != null) {
+        myKeymapManager.bindShortcuts(element.getAttributeValue(USE_SHORTCUT_OF_ATTR_NAME), id);
+      }
+
       // process all group's children. There are other groups, actions, references and links
       for (Element child : element.getChildren()) {
         String name = child.getName();
@@ -747,26 +748,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       return group;
     }
-    catch (ClassNotFoundException e) {
-      reportActionError(pluginId, "class with name \"" + className + "\" not found");
-      return null;
-    }
-    catch (NoClassDefFoundError e) {
-      reportActionError(pluginId, "class with name \"" + e.getMessage() + "\" not found");
-      return null;
-    }
-    catch(UnsupportedClassVersionError e) {
-      reportActionError(pluginId, "unsupported class version for " + className);
-      return null;
-    }
     catch (Exception e) {
-      final String message = "cannot create class \"" + className + "\"";
-      if (pluginId == null) {
-        LOG.error(message, e);
-      }
-      else {
-        LOG.error(new PluginException(message, e, pluginId));
-      }
+      String message = "cannot create class \"" + className + "\"";
+      reportActionError(pluginId, message, e);
       return null;
     }
   }
@@ -869,6 +853,28 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
+  private void processUnregisterNode(Element element, PluginId pluginId) {
+    String id = element.getAttributeValue(ID_ATTR_NAME);
+    if (id == null) {
+      reportActionError(pluginId, "'id' attribute is required for 'unregister' elements");
+      return;
+    }
+    AnAction action = getAction(id);
+    if (action == null) {
+      reportActionError(pluginId, "Trying to unregister non-existing action " + id);
+      return;
+    }
+
+    AbbreviationManager.getInstance().removeAllAbbreviations(id);
+    for (AnAction anAction : myId2Action.values()) {
+      if (anAction instanceof DefaultActionGroup) {
+        ((DefaultActionGroup) anAction).remove(action, id);
+      }
+    }
+
+    unregisterAction(id);
+  }
+
   private void processKeyboardShortcutNode(Element element, String actionId, PluginId pluginId) {
     String firstStrokeString = element.getAttributeValue(FIRST_KEYSTROKE_ATTR_NAME);
     if (firstStrokeString == null) {
@@ -965,6 +971,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
     else if (REFERENCE_ELEMENT_NAME.equals(name)) {
       processReferenceNode(child, pluginId);
+    }
+    else if (UNREGISTER_ELEMENT_NAME.equals(name)) {
+      processUnregisterNode(child, pluginId);
     }
     else {
       reportActionError(pluginId, "unexpected name of element \"" + name + "\n");
@@ -1078,7 +1087,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  public void removeActionPopup(final Object menu) {
+  void removeActionPopup(final Object menu) {
     final boolean removed = myPopups.remove(menu);
     if (removed && menu instanceof ActionPopupMenu) {
       for (ActionPopupMenuListener listener : myActionPopupMenuListeners) {
@@ -1091,7 +1100,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void queueActionPerformedEvent(final AnAction action, DataContext context, AnActionEvent event) {
+  public void queueActionPerformedEvent(@NotNull final AnAction action, @NotNull DataContext context, @NotNull AnActionEvent event) {
     if (!myPopups.isEmpty()) {
       myQueuedNotifications.put(action, context);
     }
@@ -1177,52 +1186,39 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void addAnActionListener(final AnActionListener listener, final Disposable parentDisposable) {
-    addAnActionListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removeAnActionListener(listener);
-      }
-    });
-  }
-
-  @Override
   public void removeAnActionListener(AnActionListener listener) {
     myActionListeners.remove(listener);
   }
 
   @Override
-  public void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    if (action != null) {
-      myPrevPerformedActionId = myLastPreformedActionId;
-      myLastPreformedActionId = getId(action);
-      if (myLastPreformedActionId == null && action instanceof ActionIdProvider) {
-        myLastPreformedActionId = ((ActionIdProvider)action).getId();
-      }
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      IdeaLogger.ourLastActionId = myLastPreformedActionId;
-      ActionsCollectorImpl.getInstance().record(myLastPreformedActionId);
+  public void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    myPrevPerformedActionId = myLastPreformedActionId;
+    myLastPreformedActionId = getId(action);
+    if (myLastPreformedActionId == null && action instanceof ActionIdProvider) {
+      myLastPreformedActionId = ((ActionIdProvider)action).getId();
     }
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    IdeaLogger.ourLastActionId = myLastPreformedActionId;
+    ActionsCollector.getInstance().record(myLastPreformedActionId, action.getClass(), event.isFromContextMenu(), event.getPlace());
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
     }
+    messageBusPublisher.beforeActionPerformed(action, dataContext, event);
   }
 
   @Override
-  public void fireAfterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-    if (action != null) {
-      myPrevPerformedActionId = myLastPreformedActionId;
-      myLastPreformedActionId = getId(action);
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      IdeaLogger.ourLastActionId = myLastPreformedActionId;
-    }
+  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
+    myPrevPerformedActionId = myLastPreformedActionId;
+    myLastPreformedActionId = getId(action);
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    IdeaLogger.ourLastActionId = myLastPreformedActionId;
     for (AnActionListener listener : myActionListeners) {
       try {
         listener.afterActionPerformed(action, dataContext, event);
       }
       catch(AbstractMethodError ignored) { }
     }
+    messageBusPublisher.afterActionPerformed(action, dataContext, event);
   }
 
   @Override
@@ -1245,11 +1241,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  public void fireBeforeEditorTyping(char c, DataContext dataContext) {
+  public void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext) {
     myLastTimeEditorWasTypedIn = System.currentTimeMillis();
     for (AnActionListener listener : myActionListeners) {
       listener.beforeEditorTyping(c, dataContext);
     }
+    messageBusPublisher.beforeEditorTyping(c, dataContext);
   }
 
   @Override
@@ -1305,7 +1302,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     return result;
   }
 
-  private void tryToExecuteNow(final AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
+  private void tryToExecuteNow(@NotNull AnAction action, final InputEvent inputEvent, final Component contextComponent, final String place, final ActionCallback result) {
     final Presentation presentation = action.getTemplatePresentation().clone();
 
     IdeFocusManager.findInstanceByContext(getContextBy(contextComponent)).doWhenFocusSettlesDown(
@@ -1332,7 +1329,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         }
 
         Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
-        if (component != null && !component.isShowing()) {
+        if (component != null && !component.isShowing() && !ActionPlaces.TOUCHBAR_GENERAL.equals(place)) {
           result.setRejected();
           return;
         }
@@ -1371,13 +1368,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
       connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
         @Override
-        public void applicationActivated(IdeFrame ideFrame) {
+        public void applicationActivated(@NotNull IdeFrame ideFrame) {
           setDelay(TIMER_DELAY);
           restart();
         }
 
         @Override
-        public void applicationDeactivated(IdeFrame ideFrame) {
+        public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
           setDelay(DEACTIVATED_TIMER_DELAY);
         }
       });
@@ -1405,6 +1402,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       final int lastEventCount = myLastTimePerformed;
       myLastTimePerformed = ActivityTracker.getInstance().getCount();
 
+      if (myLastTimePerformed == lastEventCount && !Registry.is("actionSystem.always.update.toolbar.actions")) {
+        return;
+      }
+
       boolean transparentOnly = myLastTimePerformed == lastEventCount;
 
       try {
@@ -1423,7 +1424,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
 
-    private void notifyListeners(final List<TimerListener> timerListeners, final Set<TimerListener> notified) {
+    private void notifyListeners(final List<TimerListener> timerListeners, final Set<? super TimerListener> notified) {
       for (TimerListener listener : timerListeners) {
         if (notified.add(listener)) {
           runListenerAction(listener);
@@ -1434,6 +1435,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     private void runListenerAction(final TimerListener listener) {
       ModalityState modalityState = listener.getModalityState();
       if (modalityState == null) return;
+      LOG.debug("notify ", listener);
       if (!ModalityState.current().dominates(modalityState)) {
         try {
           listener.run();

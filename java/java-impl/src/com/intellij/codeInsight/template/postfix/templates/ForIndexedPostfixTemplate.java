@@ -23,7 +23,7 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
   /**
    * @deprecated
    */
-  public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
+  @Deprecated public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
     element -> IS_ITERABLE_OR_ARRAY.value(element) || IS_NUMBER.value(element);
     
   protected ForIndexedPostfixTemplate(@NotNull String templateName, @NotNull String templateText, @NotNull String example,

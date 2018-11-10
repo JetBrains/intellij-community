@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.impl;
 
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunnerSettings;
@@ -28,6 +17,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.JBUI;
@@ -35,20 +25,20 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author dyoma
  */
 public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfigurationSettings> {
-  private final ArrayList<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors =
-    new ArrayList<>();
+  private final ArrayList<SettingsEditor<RunnerAndConfigurationSettings>> myRunnerEditors = new ArrayList<>();
   private final Map<ProgramRunner, List<SettingsEditor>> myRunner2UnwrappedEditors = new HashMap<>();
   private RunnersEditorComponent myRunnersComponent;
   private final RunConfiguration myConfiguration;
@@ -85,9 +75,8 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
 
       myRunnersComponent = new RunnersEditorComponent();
 
-      final Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
-      for (final Executor executor : executors) {
-        ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), myConfiguration);
+      for (final Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+        ProgramRunner<RunnerSettings> runner = ProgramRunner.getRunner(executor.getId(), myConfiguration);
         if (runner != null) {
           JComponent perRunnerSettings = createCompositePerRunnerSettings(executor, runner);
           if (perRunnerSettings != null) {
@@ -118,19 +107,22 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     }
   }
 
-  private JComponent createCompositePerRunnerSettings(final Executor executor, final ProgramRunner runner) {
+  @Nullable
+  private JComponent createCompositePerRunnerSettings(@NotNull Executor executor, @NotNull ProgramRunner<RunnerSettings> runner) {
     final SettingsEditor<ConfigurationPerRunnerSettings> configEditor = myConfiguration.getRunnerSettingsEditor(runner);
     SettingsEditor<RunnerSettings> runnerEditor;
-
     try {
       runnerEditor = runner.getSettingsEditor(executor, myConfiguration);
     }
     catch (AbstractMethodError error) {
-      // this is stub code for plugin compatibility!
+      // this is stub code for plugin compatibility
       runnerEditor = null;
     }
 
-    if (configEditor == null && runnerEditor == null) return null;
+    if (configEditor == null && runnerEditor == null) {
+      return null;
+    }
+
     SettingsEditor<RunnerAndConfigurationSettings> wrappedConfigEditor = null;
     SettingsEditor<RunnerAndConfigurationSettings> wrappedRunEditor = null;
     if (configEditor != null) {
@@ -154,15 +146,13 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       return panel;
     }
 
-    if (wrappedRunEditor != null) return wrappedRunEditor.getComponent();
-    return wrappedConfigEditor.getComponent();
+    return wrappedRunEditor == null ? Objects.requireNonNull(wrappedConfigEditor).getComponent() : wrappedRunEditor.getComponent();
   }
 
   private <T> SettingsEditor<RunnerAndConfigurationSettings> wrapEditor(SettingsEditor<T> editor,
                                                                         Convertor<RunnerAndConfigurationSettings, T> convertor,
                                                                         ProgramRunner runner) {
-    SettingsEditor<RunnerAndConfigurationSettings> wrappedEditor
-      = new SettingsEditorWrapper<>(editor, convertor);
+    SettingsEditor<RunnerAndConfigurationSettings> wrappedEditor = new SettingsEditorWrapper<>(editor, convertor);
 
     List<SettingsEditor> unwrappedEditors = myRunner2UnwrappedEditors.get(runner);
     if (unwrappedEditors == null) {
@@ -180,7 +170,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   public <T extends SettingsEditor> T selectExecutorAndGetEditor(final ProgramRunner runner, Class<T> editorClass) {
     myGroupSettingsBuilder.selectEditor(RUNNERS_TAB_NAME);
     Executor executor = ContainerUtil.find(myRunnersComponent.getExecutors(),
-                                           executor1 -> runner.equals(RunnerRegistry.getInstance().getRunner(executor1.getId(), myConfiguration)));
+                                           executor1 -> runner.equals(ProgramRunner.getRunner(executor1.getId(), myConfiguration)));
     if (executor == null) {
       return null;
     }
@@ -210,6 +200,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     myConfiguration = settings.getConfiguration();
   }
 
+  @NotNull
   @Override
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getFactory().create();
@@ -223,17 +214,18 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     return settings;
   }
 
-  private static class RunnersEditorComponent {
+  private static final class RunnersEditorComponent {
     @NonNls private static final String NO_RUNNER_COMPONENT = "<NO RUNNER LABEL>";
 
-    private JList myRunnersList;
+    private JList<Executor> myRunnersList;
     private JPanel myRunnerPanel;
     private final CardLayout myLayout = new CardLayout();
-    private final DefaultListModel myListModel = new DefaultListModel();
+    private final DefaultListModel<Executor> myListModel = new DefaultListModel<>();
     private final JLabel myNoRunner = new JLabel(ExecutionBundle.message("run.configuration.norunner.selected.label"));
     private JPanel myRunnersPanel;
+    private JBScrollPane myScrollPane;
 
-    public RunnersEditorComponent() {
+    RunnersEditorComponent() {
       myRunnerPanel.setLayout(myLayout);
       myRunnerPanel.add(myNoRunner, NO_RUNNER_COMPONENT);
       myRunnersList.setModel(myListModel);
@@ -244,18 +236,20 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
         }
       });
       updateRunnerComponent();
-      myRunnersList.setCellRenderer(new ColoredListCellRenderer() {
+      myRunnersList.setCellRenderer(new ColoredListCellRenderer<Executor>() {
         @Override
-        protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          Executor executor = (Executor)value;
-          setIcon(executor.getIcon());
-          append(executor.getId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        protected void customizeCellRenderer(@NotNull JList<? extends Executor> list, Executor value, int index, boolean selected, boolean hasFocus) {
+          setIcon(value.getIcon());
+          append(value.getId(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
         }
       });
+
+      myScrollPane.setBorder(JBUI.Borders.empty());
+      myScrollPane.setViewportBorder(JBUI.Borders.empty());
     }
 
     private void updateRunnerComponent() {
-      Executor executor = (Executor)myRunnersList.getSelectedValue();
+      Executor executor = myRunnersList.getSelectedValue();
       myLayout.show(myRunnerPanel, executor != null ? executor.getId() : NO_RUNNER_COMPONENT);
       myRunnersPanel.revalidate();
     }
@@ -267,7 +261,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     }
 
     public List<Executor> getExecutors() {
-      return Collections.list((Enumeration<Executor>)myListModel.elements());
+      return Collections.list(myListModel.elements());
     }
 
     public void selectExecutor(Executor executor) {
@@ -282,7 +276,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
   private class ConfigToSettingsWrapper extends SettingsEditor<RunnerAndConfigurationSettings> {
     private final SettingsEditor<RunConfiguration> myConfigEditor;
 
-    public ConfigToSettingsWrapper(SettingsEditor<RunConfiguration> configEditor) {
+    ConfigToSettingsWrapper(SettingsEditor<RunConfiguration> configEditor) {
       myConfigEditor = configEditor;
       if (configEditor instanceof RunConfigurationSettingsEditor) {
         ((RunConfigurationSettingsEditor)configEditor).setOwner(ConfigurationSettingsEditor.this);

@@ -134,7 +134,7 @@ public class FileDownloaderImpl implements FileDownloader {
       return null;
     }
 
-    @SuppressWarnings("ThrowableResultOfMethodCallIgnored") Exception exception = exceptionRef.get();
+    Exception exception = exceptionRef.get();
     if (exception != null) {
       final boolean tryAgain = IOExceptionDialog.showErrorDialog(myDialogTitle, exception.getMessage());
       if (tryAgain) {

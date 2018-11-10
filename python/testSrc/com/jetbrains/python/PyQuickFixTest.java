@@ -13,6 +13,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest;
 import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ public class PyQuickFixTest extends PyTestCase {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     myFixture.setCaresAboutInjection(false);
+    PyRenameElementQuickFixTest.registerTestNameSuggestionProvider(getTestRootDisposable());
   }
 
   @Override
@@ -243,6 +245,10 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-12679
   public void testRedundantParenthesesParenthesizedExpression() {
+    doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
+  }
+
+  public void testRedundantParenthesesMultipleParentheses() {
     doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
@@ -682,6 +688,15 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyMethodOverridingInspection.class, "<html>Change signature of m(self, <b>**kwargs</b>)</html>", true, true);
   }
 
+  // PY-30789
+  public void testSetImportedABCMetaAsMetaclassPy2() {
+    doInspectionTest("PyAbstractClassInspection/quickFix/SetImportedABCMetaAsMetaclassPy2/main.py",
+                     PyAbstractClassInspection.class,
+                     "Set '" + PyNames.ABC_META + "' as metaclass",
+                     true,
+                     true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {
@@ -713,7 +728,6 @@ public class PyQuickFixTest extends PyTestCase {
    * @param available       true if the fix should be available, false if it should be explicitly not available.
    * @throws Exception
    */
-  @SuppressWarnings("Duplicates")
   protected void doInspectionTest(@NonNls @NotNull String[] testFiles,
                                   @NotNull Class inspectionClass,
                                   @NonNls @NotNull String quickFixName,

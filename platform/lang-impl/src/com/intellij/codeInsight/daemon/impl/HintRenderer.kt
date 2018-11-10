@@ -2,10 +2,12 @@
 package com.intellij.codeInsight.daemon.impl
 
 
+import com.intellij.codeInsight.hints.HintWidthAdjustment
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
+import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
@@ -23,16 +25,20 @@ import javax.swing.UIManager
  * @author egor
  */
 open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
+  var widthAdjustment: HintWidthAdjustment? = null
 
-  override fun calcWidthInPixels(editor: Editor): Int {
-    return doCalcWidth(text, getFontMetrics(editor).metrics)
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int {
+    val editor = inlay.editor
+    val fontMetrics = getFontMetrics(editor).metrics
+    return doCalcWidth(text, fontMetrics) + calcWidthAdjustment(editor, fontMetrics)
   }
 
   protected open fun getTextAttributes(editor: Editor): TextAttributes? {
     return editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
   }
 
-  override fun paint(editor: Editor, g: Graphics, r: Rectangle, textAttributes: TextAttributes) {
+  override fun paint(inlay: Inlay<*>, g: Graphics, r: Rectangle, textAttributes: TextAttributes) {
+    val editor = inlay.editor
     if (editor !is EditorImpl) return
     val ascent = editor.ascent
     val descent = editor.descent
@@ -59,7 +65,19 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
         g.clipRect(r.x + 3, r.y + 2, r.width - 6, r.height - 4)
         val metrics = fontMetrics.metrics
-        g.drawString(text, r.x + 7, r.y + Math.max(ascent, (r.height + metrics.ascent - metrics.descent) / 2) - 1)
+        val startX = r.x + 7
+        val startY = r.y + Math.max(ascent, (r.height + metrics.ascent - metrics.descent) / 2) - 1
+
+        val widthAdjustment = calcWidthAdjustment(editor, g.fontMetrics)
+        if (widthAdjustment == 0) {
+          g.drawString(text, startX, startY)
+        } else {
+          val adjustmentPosition = this.widthAdjustment!!.adjustmentPosition
+          val firstPart = text!!.substring(0, adjustmentPosition)
+          val secondPart = text!!.substring(adjustmentPosition)
+          g.drawString(firstPart, startX, startY)
+          g.drawString(secondPart, startX + g.getFontMetrics().stringWidth(firstPart) + widthAdjustment, startY)
+        }
 
         g.setClip(savedClip)
         g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, savedHint)
@@ -82,6 +100,12 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         EffectType.BOLD_DOTTED_LINE -> EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
       }
     }
+  }
+
+  private fun calcWidthAdjustment(editor: Editor, fontMetrics: FontMetrics) : Int {
+    if (widthAdjustment == null || editor !is EditorImpl) return 0
+    val editorTextWidth = editor.getFontMetrics(Font.PLAIN).stringWidth(widthAdjustment!!.editorTextToMatch)
+    return Math.max(0, editorTextWidth + doCalcWidth(widthAdjustment!!.hintTextToMatch, fontMetrics) - doCalcWidth(text, fontMetrics))
   }
 
   protected class MyFontMetrics constructor(editor: Editor, familyName: String, size: Int) {

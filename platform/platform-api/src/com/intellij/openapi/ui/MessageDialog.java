@@ -211,7 +211,7 @@ class MessageDialog extends DialogWrapper {
 
   @NotNull
   @Override
-  LayoutManager createRootLayout() {
+  protected LayoutManager createRootLayout() {
     return Messages.isMacSheetEmulation() ? myLayout = new MessagesBorderLayout() : super.createRootLayout();
   }
 

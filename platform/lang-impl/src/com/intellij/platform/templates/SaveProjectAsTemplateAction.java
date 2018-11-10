@@ -14,12 +14,11 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -68,7 +67,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   static final String FILE_HEADER_TEMPLATE_PLACEHOLDER = "<IntelliJ_File_Header>";
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getEventProject(e);
     assert project != null;
     if (!ProjectKt.isDirectoryBased(project)) {
@@ -123,8 +122,8 @@ public class SaveProjectAsTemplateAction extends AnAction {
     final Map<String, String> parameters = computeParameters(project, replaceParameters);
     indicator.setText("Saving project...");
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (project instanceof ProjectImpl) {
-        (((ProjectImpl)project)).save(true);
+      if (project instanceof ProjectEx) {
+        (((ProjectEx)project)).save(true);
       }
       else {
         project.save();
@@ -221,8 +220,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     final Map<String, String> parameters = new HashMap<>();
     if (replaceParameters) {
       ApplicationManager.getApplication().runReadAction(() -> {
-        ProjectTemplateParameterFactory[] extensions = Extensions.getExtensions(ProjectTemplateParameterFactory.EP_NAME);
-        for (ProjectTemplateParameterFactory extension : extensions) {
+        for (ProjectTemplateParameterFactory extension : ProjectTemplateParameterFactory.EP_NAME.getExtensionList()) {
           String value = extension.detectParameterValue(project);
           if (value != null) {
             parameters.put(value, extension.getParameterId());
@@ -356,7 +354,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = getEventProject(e);
     e.getPresentation().setEnabled(project != null && !project.isDefault());
   }
@@ -370,7 +368,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     private final Map<String, String> myParameters;
     private final boolean myShouldEscape;
 
-    public MyContentIterator(ProgressIndicator indicator,
+    MyContentIterator(ProgressIndicator indicator,
                              ZipOutputStream finalStream,
                              Project project,
                              Map<String, String> parameters,
@@ -388,7 +386,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
     }
 
     @Override
-    public boolean processFile(final VirtualFile virtualFile) {
+    public boolean processFile(@NotNull final VirtualFile virtualFile) {
       if (!virtualFile.isDirectory()) {
         final String fileName = virtualFile.getName();
         myIndicator.setText2(fileName);

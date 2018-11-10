@@ -32,7 +32,13 @@ public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     data.setUniqueIds(nodeIds);
     data.TEST_OBJECT = JUnitConfiguration.TEST_UNIQUE_ID;
-    configuration.setGeneratedName();
+    AbstractTestProxy selectedProxy = context.getDataContext().getData(AbstractTestProxy.DATA_KEY);
+    if (selectedProxy != null) {
+      configuration.setName(selectedProxy.getName());
+    }
+    else {
+      configuration.setGeneratedName();
+    }
     setupConfigurationModule(context, configuration);
     return true;
   }

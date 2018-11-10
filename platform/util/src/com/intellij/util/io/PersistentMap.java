@@ -1,6 +1,7 @@
 package com.intellij.util.io;
 
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -16,7 +17,7 @@ public interface PersistentMap<K, V> extends Closeable {
 
   void remove(K key) throws IOException;
 
-  boolean processKeys(Processor<K> processor) throws IOException;
+  boolean processKeys(@NotNull Processor<? super K> processor) throws IOException;
 
   boolean isClosed();
 
@@ -24,6 +25,7 @@ public interface PersistentMap<K, V> extends Closeable {
 
   void force();
 
+  @Override
   void close() throws IOException;
 
   void clear() throws IOException;

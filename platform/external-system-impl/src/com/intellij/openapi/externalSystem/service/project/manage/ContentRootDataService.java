@@ -39,11 +39,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -68,7 +68,6 @@ import static com.intellij.openapi.vfs.VfsUtilCore.pathToUrl;
 
 /**
  * @author Denis Zhdanov
- * @since 2/7/12 3:20 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ContentRootDataService extends AbstractProjectDataService<ContentRootData, ContentEntry> {
@@ -90,6 +89,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
                          @Nullable ProjectData projectData,
                          @NotNull Project project,
                          @NotNull IdeModifiableModelsProvider modelsProvider) {
+    logUnitTest("Importing data. Data size is [" + toImport.size() + "]");
     if (toImport.isEmpty()) {
       return;
     }
@@ -129,8 +129,10 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
           if (roots.length > 0) {
             VirtualFile virtualFile = roots[0];
             ExternalSystemUtil.invokeLater(project, ModalityState.NON_MODAL, () -> {
-              final ProjectView projectView = ProjectView.getInstance(project);
-              projectView.changeViewCB(ProjectViewPane.ID, null).doWhenProcessed(() -> projectView.selectCB(null, virtualFile, false));
+              StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
+                final ProjectView projectView = ProjectView.getInstance(project);
+                projectView.changeViewCB(ProjectViewPane.ID, null).doWhenProcessed(() -> projectView.selectCB(null, virtualFile, false));
+              });
             });
           }
         }
@@ -139,8 +141,9 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   }
 
   private static void importData(@NotNull IdeModifiableModelsProvider modelsProvider,
-                                 @NotNull final Collection<DataNode<ContentRootData>> data,
+                                 @NotNull final Collection<? extends DataNode<ContentRootData>> data,
                                  @NotNull final Module module, boolean forceDirectoriesCreation) {
+    logUnitTest("Import data for module [" + module.getName() + "], data size [" + data.size() + "]");
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     final ContentEntry[] contentEntries = modifiableRootModel.getContentEntries();
     final Map<String, ContentEntry> contentEntriesMap = ContainerUtilRt.newHashMap();
@@ -257,6 +260,9 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
   private static void createSourceRootIfAbsent(
     @NotNull ContentEntry entry, @NotNull final SourceRoot root, @NotNull Module module,
     @NotNull JpsModuleSourceRootType<?> sourceRootType, boolean generated, boolean createEmptyContentRootDirectories) {
+    logUnitTest("create source root if absent entry.url=[" + entry.getUrl() + "] root.path=[" + root.getPath() + "]" +
+                " generated=[" + generated + "] createEmptyContentRootDirectories=[" + createEmptyContentRootDirectories + "]");
+
     SourceFolder[] folders = entry.getSourceFolders();
     for (SourceFolder folder : folders) {
       VirtualFile file = folder.getFile();
@@ -279,13 +285,11 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
     }
 
     if (!createEmptyContentRootDirectories && !generated) {
-      final Ref<VirtualFile> ref = Ref.create();
-      ExternalSystemApiUtil.doWriteAction(() -> ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(root.getPath())));
-      final VirtualFile sourceFolderFile = ref.get();
-      if (sourceFolderFile == null || !sourceFolderFile.isValid()) {
+      if (!FileUtil.exists(root.getPath())) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Source folder [" + root.getPath() + "] does not exist and will not be created, will add when dir is created");
         }
+        logUnitTest("Adding source folder listener to watch [" + root.getPath() + "] for creation in project [hashCode=" + module.getProject().hashCode() + "]");
         final AddSourceFolderListener listener = new AddSourceFolderListener(root, module, sourceRootType);
         saveSourceFolderCreationListener(module, listener);
         VirtualFileManager.getInstance().addVirtualFileListener(listener, module);
@@ -303,7 +307,7 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
         properties.setForGeneratedSources(true);
       }
     }
-    if(createEmptyContentRootDirectories) {
+    if(createEmptyContentRootDirectories && !FileUtil.exists(root.getPath())) {
       ExternalSystemApiUtil.doWriteAction(() -> {
         try {
           VfsUtil.createDirectoryIfMissing(root.getPath());
@@ -312,6 +316,12 @@ public class ContentRootDataService extends AbstractProjectDataService<ContentRo
           LOG.warn(String.format("Unable to create directory for the path: %s", root.getPath()), e);
         }
       });
+    }
+  }
+
+  private static void logUnitTest(String message) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.info(message);
     }
   }
 

@@ -14,6 +14,7 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
@@ -57,6 +58,7 @@ import java.util.List;
 public class PopFrameAction extends DebuggerAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(PopFrameAction.class);
 
+  @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final JavaStackFrame stackFrame = getStackFrame(e);
@@ -210,7 +212,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
     while (tryStatement != null) {
       PsiResourceList resourceList = tryStatement.getResourceList();
       if (resourceList != null) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         for (PsiResourceListElement listElement : resourceList) {
           String varName = getResourceName(listElement);
           if (varName != null) {
@@ -317,6 +319,7 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
     return suspendContext != null && debuggerContext.getThreadProxy() == suspendContext.getThread();
   }
 
+  @Override
   public void update(@NotNull AnActionEvent e) {
     boolean enable = false;
 
@@ -325,7 +328,8 @@ public class PopFrameAction extends DebuggerAction implements DumbAware {
       enable = proxy.getVirtualMachine().canPopFrames();
     }
 
-    if(ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace())) {
+    if((ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || ActionPlaces.DEBUGGER_TOOLBAR.equals(e.getPlace()))
+        && DebuggerUtilsEx.isInJavaSession(e)) {
       e.getPresentation().setEnabled(enable);
     }
     else {

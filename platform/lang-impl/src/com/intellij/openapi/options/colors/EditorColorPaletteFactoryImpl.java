@@ -44,7 +44,7 @@ public class EditorColorPaletteFactoryImpl extends EditorColorPaletteFactory {
 
     @Nullable private final Language myLanguage;
 
-    public ColorPagesPalette(@NotNull EditorColorsScheme colorsScheme, @Nullable Language language) {
+    ColorPagesPalette(@NotNull EditorColorsScheme colorsScheme, @Nullable Language language) {
       super(colorsScheme);
       myLanguage = language;
     }
@@ -100,8 +100,7 @@ public class EditorColorPaletteFactoryImpl extends EditorColorPaletteFactory {
   private static boolean pageIsGoodForAnyLanguage(boolean filterOutRainbowNonConflictingAttrKeys,
                                                   @NotNull ColorSettingsPage page) {
     return !filterOutRainbowNonConflictingAttrKeys
-        || page instanceof DefaultLanguageColorsPage
-        || page instanceof GeneralColorsPage
-        || page instanceof RainbowColorSettingsPage;
+           || page instanceof GeneralColorsPage
+           || page instanceof RainbowColorSettingsPage;
   }
 }

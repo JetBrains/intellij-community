@@ -18,6 +18,7 @@ package com.intellij.codeInspection.concurrencyAnnotations;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,7 +44,7 @@ public class JCiPUtil {
     if (annotation != null) {
       return true;
     }
-    if (checkDocComment) {
+    if (checkDocComment && IdIndex.hasIdentifierInFile(aClass.getContainingFile(), "Immutable")) {
       final PsiDocComment comment = aClass.getDocComment();
       return comment != null && comment.findTagByName("@Immutable") != null;
     }
@@ -90,14 +91,15 @@ public class JCiPUtil {
   @Nullable
   static String getGuardValue(PsiAnnotation annotation) {
     final PsiAnnotationMemberValue psiAnnotationMemberValue = annotation.findAttributeValue("value");
-    if (psiAnnotationMemberValue != null) {
-      final String value = psiAnnotationMemberValue.getText();
-      final String trim = value.substring(1, value.length() - 1).trim();
-      if (trim.equals("itself")) {
+    if (psiAnnotationMemberValue instanceof PsiLiteralExpression) {
+      final Object value = ((PsiLiteralExpression)psiAnnotationMemberValue).getValue();
+      if ("itself".equals(value)) {
         final PsiMember member = PsiTreeUtil.getParentOfType(annotation, PsiMember.class);
         if (member != null) return member.getName();
       }
-      return trim;
+      if (value instanceof String) {
+        return (String)value;
+      }
     }
     return null;
   }

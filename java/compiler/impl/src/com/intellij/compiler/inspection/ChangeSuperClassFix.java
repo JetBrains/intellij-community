@@ -149,9 +149,11 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
         else {
           list = extendsList;
           PsiJavaCodeReferenceElement[] elements = list.getReferenceElements();
-          if (elements.length == 1 &&
-              elements[0].isReferenceTo(psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, aClass.getResolveScope()))) {
-            elements[0].delete();
+          if (elements.length == 1) {
+            PsiClass objectClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, aClass.getResolveScope());
+            if (objectClass != null && elements[0].isReferenceTo(objectClass)) {
+              elements[0].delete();
+            }
           }
         }
         assert list != null;
@@ -194,7 +196,7 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
                                                              String newClassName,
                                                              Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return candidates.stream().map(c -> (PsiMethod)c.getMember()).collect(Collectors.toList());
+      return ContainerUtil.map(candidates, c -> (PsiMethod)c.getMember());
     }
     MemberSelectionPanel panel =
       new MemberSelectionPanel("<html>Choose members to delete since they are already defined in <b>" + newClassName + "</b>",
@@ -214,7 +216,7 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
       }
     };
     return dlg.showAndGet()
-           ? panel.getTable().getSelectedMemberInfos().stream().map(info -> (PsiMethod)info.getMember()).collect(Collectors.toList())
+           ? ContainerUtil.map(panel.getTable().getSelectedMemberInfos(), info -> (PsiMethod)info.getMember())
            : Collections.emptyList();
   }
 }

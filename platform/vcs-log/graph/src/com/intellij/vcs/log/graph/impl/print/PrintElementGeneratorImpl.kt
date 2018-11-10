@@ -313,7 +313,7 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
     private val LOG = Logger.getInstance(PrintElementGeneratorImpl::class.java)
 
     private const val VERY_LONG_EDGE_SIZE = 1000
-    const val LONG_EDGE_SIZE = 30
+    const val LONG_EDGE_SIZE: Int = 30
     private const val VERY_LONG_EDGE_PART_SIZE = 250
     private const val LONG_EDGE_PART_SIZE = 1
 

@@ -32,6 +32,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiMethod;
 public class JavaFxReferencesContributor extends PsiReferenceContributor {
   public static final PsiJavaElementPattern.Capture<PsiLiteralExpression> STYLESHEET_PATTERN =
       literalExpression().methodCallParameter(psiMethod()).and(new FilterPattern(new ElementFilter() {
+        @Override
         public boolean isAcceptable(Object element, PsiElement context) {
           final PsiExpression psiExpression = getParentElement((PsiLiteralExpression)context);
           if (psiExpression != null) {
@@ -40,7 +41,8 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
           }
           return false;
         }
-  
+
+        @Override
         public boolean isClassAcceptable(Class hintClass) {
           return true;
         }
@@ -81,6 +83,7 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
 
   public static final PsiJavaElementPattern.Capture<PsiLiteralExpression> FXML_PATTERN =
     literalExpression().methodCallParameter(psiMethod().withName("getResource")).and(new FilterPattern(new ElementFilter() {
+      @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         final PsiLiteralExpression literalExpression = (PsiLiteralExpression)context;
         PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(literalExpression, PsiMethodCallExpression.class);
@@ -114,6 +117,7 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
         return false;
       }
 
+      @Override
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }

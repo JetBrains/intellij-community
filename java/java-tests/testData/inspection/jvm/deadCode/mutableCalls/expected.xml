@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>B.kt</file>
+    <line>1</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Method has one usage but it is not reachable from entry points.</description>
+  </problem>
+
+  <problem>
+    <file>C.kt</file>
+    <line>6</line>
+    <problem_class>unused declaration</problem_class>
+    <description>Method has usage(s) but they all belong to calls chain that has no members reachable from entry points.</description>
+  </problem>
+
+  <problem>
+    <file>C.kt</file>
+    <line>2</line>
+    <entry_point TYPE="method" FQNAME="C void xxx()" />
+    <problem_class>unused declaration</problem_class>
+    <description>Method has usage(s) but they all belong to calls chain that has no members reachable from entry points.</description>
+  </problem>
+
+  <problem>
+    <file>A.java</file>
+    <line>2</line>
+    <entry_point TYPE="method" FQNAME="A void xxx()" />
+    <problem_class>unused declaration</problem_class>
+    <description>Method has one usage but it is not reachable from entry points.</description>
+  </problem>
+</problems>
+

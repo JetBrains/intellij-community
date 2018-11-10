@@ -24,6 +24,7 @@ public class RegExpSupportLoader extends FileTypeFactory {
     public static final RegExpLanguage LANGUAGE = RegExpLanguage.INSTANCE;
     public static final RegExpFileType FILE_TYPE = RegExpFileType.INSTANCE;
 
+    @Override
     public void createFileTypes(final @NotNull FileTypeConsumer consumer) {
         consumer.consume(FILE_TYPE, FILE_TYPE.getDefaultExtension());
     }

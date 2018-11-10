@@ -34,12 +34,14 @@ import java.util.Arrays;
 public class EditorMultiCaretTest extends AbstractEditorTest {
   private boolean myStoredVirtualSpaceSetting;
 
+  @Override
   public void setUp() throws Exception {
     super.setUp();
     myStoredVirtualSpaceSetting = EditorSettingsExternalizable.getInstance().isVirtualSpace();
     EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
   }
 
+  @Override
   public void tearDown() throws Exception {
     try {
       EditorSettingsExternalizable.getInstance().setVirtualSpace(myStoredVirtualSpaceSetting);
@@ -85,7 +87,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
       checkResultByText("<caret>te<caret>xt");
     });
   }
-  
+
   public void testCaretRemovalWithCustomShortcutDoesntAffectOtherSelections() throws Throwable {
     doWithAltClickShortcut(() -> {
       initText("<selection>some<caret></selection> text");
@@ -435,7 +437,7 @@ public class EditorMultiCaretTest extends AbstractEditorTest {
     mouse().ctrl().alt().shift().pressAt(0, 7).dragTo(1, 5).release();
     checkResultByText("s<selection>om<caret></selection>e <selection><caret>te</selection>xt\nother<selection><caret> t</selection>ext");
   }
-  
+
   public void testCaretPositionUpdateOnFolding() {
     initText("line1\n" +
              "line2\n" +

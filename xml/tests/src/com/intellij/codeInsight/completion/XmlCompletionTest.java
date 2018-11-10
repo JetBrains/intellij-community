@@ -27,7 +27,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -35,6 +34,7 @@ import com.intellij.psi.statistics.impl.StatisticsManagerImpl;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.xml.util.XmlUtil;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -77,7 +77,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
       return;
     }
 
-    ExternalResourceManagerExImpl.addTestResource(url, location, myFixture.getTestRootDisposable());
+    ExternalResourceManagerExImpl.registerResourceTemporarily(url, location, myFixture.getTestRootDisposable());
   }
 
   public void testCompleteWithAnyInSchema() {
@@ -681,7 +681,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
                        "xml:id",
                        "xml:lang",
                        "xml:space",
-                       "xsi:nill",
+                       "xsi:nil",
                        "xsi:noNamespaceSchemaLocation",
                        "xsi:type");
   }
@@ -756,6 +756,12 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     assertTrue(myFixture.getLookupElementStrings().size() > 3); // all standard schemas actually
   }
 
+  public void testCustomNamespaceCompletion() {
+    myFixture.configureByFiles("main.xsd", "sub.xsd");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertTrue(Arrays.stream(elements).anyMatch(element -> "http://www.test.com/sub".equals(element.getLookupString())));
+  }
+
   public void testRootTagCompletion() {
     boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
@@ -792,10 +798,14 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     assertSameElements(variants, "int", "integer", "invisibleType");
   }
 
+  public void testEnumeratedTypeUnion() {
+    List<String> variants = myFixture.getCompletionVariants("enumerations.xml", "enumerations.xsd");
+    assertSameElements(variants, "A", "B");
+  }
+
   private HtmlCodeStyleSettings getHtmlSettings() {
     return CodeStyle.getSettings(myFixture.getProject())
                     .getCustomSettings(HtmlCodeStyleSettings.class);
   }
-
 }
 

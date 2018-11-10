@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -50,7 +51,8 @@ public class InsertPathAction extends AnAction {
     myDescriptor = descriptor;
   }
 
-  public void actionPerformed(AnActionEvent e) {
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
     String selectedText = myTextField.getSelectedText();
     VirtualFile virtualFile;
     if (selectedText != null ) {
@@ -95,7 +97,7 @@ public class InsertPathAction extends AnAction {
   public static void addTo(JTextComponent textField, FileChooserDescriptor descriptor) {
     addTo(textField, descriptor, true);
   }
-  
+
   public static void addTo(JTextComponent textField, FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
     if (ApplicationManager.getApplication() != null) { //NPE fixed when another class loader works
       removeFrom(textField);

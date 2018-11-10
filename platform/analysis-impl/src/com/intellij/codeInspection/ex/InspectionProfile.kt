@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInspection.InspectionProfile
@@ -29,15 +15,15 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.util.xmlb.annotations.Transient
 import org.jdom.Element
 
-const val DEFAULT_PROFILE_NAME = "Default"
-val BASE_PROFILE by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
+const val DEFAULT_PROFILE_NAME: String = "Default"
+val BASE_PROFILE: InspectionProfileImpl by lazy { InspectionProfileImpl(DEFAULT_PROFILE_NAME) }
 
 abstract class NewInspectionProfile(name: String, private var profileManager: BaseInspectionProfileManager) : ProfileEx(name), InspectionProfile, SerializableScheme {
   @Volatile
   @JvmField
-  protected var initialized = false
+  protected var initialized: Boolean = false
   @JvmField
-  protected val myLock = Any()
+  protected val myLock: Any = Any()
 
   private var isProjectLevel: Boolean = false
 
@@ -45,10 +31,10 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   @Transient
   internal var schemeState: SchemeState? = null
 
-  override fun getSchemeState() = schemeState
+  override fun getSchemeState(): SchemeState? = schemeState
 
   @Transient
-  fun isProjectLevel() = isProjectLevel
+  fun isProjectLevel(): Boolean = isProjectLevel
 
   fun setProjectLevel(value: Boolean) {
     isProjectLevel = value
@@ -71,9 +57,9 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
       return PathMacroManager.getInstance((profileManager as? ProjectInspectionProfileManager)?.project ?: ApplicationManager.getApplication())
     }
 
-  override fun toString() = name
+  override fun toString(): String = name
 
-  override fun equals(other: Any?) = super.equals(other) && (other as NewInspectionProfile).profileManager === profileManager
+  override fun equals(other: Any?): Boolean = super.equals(other) && (other as NewInspectionProfile).profileManager === profileManager
 
   /**
    * If you need to enable multiple tools, please use [.modifyProfile]
@@ -103,7 +89,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
     }
   }
 
-  fun getTools(name: String, project: Project?) = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"${this.name}\"")
+  fun getTools(name: String, project: Project?): ToolsImpl = getToolsOrNull(name, project) ?: throw AssertionError("Can't find tools for \"$name\" in the profile \"${this.name}\"")
 
   abstract fun getToolsOrNull(name: String, project: Project?): ToolsImpl?
 

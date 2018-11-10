@@ -21,7 +21,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   private PopupChooserBuilder myBuilder;
   private final JTree myTree;
 
-  public PopupTreeAdapter(PopupChooserBuilder builder, JTree tree) {
+  PopupTreeAdapter(PopupChooserBuilder builder, JTree tree) {
     myBuilder = builder;
     myTree = tree;
   }
@@ -32,7 +32,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemChosenCallback(Consumer<T> callback) {
+  public void setItemChosenCallback(Consumer<? super T> callback) {
     myBuilder.setItemChoosenCallback(() -> {
       TreePath path = myTree.getSelectionModel().getLeadSelectionPath();
       T component = (T)path.getLastPathComponent();
@@ -43,7 +43,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   }
 
   @Override
-  public void setItemsChosenCallback(Consumer<Set<T>> callback) {
+  public void setItemsChosenCallback(Consumer<? super Set<T>> callback) {
     myBuilder.setItemChoosenCallback(() -> {
       final Set<T> selection = new HashSet<>();
       for (TreePath path : myTree.getSelectionModel().getSelectionPaths()) {
@@ -81,6 +81,7 @@ class PopupTreeAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
       myTree.addMouseMotionListener(new MouseMotionAdapter() {
         boolean myIsEngaged = false;
 
+        @Override
         public void mouseMoved(MouseEvent e) {
           if (myIsEngaged) {
             final Point p = e.getPoint();

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -54,7 +55,7 @@ public class AddReturnFix implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myMethod.isValid() &&
-           myMethod.getManager().isInProject(myMethod) &&
+           ScratchFileService.isInProjectOrScratch(myMethod) &&
            myMethod.getBody() != null &&
            myMethod.getBody().getRBrace() != null
         ;
@@ -69,7 +70,7 @@ public class AddReturnFix implements IntentionAction {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     String value = suggestReturnValue();
-    PsiElementFactory factory = JavaPsiFacade.getInstance(myMethod.getProject()).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
     PsiReturnStatement returnStatement = (PsiReturnStatement) factory.createStatementFromText("return " + value+";", myMethod);
     PsiCodeBlock body = myMethod.getBody();
     returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());

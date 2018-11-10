@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stub.JavaStubImplUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.reference.SoftReference;
@@ -299,15 +300,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public boolean isDeprecated() {
-    return isFieldDeprecated(this, getGreenStub());
-  }
-
-  static boolean isFieldDeprecated(@NotNull PsiField field, @Nullable PsiFieldStub stub) {
-    if (stub != null) {
-      return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(field);
-    }
-
-    return PsiImplUtil.isDeprecatedByDocTag(field) || PsiImplUtil.isDeprecatedByAnnotation(field);
+    return JavaStubImplUtil.isMemberDeprecated(this, getGreenStub());
   }
 
   @Override

@@ -15,13 +15,12 @@
  */
 package org.intellij.lang.xpath.psi.impl;
 
+import com.intellij.lang.ASTNode;
 import org.intellij.lang.xpath.XPathTokenTypes;
-import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.NodeType;
+import org.intellij.lang.xpath.psi.XPathElementVisitor;
 import org.intellij.lang.xpath.psi.XPathNodeTypeTest;
 import org.intellij.lang.xpath.psi.XPathType;
-
-import com.intellij.lang.ASTNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,25 +29,30 @@ public class XPathNodeTypeTestImpl extends XPathFunctionCallImpl implements XPat
         super(node);
     }
 
+    @Override
     @NotNull
     public XPathType getType() {
         return XPathType.NODESET;
     }
 
+    @Override
     public NodeType getNodeType() {
         return NodeType.valueOf(getFunctionName().replace('-', '_').toUpperCase());
     }
 
+    @Override
     @Nullable
     protected ASTNode getPrefixNode() {
         return null;
     }
 
+    @Override
     @Nullable
     protected ASTNode getNameNode() {
         return getNode().findChildByType(XPathTokenTypes.NODE_TYPE);
     }
 
+  @Override
   public void accept(final XPathElementVisitor visitor) {
     visitor.visitXPathNodeTypeTest(this);
   }

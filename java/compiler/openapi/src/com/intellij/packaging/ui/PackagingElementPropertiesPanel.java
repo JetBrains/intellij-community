@@ -22,5 +22,6 @@ import com.intellij.openapi.options.UnnamedConfigurable;
  */
 public abstract class PackagingElementPropertiesPanel implements UnnamedConfigurable {
 
+  @Override
   public abstract void apply();
 }

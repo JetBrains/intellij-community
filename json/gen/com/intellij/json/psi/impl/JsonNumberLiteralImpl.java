@@ -12,7 +12,7 @@ import com.intellij.json.psi.*;
 
 public class JsonNumberLiteralImpl extends JsonLiteralImpl implements JsonNumberLiteral {
 
-  public JsonNumberLiteralImpl(ASTNode node) {
+  public JsonNumberLiteralImpl(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -20,6 +20,7 @@ public class JsonNumberLiteralImpl extends JsonLiteralImpl implements JsonNumber
     visitor.visitNumberLiteral(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JsonElementVisitor) accept((JsonElementVisitor)visitor);
     else super.accept(visitor);

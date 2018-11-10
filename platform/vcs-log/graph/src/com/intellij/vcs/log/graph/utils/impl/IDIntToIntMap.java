@@ -50,7 +50,7 @@ public class IDIntToIntMap implements IntToIntMap {
 
   private static class EmptyIDIntToIntMap extends IDIntToIntMap implements UpdatableIntToIntMap {
 
-    public EmptyIDIntToIntMap() {
+    EmptyIDIntToIntMap() {
       super(0);
     }
 

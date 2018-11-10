@@ -34,6 +34,11 @@ public class PartialChangesUtil {
     VirtualFile file = getVirtualFile(change);
     if (file == null) return null;
 
+    return getPartialTracker(project, file);
+  }
+
+  @Nullable
+  public static PartialLocalLineStatusTracker getPartialTracker(@NotNull Project project, @NotNull VirtualFile file) {
     LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(file);
     return ObjectUtils.tryCast(tracker, PartialLocalLineStatusTracker.class);
   }
@@ -48,9 +53,9 @@ public class PartialChangesUtil {
 
   @NotNull
   public static List<Change> processPartialChanges(@NotNull Project project,
-                                                   @NotNull Collection<Change> changes,
+                                                   @NotNull Collection<? extends Change> changes,
                                                    boolean executeOnEDT,
-                                                   @NotNull PairFunction<List<ChangeListChange>, PartialLocalLineStatusTracker, Boolean> partialProcessor) {
+                                                   @NotNull PairFunction<? super List<ChangeListChange>, ? super PartialLocalLineStatusTracker, Boolean> partialProcessor) {
     if (!ContainerUtil.exists(changes, it -> it instanceof ChangeListChange)) return new ArrayList<>(changes);
 
     List<Change> otherChanges = new ArrayList<>();

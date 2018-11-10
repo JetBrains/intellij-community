@@ -8,8 +8,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.EventDispatcher;
@@ -25,14 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(
-  name = "DebuggerSettings",
-  defaultStateAsResource = true,
-  storages = {
-    @Storage("debugger.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "DebuggerSettings", storages = @Storage("debugger.xml"))
 public class DebuggerSettings implements Cloneable, PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(DebuggerSettings.class);
   public static final int SOCKET_TRANSPORT = 0;
@@ -49,6 +40,23 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @NonNls public static final String EVALUATE_FINALLY_ALWAYS = "EvaluateFinallyAlways";
   @NonNls public static final String EVALUATE_FINALLY_NEVER = "EvaluateFinallyNever";
   @NonNls public static final String EVALUATE_FINALLY_ASK = "EvaluateFinallyAsk";
+
+  private static final ClassFilter[] DEFAULT_STEPPING_FILTERS = new ClassFilter[]{
+    new ClassFilter("com.sun.*"),
+    new ClassFilter("java.*"),
+    new ClassFilter("javax.*"),
+    new ClassFilter("org.omg.*"),
+    new ClassFilter("sun.*"),
+    new ClassFilter("jdk.internal.*"),
+    new ClassFilter("junit.*"),
+    new ClassFilter("com.intellij.rt.*"),
+    new ClassFilter("com.yourkit.runtime.*"),
+    new ClassFilter("com.springsource.loaded.*"),
+    new ClassFilter("org.springsource.loaded.*"),
+    new ClassFilter("javassist.*"),
+    new ClassFilter("org.apache.webbeans.*"),
+    new ClassFilter("com.ibm.ws.*"),
+  };
 
   public boolean TRACING_FILTERS_ENABLED = true;
   public int DEBUGGER_TRANSPORT;
@@ -69,12 +77,13 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public volatile boolean AUTO_VARIABLES_MODE = false;
 
   public volatile boolean KILL_PROCESS_IMMEDIATELY = false;
+  public volatile boolean ALWAYS_DEBUG = true;
 
   public String EVALUATE_FINALLY_ON_POP_FRAME = EVALUATE_FINALLY_ASK;
 
   public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
-  private ClassFilter[] mySteppingFilters = ClassFilter.EMPTY_ARRAY;
+  private ClassFilter[] mySteppingFilters = DEFAULT_STEPPING_FILTERS;
 
   public boolean INSTRUMENTING_AGENT = true;
   private List<CapturePoint> myCapturePoints = new ArrayList<>();
@@ -105,12 +114,8 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   @Override
   public Element getState() {
     Element state = XmlSerializer.serialize(this, new SkipDefaultsSerializationFilter());
-    try {
+    if (!Arrays.equals(DEFAULT_STEPPING_FILTERS, mySteppingFilters)) {
       DebuggerUtilsEx.writeFilters(state, "filter", mySteppingFilters);
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-      return null;
     }
 
     for (ContentState eachState : myContentStates.values()) {
@@ -126,11 +131,12 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
   public void loadState(@NotNull Element state) {
     XmlSerializer.deserializeInto(this, state);
 
-    try {
-      setSteppingFilters(DebuggerUtilsEx.readFilters(state.getChildren("filter")));
+    List<Element> steppingFiltersElement = state.getChildren("filter");
+    if (steppingFiltersElement.isEmpty()) {
+      setSteppingFilters(DEFAULT_STEPPING_FILTERS);
     }
-    catch (InvalidDataException e) {
-      LOG.error(e);
+    else {
+      setSteppingFilters(DebuggerUtilsEx.readFilters(steppingFiltersElement));
     }
 
     myContentStates.clear();
@@ -152,6 +158,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       DISABLE_JIT == secondSettings.DISABLE_JIT &&
       SHOW_ALTERNATIVE_SOURCE == secondSettings.SHOW_ALTERNATIVE_SOURCE &&
       KILL_PROCESS_IMMEDIATELY == secondSettings.KILL_PROCESS_IMMEDIATELY &&
+      ALWAYS_DEBUG == secondSettings.ALWAYS_DEBUG &&
       HOTSWAP_IN_BACKGROUND == secondSettings.HOTSWAP_IN_BACKGROUND &&
       SKIP_SYNTHETIC_METHODS == secondSettings.SKIP_SYNTHETIC_METHODS &&
       SKIP_CLASSLOADERS == secondSettings.SKIP_CLASSLOADERS &&
@@ -160,7 +167,7 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
       RESUME_ONLY_CURRENT_THREAD == secondSettings.RESUME_ONLY_CURRENT_THREAD &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
-      (RUN_HOTSWAP_AFTER_COMPILE != null ? RUN_HOTSWAP_AFTER_COMPILE.equals(secondSettings.RUN_HOTSWAP_AFTER_COMPILE) : secondSettings.RUN_HOTSWAP_AFTER_COMPILE == null) &&
+      (Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE)) &&
       DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters) &&
       myCapturePoints.equals(((DebuggerSettings)obj).myCapturePoints);
   }

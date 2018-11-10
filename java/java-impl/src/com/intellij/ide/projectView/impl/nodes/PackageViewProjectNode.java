@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class PackageViewProjectNode extends AbstractProjectNode {
-  public PackageViewProjectNode(Project project, ViewSettings viewSettings) {
+  public PackageViewProjectNode(@NotNull Project project, ViewSettings viewSettings) {
     super(project, project, viewSettings);
   }
 
@@ -100,13 +100,15 @@ public class PackageViewProjectNode extends AbstractProjectNode {
 
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroup(final Module module) {
+  protected AbstractTreeNode createModuleGroup(@NotNull final Module module) {
     return new PackageViewModuleNode(getProject(), module, getSettings());
   }
 
+  @NotNull
   @Override
-  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup) {
+  protected AbstractTreeNode createModuleGroupNode(@NotNull final ModuleGroup moduleGroup) {
     return new PackageViewModuleGroupNode(getProject(),  moduleGroup, getSettings());
   }
 

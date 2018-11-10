@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -37,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +44,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent event) {
+  public void actionPerformed(@NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
@@ -94,6 +81,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         if (selectedFlags.isRearrangeCode()) {
           processor = new RearrangeCodeProcessor(processor);
         }
+        if (selectedFlags.isCodeCleanup()) {
+          processor = new CodeCleanupCodeProcessor(processor);
+        }
 
         processor.run();
       }
@@ -111,7 +101,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) return;
       if (element instanceof PsiDirectoryContainer) {
-        dir = ((PsiDirectoryContainer)element).getDirectories()[0];
+        dir = ArrayUtil.getFirstElement(((PsiDirectoryContainer)element).getDirectories());
       }
       else if (element instanceof PsiDirectory) {
         dir = (PsiDirectory)element;
@@ -173,9 +163,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     return null;
   }
 
-  private static void reformatDirectory(@NotNull Project project,
-                                        @NotNull PsiDirectory dir,
-                                        @NotNull DirectoryFormattingOptions options)
+  public static void reformatDirectory(@NotNull Project project,
+                                       @NotNull PsiDirectory dir,
+                                       @NotNull DirectoryFormattingOptions options)
   {
     AbstractLayoutCodeProcessor processor = new ReformatCodeProcessor(
       project, dir, options.isIncludeSubdirectories(), options.getTextRangeType() == TextRangeType.VCS_CHANGED_TEXT
@@ -189,6 +179,9 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
     if (options.isRearrangeCode()) {
       processor = new RearrangeCodeProcessor(processor);
+    }
+    if (options.isCodeCleanup()) {
+      processor = new CodeCleanupCodeProcessor(processor);
     }
 
     processor.run();
@@ -260,7 +253,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);

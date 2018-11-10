@@ -42,7 +42,7 @@ abstract class ChangeCorrector {
 
   @NotNull protected final DiffIterableUtil.ChangeBuilder myBuilder;
 
-  public ChangeCorrector(int length1,
+  ChangeCorrector(int length1,
                          int length2,
                          @NotNull FairDiffIterable changes,
                          @NotNull ProgressIndicator indicator) {
@@ -141,13 +141,13 @@ abstract class ChangeCorrector {
   public static class SmartLineChangeCorrector extends ChangeCorrector {
     @NotNull private final TIntArrayList myIndexes1;
     @NotNull private final TIntArrayList myIndexes2;
-    @NotNull private final List<Line> myLines1;
-    @NotNull private final List<Line> myLines2;
+    @NotNull private final List<? extends Line> myLines1;
+    @NotNull private final List<? extends Line> myLines2;
 
     public SmartLineChangeCorrector(@NotNull TIntArrayList indexes1,
                                     @NotNull TIntArrayList indexes2,
-                                    @NotNull List<Line> lines1,
-                                    @NotNull List<Line> lines2,
+                                    @NotNull List<? extends Line> lines1,
+                                    @NotNull List<? extends Line> lines2,
                                     @NotNull FairDiffIterable changes,
                                     @NotNull ProgressIndicator indicator) {
       super(lines1.size(), lines2.size(), changes, indicator);
@@ -161,8 +161,8 @@ abstract class ChangeCorrector {
     protected void matchGap(int start1, int end1, int start2, int end2) {
       Range expand = expand(myLines1, myLines2, start1, start2, end1, end2);
 
-      List<Line> inner1 = myLines1.subList(expand.start1, expand.end1);
-      List<Line> inner2 = myLines2.subList(expand.start2, expand.end2);
+      List<? extends Line> inner1 = myLines1.subList(expand.start1, expand.end1);
+      List<? extends Line> inner2 = myLines2.subList(expand.start2, expand.end2);
       FairDiffIterable innerChanges = diff(inner1, inner2, myIndicator);
 
       myBuilder.markEqual(start1, start2, expand.start1, expand.start2);

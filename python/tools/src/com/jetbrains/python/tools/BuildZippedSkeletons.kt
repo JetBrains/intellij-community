@@ -32,10 +32,12 @@ import java.util.zip.ZipOutputStream
  * @author traff
  */
 
-val PYCHARM_PYTHONS = "PYCHARM_PYTHONS"
+const val PYCHARM_PYTHONS: String = "PYCHARM_PYTHONS"
 
 fun main(args: Array<String>) {
+  println("Starting build process")
   val app = IdeaTestApplication.getInstance()
+  println("App started: ${app}")
   try {
 
     val root = System.getenv(PYCHARM_PYTHONS)

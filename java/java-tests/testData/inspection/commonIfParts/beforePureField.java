@@ -1,4 +1,4 @@
-// "Extract common part from if (may change semantics)" "INFORMATION"
+// "Extract common part from 'if' (may change semantics)" "INFORMATION"
 
 import java.util.List;
 import java.util.Map;

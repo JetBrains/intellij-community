@@ -15,10 +15,8 @@
  */
 package com.intellij.execution.application;
 
-import com.intellij.execution.CommonJavaRunConfigurationParameters;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.JavaRunConfigurationExtensionManager;
-import com.intellij.execution.RunConfigurationExtension;
+import com.intellij.execution.*;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaCommandLineState;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
@@ -27,6 +25,7 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -51,10 +50,21 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @NotNull
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
-    OSProcessHandler handler = new KillableColoredProcessHandler(createCommandLine());
+    OSProcessHandler handler = new KillableColoredProcessHandler(createCommandLine()) {
+      @NotNull
+      @Override
+      protected BaseOutputReader.Options readerOptions() {
+        return BaseOutputReader.Options.forMostlySilentProcess();
+      }
+    };
     ProcessTerminatedListener.attach(handler);
     JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(getConfiguration(), handler, getRunnerSettings());
     return handler;
+  }
+
+  @Override
+  protected GeneralCommandLine createCommandLine() throws ExecutionException {
+    return super.createCommandLine().withInput(InputRedirectAware.getInputFile(myConfiguration));
   }
 
   protected T getConfiguration() {

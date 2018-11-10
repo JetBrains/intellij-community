@@ -2,6 +2,8 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
+import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel;
+import com.intellij.ide.ui.search.ComponentHighligtingListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -23,15 +25,18 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
-import com.intellij.ui.UserActivityListener;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +55,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public abstract class CodeStyleAbstractPanel implements Disposable {
+public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHighligtingListener {
 
   private static final long TIME_TO_HIGHLIGHT_PREVIEW_CHANGES_IN_MILLIS = TimeUnit.SECONDS.toMillis(3);
 
@@ -64,13 +69,13 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   protected static final int[] ourWrappings =
     {CommonCodeStyleSettings.DO_NOT_WRAP, CommonCodeStyleSettings.WRAP_AS_NEEDED, CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM, CommonCodeStyleSettings.WRAP_ALWAYS};
   private long myLastDocumentModificationStamp;
-  private String myTextToReformat = null;
+  private String myTextToReformat;
   private final UserActivityWatcher myUserActivityWatcher = new UserActivityWatcher();
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private @Nullable CodeStyleSchemesModel myModel;
-  private boolean mySomethingChanged = false;
+  @Nullable private CodeStyleSchemesModel myModel;
+  private boolean mySomethingChanged;
   private long myEndHighlightPreviewChangesTimeMillis = -1;
   private boolean myShowsPreviewHighlighters;
   private final CodeStyleSettings myCurrentSettings;
@@ -93,12 +98,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     if (myEditor != null) {
       myUpdateAlarm.setActivationComponent(myEditor.getComponent());
     }
-    myUserActivityWatcher.addUserActivityListener(new UserActivityListener() {
-      @Override
-      public void stateChanged() {
-        somethingChanged();
-      }
-    });
+    myUserActivityWatcher.addUserActivityListener(() -> somethingChanged());
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ComponentHighligtingListener.TOPIC, this);
 
     updatePreview(true);
   }
@@ -116,7 +118,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return mySomethingChanged;
   }
 
-  public void setModel(@Nullable final CodeStyleSchemesModel model) {
+  public void setModel(@NotNull CodeStyleSchemesModel model) {
     myModel = model;
   }
 
@@ -160,7 +162,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   private void updateEditor(boolean useDefaultSample) {
-    if (!myShouldUpdatePreview || (!ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getComponent().isShowing())) {
+    if (!myShouldUpdatePreview || !ApplicationManager.getApplication().isUnitTestMode() && !myEditor.getComponent().isShowing()) {
       return;
     }
 
@@ -171,7 +173,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       myTextToReformat = myEditor.getDocument().getText();
     }
     else if (useDefaultSample || myTextToReformat == null) {
-      myTextToReformat = getPreviewText();
+      myTextToReformat = StringUtil.convertLineSeparators(ObjectUtils.notNull(getPreviewText(), ""));
     }
 
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
@@ -400,22 +402,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   public static String readFromFile(final Class resourceContainerClass, @NonNls final String fileName) {
-    try {
-      final InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
+    try (InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
+         LineNumberReader lineNumberReader = stream == null ? null : new LineNumberReader(new InputStreamReader(stream))) {
       if (stream == null) throw new IOException("Resource not found: " + "codeStyle/preview/" + fileName);
-      final InputStreamReader reader = new InputStreamReader(stream);
-      final StringBuffer result;
-      final LineNumberReader lineNumberReader = new LineNumberReader(reader);
-      try {
-        result = new StringBuffer();
-        String line;
-        while ((line = lineNumberReader.readLine()) != null) {
-          result.append(line);
-          result.append("\n");
-        }
-      }
-      finally {
-        lineNumberReader.close();
+      final StringBuilder result = new StringBuilder();
+      String line;
+      while ((line = lineNumberReader.readLine()) != null) {
+        result.append(line);
+        result.append("\n");
       }
 
       return result.toString();
@@ -608,4 +602,50 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return false;
   }
 
+  @Override
+  public final void highlight(@NotNull JComponent component, @NotNull String searchString) {
+    if (isInsideThisPanel(component)) {
+      if (component instanceof TabLabel) {
+        Container parent = component.getParent();
+        if (parent instanceof JBTabs) {
+          ((JBTabs)parent).select(((TabLabel)component).getInfo(), false);
+        }
+      }
+      else {
+        JPanel tabPanel = findTabbedPaneChild(component);
+        if (tabPanel != null) {
+          JTabbedPane tabbedPane = (JTabbedPane)tabPanel.getParent();
+          int index = tabbedPane.indexOfComponent(tabPanel);
+          if (index >= 0) {
+            tabbedPane.setSelectedIndex(index);
+          }
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static JPanel findTabbedPaneChild(@NotNull JComponent component) {
+    Container parent = component.getParent();
+    while (parent != null && !(parent instanceof NewCodeStyleSettingsPanel)) {
+      Container nextParent = parent.getParent();
+      if (nextParent instanceof JTabbedPane && parent instanceof JPanel) {
+        return (JPanel)parent;
+      }
+      parent = nextParent;
+    }
+    return null;
+  }
+
+  private boolean isInsideThisPanel(@NotNull JComponent rootComponent) {
+    Container parent = rootComponent.getParent();
+    JComponent thisPanel = getPanel();
+    while (parent != null && !(parent instanceof NewCodeStyleSettingsPanel)) {
+      if (parent == thisPanel) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
+    return false;
+  }
 }

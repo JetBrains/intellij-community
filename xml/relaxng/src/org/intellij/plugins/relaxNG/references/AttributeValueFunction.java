@@ -28,7 +28,7 @@ class AttributeValueFunction implements Function<XmlAttributeValue, String> {
     return value.getValue();
   }
 
-  public static String[] toStrings(Set<XmlAttributeValue> values) {
+  public static String[] toStrings(Set<? extends XmlAttributeValue> values) {
     return ContainerUtil.map2Array(values, String.class, new AttributeValueFunction());
   }
 }

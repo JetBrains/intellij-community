@@ -84,7 +84,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @NotNull
-  GroupNode addOrGetGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<Node> edtInsertedUnderQueue) {
+  GroupNode addOrGetGroup(@NotNull UsageGroup group, int ruleIndex, @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
     GroupNode newNode;
     synchronized (this) {
       newNode = new GroupNode(this, group, ruleIndex);
@@ -100,12 +100,12 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   // >= 0 if found, < 0 if not found
-  private static int getNodeIndex(@NotNull Node newNode, @NotNull List<Node> children) {
+  private static int getNodeIndex(@NotNull Node newNode, @NotNull List<? extends Node> children) {
     return Collections.binarySearch(children, newNode, COMPARATOR);
   }
 
   // always >= 0
-  private static int getNodeInsertionIndex(@NotNull Node node, @NotNull List<Node> children) {
+  private static int getNodeInsertionIndex(@NotNull Node node, @NotNull List<? extends Node> children) {
     int i = getNodeIndex(node, children);
     return i >= 0 ? i : -i-1;
   }
@@ -196,7 +196,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
    * @param nodes  must all be children of parent
    */
   private static void removeNodesFromParent(@NotNull DefaultTreeModel treeModel, @NotNull GroupNode parent,
-                                            @NotNull List<MutableTreeNode> nodes) {
+                                            @NotNull List<? extends MutableTreeNode> nodes) {
     int count = nodes.size();
     if (count == 0) {
       return;
@@ -215,7 +215,9 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @NotNull
-  UsageNode addOrGetUsage(@NotNull Usage usage, @NotNull Consumer<Node> edtInsertedUnderQueue, boolean filterDuplicateLines) {
+  UsageNode addOrGetUsage(@NotNull Usage usage,
+                          boolean filterDuplicateLines,
+                          @NotNull Consumer<? super Node> edtInsertedUnderQueue) {
     UsageNode newNode;
     synchronized (this) {
       if (filterDuplicateLines) {

@@ -19,17 +19,18 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.memory.component.InstancesTracker;
+import org.jetbrains.annotations.NotNull;
 
 public class EnableBackgroundTrackingAction extends ToggleAction {
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     return project != null && !project.isDisposed() && InstancesTracker.getInstance(project).isBackgroundTrackingEnabled();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     Project project = e.getProject();
     if (project != null && !project.isDisposed()) {
       InstancesTracker.getInstance(project).setBackgroundTackingEnabled(state);

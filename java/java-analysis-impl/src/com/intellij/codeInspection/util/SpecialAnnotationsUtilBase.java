@@ -15,11 +15,10 @@
  */
 package com.intellij.codeInspection.util;
 
-import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
@@ -81,7 +80,7 @@ public class SpecialAnnotationsUtilBase {
     */
   }
 
-  public static void createAddToSpecialAnnotationFixes(@NotNull PsiModifierListOwner owner, @NotNull Processor<String> processor) {
+  public static void createAddToSpecialAnnotationFixes(@NotNull PsiModifierListOwner owner, @NotNull Processor<? super String> processor) {
     final PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
       final PsiAnnotation[] psiAnnotations = modifierList.getAnnotations();
@@ -89,7 +88,9 @@ public class SpecialAnnotationsUtilBase {
         @NonNls final String name = psiAnnotation.getQualifiedName();
         if (name == null) continue;
         if (name.startsWith("java.") || //name.startsWith("javax.") ||
-            name.startsWith("org.jetbrains.") && AnnotationUtil.isJetbrainsAnnotation(StringUtil.getShortName(name))) continue;
+            name.startsWith("org.jetbrains.") ||
+            NullableNotNullManager.isNullableAnnotation(psiAnnotation) ||
+            NullableNotNullManager.isNotNullAnnotation(psiAnnotation)) continue;
         if (!processor.process(name)) break;
       }
     }

@@ -33,6 +33,7 @@ public class AddFileOperation extends CvsOperationOnFiles {
     myKeywordSubstitution = keywordSubstitution;
   }
 
+  @Override
   protected Command createCommand(CvsRootProvider root, CvsExecutionEnvironment cvsExecutionEnvironment) {
     AddCommand result = new AddCommand();
     result.setKeywordSubst(myKeywordSubstitution);
@@ -40,6 +41,7 @@ public class AddFileOperation extends CvsOperationOnFiles {
     return result;
   }
 
+  @Override
   protected void addFilesToCommand(CvsRootProvider root, AbstractCommand command) {
     super.addFilesToCommand(root, command);
     List<AbstractFileObject> fileObjects = command.getFileObjects();
@@ -50,6 +52,7 @@ public class AddFileOperation extends CvsOperationOnFiles {
     }
   }
 
+  @Override
   protected String getOperationName() {
     return "add";
   }

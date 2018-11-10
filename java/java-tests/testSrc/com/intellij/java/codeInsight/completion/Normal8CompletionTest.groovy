@@ -250,6 +250,8 @@ class Test88 {
     checkResultByFileName()
   }
 
+  void testCollectorsJoining() { doTest() }
+
   void testCollectorsToSet() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toSet') })
@@ -262,6 +264,8 @@ class Test88 {
     selectItem(myItems[1])
     checkResultByFileName()
   }
+
+  void testCollectorsJoiningInsideCollect() { doTest() }
 
   void testNoExplicitTypeArgsInTernary() {
     configureByTestName()
@@ -277,6 +281,12 @@ class Test88 {
   void testLambdaInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
+  }
+
+  void testLambdaInAmbiguousConstructorCall() {
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('Empty') })
+    checkResultByFileName()
   }
 
   void testLambdaWithSuperWildcardInAmbiguousCall() {
@@ -330,6 +340,13 @@ class Test88 {
     checkResultByFileName()
   }
 
+  void testChainedMethodReferenceWithNoPrefix() {
+    myFixture.addClass("package bar; public class Strings {}")
+    myFixture.addClass("package foo; public class Strings { public static void goo() {} }")
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'Strings::goo'
+  }
+
   void testPreferVariableToLambda() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'output', 'out -> '
@@ -361,6 +378,13 @@ class Test88 {
   void "test intersection type members"() {
     myFixture.configureByText 'a.java',
                               'import java.util.*; class F { { (true ? new LinkedList<>() : new ArrayList<>()).<caret> }}'
+    myFixture.completeBasic()
+    assert !('finalize' in myFixture.lookupElementStrings)
+  }
+
+  void "test do not suggest inaccessible methods"() {
+    myFixture.configureByText 'a.java',
+                              'import java.util.*; class F { { new ArrayList<String>().forEach(O<caret>) }}'
     myFixture.completeBasic()
     assert !('finalize' in myFixture.lookupElementStrings)
   }

@@ -35,6 +35,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.theoryinpractice.testng.MessageInfoException;
 import com.theoryinpractice.testng.configuration.browser.GroupBrowser;
 import com.theoryinpractice.testng.configuration.browser.PackageBrowser;
@@ -120,6 +121,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     alternateJDK.setDefaultJreSelector(DefaultJreSelector.fromModuleDependencies(getModulesComponent(), false));
     commonJavaParameters.setModuleContext(moduleSelector.getModule());
     moduleClasspath.getComponent().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         commonJavaParameters.setModuleContext(moduleSelector.getModule());
       }
@@ -155,6 +157,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
                            });
     registerListener(new JRadioButton[]{packagesInProject, packagesInModule, packagesAcrossModules}, null);
     packagesInProject.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         evaluateModuleClassPath();
       }
@@ -391,8 +394,8 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       }
     }));
 
-    final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true, 
-                                                                                                      JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, 
+    final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true,
+                                                                                                      JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                                       PlainTextLanguage.INSTANCE.getAssociatedFileType());
     methodField.setComponent(methodEditorTextField);
 
@@ -462,7 +465,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
           }
         }).setAddActionUpdater(new AnActionButtonUpdater() {
         @Override
-        public boolean isEnabled(AnActionEvent e) {
+        public boolean isEnabled(@NotNull AnActionEvent e) {
           return !project.isDefault();
         }
       }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
@@ -529,11 +532,9 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     @Nullable
     protected GlobalSearchScope getSearchScope(Module[] modules) {
       if (modules == null || modules.length == 0) return null;
-      GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(modules[0]);
-      for (int i = 1; i < modules.length; i++) {
-        scope.uniteWith(GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(modules[i]));
-      }
-      return scope;
+      GlobalSearchScope[] scopes =
+        ContainerUtil.map2Array(modules, GlobalSearchScope.class, module -> GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+      return GlobalSearchScope.union(scopes);
     }
 
     @Nullable
@@ -567,10 +568,11 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   }
 
   private class TestNGMethodBrowser extends MethodBrowser {
-    public TestNGMethodBrowser(Project project) {
+    TestNGMethodBrowser(Project project) {
       super(project);
     }
 
+    @Override
     protected Condition<PsiMethod> getFilter(PsiClass testClass) {
       return method -> TestNGUtil.hasTest(method);
     }

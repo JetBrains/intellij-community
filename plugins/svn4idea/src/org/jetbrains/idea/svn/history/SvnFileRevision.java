@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -99,11 +99,13 @@ public class SvnFileRevision implements VcsFileRevision {
     return myPegRevision;
   }
 
+  @Override
   @NotNull
   public SvnRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
+  @Override
   public String getBranchName() {
     return null;
   }
@@ -111,17 +113,20 @@ public class SvnFileRevision implements VcsFileRevision {
   @Nullable
   @Override
   public SvnRepositoryLocation getChangedRepositoryPath() {
-    return new SvnRepositoryLocation(myURL.toString());
+    return new SvnRepositoryLocation(myURL);
   }
 
+  @Override
   public Date getRevisionDate() {
     return myDate;
   }
 
+  @Override
   public String getAuthor() {
     return myAuthor;
   }
 
+  @Override
   public String getCommitMessage() {
     return myCommitMessage;
   }
@@ -135,7 +140,7 @@ public class SvnFileRevision implements VcsFileRevision {
     return myMergeSources;
   }
 
-  public byte[] loadContent() throws VcsException {
+  private byte[] loadRevisionContent() throws VcsException {
     ContentLoader loader = new ContentLoader();
     if (ApplicationManager.getApplication().isDispatchThread() && !getRevision().isLocal()) {
       ProgressManager.getInstance()
@@ -159,19 +164,25 @@ public class SvnFileRevision implements VcsFileRevision {
     }
   }
 
-  public byte[] getContent() throws IOException, VcsException {
+  @Override
+  public byte[] loadContent() throws IOException, VcsException {
     byte[] result;
 
     if (Revision.HEAD.equals(getRevision())) {
-      result = loadContent();
+      result = loadRevisionContent();
     }
     else {
       result = ContentRevisionCache
         .getOrLoadAsBytes(myVCS.getProject(), getFilePathOnNonLocal(myURL.toDecodedString(), false), getRevisionNumber(),
-                          myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT, () -> loadContent());
+                          myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT, () -> loadRevisionContent());
     }
 
     return result;
+  }
+
+  @Override
+  public byte[] getContent() throws IOException, VcsException {
+    return loadContent();
   }
 
   public String getCopyFromPath() {
@@ -194,6 +205,7 @@ public class SvnFileRevision implements VcsFileRevision {
       return myContents;
     }
 
+    @Override
     public void run() {
       progress(message("progress.text.loading.contents", myURL.toDecodedString()),
                message("progress.text2.revision.information", getRevision()));

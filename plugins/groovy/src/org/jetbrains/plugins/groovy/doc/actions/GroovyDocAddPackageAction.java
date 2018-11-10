@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiPackage;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.doc.GroovyDocConfiguration;
 
 import javax.swing.*;
@@ -36,7 +37,7 @@ public class GroovyDocAddPackageAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = e.getProject();
 
     PackageChooserDialog chooser = new PackageChooserDialog("Choose packages", project);

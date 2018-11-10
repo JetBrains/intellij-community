@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml.reflect;
 
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import org.jetbrains.annotations.NonNls;
@@ -62,15 +61,6 @@ public interface DomGenericInfo {
    * @return true, if there's no children in the element, only tag value accessors
    */
   boolean isTagValueElement();
-
-  /**
-   *
-   * @param element
-   * @return {@link com.intellij.psi.xml.XmlAttributeValue} or {@link com.intellij.psi.xml.XmlTag}
-   */
-  @Deprecated
-  @Nullable
-  XmlElement getNameElement(DomElement element);
 
   @Nullable
   GenericDomValue getNameDomElement(DomElement element);

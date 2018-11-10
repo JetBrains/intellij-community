@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.radComponents;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,10 +27,12 @@ public final class RadScrollPane extends RadContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.radComponents.RadScrollPane");
 
   public static class Factory extends RadComponentFactory {
+    @Override
     public RadComponent newInstance(ModuleProvider module, Class aClass, String id) {
       return new RadScrollPane(module, aClass, id);
     }
 
+    @Override
     public RadComponent newInstance(final Class componentClass, final String id, final Palette palette) {
       return new RadScrollPane(componentClass, id, palette);
     }
@@ -63,6 +51,7 @@ public final class RadScrollPane extends RadContainer {
     return new RadScrollPaneLayoutManager();
   }
 
+  @Override
   public void write(final XmlWriter writer) {
     writer.startElement(UIFormXmlConstants.ELEMENT_SCROLLPANE);
     try {
@@ -91,10 +80,12 @@ public final class RadScrollPane extends RadContainer {
   private class RadScrollPaneLayoutManager extends RadLayoutManager {
     private MyDropLocation myDropLocation = null;
 
+    @Override
     @Nullable public String getName() {
       return null;
     }
 
+    @Override
     public void writeChildConstraints(final XmlWriter writer, final RadComponent child) {
     }
 
@@ -106,6 +97,7 @@ public final class RadScrollPane extends RadContainer {
       return myDropLocation;
     }
 
+    @Override
     public void addComponentToContainer(final RadContainer container, final RadComponent component, final int index) {
       try {
         final JScrollPane scrollPane = (JScrollPane)container.getDelegee();
@@ -128,18 +120,22 @@ public final class RadScrollPane extends RadContainer {
   }
 
   private class MyDropLocation implements ComponentDropLocation {
+    @Override
     public RadContainer getContainer() {
       return RadScrollPane.this;
     }
 
+    @Override
     public boolean canDrop(ComponentDragObject dragObject) {
       return dragObject.getComponentCount() == 1 && getComponentCount() == 0;
     }
 
+    @Override
     public void placeFeedback(FeedbackLayer feedbackLayer, ComponentDragObject dragObject) {
       feedbackLayer.putFeedback(getDelegee(), new Rectangle(0, 0, getWidth(), getHeight()), getDisplayName());
     }
 
+    @Override
     public void processDrop(GuiEditor editor,
                             RadComponent[] components,
                             GridConstraints[] constraintsToAdjust,
@@ -147,6 +143,7 @@ public final class RadScrollPane extends RadContainer {
       addComponent(components[0]);
     }
 
+    @Override
     @Nullable
     public ComponentDropLocation getAdjacentLocation(Direction direction) {
       return null;

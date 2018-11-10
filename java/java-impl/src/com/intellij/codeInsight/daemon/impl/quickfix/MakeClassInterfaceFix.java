@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -58,7 +59,7 @@ public class MakeClassInterfaceFix extends LocalQuickFixAndIntentionActionOnPsiE
                              @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
 
-    return myClass.getManager().isInProject(myClass);
+    return ScratchFileService.isInProjectOrScratch(myClass);
   }
 
   @Override
@@ -91,7 +92,7 @@ public class MakeClassInterfaceFix extends LocalQuickFixAndIntentionActionOnPsiE
 
   private static void convertPsiClass(PsiClass aClass, final boolean makeInterface) throws IncorrectOperationException {
     final IElementType lookFor = makeInterface? JavaTokenType.CLASS_KEYWORD : JavaTokenType.INTERFACE_KEYWORD;
-    final PsiKeyword replaceWith = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createKeyword(makeInterface? PsiKeyword.INTERFACE : PsiKeyword.CLASS);
+    final PsiKeyword replaceWith = JavaPsiFacade.getElementFactory(aClass.getProject()).createKeyword(makeInterface? PsiKeyword.INTERFACE : PsiKeyword.CLASS);
     for (PsiElement psiElement : aClass.getChildren()) {
       if (psiElement instanceof PsiKeyword) {
         final PsiKeyword psiKeyword = (PsiKeyword)psiElement;

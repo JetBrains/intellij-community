@@ -78,15 +78,14 @@ abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase implemen
 
     if (!highlightPolicy.isShouldCompare()) return null;
 
-    ComparisonPolicy policy = ignorePolicy.getComparisonPolicy();
-    boolean innerFragments = highlightPolicy.isFineFragments();
-    boolean squashFragments = highlightPolicy.isShouldSquash();
-    boolean trimFragments = ignorePolicy.isShouldTrimChunks();
-
     indicator.checkCanceled();
     List<List<LineFragment>> fragments = doCompare(text1, text2, lineOffsets1, lineOffsets2, linesRanges,
-                                                   ignorePolicy, innerFragments, indicator);
+                                                   ignorePolicy, highlightPolicy, indicator);
     assert fragments.size() == (linesRanges != null ? linesRanges.size() : 1);
+
+    ComparisonPolicy policy = ignorePolicy.getComparisonPolicy();
+    boolean squashFragments = highlightPolicy.isShouldSquash();
+    boolean trimFragments = ignorePolicy.isShouldTrimChunks();
 
     indicator.checkCanceled();
     return ContainerUtil.map(fragments, rangeFragments -> {
@@ -102,6 +101,6 @@ abstract class TwosideTextDiffProviderBase extends TextDiffProviderBase implemen
                                                         @NotNull LineOffsets lineOffsets2,
                                                         @Nullable List<Range> linesRanges,
                                                         @NotNull IgnorePolicy ignorePolicy,
-                                                        boolean innerFragments,
+                                                        @NotNull HighlightPolicy highlightPolicy,
                                                         @NotNull ProgressIndicator indicator);
 }

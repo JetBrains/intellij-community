@@ -48,6 +48,7 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
     myRmicSettings = RmicConfiguration.getOptions(project);
     myProject = project;
     myCbEnabled.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         setOptionsEnabled(e.getStateChange() == ItemEvent.SELECTED);
       }
@@ -63,6 +64,7 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
     myAdditionalOptionsField.setEnabled(selected);
   }
 
+  @Override
   public String getDisplayName() {
     return CompilerBundle.message("rmi.compiler.description");
   }
@@ -72,15 +74,18 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
     return "reference.projectsettings.compiler.rmicompiler";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getHelpTopic();
   }
 
+  @Override
   public JComponent createComponent() {
     return myPanel;
   }
 
+  @Override
   public boolean isModified() {
     boolean isModified = false;
     isModified |= ComparingUtils.isModified(myCbEnabled, myRmicSettings.IS_EANABLED);
@@ -91,6 +96,7 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
     return isModified;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     try {
       myRmicSettings.IS_EANABLED =  myCbEnabled.isSelected();
@@ -104,6 +110,7 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
     }
   }
 
+  @Override
   public void reset() {
     myCbEnabled.setSelected(myRmicSettings.IS_EANABLED);
     setOptionsEnabled(myRmicSettings.IS_EANABLED);

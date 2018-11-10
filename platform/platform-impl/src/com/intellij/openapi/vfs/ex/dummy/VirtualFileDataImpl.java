@@ -27,7 +27,7 @@ class VirtualFileDataImpl extends VirtualFileImpl {
   private byte[] myContents = ArrayUtil.EMPTY_BYTE_ARRAY;
   private long myModificationStamp = LocalTimeCounter.currentTime();
 
-  public VirtualFileDataImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
+  VirtualFileDataImpl(DummyFileSystem fileSystem, VirtualFileDirectoryImpl parent, String name) {
     super(fileSystem, parent, name);
   }
 

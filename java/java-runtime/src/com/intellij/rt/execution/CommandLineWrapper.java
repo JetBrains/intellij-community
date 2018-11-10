@@ -28,7 +28,6 @@ import java.util.jar.Manifest;
 
 /**
  * @author anna
- * @since 12-Aug-2008
  * @noinspection SSBasedInspection
  */
 public class CommandLineWrapper {
@@ -100,7 +99,6 @@ public class CommandLineWrapper {
 
   /**
    * The implementation is copied from copied from com.intellij.util.execution.ParametersListUtil.parse and adapted to old Java versions
-   * @noinspection Duplicates
    */
   private static List splitBySpaces(String parameterString) {
     parameterString = parameterString.trim();
@@ -200,7 +198,7 @@ public class CommandLineWrapper {
 
   /** @noinspection ResultOfMethodCallIgnored*/
   private static List readLinesAndDeleteFile(File file) throws IOException {
-    BufferedReader reader = new BufferedReader(new FileReader(file));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
     try {
       List lines = new ArrayList();
       String line;

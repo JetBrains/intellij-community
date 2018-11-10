@@ -48,6 +48,7 @@ public abstract class BuildRootDescriptor {
   /**
    * @deprecated override {@link #createFileFilter()} instead
    */
+  @Deprecated
   public FileFilter createFileFilter(@NotNull ProjectDescriptor descriptor) {
     return null;
   }

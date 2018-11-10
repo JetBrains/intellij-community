@@ -31,9 +31,11 @@ import org.jetbrains.idea.maven.dom.MavenDomElement;
  * </pre>
  */
 public interface MavenDomExtension extends MavenDomElement, MavenDomArtifactCoordinates {
+  @Override
   @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getGroupId();
 
+  @Override
   @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getVersion();
 }

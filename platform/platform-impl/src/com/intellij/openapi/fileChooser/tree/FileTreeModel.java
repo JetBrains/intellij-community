@@ -26,14 +26,11 @@ import com.intellij.ui.tree.Identifiable;
 import com.intellij.ui.tree.MapBasedTree;
 import com.intellij.ui.tree.MapBasedTree.Entry;
 import com.intellij.ui.tree.MapBasedTree.UpdateResult;
-import com.intellij.ui.tree.Searchable;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -53,7 +50,7 @@ import static java.util.stream.Collectors.toList;
 /**
  * @author Sergey.Malenkov
  */
-public final class FileTreeModel extends AbstractTreeModel implements Identifiable, Searchable, InvokerSupplier {
+public final class FileTreeModel extends AbstractTreeModel implements Identifiable, InvokerSupplier {
   private final Invoker invoker = new Invoker.BackgroundThread(this);
   private final State state;
   private volatile List<Root> roots;
@@ -68,13 +65,13 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     getApplication().getMessageBus().connect(this).subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        invoker.invokeLaterIfNeeded(() -> process(events));
+        invoker.runOrInvokeLater(() -> process(events));
       }
     });
   }
 
   public void invalidate() {
-    invoker.invokeLaterIfNeeded(() -> {
+    invoker.runOrInvokeLater(() -> {
       if (roots != null) {
         for (Root root : roots) {
           root.tree.invalidate();
@@ -104,110 +101,15 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
 
   @NotNull
   @Override
-  public Promise<TreePath> getTreePath(Object object) {
-    if (object == null) return Promises.rejectedPromise();
-    if (object instanceof String && object.equals(state.toString())) return Promises.resolvedPromise(state.path);
-    AsyncPromise<TreePath> promise = new AsyncPromise<>();
-    invoker.invokeLaterIfNeeded(() -> {
-      if (object instanceof Object[]) {
-        resolveID(promise, (Object[])object);
-      }
-      else if (object instanceof VirtualFile) {
-        resolveFile(promise, (VirtualFile)object);
-      }
-      else if (object instanceof String) {
-        VirtualFile file = findFile((String)object);
-        if (file != null) {
-          resolveFile(promise, file);
-        }
-        else {
-          promise.setError("file not found");
-        }
-      }
-      else {
-        promise.setError("unsupported object");
-      }
-    });
-    return promise;
-  }
-
-  private void resolveID(AsyncPromise<TreePath> promise, Object[] array) {
-    if (array.length > 0) {
-      if (roots == null) roots = state.getRoots();
-      for (Root root : roots) {
-        Entry<Node> child = root.tree.getRootEntry();
-        if (child != null && Objects.equals(child.getNode().getName(), array[0])) {
-          resolveID(promise, array, 1, root, child);
-          return;
-        }
-      }
-      promise.setError("root entry not found");
-    }
-    else {
-      promise.setResult(state.path);
-    }
-  }
-
-  private void resolveID(AsyncPromise<TreePath> promise, Object[] array, int index, Root root, Entry<Node> entry) {
-    if (index < array.length) {
-      if (entry.isLoadingRequired()) {
-        root.updateChildren(state, entry);
-      }
-      for (int i = 0; i < entry.getChildCount(); i++) {
-        Entry<Node> child = entry.getChildEntry(i);
-        if (child != null && Objects.equals(child.getNode().getName(), array[index])) {
-          resolveID(promise, array, index + 1, root, child);
-          return;
-        }
-      }
-      promise.setError("entry not found");
-    }
-    else {
-      promise.setResult(entry);
-    }
-  }
-
-  private void resolveFile(AsyncPromise<TreePath> promise, VirtualFile file) {
-    if (roots == null) roots = state.getRoots();
-    for (Root root : roots) {
-      if (resolveFile(promise, file, root, root.tree.getRootEntry())) {
-        return;
-      }
-    }
-    promise.setError("root entry not found");
-  }
-
-  private boolean resolveFile(AsyncPromise<TreePath> promise, VirtualFile file, Root root, Entry<Node> entry) {
-    if (entry != null) {
-      if (entry.getNode().getFile().equals(file)) {
-        promise.setResult(entry);
-        return true;
-      }
-      if (VfsUtilCore.isAncestor(entry.getNode().getFile(), file, true)) {
-        if (entry.isLoadingRequired()) {
-          root.updateChildren(state, entry);
-        }
-        for (int i = 0; i < entry.getChildCount(); i++) {
-          if (resolveFile(promise, file, root, entry.getChildEntry(i))) {
-            return true;
-          }
-        }
-        promise.setError("entry not found");
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @NotNull
-  @Override
   public Invoker getInvoker() {
     return invoker;
   }
 
   @Override
   public final Object getRoot() {
-    return state;
+    if (state.path != null) return state;
+    if (roots == null) roots = state.getRoots();
+    return 1 == roots.size() ? roots.get(0) : null;
   }
 
   @Override
@@ -366,12 +268,12 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
     private final List<VirtualFile> roots;
 
     private State(FileChooserDescriptor descriptor, FileRefresher refresher, boolean sortDirectories, boolean sortArchives) {
-      this.path = new TreePath(this);
       this.descriptor = descriptor;
       this.refresher = refresher;
       this.sortDirectories = sortDirectories;
       this.sortArchives = sortArchives;
       this.roots = getRoots(descriptor);
+      this.path = roots != null && 1 == roots.size() ? null : new TreePath(this);
     }
 
     private int compare(VirtualFile one, VirtualFile two) {
@@ -414,11 +316,11 @@ public final class FileTreeModel extends AbstractTreeModel implements Identifiab
       List<VirtualFile> files = roots;
       if (files == null) files = getSystemRoots();
       if (files == null || files.isEmpty()) return emptyList();
-      return files.stream().map(file -> new Root(this, file)).collect(toList());
+      return ContainerUtil.map(files, file -> new Root(this, file));
     }
 
     private static List<VirtualFile> getRoots(FileChooserDescriptor descriptor) {
-      List<VirtualFile> list = descriptor.getRoots().stream().filter(State::isValid).collect(toList());
+      List<VirtualFile> list = ContainerUtil.filter(descriptor.getRoots(), State::isValid);
       return list.isEmpty() && descriptor.isShowFileSystemRoots() ? null : list;
     }
 

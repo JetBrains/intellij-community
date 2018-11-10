@@ -8,16 +8,7 @@
     <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
-    <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/plexus-utils-1.5.5.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="plexus-utils" level="project" />
     <orderEntry type="module-library">
       <library name="Maven">
         <CLASSES>
@@ -86,9 +77,10 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="javax-activation" type="repository">
+        <properties include-transitive-deps="false" maven-id="javax.activation:activation:1.1" />
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/activation-1.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/javax/activation/activation/1.1/activation-1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

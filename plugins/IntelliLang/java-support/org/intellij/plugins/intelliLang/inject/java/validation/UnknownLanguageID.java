@@ -30,25 +30,30 @@ import org.jetbrains.annotations.NotNull;
 
 public class UnknownLanguageID extends LocalInspectionTool {
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return PatternValidator.LANGUAGE_INJECTION;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Unknown Language ID";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -81,6 +86,7 @@ public class UnknownLanguageID extends LocalInspectionTool {
     };
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {

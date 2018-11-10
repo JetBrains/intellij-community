@@ -19,7 +19,6 @@ package com.intellij.openapi.externalSystem.model.task.event;
  * An event that informs about an interim results of the operation.
  *
  * @author Vladislav.Soroka
- * @since 11/27/2015
  */
 public interface ExternalSystemStatusEvent<T extends OperationDescriptor> extends ExternalSystemProgressEvent<T> {
   /**

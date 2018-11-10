@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.util.SmartList
 import gnu.trove.THashMap
+import gnu.trove.THashSet
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.settingsRepository.git.cloneBare
 import org.jetbrains.settingsRepository.git.commit
@@ -40,10 +28,17 @@ internal class BareGitTest {
     val remoteRepository = tempDirManager.createRepository()
     val filePath = "keymaps/Mac OS X from RubyMine.xml"
     remoteRepository.add(filePath, SAMPLE_FILE_CONTENT)
+    remoteRepository.add("keymapsZ.xml", "test")
     remoteRepository.commit("")
 
     val repository = cloneBare(remoteRepository.workTree.absolutePath, tempDirManager.newPath())
     assertThat(FileUtil.loadTextAndClose(repository.read(filePath)!!)).isEqualTo(SAMPLE_FILE_CONTENT)
+
+    val list = SmartList<String>()
+    repository.processChildren("keymaps") { name, _ ->
+      list.add(name)
+    }
+    assertThat(list).containsOnly("Mac OS X from RubyMine.xml")
   }
 
   @Test fun processChildren() {
@@ -63,5 +58,20 @@ internal class BareGitTest {
 
     assertThat(data).hasSize(1)
     assertThat(data.get("Mac OS X from RubyMine.xml")).isEqualTo(SAMPLE_FILE_CONTENT)
+  }
+
+  @Test
+  fun `processChildren not-master branch`() {
+    val clonePath = tempDirManager.newPath()
+    val repository = cloneBare("https://github.com/pronskiy/PhpStorm-Live-Templates-Craft-CMS.git", clonePath)
+
+    val filePath = "templates"
+    val data = THashSet<String>()
+    repository.processChildren(filePath) {name, input ->
+      data.add(name)
+      true
+    }
+
+    assertThat(data).isNotEmpty
   }
 }

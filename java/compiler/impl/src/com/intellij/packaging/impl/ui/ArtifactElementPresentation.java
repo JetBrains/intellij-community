@@ -40,6 +40,7 @@ public class ArtifactElementPresentation extends TreeNodePresentation {
     myContext = context;
   }
 
+  @Override
   public String getPresentableName() {
     return myArtifactPointer != null ? myArtifactPointer.getArtifactName(myContext.getArtifactModel()) : "<unknown>";
   }
@@ -57,6 +58,7 @@ public class ArtifactElementPresentation extends TreeNodePresentation {
     }
   }
 
+  @Override
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     final Artifact artifact = findArtifact();
     Icon icon = artifact != null ? artifact.getArtifactType().getIcon() : AllIcons.Nodes.Artifact;

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -77,7 +78,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiMethod myMethod = (PsiMethod)startElement;
 
     final PsiType myReturnType = myReturnTypePointer.getType();
-    if (myMethod.getManager().isInProject(myMethod) &&
+    if (ScratchFileService.isInProjectOrScratch(myMethod) &&
         myReturnType != null &&
         myReturnType.isValid() &&
         !TypeConversionUtil.isNullType(myReturnType)) {
@@ -112,7 +113,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     final List<PsiMethod> affectedMethods = changeReturnType(myMethod, myReturnType);
 
-    PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiReturnStatement statementToSelect = null;
     if (!PsiType.VOID.equals(myReturnType)) {
       final ReturnStatementAdder adder = new ReturnStatementAdder(factory, myReturnType);
@@ -217,11 +218,11 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     for (PsiMethod targetMethod : methods) {
       methodSignatureChangeVisitor.addBase(targetMethod);
       ChangeSignatureProcessor processor = new UsagesAwareChangeSignatureProcessor(method.getProject(), targetMethod,
-                                                                        false, null,
-                                                                        myName,
-                                                                        returnType,
-                                                                        RemoveUnusedParameterFix.getNewParametersInfo(targetMethod, null),
-                                                                        methodSignatureChangeVisitor);
+                                                                                   false, null,
+                                                                                   myName,
+                                                                                   returnType,
+                                                                                   ParameterInfoImpl.fromMethod(targetMethod),
+                                                                                   methodSignatureChangeVisitor);
       processor.run();
     }
 
@@ -331,6 +332,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final PsiSubstitutor superClassSubstitutor =
       TypeConversionUtil.getSuperClassSubstitutor(superClass, baseClass, PsiSubstitutor.EMPTY);
     final PsiType superReturnTypeInBaseClassType = superClassSubstitutor.substitute(superReturnType);
+    if (superReturnTypeInBaseClassType == null) return true;
     final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();
     final PsiSubstitutor psiSubstitutor =
       resolveHelper.inferTypeArguments(PsiTypesUtil.filterUnusedTypeParameters(superReturnTypeInBaseClassType, baseClass.getTypeParameters()),

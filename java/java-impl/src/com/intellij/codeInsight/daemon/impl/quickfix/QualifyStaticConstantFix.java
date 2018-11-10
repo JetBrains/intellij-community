@@ -38,7 +38,7 @@ public class QualifyStaticConstantFix extends StaticImportConstantFix {
 
   @NotNull
   @Override
-  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(List<PsiField> fieldsToImport,
+  protected StaticImportMethodQuestionAction<PsiField> createQuestionAction(List<? extends PsiField> fieldsToImport,
                                                                             @NotNull Project project,
                                                                             Editor editor) {
     return new StaticImportMethodQuestionAction<PsiField>(project, editor, fieldsToImport, myRef) {

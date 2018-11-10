@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.openapi.editor.Editor;
@@ -21,24 +7,22 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyDocStringOwner;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: catherine
- * Intention to convert between single-quoted and double-quoted strings 
+ * Intention to convert between single-quoted and double-quoted strings
  */
 public class PyQuotedStringIntention extends PyBaseIntentionAction {
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return PyBundle.message("INTN.quoted.string");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile)) {
       return false;
@@ -51,7 +35,7 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
         if (docStringOwner.getDocStringExpression() == string) return false;
       }
       String stringText = string.getText();
-      int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      int prefixLength = PyStringLiteralUtil.getPrefixLength(stringText);
       stringText = stringText.substring(prefixLength);
 
       if (stringText.length() >= 6) {
@@ -72,12 +56,13 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
     return false;
   }
 
+  @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {
       final String stringText = string.getText();
-      int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      int prefixLength = PyStringLiteralUtil.getPrefixLength(stringText);
       final String text = stringText.substring(prefixLength);
 
       if (text.startsWith("'") && text.endsWith("'")) {
@@ -106,7 +91,6 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
       }
       if (ch == '"') {
         stringBuilder.append('\'');
-        continue;
       }
       else if (ch == '\'') {
         stringBuilder.append("\\\'");
@@ -135,7 +119,6 @@ public class PyQuotedStringIntention extends PyBaseIntentionAction {
       }
       if (ch == '\'') {
         stringBuilder.append('"');
-        continue;
       }
       else if (ch == '"') {
         stringBuilder.append("\\\"");

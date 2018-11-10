@@ -44,6 +44,7 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
     myComponent = component;
   }
 
+  @Override
   public boolean delete(final VirtualFile file) throws IOException {
     return processDeletedFile(file);
   }
@@ -80,15 +81,18 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
     }
   }
 
+  @Override
   public boolean move(final VirtualFile file, final VirtualFile toDir) throws IOException {
     return doMoveRename(file, toDir, file.getName());
   }
 
+  @Override
   @Nullable
   public File copy(final VirtualFile file, final VirtualFile toDir, final String copyName) {
     return null;
   }
 
+  @Override
   public boolean rename(final VirtualFile file, final String newName) throws IOException {
     return doMoveRename(file, file.getParent(), newName);
   }
@@ -124,13 +128,16 @@ public class CvsFileOperationsHandler implements LocalFileOperationsHandler {
     }
   }
 
+  @Override
   public boolean createFile(final VirtualFile dir, final String name) {
     return false;
   }
 
+  @Override
   public boolean createDirectory(final VirtualFile dir, final String name) {
     return false;
   }
 
+  @Override
   public void afterDone(final ThrowableConsumer<LocalFileOperationsHandler, IOException> invoker) {}
 }

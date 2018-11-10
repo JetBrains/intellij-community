@@ -33,7 +33,6 @@ import java.util.Set;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:19 AM
  */
 public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
@@ -43,7 +42,7 @@ public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
     myTypes.add(interestedType);
   }
 
-  public ByTypeArrangementEntryMatcher(@NotNull Collection<ArrangementAtomMatchCondition> interestedTypes) {
+  public ByTypeArrangementEntryMatcher(@NotNull Collection<? extends ArrangementAtomMatchCondition> interestedTypes) {
     myTypes.addAll(interestedTypes);
   }
 

@@ -48,7 +48,7 @@ public class JavaOverridingMethodUtil {
   @Nullable
   public static Stream<PsiMethod> getOverridingMethodsIfCheapEnough(@NotNull PsiMethod method,
                                                                     @Nullable GlobalSearchScope searchScope,
-                                                                    @NotNull Predicate<PsiMethod> preFilter) {
+                                                                    @NotNull Predicate<? super PsiMethod> preFilter) {
     Project project = method.getProject();
     String name = method.getName();
     SearchScope useScope = method.getUseScope();

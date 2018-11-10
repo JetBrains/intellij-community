@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions
 
 import com.intellij.diagnostic.DebugLogManager
@@ -30,7 +30,7 @@ class DebugLogConfigureAction : DumbAwareAction() {
   }
 }
 
-private val TRACE_SUFFIX = ":trace"
+private const val TRACE_SUFFIX = ":trace"
 private val ALL_POSSIBLE_SEPARATORS = "[\n,;]+".toRegex()
 
 private class DebugLogConfigureDialog(project: Project, categories: List<Pair<String, DebugLogLevel>>) : DialogWrapper(project, false) {

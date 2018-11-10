@@ -1,1 +1,1 @@
-1 * (1 + 2).par<caret>
+(1 + 1) * 2.par<caret>

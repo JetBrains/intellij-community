@@ -34,7 +34,7 @@ public class PyCustomMember extends UserDataHolderBase {
     RESOLVE = Key.create("resolve");
   private final String myName;
   private final boolean myResolveToInstance;
-  private final Function<PsiElement, PyType> myTypeCallback;
+  private final Function<? super PsiElement, ? extends PyType> myTypeCallback;
   @Nullable
   private final String myTypeName;
 
@@ -70,7 +70,7 @@ public class PyCustomMember extends UserDataHolderBase {
 
   public PyCustomMember(@NotNull final String name,
                         @Nullable final String type,
-                        final Function<PsiElement, PyType> typeCallback) {
+                        final Function<? super PsiElement, ? extends PyType> typeCallback) {
     myName = name;
 
     myResolveToInstance = false;
@@ -166,20 +166,6 @@ public class PyCustomMember extends UserDataHolderBase {
   /**
    * Resolves custom member in specified context.
    *
-   * @param context psi element to be used as psi context
-   * @return resolved element
-   * @deprecated Use {@link PyCustomMember#resolve(PsiElement, PyResolveContext)} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Nullable
-  @Deprecated
-  public PsiElement resolve(@NotNull PsiElement context) {
-    return resolve(context, PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.codeInsightFallback(context.getProject())));
-  }
-
-  /**
-   * Resolves custom member in specified context.
-   *
    * @param context        psi element to be used as psi context
    * @param resolveContext context to be used in resolve
    * @return resolved element
@@ -195,7 +181,6 @@ public class PyCustomMember extends UserDataHolderBase {
     if (myTypeName != null) {
 
       final ParameterizedCachedValueProvider<PyClass, PsiElement> provider = new ParameterizedCachedValueProvider<PyClass, PsiElement>() {
-        @Nullable
         @Override
         public CachedValueProvider.Result<PyClass> compute(
           final PsiElement param) {
@@ -283,7 +268,7 @@ public class PyCustomMember extends UserDataHolderBase {
     private final PyClass myClass;
     private final PsiElement myContext;
 
-    public MyInstanceElement(PyClass clazz, PsiElement context, PsiElement resolveTarget) {
+    MyInstanceElement(PyClass clazz, PsiElement context, PsiElement resolveTarget) {
       super(resolveTarget != null ? resolveTarget.getNode() : clazz.getNode());
       myClass = clazz;
       myContext = context;

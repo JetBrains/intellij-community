@@ -43,7 +43,7 @@ public class UnwrapConditionalTest extends UnwrapTestCase {
                     "\"1\";\n");
   }
 
-  public void testUnwrapUnderAssigmentExpression() throws Exception {
+  public void testUnwrapUnderAssignmentExpression() throws Exception {
     assertUnwrapped("String s = f ? \"1<caret>\" : \"2\";\n",
                     "String s = \"1\";\n");
   }

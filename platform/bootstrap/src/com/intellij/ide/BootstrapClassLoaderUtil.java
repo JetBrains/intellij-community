@@ -34,23 +34,14 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   }
 
   @NotNull
-  public static ClassLoader initClassLoader(ClassLoader parent, List<String> cp) throws MalformedURLException {
+  public static ClassLoader initClassLoader() throws MalformedURLException {
     Collection<URL> classpath = new LinkedHashSet<>();
-    if (parent == null) {
-      addParentClasspath(classpath, false);
-    }
+    addParentClasspath(classpath, false);
     addIDEALibraries(classpath);
     addAdditionalClassPath(classpath);
-    if (parent == null) {
-      addParentClasspath(classpath, true);
-    }
-    for (String s : cp) {
-      classpath.add(new File(s).toURI().toURL());
-    }
+    addParentClasspath(classpath, true);
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
-      .parent(parent == null ? null : new URLClassLoader(new URL[]{}))
-      .fallback(parent)
       .urls(filterClassPath(new ArrayList<>(classpath)))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()
@@ -64,7 +55,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     return builder.get();
   }
 
-  private static void addParentClasspath(Collection<URL> classpath, boolean ext) throws MalformedURLException {
+  private static void addParentClasspath(Collection<? super URL> classpath, boolean ext) throws MalformedURLException {
     if (!SystemInfo.IS_AT_LEAST_JAVA9) {
       String[] extDirs = System.getProperty("java.ext.dirs", "").split(File.pathSeparator);
       if (ext && extDirs.length == 0) return;
@@ -112,7 +103,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
-  private static void addIDEALibraries(Collection<URL> classpath) throws MalformedURLException {
+  private static void addIDEALibraries(Collection<? super URL> classpath) throws MalformedURLException {
     Class<BootstrapClassLoaderUtil> aClass = BootstrapClassLoaderUtil.class;
     String selfRoot = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     assert selfRoot != null;
@@ -125,7 +116,7 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     addLibraries(classpath, new File(libFolder, "ant/lib"), selfRootUrl);
   }
 
-  private static void addLibraries(Collection<URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {
+  private static void addLibraries(Collection<? super URL> classPath, File fromDir, URL selfRootUrl) throws MalformedURLException {
     File[] files = fromDir.listFiles();
     if (files == null) return;
 
@@ -139,11 +130,11 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
-  private static void addAdditionalClassPath(Collection<URL> classpath) {
+  private static void addAdditionalClassPath(Collection<? super URL> classpath) {
     parseClassPathString(System.getProperty(PROPERTY_ADDITIONAL_CLASSPATH), classpath);
   }
 
-  private static void parseClassPathString(String pathString, Collection<URL> classpath) {
+  private static void parseClassPathString(String pathString, Collection<? super URL> classpath) {
     if (pathString != null && !pathString.isEmpty()) {
       try {
         StringTokenizer tokenizer = new StringTokenizer(pathString, File.pathSeparator + ',', false);
@@ -158,7 +149,6 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
     }
   }
 
-  @SuppressWarnings("Duplicates")
   private static List<URL> filterClassPath(List<URL> classpath) {
     String ignoreProperty = System.getProperty(PROPERTY_IGNORE_CLASSPATH);
     if (ignoreProperty != null) {

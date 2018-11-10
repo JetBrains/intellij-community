@@ -44,7 +44,7 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
         if (pointer != null) {
           pointer.setName(artifact.getName());
         }
-        
+
         final ArtifactPointerImpl unresolved = myUnresolvedPointers.remove(artifact.getName());
         if (unresolved != null) {
           unresolved.setArtifact(artifact);
@@ -73,6 +73,7 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
     }
   }
 
+  @Override
   public ArtifactPointer createPointer(@NotNull String name) {
     if (myArtifactManager != null) {
       final Artifact artifact = myArtifactManager.findArtifact(name);
@@ -89,6 +90,7 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
     return pointer;
   }
 
+  @Override
   public ArtifactPointer createPointer(@NotNull Artifact artifact) {
     ArtifactPointerImpl pointer = myPointers.get(artifact);
     if (pointer == null) {
@@ -109,7 +111,7 @@ public class ArtifactPointerManagerImpl extends ArtifactPointerManager {
     return createPointer(artifactModel.getOriginalArtifact(artifact));
   }
 
-  public void disposePointers(List<Artifact> artifacts) {
+  public void disposePointers(List<? extends Artifact> artifacts) {
     for (Artifact artifact : artifacts) {
       disposePointer(artifact);
     }

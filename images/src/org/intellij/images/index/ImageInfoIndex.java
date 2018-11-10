@@ -56,7 +56,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   private final SingleEntryIndexer<ImageInfo> myDataIndexer = new SingleEntryIndexer<ImageInfo>(false) {
     @Override
     protected ImageInfo computeValue(@NotNull FileContent inputData) {
-      final ImageInfoReader.Info info = ImageInfoReader.getInfo(inputData.getContent());
+      ImageInfoReader.Info info = ImageInfoReader.getInfo(inputData.getContent(), inputData.getFileName());
       return info != null? new ImageInfo(info.width, info.height, info.bpp) : null;
     }
   };
@@ -74,7 +74,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
   }
 
   public static void processValues(VirtualFile virtualFile, FileBasedIndex.ValueProcessor<ImageInfo> processor, Project project) {
-    FileBasedIndex.getInstance().processValues(INDEX_ID, Math.abs(FileBasedIndex.getFileId(virtualFile)), virtualFile, processor, GlobalSearchScope
+    FileBasedIndex.getInstance().processValues(INDEX_ID, getFileKey(virtualFile), virtualFile, processor, GlobalSearchScope
         .fileScope(project, virtualFile));
   }
 

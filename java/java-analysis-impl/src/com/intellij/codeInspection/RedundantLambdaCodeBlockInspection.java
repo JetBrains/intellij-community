@@ -15,6 +15,7 @@ import java.util.Collection;
 
 public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(RedundantLambdaCodeBlockInspection.class);
+  private static final String SHORT_NAME = "CodeBlock2Expr";
 
   @Nls
   @NotNull
@@ -38,30 +39,30 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
   @NotNull
   @Override
   public String getShortName() {
-    return  "CodeBlock2Expr";
+    return SHORT_NAME;
   }
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
-        super.visitLambdaExpression(expression);
-        if (PsiUtil.isLanguageLevel8OrHigher(expression)) {
-          final PsiElement body = expression.getBody();
-          final PsiExpression psiExpression = isCodeBlockRedundant(body);
-          if (psiExpression != null) {
-            final PsiElement errorElement;
-            final PsiElement parent = psiExpression.getParent();
-            if (parent instanceof PsiReturnStatement) {
-              errorElement = parent.getFirstChild();
-            } else {
-              errorElement = body.getFirstChild();
-            }
-            holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
+        final PsiElement body = expression.getBody();
+        final PsiExpression psiExpression = isCodeBlockRedundant(body);
+        if (psiExpression != null) {
+          final PsiElement errorElement;
+          final PsiElement parent = psiExpression.getParent();
+          if (parent instanceof PsiReturnStatement) {
+            errorElement = parent.getFirstChild();
+          } else {
+            errorElement = body.getFirstChild();
           }
+          holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
         }
       }
     };
@@ -84,7 +85,18 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
   private static boolean findCommentsOutsideExpression(PsiElement body, PsiExpression psiExpression) {
     final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(body, PsiComment.class);
     for (PsiComment comment : comments) {
-      if (!PsiTreeUtil.isAncestor(psiExpression, comment, true)) {
+      if (!PsiTreeUtil.isAncestor(psiExpression, comment, true) && !isSelfSuppressionComment(comment)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isSelfSuppressionComment(PsiComment comment) {
+    String suppressString = JavaSuppressionUtil.getSuppressedInspectionIdsIn(comment);
+    if (suppressString != null) {
+      String[] suppressIds = suppressString.split(",");
+      if (suppressIds.length == 1 && SHORT_NAME.equals(suppressIds[0])) {
         return true;
       }
     }

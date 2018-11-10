@@ -20,7 +20,6 @@ import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.FindUsagesManager;
 import com.intellij.find.findUsages.FindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ex.CompilerPathsEx;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpec;
@@ -53,7 +52,6 @@ import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -83,9 +81,10 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
+
 /**
  * @author Vladislav.Soroka
- * @since 6/30/2014
  */
 public abstract class ExternalSystemImportingTestCase extends ExternalSystemTestCase {
 
@@ -511,6 +510,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     }
   }
 
+  @Override
   protected Sdk setupJdkForModule(final String moduleName) {
     final Sdk sdk = true ? JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk() : createJdk("Java 1.5");
     ModuleRootModificationUtil.setModuleSdk(getModule(moduleName), sdk);
@@ -545,11 +545,11 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return counter;
   }
 
-  protected static Collection<UsageInfo> findUsages(PsiElement element) throws Exception {
+  protected static Collection<UsageInfo> findUsages(@NotNull PsiElement element) throws Exception {
     return ProgressManager.getInstance().run(new Task.WithResult<Collection<UsageInfo>, Exception>(element.getProject(), "", false) {
       @Override
       protected Collection<UsageInfo> compute(@NotNull ProgressIndicator indicator) {
-        return ApplicationManager.getApplication().runReadAction((Computable<Collection<UsageInfo>>)() -> {
+        return runInEdtAndGet(() -> {
           FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(element.getProject())).getFindUsagesManager();
           FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(element, false);
           assertNotNull(handler);

@@ -72,7 +72,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
     group.addSeparator();
     group.add(new DumbAwareAction("Edit Scopes Order...") {
       @Override
-      public void actionPerformed(final AnActionEvent e) {
+      public void actionPerformed(@NotNull final AnActionEvent e) {
         final ScopesOrderDialog dlg = new ScopesOrderDialog(component, myInspectionProfile, myProject);
         if (dlg.showAndGet()) {
           onScopesOrderChanged();
@@ -99,7 +99,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
       }
       group.add(new DumbAwareAction(scopeName) {
         @Override
-        public void actionPerformed(final AnActionEvent e) {
+        public void actionPerformed(@NotNull final AnActionEvent e) {
           for (final Descriptor defaultDescriptor : defaultDescriptors) {
             InspectionToolWrapper wrapper = defaultDescriptor.getToolWrapper().createCopy();
             wrapper.getTool().readSettings(Descriptor.createConfigElement(defaultDescriptor.getToolWrapper()));

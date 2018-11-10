@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -27,7 +13,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -52,8 +37,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 import java.text.MessageFormat;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /*
  * @author: MYakovlev
@@ -107,9 +92,9 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
   private void onAdd() {
     String ext = "java";
-    final FileTemplateDefaultExtension[] defaultExtensions = Extensions.getExtensions(FileTemplateDefaultExtension.EP_NAME);
-    if (defaultExtensions.length > 0) {
-      ext = defaultExtensions[0].value;
+    final List<FileTemplateDefaultExtension> defaultExtensions = FileTemplateDefaultExtension.EP_NAME.getExtensionList();
+    if (defaultExtensions.size() > 0) {
+      ext = defaultExtensions.get(0).value;
     }
     createTemplate(IdeBundle.message("template.unnamed"), ext, "");
   }
@@ -132,7 +117,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     }
     catch (ConfigurationException ignore) {
     }
-    
+
     final FileTemplate selected = myCurrentTab.getSelectedTemplate();
     if (selected == null) {
       return;
@@ -208,8 +193,8 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
     final List<FileTemplateTab> allTabs = new ArrayList<>(Arrays.asList(myTemplatesList, myIncludesList, myCodeTemplatesList));
 
-    final FileTemplateGroupDescriptorFactory[] factories = Extensions.getExtensions(FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME);
-    if (factories.length != 0) {
+    final List<FileTemplateGroupDescriptorFactory> factories = FileTemplateGroupDescriptorFactory.EXTENSION_POINT_NAME.getExtensionList();
+    if (factories.size() != 0) {
       myOtherTemplatesList = new FileTemplateTabAsTree(OTHER_TITLE) {
         @Override
         public void onTemplateSelected() {
@@ -255,12 +240,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     DefaultActionGroup group = new DefaultActionGroup();
     AnAction removeAction = new AnAction(IdeBundle.message("action.remove.template"), null, AllIcons.General.Remove) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         onRemove();
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         if (myCurrentTab == null) {
           e.getPresentation().setEnabled(false);
@@ -272,24 +257,24 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     };
     AnAction addAction = new AnAction(IdeBundle.message("action.create.template"), null, AllIcons.General.Add) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         onAdd();
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(!(myCurrentTab == myCodeTemplatesList || myCurrentTab == myOtherTemplatesList));
       }
     };
     AnAction cloneAction = new AnAction(IdeBundle.message("action.copy.template"), null, PlatformIcons.COPY_ICON) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         onClone();
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         e.getPresentation().setEnabled(myCurrentTab != myCodeTemplatesList
                                        && myCurrentTab != myOtherTemplatesList
@@ -298,12 +283,12 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     };
     AnAction resetAction = new AnAction(IdeBundle.message("action.reset.to.default"), null, AllIcons.Actions.Rollback) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         onReset();
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         super.update(e);
         if (myCurrentTab == null) {
           e.getPresentation().setEnabled(false);
@@ -373,13 +358,16 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
 
   private void onTabChanged() {
     applyEditor(myCurrentTab.getSelectedTemplate());
-    
+
+    FileTemplateTab tab = myCurrentTab;
     final int selectedIndex = myTabbedPane.getSelectedIndex();
     if (0 <= selectedIndex && selectedIndex < myTabs.length) {
       myCurrentTab = myTabs[selectedIndex];
     }
     ((CardLayout)myLeftPanel.getLayout()).show(myLeftPanel, myCurrentTab.getTitle());
     onListSelectionChanged();
+    // request focus to a list (or tree) later to avoid moving focus to the tabbed pane
+    if (tab != myCurrentTab) EventQueue.invokeLater(myCurrentTab.getComponent()::requestFocus);
   }
 
   private void onListSelectionChanged() {
@@ -461,7 +449,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
   }
 
   private static boolean isInternalTemplateName(final String templateName) {
-    for(InternalTemplateBean bean: Extensions.getExtensions(InternalTemplateBean.EP_NAME)) {
+    for(InternalTemplateBean bean: InternalTemplateBean.EP_NAME.getExtensionList()) {
       if (Comparing.strEqual(templateName, bean.name)) {
         return true;
       }
@@ -659,7 +647,6 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     initLists();
   }
 
-  @SuppressWarnings("ToArrayCallWithZeroLengthArrayArgument")
   private void updateCache() {
     if (isSchemeModified()) {
       if (!myChangesCache.containsKey(myScheme)) {

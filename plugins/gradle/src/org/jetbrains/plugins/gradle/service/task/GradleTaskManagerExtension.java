@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/5/13
  */
 public interface GradleTaskManagerExtension {
 
@@ -38,6 +37,7 @@ public interface GradleTaskManagerExtension {
   /**
    * @deprecated use {@link #executeTasks(ExternalSystemTaskId, List, String, GradleExecutionSettings, String, ExternalSystemTaskNotificationListener)}
    */
+  @Deprecated
   default boolean executeTasks(@NotNull final ExternalSystemTaskId id,
                                @NotNull final List<String> taskNames,
                                @NotNull String projectPath,

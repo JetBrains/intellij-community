@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyIndexPropertyUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.util
@@ -32,6 +18,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrImmediateTupleType
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.getClassReferenceFromExpression
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.LazyTypeArgument
 
 fun GrIndexProperty.isSimpleArrayAccess(): Boolean {
   return getSimpleArrayAccessType() != null
@@ -87,9 +75,11 @@ fun GrIndexProperty.getArgumentListType(): PsiType? {
   val argList = argumentList
   if (argList.namedArguments.isNotEmpty()) return null
   argList.expressionArguments.singleOrNull()?.let { return it.type }
-  val types = argList.expressionArguments.map { it.type }.toTypedArray()
+  val types = argList.expressionArguments.map { it.type }
   return GrImmediateTupleType(types, JavaPsiFacade.getInstance(project), resolveScope)
 }
+
+fun GrIndexProperty.getArgumentListArgument(): Argument = LazyTypeArgument { getArgumentListType() }
 
 fun GrIndexProperty.getArgumentTypes(rhs: Boolean): Array<PsiType>? {
   val argumentListType = getArgumentListType() ?: return null

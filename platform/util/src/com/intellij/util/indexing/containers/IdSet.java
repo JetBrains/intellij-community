@@ -51,7 +51,7 @@ public class IdSet extends TIntHashSet implements RandomAccessIntContainer {
   }
 
   private class IntSetIterator extends TroveSetIntIterator {
-    public IntSetIterator() {
+    IntSetIterator() {
       super(IdSet.this);
     }
 

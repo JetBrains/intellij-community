@@ -9,5 +9,5 @@ class LogbackImportContributor : GrImportContributor {
 
   private val imports: List<GroovyImport> by lazy(::buildImports)
 
-  override fun getFileImports(file: GroovyFile) = if (file.isLogbackConfig()) imports else emptyList()
+  override fun getFileImports(file: GroovyFile): List<GroovyImport> = if (file.isLogbackConfig()) imports else emptyList()
 }

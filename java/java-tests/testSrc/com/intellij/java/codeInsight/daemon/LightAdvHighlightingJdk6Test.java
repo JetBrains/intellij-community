@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
@@ -30,81 +16,51 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    enableInspectionTools(new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection());
+    enableInspectionTools(
+      new UnusedDeclarationInspection(), new UncheckedWarningLocalInspection(), new JavacQuirksInspection(), new RedundantCastInspection());
     setLanguageLevel(LanguageLevel.JDK_1_6);
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_6, getModule(), getTestRootDisposable());
   }
-  
-  private void doTest(boolean checkWarnings, boolean checkInfos) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
+
+  private void doTest(boolean checkWarnings) {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 
-  public void testJava5CastConventions() { setLanguageLevel(LanguageLevel.JDK_1_5); doTest(true, false); }
-  public void testJavacQuirks() { doTest(true, false); }
-  public void testMethodReturnTypeSubstitutability() { doTest(true, false); }
-  public void testIDEADEV11877() { doTest(false, false); }
-  public void testIDEA108285() { doTest(false, false); }
-  public void testClassObjectAccessibility() { doTest(false, false); }
-  public void testRedundantCastInConditionalExpression() { doTest(true, false); }
-  public void testUnhandledExceptions() { doTest(true, false); }
-  public void testUnhandledExceptionsValueOf() { doTest(true, false); }
-  public void testUnsupportedFeatures() { doTest(false, false); }
-  public void testEnumInitializers() { doTest(false, false); }
-  public void testEnumSynthetics() { doTest(false, false); }
-  public void testEnumWithoutConstants() { doTest(false, false); }
-  public void testEnumInstanceFieldInitializer() { doTest(false, false); }
-  public void testIDEA79251() { doTest(false, false); }
-  public void testIDEA65473() { doTest(false, false); }
-  public void testIDEA61415() { doTest(false, false); }
-  public void testGenericArrayCreationWithGenericTypeWithOneUnboundedWildcardOneNormalParams() { doTest(false, false); }
-  public void testAgentPremain() { doTest(false, false); }
-  public void testInitializedBeforeUsed() { doTest(false, false); }
-  public void testUnreachableAssignments() { doTest(false, false); }
-  public void testCompileTypeConstantsAccessibleFromStaticFieldInitializers() { doTest(false, false);}
-  public void testInheritUnrelatedConcreteMethodsWithSameSignature() { doTest(false, false);}
-  public void testStatementWithExpression() { doTest(false, false); }
-
-  public void testAssignmentFromStringToObject() {
-    doTest(true, false);
-  }
-
-  public void testUnhandledErrorsFromEnumConstructors() {
-    doTest(true, false);
-  }
-  public void testSkipAbstractMethodsIfTheyMustBeDeclaredInNonAbstractSuperclass() {
-    doTest(false, false);
-  }
-  public void testVariableUsedBeforeAssignmentWithParenthesis() {
-    doTest(false, false);
-  }
-  public void testThisInArgListOfAnonymous() {
-    doTest(false, false);
-  }
-  public void testSameFieldNameErrorOnSecond() {
-    doTest(false, false);
-  }
-
-  public void testEnumConstantWithoutInterfaceImplementation() {
-    doTest(false, false);
-  }
-
-  public void testAmbiguityChecksForImplicitSuperConstructorCall() {
-    doTest(false, false);
-  }
-
-  public void testSpeculateOnUnhandledExceptionsOverResolvedConstructorOnly() {
-    doTest(false, false);
-  }
-
-  public void testStaticOnDemandImportResolvesToClass() {
-    doTest(false, false);
-  }
-
-  public void testReachableWhileBodyDueToConstantStringComparison() {
-    doTest(false, false);
-  }
-
-  public void testPrivateClassReferencedInAnnotationOnSibling() {
-    doTest(false, false);
-  }
+  public void testJava5CastConventions() { setLanguageLevel(LanguageLevel.JDK_1_5); doTest(true); }
+  public void testJavacQuirks() { doTest(true); }
+  public void testMethodReturnTypeSubstitutability() { doTest(true); }
+  public void testIDEADEV11877() { doTest(false); }
+  public void testIDEA108285() { doTest(false); }
+  public void testClassObjectAccessibility() { doTest(false); }
+  public void testRedundantCastInConditionalExpression() { doTest(true); }
+  public void testUnhandledExceptions() { doTest(true); }
+  public void testUnhandledExceptionsValueOf() { doTest(true); }
+  public void testUnsupportedFeatures() { doTest(false); }
+  public void testEnumInitializers() { doTest(false); }
+  public void testEnumSynthetics() { doTest(false); }
+  public void testEnumWithoutConstants() { doTest(false); }
+  public void testEnumInstanceFieldInitializer() { doTest(false); }
+  public void testIDEA79251() { doTest(false); }
+  public void testIDEA65473() { doTest(false); }
+  public void testIDEA61415() { doTest(false); }
+  public void testGenericArrayCreationWithGenericTypeWithOneUnboundedWildcardOneNormalParams() { doTest(false); }
+  public void testAgentPremain() { doTest(false); }
+  public void testInitializedBeforeUsed() { doTest(false); }
+  public void testUnreachableAssignments() { doTest(false); }
+  public void testCompileTypeConstantsAccessibleFromStaticFieldInitializers() { doTest(false);}
+  public void testInheritUnrelatedConcreteMethodsWithSameSignature() { doTest(false);}
+  public void testStatementWithExpression() { doTest(false); }
+  public void testAssignmentFromStringToObject() { doTest(true); }
+  public void testUnhandledErrorsFromEnumConstructors() { doTest(true);}
+  public void testSkipAbstractMethodsIfTheyMustBeDeclaredInNonAbstractSuperclass() { doTest(false); }
+  public void testVariableUsedBeforeAssignmentWithParenthesis() { doTest(false); }
+  public void testThisInArgListOfAnonymous() { doTest(false); }
+  public void testSameFieldNameErrorOnSecond() { doTest(false); }
+  public void testEnumConstantWithoutInterfaceImplementation() { doTest(false); }
+  public void testAmbiguityChecksForImplicitSuperConstructorCall() { doTest(false); }
+  public void testSpeculateOnUnhandledExceptionsOverResolvedConstructorOnly() { doTest(false); }
+  public void testStaticOnDemandImportResolvesToClass() { doTest(false); }
+  public void testReachableWhileBodyDueToConstantStringComparison() { doTest(false); }
+  public void testPrivateClassReferencedInAnnotationOnSibling() { doTest(false); }
+  public void testInnerClassImportShouldNotLeadToClassUsage() { enableInspectionTool(new UnusedDeclarationInspection(true)); doTest(true); }
 }

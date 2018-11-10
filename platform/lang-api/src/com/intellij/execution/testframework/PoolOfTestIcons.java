@@ -26,6 +26,11 @@ public interface PoolOfTestIcons {
   Icon FAILED_ICON = AllIcons.RunConfigurations.TestFailed;
   Icon ERROR_ICON = AllIcons.RunConfigurations.TestError;
   Icon NOT_RAN = AllIcons.RunConfigurations.TestNotRan;
+  /**
+   * @deprecated to be removed in IDEA 2020, use AllIcons.Process.Step_N
+   */
+  @SuppressWarnings("unused")
+  @Deprecated
   Icon LOADING_ICON = AllIcons.RunConfigurations.LoadingTree;
   Icon TERMINATED_ICON = AllIcons.RunConfigurations.TestTerminated;
   Icon IGNORED_ICON = AllIcons.RunConfigurations.TestIgnored;

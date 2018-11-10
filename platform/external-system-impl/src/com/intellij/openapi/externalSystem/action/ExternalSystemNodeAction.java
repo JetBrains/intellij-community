@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemConfigLocator;
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/17/2014
  */
 public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
 
@@ -42,7 +42,8 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     myExternalDataClazz = externalDataClazz;
   }
 
-  protected boolean isEnabled(AnActionEvent e) {
+  @Override
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && getSystemId(e) != null && getExternalData(e, myExternalDataClazz) != null;
   }
 
@@ -62,23 +63,23 @@ public abstract class ExternalSystemNodeAction<T> extends ExternalSystemAction {
     final T data = getExternalData(e, myExternalDataClazz);
     if (data == null) return;
 
+    ExternalSystemActionsCollector.trigger(project, projectSystemId, this, e);
     perform(project, projectSystemId, data, e);
   }
 
   @Nullable
-  protected ExternalSystemUiAware getExternalSystemUiAware(AnActionEvent e) {
+  protected ExternalSystemUiAware getExternalSystemUiAware(@NotNull AnActionEvent e) {
     return ExternalSystemDataKeys.UI_AWARE.getData(e.getDataContext());
   }
 
   @SuppressWarnings("unchecked")
   @Nullable
-  protected <T> T getExternalData(AnActionEvent e, Class<T> dataClass) {
+  protected <T> T getExternalData(@NotNull AnActionEvent e, Class<T> dataClass) {
     ExternalSystemNode node = ContainerUtil.getFirstItem(ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext()));
     return node != null && dataClass.isInstance(node.getData()) ? (T)node.getData() : null;
   }
 
-  @SuppressWarnings("unchecked")
-  protected boolean isIgnoredNode(AnActionEvent e) {
+  protected boolean isIgnoredNode(@NotNull AnActionEvent e) {
     ExternalSystemNode node = ContainerUtil.getFirstItem(ExternalSystemDataKeys.SELECTED_NODES.getData(e.getDataContext()));
     return node != null && myExternalDataClazz.isInstance(node.getData()) && node.isIgnored();
   }

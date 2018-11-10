@@ -419,7 +419,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   }
 
   @Override
-  public void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
+  public void saveTo(DataOutput out, DataExternalizer<? super Value> externalizer) throws IOException {
     DataInputOutputUtil.writeINT(out, size());
 
     for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
@@ -458,7 +458,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
 
   static final int NUMBER_OF_VALUES_THRESHOLD = 20;
 
-  public void readFrom(DataInputStream stream, DataExternalizer<Value> externalizer) throws IOException {
+  public void readFrom(DataInputStream stream, DataExternalizer<? extends Value> externalizer) throws IOException {
     FileId2ValueMapping<Value> mapping = null;
 
     while (stream.available() > 0) {

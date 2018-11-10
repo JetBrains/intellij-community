@@ -10,14 +10,14 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 
-import static org.jetbrains.plugins.groovy.util.GrFileIndexUtil.hasNameInFile;
+import static com.intellij.psi.impl.cache.impl.id.IdIndex.hasIdentifierInFile;
 
 public class FieldScriptTransformationSupport implements AstTransformationSupport {
   @Override
   public void applyTransformation(@NotNull TransformationContext context) {
     if (!(context.getCodeClass() instanceof GroovyScriptClass)) return;
     final GroovyScriptClass scriptClass = (GroovyScriptClass)context.getCodeClass();
-    if (!hasNameInFile(scriptClass.getContainingFile(), "Field")) {
+    if (!hasIdentifierInFile(scriptClass.getContainingFile(), "Field")) {
       return;
     }
     for (GrVariableDeclaration declaration : scriptClass.getContainingFile().getScriptDeclarations(true)) {

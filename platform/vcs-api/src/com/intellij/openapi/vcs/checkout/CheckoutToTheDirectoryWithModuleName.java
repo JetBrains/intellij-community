@@ -25,6 +25,7 @@ public class CheckoutToTheDirectoryWithModuleName extends CheckoutStrategy{
     super(selectedLocation, cvsPath, isForFile);
   }
 
+  @Override
   public File getResult() {
     if (!getSelectedLocation().getName().equals(getTopLevelName(getCvsPath()))) return null;
     return new File(getSelectedLocation().getParentFile(), getCvsPath().getPath());
@@ -36,10 +37,12 @@ public class CheckoutToTheDirectoryWithModuleName extends CheckoutStrategy{
     return current.getName();
   }
 
+  @Override
   public boolean useAlternativeCheckoutLocation() {
     return false;
   }
 
+  @Override
   public File getCheckoutDirectory() {
     return getSelectedLocation().getParentFile();
   }

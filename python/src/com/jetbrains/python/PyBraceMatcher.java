@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.lang.BracePair;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,19 +12,24 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PyBraceMatcher implements PairedBraceMatcher {
-  private final BracePair[] PAIRS;
+  private static final BracePair[] ourBraces = {
+    new BracePair(PyTokenTypes.LPAR, PyTokenTypes.RPAR, false),
+    new BracePair(PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET, false),
+    new BracePair(PyTokenTypes.LBRACE, PyTokenTypes.RBRACE, false),
+    new BracePair(PyTokenTypes.FSTRING_FRAGMENT_START, PyTokenTypes.FSTRING_FRAGMENT_END, true)
+  };
 
-  public PyBraceMatcher() {
-    PAIRS = new BracePair[]{new BracePair(PyTokenTypes.LPAR, PyTokenTypes.RPAR, false),
-      new BracePair(PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET, false), new BracePair(PyTokenTypes.LBRACE, PyTokenTypes.RBRACE, false)};
-  }
-
+  @Override
   @NotNull
   public BracePair[] getPairs() {
-    return PAIRS;
+    return ourBraces;
   }
 
+  @Override
   public boolean isPairedBracesAllowedBeforeType(@NotNull IElementType lbraceType, @Nullable IElementType contextType) {
+    if (lbraceType == PyTokenTypes.FSTRING_FRAGMENT_START) {
+      return true;
+    }
     return
       PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(contextType) ||
       contextType == PyTokenTypes.END_OF_LINE_COMMENT ||
@@ -51,6 +42,7 @@ public class PyBraceMatcher implements PairedBraceMatcher {
       contextType == null;
   }
 
+  @Override
   public int getCodeConstructStart(final PsiFile file, int openingBraceOffset) {
     return openingBraceOffset;
   }

@@ -44,6 +44,7 @@ public abstract class MasqueradingLexer extends DelegateLexer {
       super(delegate);
     }
 
+    @Override
     @Nullable
     public IElementType getMasqueTokenType() {
       if (myDelegate instanceof MasqueradingLexer) {
@@ -53,6 +54,7 @@ public abstract class MasqueradingLexer extends DelegateLexer {
       return myDelegate.getTokenType();
     }
 
+    @Override
     @Nullable
     public String getMasqueTokenText() {
       if (myDelegate instanceof MasqueradingLexer) {

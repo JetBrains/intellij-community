@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * @author Denis Zhdanov
- * @since 01/20/2011
  */
 public class EnterAfterJavadocTagHandlerTest {
 

@@ -59,6 +59,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
   private final MoveDestination myMoveDestination;
   private final PsiMethod myMethod;
+  @NotNull
   private final String myClassName;
   private final String myPackageName;
   private final boolean myCreateInnerClass;
@@ -68,7 +69,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
   private final List<PsiTypeParameter> myTypeParameters;
   private final String myUnwrapMethodName;
 
-  public WrapReturnValueProcessor(String className,
+  public WrapReturnValueProcessor(@NotNull String className,
                                   String packageName,
                                   MoveDestination moveDestination,
                                   PsiMethod method,
@@ -104,7 +105,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     if (existingClass != null) {
       if (TypeConversionUtil.isPrimitiveWrapper(myQualifiedName)) {
         final PsiPrimitiveType unboxedType =
-          PsiPrimitiveType.getUnboxedType(JavaPsiFacade.getInstance(myProject).getElementFactory().createType(existingClass));
+          PsiPrimitiveType.getUnboxedType(JavaPsiFacade.getElementFactory(myProject).createType(existingClass));
         assert unboxedType != null;
         return unboxedType.getCanonicalText() + "Value()";
       }
@@ -338,6 +339,7 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
     return true;
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     final PsiClass containingClass = myMethod.getContainingClass();
@@ -346,10 +348,10 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
 
   private class ReturnSearchVisitor extends JavaRecursiveElementWalkingVisitor {
-    private final List<FixableUsageInfo> usages;
+    private final List<? super FixableUsageInfo> usages;
     private final String type;
 
-    ReturnSearchVisitor(List<FixableUsageInfo> usages, String type) {
+    ReturnSearchVisitor(List<? super FixableUsageInfo> usages, String type) {
       super();
       this.usages = usages;
       this.type = type;
@@ -357,8 +359,10 @@ public class WrapReturnValueProcessor extends FixableUsagesRefactoringProcessor 
 
     @Override
     public void visitClass(PsiClass aClass) {}
+    @Override
     public void visitLambdaExpression(PsiLambdaExpression expression) {}
 
+    @Override
     public void visitReturnStatement(PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
 

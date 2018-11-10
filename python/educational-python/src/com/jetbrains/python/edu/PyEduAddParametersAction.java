@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
@@ -29,7 +30,7 @@ public class PyEduAddParametersAction implements PyExecuteFileExtensionPoint {
 
   private static class AddParametersAction extends EditRunConfigurationsAction {
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       final ConfigurationContext context = ConfigurationContext.getFromContext(e.getDataContext());
       final Location location = context.getLocation();
       if (location == null) return;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase;
 
 import com.intellij.icons.AllIcons;
@@ -22,7 +8,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
@@ -33,7 +21,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.table.ComboBoxTableCellEditor;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NonNls;
@@ -62,6 +49,8 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   @NotNull private final JBTable myCommitsTable;
   @NotNull private final CopyProvider myCopyProvider;
 
+  private boolean myModified;
+
   protected GitRebaseEditor(@NotNull Project project, @NotNull VirtualFile gitRoot, @NotNull List<GitRebaseEntry> entries) {
     super(project, true);
     myProject = project;
@@ -71,6 +60,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
     myTableModel = new MyTableModel(entries);
     myTableModel.addTableModelListener(e -> validateFields());
+    myTableModel.addTableModelListener(e -> myModified = true);
 
     myCommitsTable = new JBTable(myTableModel);
     myCommitsTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -85,8 +75,8 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       }
     });
     TableColumn actionColumn = myCommitsTable.getColumnModel().getColumn(MyTableModel.ACTION_COLUMN);
-    actionColumn.setCellEditor(ComboBoxTableCellEditor.INSTANCE);
-    actionColumn.setCellRenderer(ComboBoxTableCellRenderer.INSTANCE);
+    actionColumn.setCellEditor(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()).withClickCount(1));
+    actionColumn.setCellRenderer(new ComboBoxTableRenderer<>(GitRebaseEntry.Action.values()));
 
     List<AnAction> actions = generateSelectRebaseActionActions();
     for (AnAction action : actions) {
@@ -107,6 +97,16 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   private void installSpeedSearch() {
     new TableSpeedSearch(myCommitsTable, (o, cell) -> cell.column == 0 ? null : String.valueOf(o));
+  }
+
+  @Override
+  public void doCancelAction() {
+    if (myModified) {
+      int ans = Messages.showDialog(getRootPane(), GitBundle.getString("rebase.editor.discard.modifications.message"),
+                                    "Cancel Rebase", new String[]{"Discard", "Continue Rebasing"}, 0, Messages.getQuestionIcon());
+      if (ans != Messages.YES) return;
+    }
+    super.doCancelAction();
   }
 
   @Nullable
@@ -145,6 +145,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     setOKActionEnabled(true);
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return ToolbarDecorator.createDecorator(myCommitsTable)
       .disableAddAction()
@@ -177,7 +178,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myCopyProvider;
     }
@@ -215,14 +216,17 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
       }
     }
 
+    @Override
     public int getRowCount() {
       return myEntries.size();
     }
 
+    @Override
     public int getColumnCount() {
       return SUBJECT_COLUMN + 1;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       GitRebaseEntry e = myEntries.get(rowIndex);
       switch (columnIndex) {
@@ -390,7 +394,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int row = myCommitsTable.getSelectedRow();
       assert row >= 0 && row < myTableModel.getRowCount();
       GitRebaseEntry entry = myTableModel.myEntries.get(row);
@@ -406,7 +410,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   private class SetActionAction extends DumbAwareAction {
     private final GitRebaseEntry.Action myAction;
 
-    public SetActionAction(GitRebaseEntry.Action action) {
+    SetActionAction(GitRebaseEntry.Action action) {
       super(action.toString());
       myAction = action;
       KeyStroke keyStroke = KeyStroke.getKeyStroke(KeyEvent.getExtendedKeyCodeForChar(action.getMnemonic()), InputEvent.ALT_MASK);
@@ -414,7 +418,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       int[] selectedRows = myCommitsTable.getSelectedRows();
       for (int i : selectedRows) {
         myTableModel.setValueAt(myAction, i, MyTableModel.ACTION_COLUMN);
@@ -425,7 +429,7 @@ public class GitRebaseEditor extends DialogWrapper implements DataProvider {
   private class MoveUpDownActionListener implements AnActionButtonRunnable {
     private final MoveDirection direction;
 
-    public MoveUpDownActionListener(@NotNull MoveDirection direction) {
+    MoveUpDownActionListener(@NotNull MoveDirection direction) {
       this.direction = direction;
     }
 

@@ -137,7 +137,7 @@ public class ModuleRootModificationUtil {
     });
   }
 
-  public static void updateModel(@NotNull Module module, @NotNull Consumer<ModifiableRootModel> task) {
+  public static void updateModel(@NotNull Module module, @NotNull Consumer<? super ModifiableRootModel> task) {
     ModifiableRootModel model = ReadAction.compute(() -> ModuleRootManager.getInstance(module).getModifiableModel());
     try {
       task.consume(model);

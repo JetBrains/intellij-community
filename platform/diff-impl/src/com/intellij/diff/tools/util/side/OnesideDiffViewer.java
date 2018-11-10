@@ -123,7 +123,7 @@ public abstract class OnesideDiffViewer<T extends EditorHolder> extends Listener
 
   @Nullable
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
       return getContent();
     }

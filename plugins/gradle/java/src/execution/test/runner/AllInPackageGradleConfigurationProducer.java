@@ -33,7 +33,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/14/14
  */
 public class AllInPackageGradleConfigurationProducer extends GradleTestRunConfigurationProducer {
 

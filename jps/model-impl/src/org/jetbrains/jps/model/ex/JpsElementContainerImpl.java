@@ -102,6 +102,7 @@ public class JpsElementContainerImpl extends JpsElementContainerEx implements Jp
     return myElements;
   }
 
+  @Override
   public void applyChanges(@NotNull JpsElementContainerEx modified) {
     for (JpsElementChildRole<?> role : myElements.keySet()) {
       applyChanges(role, modified);

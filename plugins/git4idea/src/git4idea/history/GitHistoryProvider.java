@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -32,12 +18,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.changes.GitChangeUtils;
-import git4idea.history.browser.SHAHash;
 import git4idea.log.GitShowCommitInLogAction;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -64,10 +50,12 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     myProject = project;
   }
 
+  @Override
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
     return VcsDependentHistoryComponents.createOnlyColumns(ColumnInfo.EMPTY_ARRAY);
   }
 
+  @Override
   public AnAction[] getAdditionalActions(Runnable refresher) {
     return new AnAction[]{
       ShowAllAffectedGenericAction.getInstance(),
@@ -75,10 +63,12 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
       new GitShowCommitInLogAction()};
   }
 
+  @Override
   public boolean isDateOmittable() {
     return false;
   }
 
+  @Override
   @Nullable
   public String getHelpId() {
     return null;
@@ -102,6 +92,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     return createSession(filePath, revisions, currentRevision);
   }
 
+  @Override
   @Nullable
   public VcsAbstractHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     List<VcsFileRevision> revisions = GitFileHistory.collectHistory(myProject, filePath);
@@ -111,6 +102,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
   private VcsAbstractHistorySession createSession(final FilePath filePath, final List<VcsFileRevision> revisions,
                                                   @Nullable final VcsRevisionNumber number) {
     return new VcsAbstractHistorySession(revisions, number) {
+      @Override
       @Nullable
       protected VcsRevisionNumber calcCurrentRevisionNumber() {
         try {
@@ -125,6 +117,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
         }
       }
 
+      @Override
       public HistoryAsTreeProvider getHistoryAsTreeProvider() {
         return null;
       }
@@ -151,19 +144,20 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     final VirtualFile root = GitUtil.getGitRoot(filePath);
     if (root == null) return false;
 
-    final SHAHash shaHash = GitChangeUtils.commitExists(myProject, root, beforeVersionId, null, "HEAD");
-    if (shaHash == null) {
+    Hash hash = GitChangeUtils.commitExists(myProject, root, beforeVersionId, null, "HEAD");
+    if (hash == null) {
       throw new VcsException("Can not apply patch to " + filePath.getPath() + ".\nCan not find revision '" + beforeVersionId + "'.");
     }
 
     final ContentRevision content = GitVcs.getInstance(myProject).getDiffProvider()
-                                          .createFileContent(new GitRevisionNumber(shaHash.getValue()), filePath.getVirtualFile());
+      .createFileContent(new GitRevisionNumber(hash.asString()), filePath.getVirtualFile());
     if (content == null) {
-      throw new VcsException("Can not load content of '" + filePath.getPath() + "' for revision '" + shaHash.getValue() + "'");
+      throw new VcsException("Can not load content of '" + filePath.getPath() + "' for revision '" + hash.asString() + "'");
     }
     return !processor.process(content.getContent());
   }
 
+  @Override
   public void reportAppendableHistory(FilePath path, VcsAppendableHistorySessionPartner partner) {
     reportAppendableHistory(path, null, partner);
   }
@@ -198,6 +192,7 @@ public class GitHistoryProvider implements VcsHistoryProviderEx,
     return VcsUtil.getFilePath(virtualFile);
   }
 
+  @Override
   public boolean supportsHistoryForDirectories() {
     return true;
   }

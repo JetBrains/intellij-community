@@ -21,7 +21,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <depends optional="true" config-file="python-community-plugin-java.xml">com.intellij.modules.java</depends>
   <depends optional="true" config-file="python-community-plugin-minor.xml">com.intellij.modules.clion</depends>
   <depends optional="true" config-file="python-plugin-rider.xml">com.intellij.modules.rider</depends>
-  <depends optional="true" config-file="python-plugin-dbide.xml">com.intellij.modules.database</depends>
+  <depends optional="true" config-file="python-plugin-dbide.xml">com.intellij.modules.datagrip</depends>
   <depends optional="true" config-file="python-plugin-go.xml">org.jetbrains.plugins.go</depends>
 
   <!-- Two different versions of this file exist: one is used when building from sources (when auxiliary

@@ -38,10 +38,12 @@ public class AntDomFileDescription extends AntFileDescription<AntDomProject> {
     super(AntDomProject.class, ROOT_TAG_NAME);
   }
 
+  @Override
   public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
     return super.isMyFile(file, module) && isAntFile(file);
   }
 
+  @Override
   @Nullable
   public Icon getFileIcon(@Iconable.IconFlags int flags) {
     return AntIcons.AntBuildXml;

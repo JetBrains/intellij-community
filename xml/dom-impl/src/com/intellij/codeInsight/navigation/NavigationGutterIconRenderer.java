@@ -50,11 +50,11 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   implements GutterIconNavigationHandler<PsiElement>, DumbAware {
   private final String myPopupTitle;
   private final String myEmptyText;
-  private final Computable<PsiElementListCellRenderer> myCellRenderer;
-  private final NotNullLazyValue<List<SmartPsiElementPointer>> myPointers;
+  private final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
+  private final NotNullLazyValue<? extends List<SmartPsiElementPointer>> myPointers;
 
-  protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, @NotNull Computable<PsiElementListCellRenderer> cellRenderer,
-    @NotNull NotNullLazyValue<List<SmartPsiElementPointer>> pointers) {
+  protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, @NotNull Computable<? extends PsiElementListCellRenderer> cellRenderer,
+    @NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer>> pointers) {
     myPopupTitle = popupTitle;
     myEmptyText = emptyText;
     myCellRenderer = cellRenderer;
@@ -96,7 +96,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   public AnAction getClickAction() {
     return new AnAction() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         navigate(e == null ? null : (MouseEvent)e.getInputEvent(), null);
       }
     };

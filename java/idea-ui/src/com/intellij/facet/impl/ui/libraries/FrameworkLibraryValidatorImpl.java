@@ -69,11 +69,12 @@ public class FrameworkLibraryValidatorImpl extends FrameworkLibraryValidator {
   private class LibrariesQuickFix extends FacetConfigurationQuickFix {
     private final CustomLibraryDescription myDescription;
 
-    public LibrariesQuickFix(CustomLibraryDescription description) {
+    LibrariesQuickFix(CustomLibraryDescription description) {
       super(IdeBundle.message("button.fix"));
       myDescription = description;
     }
 
+    @Override
     public void run(final JComponent place) {
       AddCustomLibraryDialog dialog = AddCustomLibraryDialog.createDialog(myDescription, myContext.getLibrariesContainer(),
                                                                           myContext.getModule(), myContext.getModifiableRootModel(), null);

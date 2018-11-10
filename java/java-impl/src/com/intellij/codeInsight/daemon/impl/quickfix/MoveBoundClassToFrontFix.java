@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -32,8 +33,10 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
 
   public MoveBoundClassToFrontFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {
     super(aClass, classToExtendFrom, true);
+    PsiClass classToExtendFromPointer = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+
     myName = QuickFixBundle.message("move.bound.class.to.front.fix.text",
-                                    HighlightUtil.formatClass(myClassToExtendFrom),
+                                    classToExtendFromPointer == null ? "<null>" : HighlightUtil.formatClass(classToExtendFromPointer),
                                     HighlightUtil.formatClass(aClass));
   }
 
@@ -74,10 +77,12 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
+    PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
+
     return
-      myClass.getManager().isInProject(myClass)
-      && myClassToExtendFrom != null
-      && myClassToExtendFrom.isValid()
+      ScratchFileService.isInProjectOrScratch(myClass)
+      && classToExtendFrom != null
+      && classToExtendFrom.isValid()
     ;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.Couple;
@@ -22,7 +8,6 @@ import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.graph.InboundSemiGraph;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,6 +125,7 @@ public class LoadingOrder {
     }
 
     InboundSemiGraph<Orderable> graph = new InboundSemiGraph<Orderable>() {
+      @NotNull
       @Override
       public Collection<Orderable> getNodes() {
         List<Orderable> list = ContainerUtil.newArrayList(orderable);
@@ -147,6 +133,7 @@ public class LoadingOrder {
         return list;
       }
 
+      @NotNull
       @Override
       public Iterator<Orderable> getIn(Orderable n) {
         LoadingOrder order = cachedMap.get(n);
@@ -190,20 +177,32 @@ public class LoadingOrder {
 
     if (!builder.isAcyclic()) {
       Couple<Orderable> p = builder.getCircularDependency();
-      throw new SortingException("Could not satisfy sorting requirements", p.first.getDescribingElement(), p.second.getDescribingElement());
+      throw new SortingException("Could not satisfy sorting requirements", p.first, p.second);
     }
 
     orderable.sort(builder.comparator());
   }
 
-  public static LoadingOrder readOrder(@NonNls String orderAttr) {
-    return orderAttr != null ? new LoadingOrder(orderAttr) : ANY;
+  @NotNull
+  public static LoadingOrder readOrder(@Nullable String orderAttr) {
+    if (orderAttr == null) {
+      return ANY;
+    }
+    else if (orderAttr.equals(FIRST_STR)) {
+      return FIRST;
+    }
+    else if (orderAttr.equals(LAST_STR)) {
+      return LAST;
+    }
+    else {
+      return new LoadingOrder(orderAttr);
+    }
   }
 
   public interface Orderable {
     @Nullable
     String getOrderId();
+
     LoadingOrder getOrder();
-    Element getDescribingElement();
   }
 }

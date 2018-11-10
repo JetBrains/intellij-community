@@ -28,7 +28,7 @@ abstract class AddItemPopupAction<ItemType> extends ChooseAndAddAction<ItemType>
   private final Icon myIcon;
   private final int myIndex;
 
-  public AddItemPopupAction(ClasspathPanel classpathPanel, int index, String title, Icon icon) {
+  AddItemPopupAction(ClasspathPanel classpathPanel, int index, String title, Icon icon) {
     super(classpathPanel);
     myTitle = title;
     myIcon = icon;

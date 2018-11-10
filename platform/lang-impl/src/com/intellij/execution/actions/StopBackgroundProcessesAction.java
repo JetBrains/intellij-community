@@ -34,7 +34,6 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,18 +46,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class StopBackgroundProcessesAction extends DumbAwareAction implements AnAction.TransparentUpdate{
-  private Icon wrappee = null;
   @Override
-  public void update(AnActionEvent e) {
-    if (wrappee == null) {
-      wrappee = IconUtil.toSize(getTemplatePresentation().getIcon(), 16, 16);
-    }
-    e.getPresentation().setIcon(wrappee);
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(!getCancellableProcesses(e.getProject()).isEmpty());
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
     List<StopAction.HandlerItem> handlerItems = getItemsList(getCancellableProcesses(project));

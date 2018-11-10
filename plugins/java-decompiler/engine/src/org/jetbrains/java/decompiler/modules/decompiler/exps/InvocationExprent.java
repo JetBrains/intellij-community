@@ -66,7 +66,7 @@ public class InvocationExprent extends Exprent {
   public InvocationExprent(int opcode,
                            LinkConstant cn,
                            List<PooledConstant> bootstrapArguments,
-                           ListStack<Exprent> stack,
+                           ListStack<? extends Exprent> stack,
                            Set<Integer> bytecodeOffsets) {
     this();
 
@@ -247,7 +247,9 @@ public class InvocationExprent extends Exprent {
 
           if (invocationTyp == INVOKE_SPECIAL) {
             if (!classname.equals(this_classname)) { // TODO: direct comparison to the super class?
-              super_qualifier = this_classname;
+              StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+              boolean isInterface = cl != null && cl.hasModifier(CodeConstants.ACC_INTERFACE);
+              super_qualifier = !isInterface ? this_classname : classname;
             }
           }
         }

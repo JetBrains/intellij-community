@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.maven.model.impl.MavenModuleResourceConfiguration;
@@ -77,7 +78,7 @@ public class MavenResourceFileProcessor {
       copyWithFiltering(file, targetFile);
     }
     else {
-      FileUtil.copyContent(file, targetFile);
+      FSOperations.copy(file, targetFile);
     }
   }
 

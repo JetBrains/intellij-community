@@ -2,7 +2,10 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,8 +15,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
-import java.util.HashMap;
-import com.intellij.util.containers.TransferToEDTQueue;
+import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -34,8 +37,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author nik
@@ -54,9 +57,8 @@ public class XFramesView extends XDebugView {
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<>();
   private final ActionToolbarImpl myToolbar;
   private final Wrapper myThreadsPanel;
-  private boolean myThreadsCalculated = false;
-  private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XFramesView later invocator");
-  private boolean myRefresh = false;
+  private boolean myThreadsCalculated;
+  private boolean myRefresh;
 
   public XFramesView(@NotNull Project project) {
     myMainPanel = new JPanel(new BorderLayout());
@@ -108,7 +110,7 @@ public class XFramesView extends XDebugView {
             XDebugSession session = getSession(e);
             if (session != null) {
               myRefresh = false;
-              updateFrames((XExecutionStack)item, session, null);
+              updateFrames((XExecutionStack)item, session, null, false);
             }
           }
         }
@@ -158,10 +160,14 @@ public class XFramesView extends XDebugView {
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
   }
 
+  public JComponent getDefaultFocusedComponent() {
+    return myFramesList;
+  }
+
   private class ThreadsBuilder implements XSuspendContext.XExecutionStackContainer {
     private volatile boolean myObsolete;
 
-    public ThreadsBuilder() {
+    ThreadsBuilder() {
       myThreadComboBox.addItem(null); // rendered as "Loading..."
     }
 
@@ -230,6 +236,13 @@ public class XFramesView extends XDebugView {
     return myBuilders.computeIfAbsent(executionStack, k -> new StackFramesListBuilder(executionStack, session));
   }
 
+  private void withCurrentBuilder(Consumer<StackFramesListBuilder> consumer) {
+    StackFramesListBuilder builder = myBuilders.get(mySelectedStack);
+    if (builder != null) {
+      consumer.consume(builder);
+    }
+  }
+
   @Override
   public void processSessionEvent(@NotNull SessionEvent event, @NotNull XDebugSession session) {
     myRefresh = event == SessionEvent.SETTINGS_CHANGED;
@@ -252,7 +265,7 @@ public class XFramesView extends XDebugView {
       return;
     }
 
-    myLaterInvocator.offer(() -> {
+    EdtExecutorService.getInstance().execute(() -> {
       if (event != SessionEvent.SETTINGS_CHANGED) {
         mySelectedFrameIndex = 0;
         mySelectedStack = null;
@@ -284,13 +297,20 @@ public class XFramesView extends XDebugView {
       addExecutionStacks(Arrays.asList(executionStacks));
 
       myThreadComboBox.setSelectedItem(activeExecutionStack);
-      myThreadsPanel.removeAll();
-      myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
-      final boolean invisible = executionStacks.length == 1 && StringUtil.isEmpty(executionStacks[0].getDisplayName());
-      if (!invisible) {
-        myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
+      boolean invisible = executionStacks.length == 1 && StringUtil.isEmpty(executionStacks[0].getDisplayName());
+      if (invisible != (myThreadComboBox.getParent() == null)) {
+        if (invisible) {
+          myThreadsPanel.remove(myThreadComboBox);
+        }
+        else {
+          myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
+        }
+        myThreadsPanel.revalidate();
       }
-      updateFrames(activeExecutionStack, session, event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null);
+      updateFrames(activeExecutionStack,
+                   session,
+                   event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null,
+                   event == SessionEvent.SETTINGS_CHANGED);
     });
   }
 
@@ -319,15 +339,19 @@ public class XFramesView extends XDebugView {
     }
   }
 
-  private void updateFrames(XExecutionStack executionStack, @NotNull XDebugSession session, @Nullable XStackFrame frameToSelect) {
+  private void updateFrames(XExecutionStack executionStack,
+                            @NotNull XDebugSession session,
+                            @Nullable XStackFrame frameToSelect,
+                            boolean refresh) {
     if (mySelectedStack != null) {
-      getOrCreateBuilder(mySelectedStack, session).stop();
+      withCurrentBuilder(StackFramesListBuilder::stop);
     }
 
     mySelectedStack = executionStack;
     if (executionStack != null) {
       mySelectedFrameIndex = myExecutionStacksWithSelection.get(executionStack);
       StackFramesListBuilder builder = getOrCreateBuilder(executionStack, session);
+      builder.setRefresh(refresh);
       builder.setToSelect(frameToSelect != null ? frameToSelect : mySelectedFrameIndex);
       myListenersEnabled = false;
       boolean selected = builder.initModel(myFramesList.getModel());
@@ -346,8 +370,8 @@ public class XFramesView extends XDebugView {
   private void processFrameSelection(XDebugSession session, boolean force) {
     mySelectedFrameIndex = myFramesList.getSelectedIndex();
     myExecutionStacksWithSelection.put(mySelectedStack, mySelectedFrameIndex);
-    getOrCreateBuilder(mySelectedStack, session).setToSelect(null);
-    
+    withCurrentBuilder(b -> b.setToSelect(null));
+
     Object selected = myFramesList.getSelectedValue();
     if (selected instanceof XStackFrame) {
       if (session != null) {
@@ -362,11 +386,12 @@ public class XFramesView extends XDebugView {
     private XExecutionStack myExecutionStack;
     private final List<XStackFrame> myStackFrames;
     private String myErrorMessage;
-    private int myNextFrameIndex = 0;
+    private int myNextFrameIndex;
     private volatile boolean myRunning;
     private boolean myAllFramesLoaded;
     private final XDebugSession mySession;
     private Object myToSelect;
+    private boolean myRefresh;
 
     private StackFramesListBuilder(final XExecutionStack executionStack, XDebugSession session) {
       myExecutionStack = executionStack;
@@ -378,6 +403,10 @@ public class XFramesView extends XDebugView {
       myToSelect = toSelect;
     }
 
+    private void setRefresh(boolean refresh) {
+      myRefresh = refresh;
+    }
+
     @Override
     public void addStackFrames(@NotNull final List<? extends XStackFrame> stackFrames, final boolean last) {
       addStackFrames(stackFrames, null, last);
@@ -386,12 +415,12 @@ public class XFramesView extends XDebugView {
     @Override
     public void addStackFrames(@NotNull final List<? extends XStackFrame> stackFrames, @Nullable XStackFrame toSelect, final boolean last) {
       if (isObsolete()) return;
-      myLaterInvocator.offer(() -> {
+      EdtExecutorService.getInstance().execute(() -> {
         if (isObsolete()) return;
         myStackFrames.addAll(stackFrames);
         addFrameListElements(stackFrames, last);
 
-        if (toSelect != null) {
+        if (toSelect != null && !myRefresh) {
           setToSelect(toSelect);
         }
 
@@ -413,7 +442,7 @@ public class XFramesView extends XDebugView {
     @Override
     public void errorOccurred(@NotNull final String errorMessage) {
       if (isObsolete()) return;
-      myLaterInvocator.offer(() -> {
+      EdtExecutorService.getInstance().execute(() -> {
         if (isObsolete()) return;
         if (myErrorMessage == null) {
           myErrorMessage = errorMessage;

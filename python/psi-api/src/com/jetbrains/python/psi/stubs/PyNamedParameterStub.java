@@ -13,15 +13,6 @@ public interface PyNamedParameterStub extends NamedStub<PyNamedParameter>, PyAnn
   boolean isPositionalContainer();
   boolean isKeywordContainer();
 
-  /**
-   * @deprecated Use {@link PyNamedParameterStub#getDefaultValueText()} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Deprecated
-  default boolean hasDefaultValue() {
-    return getDefaultValueText() != null;
-  }
-
   @Nullable
   default String getDefaultValueText() {
     return null;

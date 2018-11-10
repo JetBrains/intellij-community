@@ -5,6 +5,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSettingListener;
+import com.intellij.codeInsight.folding.impl.FoldingUtil;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.facet.Facet;
@@ -112,7 +114,6 @@ public class DaemonListeners implements Disposable {
                          @NotNull EditorFactory editorFactory,
                          @NotNull PsiDocumentManager psiDocumentManager,
                          @NotNull CommandProcessor commandProcessor,
-                         @NotNull EditorColorsManager editorColorsManager,
                          @NotNull final Application application,
                          @NotNull ProjectInspectionProfileManager inspectionProjectProfileManager,
                          @NotNull TodoConfiguration todoConfiguration,
@@ -163,12 +164,12 @@ public class DaemonListeners implements Disposable {
     eventMulticaster.addDocumentListener(new DocumentListener() {
       // clearing highlighters before changing document because change can damage editor highlighters drastically, so we'll clear more than necessary
       @Override
-      public void beforeDocumentChange(final DocumentEvent e) {
+      public void beforeDocumentChange(@NotNull final DocumentEvent e) {
         Document document = e.getDocument();
         VirtualFile virtualFile = fileDocumentManager.getFile(document);
         Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
-        //no need to stop daemon if something happened in the console
-        if (worthBothering(document, project)) {
+        //no need to stop daemon if something happened in the console or in non-physical document
+        if (worthBothering(document, project) && application.isDispatchThread()) {
           stopDaemon(true, "Document change");
           UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
         }
@@ -177,7 +178,7 @@ public class DaemonListeners implements Disposable {
 
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         final Editor editor = e.getEditor();
         if ((editor.getComponent().isShowing() || application.isHeadlessEnvironment()) &&
             worthBothering(editor.getDocument(), editor.getProject())) {
@@ -244,13 +245,13 @@ public class DaemonListeners implements Disposable {
     editorFactory.addEditorFactoryListener(editorFactoryListener, this);
 
     PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)psiDocumentManager;
-    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, editorFactory,connection, daemonCodeAnalyzer.getFileStatusMap());
+    PsiChangeHandler changeHandler = new PsiChangeHandler(myProject, documentManager, editorFactory, connection, daemonCodeAnalyzer.getFileStatusMap());
     Disposer.register(this, changeHandler);
     psiManager.addPsiTreeChangeListener(changeHandler, changeHandler);
 
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         stopDaemonAndRestartAllFiles("Project roots changed");
       }
     });
@@ -269,13 +270,13 @@ public class DaemonListeners implements Disposable {
 
     connection.subscribe(PowerSaveMode.TOPIC, () -> stopDaemon(true, "Power save mode change"));
     connection.subscribe(EditorColorsManager.TOPIC, scheme -> stopDaemonAndRestartAllFiles("Editor color scheme changed"));
+    connection.subscribe(CommandListener.TOPIC, new MyCommandListener());
 
-    commandProcessor.addCommandListener(new MyCommandListener(), this);
     application.addApplicationListener(new MyApplicationListener(), this);
     inspectionProjectProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
     todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
     todoConfiguration.colorSettingsChanged();
-    actionManagerEx.addAnActionListener(new MyAnActionListener(), this);
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new MyAnActionListener());
     virtualFileManager.addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
@@ -358,6 +359,8 @@ public class DaemonListeners implements Disposable {
         stopDaemonAndRestartAllFiles("facet changed: " + facet.getName());
       }
     });
+
+    connection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (root, setting) -> updateStatusBar());
   }
 
   private boolean worthBothering(final Document document, Project project) {
@@ -437,7 +440,7 @@ public class DaemonListeners implements Disposable {
     private final String myCutActionName = myActionManager.getAction(IdeActions.ACTION_EDITOR_CUT).getTemplatePresentation().getText();
 
     @Override
-    public void commandStarted(CommandEvent event) {
+    public void commandStarted(@NotNull CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
@@ -450,7 +453,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Nullable
-    private Document extractDocumentFromCommand(CommandEvent event) {
+    private Document extractDocumentFromCommand(@NotNull CommandEvent event) {
       Document affectedDocument = event.getDocument();
       if (affectedDocument != null) return affectedDocument;
       Object id = event.getCommandGroupId();
@@ -465,7 +468,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void commandFinished(CommandEvent event) {
+    public void commandFinished(@NotNull CommandEvent event) {
       Document affectedDocument = extractDocumentFromCommand(event);
       if (!worthBothering(affectedDocument, event.getProject())) return;
 
@@ -489,6 +492,9 @@ public class DaemonListeners implements Disposable {
     public void propertyChange(@NotNull PropertyChangeEvent evt) {
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(evt.getPropertyName())) {
         stopDaemonAndRestartAllFiles("Todo patterns changed");
+      }
+      else if (TodoConfiguration.PROP_MULTILINE.equals(evt.getPropertyName())) {
+        stopDaemonAndRestartAllFiles("Todo multi-line detection changed");
       }
     }
   }
@@ -533,16 +539,16 @@ public class DaemonListeners implements Disposable {
     });
   }
 
-  private class MyAnActionListener extends AnActionListener.Adapter {
+  private class MyAnActionListener implements AnActionListener {
     private final AnAction escapeAction = myActionManager.getAction(IdeActions.ACTION_EDITOR_ESCAPE);
 
     @Override
-    public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
       myEscPressed = action == escapeAction;
     }
 
     @Override
-    public void beforeEditorTyping(char c, DataContext dataContext) {
+    public void beforeEditorTyping(char c, @NotNull DataContext dataContext) {
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       //no need to stop daemon if something happened in the console
       if (editor != null && !worthBothering(editor.getDocument(), editor.getProject())) {
@@ -552,7 +558,7 @@ public class DaemonListeners implements Disposable {
     }
   }
 
-  private static class MyEditorMouseListener extends EditorMouseAdapter {
+  private static class MyEditorMouseListener implements EditorMouseListener {
     @NotNull
     private final TooltipController myTooltipController;
 
@@ -561,7 +567,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void mouseExited(EditorMouseEvent e) {
+    public void mouseExited(@NotNull EditorMouseEvent e) {
       if (!myTooltipController.shouldSurvive(e.getMouseEvent())) {
         DaemonTooltipUtil.cancelTooltips();
       }
@@ -570,7 +576,7 @@ public class DaemonListeners implements Disposable {
 
   private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     @Override
-    public void mouseMoved(EditorMouseEvent e) {
+    public void mouseMoved(@NotNull EditorMouseEvent e) {
       if (Registry.is("ide.disable.editor.tooltips")) {
         return;
       }
@@ -590,8 +596,10 @@ public class DaemonListeners implements Disposable {
         if (e.getArea() == EditorMouseEventArea.EDITING_AREA && !UIUtil.isControlKeyDown(e.getMouseEvent())) {
           int offset = editor.logicalPositionToOffset(logical);
           if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
+          if (editor.getInlayModel().getElementAt(e.getMouseEvent().getPoint()) != null) return;
           HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
-          if (info == null || info.getDescription() == null) {
+          if (info == null || info.getDescription() == null ||
+              info.getHighlighter() != null && FoldingUtil.isHighlighterFolded(editor, info.getHighlighter())) {
             IdeTooltipManager.getInstance().hideCurrent(e.getMouseEvent());
             return;
           }
@@ -607,7 +615,7 @@ public class DaemonListeners implements Disposable {
     }
 
     @Override
-    public void mouseDragged(EditorMouseEvent e) {
+    public void mouseDragged(@NotNull EditorMouseEvent e) {
       myTooltipController.cancelTooltips();
     }
   }

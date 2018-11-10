@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -19,11 +19,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/**
- * @author anna
- * @since 15-Nov-2005
- */
-public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
+public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   private final RedundantThrowsDeclarationInspection myGlobalTool;
 
   @TestOnly
@@ -86,22 +82,18 @@ public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaL
 
     if (candidates.isEmpty()) return null;
     if (needCheckOverridingMethods) {
-
-      Set<String> thrownExceptionShortNames = candidates.stream().map(refAndType -> refAndType.type.getClassName()).collect(Collectors.toSet());
-      Predicate<PsiMethod> methodContainsThrownExceptions = m -> Arrays.stream(m.getThrowsList().getReferencedTypes())
-        .map(PsiClassType::getClassName)
-        .anyMatch(thrownExceptionShortNames::contains);
+      Predicate<PsiMethod> methodContainsThrownExceptions = m -> m.getThrowsList().getReferencedTypes().length != 0;
       Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(method, null, methodContainsThrownExceptions);
       if (overridingMethods == null) return null;
 
       Iterator<PsiMethod> overridingMethodIt = overridingMethods.iterator();
       while (overridingMethodIt.hasNext()) {
         PsiMethod m = overridingMethodIt.next();
-        PsiClassType[] overridingMethodThrownException = m.getThrowsList().getReferencedTypes();
+        PsiClassType[] overridingMethodThrownExceptions = m.getThrowsList().getReferencedTypes();
 
         candidates.removeIf(refAndType -> {
           PsiClassType type = refAndType.type;
-          return ArrayUtil.contains(type, overridingMethodThrownException);
+          return Arrays.stream(overridingMethodThrownExceptions).anyMatch(type::isAssignableFrom);
         });
 
         if (candidates.isEmpty()) return null;
@@ -111,7 +103,7 @@ public class RedundantThrowsDeclarationLocalInspection extends AbstractBaseJavaL
     return candidates.stream().map(exceptionType -> {
       PsiJavaCodeReferenceElement reference = exceptionType.ref;
       String description = JavaErrorMessages.message("exception.is.never.thrown", JavaHighlightUtil.formatType(exceptionType.type));
-      LocalQuickFix quickFix = new MethodThrowsFix(method, exceptionType.type, false, false);
+      LocalQuickFix quickFix = new MethodThrowsFix.Remove(method, exceptionType.type, false);
       return inspectionManager.createProblemDescriptor(reference, description, quickFix, ProblemHighlightType.LIKE_UNUSED_SYMBOL, true);
     }).toArray(ProblemDescriptor[]::new);
   }

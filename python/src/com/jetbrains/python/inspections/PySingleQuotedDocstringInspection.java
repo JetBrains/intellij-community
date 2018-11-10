@@ -24,7 +24,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.quickfix.ConvertDocstringQuickFix;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +59,7 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
     @Override
     public void visitPyStringLiteralExpression(final PyStringLiteralExpression string) {
       String stringText = string.getText();
-      int length = PyStringLiteralExpressionImpl.getPrefixLength(stringText);
+      int length = PyStringLiteralUtil.getPrefixLength(stringText);
       stringText = stringText.substring(length);
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(string, PyDocStringOwner.class);
       if (docStringOwner != null) {

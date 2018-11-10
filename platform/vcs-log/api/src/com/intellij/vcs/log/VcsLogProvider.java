@@ -2,12 +2,15 @@ package com.intellij.vcs.log;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,14 +73,23 @@ public interface VcsLogProvider {
   void readFullDetails(@NotNull VirtualFile root,
                        @NotNull List<String> hashes,
                        @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                       boolean fast)
+                       boolean isForIndexing)
     throws VcsException;
 
   /**
    * Reads those details of the given commits, which are necessary to be shown in the log table.
    */
   @NotNull
-  List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
+  @Deprecated
+  default List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
+    throws VcsException {
+    return readMetadata(root, hashes);
+  }
+
+  /**
+   * Reads those details of the given commits, which are necessary to be shown in the log table and commit details.
+   */
+  List<? extends VcsCommitMetadata> readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
 
   /**
    * Read full details of the given commits from the VCS.
@@ -169,6 +181,14 @@ public interface VcsLogProvider {
    */
   @Nullable
   VcsLogDiffHandler getDiffHandler();
+
+  /**
+   * Returns the VCS root which should be used by the file history instead of the root found by standard mechanism (through mappings).
+   */
+  @Nullable
+  default VirtualFile getVcsRoot(@NotNull Project project, @NotNull FilePath filePath) {
+    return VcsUtil.getVcsRootFor(project, filePath);
+  }
 
   interface Requirements {
 

@@ -3,15 +3,18 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
+
 import static com.intellij.mock.MockVirtualFile.dir;
 import static com.intellij.mock.MockVirtualFile.file;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 
 public class VfsUtilLightTest extends BareTestFixtureTestCase {
   private static VirtualFile myRoot;
@@ -52,5 +55,16 @@ public class VfsUtilLightTest extends BareTestFixtureTestCase {
     VirtualFile dst = myRoot.findFileByRelativePath(dstPath);
     assertNotNull(dstPath, dst);
     assertEquals(expected, VfsUtilCore.findRelativePath(src, dst, '/'));
+  }
+
+  @Test
+  public void testGetPathForVFileCreateEventForJarReturnsNormalizedPathSeparators() {
+    File jarFile = IoTestUtil.createTestJar();
+    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jarFile));
+    VirtualFile jarRoot = VirtualFileManager.getInstance().findFileByUrl("jar://" + FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/");
+    assertNotNull(jarRoot);
+
+    VFileCreateEvent event = new VFileCreateEvent(this, jarRoot, "x.txt", false, false);
+    assertEquals(FileUtil.toSystemIndependentName(jarFile.getPath()) + "!/x.txt", event.getPath());
   }
 }

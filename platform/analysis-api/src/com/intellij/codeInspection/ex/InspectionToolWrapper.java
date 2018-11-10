@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -20,6 +6,7 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -58,7 +45,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   /** Copy ctor */
-  protected InspectionToolWrapper(@NotNull InspectionToolWrapper<T, E> other) {
+  protected InspectionToolWrapper(@NotNull InspectionToolWrapper<T, ? extends E> other) {
     myEP = other.myEP;
     // we need to create a copy for buffering
     if (other.myTool == null) {
@@ -83,7 +70,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       //noinspection unchecked
       myTool = tool = (T)myEP.instantiateTool();
       if (!tool.getShortName().equals(myEP.getShortName())) {
-        LOG.error("Short name not matched for " + tool.getClass() + ": getShortName() = " + tool.getShortName() + "; ep.shortName = " + myEP.getShortName());
+        LOG.error(new PluginException("Short name not matched for " + tool.getClass() + ": getShortName() = #" + tool.getShortName() + "; ep.shortName = #" + myEP.getShortName(), myEP.getPluginId()));
       }
     }
     return tool;

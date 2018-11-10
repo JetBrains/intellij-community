@@ -21,6 +21,7 @@ public abstract class AbstractTreeHasher implements TreeHasher {
     myForIndexing = forIndexing;
   }
 
+  @Override
   public final void hash(@NotNull final PsiElement root, @NotNull final NodeSpecificHasher hasher) {
     hash(root, null, hasher);
   }

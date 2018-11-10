@@ -22,7 +22,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/10/14
  */
 public class WebResourceImpl implements WebConfiguration.WebResource {
   @NotNull

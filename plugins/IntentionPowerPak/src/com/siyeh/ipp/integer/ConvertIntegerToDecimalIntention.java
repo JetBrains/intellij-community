@@ -34,7 +34,7 @@ public class ConvertIntegerToDecimalIntention extends ConvertNumberIntentionBase
     }
     else if (PsiType.LONG.equals(type)) {
       final long longValue = negated ? -value.longValue() : value.longValue();
-      return Long.toString(longValue) + "L";
+      return longValue + "L";
     }
     else if (PsiType.FLOAT.equals(type)) {
       final float floatValue = negated ? -value.floatValue() : value.floatValue();

@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,10 +41,10 @@ public class SemanticEditorPosition {
   private final HighlighterIterator myIterator;
   private final CharSequence myChars;
   private final Function<IElementType, SyntaxElement> myTypeMapper;
-  private final BiFunction<EditorEx, Integer, HighlighterIterator> myCreateHighlighterIteratorAtOffset;
+  private final BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> myCreateHighlighterIteratorAtOffset;
 
   private SemanticEditorPosition(@NotNull EditorEx editor, int offset,
-                                 @NotNull BiFunction<EditorEx, Integer, HighlighterIterator> createHighlighterIteratorAtOffset,
+                                 @NotNull BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
                                  @NotNull Function<IElementType, SyntaxElement> typeMapper) {
     myCreateHighlighterIteratorAtOffset = createHighlighterIteratorAtOffset;
     myEditor = editor;
@@ -88,6 +87,22 @@ public class SemanticEditorPosition {
   public boolean isAtMultiline() {
     if (!myIterator.atEnd()) {
       return CharArrayUtil.containLineBreaks(myChars, myIterator.getStart(), myIterator.getEnd());
+    }
+    return false;
+  }
+
+  /**
+   * Checks if there are line breaks strictly after the given offset till the end of the current element.
+   *
+   * @param offset The offset to search line breaks after.
+   * @return True if there are line breaks after the given offset.
+   */
+  public boolean hasLineBreaksAfter(int offset) {
+    if (!myIterator.atEnd() && offset >= 0) {
+      int offsetAfter = offset + 1;
+      if (offsetAfter < myIterator.getEnd()) {
+        return CharArrayUtil.containLineBreaks(myChars, offsetAfter, myIterator.getEnd());
+      }
     }
     return false;
   }
@@ -157,21 +172,9 @@ public class SemanticEditorPosition {
     return copyAnd(position -> position.moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis));
   }
 
-  /**
-   * @deprecated use {@link #moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(SyntaxElement, SyntaxElement, Predicate)} instead. 
-   */
-  @Deprecated
-  public void moveToLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
-                                                           @NotNull SyntaxElement rightParenthesis,
-                                                           @NotNull Condition<SyntaxElement> terminationCondition) {
-    moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(leftParenthesis,
-                                                              rightParenthesis,
-                                                              self -> terminationCondition.value(self.getCurrElement()));
-  }
-
   public void moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(@NotNull SyntaxElement leftParenthesis,
                                                                         @NotNull SyntaxElement rightParenthesis,
-                                                                        @NotNull Predicate<SemanticEditorPosition> terminationCondition) {
+                                                                        @NotNull Predicate<? super SemanticEditorPosition> terminationCondition) {
     while (!myIterator.atEnd()) {
       if (terminationCondition.test(this)) {
         break;
@@ -185,18 +188,6 @@ public class SemanticEditorPosition {
       }
       myIterator.retreat();
     }
-  }
-
-  /**
-   * @deprecated use {@link #findLeftParenthesisBackwardsSkippingNestedWithPredicate(SyntaxElement, SyntaxElement, Predicate)} instead. 
-   */
-  @Deprecated 
-  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
-                                                                           @NotNull SyntaxElement rightParenthesis,
-                                                                           @NotNull Condition<SyntaxElement> terminationCondition) 
-  {
-    return findLeftParenthesisBackwardsSkippingNestedWithPredicate(leftParenthesis, rightParenthesis,
-                                                                   self -> terminationCondition.value(self.getCurrElement()));
   }
 
   public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNestedWithPredicate(
@@ -241,7 +232,6 @@ public class SemanticEditorPosition {
     return myIterator.getStart();
   }
 
-  @SuppressWarnings("unused")
   public boolean isAtAnyOf(@NotNull SyntaxElement... syntaxElements) {
     if (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
@@ -332,7 +322,7 @@ public class SemanticEditorPosition {
                                   myTypeMapper);
   }
 
-  public SemanticEditorPosition copyAnd(@NotNull Consumer<SemanticEditorPosition> modifier) {
+  public SemanticEditorPosition copyAnd(@NotNull Consumer<? super SemanticEditorPosition> modifier) {
     SemanticEditorPosition position = copy();
     modifier.accept(position);
     return position;
@@ -340,7 +330,7 @@ public class SemanticEditorPosition {
   
   @NotNull
   public static SemanticEditorPosition createEditorPosition(@NotNull EditorEx editor, int offset,
-                                                            @NotNull BiFunction<EditorEx, Integer, HighlighterIterator> createHighlighterIteratorAtOffset,
+                                                            @NotNull BiFunction<? super EditorEx, ? super Integer, ? extends HighlighterIterator> createHighlighterIteratorAtOffset,
                                                             @NotNull Function<IElementType, SyntaxElement> typeMapper) {
     return new SemanticEditorPosition(editor, offset, createHighlighterIteratorAtOffset, typeMapper);
   }

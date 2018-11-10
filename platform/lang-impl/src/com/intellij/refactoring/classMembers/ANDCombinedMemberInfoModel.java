@@ -64,7 +64,7 @@ public class ANDCombinedMemberInfoModel<T extends PsiElement, M extends MemberIn
   }
 
   @Override
-  public void memberInfoChanged(MemberInfoChange<T, M> event) {
+  public void memberInfoChanged(@NotNull MemberInfoChange<T, M> event) {
     myTooltipManager.invalidate();
     myModel1.memberInfoChanged(event);
     myModel2.memberInfoChanged(event);

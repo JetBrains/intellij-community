@@ -18,7 +18,6 @@ package com.intellij.refactoring;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -40,14 +39,15 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     final PsiElement[] elements = ExtractMethodHandler.getElements(file.getProject(), editor, file);
     if (elements != null && elements.length > 0) return true;
-    return acceptLocalVariable() && 
+    return acceptLocalVariable() &&
            PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class) != null;
   }
-  
+
   protected boolean acceptLocalVariable() {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length >= 1 && elements[0] instanceof PsiExpression, "incorrect invoke() parameters");
     final PsiElement tempExpr = elements[0];

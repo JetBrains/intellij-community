@@ -17,10 +17,10 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -30,13 +30,14 @@ class PreviewDiffRequest extends SimpleDiffRequest {
   private static final Logger LOG = Logger.getInstance(PreviewDiffRequest.class);
 
   private final Map<FragmentNode, Couple<TextRange>> myLinesBounds;
-  private final Consumer<FragmentNode> mySelectNode;
+  private final Consumer<? super FragmentNode> mySelectNode;
   private CaretTracker myCaretTracker; // accessed in EDT
+  private boolean myInitialized; // accessed in EDT
 
-  public PreviewDiffRequest(@NotNull Map<FragmentNode, Couple<TextRange>> linesBounds,
+  PreviewDiffRequest(@NotNull Map<FragmentNode, Couple<TextRange>> linesBounds,
                             @NotNull DiffContent content1,
                             @NotNull DiffContent content2,
-                            @NotNull Consumer<FragmentNode> selectNode) {
+                            @NotNull Consumer<? super FragmentNode> selectNode) {
     super(null, content1, content2, null, null);
     myLinesBounds = linesBounds;
     mySelectNode = selectNode;
@@ -65,6 +66,12 @@ class PreviewDiffRequest extends SimpleDiffRequest {
     }
   }
 
+  public void onInitialized() {
+    LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread(), "EDT only");
+
+    myInitialized = true;
+  }
+
   abstract class CaretTracker<V extends DiffViewerBase> extends DiffViewerListener {
     protected final V myViewer;
     protected boolean myMoveCaret = true;
@@ -86,21 +93,22 @@ class PreviewDiffRequest extends SimpleDiffRequest {
     }
 
     protected class MyCaretListener implements CaretListener {
-      private final Function<Couple<TextRange>, TextRange> mySideGetter;
+      private final Function<? super Couple<TextRange>, ? extends TextRange> mySideGetter;
 
-      public MyCaretListener(Function<Couple<TextRange>, TextRange> sideGetter) {
+      public MyCaretListener(Function<? super Couple<TextRange>, ? extends TextRange> sideGetter) {
         mySideGetter = sideGetter;
       }
 
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
+        if (!myInitialized) return;
         myMoveCaret = false;
         try {
           int newOffset = e.getEditor().logicalPositionToOffset(e.getNewPosition());
           for (Map.Entry<FragmentNode, Couple<TextRange>> entry : myLinesBounds.entrySet()) {
             TextRange range = mySideGetter.apply(entry.getValue());
             if (range.containsOffset(newOffset)) {
-              mySelectNode.consume(entry.getKey());
+              mySelectNode.accept(entry.getKey());
               break;
             }
           }

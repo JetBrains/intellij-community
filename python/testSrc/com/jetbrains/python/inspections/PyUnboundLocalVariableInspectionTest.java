@@ -177,6 +177,11 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-13919
+  public void testRaiseInsideWith() {
+    doTest();
+  }
+
   // PY-6114
   public void testUnboundUnreachable() {
     doTest();

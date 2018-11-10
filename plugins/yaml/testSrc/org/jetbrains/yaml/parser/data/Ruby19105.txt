@@ -2,7 +2,8 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)(''Fn::Join':')
+        PsiElement(scalar key)(''Fn::Join'')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
         YAML sequence
@@ -22,7 +23,8 @@ YAML file
                 PsiWhiteSpace(' ')
                 YAML mapping
                   YAML key value
-                    PsiElement(scalar key)('Ref:')
+                    PsiElement(scalar key)('Ref')
+                    PsiElement(:)(':')
                     PsiWhiteSpace(' ')
                     YAML plain scalar text
                       PsiElement(text)('hostedZoneName')

@@ -16,6 +16,7 @@
 package com.intellij.designer;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import icons.UIDesignerNewIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +74,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
 
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
                                                                                false, getAnchor(), myProject, true);
-    myToolWindow.setIcon(UIDesignerNewIcons.ToolWindow);
+    myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowUIDesigner);
 
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
@@ -133,7 +133,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     return createContent(designer,
                          toolWindowContent,
                          DesignerBundle.message("designer.toolwindow.title"),
-                         UIDesignerNewIcons.ToolWindow,
+                         AllIcons.Toolwindows.ToolWindowUIDesigner,
                          toolWindowContent.getToolWindowPanel(),
                          toolWindowContent.getComponentTree(),
                          320,

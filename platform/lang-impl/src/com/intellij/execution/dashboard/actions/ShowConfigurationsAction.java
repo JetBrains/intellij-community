@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.DumbAware;
@@ -27,12 +28,22 @@ public class ShowConfigurationsAction extends ToggleAction implements DumbAware 
       return;
     }
 
-    e.getPresentation().setEnabledAndVisible(true);
+    Project project = e.getProject();
+    if (project == null) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
+    boolean enabled = RunDashboardManager.getInstance(project).getDashboardContentManager().getContentCount() > 0;
+    e.getPresentation().setEnabled(enabled);
+    if (!enabled && ActionPlaces.isPopupPlace(e.getPlace())) {
+      e.getPresentation().setVisible(false);
+    }
     super.update(e);
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return true;
 
@@ -40,7 +51,7 @@ public class ShowConfigurationsAction extends ToggleAction implements DumbAware 
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     Project project = e.getProject();
     if (project == null) return;
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -29,9 +15,7 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.FieldBreakpoint;
-import com.intellij.debugger.ui.impl.watch.DebuggerTree;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.FieldDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -44,6 +28,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.sun.jdi.Field;
 import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 public class ToggleFieldBreakpointAction extends AnAction {
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
@@ -75,9 +61,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
               if (selectedNode != null && selectedNode.getDescriptor() instanceof FieldDescriptorImpl) {
                 ObjectReference object = ((FieldDescriptorImpl)selectedNode.getDescriptor()).getObject();
                 if(object != null) {
-                  long id = object.uniqueID();
-                  InstanceFilter[] instanceFilters = new InstanceFilter[] { InstanceFilter.create(Long.toString(id))};
-                  fieldBreakpoint.setInstanceFilters(instanceFilters);
+                  fieldBreakpoint.setInstanceFilters(new InstanceFilter[] { InstanceFilter.create(object.uniqueID())});
                   fieldBreakpoint.setInstanceFiltersEnabled(true);
                 }
               }
@@ -97,7 +81,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent event){
+  public void update(@NotNull AnActionEvent event){
     SourcePosition place = getPlace(event);
     boolean toEnable = place != null;
 
@@ -143,26 +127,30 @@ public class ToggleFieldBreakpointAction extends AnAction {
       return null;
     }
 
-    final DebuggerTreeNodeImpl selectedNode = DebuggerAction.getSelectedNode(dataContext);
-    if(selectedNode != null && selectedNode.getDescriptor() instanceof FieldDescriptorImpl) {
-      final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
-      final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
-      if (debugProcess != null) { // if there is an active debug session
-        final Ref<SourcePosition> positionRef = new Ref<>(null);
-        debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
-          @Override
-          public Priority getPriority() {
-            return Priority.HIGH;
-          }
+    XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
+    if (value instanceof NodeDescriptorProvider) {
+      NodeDescriptorImpl descriptor = ((NodeDescriptorProvider)value).getDescriptor();
+      if (descriptor instanceof FieldDescriptorImpl) {
+        final DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(dataContext);
+        final DebugProcessImpl debugProcess = debuggerContext.getDebugProcess();
+        if (debugProcess != null) { // if there is an active debug session
+          final Ref<SourcePosition> positionRef = new Ref<>(null);
+          debugProcess.getManagerThread().invokeAndWait(new DebuggerContextCommandImpl(debuggerContext) {
+            @Override
+            public Priority getPriority() {
+              return Priority.HIGH;
+            }
 
-          @Override
-          public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-            ApplicationManager.getApplication().runReadAction(() -> positionRef.set(SourcePositionProvider.getSourcePosition(selectedNode.getDescriptor(), project, debuggerContext)));
+            @Override
+            public void threadAction(@NotNull SuspendContextImpl suspendContext) {
+              ApplicationManager.getApplication().runReadAction(
+                () -> positionRef.set(SourcePositionProvider.getSourcePosition(descriptor, project, debuggerContext)));
+            }
+          });
+          final SourcePosition sourcePosition = positionRef.get();
+          if (sourcePosition != null) {
+            return sourcePosition;
           }
-        });
-        final SourcePosition sourcePosition = positionRef.get();
-        if (sourcePosition != null) {
-          return sourcePosition;
         }
       }
     }

@@ -30,8 +30,6 @@ public class Anonymous2LambdaInspectionTest extends LightQuickFixParameterizedTe
     };
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/anonymous2lambda";

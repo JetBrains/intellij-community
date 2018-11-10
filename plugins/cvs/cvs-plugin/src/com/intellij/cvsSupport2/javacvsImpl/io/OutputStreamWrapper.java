@@ -30,26 +30,31 @@ public class OutputStreamWrapper extends OutputStream{
     myStatistics = statistics;
   }
 
+  @Override
   public void write(int b) throws IOException {
     myOutputStream.write(b);
     myStatistics.send(1);
   }
 
+  @Override
   public void close() throws IOException {
     myOutputStream.close();
   }
 
+  @Override
   public void write(byte[] b) throws IOException {
     myOutputStream.write(b);
     myStatistics.send(b.length);
   }
 
+  @Override
   public void write(byte[] b, int off, int len) throws IOException {
     myOutputStream.write(b, off, len);
     myStatistics.send(len);
 
   }
 
+  @Override
   public void flush() throws IOException {
     myOutputStream.flush();
   }

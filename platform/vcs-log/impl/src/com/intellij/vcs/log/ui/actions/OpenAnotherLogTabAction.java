@@ -20,36 +20,35 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import org.jetbrains.annotations.NotNull;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
   protected OpenAnotherLogTabAction() {
-    super("Open Another Log Tab", "Open Another Log Tab", AllIcons.General.Add);
+    super("Open Another Log Tab", "Open Another Log Tab", AllIcons.ToolbarDecorator.Export);
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null || !Registry.is("vcs.log.open.another.log.visible")) {
+    if (project == null) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
     VcsProjectLog projectLog = VcsProjectLog.getInstance(project);
     VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
-    e.getPresentation()
-      .setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager); // only for main log (it is a question, how and where we want to open tabs for external logs)
+    // only for main log (it is a question, how and where we want to open tabs for external logs)
+    e.getPresentation().setEnabledAndVisible(logManager != null && projectLog.getLogManager() == logManager);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    VcsLogUtil.triggerUsage(e);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    VcsLogUsageTriggerCollector.triggerUsage(e);
 
-    VcsLogContentUtil
-      .openAnotherLogTab(e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER), e.getRequiredData(CommonDataKeys.PROJECT));
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    VcsProjectLog.getInstance(project).getTabsManager().openAnotherLogTab(e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER));
   }
 }

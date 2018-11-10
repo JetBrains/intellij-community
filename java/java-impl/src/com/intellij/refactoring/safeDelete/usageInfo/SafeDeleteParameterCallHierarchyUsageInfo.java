@@ -40,6 +40,7 @@ public class SafeDeleteParameterCallHierarchyUsageInfo extends SafeDeleteUsageIn
     return (PsiParameter)super.getReferencedElement();
   }
 
+  @Override
   public void performRefactoring() throws IncorrectOperationException {
     final PsiParameter parameter = getReferencedElement();
     if (parameter != null && parameter.isValid()) {

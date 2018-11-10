@@ -22,13 +22,12 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.StringBuilderSpinAllocator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,10 +59,12 @@ public final class PlainTextView implements AntOutputView {
     return "_text_view_";
   }
 
+  @Override
   public JComponent getComponent() {
     return myConsole.getComponent();
   }
 
+  @Override
   @Nullable
   public Object addMessage(AntMessage message) {
     print(message.getText() + "\n", ProcessOutputTypes.STDOUT);
@@ -80,37 +81,16 @@ public final class PlainTextView implements AntOutputView {
     }
   }
 
+  @Override
   public void addJavacMessage(AntMessage message, String url) {
-    final VirtualFile file = message.getFile();
     if (message.getLine() > 0) {
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-
-        if (file != null) {
-          ApplicationManager.getApplication().runReadAction(() -> {
-            String presentableUrl = file.getPresentableUrl();
-            builder.append(presentableUrl);
-            builder.append(' ');
-          });
-        }
-        else if (url != null) {
-          builder.append(url);
-          builder.append(' ');
-        }
-        builder.append('(');
-        builder.append(message.getLine());
-        builder.append(':');
-        builder.append(message.getColumn());
-        builder.append(")");
-        print(builder.toString(), ProcessOutputTypes.STDOUT);
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
+      String msg = TreeView.printMessage(message, url);
+      print(msg, ProcessOutputTypes.STDOUT);
     }
     print(message.getText(), ProcessOutputTypes.STDOUT);
   }
 
+  @Override
   public void addException(AntMessage exception, boolean showFullTrace) {
     String text = exception.getText();
     if (!showFullTrace) {
@@ -126,36 +106,44 @@ public final class PlainTextView implements AntOutputView {
     myConsole.clear();
   }
 
+  @Override
   public void startBuild(AntMessage message) {
     print(myCommandLine + "\n", ProcessOutputTypes.SYSTEM);
     addMessage(message);
   }
 
+  @Override
   public void buildFailed(AntMessage message) {
     print(myCommandLine + "\n", ProcessOutputTypes.SYSTEM);
     addMessage(message);
   }
 
+  @Override
   public void startTarget(AntMessage message) {
     addMessage(message);
   }
 
+  @Override
   public void startTask(AntMessage message) {
     addMessage(message);
   }
 
+  @Override
   public void finishBuild(String messageText) {
     print("\n" + messageText + "\n", ProcessOutputTypes.SYSTEM);
   }
 
+  @Override
   public void finishTarget() {
   }
 
+  @Override
   public void finishTask() {
   }
 
+  @Override
   @Nullable
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     return null;
   }
 
@@ -164,6 +152,7 @@ public final class PlainTextView implements AntOutputView {
   }
 
   private final class JUnitFilter implements Filter {
+    @Override
     @Nullable
     public Result applyFilter(String line, int entireLength) {
       HyperlinkUtil.PlaceInfo placeInfo = HyperlinkUtil.parseJUnitMessage(myProject, line);
@@ -181,6 +170,7 @@ public final class PlainTextView implements AntOutputView {
   }
 
   private final class AntMessageFilter implements Filter {
+    @Override
     public Result applyFilter(String line, int entireLength) {
       int afterLineNumberIndex = line.indexOf(": "); // end of file_name_and_line_number sequence
       if (afterLineNumberIndex == -1) {

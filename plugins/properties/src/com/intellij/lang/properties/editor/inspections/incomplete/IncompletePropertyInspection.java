@@ -100,7 +100,7 @@ public class IncompletePropertyInspection extends LocalInspectionTool implements
     private final ResourceBundle myResourceBundle;
     private final SmartPsiElementPointer<PsiElement> myElementPointer;
 
-    public IgnoreLocalesQuickFix(IProperty property, ResourceBundle bundle) {
+    IgnoreLocalesQuickFix(IProperty property, ResourceBundle bundle) {
       myElementPointer = SmartPointerManager.getInstance(bundle.getProject()).createSmartPsiElementPointer(property.getPsiElement());
       myResourceBundle = bundle;
     }

@@ -166,6 +166,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
         return summary;
       }
 
+      @Override
       public String getDescription() {
         return description;
       }
@@ -224,7 +225,6 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   private static Comment[] parseComments(Element notes) {
     if (notes == null) return Comment.EMPTY_ARRAY;
     final List<Comment> result = new ArrayList<>();
-    //noinspection unchecked
     for (Element note : (List<Element>)notes.getChildren("note")) {
       final String text = note.getChildText("text");
       if (text == null) continue;
@@ -277,6 +277,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     return Comparing.strEqual(projectId, myProjectId) ? split[1] : null;
   }
 
+  @Override
   @Nullable
   public String extractId(@NotNull final String taskName) {
     Matcher matcher = myPattern.matcher(taskName);
@@ -298,7 +299,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
   public String getProjectId() {
     return myProjectId;
   }
-  
+
   public void setProjectId(final String projectId) {
     myProjectId = projectId;
     myPattern = Pattern.compile("(" + projectId + "\\-\\d+):\\s+");

@@ -33,7 +33,7 @@ public class CachedVariableContext implements VariableContext {
        for (Variable variable : variables) {
            if (variable.getName().length() == 0) {
                continue;
-           } 
+           }
            final String expression = variable.getExpression();
            // empty expression evaluates to empty nodeset
            final XPath xPath = xpath.getNavigator().parseXPath(expression.length() == 0 ? "/.." : expression);
@@ -41,6 +41,7 @@ public class CachedVariableContext implements VariableContext {
        }
    }
 
+   @Override
    public Object getVariableValue(String nsURI, String prefix, String localName) throws UnresolvableException {
        final Object o = myMap.get(localName);
        if (o == null) throw new UnresolvableException("Unresolved variable: " + makePrefix(nsURI) + localName);

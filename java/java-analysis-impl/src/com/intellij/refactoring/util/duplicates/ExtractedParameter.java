@@ -50,31 +50,15 @@ public class ExtractedParameter {
     if (type == null) {
       return false;
     }
-    for (ExtractedParameter parameter : parameters) {
-      boolean samePattern = parameter.samePattern(patternPart);
-      boolean sameCandidate = parameter.sameCandidate(candidatePart);
-      if (samePattern && sameCandidate) {
-        parameter.addUsages(patternPart);
-        return true;
-      }
-      if (samePattern || sameCandidate) {
-        return false;
-      }
-    }
     parameters.add(new ExtractedParameter(patternPart, candidatePart, type));
     return true;
   }
 
   @NotNull
-  public ExtractedParameter mapPatternToItself(@NotNull Match match) {
-    ExtractableExpressionPart copy = myPattern.copy();
-    ExtractableExpressionPart deepCopy = myPattern.deepCopy();
-
-    ExtractedParameter parameter = new ExtractedParameter(copy, deepCopy, copy.myType);
-    parameter.myPatternUsages.addAll(myPatternUsages);
-
-    match.getExtractedParameters().add(parameter);
-    return parameter;
+  public ExtractedParameter copyWithCandidateUsage(@NotNull PsiExpression candidateUsage) {
+    ExtractedParameter result = new ExtractedParameter(myPattern, ExtractableExpressionPart.fromUsage(candidateUsage, myType), myType);
+    result.myPatternUsages.addAll(myPatternUsages);
+    return result;
   }
 
   @NotNull
@@ -83,26 +67,19 @@ public class ExtractedParameter {
     return type.getCanonicalText();
   }
 
-  private void addUsages(ExtractableExpressionPart patternPart) {
+  public void addUsages(@NotNull ExtractableExpressionPart patternPart) {
     myPatternUsages.add(patternPart.getUsage());
   }
 
-  private boolean sameCandidate(ExtractableExpressionPart part) {
-    return myCandidate.isEquivalent(part);
-  }
-
-  private boolean samePattern(ExtractableExpressionPart part) {
-    return myPattern.isEquivalent(part);
-  }
-
-  public static List<Match> getCompatibleMatches(List<Match> matches,
-                                                 PsiElement[] pattern,
-                                                 List<PsiElement[]> candidates) {
+  public static List<Match> getCompatibleMatches(@NotNull List<Match> matches,
+                                                 @NotNull PsiElement[] pattern,
+                                                 @NotNull List<PsiElement[]> candidates) {
     List<Match> result = new ArrayList<>();
     Set<PsiExpression> firstUsages = null;
     for (Match match : matches) {
       List<ExtractedParameter> parameters = match.getExtractedParameters();
-      PsiElement[] candidateElements = ContainerUtil.find(candidates, elements -> match.getMatchStart() == elements[0]);
+      PsiElement[] candidateElements = ContainerUtil.find(candidates,
+                                                          elements -> elements.length != 0 && match.getMatchStart() == elements[0]);
       Set<PsiVariable> candidateVariables = ContainerUtil.map2SetNotNull(parameters, parameter -> parameter.myCandidate.myVariable);
       if (candidateElements == null || containsModifiedField(candidateElements, candidateVariables)) {
         continue;
@@ -123,7 +100,7 @@ public class ExtractedParameter {
     return result;
   }
 
-  private static boolean containsModifiedField(@NotNull PsiElement[] elements, Set<PsiVariable> variables) {
+  private static boolean containsModifiedField(@NotNull PsiElement[] elements, @NotNull Set<PsiVariable> variables) {
     Set<PsiField> fields = StreamEx.of(variables)
       .select(PsiField.class)
       .filter(field -> !field.hasModifierProperty(PsiModifier.FINAL))
@@ -145,7 +122,7 @@ public class ExtractedParameter {
     private final Set<PsiField> myFields;
     private boolean myModified;
 
-    public FieldModificationVisitor(Set<PsiField> fields) {
+    FieldModificationVisitor(Set<PsiField> fields) {
       myFields = fields;
     }
 
@@ -186,5 +163,10 @@ public class ExtractedParameter {
         }
       }
     }
+  }
+
+  @Override
+  public String toString() {
+    return myPattern + " -> " + myCandidate + " [" + myPatternUsages.size() + "] : " + myType.getPresentableText();
   }
 }

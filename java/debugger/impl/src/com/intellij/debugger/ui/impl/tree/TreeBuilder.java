@@ -43,34 +43,42 @@ public abstract class TreeBuilder implements TreeModel {
     myRoot = root;
   }
 
+  @Override
   public Object getRoot() {
     return myRoot;
   }
 
+  @Override
   public int getChildCount(Object parent) {
     return ((TreeBuilderNode) parent).getChildCount();
   }
 
+  @Override
   public boolean isLeaf(Object node) {
     return ((TreeBuilderNode) node).isLeaf();
   }
 
+  @Override
   public void addTreeModelListener(TreeModelListener l) {
     myDispatcher.addListener(l);
   }
 
+  @Override
   public void removeTreeModelListener(TreeModelListener l) {
     myDispatcher.removeListener(l);
   }
 
+  @Override
   public Object getChild(Object parent, int index) {
     return ((TreeBuilderNode) parent).getChildAt(index);
   }
 
+  @Override
   public int getIndexOfChild(Object parent, Object child) {
     return ((TreeBuilderNode) parent).getIndex((TreeNode) child);
   }
 
+  @Override
   public void valueForPathChanged(TreePath path, Object newValue) {
     TreeBuilderNode  aNode = (TreeBuilderNode) path.getLastPathComponent();
 

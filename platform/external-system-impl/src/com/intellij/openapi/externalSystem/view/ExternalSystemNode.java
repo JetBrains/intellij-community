@@ -37,12 +37,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/15/2014
  */
 public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode> {
 
@@ -97,6 +96,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     myParent = parent;
   }
 
+  @Override
   public boolean isAutoExpandNode() {
     SimpleNode parent = getParent();
     return parent != null && parent.getChildCount() == 1;
@@ -114,6 +114,12 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   @Override
   public NodeDescriptor getParentDescriptor() {
     return myParent;
+  }
+
+  @Override
+  public String getName() {
+    String displayName = ((ExternalProjectsViewImpl)getExternalProjectsView()).getDisplayName(myDataNode);
+    return displayName == null ? super.getName() : displayName;
   }
 
   protected ExternalProjectsView getExternalProjectsView() {
@@ -188,6 +194,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return ExternalProjectsStructure.DisplayKind.NEVER;
   }
 
+  @Override
   @NotNull
   public final ExternalSystemNode[] getChildren() {
     if (myChildren == null) {

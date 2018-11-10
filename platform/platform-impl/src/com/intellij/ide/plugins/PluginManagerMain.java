@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -72,8 +73,8 @@ import java.awt.event.MouseEvent;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
@@ -173,7 +174,7 @@ public abstract class PluginManagerMain implements Disposable {
     JLabel mySortLabel = new JLabel();
     mySortLabel.setForeground(UIUtil.getLabelDisabledForeground());
     mySortLabel.setBorder(JBUI.Borders.empty(1, 1, 1, 5));
-    mySortLabel.setIcon(AllIcons.General.SplitDown);
+    mySortLabel.setIcon(AllIcons.General.ArrowDown);
     mySortLabel.setHorizontalTextPosition(SwingConstants.LEADING);
     header.add(mySortLabel, BorderLayout.EAST);
     myTablePanel.add(header, BorderLayout.NORTH);
@@ -410,19 +411,20 @@ public abstract class PluginManagerMain implements Disposable {
   /**
    * @deprecated use {@link #downloadPlugins(List, List, Runnable, PluginEnabler, Runnable)} instead
    */
+  @Deprecated
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<PluginId> allPlugins,
+                                        List<? extends PluginId> allPlugins,
                                         Runnable onSuccess,
                                         @Nullable Runnable cleanup) throws IOException {
     return downloadPlugins(plugins,
-                           allPlugins.stream().map(p -> new PluginNode(p, p.getIdString(), "-1")).collect(Collectors.toList()),
+                           ContainerUtil.map(allPlugins, p -> new PluginNode(p, p.getIdString(), "-1")),
                            onSuccess,
                            new PluginEnabler.HEADLESS(),
                            cleanup);
   }
 
   public static boolean downloadPlugins(List<PluginNode> plugins,
-                                        List<IdeaPluginDescriptor> allPlugins,
+                                        List<? extends IdeaPluginDescriptor> allPlugins,
                                         Runnable onSuccess,
                                         PluginEnabler pluginEnabler,
                                         @Nullable Runnable cleanup) throws IOException {
@@ -575,7 +577,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   private static class MySpeedSearchBar extends SpeedSearchBase<PluginTable> {
-    public MySpeedSearchBar(PluginTable cmp) {
+    MySpeedSearchBar(PluginTable cmp) {
       super(cmp);
     }
 
@@ -616,7 +618,7 @@ public abstract class PluginManagerMain implements Disposable {
     pluginTable.select(descriptors);
   }
 
-  protected static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
+  public static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
     if (StringUtil.isEmpty(filter)) return true;
     if (StringUtil.containsIgnoreCase(descriptor.getName(), filter) || isAccepted(search, filter, descriptor.getName())) return true;
     if (isAccepted(search, filter, descriptor.getDescription())) return true;
@@ -624,7 +626,7 @@ public abstract class PluginManagerMain implements Disposable {
     return category != null && (StringUtil.containsIgnoreCase(category, filter) || isAccepted(search, filter, category));
   }
 
-  private static boolean isAccepted(@NotNull Set<String> search, @NotNull String filter, @Nullable String description) {
+  public static boolean isAccepted(@NotNull Set<String> search, @NotNull String filter, @Nullable String description) {
     if (StringUtil.isEmpty(description)) return false;
     if (filter.length() <= 2) return false; 
     Set<String> words = SearchableOptionsRegistrar.getInstance().getProcessedWords(description);
@@ -636,7 +638,7 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
   public static boolean suggestToEnableInstalledDependantPlugins(PluginEnabler pluginEnabler,
-                                                                 List<PluginNode> list) {
+                                                                 List<? extends PluginNode> list) {
     Set<IdeaPluginDescriptor> disabled = new HashSet<>();
     Set<IdeaPluginDescriptor> disabledDependants = new HashSet<>();
     for (PluginNode node : list) {
@@ -783,6 +785,31 @@ public abstract class PluginManagerMain implements Disposable {
     UpdateChecker.NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener).notify(project);
   }
 
+  public static boolean checkThirdPartyPluginsAllowed(Iterable<? extends IdeaPluginDescriptor> descriptors) {
+    UpdateSettings updateSettings = UpdateSettings.getInstance();
+
+    if (updateSettings.isThirdPartyPluginsAllowed()) {
+      return true;
+    }
+
+    for (IdeaPluginDescriptor descriptor : descriptors) {
+      if (!isDevelopedByJetBrains(descriptor)) {
+        String title = IdeBundle.message("third.party.plugins.privacy.note.title");
+        String message = IdeBundle.message("third.party.plugins.privacy.note.message");
+        String yesText = IdeBundle.message("third.party.plugins.privacy.note.yes");
+        String noText = IdeBundle.message("third.party.plugins.privacy.note.no");
+        if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
+          updateSettings.setThirdPartyPluginsAllowed(true);
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
+
   public class MyPluginsFilter extends FilterComponent {
     public MyPluginsFilter() {
       super("PLUGIN_FILTER", 5);
@@ -802,13 +829,13 @@ public abstract class PluginManagerMain implements Disposable {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       loadAvailablePlugins();
       myFilter.setFilter("");
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!myBusy);
     }
   }

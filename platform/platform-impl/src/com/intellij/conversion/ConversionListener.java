@@ -16,6 +16,8 @@
 
 package com.intellij.conversion;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.File;
 import java.util.List;
 
@@ -24,7 +26,7 @@ import java.util.List;
 */
 public interface ConversionListener {
   void conversionNeeded();
-  void successfullyConverted(File backupDir);
-  void error(String message);
-  void cannotWriteToFiles(final List<File> readonlyFiles);
+  void successfullyConverted(@NotNull File backupDir);
+  void error(@NotNull String message);
+  void cannotWriteToFiles(@NotNull List<? extends File> readonlyFiles);
 }

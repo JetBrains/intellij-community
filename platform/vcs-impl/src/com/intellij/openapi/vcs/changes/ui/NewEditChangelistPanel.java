@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -108,13 +93,13 @@ public abstract class NewEditChangelistPanel extends JPanel {
 
   public void init(final LocalChangeList initial) {
     myMakeActiveCheckBox.setSelected(VcsConfiguration.getInstance(myProject).MAKE_NEW_CHANGELIST_ACTIVE);
-    for (EditChangelistSupport support : Extensions.getExtensions(EditChangelistSupport.EP_NAME, myProject)) {
+    for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
       support.installSearch(myNameTextField, myDescriptionTextArea);
       myConsumer = support.addControls(myAdditionalControlsPanel, initial);
     }
     myNameTextField.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent event) {
+      public void documentChanged(@NotNull DocumentEvent event) {
         nameChangedImpl(myProject, initial);
       }
     });

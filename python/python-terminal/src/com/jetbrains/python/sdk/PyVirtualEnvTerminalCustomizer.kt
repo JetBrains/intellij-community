@@ -39,14 +39,17 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         val shellName = File(shellPath).name
 
         if (shellName == "bash" || (SystemInfo.isMac && shellName == "sh") || (shellName == "zsh") ||
-            ((shellName == "fish") && PythonSdkType.isVirtualEnv(sdk))) { //fish shell works only for virtualenv and not for conda
+            ((shellName == "fish"))) { //fish shell works only for virtualenv and not for conda
           //for bash we pass activate script to jediterm shell integration (see jediterm-bash.in) to source it there
+          //TODO: fix conda for fish
+
           findActivateScript(path, shellPath)?.let { activate ->
             val pathEnv = EnvironmentUtil.getEnvironmentMap().get("PATH")
             if (pathEnv != null) {
               envs.put("PATH", pathEnv)
             }
-            envs.put("JEDITERM_SOURCE", if (activate.second != null) "${activate.first} ${activate.second}" else activate.first)
+            envs.put("JEDITERM_SOURCE",  activate.first)
+            envs.put("JEDITERM_SOURCE_ARGS", activate.second?:"")
           }
         }
         else {
@@ -84,7 +87,7 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
     return null
   }
 
-  override fun getConfigurable(project: Project) = object : UnnamedConfigurable {
+  override fun getConfigurable(project: Project): UnnamedConfigurable = object : UnnamedConfigurable {
     val settings = PyVirtualEnvTerminalSettings.getInstance(project)
 
     var myCheckbox: JCheckBox = JCheckBox("Activate virtualenv")
@@ -106,12 +109,12 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
 }
 
 class SettingsState {
-  var virtualEnvActivate = true
+  var virtualEnvActivate: Boolean = true
 }
 
 @State(name = "PyVirtualEnvTerminalCustomizer", storages = [(Storage("python-terminal.xml"))])
 class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
-  var myState = SettingsState()
+  var myState: SettingsState = SettingsState()
 
   var virtualEnvActivate: Boolean
     get() = myState.virtualEnvActivate
@@ -119,7 +122,7 @@ class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
       myState.virtualEnvActivate = value
     }
 
-  override fun getState() = myState
+  override fun getState(): SettingsState = myState
 
   override fun loadState(state: SettingsState) {
     myState.virtualEnvActivate = state.virtualEnvActivate

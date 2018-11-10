@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.jsonSchema.JsonPointerUtil;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,7 +36,11 @@ public class JsonQualifiedNameProvider implements QualifiedNameProvider {
     StringBuilder builder = new StringBuilder();
     while (parentProperty != null) {
       if (parentProperty instanceof JsonProperty) {
-        builder.insert(0, parentProperty.getName());
+        String name = parentProperty.getName();
+        if (qualifiedNameKind == JsonQualifiedNameKind.JsonPointer) {
+          name = name == null ? null : JsonPointerUtil.escapeForJsonPointer(name);
+        }
+        builder.insert(0, name);
         builder.insert(0, qualifiedNameKind == JsonQualifiedNameKind.JsonPointer ? "/" : ".");
       }
       else {

@@ -17,6 +17,7 @@ package com.intellij.openapi.application;
 
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -27,13 +28,13 @@ public interface ApplicationActivationListener {
   /**
    * Called when app is activated by transferring focus to it.
    */
-  default void applicationActivated(IdeFrame ideFrame) {
+  default void applicationActivated(@NotNull IdeFrame ideFrame) {
   }
 
   /**
    * Called when app is de-activated by transferring focus from it.
    */
-  default void applicationDeactivated(IdeFrame ideFrame) {
+  default void applicationDeactivated(@NotNull IdeFrame ideFrame) {
   }
 
   /**
@@ -44,11 +45,11 @@ public interface ApplicationActivationListener {
    * The shortcoming of the method is that a notification is delivered
    * with a delay. See {code app.deactivation.timeout} key in the registry
    */
-  default void delayedApplicationDeactivated(IdeFrame ideFrame) {
+  default void delayedApplicationDeactivated(@NotNull IdeFrame ideFrame) {
   }
 
   /**
-   * @deprecated Use ApplicationActivationListener directly
+   * @deprecated Use {@link ApplicationActivationListener} instead
    */
   @Deprecated
   abstract class Adapter implements ApplicationActivationListener {

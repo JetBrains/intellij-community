@@ -31,6 +31,7 @@ public interface UsageViewDescriptor {
 
   String getProcessedElementsHeader();
 
+  @NotNull
   String getCodeReferencesText(int usagesCount, int filesCount);
 
   @Nullable

@@ -50,41 +50,63 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
 
   @Override
   @Nullable
-  public <T, D extends UserDataHolder> T getCachedValue(@NotNull D dataHolder,
-                                                        @NotNull Key<CachedValue<T>> key,
-                                                        @NotNull CachedValueProvider<T> provider,
-                                                        boolean trackValue) {
-    CachedValueLeakChecker.checkProvider(provider, key, dataHolder);
-    CachedValue<T> value;
-    if (dataHolder instanceof UserDataHolderEx) {
-      UserDataHolderEx dh = (UserDataHolderEx)dataHolder;
-      value = dh.getUserData(key);
-      while (isOutdated(value)) {
-        if (dh.replace(key, value, null)) {
-          value = null;
-          break;
-        }
-        value = dh.getUserData(key);
-      }
-      if (value == null) {
-        value = createCachedValue(provider, trackValue);
-        assert ((CachedValueBase)value).isFromMyProject(myProject);
-        value = dh.putUserDataIfAbsent(key, value);
+  public <T> T getCachedValue(@NotNull UserDataHolder dataHolder,
+                              @NotNull Key<CachedValue<T>> key,
+                              @NotNull CachedValueProvider<T> provider,
+                              boolean trackValue) {
+    return dataHolder instanceof UserDataHolderEx
+           ? getCachedValueFromExHolder((UserDataHolderEx)dataHolder, key, provider, trackValue)
+           : getCachedValueFromHolder(dataHolder, key, provider, trackValue);
+  }
+
+  private <T> T getCachedValueFromExHolder(@NotNull UserDataHolderEx dataHolder,
+                                           @NotNull Key<CachedValue<T>> key,
+                                           @NotNull CachedValueProvider<T> provider,
+                                           boolean trackValue) {
+    CachedValue<T> value = dataHolder.getUserData(key);
+    if (value instanceof CachedValueBase && ((CachedValueBase)value).isFromMyProject(myProject)) {
+      //noinspection unchecked
+      CachedValueBase.Data<T> data = ((CachedValueBase<T>)value).getUpToDateOrNull(false);
+      if (data != null) {
+        return data.value;
       }
     }
-    else {
-      synchronized (dataHolder) {
-        value = dataHolder.getUserData(key);
-        if (isOutdated(value)) {
-          value = null;
-        }
-        if (value == null) {
-          value = createCachedValue(provider, trackValue);
-          dataHolder.putUserData(key, value);
-        }
+    while (isOutdated(value)) {
+      if (dataHolder.replace(key, value, null)) {
+        value = null;
+        break;
+      }
+      value = dataHolder.getUserData(key);
+    }
+    if (value == null) {
+      value = dataHolder.putUserDataIfAbsent(key, freshCachedValue(dataHolder, key, provider, trackValue));
+    }
+    return value.getValue();
+  }
+
+  private <T> T getCachedValueFromHolder(@NotNull UserDataHolder dataHolder,
+                                         @NotNull Key<CachedValue<T>> key,
+                                         @NotNull CachedValueProvider<T> provider, boolean trackValue) {
+    CachedValue<T> value;
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (dataHolder) {
+      value = dataHolder.getUserData(key);
+      if (isOutdated(value)) {
+        value = null;
+      }
+      if (value == null) {
+        value = freshCachedValue(dataHolder, key, provider, trackValue);
+        dataHolder.putUserData(key, value);
       }
     }
     return value.getValue();
+  }
+
+  private <T> CachedValue<T> freshCachedValue(UserDataHolder dh, Key<CachedValue<T>> key, CachedValueProvider<T> provider, boolean trackValue) {
+    CachedValueLeakChecker.checkProvider(provider, key, dh);
+    CachedValue<T> value = createCachedValue(provider, trackValue);
+    assert ((CachedValueBase)value).isFromMyProject(myProject);
+    return value;
   }
 
   private boolean isOutdated(CachedValue<?> value) {
@@ -96,7 +118,4 @@ public class CachedValuesManagerImpl extends CachedValuesManager {
     return !base.hasUpToDateValue() && base.getRawData() != null;
   }
 
-  public Project getProject() {
-    return myProject;
-  }
 }

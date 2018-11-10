@@ -26,8 +26,11 @@ class JavaUPolyadicExpression(
   override val psi: PsiPolyadicExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UPolyadicExpression {
-  override val operands: List<UExpression> by lz {
-    psi.operands.map { JavaConverter.convertOrEmpty(it, this) }
+
+  override val operands: List<UExpression> = object : AbstractList<UExpression>() {
+    override val size: Int get() = psi.operands.size
+
+    override fun get(index: Int): UExpression = JavaConverter.convertOrEmpty(psi.operands[index], this@JavaUPolyadicExpression)
   }
 
   override val operator: UastBinaryOperator by lz { psi.operationTokenType.getOperatorType() }

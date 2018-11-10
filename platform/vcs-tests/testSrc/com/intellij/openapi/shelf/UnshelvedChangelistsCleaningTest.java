@@ -94,7 +94,7 @@ public class UnshelvedChangelistsCleaningTest extends PlatformTestCase {
     String datePresentation = DateFormatUtil.formatDate(calendarTime);
     assertTrue("Calendar date is: " + datePresentation, myCalendar.get(Calendar.YEAR) < TEST_YEAR);
     debug(datePresentation);
-    shelveChangesManager.cleanUnshelved(false, myCalendar.getTimeInMillis());
+    shelveChangesManager.cleanUnshelved(myCalendar.getTimeInMillis());
     PlatformTestUtil.saveProject(myProject);
     
     assertFalse(shelveChangesManager.getRecycledShelvedChangeLists().isEmpty());

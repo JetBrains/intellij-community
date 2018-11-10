@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 class AnnotateCurrentRevisionAction extends AnnotateRevisionAction {
   @Nullable private final FileAnnotation.CurrentFileRevisionProvider myProvider;
 
-  public AnnotateCurrentRevisionAction(@NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
+  AnnotateCurrentRevisionAction(@NotNull FileAnnotation annotation, @NotNull AbstractVcs vcs) {
     super("Annotate Revision", "Annotate selected revision in new tab", AllIcons.Actions.Annotate,
           annotation, vcs);
     myProvider = annotation.getCurrentFileRevisionProvider();

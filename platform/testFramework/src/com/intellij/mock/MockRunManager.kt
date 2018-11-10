@@ -2,7 +2,6 @@
 package com.intellij.mock
 
 import com.intellij.execution.BeforeRunTask
-import com.intellij.execution.RunManagerConfig
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.ConfigurationFactory
@@ -13,21 +12,15 @@ import com.intellij.openapi.util.Key
 import javax.swing.Icon
 
 class MockRunManager : RunManagerEx() {
+  override fun isTemplate(configuration: RunConfiguration) = false
+
   override fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings? = null
 
-  override fun getConfigurationType(typeName: String) = TODO("not implemented")
+  override fun hasSettings(settings: RunnerAndConfigurationSettings): Boolean = false
 
-  override fun hasSettings(settings: RunnerAndConfigurationSettings) = false
-
-  override fun getConfigurationsList(type: ConfigurationType) = emptyList<RunConfiguration>()
+  override fun getConfigurationsList(type: ConfigurationType): List<RunConfiguration> = emptyList()
 
   override fun makeStable(settings: RunnerAndConfigurationSettings) {}
-
-  override val configurationFactories: Array<ConfigurationType>
-    get() = emptyArray()
-
-  override val configurationFactoriesWithoutUnknown: List<ConfigurationType>
-    get() = emptyList()
 
   override val allConfigurationsList: List<RunConfiguration>
     get() = emptyList()
@@ -40,7 +33,7 @@ class MockRunManager : RunManagerEx() {
 
   override var selectedConfiguration: RunnerAndConfigurationSettings?
     get() = null
-    set(value) {}
+    set(_) {}
 
   override fun createConfiguration(runConfiguration: RunConfiguration, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
     throw UnsupportedOperationException()
@@ -54,15 +47,7 @@ class MockRunManager : RunManagerEx() {
     return emptyList()
   }
 
-  override fun getStructure(type: ConfigurationType): Map<String, List<RunnerAndConfigurationSettings>> {
-    return emptyMap()
-  }
-
   override fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?) {}
-
-  override fun getConfig(): RunManagerConfig {
-    throw UnsupportedOperationException()
-  }
 
   override fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings {
     throw UnsupportedOperationException()
@@ -83,7 +68,7 @@ class MockRunManager : RunManagerEx() {
     return emptyList()
   }
 
-  override fun setBeforeRunTasks(runConfiguration: RunConfiguration, tasks: List<BeforeRunTask<*>>, addEnabledTemplateTasksIfAbsent: Boolean) {}
+  override fun setBeforeRunTasks(runConfiguration: RunConfiguration, tasks: List<BeforeRunTask<*>>) {}
 
   override fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings? {
     return null

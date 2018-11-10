@@ -29,7 +29,7 @@ import java.util.*;
  * @author ilyas
  */
 public class DuplicatesUtil {
-  public static void collectMethodDuplicates(Map<GrMethod, List<GrMethod>> map, HashSet<GrMethod> duplicateMethodsWarning, HashSet<GrMethod> duplicateMethodsErrors) {
+  public static void collectMethodDuplicates(Map<GrMethod, List<GrMethod>> map, HashSet<? super GrMethod> duplicateMethodsWarning, HashSet<? super GrMethod> duplicateMethodsErrors) {
     for (GrMethod method : map.keySet()) {
       List<GrMethod> duplicateMethods = map.get(method);
 

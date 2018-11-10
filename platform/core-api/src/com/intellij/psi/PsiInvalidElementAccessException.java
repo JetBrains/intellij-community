@@ -121,17 +121,25 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
                                              @Nullable Object trace) {
     String reason = "Element: " + element.getClass();
     if (!recursiveInvocation) {
+      try {
+        reason += " #" + getLanguage(element).getID() + " ";
+      }
+      catch (PsiInvalidElementAccessException ignore) { }
       String traceText = !isTrackingInvalidation() ? "disabled" :
                          trace != null ? "see attachment" :
                          "no info";
       try {
         reason += " because: " + findOutInvalidationReason(element);
       }
-      catch (PsiInvalidElementAccessException ignore) {
-      }
+      catch (PsiInvalidElementAccessException ignore) { }
       reason += "\ninvalidated at: " + traceText;
     }
     return reason + (message == null ? "" : "; " + message);
+  }
+
+  @NotNull
+  private static Language getLanguage(@NotNull PsiElement element) {
+    return element instanceof ASTNode ? ((ASTNode)element).getElementType().getLanguage() : element.getLanguage();
   }
 
   @Override

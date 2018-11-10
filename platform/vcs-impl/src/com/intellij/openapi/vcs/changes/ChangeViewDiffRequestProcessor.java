@@ -26,10 +26,12 @@ import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
@@ -116,6 +118,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return super.getProject();
   }
 
+  @Override
+  public boolean isWindowFocused() {
+    return DiffUtil.isFocusedComponent(getProject(), getComponent());
+  }
+
   //
   // Navigation
   //
@@ -136,6 +143,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   public void clear() {
     myCurrentChange = null;
     updateRequest();
+    dropCaches();
   }
 
   @Override
@@ -157,18 +165,21 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     }
 
     if (selectedChanges.isEmpty()) {
-      myCurrentChange = null;
-      updateRequest();
+      setCurrentChange(null);
       return;
     }
 
     if (selectedChange == null) {
-      myCurrentChange = selectedChanges.get(0);
-      updateRequest();
+      setCurrentChange(selectedChanges.get(0));
       return;
     }
 
-    myCurrentChange = selectedChange;
+    setCurrentChange(selectedChange);
+  }
+
+  @CalledInAwt
+  public void setCurrentChange(@Nullable Wrapper change) {
+    myCurrentChange = change;
     updateRequest();
   }
 
@@ -217,7 +228,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @NotNull private final Wrapper myFallback;
     private final boolean myUpdateSelection;
 
-    public ChangesNavigatable(@NotNull List<Wrapper> allChanges, @NotNull Wrapper fallback, boolean updateSelection) {
+    ChangesNavigatable(@NotNull List<Wrapper> allChanges, @NotNull Wrapper fallback, boolean updateSelection) {
       myChanges = allChanges;
       myFallback = fallback;
       myUpdateSelection = updateSelection;
@@ -274,6 +285,20 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     @Nullable
     public abstract DiffRequestProducer createProducer(@Nullable Project project);
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (getClass() != o.getClass()) return false;
+
+      Wrapper wrapper = (Wrapper)o;
+      return Comparing.equal(getUserObject(), wrapper.getUserObject());
+    }
+
+    @Override
+    public int hashCode() {
+      return getUserObject().hashCode();
+    }
   }
 
   protected static class ChangeWrapper extends Wrapper {
@@ -286,7 +311,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @NotNull
     @Override
     public Object getUserObject() {
-      return this.change;
+      return change;
     }
 
     @Nullable
@@ -332,7 +357,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @NotNull
     @Override
     public Object getUserObject() {
-      return this.file;
+      return file;
     }
 
     @Nullable
@@ -340,27 +365,13 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     public DiffRequestProducer createProducer(@Nullable Project project) {
       return UnversionedDiffRequestProducer.create(project, file);
     }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (getClass() != o.getClass()) return false;
-
-      UnversionedFileWrapper wrapper = (UnversionedFileWrapper)o;
-      return wrapper.file.equals(file);
-    }
-
-    @Override
-    public int hashCode() {
-      return file.hashCode();
-    }
   }
 
   private static class ErrorChangeRequestProducer implements DiffRequestProducer {
     @NotNull private final Change myChange;
     @NotNull private final DiffRequest myRequest;
 
-    public ErrorChangeRequestProducer(@NotNull Change change, @NotNull DiffRequest request) {
+    ErrorChangeRequestProducer(@NotNull Change change, @NotNull DiffRequest request) {
       myChange = change;
       myRequest = request;
     }

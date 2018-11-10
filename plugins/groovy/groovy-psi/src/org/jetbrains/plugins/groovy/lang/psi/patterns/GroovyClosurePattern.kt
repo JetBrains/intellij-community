@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 
 class GroovyClosurePattern : GroovyExpressionPattern<GrClosableBlock, GroovyClosurePattern>(GrClosableBlock::class.java) {
 
-  fun inMethod(methodPattern: ElementPattern<out PsiMethod>) = with(object : PatternCondition<GrClosableBlock>("closureInMethod") {
+  fun inMethod(methodPattern: ElementPattern<out PsiMethod>): GroovyClosurePattern = with(object : PatternCondition<GrClosableBlock>("closureInMethod") {
     override fun accepts(closure: GrClosableBlock, context: ProcessingContext?): Boolean {
       val parent = closure.parent
       val call = when (parent) {

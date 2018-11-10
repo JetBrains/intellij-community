@@ -52,7 +52,7 @@ public class RunConfigurationsDialogFixture extends ComponentFixture<RunConfigur
 
   @NotNull
   public static RunConfigurationsDialogFixture find(@NotNull Robot robot) {
-    JDialog frame = GuiTestUtil.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog frame = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         return ExecutionBundle.message("run.debug.dialog.title").equals(dialog.getTitle()) && dialog.isShowing();
@@ -94,8 +94,8 @@ public class RunConfigurationsDialogFixture extends ComponentFixture<RunConfigur
       target(),
       ClassNameMatcher.forClass("com.intellij.execution.impl.BeforeRunStepsPanel", JPanel.class, true));
 
-    ActionButtonFixture.findByText("Remove", robot(), beforeRunStepsPanel).click();
-    ActionButtonFixture.findByText("Add", robot(), beforeRunStepsPanel).click();
+    ActionButtonFixture.Companion.fixtureByText(beforeRunStepsPanel, robot(), "Remove").click();
+    ActionButtonFixture.Companion.fixtureByText(beforeRunStepsPanel, robot(), "Add").click();
 
     JBList popupList = robot().finder().find(
       target(),

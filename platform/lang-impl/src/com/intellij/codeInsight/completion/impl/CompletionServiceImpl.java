@@ -21,6 +21,7 @@ import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,13 +34,15 @@ import java.util.ArrayList;
 public final class CompletionServiceImpl extends CompletionService {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.impl.CompletionServiceImpl");
   private static volatile CompletionPhase ourPhase = CompletionPhase.NoCompletion;
-  private static String ourPhaseTrace;
+  private static Throwable ourPhaseTrace;
+
+  @Nullable private CompletionProcess myApiCompletionProcess;
 
   public CompletionServiceImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
-        CompletionProgressIndicator indicator = getCurrentCompletion();
+      public void projectClosing(@NotNull Project project) {
+        CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator();
         if (indicator != null && indicator.getProject() == project) {
           indicator.closeAndFinish(true);
           setCompletionPhase(CompletionPhase.NoCompletion);
@@ -50,6 +53,17 @@ public final class CompletionServiceImpl extends CompletionService {
     });
   }
 
+  @Override
+  public void performCompletion(final CompletionParameters parameters, final Consumer<? super CompletionResult> consumer) {
+    myApiCompletionProcess = parameters.getProcess();
+    try {
+      super.performCompletion(parameters, consumer);
+    }
+    finally {
+      myApiCompletionProcess = null;
+    }
+  }
+
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
   public static CompletionServiceImpl getCompletionService() {
     return (CompletionServiceImpl) CompletionService.getCompletionService();
@@ -57,14 +71,14 @@ public final class CompletionServiceImpl extends CompletionService {
 
   @Override
   public String getAdvertisementText() {
-    final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
+    final CompletionProgressIndicator completion = getCurrentCompletionProgressIndicator();
     return completion == null ? null : ContainerUtil.getFirstItem(completion.getLookup().getAdvertisements());
   }
 
   @Override
   public void setAdvertisementText(@Nullable final String text) {
     if (text == null) return;
-    final CompletionProgressIndicator completion = getCompletionService().getCurrentCompletion();
+    final CompletionProgressIndicator completion = getCurrentCompletionProgressIndicator();
     if (completion != null) {
       completion.addAdvertisement(text, null);
     }
@@ -99,9 +113,14 @@ public final class CompletionServiceImpl extends CompletionService {
   }
 
   @Override
-  public CompletionProgressIndicator getCurrentCompletion() {
+  public CompletionProcess getCurrentCompletion() {
+    CompletionProgressIndicator indicator = getCurrentCompletionProgressIndicator();
+    return indicator != null ? indicator : myApiCompletionProcess;
+  }
+
+  public static CompletionProgressIndicator getCurrentCompletionProgressIndicator() {
     if (isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class, CompletionPhase.CommittingDocuments.class,
-      CompletionPhase.Synchronous.class)) {
+                CompletionPhase.Synchronous.class)) {
       return ourPhase.indicator;
     }
     return null;
@@ -207,12 +226,10 @@ public final class CompletionServiceImpl extends CompletionService {
   }
 
   @SafeVarargs
-  public static boolean assertPhase(@NotNull Class<? extends CompletionPhase>... possibilities) {
+  public static void assertPhase(@NotNull Class<? extends CompletionPhase>... possibilities) {
     if (!isPhase(possibilities)) {
-      LOG.error(ourPhase + "; set at " + ourPhaseTrace);
-      return false;
+      LOG.error(ourPhase + "; set at " + ExceptionUtil.getThrowableText(ourPhaseTrace));
     }
-    return true;
   }
 
   @SafeVarargs
@@ -236,7 +253,7 @@ public final class CompletionServiceImpl extends CompletionService {
 
     Disposer.dispose(oldPhase);
     ourPhase = phase;
-    ourPhaseTrace = DebugUtil.currentStackTrace();
+    ourPhaseTrace = new Throwable();
   }
 
   public static CompletionPhase getCompletionPhase() {
@@ -286,21 +303,21 @@ public final class CompletionServiceImpl extends CompletionService {
     return new CompletionSorterImpl(new ArrayList<>());
   }
 
-  @SuppressWarnings("unused")
   public CompletionLookupArranger createLookupArranger(CompletionParameters parameters) {
-    return new CompletionLookupArrangerImpl(parameters);
+    return new CompletionLookupArrangerImpl(parameters).withAllItemsVisible();
   }
 
-  @SuppressWarnings("unused")
   public void handleCompletionItemSelected(CompletionParameters parameters,
                                            LookupElement lookupElement,
                                            PrefixMatcher prefixMatcher,
+                                           String additionalPrefix,
                                            char completionChar) {
 
+    String itemPattern = prefixMatcher.getPrefix() + additionalPrefix;
     LookupImpl.insertLookupString(parameters.getPosition().getProject(),
                                   parameters.getEditor(),
                                   lookupElement,
-                                  prefixMatcher, prefixMatcher.getPrefix(), prefixMatcher.getPrefix().length());
+                                  prefixMatcher, itemPattern, itemPattern.length());
     CodeCompletionHandlerBase handler =
       CodeCompletionHandlerBase.createHandler(parameters.getCompletionType(), true, parameters.isAutoPopup(), true);
     handler.handleCompletionElementSelected(parameters, lookupElement, completionChar);

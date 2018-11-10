@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/xpath-lang/test" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/xpath-view/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/xpath-lang/gen" isTestSource="false" generated="true" />
+      <sourceFolder url="file://$MODULE_DIR$/xpath-lang/resources" type="java-resource" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -17,7 +18,7 @@
     <orderEntry type="module" module-name="intellij.xml.impl" />
     <orderEntry type="module" module-name="intellij.xslt.debugger.rt" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
-    <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
+    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="library" name="Jaxen" level="project" />
     <orderEntry type="module" module-name="intellij.java.resources.en" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />

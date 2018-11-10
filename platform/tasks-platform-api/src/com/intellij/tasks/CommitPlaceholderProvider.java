@@ -27,7 +27,7 @@ public interface CommitPlaceholderProvider {
   ExtensionPointName<CommitPlaceholderProvider> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.tasks.commitPlaceholderProvider");
 
   @NotNull
-  String[] getPlaceholders(TaskRepository repository);
+  String[] getPlaceholders(@Nullable TaskRepository repository);
 
   @Nullable
   String getPlaceholderValue(LocalTask task, String placeholder);

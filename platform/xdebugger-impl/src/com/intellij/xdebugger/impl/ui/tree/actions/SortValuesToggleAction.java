@@ -36,12 +36,12 @@ public class SortValuesToggleAction extends ToggleAction implements DumbAware {
   }
 
   @Override
-  public boolean isSelected(AnActionEvent e) {
+  public boolean isSelected(@NotNull AnActionEvent e) {
     return XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().isSortValues();
   }
 
   @Override
-  public void setSelected(AnActionEvent e, boolean state) {
+  public void setSelected(@NotNull AnActionEvent e, boolean state) {
     XDebuggerSettingManagerImpl.getInstanceImpl().getDataViewSettings().setSortValues(state);
     XDebuggerUtilImpl.rebuildAllSessionsViews(e.getProject());
   }

@@ -17,9 +17,9 @@ package org.jetbrains.uast
 
 
 import com.intellij.psi.PsiType
-import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
+import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
 /**
@@ -50,12 +50,12 @@ interface UCallableReferenceExpression : UReferenceExpression {
     visitor.afterVisitCallableReferenceExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitCallableReferenceExpression(this, data)
 
-  override fun asLogString() = log("name = $callableName")
+  override fun asLogString(): String = log("name = $callableName")
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     qualifierExpression?.let {
       append(it.asRenderString())
     } ?: qualifierType?.let {

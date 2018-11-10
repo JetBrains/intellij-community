@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.generation.surroundWith;
 
@@ -35,7 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -64,10 +49,9 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     invoke(project, editor, file, null);
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return null;
+  public boolean startInWriteAction() {
+    return false;
   }
 
   public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, Surrounder surrounder) {
@@ -102,7 +86,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     if (element1 == null || element2 == null) return null;
 
     TextRange textRange = new TextRange(startOffset, endOffset);
-    for(SurroundWithRangeAdjuster adjuster: Extensions.getExtensions(SurroundWithRangeAdjuster.EP_NAME)) {
+    for(SurroundWithRangeAdjuster adjuster: SurroundWithRangeAdjuster.EP_NAME.getExtensionList()) {
       textRange = adjuster.adjustSurroundWithRange(file, textRange, hasSelection);
       if (textRange == null) return null;
     }
@@ -274,7 +258,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     private final Editor myEditor;
     private final PsiElement[] myElements;
 
-    public InvokeSurrounderAction(Surrounder surrounder, Project project, Editor editor, PsiElement[] elements, char mnemonic) {
+    InvokeSurrounderAction(Surrounder surrounder, Project project, Editor editor, PsiElement[] elements, char mnemonic) {
       super(UIUtil.MNEMONIC + String.valueOf(mnemonic) + ". " + surrounder.getTemplateDescription());
       mySurrounder = surrounder;
       myProject = project;
@@ -283,7 +267,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       if (!FileDocumentManager.getInstance().requestWriting(myEditor.getDocument(), myProject)) {
         return;
       }
@@ -298,7 +282,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       ShowSettingsUtil.getInstance().showSettingsDialog(e.getData(CommonDataKeys.PROJECT), "Live Templates");
     }
   }

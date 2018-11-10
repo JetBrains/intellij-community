@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -136,7 +135,8 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         .conflictsDetected("refactoring.rename", conflictData);
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        throw new ConflictsInTestsException(conflicts.values());
+        if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());
+        return true;
       }
       ConflictsDialog conflictsDialog = prepareConflictsDialog(conflicts, refUsages.get());
       if (!conflictsDialog.showAndGet()) {
@@ -285,7 +285,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
         }
       }
 
-      for (AutomaticRenamerFactory factory : Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
+      for (AutomaticRenamerFactory factory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
         if (factory.getOptionName() == null && factory.isApplicable(element)) {
           myRenamers.add(factory.createRenamer(element, newName, usagesList));
         }
@@ -344,7 +344,10 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
     final MultiMap<PsiElement, UsageInfo> classified = classifyUsages(myAllRenames.keySet(), usages);
     for (final PsiElement element : myAllRenames.keySet()) {
-      LOG.assertTrue(element.isValid());
+      if (!element.isValid()) {
+        LOG.error(new PsiInvalidElementAccessException(element));
+        continue;
+      }
       String newName = myAllRenames.get(element);
 
       final RefactoringElementListener elementListener = getTransaction().getElementListener(element);

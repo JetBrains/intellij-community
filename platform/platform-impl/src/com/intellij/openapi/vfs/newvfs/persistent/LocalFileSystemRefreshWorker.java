@@ -240,15 +240,15 @@ class LocalFileSystemRefreshWorker {
     file.markDirty();
   }
 
-  private static Function<VirtualFile, Boolean> ourCancellingCondition;
+  private static Function<? super VirtualFile, Boolean> ourCancellingCondition;
 
   @TestOnly
-  static void setCancellingCondition(@Nullable Function<VirtualFile, Boolean> condition) {
+  static void setCancellingCondition(@Nullable Function<? super VirtualFile, Boolean> condition) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     ourCancellingCondition = condition;
   }
 
-  private static void addDeletionEventTo(@NotNull VirtualFile file, @NotNull Collection<VFileEvent> myFileEvents) {
+  private static void addDeletionEventTo(@NotNull VirtualFile file, @NotNull Collection<? super VFileEvent> myFileEvents) {
     if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
     myFileEvents.add(new VFileDeleteEvent(null, file, true));
   }

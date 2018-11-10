@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -89,7 +88,7 @@ class ConstructorReferencesSearchHelper {
     };
 
     SearchScope restrictedScope = searchScope instanceof GlobalSearchScope
-                                  ? GlobalSearchScope.getScopeRestrictedByFileTypes((GlobalSearchScope)searchScope, JavaFileType.INSTANCE)
+                                  ? ((GlobalSearchScope)searchScope).intersectWith(new JavaFilesSearchScope(project))
                                   : searchScope;
 
     ReferencesSearch.searchOptimized(containingClass, restrictedScope, ignoreAccessScope, collector, true, processor1);

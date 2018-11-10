@@ -2,7 +2,6 @@
 package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.diagnostic.IdeErrorsDialog;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
@@ -16,8 +15,8 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
@@ -84,13 +83,7 @@ public final class StoreUtil {
       return spec;
     }
 
-    PluginId pluginId = PluginManagerCore.getPluginByClassName(componentClass.getName());
-    if (pluginId == null) {
-      throw new RuntimeException("No @State annotation found in " + componentClass);
-    }
-    else {
-      throw new PluginException("No @State annotation found in " + componentClass, pluginId);
-    }
+    throw PluginManagerCore.createPluginException("No @State annotation found in " + componentClass, null, componentClass);
   }
 
   @Nullable
@@ -105,9 +98,19 @@ public final class StoreUtil {
     return null;
   }
 
+  /**
+   * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
+   */
   public static void saveDocumentsAndProjectsAndApp(boolean isForceSavingAllSettings) {
     FileDocumentManager.getInstance().saveAllDocuments();
+    saveProjectsAndApp(isForceSavingAllSettings);
+  }
 
+  /**
+   * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
+   */
+  public static void saveProjectsAndApp(boolean isForceSavingAllSettings) {
+    long start = System.currentTimeMillis();
     ApplicationManager.getApplication().saveSettings(isForceSavingAllSettings);
 
     ProjectManager projectManager = ProjectManager.getInstance();
@@ -118,11 +121,14 @@ public final class StoreUtil {
     for (Project project : projectManager.getOpenProjects()) {
       saveProject(project, isForceSavingAllSettings);
     }
+
+    long duration = System.currentTimeMillis() - start;
+    LOG.info("saveProjectsAndApp took " + duration + " ms");
   }
 
   public static void saveProject(@NotNull Project project, boolean isForce) {
-    if (isForce && project instanceof ProjectImpl) {
-      ((ProjectImpl)project).save(true);
+    if (isForce && project instanceof ProjectEx) {
+      ((ProjectEx)project).save(true);
     }
     else {
       project.save();

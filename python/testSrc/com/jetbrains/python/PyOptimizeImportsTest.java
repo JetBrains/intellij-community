@@ -17,18 +17,12 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.actions.OptimizeImportsAction;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.sdk.PythonSdkType;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -124,29 +118,6 @@ public class PyOptimizeImportsTest extends PyTestCase {
     });
   }
 
-  private void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
-    final Sdk sdk = PythonSdkType.findPythonSdk(myFixture.getModule());
-    assertNotNull(sdk);
-    WriteAction.run(() -> {
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      modificator.addRoot(directory, OrderRootType.CLASSES);
-      modificator.commitChanges();
-    });
-    try {
-      runnable.run();
-    }
-    finally {
-      //noinspection ThrowFromFinallyBlock
-      WriteAction.run(() -> {
-        final SdkModificator modificator = sdk.getSdkModificator();
-        assertNotNull(modificator);
-        modificator.removeRoot(directory, OrderRootType.CLASSES);
-        modificator.commitChanges();
-      });
-    }
-  }
-
   // PY-18792
   public void testDisableAlphabeticalOrder() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_IMPORTS = false;
@@ -199,6 +170,19 @@ public class PyOptimizeImportsTest extends PyTestCase {
   // PY-18792
   public void testSortImportsByNameFirstWithinGroup() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_BY_TYPE_FIRST = false;
+    doTest();
+  }
+
+  // PY-20159
+  public void testCaseInsensitiveOrderOfImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER = true;
+    doTest();
+  }
+
+  // PY-20159
+  public void testCaseInsensitiveOrderOfNamesInsideFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER = true;
     doTest();
   }
 
@@ -312,6 +296,12 @@ public class PyOptimizeImportsTest extends PyTestCase {
   // PY-25567
   public void testExistingParenthesesInCombinedFromImports() {
     getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
+    doTest();
+  }
+
+  // PY-20100
+  public void testSplittingOfFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_ALWAYS_SPLIT_FROM_IMPORTS = true;
     doTest();
   }
 

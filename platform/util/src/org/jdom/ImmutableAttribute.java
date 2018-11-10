@@ -16,7 +16,7 @@ package org.jdom;
 import org.jetbrains.annotations.NotNull;
 
 class ImmutableAttribute extends Attribute {
-  ImmutableAttribute(@NotNull String name, @NotNull String value, int type, @NotNull Namespace namespace) {
+  ImmutableAttribute(@NotNull String name, @NotNull String value, AttributeType type, @NotNull Namespace namespace) {
     super.setName(name);
     super.setValue(value);
     super.setNamespace(namespace);

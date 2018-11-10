@@ -38,24 +38,24 @@ class Main {
     }
 
     private void forEachType(String[] strs, Iterable<String> it, Iterable raw) {
-        for (var str : strs) {
+        for (var str: strs) {
             String s = str;
         }
 
-        for (var str : it) {
+        for (var str: it) {
             String s = str;
             str = s;
         }
 
-        for (var  o : raw) {
+        for (var o: raw) {
             Object obj = o;
         }
 
         for (var v:<error descr="Expression expected"> </error>) {}
 
-        for (var v:  <error descr="foreach not applicable to type 'null'">null</error>) {}
+        for (var v: <error descr="foreach not applicable to type 'null'">null</error>) {}
 
-        for (var v : (<error descr="Cannot resolve symbol 'v'">v</error>)) {}
+        for (var v: (<error descr="Cannot resolve symbol 'v'">v</error>)) {}
     }
 
     private void tryWithResources(AutoCloseable c) throws Exception {

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.api;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -31,13 +32,14 @@ public class RequestFuture<T> extends BasicFuture<T> {
     void cancel(RequestFuture<T> future) throws Exception;
   }
 
-  public RequestFuture(T handler, UUID requestID, @Nullable CancelAction<T> cancelAction) {
+  public RequestFuture(T handler, @NotNull UUID requestID, @Nullable CancelAction<T> cancelAction) {
     super();
     myCancelAction = cancelAction;
     myHandler = handler;
     myRequestID = requestID;
   }
 
+  @NotNull
   public UUID getRequestID() {
     return myRequestID;
   }

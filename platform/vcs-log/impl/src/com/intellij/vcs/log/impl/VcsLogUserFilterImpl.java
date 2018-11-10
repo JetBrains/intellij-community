@@ -59,6 +59,7 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
     }
   }
 
+  @Override
   @NotNull
   public Collection<VcsUser> getUsers(@NotNull VirtualFile root) {
     Set<VcsUser> result = ContainerUtil.newHashSet();
@@ -79,7 +80,8 @@ public class VcsLogUserFilterImpl implements VcsLogUserFilter {
         if (emailNamePart != null) {
           users.addAll(getUsers(emailNamePart));
         }
-      } else {
+      }
+      else {
         LOG.warn("Can not resolve user name for root " + root);
       }
     }

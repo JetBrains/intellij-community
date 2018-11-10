@@ -21,20 +21,21 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.CompositeDefinitionSource;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector;
 import org.jetbrains.plugins.gradle.ui.GradleProjectCompositeSelectorDialog;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
  * @author Vladislav.Soroka
- * @since 5/12/2015
  */
 public class GradleOpenProjectCompositeConfigurationAction extends ExternalSystemAction {
 
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     if (!super.isEnabled(e)) return false;
     if (getSystemId(e) == null) return false;
 
@@ -42,7 +43,7 @@ public class GradleOpenProjectCompositeConfigurationAction extends ExternalSyste
   }
 
   @Override
-  protected boolean isVisible(AnActionEvent e) {
+  protected boolean isVisible(@NotNull AnActionEvent e) {
     final Project project = getProject(e);
     if (project == null) return false;
     ProjectSystemId systemId = getSystemId(e);
@@ -64,9 +65,10 @@ public class GradleOpenProjectCompositeConfigurationAction extends ExternalSyste
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = getProject(e);
     if (project == null) return;
+    GradleActionsUsagesCollector.trigger(project, this, e);
     final ProjectNode projectNode = ExternalSystemDataKeys.SELECTED_PROJECT_NODE.getData(e.getDataContext());
     if (projectNode == null || projectNode.getData() == null) return;
     new GradleProjectCompositeSelectorDialog(project, projectNode.getData().getLinkedExternalProjectPath()).showAndGet();

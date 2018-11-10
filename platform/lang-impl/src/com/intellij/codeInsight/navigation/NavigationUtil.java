@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.navigation;
 
@@ -23,6 +9,7 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -30,7 +17,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -56,15 +42,15 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -81,7 +67,7 @@ public final class NavigationUtil {
 
   @NotNull
   public static JBPopup getPsiElementPopup(@NotNull PsiElement[] elements,
-                                           @NotNull final PsiElementListCellRenderer<PsiElement> renderer,
+                                           @NotNull final PsiElementListCellRenderer<? super PsiElement> renderer,
                                            final String title) {
     return getPsiElementPopup(elements, renderer, title, new PsiElementProcessor<PsiElement>() {
       @Override
@@ -99,7 +85,7 @@ public final class NavigationUtil {
   public static <T extends PsiElement> JBPopup getPsiElementPopup(@NotNull T[] elements,
                                                                   @NotNull final PsiElementListCellRenderer<T> renderer,
                                                                   final String title,
-                                                                  @NotNull final PsiElementProcessor<T> processor) {
+                                                                  @NotNull final PsiElementProcessor<? super T> processor) {
     return getPsiElementPopup(elements, renderer, title, processor, null);
   }
 
@@ -107,7 +93,7 @@ public final class NavigationUtil {
   public static <T extends PsiElement> JBPopup getPsiElementPopup(@NotNull T[] elements,
                                                                   @NotNull final PsiElementListCellRenderer<T> renderer,
                                                                   @Nullable final String title,
-                                                                  @NotNull final PsiElementProcessor<T> processor,
+                                                                  @NotNull final PsiElementProcessor<? super T> processor,
                                                                   @Nullable final T selection) {
     assert elements.length > 0 : "Attempted to show a navigation popup with zero elements";
     IPopupChooserBuilder<T> builder = JBPopupFactory.getInstance()
@@ -177,12 +163,22 @@ public final class NavigationUtil {
       element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true);
     }
 
-    if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
-      final NavigationItem navigationItem = (NavigationItem)element;
-      if (!navigationItem.canNavigate()) return false;
-      navigationItem.navigate(requestFocus);
-      return true;
-    }
+    Ref<Boolean> resultRef = new Ref<>();
+    boolean openAsNativeFinal = openAsNative;
+    // all navigation inside should be treated as a single operation, so that 'Back' action undoes it in one go
+    CommandProcessor.getInstance().executeCommand(element.getProject(), () -> {
+      if (openAsNativeFinal || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
+        final NavigationItem navigationItem = (NavigationItem)element;
+        if (!navigationItem.canNavigate()) {
+          resultRef.set(Boolean.FALSE);
+        }
+        else {
+          navigationItem.navigate(requestFocus);
+          resultRef.set(Boolean.TRUE);
+        }
+      }
+    }, "", null);
+    if (!resultRef.isNull()) return resultRef.get();
 
     element.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
     return false;
@@ -279,7 +275,6 @@ public final class NavigationUtil {
 
     return getPsiElementPopup(elements, itemsMap, title, showContainingModules, element -> {
       if (element instanceof PsiElement) {
-        //noinspection SuspiciousMethodCalls
         itemsMap.get(element).navigate();
       }
       else {
@@ -380,7 +375,6 @@ public final class NavigationUtil {
       @Override
       public String getIndexedString(Object value) {
         if (value instanceof GotoRelatedItem) {
-          //noinspection ConstantConditions
           return ((GotoRelatedItem)value).getCustomName();
         }
         PsiElement element = (PsiElement)value;
@@ -428,7 +422,7 @@ public final class NavigationUtil {
           final SeparatorWithText sep = new SeparatorWithText() {
             @Override
             protected void paintComponent(Graphics g) {
-              g.setColor(new JBColor(Color.WHITE, UIUtil.getSeparatorColor()));
+              g.setColor(new JBColor(Color.WHITE, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
               g.fillRect(0,0,getWidth(), getHeight());
               super.paintComponent(g);
             }
@@ -448,7 +442,7 @@ public final class NavigationUtil {
       if (mnemonic != -1) {
         final Action action = createNumberAction(mnemonic, popup, itemsMap, processor);
         popup.registerAction(mnemonic + "Action", KeyStroke.getKeyStroke(String.valueOf(mnemonic)), action);
-        popup.registerAction(mnemonic + "Action", KeyStroke.getKeyStroke("NUMPAD" + String.valueOf(mnemonic)), action);
+        popup.registerAction(mnemonic + "Action", KeyStroke.getKeyStroke("NUMPAD" + mnemonic), action);
         hasMnemonic.set(true);
       }
     }
@@ -479,7 +473,7 @@ public final class NavigationUtil {
   @NotNull
   public static List<GotoRelatedItem> collectRelatedItems(@NotNull PsiElement contextElement, @Nullable DataContext dataContext) {
     Set<GotoRelatedItem> items = ContainerUtil.newLinkedHashSet();
-    for (GotoRelatedProvider provider : Extensions.getExtensions(GotoRelatedProvider.EP_NAME)) {
+    for (GotoRelatedProvider provider : GotoRelatedProvider.EP_NAME.getExtensionList()) {
       items.addAll(provider.getItems(contextElement));
       if (dataContext != null) {
         items.addAll(provider.getItems(dataContext));

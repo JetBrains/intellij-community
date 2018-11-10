@@ -48,7 +48,7 @@ public class ManifestCompletionContributor extends CompletionContributor {
            new CompletionProvider<CompletionParameters>() {
              @Override
              public void addCompletions(@NotNull CompletionParameters parameters,
-                                        ProcessingContext context,
+                                        @NotNull ProcessingContext context,
                                         @NotNull CompletionResultSet resultSet) {
                for (String header : repository.getAllHeaderNames()) {
                  resultSet.addElement(LookupElementBuilder.create(header).withInsertHandler(HEADER_INSERT_HANDLER));
@@ -60,7 +60,7 @@ public class ManifestCompletionContributor extends CompletionContributor {
 
   private static final InsertHandler<LookupElement> HEADER_INSERT_HANDLER = new InsertHandler<LookupElement>() {
     @Override
-    public void handleInsert(InsertionContext context, LookupElement item) {
+    public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
       context.setAddCompletionChar(false);
       EditorModificationUtil.insertStringAtCaret(context.getEditor(), ": ");
       context.commitDocument();

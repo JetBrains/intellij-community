@@ -1,9 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
+import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -23,8 +23,8 @@ import java.util.*;
  * Base class for a configuration that is associated with a specific module. For example, Java run configurations use the selected module
  * to determine the run classpath.
  */
-public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunConfigurationModule> extends LocatableConfigurationBase implements Cloneable, ModuleRunConfiguration {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.ModuleBasedConfiguration");
+public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunConfigurationModule, T> extends LocatableConfigurationBase<T> implements Cloneable, ModuleRunConfiguration {
+  private static final Logger LOG = Logger.getInstance(ModuleBasedConfiguration.class);
 
   protected static final String TO_CLONE_ELEMENT_NAME = "toClone";
 
@@ -38,7 +38,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
   }
 
   public ModuleBasedConfiguration(@NotNull ConfigurationModule configurationModule, @NotNull ConfigurationFactory factory) {
-    super(configurationModule.getProject(), factory, "");
+    super(configurationModule.getProject(), factory);
 
     myModule = configurationModule;
     setInitialModuleName();
@@ -46,19 +46,19 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
 
   private void setInitialModuleName() {
     // to ensure that newly created RC will have modification counter 0
-    ModuleBasedConfigurationOptions options = getOptions();
-    options.setModule(myModule.getModuleName());
-    options.resetModificationCount();
+    syncModuleName();
+    getOptions().resetModificationCount();
   }
 
+  @NotNull
   @Override
   protected ModuleBasedConfigurationOptions getOptions() {
-    //noinspection unchecked
     return (ModuleBasedConfigurationOptions)super.getOptions();
   }
 
+  @NotNull
   @Override
-  protected Class<? extends ModuleBasedConfigurationOptions> getOptionsClass() {
+  protected Class<? extends ModuleBasedConfigurationOptions> getDefaultOptionsClass() {
     return ModuleBasedConfigurationOptions.class;
   }
 
@@ -98,12 +98,27 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
    * @deprecated  method {@link ConfigurationFactory#createTemplateConfiguration(com.intellij.openapi.project.Project)}
    * would be used instead to avoid wrong custom 'cloning'
    */
+  @Deprecated
   protected ModuleBasedConfiguration createInstance() {
     @SuppressWarnings("unchecked")
-    ModuleBasedConfiguration<ConfigurationModule> configuration =
-      (ModuleBasedConfiguration<ConfigurationModule>)getFactory().createTemplateConfiguration(getProject());
+    ModuleBasedConfiguration<ConfigurationModule, T> configuration =
+      (ModuleBasedConfiguration<ConfigurationModule, T>)getFactory().createTemplateConfiguration(getProject());
     configuration.setName(getName());
     return configuration;
+  }
+
+  @Nullable
+  @Override
+  public final T getState() {
+    syncModuleName();
+    return super.getState();
+  }
+
+  @Override
+  public void loadState(@NotNull T state) {
+    super.loadState(state);
+
+    myModule.setModuleName(getOptions().getModule());
   }
 
   @Override
@@ -115,34 +130,57 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
-    getOptions().setModule(myModule.getModuleName());
+    syncModuleName();
 
     super.writeExternal(element);
+  }
+
+  protected final void syncModuleName() {
+    getOptions().setModule(myModule.getModuleName());
   }
 
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public ModuleBasedConfiguration clone() {
-    final Element element = new Element(TO_CLONE_ELEMENT_NAME);
-    try {
-      writeExternal(element);
-      ModuleBasedConfiguration configuration = (ModuleBasedConfiguration)getFactory().createTemplateConfiguration(getProject());
-      configuration.setName(getName());
+    @SuppressWarnings("unchecked")
+    ModuleBasedConfiguration<ConfigurationModule, T> configuration = (ModuleBasedConfiguration)Objects.requireNonNull(getFactory())
+      .createTemplateConfiguration(getProject());
+    configuration.setName(getName());
 
-      // AbstractPythonRunConfiguration calls in the constructor and so, there is a chance that newly created configuration will have module, but old haven't
-      // and so, on readExternal module will be lost
-      RunConfigurationModule configurationModule = configuration.getConfigurationModule();
-      String moduleName = StringUtil.nullize(configurationModule.getModuleName());
-      configuration.readExternal(element);
-      if (moduleName != null && StringUtil.nullize(configurationModule.getModuleName()) == null) {
-        configurationModule.setModuleName(moduleName);
+    // AbstractPythonRunConfiguration calls in the constructor and so, there is a chance that newly created configuration will have module, but old haven't
+    // and so, on readExternal module will be lost
+    RunConfigurationModule configurationModule = configuration.getConfigurationModule();
+    String moduleName = StringUtil.nullize(configurationModule.getModuleName());
+
+    boolean isUseReadWriteExternal = true;
+    if (this instanceof PersistentStateComponent<?>) {
+      @SuppressWarnings("unchecked")
+      Class<?> stateClass = ComponentSerializationUtil.getStateClass((Class<? extends PersistentStateComponent>)getClass());
+      if (stateClass != Element.class) {
+        isUseReadWriteExternal = false;
+        configuration.doCopyOptionsFrom(this);
       }
-      return configuration;
     }
-    catch (InvalidDataException | WriteExternalException e) {
-      LOG.error(e);
-      return null;
+
+    if (isUseReadWriteExternal) {
+      final Element element = new Element(TO_CLONE_ELEMENT_NAME);
+      try {
+        writeExternal(element);
+        configuration.readExternal(element);
+        // we don't call super.clone(), but writeExternal doesn't copy transient fields in the options like isAllowRunningInParallel
+        // so, we have to call copyFrom to ensure that state is fully cloned
+        // MUST BE AFTER readExternal because readExternal set options to a new instance
+        configuration.setAllowRunningInParallel(isAllowRunningInParallel());
+      }
+      catch (InvalidDataException | WriteExternalException e) {
+        LOG.error(e);
+        return null;
+      }
     }
+    if (moduleName != null && StringUtil.nullize(configurationModule.getModuleName()) == null) {
+      configurationModule.setModuleName(moduleName);
+    }
+    return configuration;
   }
 
   @Override
@@ -181,6 +219,7 @@ public abstract class ModuleBasedConfiguration<ConfigurationModule extends RunCo
     return false;
   }
 
+  @Override
   public void onNewConfigurationCreated() {
     final RunConfigurationModule configurationModule = getConfigurationModule();
     if (configurationModule.getModule() == null) {

@@ -14,9 +14,6 @@ import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8ListSortInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
@@ -36,7 +33,6 @@ public class Java8ListSortInspection extends AbstractBaseJavaLocalInspectionTool
           if(method != null) {
             PsiClass containingClass = method.getContainingClass();
             if(containingClass != null && CommonClassNames.JAVA_UTIL_COLLECTIONS.equals(containingClass.getQualifiedName())) {
-              //noinspection DialogTitleCapitalization
               holder.registerProblem(nameElement, QuickFixBundle.message("java.8.list.sort.inspection.description"),
                                      new ReplaceWithListSortFix());
             }

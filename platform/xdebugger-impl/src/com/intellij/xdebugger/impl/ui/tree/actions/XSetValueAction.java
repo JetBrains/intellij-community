@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XSetValueAction extends XDebuggerTreeActionBase {
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     super.update(e);
     XValueNodeImpl node = getSelectedNode(e.getDataContext());
     Presentation presentation = e.getPresentation();

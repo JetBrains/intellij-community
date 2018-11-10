@@ -51,7 +51,7 @@ public class PaletteRefactoringListenerProvider implements RefactoringElementLis
   private class MyRefactoringElementListener extends RefactoringElementAdapter{
     private final ComponentItem myItem;
 
-    public MyRefactoringElementListener(final ComponentItem item) {
+    MyRefactoringElementListener(final ComponentItem item) {
       myItem = item;
     }
 

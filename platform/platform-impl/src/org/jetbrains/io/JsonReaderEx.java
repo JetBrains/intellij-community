@@ -535,7 +535,6 @@ public final class JsonReaderEx implements Closeable {
     return peeked = peeking;
   }
 
-  @SuppressWarnings("ConstantConditions")
   private int peekNumber() {
     // Like nextNonWhitespace, this uses locals 'p' and 'l' to save inner-loop field access.
     CharSequence in = this.in;

@@ -73,9 +73,7 @@ public class DebuggerUIUtil {
   }
 
   public static void focusEditorOnCheck(final JCheckBox checkbox, final JComponent component) {
-    final Runnable runnable = () -> getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      getGlobalInstance().requestFocus(component, true);
-    });
+    final Runnable runnable = () -> getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(component, true));
     checkbox.addActionListener(e -> {
       if (checkbox.isSelected()) {
         SwingUtilities.invokeLater(runnable);
@@ -162,7 +160,7 @@ public class DebuggerUIUtil {
     builder.setResizable(true)
       .setMovable(true)
         .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
-        .setRequestFocus(false);
+        .setRequestFocus(true);
       if (callback != null) {
         builder.setCancelCallback(() -> {
           callback.setObsolete();
@@ -216,25 +214,25 @@ public class DebuggerUIUtil {
     final Balloon balloon = showBreakpointEditor(project, mainPanel, point, component, showMoreOptions, breakpoint);
     balloonRef.set(balloon);
 
-    final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointListener<XBreakpoint<?>>() {
+    Disposable disposable = Disposer.newDisposable();
+
+    balloon.addListener(new JBPopupListener() {
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        Disposer.dispose(disposable);
+        propertiesPanel.saveProperties();
+        propertiesPanel.dispose();
+      }
+    });
+
+    project.getMessageBus().connect(disposable).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<XBreakpoint<?>>() {
       @Override
       public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
         if (removedBreakpoint.equals(breakpoint)) {
           balloon.hide();
         }
       }
-    };
-
-    balloon.addListener(new JBPopupListener() {
-      @Override
-      public void onClosed(LightweightWindowEvent event) {
-        propertiesPanel.saveProperties();
-        propertiesPanel.dispose();
-        breakpointManager.removeBreakpointListener(breakpointListener);
-      }
     });
-
-    breakpointManager.addBreakpointListener(breakpointListener);
     ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstance().requestFocus(mainPanel, true));
   }
 
@@ -247,14 +245,20 @@ public class DebuggerUIUtil {
     editor.setShowMoreOptionsLink(true);
 
     final JPanel panel = editor.getMainPanel();
-    final Balloon balloon = JBPopupFactory.getInstance()
+
+    BalloonBuilder builder = JBPopupFactory.getInstance()
       .createDialogBalloonBuilder(panel, null)
       .setHideOnClickOutside(true)
       .setCloseButtonEnabled(false)
       .setAnimationCycle(0)
-      .setBlockClicksThroughBalloon(true)
-      .createBalloon();
+      .setBlockClicksThroughBalloon(true);
 
+    Color borderColor = UIManager.getColor("DebuggerPopup.borderColor");
+    if (borderColor != null ) {
+      builder.setBorderColor(borderColor);
+    }
+
+    Balloon balloon = builder.createBalloon();
 
     editor.setDelegate(new BreakpointEditor.Delegate() {
       @Override
@@ -323,7 +327,7 @@ public class DebuggerUIUtil {
     private final AtomicBoolean myObsolete = new AtomicBoolean(false);
     private final EditorTextField myTextArea;
 
-    public FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
+    FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
       myTextArea = textArea;
     }
 
@@ -435,7 +439,7 @@ public class DebuggerUIUtil {
     return object instanceof Obsolescent && ((Obsolescent)object).isObsolete();
   }
 
-  public static void setTreeNodeValue(XValueNodeImpl valueNode, XExpression text, Consumer<String> errorConsumer) {
+  public static void setTreeNodeValue(XValueNodeImpl valueNode, XExpression text, Consumer<? super String> errorConsumer) {
     XDebuggerTree tree = valueNode.getTree();
     Project project = tree.getProject();
     XValueModifier modifier = valueNode.getValueContainer().getModifier();

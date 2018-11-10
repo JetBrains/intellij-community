@@ -4,16 +4,18 @@ package com.intellij.lang.java.parser;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.WhitespacesBinders;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
+
+import java.util.function.Function;
 
 import static com.intellij.codeInsight.daemon.JavaErrorMessages.BUNDLE;
 import static com.intellij.lang.PsiBuilderUtil.*;
@@ -52,15 +54,28 @@ public class ExpressionParser {
   private static final TokenSet TYPE_START = TokenSet.orSet(
     ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
 
+  private static final Key<Boolean> CASE_LABEL = Key.create("java.parser.case.label.expr");
+
   private final JavaParser myParser;
 
-  public ExpressionParser(@NotNull final JavaParser javaParser) {
+  public ExpressionParser(@NotNull JavaParser javaParser) {
     myParser = javaParser;
   }
 
   @Nullable
-  public PsiBuilder.Marker parse(final PsiBuilder builder) {
+  public PsiBuilder.Marker parse(@NotNull PsiBuilder builder) {
     return parseAssignment(builder);
+  }
+
+  @Nullable
+  public PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
+    CASE_LABEL.set(builder, Boolean.TRUE);
+    try {
+      return parseAssignment(builder);
+    }
+    finally {
+      CASE_LABEL.set(builder, null);
+    }
   }
 
   @Nullable
@@ -69,7 +84,7 @@ public class ExpressionParser {
     if (left == null) return null;
 
     final IElementType tokenType = getGtTokenType(builder);
-    if (ASSIGNMENT_OPS.contains(tokenType) && tokenType != null) {
+    if (tokenType != null && ASSIGNMENT_OPS.contains(tokenType)) {
       final PsiBuilder.Marker assignment = left.precede();
       advanceGtToken(builder, tokenType);
 
@@ -491,9 +506,11 @@ public class ExpressionParser {
     }
 
     if (tokenType == JavaTokenType.LPARENTH) {
-      final PsiBuilder.Marker lambda = parseLambdaAfterParenth(builder);
-      if (lambda != null) {
-        return lambda;
+      if (CASE_LABEL.get(builder) != Boolean.TRUE) {
+        final PsiBuilder.Marker lambda = parseLambdaAfterParenth(builder);
+        if (lambda != null) {
+          return lambda;
+        }
       }
 
       final PsiBuilder.Marker parenth = builder.mark();
@@ -541,7 +558,7 @@ public class ExpressionParser {
       builder.remapCurrentToken(tokenType = JavaTokenType.IDENTIFIER);
     }
     if (tokenType == JavaTokenType.IDENTIFIER) {
-      if (builder.lookAhead(1) == JavaTokenType.ARROW) {
+      if (CASE_LABEL.get(builder) != Boolean.TRUE && builder.lookAhead(1) == JavaTokenType.ARROW) {
         return parseLambdaExpression(builder, false);
       }
 
@@ -601,15 +618,15 @@ public class ExpressionParser {
 
   @NotNull
   private PsiBuilder.Marker parseArrayInitializer(PsiBuilder builder) {
-    return parseArrayInitializer(builder, JavaElementType.ARRAY_INITIALIZER_EXPRESSION, builder1 -> parse(builder1) != null, "expected.expression");
+    return parseArrayInitializer(builder, JavaElementType.ARRAY_INITIALIZER_EXPRESSION, this::parse, "expected.expression");
   }
 
   @NotNull
   public PsiBuilder.Marker parseArrayInitializer(@NotNull PsiBuilder builder,
                                                  @NotNull IElementType type,
-                                                 @NotNull Function<PsiBuilder, Boolean> elementParser,
+                                                 @NotNull Function<? super PsiBuilder, PsiBuilder.Marker> elementParser,
                                                  @NotNull @PropertyKey(resourceBundle = BUNDLE) String missingElementKey) {
-    final PsiBuilder.Marker arrayInit = builder.mark();
+    PsiBuilder.Marker arrayInit = builder.mark();
     builder.advanceLexer();
 
     boolean first = true;
@@ -624,7 +641,7 @@ public class ExpressionParser {
         break;
       }
 
-      if (!elementParser.fun(builder)) {
+      if (elementParser.apply(builder) == null) {
         if (builder.getTokenType() == JavaTokenType.COMMA) {
           if (first && builder.lookAhead(1) == JavaTokenType.RBRACE) {
             advance(builder, 2);

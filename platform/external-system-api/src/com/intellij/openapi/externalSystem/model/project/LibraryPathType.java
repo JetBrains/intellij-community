@@ -7,7 +7,6 @@ import com.intellij.openapi.roots.OrderRootType;
  * for serialization/deserialization.
  * 
  * @author Denis Zhdanov
- * @since 8/10/11 6:37 PM
  */
 public enum LibraryPathType {
   BINARY, SOURCE, DOC

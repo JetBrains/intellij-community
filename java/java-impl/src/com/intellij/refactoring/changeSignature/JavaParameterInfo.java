@@ -33,12 +33,14 @@ public interface JavaParameterInfo extends ParameterInfo {
     return createType(context, context.getManager());
   }
 
+  @Override
   String getTypeText();
 
   CanonicalTypes.Type getTypeWrapper();
 
   PsiExpression getValue(PsiCallExpression callExpression);
 
+  @Override
   @Nullable
   default PsiElement getActualValue(PsiElement callExpression, Object substitutor) {
     return callExpression instanceof PsiCallExpression ? getValue((PsiCallExpression)callExpression) : null;

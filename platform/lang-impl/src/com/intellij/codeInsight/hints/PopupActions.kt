@@ -45,14 +45,13 @@ class ShowSettingsWithAddedPattern : AnAction() {
     val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
     
     val offset = editor.caretModel.offset
-    val info = getHintInfoFromProvider(offset, file, editor) ?: return
-    
-    val text = when (info) {
-      is HintInfo.OptionInfo -> "Show Hints Settings..."
-      is HintInfo.MethodInfo -> CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()) 
+    val info = getHintInfoFromProvider(offset, file, editor)
+    if (info is HintInfo.MethodInfo) {
+      e.presentation.setText(CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()), false)
     }
-    
-    e.presentation.setText(text, false)
+    else {
+      e.presentation.isVisible = false
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -76,6 +75,22 @@ class ShowSettingsWithAddedPattern : AnAction() {
   }
 }
 
+class ShowParameterHintsSettings : AnAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
+
+    val fileLanguage = file.language.baseLanguage ?: file.language
+    InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
+
+    val offset = editor.caretModel.offset
+    val info = getHintInfoFromProvider(offset, file, editor) ?: return
+
+    val selectedLanguage = (info as? HintInfo.MethodInfo)?.language ?: fileLanguage
+    val dialog = ParameterNameHintsConfigurable(selectedLanguage, null)
+    dialog.show()
+  }
+}
 
 class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
   companion object {
@@ -135,17 +150,18 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
   
   private fun undo(language: Language, info: MethodInfo) {
     val settings = ParameterNameHintsSettings.getInstance()
-    
-    val diff = settings.getBlackListDiff(language)
+    val languageForSettings = getLanguageForSettingKey(language)
+
+    val diff = settings.getBlackListDiff(languageForSettings)
     val updated = diff.added.toMutableSet().apply {
       remove(info.toPattern())
     }
     
-    settings.setBlackListDiff(language, Diff(updated, diff.removed))
+    settings.setBlackListDiff(languageForSettings, Diff(updated, diff.removed))
     refreshAllOpenEditors()
   }
 
-  override fun startInWriteAction() = false
+  override fun startInWriteAction(): Boolean = false
 }
 
 
@@ -188,7 +204,7 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
     refreshAllOpenEditors()
   }
 
-  override fun startInWriteAction() = false
+  override fun startInWriteAction(): Boolean = false
 }
 
 class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
@@ -236,7 +252,7 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
     refreshAllOpenEditors()
   }
 
-  override fun startInWriteAction() = false
+  override fun startInWriteAction(): Boolean = false
 
 }
 
@@ -284,9 +300,7 @@ private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boole
   val startOffset = element?.textRange?.startOffset ?: offset
   val endOffset = element?.textRange?.endOffset ?: offset
   
-  return editor.inlayModel
-      .getInlineElementsInRange(startOffset, endOffset)
-      .find { ParameterHintsPresentationManager.getInstance().isParameterHint(it) } != null
+  return !ParameterHintsPresentationManager.getInstance().getParameterHintsInRange(editor, startOffset, endOffset).isEmpty()
 }
 
 
@@ -318,11 +332,11 @@ private fun getHintInfoFromProvider(offset: Int, file: PsiFile, editor: Editor):
 fun PsiElement.isOwnsInlayInEditor(editor: Editor): Boolean {
   if (textRange == null) return false
   val start = if (textRange.isEmpty) textRange.startOffset else textRange.startOffset + 1
-  return !editor.inlayModel.getInlineElementsInRange(start, textRange.endOffset).isEmpty()
+  return editor.inlayModel.hasInlineElementsInRange(start, textRange.endOffset)
 }
 
 
-fun MethodInfo.toPattern() = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
+fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
 
 
 private fun String.capitalize() = StringUtil.capitalizeWords(this, true)

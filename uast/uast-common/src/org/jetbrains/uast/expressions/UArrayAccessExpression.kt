@@ -42,11 +42,11 @@ interface UArrayAccessExpression : UExpression {
     visitor.afterVisitArrayAccessExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitArrayAccessExpression(this, data)
 
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
-  override fun asRenderString() = receiver.asRenderString() +
-                                  indices.joinToString(prefix = "[", postfix = "]") { it.asRenderString() }
+  override fun asRenderString(): String = receiver.asRenderString() +
+                                          indices.joinToString(prefix = "[", postfix = "]") { it.asRenderString() }
 }

@@ -46,13 +46,6 @@ public class HtmlLanguageCodeStyleSettings extends LanguageCodeStyleSettingsProv
   }
 
   @Override
-  public CommonCodeStyleSettings getDefaultCommonSettings() {
-    CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(HTMLLanguage.INSTANCE);
-    defaultSettings.initIndentOptions();
-    return defaultSettings;
-  }
-
-  @Override
   public IndentOptionsEditor getIndentOptionsEditor() {
     return new SmartIndentOptionsEditor();
   }

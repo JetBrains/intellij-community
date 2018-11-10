@@ -40,6 +40,11 @@ public class ConfigurationException extends Exception {
     myTitle = title;
   }
 
+  public ConfigurationException(String message, Throwable cause, String title) {
+    super(message, cause);
+    myTitle = title;
+  }
+
   /**
    * @return the title describing the problem in short
    */
@@ -67,5 +72,13 @@ public class ConfigurationException extends Exception {
 
   public void setOriginator(Configurable originator) {
     myOriginator = originator;
+  }
+
+  /**
+   * @return whether this error should be shown when index isn't complete. Override and return false for errors that
+   * might be caused by inability to find some PSI due to index absence.
+   */
+  public boolean shouldShowInDumbMode() {
+    return true;
   }
 }

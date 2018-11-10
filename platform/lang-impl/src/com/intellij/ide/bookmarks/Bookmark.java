@@ -17,7 +17,6 @@
 package com.intellij.ide.bookmarks;
 
 import com.intellij.codeInsight.daemon.GutterMark;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -67,16 +66,21 @@ import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
+import static com.intellij.ide.ui.UISettings.setupAntialiasing;
+
 public class Bookmark implements Navigatable, Comparable<Bookmark> {
   static final Icon DEFAULT_ICON = new MyCheckedIcon();
 
   private final VirtualFile myFile;
-  @NotNull private OpenFileDescriptor myTarget;
+  @NotNull
+  private OpenFileDescriptor myTarget;
   private final Project myProject;
   private Reference<RangeHighlighterEx> myHighlighterRef;
 
+  @NotNull
   private String myDescription;
   private char myMnemonic;
+  int index; // index in the list of bookmarks in the Navigate|Bookmarks|show
 
   public Bookmark(@NotNull Project project, @NotNull VirtualFile file, int line, @NotNull String description) {
     myFile = file;
@@ -94,7 +98,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   @Override
-  public int compareTo(Bookmark o) {
+  public int compareTo(@NotNull Bookmark o) {
     int i = myMnemonic != 0 ? o.myMnemonic != 0 ? myMnemonic - o.myMnemonic : -1: o.myMnemonic != 0 ? 1 : 0;
     if (i != 0) return i;
     i = myProject.getName().compareTo(o.myProject.getName());
@@ -110,7 +114,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   private void addHighlighter() {
-    Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
+    Document document = getCachedDocument();
     if (document != null) {
       createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
     }
@@ -147,30 +151,35 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return highlighter;
   }
 
+  @Deprecated
   @Nullable
   public Document getDocument() {
+    return getCachedDocument();
+  }
+
+  Document getCachedDocument() {
     return FileDocumentManager.getInstance().getCachedDocument(getFile());
   }
 
   public void release() {
-      int line = getLine();
-      if (line < 0) {
-        return;
-      }
-      final Document document = getDocument();
-      if (document == null) return;
-      MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
-      final Document markupDocument = markup.getDocument();
-      if (markupDocument.getLineCount() <= line) return;
-      RangeHighlighterEx highlighter = findMyHighlighter();
-      if (highlighter != null) {
-        myHighlighterRef = null;
-        highlighter.dispose();
-      }
+    int line = getLine();
+    if (line < 0) {
+      return;
+    }
+    final Document document = getCachedDocument();
+    if (document == null) return;
+    MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true);
+    final Document markupDocument = markup.getDocument();
+    if (markupDocument.getLineCount() <= line) return;
+    RangeHighlighterEx highlighter = findMyHighlighter();
+    if (highlighter != null) {
+      myHighlighterRef = null;
+      highlighter.dispose();
+    }
   }
 
   private RangeHighlighterEx findMyHighlighter() {
-    final Document document = getDocument();
+    final Document document = getCachedDocument();
     if (document == null) return null;
     RangeHighlighterEx result = SoftReference.dereference(myHighlighterRef);
     if (result != null) {
@@ -199,11 +208,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return myMnemonic == 0 ? DEFAULT_ICON : MnemonicIcon.getIcon(myMnemonic);
   }
 
+  @NotNull
   public String getDescription() {
     return myDescription;
   }
 
-  public void setDescription(String description) {
+  public void setDescription(@NotNull String description) {
     myDescription = description;
   }
 
@@ -221,8 +231,8 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   }
 
   @Nullable
-  public String getNotEmptyDescription() {
-    return StringUtil.isEmpty(myDescription) ? null : myDescription;
+  String nullizeEmptyDescription() {
+    return StringUtil.nullize(myDescription);
   }
 
   public boolean isValid() {
@@ -253,14 +263,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
   public int getLine() {
     int targetLine = myTarget.getLine();
-    if (targetLine == -1) return targetLine;
+    if (targetLine == -1) return -1;
     //What user sees in gutter
     RangeHighlighterEx highlighter = findMyHighlighter();
     if (highlighter != null && highlighter.isValid()) {
-      Document document = getDocument();
-      if (document != null) {
-        return document.getLineNumber(highlighter.getStartOffset());
-      }
+      Document document = highlighter.getDocument();
+      return document.getLineNumber(highlighter.getStartOffset());
     }
     RangeMarker marker = myTarget.getRangeMarker();
     if (marker != null && marker.isValid()) {
@@ -270,6 +278,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return targetLine;
   }
 
+  @NotNull
   private OpenFileDescriptor getTarget() {
     int line = getLine();
     if (line != myTarget.getLine()) {
@@ -281,13 +290,15 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   @Override
   public String toString() {
     StringBuilder result = new StringBuilder(getQualifiedName());
-    String description = StringUtil.escapeXml(getNotEmptyDescription());
+    String text = nullizeEmptyDescription();
+    String description = text == null ? null : StringUtil.escapeXmlEntities(text);
     if (description != null) {
       result.append(": ").append(description);
     }
     return result.toString();
   }
 
+  @NotNull
   public String getQualifiedName() {
     String presentableUrl = myFile.getPresentableUrl();
     if (myFile.isDirectory()) return presentableUrl;
@@ -317,12 +328,14 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return IdeBundle.message("bookmark.file.X.line.Y", presentableUrl, getLine() + 1);
   }
 
+  @NotNull
   private String getBookmarkTooltip() {
     StringBuilder result = new StringBuilder("Bookmark");
     if (myMnemonic != 0) {
       result.append(" ").append(myMnemonic);
     }
-    String description = StringUtil.escapeXml(getNotEmptyDescription());
+    String text = nullizeEmptyDescription();
+    String description = text == null ? null : StringUtil.escapeXmlEntities(text);
     if (description != null) {
       result.append(": ").append(description);
     }
@@ -335,7 +348,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @NotNull
     @Override
-    protected MnemonicIcon copy() {
+    public MnemonicIcon copy() {
       return new MnemonicIcon(myMnemonic);
     }
 
@@ -370,6 +383,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
       g.drawRect(x, y, width, height);
 
       g.setColor(EditorColorsManager.getInstance().getGlobalScheme().getDefaultForeground());
+      setupAntialiasing(g);
 
       float startingFontSize = 40f;  // large font for smaller rounding error
       Font font = getBookmarkFont().deriveFont(startingFontSize);
@@ -409,12 +423,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public int hashCode() {
-      return (int)myMnemonic;
+      return myMnemonic;
     }
   }
 
   private static class MyCheckedIcon extends JBUI.CachingScalableJBIcon<MyCheckedIcon> implements RetrievableIcon {
-    @Nullable
+    @NotNull
     @Override
     public Icon retrieveIcon() {
       return IconUtil.scale(PlatformIcons.CHECK_ICON, null, getScale());
@@ -422,7 +436,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      IconUtil.scale(darkBackground() ? AllIcons.Actions.CheckedGrey : AllIcons.Actions.CheckedBlack, c, getScale()).paintIcon(c, g, x, y);
+      IconUtil.scale(PlatformIcons.CHECK_ICON, c, getScale()).paintIcon(c, g, x, y);
     }
 
     @Override
@@ -441,7 +455,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @NotNull
     @Override
-    protected MyCheckedIcon copy() {
+    public MyCheckedIcon copy() {
       return new MyCheckedIcon();
     }
   }
@@ -468,11 +482,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     }
 
     @Override
+    @NotNull
     public String getTooltipText() {
       return myBookmark.getBookmarkTooltip();
     }
 
-    @Nullable
+    @NotNull
     @Override
     public GutterDraggableObject getDraggableObject() {
       return new GutterDraggableObject() {
@@ -488,6 +503,12 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
           return DragSource.DefaultMoveDrop;
         }
       };
+    }
+
+    @NotNull
+    @Override
+    public String getAccessibleName() {
+      return "icon: bookmark " + myBookmark.myMnemonic;
     }
 
     @Override

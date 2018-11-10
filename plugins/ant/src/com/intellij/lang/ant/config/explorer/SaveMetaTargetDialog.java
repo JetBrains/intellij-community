@@ -24,7 +24,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,6 +33,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SaveMetaTargetDialog extends DialogWrapper {
   private JList myTargetList;
@@ -54,15 +55,18 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.ant.explorer.SaveMetaTargetDialog";
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction()};
   }
 
+  @Override
   protected void doOKAction() {
     final ExecuteCompositeTargetEvent eventObject = createEventObject();
     if (myAntConfiguration.getTargetForEvent(eventObject) == null) {
@@ -75,10 +79,12 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     }
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTfName;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final JLabel nameLabel = new JLabel(AntBundle.message("save.meta.data.name.label"));
@@ -92,7 +98,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
 
     final DefaultListModel dataModel = new DefaultListModel();
     myTargetList = new JBList(dataModel);
-    final String[] targetNames = myInitialEvent.getTargetNames();
+    final List<String> targetNames = myInitialEvent.getTargetNames();
     for (String name : targetNames) {
       dataModel.addElement(name);
     }
@@ -112,6 +118,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
                                                  GridBagConstraints.HORIZONTAL, JBUI.insetsLeft(6), 0, 0));
 
     class UpdateAction implements ActionListener {
+      @Override
       public void actionPerformed(ActionEvent e) {
         upButton.setEnabled(ListUtil.canMoveSelectedItemsUp(myTargetList));
         downButton.setEnabled(ListUtil.canMoveSelectedItemsDown(myTargetList));
@@ -119,6 +126,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     }
 
     upButton.addActionListener(new UpdateAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         ListUtil.moveSelectedItemsUp(myTargetList);
         super.actionPerformed(e);
@@ -126,6 +134,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     });
 
     downButton.addActionListener(new UpdateAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         ListUtil.moveSelectedItemsDown(myTargetList);
         super.actionPerformed(e);
@@ -133,6 +142,7 @@ public class SaveMetaTargetDialog extends DialogWrapper {
     });
 
     myTargetList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         upButton.setEnabled(ListUtil.canMoveSelectedItemsUp(myTargetList));
         downButton.setEnabled(ListUtil.canMoveSelectedItemsDown(myTargetList));
@@ -145,9 +155,9 @@ public class SaveMetaTargetDialog extends DialogWrapper {
   private ExecuteCompositeTargetEvent createEventObject() {
     final ListModel model = myTargetList.getModel();
     final int size = model.getSize();
-    final String[] names = ArrayUtil.newStringArray(size);
+    final List<String> names  = new ArrayList<>();
     for (int idx = 0; idx < size; idx++) {
-      names[idx] = (String)model.getElementAt(idx);
+      names.add((String)model.getElementAt(idx));
     }
     final ExecuteCompositeTargetEvent event = new ExecuteCompositeTargetEvent(names);
     event.setPresentableName(myTfName.getText().trim());

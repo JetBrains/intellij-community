@@ -35,7 +35,7 @@ class Selection {
   @Nullable private final Integer myDelta;
   private final boolean myIsOnTop;
 
-  public Selection(@NotNull VcsLogGraphTable table) {
+  Selection(@NotNull VcsLogGraphTable table) {
     myTable = table;
     List<Integer> selectedRows = ContainerUtil.sorted(Ints.asList(myTable.getSelectedRows()));
     Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(myTable);

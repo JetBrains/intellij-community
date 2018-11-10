@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.images.search.ImageTagManager;
 import org.intellij.images.search.TagFilter;
 import org.intellij.images.thumbnail.ThumbnailView;
@@ -29,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public final class FilterByTagActionGroup extends ActionGroup implements PopupAction {
 
@@ -37,7 +37,8 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         setPopup(true);
     }
 
-    public void update(final AnActionEvent e) {
+    @Override
+    public void update(@NotNull final AnActionEvent e) {
         Project project = e.getProject();
         if (project == null) {
             e.getPresentation().setEnabledAndVisible(false);
@@ -61,12 +62,11 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         if (view == null) return AnAction.EMPTY_ARRAY;
         ImageTagManager tagManager = ImageTagManager.getInstance(project);
 
-        List<MyToggleAction> tagActions = tagManager.getAllTags()
-          .stream().map(tag -> new MyToggleAction(view, new TagFilter(tag, tagManager)))
-          .collect(Collectors.toList());
+        List<MyToggleAction> tagActions =
+          ContainerUtil.map(tagManager.getAllTags(), tag -> new MyToggleAction(view, new TagFilter(tag, tagManager)));
         group.add(new AnAction("All") {
             @Override
-            public void actionPerformed(AnActionEvent e) {
+            public void actionPerformed(@NotNull AnActionEvent e) {
                 for (MyToggleAction tagAction : tagActions) {
                     tagAction.setSelected(e, false);
                 }
@@ -83,20 +83,20 @@ public final class FilterByTagActionGroup extends ActionGroup implements PopupAc
         private final ThumbnailView myView;
         private final TagFilter myFilter;
 
-        public MyToggleAction(ThumbnailView view, TagFilter filter) {
+        MyToggleAction(ThumbnailView view, TagFilter filter) {
             super(filter.getDisplayName());
             myView = view;
             myFilter = filter;
         }
 
         @Override
-        public boolean isSelected(AnActionEvent e) {
+        public boolean isSelected(@NotNull AnActionEvent e) {
             TagFilter[] filters = myView.getTagFilters();
             return filters != null && Arrays.stream(filters).anyMatch(f -> myFilter.getDisplayName().equals(f.getDisplayName()));
         }
 
         @Override
-        public void setSelected(AnActionEvent e, boolean state) {
+        public void setSelected(@NotNull AnActionEvent e, boolean state) {
             if (state) {
                 myFilter.setFilter(myView);
             }

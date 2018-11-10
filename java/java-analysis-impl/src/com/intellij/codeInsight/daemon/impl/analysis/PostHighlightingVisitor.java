@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.UnusedImportProvider;
 import com.intellij.codeInsight.daemon.impl.*;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.InspectionProfile;
@@ -24,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -185,8 +183,7 @@ class PostHighlightingVisitor {
         HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile)) {
       return true;
     }
-    final ImplicitUsageProvider[] implicitUsageProviders = Extensions.getExtensions(ImplicitUsageProvider.EP_NAME);
-    for (ImplicitUsageProvider provider : implicitUsageProviders) {
+    for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof UnusedImportProvider && ((UnusedImportProvider)provider).isUnusedImportEnabled(myFile)) return true;
     }
     return false;
@@ -258,22 +255,21 @@ class PostHighlightingVisitor {
       return highlightInfo;
     }
 
-    boolean referenced = myRefCountHolder.isReferencedForRead(variable);
-    if (!referenced && !UnusedSymbolUtil.isImplicitRead(myProject, variable, progress)) {
+    if (!myRefCountHolder.isReferencedForRead(variable) && !UnusedSymbolUtil.isImplicitRead(myProject, variable, progress)) {
       String message = JavaErrorMessages.message("local.variable.is.not.used.for.reading", identifier.getText());
       HighlightInfo highlightInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
       QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(variable), myDeadCodeKey);
       return highlightInfo;
     }
 
-    if (!variable.hasInitializer()) {
-      referenced = myRefCountHolder.isReferencedForWrite(variable);
-      if (!referenced && !UnusedSymbolUtil.isImplicitWrite(myProject, variable, progress)) {
-        String message = JavaErrorMessages.message("local.variable.is.not.assigned", identifier.getText());
-        final HighlightInfo unusedSymbolInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
-        QuickFixAction.registerQuickFixAction(unusedSymbolInfo, new EmptyIntentionAction(UnusedSymbolLocalInspectionBase.DISPLAY_NAME), myDeadCodeKey);
-        return unusedSymbolInfo;
-      }
+    if (!variable.hasInitializer() &&
+        !myRefCountHolder.isReferencedForWrite(variable) &&
+        !UnusedSymbolUtil.isImplicitWrite(myProject, variable, progress)) {
+      String message = JavaErrorMessages.message("local.variable.is.not.assigned", identifier.getText());
+      final HighlightInfo unusedSymbolInfo = UnusedSymbolUtil.createUnusedSymbolInfo(identifier, message, myDeadCodeInfoType);
+      QuickFixAction
+        .registerQuickFixAction(unusedSymbolInfo, QuickFixFactory.getInstance().createAddVariableInitializerFix(variable), myDeadCodeKey);
+      return unusedSymbolInfo;
     }
 
     return null;
@@ -295,8 +291,8 @@ class PostHighlightingVisitor {
 
         HighlightInfo highlightInfo = suggestionsToMakeFieldUsed(field, identifier, message);
         if (!field.hasInitializer() && !field.hasModifierProperty(PsiModifier.FINAL)) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field), 
-                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field));
+          QuickFixAction.registerQuickFixAction(highlightInfo, HighlightMethodUtil.getFixRange(field),
+                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field), myDeadCodeKey);
         }
         return highlightInfo;
       }
@@ -317,11 +313,11 @@ class PostHighlightingVisitor {
 
         QuickFixAction.registerQuickFixAction(info, quickFixFactory.createCreateGetterOrSetterFix(false, true, field), myDeadCodeKey);
         if (!field.hasModifierProperty(PsiModifier.FINAL)) {
-          QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field), 
-                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field));
+          QuickFixAction.registerQuickFixAction(info, HighlightMethodUtil.getFixRange(field),
+                                                quickFixFactory.createCreateConstructorParameterFromFieldFix(field), myDeadCodeKey);
         }
         SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
-          QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToImplicitlyWrittenFieldsFix(project, annoName));
+          QuickFixAction.registerQuickFixAction(info, quickFixFactory.createAddToImplicitlyWrittenFieldsFix(project, annoName), myDeadCodeKey);
           return true;
         });
         return info;
@@ -347,7 +343,8 @@ class PostHighlightingVisitor {
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(field, annoName -> {
       QuickFixAction
         .registerQuickFixAction(highlightInfo,
-                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(field.getProject(), annoName, "fields"));
+                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(field.getProject(), annoName, "fields"),
+                                myDeadCodeKey);
       return true;
     });
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createRemoveUnusedVariableFix(field), myDeadCodeKey);
@@ -357,7 +354,6 @@ class PostHighlightingVisitor {
     return highlightInfo;
   }
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final Map<PsiMethod, Boolean> isOverriddenOrOverrides = ConcurrentFactoryMap.createMap(method-> {
       boolean overrides = SuperMethodsSearch.search(method, null, true, false).findFirst() != null;
       return overrides || OverridingMethodsSearch.search(method).findFirst() != null;
@@ -435,7 +431,7 @@ class PostHighlightingVisitor {
     QuickFixAction.registerQuickFixAction(highlightInfo, QuickFixFactory.getInstance().createSafeDeleteFix(method), myDeadCodeKey);
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(method, annoName -> {
       IntentionAction fix = QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, "methods");
-      QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+      QuickFixAction.registerQuickFixAction(highlightInfo, fix, myDeadCodeKey);
       return true;
     });
     return highlightInfo;
@@ -488,7 +484,8 @@ class PostHighlightingVisitor {
     SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)aClass, annoName -> {
       QuickFixAction
         .registerQuickFixAction(highlightInfo,
-                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, element));
+                                QuickFixFactory.getInstance().createAddToDependencyInjectionAnnotationsFix(project, annoName, element),
+                                highlightDisplayKey);
       return true;
     });
     return highlightInfo;

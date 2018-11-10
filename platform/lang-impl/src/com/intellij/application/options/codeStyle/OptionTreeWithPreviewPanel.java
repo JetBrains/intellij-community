@@ -428,11 +428,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
         button.setText(treeNode.getText());
         button.setSelected(treeNode.isSelected);
         if (isSelected) {
-          button.setForeground(UIUtil.getTreeSelectionForeground());
-          button.setBackground(UIUtil.getTreeSelectionBackground());
+          button.setForeground(UIUtil.getTreeSelectionForeground(hasFocus));
+          button.setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
         }
         else {
-          button.setForeground(UIUtil.getTreeTextForeground());
+          button.setForeground(UIUtil.getTreeForeground());
           button.setBackground(tree.getBackground());
         }
 
@@ -446,11 +446,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
         myLabel.setOpaque(true);
 
         if (isSelected) {
-          myLabel.setForeground(UIUtil.getTreeSelectionForeground());
-          myLabel.setBackground(UIUtil.getTreeSelectionBackground());
+          myLabel.setForeground(UIUtil.getTreeSelectionForeground(hasFocus));
+          myLabel.setBackground(UIUtil.getTreeSelectionBackground(hasFocus));
         }
         else {
-          myLabel.setForeground(UIUtil.getTreeTextForeground());
+          myLabel.setForeground(UIUtil.getTreeForeground());
           myLabel.setBackground(tree.getBackground());
         }
 
@@ -467,11 +467,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     final Field field;
     private boolean enabled = true;
 
-    public BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
+    BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
       this(fieldName, groupName, title, null, null, field);
     }
 
-    public BooleanOptionKey(String fieldName,
+    BooleanOptionKey(String fieldName,
                             String groupName,
                             String title,
                             @Nullable OptionAnchor anchor,
@@ -533,7 +533,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   private class CustomBooleanOptionKey<T extends CustomCodeStyleSettings> extends BooleanOptionKey {
     private final Class<T> mySettingsClass;
 
-    public CustomBooleanOptionKey(String fieldName,
+    CustomBooleanOptionKey(String fieldName,
                                   String groupName,
                                   String title,
                                   OptionAnchor anchor,
@@ -568,7 +568,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     private boolean isSelected;
     private boolean isEnabled = true;
 
-    public MyToggleTreeNode(Object key, String text) {
+    MyToggleTreeNode(Object key, String text) {
       myKey = key;
       myText = text;
     }

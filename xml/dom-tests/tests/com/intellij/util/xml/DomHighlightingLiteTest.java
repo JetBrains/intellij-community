@@ -288,7 +288,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
   }
 
   private static class MyDomElementsInspection extends DomElementsInspection<DomElement> {
-    public MyDomElementsInspection() {
+    MyDomElementsInspection() {
       super(DomElement.class);
     }
 
@@ -312,7 +312,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
   }
 
   private static class MyBasicDomElementsInspection extends BasicDomElementsInspection<DomElement> {
-    public MyBasicDomElementsInspection() {
+    MyBasicDomElementsInspection() {
       super(DomElement.class);
     }
 
@@ -342,7 +342,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
 
 
   private static class MyNonHighlightingDomFileDescription extends DomFileDescription<DomElement> {
-    public MyNonHighlightingDomFileDescription() {
+    MyNonHighlightingDomFileDescription() {
       super(DomElement.class, "a");
     }
 

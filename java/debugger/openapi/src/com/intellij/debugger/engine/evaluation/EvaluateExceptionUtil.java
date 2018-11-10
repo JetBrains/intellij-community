@@ -22,7 +22,6 @@ import com.sun.jdi.*;
 /**
  * @author lex
  */
-@SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 public class EvaluateExceptionUtil {
   public static final EvaluateException INCONSISTEND_DEBUG_INFO = createEvaluateException(DebuggerBundle.message("evaluation.error.inconsistent.debug.info"));
   public static final EvaluateException BOOLEAN_EXPECTED = createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.value.expected.in.condition"));

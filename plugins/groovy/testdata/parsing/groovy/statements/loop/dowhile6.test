@@ -1,0 +1,15 @@
+do {} abc
+-----
+Groovy script
+  do-while statement
+    PsiElement(do)('do')
+    PsiWhiteSpace(' ')
+    Block statement
+      Open block
+        PsiElement({)('{')
+        PsiElement(})('}')
+    PsiErrorElement:while expected, got 'abc'
+      <empty list>
+    PsiWhiteSpace(' ')
+    Reference expression
+      PsiElement(identifier)('abc')

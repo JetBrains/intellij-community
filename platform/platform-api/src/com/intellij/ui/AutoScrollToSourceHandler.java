@@ -53,12 +53,14 @@ public abstract class AutoScrollToSourceHandler {
     }.installOn(tree);
 
     tree.addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseDragged(final MouseEvent e) {
         onSelectionChanged(tree);
       }
     });
     tree.addTreeSelectionListener(
       new TreeSelectionListener() {
+        @Override
         public void valueChanged(TreeSelectionEvent e) {
           onSelectionChanged(tree);
         }
@@ -83,6 +85,7 @@ public abstract class AutoScrollToSourceHandler {
     }.installOn(table);
 
     table.addMouseMotionListener(new MouseMotionAdapter() {
+      @Override
       public void mouseDragged(final MouseEvent e) {
         onSelectionChanged(table);
       }
@@ -114,6 +117,7 @@ public abstract class AutoScrollToSourceHandler {
     }.installOn(jList);
 
     jList.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(ListSelectionEvent e) {
         onSelectionChanged(jList);
       }
@@ -187,16 +191,18 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private class AutoscrollToSourceAction extends ToggleAction implements DumbAware {
-    public AutoscrollToSourceAction() {
+    AutoscrollToSourceAction() {
       super(UIBundle.message("autoscroll.to.source.action.name"), UIBundle.message("autoscroll.to.source.action.description"),
             AllIcons.General.AutoscrollToSource);
     }
 
-    public boolean isSelected(AnActionEvent event) {
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return isAutoScrollMode();
     }
 
-    public void setSelected(AnActionEvent event, boolean flag) {
+    @Override
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       setAutoScrollMode(flag);
     }
   }

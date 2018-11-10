@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
@@ -43,7 +42,7 @@ open class ApplicationRule : ExternalResource() {
     }
   }
 
-  override public final fun before() {
+  public final override fun before() {
     IdeaTestApplication.getInstance()
     TestRunnerUtil.replaceIdeEventQueueSafely()
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
@@ -86,15 +85,15 @@ class ProjectRule(val projectDescriptor: LightProjectDescriptor = LightProjectDe
       val project = sharedProject ?: return
       sharedProject = null
       sharedModule = null
-      (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(project, true)
+      ProjectManagerEx.getInstanceEx().forceCloseProject(project, true)
       // TODO uncomment and figure out where to put this statement
 //      (VirtualFilePointerManager.getInstance() as VirtualFilePointerManagerImpl).assertPointersAreDisposed()
     }
   }
 
-  override public fun after() {
+  public override fun after() {
     if (projectOpened.compareAndSet(true, false)) {
-      sharedProject?.let { runInEdtAndWait { (ProjectManager.getInstance() as ProjectManagerImpl).forceCloseProject(it, false) } }
+      sharedProject?.let { runInEdtAndWait { ProjectManagerEx.getInstanceEx().forceCloseProject(it, false) } }
     }
   }
 
@@ -174,10 +173,10 @@ class EdtRule : TestRule {
 }
 
 class InitInspectionRule : TestRule {
-  override fun apply(base: Statement, description: Description) = statement { runInInitMode { base.evaluate() } }
+  override fun apply(base: Statement, description: Description): Statement = statement { runInInitMode { base.evaluate() } }
 }
 
-inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
+inline fun statement(crossinline runnable: () -> Unit): Statement = object : Statement() {
   override fun evaluate() {
     runnable()
   }
@@ -192,11 +191,13 @@ annotation class RunsInActiveStoreMode
 
 class ActiveStoreRule(private val projectRule: ProjectRule) : TestRule {
   override fun apply(base: Statement, description: Description): Statement {
-    return if (description.getOwnOrClassAnnotation(RunsInActiveStoreMode::class.java) == null) {
-      base
+    if (description.getOwnOrClassAnnotation(RunsInActiveStoreMode::class.java) == null) {
+      return base
     }
     else {
-      statement { projectRule.project.runInLoadComponentStateMode { base.evaluate() } }
+      return statement {
+        projectRule.project.runInLoadComponentStateMode { base.evaluate() }
+      }
     }
   }
 }
@@ -221,10 +222,10 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false) = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
+fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false): Project = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
 
 fun Project.use(task: (Project) -> Unit) {
-  val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
+  val projectManager = ProjectManagerEx.getInstanceEx()
   try {
     runInEdtAndWait { projectManager.openTestProject(this) }
     task(this)
@@ -236,7 +237,7 @@ fun Project.use(task: (Project) -> Unit) {
 
 class DisposeNonLightProjectsRule : ExternalResource() {
   override fun after() {
-    val projectManager = if (ApplicationManager.getApplication().isDisposed) null else ProjectManager.getInstance() as ProjectManagerImpl
+    val projectManager = if (ApplicationManager.getApplication().isDisposed) null else ProjectManagerEx.getInstanceEx()
     projectManager?.openProjects?.forEachGuaranteed {
       if (!ProjectManagerImpl.isLight(it)) {
         runInEdtAndWait { projectManager.forceCloseProject(it, true) }
@@ -247,8 +248,8 @@ class DisposeNonLightProjectsRule : ExternalResource() {
 
 class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResource() {
   override fun after() {
-    projectRule.projectIfOpened?.let {
-      val moduleManager = ModuleManager.getInstance(it)
+    projectRule.projectIfOpened?.let { project ->
+      val moduleManager = ModuleManager.getInstance(project)
       runInEdtAndWait {
         moduleManager.modules.forEachGuaranteed {
           if (!it.isDisposed && it !== sharedModule) {
@@ -265,7 +266,7 @@ class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResourc
  * So, should be one task per rule.
  */
 class WrapRule(private val before: () -> () -> Unit) : TestRule {
-  override fun apply(base: Statement, description: Description) = statement {
+  override fun apply(base: Statement, description: Description): Statement = statement {
     val after = before()
     try {
       base.evaluate()

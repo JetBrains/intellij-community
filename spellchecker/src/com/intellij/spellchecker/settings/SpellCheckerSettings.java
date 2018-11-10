@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.openapi.components.*;
@@ -12,7 +12,8 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtilRt.extensionEquals;
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.parseInt;
 
 @State(name = "SpellCheckerSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class SpellCheckerSettings implements PersistentStateComponent<Element> {
@@ -106,7 +107,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   }
 
   @Override
-  @SuppressWarnings({"ConstantConditions"})
   public Element getState() {
     if (myBundledDisabledDictionariesPaths.isEmpty() &&
         myOldDictionaryFoldersPaths.isEmpty() &&
@@ -189,8 +189,7 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       myCorrectionsLimit = parseInt(element.getAttributeValue(CORRECTIONS_MAX_LIMIT), DEFAULT_MAX_VALUE);
       myDictionaryToSave = notNullize(element.getAttributeValue(DICTIONARY_TO_SAVE_ATTR_NAME), DEFAULT_DICTIONARY_TO_SAVE);
       myUseSingleDictionaryToSave =
-        parseBoolean(notNullize(element.getAttributeValue(USE_SINGLE_DICT_ATTR_NAME), String.valueOf(DEFAULT_USE_SINGLE_DICT)),
-                     DEFAULT_USE_SINGLE_DICT);
+        Boolean.parseBoolean(notNullize(element.getAttributeValue(USE_SINGLE_DICT_ATTR_NAME), String.valueOf(DEFAULT_USE_SINGLE_DICT)));
     }
     catch (Exception ignored) {
     }

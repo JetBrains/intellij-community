@@ -39,7 +39,7 @@ public interface FileDocumentManagerListener extends EventListener {
   /**
    * NOTE: Vetoing facility is deprecated in this listener implement {@link FileDocumentSynchronizationVetoer} instead.
    */
-  default void beforeFileContentReload(VirtualFile file, @NotNull Document document) {
+  default void beforeFileContentReload(@NotNull VirtualFile file, @NotNull Document document) {
   }
 
   default void fileWithNoDocumentChanged(@NotNull VirtualFile file) {

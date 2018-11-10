@@ -17,12 +17,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
 import com.intellij.util.IncorrectOperationException;
@@ -52,7 +53,7 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, @Nullable Editor editor, @NotNull PsiFile file) {
-    if  (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
+    if  (!myClass.isValid() || !ScratchFileService.isInProjectOrScratch(myClass)) return false;
     PsiDirectory dir = file.getContainingDirectory();
     if (dir == null) return false;
     try {
@@ -81,8 +82,11 @@ public class MoveClassToSeparateFileFix implements IntentionAction {
       PsiClass newClass = (PsiClass)placeHolder.replace(myClass);
       myClass.delete();
 
-      OpenFileDescriptor descriptor = new OpenFileDescriptor(project, newClass.getContainingFile().getVirtualFile(), newClass.getTextOffset());
-      FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+      Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(project,
+                                                                                    newClass.getContainingFile()
+                                                                                            .getVirtualFile(),
+                                                                                    newClass.getTextOffset());
+      descriptor.navigate(true);
     });
   }
 

@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.dictionary;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.state.CachedDictionaryState;
 import com.intellij.spellchecker.state.ProjectDictionaryState;
 import com.intellij.util.Consumer;
@@ -17,6 +15,7 @@ import java.util.Set;
  * @deprecated will be removed in 2018.X, use separate
  * {@link ProjectDictionaryState#getProjectDictionary() and {@link CachedDictionaryState#getDictionary()}} instead
  */
+@Deprecated
 public class AggregatedDictionary implements EditableDictionary {
   @NonNls private static final String DICTIONARY_NAME = "common";
   private final EditableDictionary cachedDictionary;

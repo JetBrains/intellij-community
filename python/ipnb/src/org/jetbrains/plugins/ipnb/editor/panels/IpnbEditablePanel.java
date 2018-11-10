@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.editor.panels;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -249,7 +250,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     });
   }
 
-  
+
 
   @Nullable
   public String getText(int from, int to) {
@@ -293,6 +294,7 @@ public abstract class IpnbEditablePanel<T extends JComponent, K extends IpnbEdit
     return null;
   }
 
+  @Override
   public K getCell() {
     return myCell;
   }

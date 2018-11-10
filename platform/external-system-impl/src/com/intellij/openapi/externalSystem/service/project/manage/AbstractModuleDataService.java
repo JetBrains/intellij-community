@@ -57,14 +57,12 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 /**
  * @author Vladislav.Soroka
- * @since 8/5/2015
  */
 public abstract class AbstractModuleDataService<E extends ModuleData> extends AbstractProjectDataService<E, Module> {
 
@@ -312,11 +310,10 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           }
         })
         .whenExpired(() -> {
-          List<File> filesToRemove = orphanModules.stream().map(Path::toFile).collect(Collectors.toList());
-          filesToRemove.addAll(orphanModules.stream()
-                                 .map(path -> path.resolveSibling(path.getFileName() + ".path").toFile())
-                                 .collect(Collectors.toList()));
-          FileUtil.asyncDelete(filesToRemove);
+          List<File> filesToRemove = ContainerUtil.map(orphanModules, Path::toFile);
+          List<File> toRemove2 = ContainerUtil.map(orphanModules, path -> path.resolveSibling(path.getFileName() + ".path").toFile());
+
+          FileUtil.asyncDelete(ContainerUtil.concat(filesToRemove, toRemove2));
         });
 
       Disposer.register(project, cleanUpNotification::expire);
@@ -324,6 +321,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
     }
   }
 
+  @Override
   public void onFailureImport(Project project) {
     project.putUserData(ORPHAN_MODULE_FILES, null);
     project.putUserData(ORPHAN_MODULE_HANDLERS_COUNTER, null);

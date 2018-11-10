@@ -18,9 +18,12 @@ package com.intellij.ide;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.ComparableObject;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 public class IdeTooltip extends ComparableObject.Impl {
@@ -53,6 +56,7 @@ public class IdeTooltip extends ComparableObject.Impl {
   private Ui myUi;
 
   private boolean myHint = false;
+  private Border myComponentBorder = JBUI.Borders.empty(1, 3, 2, 3);
 
 
   public IdeTooltip(Component component, Point point, JComponent tipComponent, Object... identity) {
@@ -191,6 +195,15 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public Insets getBorderInsets() {
     return myBorderInsets;
+  }
+  
+  public Border getComponentBorder() {
+    return myComponentBorder;
+  }
+  
+  public IdeTooltip setComponentBorder(@Nullable Border value) {
+    myComponentBorder = value;
+    return this;
   }
 
   public IdeTooltip setFont(Font font) {

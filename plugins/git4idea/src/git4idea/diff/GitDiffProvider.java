@@ -51,6 +51,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
   /**
    * {@inheritDoc}
    */
+  @Override
   @Nullable
   public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
     if (file.isDirectory()) {
@@ -81,6 +82,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
   /**
    * {@inheritDoc}
    */
+  @Override
   @Nullable
   public ItemLatestState getLastRevision(VirtualFile file) {
     if (file.isDirectory()) {
@@ -108,6 +110,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
   /**
    * {@inheritDoc}
    */
+  @Override
   @Nullable
   public ContentRevision createFileContent(VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
     if (selectedFile.isDirectory()) {
@@ -156,6 +159,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
     return null;
   }
 
+  @Override
   public ItemLatestState getLastRevision(FilePath filePath) {
     if (filePath.isDirectory()) {
       return null;
@@ -174,6 +178,7 @@ public class GitDiffProvider implements DiffProvider, DiffMixin {
     }
   }
 
+  @Override
   public VcsRevisionNumber getLatestCommittedRevision(VirtualFile vcsRoot) {
     // todo
     return null;

@@ -131,7 +131,7 @@
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids7" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="UseCompareMethod" displayName="'compare()' method can be used to compare primitives"
+    <localInspection groupPath="Java" language="JAVA" shortName="UseCompareMethod" displayName="'compare()' method can be used to compare numbers"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.UseCompareMethodInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="UnknownGuard" displayName="Unknown @GuardedBy field" groupKey="group.names.concurrency.annotation.issues" groupBundle="messages.InspectionsBundle"
@@ -155,9 +155,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="DuplicateThrows" bundle="messages.InspectionsBundle" key="inspection.duplicate.throws.display.name"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING" cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.duplicateThrows.DuplicateThrowsInspection" />
-    <globalInspection shortName="RedundantSuppression" bundle="messages.InspectionsBundle" key="inspection.redundant.suppression.name"
-                      groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
-                      implementationClass="com.intellij.codeInspection.RedundantSuppressInspection"/>
     <globalInspection groupPath="Java" shortName="UnnecessaryModuleDependencyInspection" bundle="messages.InspectionsBundle"
                       key="unnecessary.module.dependency.display.name" groupKey="group.names.declaration.redundancy" enabledByDefault="true"
                       level="WARNING"
@@ -181,6 +178,7 @@
                      implementationClass="com.intellij.codeInspection.deprecation.DeprecationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="LocalCanBeFinal" bundle="messages.InspectionsBundle" key="inspection.local.can.be.final.display.name"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     cleanupTool="true"
                      implementationClass="com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousArrayMethodCall" bundle="messages.InspectionsBundle"
                      key="inspection.suspicious.array.method.call.display.name" groupKey="group.names.probable.bugs" enabledByDefault="true"
@@ -208,7 +206,7 @@
     <globalInspection groupPath="Java" language="JAVA" shortName="UNUSED_IMPORT" bundle="messages.InspectionsBundle" key="unused.import.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.imports" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportInspection"/>
-    <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" cleanupTool="true" displayName="Redundant throws clause" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
+    <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" displayName="Redundant 'throws' clause" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="SameReturnValue" bundle="messages.InspectionsBundle" key="inspection.same.return.value.display.name"
@@ -230,6 +228,7 @@
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
     <lang.psiTypeAnnotationModifier implementation="com.intellij.codeInsight.NullityAnnotationModifier"/>
+    <lang.inferredAnnotationProvider implementation="com.intellij.codeInsight.DefaultInferredAnnotationProvider"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
                     serviceImplementation="com.intellij.codeInsight.guess.impl.GuessManagerImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
@@ -241,5 +240,19 @@
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" cleanupTool="true"
+                     enabledByDefault="true" level="WARNING" groupBundle="messages.InspectionsBundle" 
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids12" bundle="messages.InspectionsBundle" shortName="RedundantBackticksAroundRawStringLiteral"
+                     implementationClass="com.intellij.codeInspection.RedundantBackticksAroundRawStringLiteralInspection" key="redundant.backticks.around.raw.string.literal.display.name"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ClassGetClass"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.class.getclass.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.ClassGetClassInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ObjectsEqualsCanBeSimplified"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
+                     enabledByDefault="true" level="INFORMATION"
+                     key="inspection.objects.equals.can.be.simplified.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.siyeh.ig.style.ObjectsEqualsCanBeSimplifiedInspection"/>
   </extensions>
 </idea-plugin>

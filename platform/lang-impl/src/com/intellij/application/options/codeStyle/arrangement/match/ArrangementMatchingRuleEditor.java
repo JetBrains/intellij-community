@@ -46,7 +46,6 @@ import java.util.List;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/14/12 9:54 AM
  */
 public class ArrangementMatchingRuleEditor extends JPanel implements ArrangementUiComponent.Listener {
 
@@ -73,7 +72,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
   }
 
   public ArrangementMatchingRuleEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
-                                       @Nullable List<CompositeArrangementSettingsToken> tokens,
+                                       @Nullable List<? extends CompositeArrangementSettingsToken> tokens,
                                        @NotNull ArrangementColorsProvider colorsProvider,
                                        @NotNull ArrangementMatchingRulesControl control)
   {
@@ -89,7 +88,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     });
   }
 
-  private void init(@Nullable List<CompositeArrangementSettingsToken> tokens) {
+  private void init(@Nullable List<? extends CompositeArrangementSettingsToken> tokens) {
     setLayout(new GridBagLayout());
     setBorder(JBUI.Borders.empty(5));
 
@@ -317,7 +316,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
    */
   private void refreshConditions() {
     Pair<ArrangementMatchCondition, ArrangementSettingsToken> pair = buildCondition();
-    ArrangementMatchCondition condition = pair == null ? null : pair.first;
+    ArrangementMatchCondition condition = Pair.getFirst(pair);
     for (ArrangementUiComponent component : myComponents.values()) {
       ArrangementSettingsToken token = component.getToken();
       if (token == null) {
@@ -409,7 +408,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     }
   }
 
-  private void updateMutexConditions(@NotNull ArrangementUiComponent component, @NotNull Set<ArrangementSettingsToken> mutex) {
+  private void updateMutexConditions(@NotNull ArrangementUiComponent component, @NotNull Set<? extends ArrangementSettingsToken> mutex) {
     if (!mutex.contains(component.getToken())) {
       return;
     }

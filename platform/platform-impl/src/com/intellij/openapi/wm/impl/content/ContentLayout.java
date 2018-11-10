@@ -10,7 +10,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 
 abstract class ContentLayout {
@@ -57,24 +56,31 @@ abstract class ContentLayout {
 
   protected void updateIdLabel(BaseLabel label) {
     String title = myUi.myWindow.getStripeTitle();
-    Border border = JBUI.Borders.empty(0, 2, 0, 8);
-    if (myUi.myManager.getContentCount() != 1) {
-      title += ":";
-    }
-    else {
-      final String text = myUi.myManager.getContent(0).getDisplayName();
-      if (text != null && text.trim().length() > 0) {
-        if (myUi.myManager.canCloseContents()) {
-          title += ":";
-        }
-        title += " ";
-        border = JBUI.Borders.emptyLeft(2);
-      }
-    }
-    label.setText(title);
-    label.setBorder(border);
 
+    String suffix = getTitleSuffix();
+    if (suffix != null) title += suffix;
+
+    label.setText(title);
+    label.setBorder(JBUI.Borders.empty(0, 2, 0, 7));
     label.setVisible(shouldShowId());
+  }
+
+  private String getTitleSuffix() {
+    switch (myUi.myManager.getContentCount()) {
+      case 0:
+        return null;
+      case 1:
+        Content content = myUi.myManager.getContent(0);
+        if (content == null) return null;
+
+        final String text = content.getDisplayName();
+        if (text != null && text.trim().length() > 0 && myUi.myManager.canCloseContents()) {
+          return ":";
+        }
+        return null;
+      default:
+        return ":";
+    }
   }
 
   protected void fillTabShape(Graphics2D g2d, Shape shape, boolean isSelected, Rectangle bounds) {

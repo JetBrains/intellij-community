@@ -7,7 +7,7 @@ import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
-import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -52,12 +52,12 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     if (modifierListOwner instanceof PsiNamedElement) {
       final String name = ((PsiNamedElement)modifierListOwner).getName();
       if (name != null) {
-        FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(modifierListOwner.getLanguage());
+        String type = LanguageFindUsages.getType(modifierListOwner);
         if (shortName == null) {
-          return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.element", provider.getType(modifierListOwner), name);
+          return CodeInsightBundle.message("inspection.i18n.quickfix.annotate.element", type, name);
         }
         return CodeInsightBundle
-          .message("inspection.i18n.quickfix.annotate.element.as", provider.getType(modifierListOwner), name, shortName);
+          .message("inspection.i18n.quickfix.annotate.element.as", type, name, shortName);
       }
     }
     if (shortName == null) {
@@ -140,7 +140,7 @@ public class AddAnnotationPsiFix extends LocalQuickFixOnPsiElement {
     if (modifierList == null || modifierList.hasAnnotation(myAnnotation)) return;
     PsiClass aClass = JavaPsiFacade.getInstance(project).findClass(myAnnotation, myModifierListOwner.getResolveScope());
     final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace;
-    if (aClass != null && aClass.getManager().isInProject(aClass) && AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME) {
+    if (aClass != null && ScratchFileService.isInProjectOrScratch(aClass) && AnnotationsHighlightUtil.getRetentionPolicy(aClass) == RetentionPolicy.RUNTIME) {
       annotationAnnotationPlace = ExternalAnnotationsManager.AnnotationPlace.IN_CODE;
     }
     else {

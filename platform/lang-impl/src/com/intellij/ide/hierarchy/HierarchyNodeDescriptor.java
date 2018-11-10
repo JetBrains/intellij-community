@@ -34,8 +34,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
+  @NotNull
   protected CompositeAppearance myHighlightedText;
-  private Object[] myCachedChildren = null;
+  private Object[] myCachedChildren;
   protected final boolean myIsBase;
 
   protected HierarchyNodeDescriptor(@NotNull Project project,
@@ -81,6 +82,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
     return true;
   }
 
+  @NotNull
   public final CompositeAppearance getHighlightedText() {
     return myHighlightedText;
   }
@@ -115,7 +117,7 @@ public abstract class HierarchyNodeDescriptor extends SmartElementDescriptor {
       //add right arrow to the base element
       LayeredIcon icon = new LayeredIcon(2);
       icon.setIcon(elementIcon, 0);
-      icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
+      icon.setIcon(AllIcons.Actions.Forward, 1, -AllIcons.Actions.Forward.getIconWidth() / 2, 0);
       setIcon(icon);
     }
     else {

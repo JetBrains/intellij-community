@@ -15,17 +15,16 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
-import org.intellij.lang.xpath.xslt.XsltSupport;
-import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
-
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nullable;
+import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.lang.xpath.xslt.refactoring.RefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class AddParamBase extends AbstractFix {
 
@@ -34,10 +33,12 @@ public abstract class AddParamBase extends AbstractFix {
     @Nullable
     protected abstract XmlTag findTemplateTag();
 
+    @Override
     protected boolean requiresEditor() {
         return false;
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         final XmlTag templateTag = findTemplateTag();
         assert templateTag != null;

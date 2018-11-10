@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing;
 
 import com.intellij.execution.ExecutionException;
@@ -62,7 +48,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
   private class MyTestRunProfile extends MyRunProfile {
 
-    public MyTestRunProfile(RunConfigurationBase configuration) {
+    MyTestRunProfile(RunConfigurationBase configuration) {
       super(configuration);
     }
 
@@ -98,7 +84,7 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     private final PythonTestCommandLineStateBase<?> myState;
     private final Project myProject;
 
-    public FailedPythonTestCommandLineStateBase(AbstractPythonTestRunConfiguration<?> configuration,
+    FailedPythonTestCommandLineStateBase(AbstractPythonTestRunConfiguration<?> configuration,
                                                 ExecutionEnvironment env,
                                                 PythonTestCommandLineStateBase<?> state) {
       super(configuration, env);
@@ -129,7 +115,6 @@ public class PyRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
     @NotNull
     @Override
     protected List<String> getTestSpecs() {
-
       final List<Pair<Location<?>, AbstractTestProxy>> failedTestLocations = new ArrayList<>();
       final List<AbstractTestProxy> failedTests = getFailedTests(myProject);
       for (final AbstractTestProxy failedTest : failedTests) {

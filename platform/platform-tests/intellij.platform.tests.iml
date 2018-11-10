@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
     <orderEntry type="library" name="gson" level="project" />
@@ -29,7 +28,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="purejavacomm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
@@ -40,5 +38,6 @@
     <orderEntry type="library" scope="TEST" name="miglayout-swing" level="project" />
     <orderEntry type="library" scope="TEST" name="batik" level="project" />
     <orderEntry type="library" scope="TEST" name="xmlgraphics-commons" level="project" />
+    <orderEntry type="module" module-name="intellij.configurationScript" scope="TEST" />
   </component>
 </module>

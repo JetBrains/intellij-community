@@ -5,5 +5,5 @@ import com.intellij.openapi.vcs.changes.actions.BaseCommitExecutorAction
 import org.zmlx.hg4idea.provider.commit.HgCommitAndPushExecutor
 
 class HgCommitAndPushExecutorAction : BaseCommitExecutorAction() {
-  override val executorId = HgCommitAndPushExecutor.ID
+  override val executorId: String = HgCommitAndPushExecutor.ID
 }

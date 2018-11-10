@@ -26,7 +26,7 @@ enum class UastVisibility(val text: String) {
   PACKAGE_LOCAL("packageLocal"),
   LOCAL("local");
 
-  override fun toString() = text
+  override fun toString(): String = text
 
   companion object {
     operator fun get(declaration: PsiModifierListOwner): UastVisibility {

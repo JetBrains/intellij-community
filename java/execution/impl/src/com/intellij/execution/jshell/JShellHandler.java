@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jshell;
 
 import com.intellij.execution.ExecutionManager;
@@ -22,8 +8,8 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.ConsoleState;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.impl.ConsoleViewRunningState;
-import com.intellij.execution.jshell.protocol.*;
 import com.intellij.execution.jshell.protocol.Event;
+import com.intellij.execution.jshell.protocol.*;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
@@ -57,8 +43,8 @@ import java.awt.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
@@ -97,7 +83,7 @@ public class JShellHandler {
     final PipedInputStream is = new PipedInputStream();
     final OutputStreamWriter readerSink = new OutputStreamWriter(new PipedOutputStream(is));
     myMessageReader = new MessageReader<>(is, Response.class);
-    myMessageWriter = new MessageWriter<>(handler.getProcessInput(), Request.class);
+    myMessageWriter = new MessageWriter<>(handler.getProcessInput());
 
     handler.addProcessListener(new ProcessAdapter() {
       @Override
@@ -121,6 +107,11 @@ public class JShellHandler {
         if (getAssociatedHandler(contentFile) == JShellHandler.this) {
           // process terminated either by closing file or by close action
           contentFile.putUserData(MARKER_KEY, null);
+          try {
+            readerSink.close();
+          }
+          catch (IOException ignored) {
+          }
         }
       }
     });
@@ -176,7 +167,7 @@ public class JShellHandler {
     actionGroup.addAll(consoleView.createConsoleActions());
     actionGroup.add(new CloseAction(EXECUTOR, descriptor, project) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         jshellHandler.stop();
         if (!processHandler.waitFor(10000)) {
           processHandler.destroyProcess();
@@ -236,8 +227,6 @@ public class JShellHandler {
     if (DEBUG_PORT > 0) {
       cmdLine.addParameter("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + DEBUG_PORT);
     }
-    cmdLine.addParameter("--add-modules");
-    cmdLine.addParameter("java.xml.bind");
 
     final StringBuilder launchCp = new StringBuilder().append(frontEndPath);
     final String protocolJar = getLibPath(Endpoint.class);
@@ -336,54 +325,59 @@ public class JShellHandler {
           LOG.info(e);
         }
       });
-      try {
-        final StringBuffer stdOut = new StringBuffer();
-        final Response response = myMessageReader.receive(unparsedText -> stdOut.append(unparsedText));
-        renderResponse(request, response, stdOut.toString());
-        return response;
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
     }
-    return null;
+    final StringBuilder stdOut = new StringBuilder();
+    Response response = null;
+    try {
+      response = myMessageReader.receive(unparsedText -> stdOut.append(unparsedText));
+      return response;
+    }
+    catch (IOException e) {
+      LOG.info(e);
+    }
+    finally {
+      renderResponse(request, response, stdOut.toString());
+    }
+    return response;
   }
 
-  private void renderResponse(Request request, Response response, String stdOut) {
+  private void renderResponse(Request request, @Nullable Response response, String stdOut) {
     //myConsoleView.print("\n-------------------evaluation " + response.getUid() + "------------------------", ConsoleViewContentType.NORMAL_OUTPUT);
-    final List<Event> events = response.getEvents();
-    if (events != null) {
-      if (request.getCommand() == Request.Command.DROP_STATE) {
-        int droppedCount = 0;
-        for (Event event : events) {
-          final CodeSnippet.Status prevStatus = event.getPreviousStatus();
-          final CodeSnippet.Status status = event.getStatus();
-          if (event.getSnippet() != null && prevStatus != status && status == CodeSnippet.Status.DROPPED) {
-            droppedCount++;
+    if (response != null) {
+      final List<Event> events = response.getEvents();
+      if (events != null) {
+        if (request.getCommand() == Request.Command.DROP_STATE) {
+          int droppedCount = 0;
+          for (Event event : events) {
+            final CodeSnippet.Status prevStatus = event.getPreviousStatus();
+            final CodeSnippet.Status status = event.getStatus();
+            if (event.getSnippet() != null && prevStatus != status && status == CodeSnippet.Status.DROPPED) {
+              droppedCount++;
+            }
           }
+          JShellDiagnostic.notifyInfo("Dropped " + droppedCount + " code snippets", myProject);
         }
-        JShellDiagnostic.notifyInfo("Dropped " + droppedCount + " code snippets", myProject);
-      }
-      else {
-        for (Event event : events) {
-          if (event.getCauseSnippet() == null) {
-            final String exception = event.getExceptionText();
-            if (!StringUtil.isEmptyOrSpaces(exception)) {
-              myConsoleView.print("\n" + exception, ConsoleViewContentType.SYSTEM_OUTPUT);
-            }
-            final String diagnostic = event.getDiagnostic();
-            if (!StringUtil.isEmptyOrSpaces(diagnostic)) {
-              myConsoleView.print("\n" + diagnostic, ConsoleViewContentType.SYSTEM_OUTPUT);
-            }
+        else {
+          for (Event event : events) {
+            if (event.getCauseSnippet() == null) {
+              final String exception = event.getExceptionText();
+              if (!StringUtil.isEmptyOrSpaces(exception)) {
+                myConsoleView.print("\n" + exception, ConsoleViewContentType.SYSTEM_OUTPUT);
+              }
+              final String diagnostic = event.getDiagnostic();
+              if (!StringUtil.isEmptyOrSpaces(diagnostic)) {
+                myConsoleView.print("\n" + diagnostic, ConsoleViewContentType.SYSTEM_OUTPUT);
+              }
 
-            final String descr = getEventDescription(event);
-            if (!StringUtil.isEmptyOrSpaces(descr)) {
-              myConsoleView.print("\n" + descr, ConsoleViewContentType.SYSTEM_OUTPUT);
-            }
-            final CodeSnippet snippet = event.getSnippet();
-            final String value = snippet != null && !snippet.getSubKind().hasValue()? null : event.getValue();
-            if (value != null) {
-              myConsoleView.print(" = " + (value.isEmpty()? "\"\"" : value), ConsoleViewContentType.NORMAL_OUTPUT);
+              final String descr = getEventDescription(event);
+              if (!StringUtil.isEmptyOrSpaces(descr)) {
+                myConsoleView.print("\n" + descr, ConsoleViewContentType.SYSTEM_OUTPUT);
+              }
+              final CodeSnippet snippet = event.getSnippet();
+              final String value = snippet != null && !snippet.getSubKind().hasValue()? null : event.getValue();
+              if (value != null) {
+                myConsoleView.print(" = " + (value.isEmpty()? "\"\"" : value), ConsoleViewContentType.NORMAL_OUTPUT);
+              }
             }
           }
         }
@@ -480,7 +474,7 @@ public class JShellHandler {
   }
 
   private static class MyConsoleView extends ConsoleViewImpl {
-    public MyConsoleView(Project project) {
+    MyConsoleView(Project project) {
       super(project, GlobalSearchScope.allScope(project), true, new ConsoleState.NotStartedStated() {
         @NotNull
         @Override
@@ -494,11 +488,11 @@ public class JShellHandler {
   }
 
   private static final class ExecException extends Exception {
-    public ExecException(String message) {
+    ExecException(String message) {
       super(message);
     }
 
-    public ExecException(String message, Throwable cause) {
+    ExecException(String message, Throwable cause) {
       super(message, cause);
     }
 

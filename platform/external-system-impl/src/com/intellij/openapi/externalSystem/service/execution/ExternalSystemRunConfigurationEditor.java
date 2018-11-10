@@ -28,7 +28,6 @@ import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 23.05.13 18:34
  */
 public class ExternalSystemRunConfigurationEditor extends SettingsEditor<ExternalSystemRunConfiguration> {
 

@@ -281,9 +281,8 @@ public final class PServerPasswordScrambler {
 	 * Scramble text, turning it into a String of scrambled data
 	 * @return a String of scrambled data
 	 */
-	@SuppressWarnings({"HardCodedStringLiteral"})
-        public String scramble(String text) {
-		final StringBuffer buffer = new StringBuffer("A");
+	public String scramble(String text) {
+		final StringBuilder buffer = new StringBuilder("A");
 
 		if (text != null) {
 			for (int i = 0; i < text.length(); ++i) {
@@ -295,8 +294,7 @@ public final class PServerPasswordScrambler {
 		return buffer.toString();
 	}
 
-	@SuppressWarnings({"HardCodedStringLiteral"})
-        public String unscramble(String scrambledText) {
+	public String unscramble(String scrambledText) {
 		if (scrambledText == null) {
 			return null;
 		}
@@ -305,7 +303,7 @@ public final class PServerPasswordScrambler {
 			throw new IllegalArgumentException("Unknown scramble method '" + scrambledText + "'");
 		}
 
-		final StringBuffer buffer = new StringBuffer(scrambledText.length() - 1);
+		final StringBuilder buffer = new StringBuilder(scrambledText.length() - 1);
 
 		for (int i = 1; i < scrambledText.length(); i++) {
 			final char scrambledChr = scrambledText.charAt(i);

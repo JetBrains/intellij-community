@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.util.ArrayUtil;
@@ -14,6 +12,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 
+/**
+ * A standard interface to write to %system%/log/idea.log (or %system%/testlog/idea.log in tests).<p/>
+ *
+ * In addition to writing to log file, "error" methods result in showing "IDE fatal errors" dialog in the IDE,
+ * in EAP versions or if "idea.fatal.error.notification" system property is "true" (). See
+ * {@link com.intellij.diagnostic.DefaultIdeaErrorLogger#canHandle} for more details.<p/>
+ *
+ * Note that in production, a call to "error" doesn't throw exceptions so the execution continues. In tests, however, an {@link AssertionError} is thrown.<p/>
+ *
+ * In most non-performance tests, debug level is enabled by default, so that when a test fails the full contents of its log are printed to stdout.
+ */
 public abstract class Logger {
   public interface Factory {
     @NotNull
@@ -50,6 +59,19 @@ public abstract class Logger {
       e.printStackTrace();
       throw new RuntimeException(e);
     }
+  }
+
+  public static void setFactory(Factory factory) {
+    if (isInitialized()) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.out.println("Changing log factory\n" + ExceptionUtil.getThrowableText(new Throwable()));
+    }
+
+    ourFactory = factory;
+  }
+
+  public static Factory getFactory() {
+    return ourFactory;
   }
 
   public static boolean isInitialized() {
@@ -163,7 +185,6 @@ public abstract class Logger {
       error(resultMessage, new Throwable(resultMessage));
     }
 
-    //noinspection Contract
     return value;
   }
 

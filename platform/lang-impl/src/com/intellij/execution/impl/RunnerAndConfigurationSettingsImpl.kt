@@ -10,34 +10,31 @@ import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.impl.BasePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionException
 import com.intellij.openapi.options.SchemeState
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SmartList
 import com.intellij.util.getAttributeBooleanValue
+import com.intellij.util.text.nullize
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.util.*
 
-private val LOG = logger<RunnerAndConfigurationSettings>()
-
 private const val RUNNER_ID = "RunnerId"
 
 private const val CONFIGURATION_TYPE_ATTRIBUTE = "type"
 private const val FACTORY_NAME_ATTRIBUTE = "factoryName"
 private const val FOLDER_NAME = "folderName"
-const val NAME_ATTR = "name"
-const val DUMMY_ELEMENT_NAME = "dummy"
+const val NAME_ATTR: String = "name"
+const val DUMMY_ELEMENT_NAME: String = "dummy"
 private const val TEMPORARY_ATTRIBUTE = "temporary"
 private const val EDIT_BEFORE_RUN = "editBeforeRun"
 private const val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
@@ -51,19 +48,24 @@ enum class RunConfigurationLevel {
   WORKSPACE, PROJECT, TEMPORARY
 }
 
-class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val manager: RunManagerImpl,
+class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: RunManagerImpl,
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
-                                                                   private var isSingleton: Boolean = false,
                                                                    var level: RunConfigurationLevel = RunConfigurationLevel.WORKSPACE) : Cloneable, RunnerAndConfigurationSettings, Comparable<Any>, SerializableScheme {
+  @Deprecated("isSingleton parameter removed", level = DeprecationLevel.ERROR)
+  @Suppress("UNUSED_PARAMETER")
+  constructor(manager: RunManagerImpl, configuration: RunConfiguration, isTemplate: Boolean, isSingleton: Boolean) : this(manager, configuration, isTemplate)
+
   companion object {
     @JvmStatic
     fun getUniqueIdFor(configuration: RunConfiguration): String {
-      if (!configuration.type.isManaged) {
+      val type = configuration.type
+      if (!type.isManaged) {
         configuration.id?.let {
           return it
         }
       }
+      // we cannot use here configuration.type.id because it will break previously stored list of stored settings
       @Suppress("DEPRECATION")
       return "${configuration.type.displayName}.${configuration.name}${(configuration as? UnknownRunConfiguration)?.uniqueID ?: ""}"
     }
@@ -84,7 +86,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   private var uniqueId: String? = null
 
-  override fun getFactory(): ConfigurationFactory = _configuration?.factory ?: UnknownConfigurationType.getFactory()
+  override fun getFactory() = _configuration?.factory ?: UnknownConfigurationType.getInstance()
 
   override fun isTemplate() = isTemplate
 
@@ -105,7 +107,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
   }
 
-  override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getFactory().createTemplateConfiguration(manager.project)
+  override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getInstance().createTemplateConfiguration(manager.project)
 
   override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
     return Factory {
@@ -151,12 +153,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun isActivateToolWindowBeforeRun() = isActivateToolWindowBeforeRun
 
-  override fun setSingleton(value: Boolean) {
-    isSingleton = value
-  }
-
-  override fun isSingleton() = isSingleton
-
   override fun setFolderName(value: String?) {
     folderName = value
   }
@@ -180,37 +176,28 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     folderName = element.getAttributeValue(FOLDER_NAME)
     val factory = manager.getFactory(element.getAttributeValue(CONFIGURATION_TYPE_ATTRIBUTE), element.getAttributeValue(FACTORY_NAME_ATTRIBUTE), !isTemplate) ?: return
 
-    wasSingletonSpecifiedExplicitly = false
-    if (isTemplate) {
-      isSingleton = factory.isConfigurationSingletonByDefault
-    }
-    else {
-      val singletonStr = element.getAttributeValue(SINGLETON)
-      if (singletonStr.isNullOrEmpty()) {
-        isSingleton = factory.isConfigurationSingletonByDefault
-      }
-      else {
-        wasSingletonSpecifiedExplicitly = true
-        isSingleton = singletonStr!!.toBoolean()
-      }
-    }
-
-    val configuration = if (isTemplate) {
-      manager.getConfigurationTemplate(factory).configuration
-    }
-    else {
+    val configuration = factory.createTemplateConfiguration(manager.project, manager)
+    if (!isTemplate) {
       // shouldn't call createConfiguration since it calls StepBeforeRunProviders that
       // may not be loaded yet. This creates initialization order issue.
-      val configuration = factory.createTemplateConfiguration(manager.project, manager)
       configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
-      configuration
+    }
+
+    wasSingletonSpecifiedExplicitly = false
+    val singletonStr = element.getAttributeValue(SINGLETON)
+    if (singletonStr.isNullOrEmpty()) {
+      configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
+    }
+    else {
+      wasSingletonSpecifiedExplicitly = true
+      configuration.isAllowRunningInParallel = !singletonStr!!.toBoolean()
     }
 
     _configuration = configuration
     uniqueId = null
 
     PathMacroManager.getInstance(configuration.project).expandPaths(element)
-    if (configuration is ModuleBasedConfiguration<*> && configuration.isModuleDirMacroSupported) {
+    if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       val moduleName = element.getChild("module")?.getAttributeValue("name")
       if (moduleName != null) {
         configuration.configurationModule.findModule(moduleName)?.let {
@@ -219,12 +206,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       }
     }
 
-    if (configuration is PersistentStateComponent<*>) {
-      configuration.deserializeAndLoadState(element)
-    }
-    else {
-      configuration.readExternal(element)
-    }
+    deserializeConfigurationFrom(configuration, element)
 
     runnerSettings.loadState(element)
     configurationPerRunnerSettings.loadState(element)
@@ -236,7 +218,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   // cannot be private - used externally
   fun writeExternal(element: Element) {
     val configuration = configuration
-    if (configuration !is UnknownRunConfiguration) {
+    if (configuration.type.isManaged) {
       if (isTemplate) {
         element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "true")
       }
@@ -244,11 +226,17 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         if (!isNewSerializationAllowed) {
           element.setAttribute(TEMPLATE_FLAG_ATTRIBUTE, "false")
         }
-        element.setAttribute(NAME_ATTR, configuration.name)
+
+        configuration.name.nullize()?.let {
+          element.setAttribute(NAME_ATTR, it)
+        }
       }
 
+      val factory = factory
       element.setAttribute(CONFIGURATION_TYPE_ATTRIBUTE, factory.type.id)
-      element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
+      if (factory.type !is SimpleConfigurationType) {
+        element.setAttribute(FACTORY_NAME_ATTRIBUTE, factory.id)
+      }
       if (folderName != null) {
         element.setAttribute(FOLDER_NAME, folderName!!)
       }
@@ -259,8 +247,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       if (!isActivateToolWindowBeforeRun) {
         element.setAttribute(ACTIVATE_TOOLWINDOW_BEFORE_RUN, "false")
       }
-      if (wasSingletonSpecifiedExplicitly || isSingleton != factory.isConfigurationSingletonByDefault) {
-        element.setAttribute(SINGLETON, isSingleton.toString())
+      if (wasSingletonSpecifiedExplicitly || configuration.isAllowRunningInParallel != factory.singletonPolicy.isAllowRunningInParallel) {
+        element.setAttribute(SINGLETON, (!configuration.isAllowRunningInParallel).toString())
       }
       if (isTemporary) {
         element.setAttribute(TEMPORARY_ATTRIBUTE, "true")
@@ -269,18 +257,18 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
     serializeConfigurationInto(configuration, element)
 
-    if (configuration !is UnknownRunConfiguration) {
+    if (configuration.type.isManaged) {
       runnerSettings.getState(element)
       configurationPerRunnerSettings.getState(element)
     }
 
-    if (configuration !is UnknownRunConfiguration) {
+    if (configuration.type.isManaged) {
       manager.writeBeforeRunTasks(configuration)?.let {
         element.addContent(it)
       }
     }
 
-    if (configuration is ModuleBasedConfiguration<*> && configuration.isModuleDirMacroSupported) {
+    if (configuration is ModuleBasedConfiguration<*, *> && configuration.isModuleDirMacroSupported) {
       configuration.configurationModule.module?.let {
         PathMacroManager.getInstance(it).collapsePathsRecursively(element)
       }
@@ -294,20 +282,11 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       val replacePathMap = (macroManager as? ProjectPathMacroManager)?.replacePathMap
       if (replacePathMap != null) {
         replacePathMap.addReplacement(projectParentPath, '$' + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$/..", true)
-        BasePathMacroManager.collapsePaths(element, true, replacePathMap)
+        PathMacroManager.collapsePaths(element, true, replacePathMap)
         return
       }
     }
     PathMacroManager.getInstance(project).collapsePathsRecursively(element)
-  }
-
-  private fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
-    if (configuration is PersistentStateComponent<*>) {
-      configuration.serializeStateInto(element)
-    }
-    else {
-      configuration.writeExternal(element)
-    }
   }
 
   override fun writeScheme(): Element {
@@ -319,7 +298,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
     configuration.checkConfiguration()
-    if (configuration !is RunConfigurationBase) {
+    if (configuration !is RunConfigurationBase<*>) {
       return
     }
 
@@ -328,8 +307,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     runners.addAll(configurationPerRunnerSettings.settings.keys)
     for (runner in runners) {
       if (executor == null || runner.canRun(executor.id, configuration)) {
-        configuration.checkRunnerSettings(runner, runnerSettings.settings[runner],
-          configurationPerRunnerSettings.settings[runner])
+        configuration.checkRunnerSettings(runner, runnerSettings.settings.get(runner), configurationPerRunnerSettings.settings.get(runner))
       }
     }
     if (executor != null) {
@@ -341,7 +319,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getConfigurationSettings(runner: ProgramRunner<*>) = configurationPerRunnerSettings.getOrCreateSettings(runner)
 
-  override fun getType(): ConfigurationType = factory.type
+  override fun getType() = factory.type
 
   public override fun clone(): RunnerAndConfigurationSettingsImpl {
     val copy = RunnerAndConfigurationSettingsImpl(manager, _configuration!!.clone())
@@ -353,7 +331,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     importFromTemplate(template.runnerSettings, runnerSettings)
     importFromTemplate(template.configurationPerRunnerSettings, configurationPerRunnerSettings)
 
-    isSingleton = template.isSingleton
     isEditBeforeRun = template.isEditBeforeRun
     isActivateToolWindowBeforeRun = template.isActivateToolWindowBeforeRun
     level = template.level
@@ -376,10 +353,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         (data as JDOMExternalizable).readExternal(temp)
       }
       catch (e: WriteExternalException) {
-        LOG.error(e)
+        RunManagerImpl.LOG.error(e)
       }
       catch (e: InvalidDataException) {
-        LOG.error(e)
+        RunManagerImpl.LOG.error(e)
       }
     }
   }
@@ -401,9 +378,10 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getSchemeState(): SchemeState? {
     val configuration = _configuration
-    return when (configuration) {
-      null -> SchemeState.UNCHANGED
-      is UnknownRunConfiguration -> if (configuration.isDoNotStore) SchemeState.NON_PERSISTENT else SchemeState.UNCHANGED
+    return when {
+      configuration == null -> SchemeState.UNCHANGED
+      configuration is UnknownRunConfiguration -> if (configuration.isDoNotStore) SchemeState.NON_PERSISTENT else SchemeState.UNCHANGED
+      !configuration.type.isManaged -> SchemeState.NON_PERSISTENT
       else -> null
     }
   }
@@ -429,17 +407,18 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
         if (runner == null) {
           iterator.remove()
         }
+        @Suppress("IfThenToSafeAccess")
         add(state, runner, if (runner == null) null else createSettings(runner))
       }
     }
 
     private fun findRunner(runnerId: String): ProgramRunner<*>? {
-      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensions.filter { runnerId == it.runnerId }
+      val runnersById = ProgramRunner.PROGRAM_RUNNER_EP.extensionList.filter { runnerId == it.runnerId }
       return when {
         runnersById.isEmpty() -> null
         runnersById.size == 1 -> runnersById.firstOrNull()
         else -> {
-          LOG.error("More than one runner found for ID: $runnerId")
+          RunManagerImpl.LOG.error("More than one runner found for ID: $runnerId")
           for (executor in ExecutorRegistry.getInstance().registeredExecutors) {
             runnersById.firstOrNull { it.canRun(executor.id, configuration)  }?.let {
               return it
@@ -503,8 +482,8 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
       try {
         return settings.getOrPut(runner) { createSettings(runner) }
       }
-      catch (ignored: AbstractMethodError) {
-        LOG.error("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", ExtensionException(runner.javaClass))
+      catch (e: AbstractMethodError) {
+        RunManagerImpl.LOG.error(PluginManagerCore.createPluginException("Update failed for: ${configuration.type.displayName}, runner: ${runner.runnerId}", e, runner.javaClass))
         return null
       }
     }
@@ -514,3 +493,21 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 // always write method element for shared settings for now due to preserve backward compatibility
 private val RunnerAndConfigurationSettings.isNewSerializationAllowed: Boolean
   get() = ApplicationManager.getApplication().isUnitTestMode || !isShared
+
+fun serializeConfigurationInto(configuration: RunConfiguration, element: Element) {
+  if (configuration is PersistentStateComponent<*>) {
+    serializeStateInto(configuration, element)
+  }
+  else {
+    configuration.writeExternal(element)
+  }
+}
+
+fun deserializeConfigurationFrom(configuration: RunConfiguration, element: Element) {
+  if (configuration is PersistentStateComponent<*>) {
+    deserializeAndLoadState(configuration, element)
+  }
+  else {
+    configuration.readExternal(element)
+  }
+}

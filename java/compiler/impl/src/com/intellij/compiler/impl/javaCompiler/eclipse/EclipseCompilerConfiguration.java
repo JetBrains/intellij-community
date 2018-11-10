@@ -14,11 +14,13 @@ import org.jetbrains.jps.model.java.compiler.EclipseCompilerOptions;
 public class EclipseCompilerConfiguration implements PersistentStateComponent<EclipseCompilerOptions> {
   private final EclipseCompilerOptions mySettings = new EclipseCompilerOptions();
 
+  @Override
   @NotNull
   public EclipseCompilerOptions getState() {
     return mySettings;
   }
 
+  @Override
   public void loadState(@NotNull EclipseCompilerOptions state) {
     XmlSerializerUtil.copyBean(state, mySettings);
   }

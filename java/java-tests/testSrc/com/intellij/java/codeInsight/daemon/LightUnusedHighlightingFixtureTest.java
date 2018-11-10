@@ -16,7 +16,9 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -55,7 +57,15 @@ public class LightUnusedHighlightingFixtureTest extends LightCodeInsightFixtureT
     myFixture.checkHighlighting();
   }
 
-
+  public void testConflictingIgnoreParameters() {
+    String testFileName = getTestName(false);
+    myFixture.configureByFile(testFileName + ".java");
+    IntentionAction action = myFixture.getAvailableIntention(
+      CodeInsightBundle.message("rename.named.element.text", "foo", "ignored1"));
+    assertNotNull(action);
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile(testFileName + "_after.java", true);
+  }
 
   @Override
   protected String getBasePath() {

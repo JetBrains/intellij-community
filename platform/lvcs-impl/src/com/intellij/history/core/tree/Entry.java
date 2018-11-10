@@ -20,9 +20,11 @@ import com.intellij.history.core.Content;
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.StreamUtil;
 import com.intellij.history.core.revisions.Difference;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -36,14 +38,20 @@ import static java.lang.String.format;
 
 public abstract class Entry {
   private int myNameId;
+  private int myNameHash; // case insensitive
   private DirectoryEntry myParent;
 
   public Entry(String name) {
-    this(toNameId(name));
+    this(toNameId(name), calcNameHash(name));
   }
 
   public Entry(int nameId) {
+    this(nameId, calcNameHash(fromNameId(nameId)));
+  }
+
+  private Entry(int nameId, int nameHash) {
     myNameId = nameId;
+    myNameHash = nameHash;
   }
 
   private static final int NULL_NAME_ID = -1;
@@ -62,7 +70,9 @@ public abstract class Entry {
   }
 
   public Entry(DataInput in) throws IOException {
-    myNameId = toNameId(StreamUtil.readString(in));
+    String name = StreamUtil.readString(in);
+    myNameId = toNameId(name);
+    myNameHash = calcNameHash(name);
   }
 
   public void write(DataOutput out) throws IOException {
@@ -83,6 +93,10 @@ public abstract class Entry {
 
   public int getNameId() {
     return myNameId;
+  }
+
+  public int getNameHash() {
+    return myNameHash;
   }
 
   public String getPath() {
@@ -165,10 +179,15 @@ public abstract class Entry {
   }
 
   public Entry findChild(String name) {
+    int nameHash = calcNameHash(name);
     for (Entry e : getChildren()) {
-      if (e.nameEquals(name)) return e;
+      if (nameHash == e.getNameHash() && e.nameEquals(name)) return e;
     }
     return null;
+  }
+
+  protected static int calcNameHash(@Nullable CharSequence name) {
+    return name == null ? -1 : StringUtil.stringHashCodeInsensitive(name);
   }
 
   public boolean hasEntry(String path) {
@@ -200,6 +219,7 @@ public abstract class Entry {
   public void setName(String newName) {
     if (myParent != null) myParent.checkDoesNotExist(this, newName);
     myNameId = toNameId(newName);
+    myNameHash = calcNameHash(newName);
   }
 
   public void setContent(Content newContent, long timestamp) {
@@ -207,19 +227,23 @@ public abstract class Entry {
   }
 
   public static List<Difference> getDifferencesBetween(Entry left, Entry right) {
+    return getDifferencesBetween(left, right, false);
+  }
+
+  public static List<Difference> getDifferencesBetween(Entry left, Entry right, boolean isRightContentCurrent) {
     List<Difference> result = new SmartList<>();
 
-    if (left == null) right.collectCreatedDifferences(result);
-    else if (right == null) left.collectDeletedDifferences(result);
-    else left.collectDifferencesWith(right, result);
+    if (left == null) right.collectCreatedDifferences(result, isRightContentCurrent);
+    else if (right == null) left.collectDeletedDifferences(result, isRightContentCurrent);
+    else left.collectDifferencesWith(right, result, isRightContentCurrent);
     return result;
   }
 
-  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull List<Difference> result);
+  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull List<Difference> result, boolean isRightContentCurrent);
 
-  protected abstract void collectCreatedDifferences(@NotNull List<Difference> result);
+  protected abstract void collectCreatedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent);
 
-  protected abstract void collectDeletedDifferences(@NotNull List<Difference> result);
+  protected abstract void collectDeletedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent);
 
   @Override
   public String toString() {

@@ -2,9 +2,9 @@
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -47,7 +47,7 @@ public class NavigationLinkHandler extends TooltipLinkHandler {
       return true;
     }
 
-    new OpenFileDescriptor(project, vFile, offset).navigate(true);
+    PsiNavigationSupport.getInstance().createNavigatable(project, vFile, offset).navigate(true);
     return true;
   }
 }

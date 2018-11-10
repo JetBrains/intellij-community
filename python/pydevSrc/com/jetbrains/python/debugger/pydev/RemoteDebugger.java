@@ -1,3 +1,5 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 /*
  * Author: atotic
  * Created on Mar 23, 2004
@@ -35,7 +37,18 @@ import static com.jetbrains.python.debugger.pydev.transport.BaseDebuggerTranspor
 
 
 public class RemoteDebugger implements ProcessDebugger {
-  private static final int RESPONSE_TIMEOUT = 60000;
+  static final int RESPONSE_TIMEOUT = 60000;
+  static final int SHORT_TIMEOUT = 2000;
+
+  /**
+   * The specific timeout for {@link VersionCommand} when IDE Python debugger
+   * runs in <em>client mode</em>, which is used when debugging Python
+   * applications run using Docker and Docker Compose.
+   *
+   * @see #handshake()
+   * @see ClientModeDebuggerTransport
+   */
+  private static final long CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS = 5000;
 
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.pydev.remote.RemoteDebugger");
 
@@ -59,19 +72,32 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @NotNull private final DebuggerTransport myDebuggerTransport;
 
+  /**
+   * The timeout for {@link VersionCommand}, which is used for handshaking with
+   * the Python debugger script.
+   *
+   * @see #handshake()
+   * @see #CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS
+   * @see #RESPONSE_TIMEOUT
+   */
+  private final long myHandshakeTimeout;
+
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull String host, int port) {
     myDebugProcess = debugProcess;
     myDebuggerTransport = new ClientModeDebuggerTransport(this, host, port);
+    myHandshakeTimeout = CLIENT_MODE_HANDSHAKE_TIMEOUT_IN_MILLIS;
   }
 
   public RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull ServerSocket socket, int timeout) {
     myDebugProcess = debugProcess;
     myDebuggerTransport = new ServerModeDebuggerTransport(this, socket, timeout);
+    myHandshakeTimeout = RESPONSE_TIMEOUT;
   }
 
   protected RemoteDebugger(@NotNull IPyDebugProcess debugProcess, @NotNull DebuggerTransport debuggerTransport) {
     myDebugProcess = debugProcess;
     myDebuggerTransport = debuggerTransport;
+    myHandshakeTimeout = RESPONSE_TIMEOUT;
   }
 
   public IPyDebugProcess getDebugProcess() {
@@ -101,7 +127,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public String handshake() throws PyDebuggerException {
-    final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN");
+    final VersionCommand command = new VersionCommand(this, LOCAL_VERSION, SystemInfo.isUnix ? "UNIX" : "WIN", myHandshakeTimeout);
     command.execute();
     String version = command.getRemoteVersion();
     if (version != null) {
@@ -205,6 +231,7 @@ public class RemoteDebugger implements ProcessDebugger {
     return command.getNewValue();
   }
 
+  @Override
   public void loadFullVariableValues(@NotNull String threadId,
                                      @NotNull String frameId,
                                      @NotNull List<PyFrameAccessor.PyAsyncValue<String>> vars) throws PyDebuggerException {
@@ -310,9 +337,9 @@ public class RemoteDebugger implements ProcessDebugger {
   }
 
   @Nullable
-  ProtocolFrame waitForResponse(final int sequence) {
+  ProtocolFrame waitForResponse(final int sequence, long timeout) {
     ProtocolFrame response;
-    long until = System.currentTimeMillis() + RESPONSE_TIMEOUT;
+    long until = System.currentTimeMillis() + timeout;
 
     synchronized (myResponseQueue) {
       boolean interrupted = false;
@@ -361,7 +388,7 @@ public class RemoteDebugger implements ProcessDebugger {
     if (command.isResponseExpected()) {
       // Note: do not wait for result from UI thread
       try {
-        myLatch.await(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
+        myLatch.await(command.getResponseTimeout(), TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException e) {
         // restore interrupted flag
@@ -663,6 +690,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
+  @Override
   public void addCloseListener(RemoteDebuggerCloseListener listener) {
     myCloseListeners.add(listener);
   }

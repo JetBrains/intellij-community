@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.*;
@@ -26,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
-import com.intellij.openapi.vcs.changes.ui.ChangesComparator;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -74,7 +74,6 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
     List<Change> changes = view.getSelectedChanges().collect(toList());
     List<VirtualFile> unversioned = view.getSelectedUnversionedFiles().collect(toList());
-    boolean isFlatten = view.isShowFlatten();
 
     final boolean needsConversion = checkIfThereAreFakeRevisions(project, changes);
 
@@ -83,15 +82,16 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
       // but we can only rely on callback after refresh
       ChangeListManager.getInstance(project).invokeAfterUpdate(
         () -> {
+          ((ChangesViewManager)ChangesViewManager.getInstance(project)).refreshImmediately();
           List<Change> actualChanges = loadFakeRevisions(project, changes);
-          showDiff(project, actualChanges, unversioned, isFlatten);
+          showDiff(project, actualChanges, unversioned, view);
         },
         InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
         ActionsBundle.actionText(IdeActions.ACTION_SHOW_DIFF_COMMON),
         ModalityState.current());
     }
     else {
-      showDiff(project, changes, unversioned, isFlatten);
+      showDiff(project, changes, unversioned, view);
     }
   }
 
@@ -126,16 +126,11 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
   private static void showDiff(@NotNull Project project,
                                @NotNull List<Change> changes,
                                @NotNull List<VirtualFile> unversioned,
-                               boolean isFlatten) {
-    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
-
+                               @NotNull ChangesListView changesView) {
     if (changes.size() == 1 && unversioned.isEmpty()) { // show all changes from this changelist
       Change selectedChange = changes.get(0);
-      ChangeList changeList = changeListManager.getChangeList(selectedChange);
-      if (changeList != null) {
-        List<Change> changelistChanges = new ArrayList<>(changeList.getChanges());
-        ContainerUtil.sort(changelistChanges, ChangesComparator.getInstance(isFlatten));
-
+      List<Change> changelistChanges = changesView.getAllChangesFromSameChangelist(selectedChange);
+      if (changelistChanges != null) {
         int selectedIndex = ContainerUtil.indexOf(changelistChanges, (Condition<Change>)it -> {
           return ChangeListChange.HASHING_STRATEGY.equals(selectedChange, it);
         });
@@ -151,8 +146,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
     if (unversioned.size() == 1 && changes.isEmpty()) { // show all unversioned changes
       VirtualFile selectedFile = unversioned.get(0);
-      List<VirtualFile> allUnversioned = changeListManager.getUnversionedFiles();
-      ContainerUtil.sort(allUnversioned, ChangesComparator.getVirtualFileComparator(isFlatten));
+      List<VirtualFile> allUnversioned = changesView.getUnversionedFiles().collect(toList());
       showUnversionedDiff(project, ListSelection.create(allUnversioned, selectedFile));
       return;
     }
@@ -193,6 +187,7 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
                                int selected) {
     if (producers.isEmpty()) return;
     DiffRequestChain chain = new ChangeDiffRequestChain(producers, selected);
+    chain.putUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true);
     DiffManager.getInstance().showDiff(project, chain, DiffDialogHints.DEFAULT);
   }
 }

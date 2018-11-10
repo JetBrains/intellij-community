@@ -3,9 +3,12 @@ package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -90,6 +93,7 @@ public class Py3CompletionTest extends PyTestCase {
       }
     });
   }
+
   @Nullable
   private List<String> doTestByText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
@@ -233,17 +237,36 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-11208
   public void testMockPatchObject1() {
-    doMultiFileTest();
+    final String testName = getTestName(true);
+
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        myFixture.configureByFile(testName + "/a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(testName + "/a.after.py");
+      }
+    );
   }
 
   // PY-11208
   public void testMockPatchObject2() {
-    doMultiFileTest();
-  }
+    final String testName = getTestName(true);
 
-  // PY-11208
-  public void testMockPatchObject3() {
-    doMultiFileTest();
+    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    assertNotNull(libDir);
+
+    runWithAdditionalClassEntryInSdkRoots(
+      libDir,
+      () -> {
+        myFixture.configureByFile(testName + "/a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(testName + "/a.after.py");
+      }
+    );
   }
 
   // PY-21060
@@ -318,6 +341,49 @@ public class Py3CompletionTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
   }
 
+  // PY-26354
+  public void testAttrsPostInit() {
+    doTestByText("import attr\n" +
+                 "\n" +
+                 "@attr.s\n" +
+                 "class C:\n" +
+                 "    x = attr.ib()\n" +
+                 "    y = attr.ib(init=False)\n" +
+                 "\n" +
+                 "    def __attrs_<caret>");
+
+    myFixture.checkResult("import attr\n" +
+                          "\n" +
+                          "@attr.s\n" +
+                          "class C:\n" +
+                          "    x = attr.ib()\n" +
+                          "    y = attr.ib(init=False)\n" +
+                          "\n" +
+                          "    def __attrs_post_init__(self):");
+  }
+
+  // PY-26354
+  public void testAttrsPostInitNoInit() {
+    assertEmpty(
+      doTestByText("import attr\n" +
+                   "\n" +
+                   "@attr.s(init=False)\n" +
+                   "class C:\n" +
+                   "    x = attr.ib()\n" +
+                   "    y = attr.ib(init=False)\n" +
+                   "\n" +
+                   "    def __attrs_<caret>")
+    );
+  }
+
+  // PY-26354
+  public void testAttrsValidatorParameters() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(testName + ".after.py");
+  }
+
   //PY-28332
   public void testImportNamespacePackageInMultipleRoots() {
     doMultiFileTest(Arrays.asList("root1/src", "root2/src"));
@@ -326,6 +392,17 @@ public class Py3CompletionTest extends PyTestCase {
   //PY-28332
   public void testImportNamespacePackageInMultipleRoots2() {
     doMultiFileTest(Arrays.asList("root1/src", "root2/src"));
+  }
+
+  // PY-27148
+  public void testNamedTupleSpecial() {
+    final List<String> suggested = doTestByText("from collections import namedtuple\n" +
+                                                "class Cat1(namedtuple(\"Cat\", \"name age\")):\n" +
+                                                "    pass\n" +
+                                                "c1 = Cat1(\"name\", 5)\n" +
+                                                "c1.<caret>");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, PyNamedTupleType.NAMEDTUPLE_SPECIAL_ATTRIBUTES);
   }
 
 

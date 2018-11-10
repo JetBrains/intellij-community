@@ -6,10 +6,8 @@ package com.intellij.ide.hierarchy;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.actions.CloseTabToolbarAction;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.pom.Navigatable;
@@ -20,6 +18,7 @@ import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
+import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -69,7 +68,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     myContent = content;
   }
 
-  protected void buildUi(JComponent toolbar, JComponent content) {
+  protected void buildUi(@NotNull JComponent toolbar, @NotNull JComponent content) {
     setToolbar(toolbar);
     setContent(content);
   }
@@ -83,7 +82,8 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     return myDisposed;
   }
 
-  protected ActionToolbar createToolbar(final String place, final String helpID) {
+  @NotNull
+  protected ActionToolbar createToolbar(@NotNull String place, final String helpID) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     appendActions(actionGroup, helpID);
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
@@ -101,7 +101,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   }
 
   protected abstract JTree getCurrentTree();
-  protected abstract HierarchyTreeBuilder getCurrentBuilder();
+  abstract StructureTreeModel getCurrentBuilder();
 
   @Nullable
   protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
@@ -232,7 +232,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   @Override
   @Nullable
-  public Object getData(@NonNls final String dataId) {
+  public Object getData(@NotNull @NonNls final String dataId) {
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement anElement = getSelectedElement();
       return anElement != null && anElement.isValid() ? anElement : super.getData(dataId);
@@ -267,18 +267,12 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     }
 
     @Override
-    public final void actionPerformed(final AnActionEvent e) {
-      final HierarchyTreeBuilder builder = getCurrentBuilder();
-      final AbstractTreeUi treeUi = builder != null ? builder.getUi() : null;
-      final ProgressIndicator progress = treeUi != null ? treeUi.getProgress() : null;
-      if (progress != null) {
-        progress.cancel();
-      }
+    public final void actionPerformed(@NotNull final AnActionEvent e) {
       myContent.getManager().removeContent(myContent, true);
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myContent != null);
     }
   }

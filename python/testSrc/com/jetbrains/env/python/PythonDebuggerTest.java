@@ -43,7 +43,7 @@ import static org.junit.Assert.*;
 @Staging //Thread leak breaks all other tests
 public class PythonDebuggerTest extends PyEnvTestCase {
   private static class BreakpointStopAndEvalTask extends PyDebuggerTask {
-    public BreakpointStopAndEvalTask(String scriptName) {
+    BreakpointStopAndEvalTask(String scriptName) {
       super("/debug", scriptName);
     }
 
@@ -124,7 +124,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       protected void checkTestResults(@NotNull final PyUnitTestProcessRunner runner,
                                       @NotNull final String stdout,
                                       @NotNull final String stderr,
-                                      @NotNull final String all) {
+                                      @NotNull final String all, int exitCode) {
         if (isSkipAllowed) {
           runner.assertNoFailures();
         }
@@ -1449,6 +1449,29 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       public void doFinally() {
         myRunConfiguration.setShowCommandLineAfterwards(false);
         myRunConfiguration.setModuleMode(false);
+      }
+    });
+  }
+
+  @Staging
+  @Test
+  public void testBuiltinBreakpoint() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_builtin_break.py") {
+      @Override
+      public void before() {
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("a").hasValue("1");
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("python3.7");
       }
     });
   }

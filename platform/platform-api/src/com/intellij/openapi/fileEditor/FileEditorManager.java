@@ -143,15 +143,6 @@ public abstract class FileEditorManager {
   public abstract FileEditor[] getAllEditors();
 
   /**
-   * @deprecated use addTopComponent
-   */
-  public abstract void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
-  /**
-   * @deprecated use removeTopComponent
-   */
-  public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
-
-  /**
    * Adds the specified component above the editor and paints a separator line below it.
    * If a separator line is not needed, set the client property to {@code true}:
    * <pre>    component.putClientProperty(SEPARATOR_DISABLED, true);    </pre>
@@ -185,13 +176,15 @@ public abstract class FileEditorManager {
   /**
    * Adds specified {@code listener}
    * @param listener listener to be added
-   * @deprecated Use MessageBus instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
+   * @deprecated Use {@link com.intellij.util.messages.MessageBus} instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
    */
+  @Deprecated
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
   /**
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
+  @Deprecated
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
@@ -200,6 +193,7 @@ public abstract class FileEditorManager {
    * @param listener listener to be removed
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
+  @Deprecated
   public abstract void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
   /**

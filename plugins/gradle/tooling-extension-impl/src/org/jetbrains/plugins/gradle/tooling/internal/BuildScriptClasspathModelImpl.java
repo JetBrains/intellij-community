@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * @author Vladislav.Soroka
- * @since 12/20/13
  */
 public class BuildScriptClasspathModelImpl implements BuildScriptClasspathModel {
 

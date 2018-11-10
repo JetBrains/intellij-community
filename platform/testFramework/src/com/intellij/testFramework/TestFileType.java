@@ -19,7 +19,6 @@ package com.intellij.testFramework;
  * Encapsulates information about target test file type in order to reduce possibility of mis-typing.
  * 
  * @author Denis Zhdanov
- * @since 11/19/10 11:31 AM
  */
 public enum TestFileType {
 

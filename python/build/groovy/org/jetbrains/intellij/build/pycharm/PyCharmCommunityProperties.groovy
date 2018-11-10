@@ -22,15 +22,20 @@ import org.jetbrains.intellij.build.*
  */
 class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   PyCharmCommunityProperties(String communityHome) {
-    productCode = "PC"
     platformPrefix = "PyCharmCore"
     applicationInfoModule = "intellij.pycharm.community.resources"
     brandingResourcePaths = ["$communityHome/python/resources"]
 
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["intellij.xml.dom"]
-    productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
-      "intellij.xml.dom.impl", "intellij.python.community.impl", "intellij.pycharm.community.resources",
-      "intellij.pycharm.community", "intellij.python.configure", "intellij.python.community", "intellij.python.psi", "intellij.platform.main"
+    productLayout.productApiModules = ["intellij.xml.dom"]
+    productLayout.productImplementationModules = [
+      "intellij.xml.dom.impl",
+      "intellij.python.community.impl",
+      "intellij.pycharm.community.resources",
+      "intellij.pycharm.community",
+      "intellij.python.configure",
+      "intellij.python.community",
+      "intellij.python.psi",
+      "intellij.platform.main"
     ]
     productLayout.bundledPluginModules = new File("$communityHome/python/build/plugin-list.txt").readLines()
     productLayout.mainModules = ["intellij.pycharm.community.main"]
@@ -59,8 +64,10 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   WindowsDistributionCustomizer createWindowsCustomizer(String projectHome) {
     return new PyCharmWindowsDistributionCustomizer() {
       {
+        icoPath = "$projectHome/python/resources/PyCharmCore.ico"
+        icoPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.ico"
         installerImagesPath = "$projectHome/python/build/resources"
-        fileAssociations = [".py"]
+        fileAssociations = ["py"]
       }
 
       @Override
@@ -78,6 +85,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$projectHome/python/resources/PyCharmCore128.png"
+        iconPngPathForEAP = "$projectHome/python/resources/PyCharmCore128_EAP.png"
         snapName = "pycharm-community"
         snapDescription =
           "Python IDE for professional developers. Save time while PyCharm takes care of the routine. "
@@ -96,6 +104,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
     return new PyCharmMacDistributionCustomizer() {
       {
         icnsPath = "$projectHome/python/resources/PyCharmCore.icns"
+        icnsPathForEAP = "$projectHome/python/resources/PyCharmCore_EAP.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
         dmgImagePath = "$projectHome/python/build/dmg_background.tiff"
       }

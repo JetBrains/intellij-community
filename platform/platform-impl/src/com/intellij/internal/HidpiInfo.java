@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.*;
@@ -64,7 +65,7 @@ public class HidpiInfo extends AnAction implements DumbAware {
     "</code></span></html>";
 
   @Override
-  public void actionPerformed(AnActionEvent anActionEvent) {
+  public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
     Window activeFrame = IdeFrameImpl.getActiveFrame();
     if (activeFrame == null) return;
 

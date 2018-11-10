@@ -15,8 +15,6 @@
  */
 package com.intellij.cvsSupport2.connections;
 
-import com.intellij.cvsSupport2.connections.SelfTestingConnection;
-import com.intellij.cvsSupport2.connections.ConnectionWrapper;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import org.netbeans.lib.cvsclient.ICvsCommandStopper;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
@@ -30,6 +28,7 @@ public class SelfTestingConnectionWrapper extends ConnectionWrapper implements S
     super(sourceConnection, statistics, cvsCommandStopper);
   }
 
+  @Override
   public void test(ICvsCommandStopper stopper) throws AuthenticationException {
     ((SelfTestingConnection)mySourceConnection).test(stopper);
   }

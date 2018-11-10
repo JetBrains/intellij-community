@@ -103,9 +103,4 @@ public class CodeInsightUtilBase extends CodeInsightUtilCore {
   public static boolean prepareEditorForWrite(@NotNull Editor editor) {
     return EditorModificationUtil.checkModificationAllowed(editor);
   }
-
-  @Deprecated
-  public static void showReadOnlyViewWarning(Editor editor) {
-    EditorModificationUtil.checkModificationAllowed(editor);
-  }
 }

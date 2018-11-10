@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.HardcodedMethodConstants;
 import gnu.trove.THashSet;
@@ -39,7 +40,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
 public class MethodCallUtils {
 
   /**
-   * @noinspection StaticCollection
    */
   @NonNls private static final Set<String> regexMethodNames = new HashSet<>(5);
 
@@ -336,13 +336,15 @@ public class MethodCallUtils {
    * @param call a call to test
    * @return true if call is resolved to the var-arg method and var-arg form is actually used
    */
-  public static boolean isVarArgCall(PsiMethodCallExpression call) {
+  public static boolean isVarArgCall(PsiCallExpression call) {
     JavaResolveResult result = call.resolveMethodGenerics();
     PsiMethod method = tryCast(result.getElement(), PsiMethod.class);
     if(method == null || !method.isVarArgs()) return false;
     PsiSubstitutor substitutor = result.getSubstitutor();
-    return MethodCallInstruction
-      .isVarArgCall(method, substitutor, call.getArgumentList().getExpressions(), method.getParameterList().getParameters());
+    PsiExpressionList argumentList = call.getArgumentList();
+    return argumentList != null &&
+           MethodCallInstruction
+             .isVarArgCall(method, substitutor, argumentList.getExpressions(), method.getParameterList().getParameters());
   }
 
   public static boolean containsSuperMethodCall(@NotNull PsiMethod method) {
@@ -412,7 +414,7 @@ public class MethodCallUtils {
 
   public static boolean isUsedAsSuperConstructorCallArgument(@NotNull PsiParameter parameter, boolean superMustBeLibrary) {
     final PsiElement scope = parameter.getDeclarationScope();
-    if (!(scope instanceof PsiMethod)) {
+    if (!(scope instanceof PsiMethod) || !((PsiMethod)scope).isConstructor()) {
       return false;
     }
     PsiMethod method = (PsiMethod)scope;
@@ -443,8 +445,32 @@ public class MethodCallUtils {
       if (JavaPsiConstructorUtil.isSuperConstructorCall(call) && (!superMustBeLibrary || method instanceof PsiCompiledElement)) {
         return true;
       }
-      parameter = method.getParameterList().getParameters()[index];
+      final PsiParameter[] parameters = method.getParameterList().getParameters();
+      parameter = parameters[Math.min(index, parameters.length - 1)];
     }
+  }
+
+  /**
+   * Returns a method/constructor parameter which corresponds to given argument
+   * @param argument an argument to find the corresponding parameter
+   * @return a parameter or null if supplied expression is not a call argument, call is not resolved or expression is a var-arg
+   * argument.
+   */
+  @Nullable
+  public static PsiParameter getParameterForArgument(@NotNull PsiExpression argument) {
+    PsiExpressionList argList = tryCast(argument.getParent(), PsiExpressionList.class);
+    if (argList == null) return null;
+    PsiCallExpression call = tryCast(argList.getParent(), PsiCallExpression.class);
+    if (call == null) return null;
+    PsiExpression[] args = argList.getExpressions();
+    int index = ArrayUtil.indexOf(args, argument);
+    if (index == -1) return null;
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return null;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (index >= parameters.length) return null;
+    if (isVarArgCall(call) && index >= parameters.length - 1) return null;
+    return parameters[index];
   }
 
   private static int getParameterReferenceIndex(PsiMethodCallExpression call, PsiParameter parameter) {
@@ -468,7 +494,7 @@ public class MethodCallUtils {
     private final PsiMethod myMethod;
     private boolean mySuperCallFound;
 
-    public SuperCallVisitor(@NotNull PsiMethod method) {
+    SuperCallVisitor(@NotNull PsiMethod method) {
       this.myMethod = method;
     }
 

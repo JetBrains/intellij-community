@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -23,14 +9,16 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbModeTask;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbServiceImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -146,7 +134,7 @@ public class StartupManagerImpl extends StartupManagerEx {
   public void runPostStartupActivitiesFromExtensions() {
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
     AtomicBoolean uiFreezeWarned = new AtomicBoolean();
-    for (StartupActivity extension : Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY)) {
+    for (StartupActivity extension : StartupActivity.POST_STARTUP_ACTIVITY.getExtensionList()) {
       Runnable runnable = () -> logActivityDuration(uiFreezeWarned, extension);
       if (DumbService.isDumbAware(extension)) {
         runActivity(runnable);
@@ -160,7 +148,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   private void logActivityDuration(AtomicBoolean uiFreezeWarned, StartupActivity extension) {
     long duration = runAndMeasure(extension);
-    
+
     Application app = ApplicationManager.getApplication();
     if (duration > 100 && !app.isUnitTestMode()) {
       boolean edt = app.isDispatchThread();
@@ -237,7 +225,7 @@ public class StartupManagerImpl extends StartupManagerEx {
       if (myProject.isDisposed() || myInitialRefreshScheduled) return;
 
       myInitialRefreshScheduled = true;
-      ((ProjectRootManagerImpl)ProjectRootManager.getInstance(myProject)).markRootsForRefresh();
+      ProjectRootManagerEx.getInstanceEx(myProject).markRootsForRefresh();
 
       Application app = ApplicationManager.getApplication();
       if (app.isNoBackgroundMode()) {
@@ -355,7 +343,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     }
   }
 
-  private static void runActivities(@NotNull List<Runnable> activities) {
+  private static void runActivities(@NotNull List<? extends Runnable> activities) {
     while (!activities.isEmpty()) {
       runActivity(activities.remove(0));
     }
@@ -382,7 +370,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     Runnable runnable = () -> {
       if (myProject.isDisposed()) return;
-      
+
       //noinspection SynchronizeOnThis
       synchronized (this) {
         // in tests which simulate project opening, post-startup activities could have been run already.

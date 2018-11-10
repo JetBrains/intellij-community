@@ -19,13 +19,13 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeVisitor
 
 object UastErrorType : PsiType(emptyArray()) {
-  override fun getInternalCanonicalText() = "<ErrorType>"
-  override fun equalsToText(text: String) = false
-  override fun getCanonicalText() = internalCanonicalText
-  override fun getPresentableText() = canonicalText
-  override fun isValid() = false
-  override fun getResolveScope() = null
-  override fun getSuperTypes() = emptyArray<PsiType>()
+  override fun getInternalCanonicalText(): String = "<ErrorType>"
+  override fun equalsToText(text: String): Boolean = false
+  override fun getCanonicalText(): String = internalCanonicalText
+  override fun getPresentableText(): String = canonicalText
+  override fun isValid(): Boolean = false
+  override fun getResolveScope(): Nothing? = null
+  override fun getSuperTypes(): Array<PsiType> = emptyArray()
 
-  override fun <A : Any?> accept(visitor: PsiTypeVisitor<A>) = visitor.visitType(this)
+  override fun <A : Any?> accept(visitor: PsiTypeVisitor<A>): A? = visitor.visitType(this)
 }

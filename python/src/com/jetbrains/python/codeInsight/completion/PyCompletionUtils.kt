@@ -33,7 +33,7 @@ import icons.PythonIcons
  *
  * auto-insert the obvious only case; else show other cases.
  */
-fun autoInsertSingleItem(context: AutoCompletionContext) =
+fun autoInsertSingleItem(context: AutoCompletionContext): AutoCompletionDecision =
   if (context.items.size == 1) {
     AutoCompletionDecision.insertItem(context.items.first())!!
   }
@@ -42,11 +42,11 @@ fun autoInsertSingleItem(context: AutoCompletionContext) =
   }
 
 
-fun CompletionParameters.getPyClass() = (ScopeUtil.getScopeOwner(position) as? PyFunction)?.containingClass
-fun CompletionParameters.getFile() = (ScopeUtil.getScopeOwner(position) as? PyFunction)?.containingFile
+fun CompletionParameters.getPyClass(): PyClass? = (ScopeUtil.getScopeOwner(position) as? PyFunction)?.containingClass
+fun CompletionParameters.getFile(): PsiFile? = (ScopeUtil.getScopeOwner(position) as? PyFunction)?.containingFile
 
 
-fun CompletionParameters.getTypeEvalContext() = TypeEvalContext.codeCompletion(originalFile.project, originalFile)
+fun CompletionParameters.getTypeEvalContext(): TypeEvalContext = TypeEvalContext.codeCompletion(originalFile.project, originalFile)
 
 
 /**

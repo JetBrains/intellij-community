@@ -91,4 +91,32 @@ public class GotoDeclarationTest extends LightCodeInsightTestCase {
     assertNotNull(item);
     assertTrue(item instanceof PsiClass && CommonClassNames.JAVA_LANG_STRING.equals(((PsiClass)item).getQualifiedName()));
   }
+
+  public void testArrayIndexNotCovered() {
+    configureFromFileText("A.java", "class A {{ String[] arr; int index; arr[index]<caret>; }}");
+    PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertNull("Unexpected " + element, element);
+  }
+
+  public void testStringRefNotCovered() {
+    configureFromFileText("A.java", "class A {{ foo(\"java\"<caret>); }}");
+    int offset = getEditor().getCaretModel().getOffset();
+    assertInstanceOf(GotoDeclarationAction.findTargetElement(getProject(), getEditor(), offset - 1), PsiDirectory.class);
+    assertNull(GotoDeclarationAction.findTargetElement(getProject(), getEditor(), offset));
+  }
+
+  public void testEndOfFile() {
+    configureFromFileText("A.java", "class A {{ String[] arr; arr<caret>");
+    PsiElement element = GotoDeclarationAction.findTargetElement(getProject(), getEditor(), getEditor().getCaretModel().getOffset());
+    assertNotNull("Unexpected null", element);
+  }
+
+  public void testNavigateToEnumClass() {
+    configureFromFileText("A.java", "enum A {<caret>G();}");
+    final PsiReference reference = getFile().findReferenceAt(getEditor().getCaretModel().getOffset());
+    assertNotNull(reference);
+    final Collection<PsiElement> candidates = TargetElementUtil.getInstance().getTargetCandidates(reference);
+    assertEquals(candidates.toString(), 1, candidates.size());
+    assertInstanceOf(ContainerUtil.getFirstItem(candidates), PsiClass.class);
+  }
 }

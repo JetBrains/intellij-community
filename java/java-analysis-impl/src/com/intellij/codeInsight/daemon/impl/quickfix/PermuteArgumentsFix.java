@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -69,7 +70,7 @@ public class PermuteArgumentsFix implements IntentionAction, HighPriorityAction 
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return !project.isDisposed() && myCall.isValid() && myCall.getManager().isInProject(myCall);
+    return !project.isDisposed() && myCall.isValid() && ScratchFileService.isInProjectOrScratch(myCall);
   }
 
   @Override
@@ -117,7 +118,7 @@ public class PermuteArgumentsFix implements IntentionAction, HighPriorityAction 
     }
   }
 
-  private static void registerShiftFixes(final PsiExpression[] expressions, final PsiCall callExpression, final List<PsiCall> permutations,
+  private static void registerShiftFixes(final PsiExpression[] expressions, final PsiCall callExpression, final List<? super PsiCall> permutations,
                                          final MethodCandidateInfo methodCandidate, final int minIncompatibleIndex, final int maxIncompatibleIndex)
     throws IncorrectOperationException {
     PsiMethod method = methodCandidate.getElement();
@@ -144,7 +145,7 @@ public class PermuteArgumentsFix implements IntentionAction, HighPriorityAction 
     }
   }
 
-  private static boolean canShift(PsiExpression[] expressions, PsiCall callExpression, List<PsiCall> permutations, int i) {
+  private static boolean canShift(PsiExpression[] expressions, PsiCall callExpression, List<? super PsiCall> permutations, int i) {
     PsiCall copy = LambdaUtil.copyTopLevelCall(callExpression);
     if (copy == null) return false;
     PsiExpressionList list = copy.getArgumentList();
@@ -162,7 +163,7 @@ public class PermuteArgumentsFix implements IntentionAction, HighPriorityAction 
     return false;
   }
 
-  private static void registerSwapFixes(final PsiExpression[] expressions, final PsiCall callExpression, final List<PsiCall> permutations,
+  private static void registerSwapFixes(final PsiExpression[] expressions, final PsiCall callExpression, final List<? super PsiCall> permutations,
                                         MethodCandidateInfo candidate, final int incompatibilitiesCount, final int minIncompatibleIndex,
                                         final int maxIncompatibleIndex) throws IncorrectOperationException {
     PsiMethod method = candidate.getElement();

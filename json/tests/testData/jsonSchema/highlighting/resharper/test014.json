@@ -1,0 +1,5 @@
+{
+
+  "a": ["", 5, <warning descr="Additional items are not allowed">5</warning>]
+}
+

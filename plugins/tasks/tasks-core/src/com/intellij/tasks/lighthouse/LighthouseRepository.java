@@ -166,6 +166,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
         return summary;
       }
 
+      @Override
       public String getDescription() {
         return description;
       }
@@ -224,6 +225,7 @@ public class LighthouseRepository extends BaseRepositoryImpl {
     return null;
   }
 
+  @Override
   @Nullable
   public String extractId(@NotNull String taskName) {
     Matcher matcher = myPattern.matcher(taskName);

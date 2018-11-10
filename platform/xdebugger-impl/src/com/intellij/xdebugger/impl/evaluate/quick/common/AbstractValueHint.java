@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -141,7 +142,7 @@ public abstract class AbstractValueHint {
   public void invokeHint(Runnable hideRunnable) {
     myHideRunnable = hideRunnable;
 
-    if (!canShowHint()) {
+    if (!canShowHint() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
       hideHint();
       return;
     }
@@ -238,7 +239,7 @@ public abstract class AbstractValueHint {
     };
     myCurrentHint.addHintListener(new HintListener() {
       @Override
-      public void hintHidden(EventObject event) {
+      public void hintHidden(@NotNull EventObject event) {
         if (myHideRunnable != null && !myInsideShow) {
           myHideRunnable.run();
         }
@@ -327,6 +328,11 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
+    if (myEditor.isDisposed() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
+      hideHint();
+      return;
+    }
+
     createHighlighter();
     setHighlighterAttributes();
 
@@ -352,7 +358,7 @@ public abstract class AbstractValueHint {
     if (!myProject.equals(hint.myProject)) return false;
     if (!myEditor.equals(hint.myEditor)) return false;
     if (myType != hint.myType) return false;
-    if (myCurrentRange != null ? !myCurrentRange.equals(hint.myCurrentRange) : hint.myCurrentRange != null) return false;
+    if (!Objects.equals(myCurrentRange, hint.myCurrentRange)) return false;
 
     return true;
   }

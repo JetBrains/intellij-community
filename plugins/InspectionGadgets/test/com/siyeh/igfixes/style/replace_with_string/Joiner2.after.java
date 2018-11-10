@@ -6,8 +6,7 @@ class Test {
       String sj = "foo" + // comment1
               s + // comment2
               "bar" + // comment3
-              s1;
-      System.out.println(sj // comment4
-      );
+              s1;// comment4
+      System.out.println(sj);
   }
 }

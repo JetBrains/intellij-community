@@ -61,7 +61,6 @@ import java.io.File;
 
 /**
  * @author Vladislav.Soroka
- * @since 2/18/14
  */
 public class GradleTestsExecutionConsoleManager
   implements ExternalSystemExecutionConsoleManager<ExternalSystemRunConfiguration, GradleTestsExecutionConsole, ProcessHandler> {
@@ -147,7 +146,7 @@ public class GradleTestsExecutionConsoleManager
 
     if (task instanceof ExternalSystemExecuteTaskTask) {
       final ExternalSystemExecuteTaskTask executeTask = (ExternalSystemExecuteTaskTask)task;
-      if (executeTask.getArguments() == null || !StringUtil.contains(executeTask.getArguments(), "--tests")) {
+      if (executeTask.getArguments() == null || !StringUtil.contains(executeTask.getArguments(), GradleConstants.TESTS_ARG_NAME)) {
         executeTask.appendArguments("--tests *");
       }
       consoleView.addMessageFilter(new ReRunTaskFilter((ExternalSystemExecuteTaskTask)task, env));
@@ -169,6 +168,9 @@ public class GradleTestsExecutionConsoleManager
     if (task instanceof ExternalSystemExecuteTaskTask) {
       final ExternalSystemExecuteTaskTask taskTask = (ExternalSystemExecuteTaskTask)task;
       if (!StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) return false;
+
+      final String arguments = taskTask.getArguments();
+      if (arguments != null && StringUtil.contains(arguments, GradleConstants.TESTS_ARG_NAME)) return true;
 
       return ContainerUtil.find(taskTask.getTasksToExecute(), taskToExecute -> {
         String projectPath = taskTask.getExternalProjectPath();

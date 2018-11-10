@@ -123,5 +123,10 @@
     <tipAndTrick file="PrintKeywords.html"/>
     <tipAndTrick file="RichTextCopy.html"/>
     <tipAndTrick file="ScratchesView.html"/>
+    <tipAndTrick file="AttachToProcess.html"/>
+    <tipAndTrick file="OnDemandLoadingPolicy.html"/>
+    <tipAndTrick file="PreReleasedPackages.html"/>
+    <tipAndTrick file="PytestFixtures.html"/>
+    <tipAndTrick file="RedirectingInput.html"/>
   </extensions>
 </idea-plugin>

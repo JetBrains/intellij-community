@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,6 +14,8 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.project.Project;
@@ -22,15 +25,20 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -42,7 +50,7 @@ import java.util.List;
 import java.util.Map;
 
 final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.idea.test.TestEditorManagerImpl");
+  private static final Logger LOG = Logger.getInstance(TestEditorManagerImpl.class);
 
   private final TestEditorSplitter myTestEditorSplitter = new TestEditorSplitter();
 
@@ -53,29 +61,33 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   private VirtualFile myActiveFile;
   private static final LightVirtualFile LIGHT_VIRTUAL_FILE = new LightVirtualFile("Dummy.java");
 
-  public TestEditorManagerImpl(@NotNull Project project) {
+  TestEditorManagerImpl(@NotNull Project project) {
     myProject = project;
     registerExtraEditorDataProvider(new TextEditorPsiDataProvider(), null);
 
-    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
+    busConnection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         if (project == myProject) {
           closeAllFiles();
         }
       }
     });
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
+    busConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
-      public void beforeFileDeletion(@NotNull VirtualFileEvent event) {
-        for (VirtualFile file : getOpenFiles()) {
-          if (VfsUtilCore.isAncestor(event.getFile(), file, false)) {
-            closeFile(file);
+      public void before(@NotNull List<? extends VFileEvent> events) {
+        for (VFileEvent event : events) {
+          if (event instanceof VFileDeleteEvent) {
+            for (VirtualFile file : getOpenFiles()) {
+              if (VfsUtilCore.isAncestor(((VFileDeleteEvent)event).getFile(), file, false)) {
+                closeFile(file);
+              }
+            }
           }
         }
       }
-    }, myProject);
-
+    });
   }
 
   @Override
@@ -210,7 +222,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
   }
 
   @Override
-  public Pair<FileEditor, FileEditorProvider> getSelectedEditorWithProvider(@NotNull VirtualFile file) {
+  public FileEditorWithProvider getSelectedEditorWithProvider(@NotNull VirtualFile file) {
     return null;
   }
 
@@ -271,7 +283,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
       @Override
       @NotNull
-      public FileEditorState readState(@Nullable Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+      public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
         throw new IncorrectOperationException();
       }
 
@@ -430,14 +442,6 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     return result;
   }
 
-  @Override
-  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-  }
-
-
-  @Override
-  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-  }
 
   @Override
   public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
@@ -467,6 +471,8 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       LOG.assertTrue(document != null, psiFile);
       editor = EditorFactory.getInstance().createEditor(document, myProject);
       final EditorHighlighter highlighter = HighlighterFactory.createHighlighter(myProject, file);
+      Language language = TextEditorImpl.getDocumentLanguage(editor);
+      editor.getSettings().setLanguage(language);
       ((EditorEx) editor).setHighlighter(highlighter);
       ((EditorEx) editor).setFile(file);
 

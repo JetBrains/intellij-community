@@ -104,6 +104,7 @@ public abstract class JavaPsiFacade {
    * @deprecated use {@link com.intellij.psi.PsiNameHelper#getInstance(com.intellij.openapi.project.Project)}
    * @return the name helper instance.
    */
+  @Deprecated
   @NotNull
   public abstract PsiNameHelper getNameHelper();
 

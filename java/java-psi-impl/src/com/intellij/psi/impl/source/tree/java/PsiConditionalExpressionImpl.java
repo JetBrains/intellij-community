@@ -185,6 +185,7 @@ public class PsiConditionalExpressionImpl extends ExpressionPsiElement implement
     }
   }
 
+  @Override
   public String toString() {
     return "PsiConditionalExpression:" + getText();
   }

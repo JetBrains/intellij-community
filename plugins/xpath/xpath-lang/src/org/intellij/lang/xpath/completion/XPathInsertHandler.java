@@ -15,17 +15,21 @@
  */
 package org.intellij.lang.xpath.completion;
 
-import com.intellij.codeInsight.completion.*;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
+import com.intellij.codeInsight.completion.InsertHandler;
+import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorModificationUtil;
+import org.jetbrains.annotations.NotNull;
 
 class XPathInsertHandler implements InsertHandler {
     private static final Logger LOG = Logger.getInstance(XPathInsertHandler.class.getName());
 
-    public void handleInsert(InsertionContext context, LookupElement lookupItem) {
+    @Override
+    public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement lookupItem) {
         final Object object = lookupItem.getObject();
         LOG.debug("object = " + object);
 
@@ -68,7 +72,7 @@ class XPathInsertHandler implements InsertHandler {
             } else if (charAt(charsSequence, offset) == ':') {
                 caretModel.moveCaretRelatively(1, 0, false, false, true);
             }
-        } 
+        }
     }
 
     private static char charAt(CharSequence charsSequence, int offset) {

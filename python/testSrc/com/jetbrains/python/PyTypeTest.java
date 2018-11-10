@@ -1342,6 +1342,32 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-29577
+  public void testRangeTypeByModifications() {
+    doTest("List[int]",
+           "expr = range(10)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr.append('a')");
+
+    doTest("List[Union[int, Any]]",
+           "expr = range(10)\n" +
+           "expr.append(var)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr[0] = 'a'\n");
+
+    doTest("List[Union[int, str, None]]",
+           "expr = range(10)\n" +
+           "expr.extend(['a', None])");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr.index('a')");
+  }
+
   // PY-1182
   public void testDictTypeByModifications() {
     doTest("Dict[str, Union[int, str]]",
@@ -3044,6 +3070,12 @@ public class PyTypeTest extends PyTestCase {
            "from collections import namedtuple\n" +
            "Cat = namedtuple(\"Cat\", \"name age\")\n" +
            "expr = Cat(\"name\", 5)._replace(age=\"five\").age");
+
+    doTest("Cat",
+           "from collections import namedtuple\n" +
+           "class Cat(namedtuple(\"Cat\", \"name age\")):\n" +
+           "    pass\n" +
+           "expr = Cat._replace(Cat(\"name\", 5), name=\"newname\")");
   }
 
   // PY-27148
@@ -3072,6 +3104,16 @@ public class PyTypeTest extends PyTestCase {
                    "from typing import NamedTuple\n" +
                    "Cat = NamedTuple(\"Cat\", name=str, age=int)\n" +
                    "expr = Cat(\"name\", 5)._replace(age=\"give\").age")
+    );
+
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Cat",
+                   "from typing import NamedTuple\n" +
+                   "class Cat(NamedTuple):\n" +
+                   "    name: str\n" +
+                   "    age: int\n" +
+                   "expr = Cat._replace(Cat(\"name\", 5), name=\"newname\")")
     );
   }
 
@@ -3228,6 +3270,52 @@ public class PyTypeTest extends PyTestCase {
 
     doTest("float", "expr = round(True)");
     doTest("float", "expr = round(True, 1)");
+  }
+
+  // PY-28227
+  public void testTypeVarTargetAST() {
+    doTest("T",
+           "from typing import TypeVar\n" +
+           "expr = TypeVar('T')");
+  }
+
+  // PY-28227
+  public void testTypeVarTargetStub() {
+    doMultiFileTest("T",
+                    "from a import T\n" +
+                    "expr = T");
+  }
+
+  // PY-29748
+  public void testAfterIdentityComparison() {
+    doTest("int",
+           "a = 1\n" +
+           "if a is a:\n" +
+           "   expr = a");
+  }
+
+  // PY-32533
+  public void testSuperWithAnotherType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> doTest("A",
+                   "class A:\n" +
+                   "    def f(self):\n" +
+                   "        return 'A'\n" +
+                   "\n" +
+                   "class B:\n" +
+                   "    def f(self):\n" +
+                   "        return 'B'\n" +
+                   "\n" +
+                   "class C(B):\n" +
+                   "    def f(self):\n" +
+                   "        return 'C'\n" +
+                   "\n" +
+                   "class D(C, A):\n" +
+                   "    def f(self):\n" +
+                   "        expr = super(B, self)\n" +
+                   "        return expr.f()")
+    );
   }
 
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {

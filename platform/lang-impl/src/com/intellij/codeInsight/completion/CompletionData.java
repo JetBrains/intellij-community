@@ -47,7 +47,7 @@ import static com.intellij.patterns.StandardPatterns.not;
 /**
  * @deprecated see {@link CompletionContributor}
  */
-@SuppressWarnings("deprecation")
+@Deprecated
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
   public static final ObjectPattern.Capture<Character> NOT_JAVA_ID = not(character().javaIdentifierPart());
@@ -69,11 +69,12 @@ public class CompletionData {
    * @deprecated 
    * @see CompletionContributor
    */
+  @Deprecated
   protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
   }
 
-  public void completeReference(final PsiReference reference, final Set<LookupElement> set, @NotNull final PsiElement position, final PsiFile file) {
+  public void completeReference(final PsiReference reference, final Set<? super LookupElement> set, @NotNull final PsiElement position, final PsiFile file) {
     final CompletionVariant[] variants = findVariants(position, file);
     boolean hasApplicableVariants = false;
     for (CompletionVariant variant : variants) {
@@ -88,11 +89,11 @@ public class CompletionData {
     }
   }
 
-  public void addKeywordVariants(Set<CompletionVariant> set, PsiElement position, final PsiFile file) {
+  public void addKeywordVariants(Set<? super CompletionVariant> set, PsiElement position, final PsiFile file) {
     ContainerUtil.addAll(set, findVariants(position, file));
   }
 
-  void completeKeywordsBySet(final Set<LookupElement> set, Set<CompletionVariant> variants){
+  void completeKeywordsBySet(final Set<LookupElement> set, Set<? extends CompletionVariant> variants){
     for (final CompletionVariant variant : variants) {
       variant.addKeywords(set, this);
     }
@@ -131,8 +132,8 @@ public class CompletionData {
 
   protected final CompletionVariant myGenericVariant = new CompletionVariant() {
     @Override
-    void addReferenceCompletions(PsiReference reference, PsiElement position, Set<LookupElement> set, final PsiFile file,
-                                        final CompletionData completionData) {
+    void addReferenceCompletions(PsiReference reference, PsiElement position, Set<? super LookupElement> set, final PsiFile file,
+                                 final CompletionData completionData) {
       completeReference(reference, position, set, TailType.NONE, TrueFilter.INSTANCE, this);
     }
   };
@@ -232,7 +233,7 @@ public class CompletionData {
   }
 
 
-  protected void addLookupItem(Set<LookupElement> set, TailType tailType, @NotNull Object completion, final CompletionVariant variant) {
+  protected void addLookupItem(Set<? super LookupElement> set, TailType tailType, @NotNull Object completion, final CompletionVariant variant) {
     LookupElement ret = objectToLookupItem(completion);
     if (ret == null) return;
     if (!(ret instanceof LookupItem)) {
@@ -258,7 +259,7 @@ public class CompletionData {
     set.add(ret);
   }
 
-  protected void completeReference(PsiReference reference, PsiElement position, Set<LookupElement> set, TailType tailType, ElementFilter filter, CompletionVariant variant) {
+  protected void completeReference(PsiReference reference, PsiElement position, Set<? super LookupElement> set, TailType tailType, ElementFilter filter, CompletionVariant variant) {
     if (reference instanceof PsiMultiReference) {
       for (PsiReference ref : getReferences((PsiMultiReference)reference)) {
         completeReference(ref, position, set, tailType, filter, variant);

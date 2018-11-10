@@ -39,26 +39,31 @@ public class LibrariesValidatorContextImpl implements LibrariesValidatorContext 
     myLibrariesContainer = LibrariesContainerFactory.createContainer(module);
   }
 
+  @Override
   @NotNull
   public ModuleRootModel getRootModel() {
     return ModuleRootManager.getInstance(myModule);
   }
 
+  @Override
   @Nullable
   public ModifiableRootModel getModifiableRootModel() {
     return null;
   }
 
+  @Override
   @NotNull
   public ModulesProvider getModulesProvider() {
     return new DefaultModulesProvider(myModule.getProject());
   }
 
+  @Override
   @NotNull
   public Module getModule() {
     return myModule;
   }
 
+  @Override
   public LibrariesContainer getLibrariesContainer() {
     return myLibrariesContainer;
   }

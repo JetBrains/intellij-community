@@ -58,6 +58,10 @@ public class ExtractToMethodReferenceTest extends IPPTestCase {
     doTest();
   }
 
+  public void testAnonymousClassArgument() {
+    doTest();
+  }
+
   public void testUsedLocalVariables() {
     assertIntentionNotAvailable();
   }

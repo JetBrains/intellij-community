@@ -63,7 +63,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   }
 
   public static boolean isAvailable(DataContext dataContext, Set<? extends JpsModuleSourceRootType<?>> sourceRootTypes,
-                                    Function<PsiDirectory, Boolean> checkPackageExists) {
+                                    Function<? super PsiDirectory, Boolean> checkPackageExists) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || view == null || view.getDirectories().length == 0) {

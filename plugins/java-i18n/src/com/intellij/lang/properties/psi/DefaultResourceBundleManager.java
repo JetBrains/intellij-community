@@ -31,19 +31,23 @@ public class DefaultResourceBundleManager extends ResourceBundleManager {
     super(project);
   }
 
+  @Override
   @Nullable
   public PsiClass getResourceBundle() {
     return JavaPsiFacade.getInstance(myProject).findClass("java.util.ResourceBundle", GlobalSearchScope.allScope(myProject));
   }
 
+  @Override
   public String getTemplateName() {
     return JavaTemplateUtil.TEMPLATE_I18NIZED_EXPRESSION;
   }
 
+  @Override
   public String getConcatenationTemplateName() {
     return JavaTemplateUtil.TEMPLATE_I18NIZED_CONCATENATION;
   }
 
+  @Override
   public boolean isActive(PsiFile context) throws ResourceBundleNotFoundException{
     if (getResourceBundle() != null) {
       return true;
@@ -51,6 +55,7 @@ public class DefaultResourceBundleManager extends ResourceBundleManager {
     throw new ResourceBundleNotFoundException(CodeInsightBundle.message("i18nize.dialog.error.jdk.message"), QuickFixFactory.getInstance().createSetupJDKFix());
   }
 
+  @Override
   public boolean canShowJavaCodeInfo() {
     return true;
   }

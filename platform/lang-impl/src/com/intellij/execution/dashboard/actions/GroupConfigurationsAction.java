@@ -42,7 +42,7 @@ public class GroupConfigurationsAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull RunDashboardContent content, AnActionEvent e, List<RunDashboardRunConfigurationNode> nodes) {
+  protected void doActionPerformed(@NotNull RunDashboardContent content, @NotNull AnActionEvent e, List<RunDashboardRunConfigurationNode> nodes) {
     Project project = e.getProject();
     if (project == null) return;
 

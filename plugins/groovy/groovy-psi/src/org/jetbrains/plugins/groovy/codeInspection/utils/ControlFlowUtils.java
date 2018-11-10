@@ -769,17 +769,13 @@ public class ControlFlowUtils {
     return ContainerUtil.find(controlFlow, instruction -> instruction.getElement() == place);
   }
 
-  public static List<Instruction> findAllInstructions(final PsiElement place, Instruction[] controlFlow) {
-    return ContainerUtil.findAll(controlFlow, instruction -> instruction.getElement() == place);
-  }
-
   @NotNull
   public static List<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
 
     final Semilattice<BitSet> sem = new Semilattice<BitSet>() {
       @NotNull
       @Override
-      public BitSet join(@NotNull List<BitSet> ins) {
+      public BitSet join(@NotNull List<? extends BitSet> ins) {
         BitSet result = new BitSet(flow.length);
         for (BitSet set : ins) {
           result.or(set);

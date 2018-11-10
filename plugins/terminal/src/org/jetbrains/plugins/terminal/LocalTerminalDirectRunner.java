@@ -21,6 +21,8 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessWaitFor;
+import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -29,12 +31,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import java.util.HashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.util.PtyUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +48,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -53,10 +59,10 @@ import java.util.concurrent.Future;
  */
 public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess> {
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
-  public static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
-  public static final String ZDOTDIR = "ZDOTDIR";
-  public static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
-
+  private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
+  private static final String ZDOTDIR = "ZDOTDIR";
+  private static final String XDG_CONFIG_HOME = "XDG_CONFIG_HOME";
+  private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
 
   private final Charset myDefaultCharset;
 
@@ -114,16 +120,39 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     return new LocalTerminalDirectRunner(project);
   }
 
-  @Override
-  protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
-    Map<String, String> envs = new HashMap<>(System.getenv());
+
+  private Map<String, String> getTerminalEnvironment() {
+    Map<String, String> envs = new THashMap<>(SystemInfo.isWindows ? CaseInsensitiveStringHashingStrategy.INSTANCE
+                                                                   : ContainerUtil.canonicalStrategy());
+
+    if (TerminalOptionsProvider.Companion.getInstance().passParentEnvs()) {
+      envs.putAll(System.getenv());
+    }
+
     if (!SystemInfo.isWindows) {
       envs.put("TERM", "xterm-256color");
     }
+    envs.put("TERMINAL_EMULATOR", "JetBrains-JediTerm");
 
     if (SystemInfo.isMac) {
       EnvironmentUtil.setLocaleEnv(envs, myDefaultCharset);
     }
+
+    PathMacroManager macroManager = PathMacroManager.getInstance(myProject);
+    for (Map.Entry<String, String> env : TerminalOptionsProvider.Companion.getInstance().getUserSpecifiedEnvs().entrySet()) {
+      envs.put(env.getKey(), macroManager.expandPath(env.getValue()));
+    }
+    return envs;
+  }
+
+  @Override
+  protected PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
+    return createProcess(directory, null);
+  }
+
+  @Override
+  protected PtyProcess createProcess(@Nullable String directory, @Nullable String commandHistoryFilePath) throws ExecutionException {
+    Map<String, String> envs = getTerminalEnvironment();
 
     String[] command = getCommand(envs);
 
@@ -139,15 +168,30 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         LOG.error("Exception during customization of the terminal session", e);
       }
     }
+    if (commandHistoryFilePath != null) {
+      envs.put(IJ_COMMAND_HISTORY_FILE_ENV, commandHistoryFilePath);
+    }
 
     try {
-      return PtyProcess.exec(command, envs, directory != null
-                                            ? directory
-                                            : TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory());
+      TerminalUsageTriggerCollector.Companion.trigger(myProject, "local.exec", FUSUsageContext.create(FUSUsageContext.getOSNameContextData(), SystemInfo.getOsNameAndVersion(), getShellName(command[0])));
+      String workingDir = getWorkingDirectory(directory);
+      long startNano = System.nanoTime();
+      PtyProcess process = PtyProcess.exec(command, envs, workingDir);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Started " + process.getClass().getName() + " from " + Arrays.toString(command) + " in " + workingDir +
+                  " (" + TimeoutUtil.getDurationMillis(startNano) + " ms)");
+      }
+      return process;
     }
     catch (IOException e) {
-      throw new ExecutionException(e);
+      throw new ExecutionException("Failed to start " + Arrays.toString(command), e);
     }
+  }
+
+  @Nullable
+  private String getWorkingDirectory(@Nullable String directory) {
+    if (directory != null) return directory;
+    return TerminalProjectOptionsProvider.Companion.getInstance(myProject).getStartingDirectory();
   }
 
   @Override
@@ -157,7 +201,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
 
   @Override
   protected TtyConnector createTtyConnector(PtyProcess process) {
-    return new PtyProcessTtyConnector(process, myDefaultCharset);
+    return new PtyProcessTtyConnector(process, myDefaultCharset) {
+      @Override
+      protected void resizeImmediately() {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("resizeImmediately to " + getPendingTermSize());
+        }
+        super.resizeImmediately();
+      }
+    };
   }
 
   @Override
@@ -279,7 +331,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     private final PtyProcess myProcess;
     private final ProcessWaitFor myWaitFor;
 
-    public PtyProcessHandler(PtyProcess process, @NotNull String presentableName) {
+    PtyProcessHandler(PtyProcess process, @NotNull String presentableName) {
       myProcess = process;
       myWaitFor = new ProcessWaitFor(process, this, presentableName);
     }

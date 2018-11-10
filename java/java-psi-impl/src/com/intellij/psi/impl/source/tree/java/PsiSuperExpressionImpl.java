@@ -149,6 +149,7 @@ public class PsiSuperExpressionImpl extends ExpressionPsiElement implements PsiS
     }
   }
 
+  @Override
   public String toString() {
     return "PsiSuperExpression:" + getText();
   }

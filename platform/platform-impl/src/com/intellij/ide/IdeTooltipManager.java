@@ -1,17 +1,16 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.editor.colors.ColorKey;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -30,6 +29,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -43,7 +43,7 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.lang.reflect.Field;
 
-public class IdeTooltipManager implements Disposable, AWTEventListener, ApplicationComponent {
+public class IdeTooltipManager implements Disposable, AWTEventListener, BaseComponent {
   public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
   public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", (Color)null);
 
@@ -86,19 +86,19 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
     myIsEnabled = Registry.get("ide.tooltip.callout");
     myIsEnabled.addListener(new RegistryValueListener.Adapter() {
       @Override
-      public void afterValueChanged(RegistryValue value) {
+      public void afterValueChanged(@NotNull RegistryValue value) {
         processEnabled();
       }
     }, ApplicationManager.getApplication());
 
     Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
-    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+    ApplicationManager.getApplication().getMessageBus().connect(ApplicationManager.getApplication()).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, AnActionEvent event) {
         hideCurrent(null, action, event);
       }
-    }, ApplicationManager.getApplication());
+    });
 
     processEnabled();
   }
@@ -111,7 +111,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
     Component c = me.getComponent();
     if (me.getID() == MouseEvent.MOUSE_ENTERED) {
       boolean canShow = true;
-      if (c != myCurrentComponent) {
+      if (componentContextHasChanged(c)) {
         canShow = hideCurrent(me, null, null);
       }
       if (canShow) {
@@ -159,6 +159,23 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
     else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
       hideCurrent(me, null, null);
     }
+  }
+
+  private boolean componentContextHasChanged(Component eventComponent) {
+    if (eventComponent == myCurrentComponent) return false;
+
+    if (myQueuedTooltip != null) {
+      // The case when a tooltip is going to appear on the Component but the MOUSE_ENTERED event comes to the Component before it,
+      // we dont want to hide the tooltip in that case (IDEA-194208)
+      Point tooltipPoint = myQueuedTooltip.getPoint();
+      if (tooltipPoint != null) {
+        Component realQueuedComponent =
+          SwingUtilities.getDeepestComponentAt(myQueuedTooltip.getComponent(), tooltipPoint.x, tooltipPoint.y);
+        return eventComponent != realQueuedComponent;
+      }
+    }
+
+    return true;
   }
 
   private void maybeShowFor(Component c, MouseEvent me) {
@@ -216,6 +233,9 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
 
           String text = c.getToolTipText(myCurrentEvent);
           if (text == null || text.trim().isEmpty()) return false;
+
+          Rectangle visibleRect = c.getParent() instanceof JViewport ? ((JViewport)c.getParent()).getViewRect() : c.getVisibleRect();
+          if (!visibleRect.contains(getPoint())) return false;
 
           JLayeredPane layeredPane = UIUtil.getParentOfType(JLayeredPane.class, c);
 
@@ -321,11 +341,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
 
     Color bg = tooltip.getTextBackground() != null ? tooltip.getTextBackground() : getTextBackground(true);
     Color fg = tooltip.getTextForeground() != null ? tooltip.getTextForeground() : getTextForeground(true);
-    Color border = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
+    Color borderColor = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
 
     BalloonBuilder builder = myPopupFactory.createBalloonBuilder(tooltip.getTipComponent())
       .setFillColor(bg)
-      .setBorderColor(border)
+      .setBorderColor(borderColor)
       .setBorderInsets(tooltip.getBorderInsets())
       .setAnimationCycle(animationEnabled ? Registry.intValue("ide.tooltip.animationCycle") : 0)
       .setShowCallout(true)
@@ -337,7 +357,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
       .setRequestFocus(tooltip.isRequestFocus())
       .setLayer(tooltip.getLayer());
     tooltip.getTipComponent().setForeground(fg);
-    tooltip.getTipComponent().setBorder(JBUI.Borders.empty(1, 3, 2, 3));
+    tooltip.getTipComponent().setBorder(tooltip.getComponentBorder());
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
 
 
@@ -373,44 +393,43 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
     }, tooltip.getDismissDelay());
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getTextForeground(boolean awtTooltip) {
     return UIUtil.getToolTipForeground();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getLinkForeground(boolean awtTooltip) {
-    return JBColor.blue;
+    return JBUI.CurrentTheme.Link.linkColor();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getTextBackground(boolean awtTooltip) {
     Color color = EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY);
     return color != null ? color : UIUtil.getToolTipBackground();
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public String getUlImg(boolean awtTooltip) {
-    AllIcons.General.Mdot.getIconWidth();  // keep icon reference
     return UIUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Color getBorderColor(boolean awtTooltip) {
     return new JBColor(Gray._160, new Color(91, 93, 95));
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public boolean isOwnBorderAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public boolean isOpaqueAllowed(boolean awtTooltip) {
     return !awtTooltip;
   }
 
-  @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
+  @SuppressWarnings({"UnusedParameters"})
   public Font getTextFont(boolean awtTooltip) {
     return UIManager.getFont("ToolTip.font");
   }
@@ -628,6 +647,12 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
         return factory;
       }
     };
+    String editorFontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
+    if (editorFontName != null) {
+      String style = "font-family:\"" + StringUtil.escapeQuotes(editorFontName) + "\";font-size:95%;";
+      kit.getStyleSheet().addRule("pre {" + style + "}");
+      text = text.replace("<code>", "<code style='" + style + "'>");
+    }
     pane.setEditorKit(kit);
     pane.setText(text);
 

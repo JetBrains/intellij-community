@@ -1,39 +1,39 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.navigation.DocPreviewUtil;
 import com.intellij.concurrency.SensitiveProgressWrapper;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiQualifiedNamedElement;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.util.Producer;
+import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
 
@@ -41,11 +41,6 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInRea
  * @author gregsh
  */
 public class QuickDocUtil {
-
-  public static void updateQuickDocAsync(@NotNull final PsiElement element, @NotNull final Producer<String> docProducer) {
-    final Project project = element.getProject();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> updateQuickDoc(project, element, docProducer.produce()));
-  }
 
   public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable final String documentation) {
     if (StringUtil.isEmpty(documentation)) return;
@@ -108,4 +103,75 @@ public class QuickDocUtil {
     return result;
   }
 
+  @Contract("_, _, _, null -> null")
+  public static String inferLinkFromFullDocumentation(@NotNull DocumentationProvider provider,
+                                                      PsiElement element,
+                                                      PsiElement originalElement,
+                                                      @Nullable String navigationInfo) {
+    if (navigationInfo != null) {
+      String fqn = element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
+      String fullText = provider.generateDoc(element, originalElement);
+      return HintUtil.prepareHintText(DocPreviewUtil.buildPreview(navigationInfo, fqn, fullText), HintUtil.getInformationHint());
+    }
+    return null;
+  }
+
+  public static final Object CUT_AT_CMD = ObjectUtils.sentinel("CUT_AT_CMD");
+
+  public static void updateQuickDocAsync(@NotNull PsiElement element,
+                                         @NotNull CharSequence prefix,
+                                         @NotNull Consumer<Consumer<Object>> provider) {
+    Project project = element.getProject();
+    StringBuilder sb = new StringBuilder(prefix);
+    ConcurrentLinkedQueue<Object> queue = new ConcurrentLinkedQueue<>();
+    Disposable alarmDisposable = Disposer.newDisposable();
+    Disposer.register(project, alarmDisposable);
+    AtomicBoolean stop = new AtomicBoolean(false);
+    Ref<Object> cutAt = Ref.create(null);
+    SingleAlarm alarm = new SingleAlarm(() -> {
+      DocumentationComponent component = getActiveDocComponent(project);
+      if (component == null) {
+        stop.set(true);
+        Disposer.dispose(alarmDisposable);
+        return;
+      }
+      Object s = queue.poll();
+      while (s != null) {
+        if (s == CUT_AT_CMD || cutAt.get() == CUT_AT_CMD) {
+          cutAt.set(s);
+          s = "";
+        }
+        else if (!cutAt.isNull()) {
+          int idx = StringUtil.indexOf(sb, cutAt.get().toString());
+          if (idx >= 0) sb.setLength(idx);
+          cutAt.set(null);
+        }
+        sb.append(s);
+        s = queue.poll();
+      }
+      if (stop.get()) {
+        Disposer.dispose(alarmDisposable);
+      }
+      String newText = sb.toString() + "<br><br><br>";
+      String prevText = component.getText();
+      if (!Comparing.equal(newText, prevText)) {
+        component.replaceText(newText, element);
+      }
+    }, 100, alarmDisposable);
+    AppExecutorUtil.getAppExecutorService().submit(() -> {
+      try {
+        provider.consume(str -> {
+          ProgressManager.checkCanceled();
+          if (stop.get()) throw new ProcessCanceledException();
+          queue.add(str);
+          alarm.cancelAndRequest();
+        });
+      }
+      finally {
+        if (stop.compareAndSet(false, true)) {
+          alarm.cancelAndRequest();
+        }
+      }
+    });
+  }
 }

@@ -46,7 +46,7 @@ public class MockStorage implements Storage {
   }
 
   @Override
-  public Address bulkStore(@NotNull Tree tree, Novelty.@NotNull Accessor novelty) {
+  public Address bulkStore(@NotNull Tree tree, @NotNull Novelty.Accessor novelty) {
     return tree.store(novelty, (address, bytes) -> {
       final Address result = alloc(bytes);
       final byte[] existing = data.putIfAbsent(result, bytes);

@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -311,7 +310,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
   }
 
   @Override
-  @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected GroovyFileImpl clone() {
     GroovyFileImpl clone = (GroovyFileImpl)super.clone();
     clone.myContext = myContext;
@@ -368,8 +366,10 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile, Ps
     return !isScript() || PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, GrVariableDeclaration.class) != null;
   }
 
-  protected GroovyFileImports getImports() {
-    return GroovyImports.getImports(this);
+  @NotNull
+  @Override
+  public GroovyFileImports getImports() {
+    return GroovyImports.getFileImports(this);
   }
 
   @Override

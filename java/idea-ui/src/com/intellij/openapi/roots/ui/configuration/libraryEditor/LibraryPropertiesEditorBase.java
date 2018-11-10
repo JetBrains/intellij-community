@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,7 @@ public abstract class LibraryPropertiesEditorBase<P extends LibraryProperties, T
         edit();
       }
     });
+    myMainPanel.setBorder(JBUI.Borders.empty(0, 10, 5, 10));
   }
 
   protected JPanel getMainPanel() {

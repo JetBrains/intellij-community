@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
@@ -24,12 +12,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.filter.ElementFilter;
 import org.jdom.filter.Filter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.*;
 
 class ImmutableElement extends Element {
-  private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(new String[0], -1, Namespace.NO_NAMESPACE);
+  private static final List<Attribute> EMPTY_LIST = new ImmutableSameTypeAttributeList(ArrayUtil.EMPTY_STRING_ARRAY, null,
+                                                                                       Namespace.NO_NAMESPACE);
   private final Content[] myContent;
   private static final Content[] EMPTY_CONTENT = new Content[0];
   private final List<Attribute> myAttributes;
@@ -40,16 +30,16 @@ class ImmutableElement extends Element {
 
     List<Attribute> originAttributes = origin.getAttributes();
     String[] nameValues = new String[originAttributes.size() * 2];
-    int type = -1;
+    AttributeType type = null;
     Namespace namespace = null;
     for (int i = 0; i < originAttributes.size(); i++) {
       Attribute origAttribute = originAttributes.get(i);
-      if (type == -1) {
+      if (type == null) {
         type = origAttribute.getAttributeType();
         namespace = origAttribute.getNamespace();
       }
       else if (type != origAttribute.getAttributeType() || !origAttribute.getNamespace().equals(namespace)) {
-        type = -1;
+        type = null;
         break; // no single type/namespace, fallback to ImmutableAttrList
       }
       String name = interner.internString(origAttribute.getName());
@@ -61,7 +51,7 @@ class ImmutableElement extends Element {
     if (originAttributes.isEmpty()) {
       newAttributes = EMPTY_LIST;
     }
-    else if (type == -1) {
+    else if (type == null) {
       newAttributes = Collections.unmodifiableList(ContainerUtil.map(originAttributes, new Function<Attribute, Attribute>() {
         @Override
         public Attribute fun(Attribute attribute) {
@@ -207,8 +197,17 @@ class ImmutableElement extends Element {
   }
 
   @Override
+  public boolean hasAttributes() {
+    return !myAttributes.isEmpty();
+  }
+
+  @Override
   public List<Attribute> getAttributes() {
     return myAttributes;
+  }
+
+  public int getAttributesSize() {
+    return myAttributes.size();
   }
 
   @Override
@@ -226,6 +225,22 @@ class ImmutableElement extends Element {
       }
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public String getAttributeValue(String attname) {
+    return getAttributeValue(attname, Namespace.NO_NAMESPACE);
+  }
+
+  @Override
+  public String getAttributeValue(String attname, String def) {
+    return getAttributeValue(attname, Namespace.NO_NAMESPACE, def);
+  }
+
+  @Override
+  public String getAttributeValue(String attname, Namespace ns) {
+    return getAttributeValue(attname, ns, null);
   }
 
   @Override
@@ -304,7 +319,7 @@ class ImmutableElement extends Element {
 
   //////////////////////////////////////////////////////////////////////
   @Override
-  public Content detach() {
+  public Element detach() {
     throw immutableError(this);
   }
   @Override

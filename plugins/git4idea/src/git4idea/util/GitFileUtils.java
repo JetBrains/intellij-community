@@ -17,17 +17,24 @@ package git4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitBinaryHandler;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+
+import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_FILTERS;
+import static git4idea.config.GitVersionSpecialty.CAT_FILE_SUPPORTS_TEXTCONV;
 
 public class GitFileUtils {
 
@@ -36,14 +43,23 @@ public class GitFileUtils {
   private GitFileUtils() {
   }
 
-  public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<FilePath> files,
+  /**
+   * @deprecated Use {@link #deletePaths}
+   */
+  @Deprecated
+  public static void delete(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
                             String... additionalOptions) throws VcsException {
+    deletePaths(project, root, files, additionalOptions);
+  }
+
+  public static void deletePaths(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends FilePath> files,
+                                 String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
       doDelete(project, root, paths, additionalOptions);
     }
   }
 
-  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files,
+  public static void deleteFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<? extends VirtualFile> files,
                                  String... additionalOptions) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
       doDelete(project, root, paths, additionalOptions);
@@ -60,7 +76,7 @@ public class GitFileUtils {
     handler.addParameters(additionalOptions);
     handler.endOptions();
     handler.addParameters(paths);
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   public static void deleteFilesFromCache(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
@@ -71,7 +87,17 @@ public class GitFileUtils {
 
   public static void addFiles(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
     throws VcsException {
-    addPaths(project, root, VcsFileUtil.chunkFiles(root, files));
+    for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
+      addPaths(project, root, paths, false);
+    }
+    updateUntrackedFilesHolderOnFileAdd(project, root, files);
+  }
+
+  public static void addFilesForce(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<VirtualFile> files)
+    throws VcsException {
+    for (List<String> paths : VcsFileUtil.chunkFiles(root, files)) {
+      addPaths(project, root, paths, true);
+    }
     updateUntrackedFilesHolderOnFileAdd(project, root, files);
   }
 
@@ -101,7 +127,17 @@ public class GitFileUtils {
 
   public static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
                               @NotNull Collection<FilePath> files) throws VcsException {
-    addPaths(project, root, VcsFileUtil.chunkPaths(root, files));
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
+      addPaths(project, root, paths, false);
+    }
+    updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
+  }
+
+  public static void addPathsForce(@NotNull Project project, @NotNull VirtualFile root,
+                                   @NotNull Collection<FilePath> files) throws VcsException {
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
+      addPaths(project, root, paths, true);
+    }
     updateUntrackedFilesHolderOnFileAdd(project, root, getVirtualFilesFromFilePaths(files));
   }
 
@@ -118,19 +154,18 @@ public class GitFileUtils {
   }
 
   private static void addPaths(@NotNull Project project, @NotNull VirtualFile root,
-                               @NotNull List<List<String>> chunkedPaths) throws VcsException {
-    for (List<String> paths : chunkedPaths) {
+                               @NotNull List<String> paths, boolean force) throws VcsException {
+    if (!force) {
       paths = excludeIgnoredFiles(project, root, paths);
-
-      if (paths.isEmpty()) {
-        continue;
-      }
-      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.ADD);
-      handler.addParameters("--ignore-errors");
-      handler.endOptions();
-      handler.addParameters(paths);
-      Git.getInstance().runCommand(handler).getOutputOrThrow();
+      if (paths.isEmpty()) return;
     }
+
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.ADD);
+    handler.addParameters("--ignore-errors", "-A");
+    if (force) handler.addParameters("-f");
+    handler.endOptions();
+    handler.addParameters(paths);
+    Git.getInstance().runCommand(handler).throwOnError();
   }
 
   @NotNull
@@ -164,10 +199,20 @@ public class GitFileUtils {
    * @throws VcsException if there is a problem with running git
    */
   public static byte[] getFileContent(Project project, VirtualFile root, String revisionOrBranch, String relativePath) throws VcsException {
-    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.SHOW);
+    GitBinaryHandler h = new GitBinaryHandler(project, root, GitCommand.CAT_FILE);
     h.setSilent(true);
+    if (CAT_FILE_SUPPORTS_TEXTCONV.existsIn(project) &&
+        Registry.is("git.read.content.with.textconv")) {
+      h.addParameters("--textconv");
+    }
+    else if (CAT_FILE_SUPPORTS_FILTERS.existsIn(project) &&
+             Registry.is("git.read.content.with.filters")) {
+      h.addParameters("--filters");
+    }
+    else {
+      h.addParameters("-p");
+    }
     h.addParameters(revisionOrBranch + ":" + relativePath);
-    h.endOptions();
     return h.run();
   }
 

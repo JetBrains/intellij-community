@@ -53,15 +53,18 @@ public class BreakpointsContextProvider extends WorkingContextProvider {
     return "Java Debugger breakpoints";
   }
 
+  @Override
   public void saveContext(Element toElement) throws WriteExternalException {
     ((DebuggerManagerEx)myDebuggerManager).getBreakpointManager().writeExternal(toElement);
   }
 
+  @Override
   public void loadContext(Element fromElement) throws InvalidDataException {
     //noinspection unchecked
     ((PersistentStateComponent<Element>)myDebuggerManager).loadState(fromElement);
   }
 
+  @Override
   public void clearContext() {
     final BreakpointManager breakpointManager = ((DebuggerManagerEx)myDebuggerManager).getBreakpointManager();
     List<Breakpoint> breakpoints = breakpointManager.getBreakpoints();

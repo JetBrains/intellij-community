@@ -88,6 +88,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
       myErrorTitle = errorTitle;
     }
 
+    @Override
     public void run(@NotNull ProgressIndicator indicator) {
       SvnVcs vcs = SvnVcs.getInstance(myProject);
 
@@ -238,7 +239,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static PropertyConsumer createHandler(Revision revision, @NotNull List<PropertyData> lines) {
+  private static PropertyConsumer createHandler(Revision revision, @NotNull List<? super PropertyData> lines) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
@@ -246,14 +247,17 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
     }
 
     return new PropertyConsumer() {
+      @Override
       public void handleProperty(File path, PropertyData property) {
         registerProperty(property);
       }
 
+      @Override
       public void handleProperty(Url url, PropertyData property) {
         registerProperty(property);
       }
 
+      @Override
       public void handleProperty(long revision, PropertyData property) {
         // revision properties here
       }
@@ -269,7 +273,7 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  public static String toSortedStringPresentation(@NotNull List<PropertyData> lines) {
+  public static String toSortedStringPresentation(@NotNull List<? extends PropertyData> lines) {
     StringBuilder sb = new StringBuilder();
 
     Collections.sort(lines, Comparator.comparing(PropertyData::getName));

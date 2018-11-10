@@ -3,9 +3,10 @@
 package com.intellij;
 
 import com.intellij.idea.Bombed;
+import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.JITSensitive;
+import com.intellij.testFramework.RunFirst;
 import com.intellij.testFramework.TeamCityLogger;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.util.containers.MultiMap;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -29,10 +31,13 @@ public class TestCaseLoader {
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
+  public static final String RUN_ONLY_AFFECTED_TEST_FLAG = "idea.run.only.affected.tests";
 
   private static final boolean PERFORMANCE_TESTS_ONLY = "true".equals(System.getProperty(PERFORMANCE_TESTS_ONLY_FLAG));
   private static final boolean INCLUDE_PERFORMANCE_TESTS = "true".equals(System.getProperty(INCLUDE_PERFORMANCE_TESTS_FLAG));
   private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = "true".equals(System.getProperty(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG));
+  private static final boolean RUN_ONLY_AFFECTED_TESTS = "true".equals(System.getProperty(RUN_ONLY_AFFECTED_TEST_FLAG));
+  private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
 
   /**
    * An implicit group which includes all tests from all defined groups and tests which don't belong to any group.
@@ -50,58 +55,76 @@ public class TestCaseLoader {
   public TestCaseLoader(String classFilterName) {
     this(classFilterName, false);
   }
-  
+
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
     myForceLoadPerformanceTests = forceLoadPerformanceTests;
-    String patterns = getTestPatterns();
-    if (!StringUtil.isEmpty(patterns)) {
-      myTestClassesFilter = new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
-      System.out.println("Using patterns: [" + patterns +"]");
-    }
-    else {
-      List<URL> groupingFileUrls = Collections.emptyList();
-      if (!StringUtil.isEmpty(classFilterName)) {
-        try {
-          groupingFileUrls = Collections.list(getClassLoader().getResources(classFilterName));
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
-      }
+    TestClassesFilter testClassesFilter = calcTestClassFilter(classFilterName);
+    TestClassesFilter affectedTestsFilter = affectedTestsFilter();
 
-      List<String> testGroupNames = getTestGroups();
-      MultiMap<String, String> groups = MultiMap.createLinked();
-
-      for (URL fileUrl : groupingFileUrls) {
-        try {
-          InputStreamReader reader = new InputStreamReader(fileUrl.openStream());
-          try {
-            groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
-          }
-          finally {
-            reader.close();
-          }
-        }
-        catch (IOException e) {
-          e.printStackTrace();
-          System.err.println("Failed to load test groups from " + fileUrl);
-        }
-      }
-
-      if (groups.isEmpty() || testGroupNames.contains(ALL_TESTS_GROUP)) {
-        System.out.println("Using all classes");
-        myTestClassesFilter = TestClassesFilter.ALL_CLASSES;
-      }
-      else {
-        System.out.println("Using test groups: " + testGroupNames);
-        myTestClassesFilter = new GroupBasedTestClassFilter(groups, testGroupNames);
-      }
-    }
+    myTestClassesFilter = new TestClassesFilter.And(testClassesFilter, affectedTestsFilter);
+    System.out.println(myTestClassesFilter.toString());
   }
 
-  @Nullable 
+  private TestClassesFilter calcTestClassFilter(String classFilterName) {
+    String patterns = getTestPatterns();
+    if (!StringUtil.isEmpty(patterns)) {
+      System.out.println("Using patterns: [" + patterns + "]");
+      return new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
+    }
+    List<URL> groupingFileUrls = Collections.emptyList();
+    if (!StringUtil.isEmpty(classFilterName)) {
+      try {
+        groupingFileUrls = Collections.list(getClassLoader().getResources(classFilterName));
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    List<String> testGroupNames = getTestGroups();
+    MultiMap<String, String> groups = MultiMap.createLinked();
+
+    for (URL fileUrl : groupingFileUrls) {
+      try (InputStreamReader reader = new InputStreamReader(fileUrl.openStream())) {
+        groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
+      }
+      catch (IOException e) {
+        e.printStackTrace();
+        System.err.println("Failed to load test groups from " + fileUrl);
+      }
+    }
+
+    if (groups.isEmpty() || testGroupNames.contains(ALL_TESTS_GROUP)) {
+      System.out.println("Using all classes");
+      return TestClassesFilter.ALL_CLASSES;
+    }
+    System.out.println("Using test groups: " + testGroupNames);
+    return new GroupBasedTestClassFilter(groups, testGroupNames);
+  }
+
+  @Nullable
   private static String getTestPatterns() {
     return System.getProperty("intellij.build.test.patterns", System.getProperty("idea.test.patterns"));
+  }
+
+  @NotNull
+  private static TestClassesFilter affectedTestsFilter() {
+    if (RUN_ONLY_AFFECTED_TESTS) {
+      System.out.println("Trying to load affected tests.");
+      File affectedTestClasses = new File(System.getProperty("idea.home.path"), "discoveredTestClasses.txt");
+      if (affectedTestClasses.exists()) {
+        System.out.println("Loading file with affected classes " + affectedTestClasses.getAbsolutePath());
+        try {
+          return new PatternListTestClassFilter(FileUtil.loadLines(affectedTestClasses));
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+          throw new RuntimeException(e);
+        }
+      }
+    }
+    System.out.println("No affected tests were found, will run with the standard test filter.");
+    return TestClassesFilter.ALL_CLASSES;
   }
 
   @NotNull
@@ -118,14 +141,14 @@ public class TestCaseLoader {
   }
 
   void addFirstTest(Class aClass) {
-    assert myFirstTestClass == null : "already added: "+aClass;
-    assert shouldAddTestCase(aClass, null, false) : "not a test: "+aClass;
+    assert myFirstTestClass == null : "already added: " + aClass;
+    assert shouldAddTestCase(aClass, null, false) : "not a test: " + aClass;
     myFirstTestClass = aClass;
   }
 
   void addLastTest(Class aClass) {
-    assert myLastTestClass == null : "already added: "+aClass;
-    assert shouldAddTestCase(aClass, null, false) : "not a test: "+aClass;
+    assert myLastTestClass == null : "already added: " + aClass;
+    assert shouldAddTestCase(aClass, null, false) : "not a test: " + aClass;
     myLastTestClass = aClass;
   }
 
@@ -142,7 +165,8 @@ public class TestCaseLoader {
         return true;
       }
     }
-    catch (NoSuchMethodException ignored) { }
+    catch (NoSuchMethodException ignored) {
+    }
 
     return TestFrameworkUtil.isJUnit4TestClass(testCaseClass);
   }
@@ -151,7 +175,11 @@ public class TestCaseLoader {
     if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(testCaseClass)) return true;
     String className = testCaseClass.getName();
 
-    return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass);
+    return !myTestClassesFilter.matches(className, moduleName) || isBombed(testCaseClass) || isExcludeFromTestDiscovery(testCaseClass);
+  }
+
+  private static boolean isExcludeFromTestDiscovery(Class c) {
+    return RUN_WITH_TEST_DISCOVERY && getAnnotationInHierarchy(c, ExcludeFromTestDiscovery.class) != null;
   }
 
   public static boolean isBombed(final AnnotatedElement element) {
@@ -159,7 +187,7 @@ public class TestCaseLoader {
     if (bombedAnnotation == null) return false;
     return !TestFrameworkUtil.bombExplodes(bombedAnnotation);
   }
-  
+
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
       try {
@@ -195,21 +223,21 @@ public class TestCaseLoader {
       try {
         return FileUtil.loadLines(filePath);
       }
-      catch (IOException ignored) { }
+      catch (IOException ignored) {
+      }
     }
 
     return Collections.emptyList();
   }
 
   private static int getRank(Class aClass) {
-    if (isPerformanceTestsRun()) {
-      return moveToStart(aClass) ? 0 : 1;
-    }
+    if (runFirst(aClass)) return 0;
+    if (isPerformanceTestsRun()) return 1;
 
     // PlatformLiteFixture is the very special test case because it doesn't load all the XMLs with component/extension declarations
-    // (that is, uses a mock application). Instead, it allows to declare them manually using its registerComponent/registerExtension 
-    // methods. The goal is to make tests which extend PlatformLiteFixture extremely fast. The problem appears when such tests are invoked 
-    // together with other tests which rely on declarations in XML files (that is, use a real application). The nature of the IDEA 
+    // (that is, uses a mock application). Instead, it allows to declare them manually using its registerComponent/registerExtension
+    // methods. The goal is to make tests which extend PlatformLiteFixture extremely fast. The problem appears when such tests are invoked
+    // together with other tests which rely on declarations in XML files (that is, use a real application). The nature of the IDEA
     // application is such that static final fields are often used to cache extensions. While having a positive effect on performance,
     // it creates problems during testing. Simply speaking, if the instance of PlatformLiteFixture is the first one in a suite, it pollutes
     // static final fields (and all other kinds of caches) with invalid values. To avoid it, such tests should always be the last.
@@ -224,8 +252,8 @@ public class TestCaseLoader {
     return ourRankList.size();
   }
 
-  private static boolean moveToStart(Class testClass) {
-    return testClass.getAnnotation(JITSensitive.class) != null;
+  private static boolean runFirst(Class testClass) {
+    return getAnnotationInHierarchy(testClass, RunFirst.class) != null;
   }
 
   private static boolean isPlatformLiteFixture(Class aClass) {
@@ -244,7 +272,7 @@ public class TestCaseLoader {
     List<Class> result = new ArrayList<>(myClassList.size());
     result.addAll(myClassList);
     Collections.sort(result, Comparator.comparingInt(TestCaseLoader::getRank));
-    
+
     if (myFirstTestClass != null) {
       result.add(0, myFirstTestClass);
     }
@@ -255,8 +283,10 @@ public class TestCaseLoader {
     return result;
   }
 
-  public void clearClasses() {
+  private void clearClasses() {
     myClassList.clear();
+    myFirstTestClass = null;
+    myLastTestClass = null;
   }
 
   static boolean isPerformanceTestsRun() {
@@ -268,7 +298,7 @@ public class TestCaseLoader {
   }
 
   static boolean shouldIncludePerformanceTestCase(Class aClass) {
-    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null,aClass);
+    return isIncludingPerformanceTestsRun() || isPerformanceTestsRun() || !isPerformanceTest(null, aClass);
   }
 
   static boolean isPerformanceTest(String methodName, Class aClass) {
@@ -287,14 +317,27 @@ public class TestCaseLoader {
       }
     }
 
-    if (getClasses().size() == 1) {
+    if (myClassList.isEmpty()) { // nothing valuable to test
       clearClasses();
     }
     long after = System.currentTimeMillis();
-    
-    String message = "Number of test classes found: " + getClasses().size() 
-                      + " time to load: " + (after - before) / 1000 + "s.";
+
+    String message = "Number of test classes found: " + getClasses().size()
+                     + " time to load: " + (after - before) / 1000 + "s.";
     System.out.println(message);
     TeamCityLogger.info(message);
+  }
+
+  @Nullable
+  public static <T extends Annotation> T getAnnotationInHierarchy(@NotNull Class<?> clazz, @NotNull Class<T> annotationClass) {
+    Class<?> current = clazz;
+    while (current != null) {
+      T annotation = current.getAnnotation(annotationClass);
+      if (annotation != null) {
+        return annotation;
+      }
+      current = current.getSuperclass();
+    }
+    return null;
   }
 }

@@ -49,6 +49,7 @@ public class MethodElement extends AbstractElement implements Element {
         this.fieldName = fieldName;
     }
 
+    @Override
     public String getAccessor() {
         return methodName + "()";
     }

@@ -275,13 +275,11 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
       myShiftPressed = myViewer.getModifierProvider().isShiftPressed();
 
       if (mySide == ThreeSide.BASE) {
-        switch (myType) {
-          case RESOLVE:
-            if (!Registry.is("diff.merge.resolve.conflict.action.visible")) return null;
-            return createResolveRenderer();
-          default:
-            throw new IllegalArgumentException(myType.name());
+        if (myType == OperationType.RESOLVE) {
+          if (!Registry.is("diff.merge.resolve.conflict.action.visible")) return null;
+          return createResolveRenderer();
         }
+        throw new IllegalArgumentException(myType.name());
       }
       else {
         Side versionSide = mySide.select(Side.LEFT, null, Side.RIGHT);
@@ -341,7 +339,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
     final String tooltipText = DiffUtil.createTooltipText(text, ctrlClickVisible ? CTRL_CLICK_TO_RESOLVE : null);
     return new DiffGutterRenderer(icon, tooltipText) {
       @Override
-      protected void performAction(AnActionEvent e) {
+      protected void performAction(@NotNull AnActionEvent e) {
         perform.run();
       }
     };

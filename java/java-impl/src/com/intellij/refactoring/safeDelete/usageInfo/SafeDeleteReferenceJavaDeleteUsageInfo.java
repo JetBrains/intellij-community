@@ -47,6 +47,7 @@ public class SafeDeleteReferenceJavaDeleteUsageInfo extends SafeDeleteReferenceS
     this(expression, referenceElement, !RemoveUnusedVariableUtil.checkSideEffects(expression, null, new ArrayList<>()));
   }
 
+  @Override
   public void deleteElement() throws IncorrectOperationException {
     if (isSafeDelete()) {
       PsiElement element = getElement();
@@ -65,7 +66,7 @@ public class SafeDeleteReferenceJavaDeleteUsageInfo extends SafeDeleteReferenceS
         if (element instanceof PsiExpressionStatement &&
             RefactoringUtil.isLoopOrIf(element.getParent()) &&
             !RemoveUnusedVariableUtil.isForLoopUpdate(element)) {
-          final PsiStatement emptyTest = JavaPsiFacade.getInstance(getProject()).getElementFactory().createStatementFromText(";", null);
+          final PsiStatement emptyTest = JavaPsiFacade.getElementFactory(getProject()).createStatementFromText(";", null);
           element.replace(emptyTest);
         } else {
           element.delete();

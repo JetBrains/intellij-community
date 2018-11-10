@@ -29,11 +29,8 @@ import java.util.Collection;
 /**
  * @deprecated Use {@link TargetElementUtil} instead. To be removed in IntelliJ IDEA 16.
  */
+@Deprecated
 public abstract class TargetElementUtilBase {
-  public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
-  public static final int ELEMENT_NAME_ACCEPTED = 0x02;
-  public static final int LOOKUP_ITEM_ACCEPTED = 0x08;
-
   public static TargetElementUtilBase getInstance() {
     return TargetElementUtil.getInstance();
   }
@@ -55,7 +52,7 @@ public abstract class TargetElementUtilBase {
   }
 
   public static int adjustOffset(Document document, final int offset) {
-    return TargetElementUtil.adjustOffset(document, offset);
+    return TargetElementUtil.adjustOffset(null, document, offset);
   }
 
   public static int adjustOffset(@Nullable PsiFile file, Document document, final int offset) {
@@ -76,15 +73,6 @@ public abstract class TargetElementUtilBase {
 
 
   @Nullable
-  public abstract PsiElement adjustElement(final Editor editor,
-                                           final int flags,
-                                           @Nullable PsiElement element,
-                                           @Nullable PsiElement contextElement);
-
-  @Nullable
-  public abstract PsiElement adjustReference(@NotNull PsiReference ref);
-
-  @Nullable
   public abstract PsiElement getNamedElement(@Nullable final PsiElement element, final int offsetInElement);
 
   @NotNull
@@ -93,8 +81,6 @@ public abstract class TargetElementUtilBase {
   public abstract PsiElement getGotoDeclarationTarget(final PsiElement element, final PsiElement navElement);
 
   public abstract boolean includeSelfInGotoImplementation(@NotNull final PsiElement element);
-
-  public abstract boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element);
 
   /**
    * @return a scope where element's implementations (Goto/Show Implementations) should be searched

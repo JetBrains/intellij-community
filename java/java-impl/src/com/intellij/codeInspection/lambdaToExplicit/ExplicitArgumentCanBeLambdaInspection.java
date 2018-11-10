@@ -13,9 +13,6 @@ import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
@@ -43,7 +40,7 @@ public class ExplicitArgumentCanBeLambdaInspection extends AbstractBaseJavaLocal
     private final LambdaAndExplicitMethodPair myInfo;
     private final String myName;
 
-    public ConvertExplicitCallToLambdaFix(LambdaAndExplicitMethodPair info, String name) {
+    ConvertExplicitCallToLambdaFix(LambdaAndExplicitMethodPair info, String name) {
       myInfo = info;
       myName = name;
     }

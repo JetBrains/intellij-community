@@ -40,13 +40,11 @@ public abstract class ProcessWaiter<T extends CancellableRunnable> {
     myInStreamListener = createStreamListener(worker.getInputStream());
 
     final Application app = ApplicationManager.getApplication();
-    Future<?> errorStreamReadingFuture = null;
-    Future<?> outputStreamReadingFuture = null;
 
     final int rc;
     try {
-      errorStreamReadingFuture = app.executeOnPooledThread(myErrStreamListener);
-      outputStreamReadingFuture = app.executeOnPooledThread(myInStreamListener);
+      Future<?> errorStreamReadingFuture = app.executeOnPooledThread(myErrStreamListener);
+      Future<?> outputStreamReadingFuture = app.executeOnPooledThread(myInStreamListener);
       rc = worker.execute();
       if (tryReadStreams(rc)) {
         errorStreamReadingFuture.get(timeout, TimeUnit.MILLISECONDS);
@@ -54,12 +52,6 @@ public abstract class ProcessWaiter<T extends CancellableRunnable> {
       }
     } finally {
       cancelListeners();
-      if (errorStreamReadingFuture != null) {
-        errorStreamReadingFuture.cancel(true);
-      }
-      if (outputStreamReadingFuture != null) {
-        outputStreamReadingFuture.cancel(true);
-      }
     }
 
     return rc;

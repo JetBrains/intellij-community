@@ -3,6 +3,9 @@ class TestFieldConversion
 {
 
     public void someMethod(int s) {
+        /**
+         * doc1
+         */
         int someInt = 0;
         switch (s) {
       case 1:

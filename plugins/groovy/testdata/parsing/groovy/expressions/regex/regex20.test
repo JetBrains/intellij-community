@@ -9,7 +9,7 @@ Groovy script
       PsiElement(()('(')
       Compound regular expression
         PsiElement(regex begin)('/')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement(regex content)('a\')
         GString injection
           PsiElement($)('$')
@@ -20,8 +20,5 @@ Groovy script
             Literal
               PsiElement(Integer)('2')
             PsiElement(})('}')
-        GrStringContentImpl(GString content element)
-          ASTWrapperPsiElement(regex content)
-            <empty list>
         PsiElement(regex end)('/')
       PsiElement())(')')

@@ -40,41 +40,6 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
     myAnnotation = annotation;
   }
 
-  /**
-   * @deprecated Use {@link PyFunctionStubImpl#PyFunctionStubImpl(String, String, String, boolean, boolean, boolean, String, String, StubElement, IStubElementType)}
-   * that includes the additional {@code isGenerator} property.
-   * This constructor will be removed in 2018.2.
-   */
-  @Deprecated
-  public PyFunctionStubImpl(@Nullable String name,
-                            @Nullable String docString,
-                            @Nullable String deprecationMessage,
-                            boolean isAsync,
-                            boolean onlyRaisesNotImplementedError,
-                            @Nullable String typeCommentContent,
-                            @Nullable String annotation, 
-                            final StubElement parent,
-                            @NotNull IStubElementType stubElementType) {
-    this(name, docString, deprecationMessage, isAsync, false, onlyRaisesNotImplementedError, typeCommentContent, annotation, parent,
-         stubElementType);
-  }
-
-  /**
-   * @deprecated Use {@link PyFunctionStubImpl#PyFunctionStubImpl(String, String, String, boolean, boolean, String, String, StubElement, IStubElementType)} instead.
-   * This constructor will be removed in 2018.2.
-   */
-  @Deprecated
-  public PyFunctionStubImpl(@Nullable String name,
-                            @Nullable String docString,
-                            @Nullable String deprecationMessage,
-                            boolean isAsync,
-                            @Nullable String typeCommentContent,
-                            @Nullable String annotation,
-                            final StubElement parent,
-                            @NotNull IStubElementType stubElementType) {
-    this(name, docString, deprecationMessage, isAsync, false, typeCommentContent, annotation, parent, stubElementType);
-  }
-
   @Nullable
   @Override
   public String getName() {

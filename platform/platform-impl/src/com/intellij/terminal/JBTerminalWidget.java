@@ -18,12 +18,16 @@ package com.intellij.terminal;
 import com.intellij.execution.filters.ConsoleFilterProvider;
 import com.intellij.execution.filters.Filter;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.DisposableWrapper;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.terminal.SubstringFinder;
@@ -40,6 +44,7 @@ import com.jediterm.terminal.ui.JediTermWidget;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentListener;
@@ -48,14 +53,19 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class JBTerminalWidget extends JediTermWidget implements Disposable {
-
   private final Project myProject;
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
+  private JBTerminalWidgetListener myListener;
 
-  public JBTerminalWidget(Project project, JBTerminalSystemSettingsProviderBase settingsProvider, Disposable parent) {
+  private JBTerminalWidgetDisposableWrapper myDisposableWrapper;
+  private VirtualFile myVirtualFile;
+  private String myCommandHistoryFilePath;
+
+  public JBTerminalWidget(Project project,
+                          JBTerminalSystemSettingsProviderBase settingsProvider,
+                          Disposable parent) {
     this(project, 80, 24, settingsProvider, parent);
   }
 
@@ -70,13 +80,21 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
     setName("terminal");
 
-    Disposer.register(parent, this);
-
     for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
-      for (Filter filter: eachProvider.getDefaultFilters(project)) {
+      for (Filter filter : eachProvider.getDefaultFilters(project)) {
         addMessageFilter(project, filter);
       }
     }
+
+    myDisposableWrapper = new JBTerminalWidgetDisposableWrapper(this, parent);
+  }
+
+  public JBTerminalWidgetListener getListener() {
+    return myListener;
+  }
+
+  public void setListener(JBTerminalWidgetListener listener) {
+    myListener = listener;
   }
 
   @Override
@@ -127,6 +145,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
   @Override
   public List<TerminalAction> getActions() {
     List<TerminalAction> actions = super.getActions();
+    actions.add(new TerminalAction("New Session", mySettingsProvider.getNewSessionKeyStrokes(), input -> {
+      myListener.onNewSession();
+      return true;
+    }).withMnemonicKey(KeyEvent.VK_T));
     if (!mySettingsProvider.overrideIdeShortcuts()) {
       actions
         .add(new TerminalAction("EditorEscape", new KeyStroke[]{KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0)}, input -> {
@@ -144,6 +166,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
 
   @Override
   public void dispose() {
+    close();
   }
 
   @Override
@@ -202,14 +225,79 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable {
       public LinkResult apply(String line) {
         Filter.Result r = filter.applyFilter(line, line.length());
         if (r != null) {
-          return new LinkResult(r.getResultItems().stream().map(
-            (item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(), new LinkInfo(
-              () -> item.getHyperlinkInfo().navigate(project))))).collect(Collectors.toList()));
+          return new LinkResult(ContainerUtil.map(r.getResultItems(),
+                                                  (item -> new LinkResultItem(item.getHighlightStartOffset(), item.getHighlightEndOffset(),
+                                                                              new LinkInfo(
+                                                                                () -> item.getHyperlinkInfo().navigate(project))))));
         }
         else {
           return null;
         }
       }
     });
+  }
+
+  public void start(TtyConnector connector) {
+    setTtyConnector(connector);
+    start();
+  }
+
+  public JBTerminalSystemSettingsProviderBase getSettingsProvider() {
+    return mySettingsProvider;
+  }
+
+  public void moveDisposable(@NotNull Disposable newParent) {
+    myDisposableWrapper = (JBTerminalWidgetDisposableWrapper)myDisposableWrapper.moveTo(newParent);
+  }
+
+  public void setVirtualFile(@Nullable VirtualFile virtualFile) {
+    if (myVirtualFile != null && virtualFile != null) {
+      throw new IllegalStateException("assigning a second virtual file to a terminal widget");
+    }
+    myVirtualFile = virtualFile;
+  }
+
+  @Nullable
+  public VirtualFile getVirtualFile() {
+    return myVirtualFile;
+  }
+
+  public void notifyStarted() {
+    if (myListener != null) {
+      myListener.onTerminalStarted();
+    }
+  }
+
+  @Nullable
+  public String getCommandHistoryFilePath() {
+    return myCommandHistoryFilePath;
+  }
+
+  public void setCommandHistoryFilePath(@Nullable String commandHistoryFilePath) {
+    myCommandHistoryFilePath = commandHistoryFilePath;
+  }
+
+  private static final class JBTerminalWidgetDisposableWrapper extends DisposableWrapper<JBTerminalWidget> {
+    private final JBTerminalWidget myObject;
+
+    public JBTerminalWidgetDisposableWrapper(JBTerminalWidget object, Disposable parent) {
+      super(object, parent);
+      myObject = object;
+    }
+
+    @Override
+    public void dispose() {
+      VirtualFile virtualFile = myObject.getVirtualFile();
+      if (virtualFile != null && virtualFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != null) {
+        return; // don't dispose terminal widget during file reopening
+      }
+      super.dispose();
+    }
+
+    @NotNull
+    @Override
+    protected JBTerminalWidgetDisposableWrapper createNewWrapper(@NotNull Disposable parent, JBTerminalWidget object) {
+      return new JBTerminalWidgetDisposableWrapper(object, parent);
+    }
   }
 }

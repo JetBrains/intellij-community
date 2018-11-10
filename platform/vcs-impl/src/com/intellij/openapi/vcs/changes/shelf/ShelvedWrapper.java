@@ -26,12 +26,12 @@ class ShelvedWrapper {
   @Nullable private final ShelvedChange myShelvedChange;
   @Nullable private final ShelvedBinaryFile myBinaryFile;
 
-  public ShelvedWrapper(@NotNull ShelvedChange shelvedChange) {
+  ShelvedWrapper(@NotNull ShelvedChange shelvedChange) {
     myShelvedChange = shelvedChange;
     myBinaryFile = null;
   }
 
-  public ShelvedWrapper(@NotNull ShelvedBinaryFile binaryFile) {
+  ShelvedWrapper(@NotNull ShelvedBinaryFile binaryFile) {
     myShelvedChange = null;
     myBinaryFile = binaryFile;
   }

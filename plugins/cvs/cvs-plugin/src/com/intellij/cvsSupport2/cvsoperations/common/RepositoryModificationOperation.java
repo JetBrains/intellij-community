@@ -66,6 +66,7 @@ public class RepositoryModificationOperation extends CompositeOperation {
     commitFile(file);
   }
 
+  @Override
   public int getFilesToProcessCount() {
     int filesToRemove = myRemoveRequests.getFilesCount();
     int filesToChange = myCommitRequests.getFilesCount() - myAddedFilesCount - filesToRemove;
@@ -79,6 +80,7 @@ public class RepositoryModificationOperation extends CompositeOperation {
     myCommitRequests.setMessage(parameters);
   }
 
+  @Override
   protected List<CvsOperation> getSubOperations() {
     ArrayList<CvsOperation> result = new ArrayList<>(super.getSubOperations());
     result.add(myCommitRequests);

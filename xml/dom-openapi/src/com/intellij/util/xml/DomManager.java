@@ -21,7 +21,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReferenceFactory;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -121,9 +120,9 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @param provider provides values to be wrapped
    * @return stable DOM element
    */
-  public abstract <T extends DomElement> T createStableValue(Factory<T> provider);
+  public abstract <T extends DomElement> T createStableValue(Factory<? extends T> provider);
 
-  public abstract <T> T createStableValue(final Factory<T> provider, final Condition<T> validator);
+  public abstract <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator);
 
   /**
    * Registers a new {@link com.intellij.util.xml.DomFileDescription} within the manager. The description parameter describes some DOM
@@ -132,12 +131,14 @@ public abstract class DomManager extends CompositeModificationTracker implements
    * @param description The description in question
    * @deprecated Make your file description an extension (see {@link com.intellij.util.xml.DomFileDescription#EP_NAME})
    */
+  @Deprecated
   public abstract void registerFileDescription(DomFileDescription description);
 
   /**
    * @return {@link com.intellij.util.xml.ConverterManager} instance
    * @deprecated This will be moved at the application level
    */
+  @Deprecated
   public abstract ConverterManager getConverterManager();
 
   public abstract ModelMerger createModelMerger();

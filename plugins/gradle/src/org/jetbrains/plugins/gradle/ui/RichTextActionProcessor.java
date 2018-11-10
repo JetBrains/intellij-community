@@ -18,7 +18,6 @@ import java.awt.event.MouseEvent;
 
 /**
  * @author Denis Zhdanov
- * @since 1/16/12 5:20 PM
  */
 public class RichTextActionProcessor implements RichTextControlBuilder.RichTextProcessor {
 
@@ -45,6 +44,7 @@ public class RichTextActionProcessor implements RichTextControlBuilder.RichTextP
 
     final String text = action.getTemplatePresentation().getText();
     JLabel result = new JLabel(text) {
+      @Override
       public void paint(Graphics g) {
         super.paint(g);
         final int y = g.getClipBounds().height - getFontMetrics(getFont()).getDescent() + 2;

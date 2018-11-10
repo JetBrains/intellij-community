@@ -1,8 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.intellij.CommonBundle;
 import com.intellij.configurationStore.StorageUtilKt;
+import com.intellij.core.JavaCoreBundle;
 import com.intellij.debugger.ui.DebuggerView;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -51,6 +53,8 @@ import kotlin.Unit;
 import kotlin.reflect.full.NoSuchPropertyException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.nustaq.serialization.FSTConfiguration;
+import org.objenesis.Objenesis;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -61,7 +65,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Denis Zhdanov
- * @since 8/9/13 3:37 PM
  */
 public class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
 
@@ -127,6 +130,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemTaskNotificationListener.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(StdModuleTypes.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(JavaModuleType.class));
+        ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.JavaCoreBundle", JavaCoreBundle.class);
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ModuleType.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(EmptyModuleType.class));
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(LanguageLevel.class));
@@ -140,6 +144,11 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         // external-system-rt.jar
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemException.class));
         ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.CommonBundle", CommonBundle.class);
+        // com.intellij.openapi.externalSystem.model.FSTSerializer dependencies
+        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(FSTConfiguration.class));
+        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(JsonFactory.class));
+        ContainerUtilRt.addIfNotNull(classPath, PathUtil.getJarPathForClass(Objenesis.class));
+
         params.getClassPath().addAll(classPath);
 
         params.setMainClass(MAIN_CLASS_NAME);
@@ -149,7 +158,7 @@ public class RemoteExternalSystemCommunicationManager implements ExternalSystemC
         // is 15 seconds (http://download.oracle.com/javase/6/docs/technotes/guides/rmi/sunrmiproperties.html#connectionTimeout),
         // we don't want to get EOFException because of that.
         params.getVMParametersList().addParametersString(
-          "-Dsun.rmi.transport.connectionTimeout=" + String.valueOf(TimeUnit.HOURS.toMillis(1))
+          "-Dsun.rmi.transport.connectionTimeout=" + TimeUnit.HOURS.toMillis(1)
         );
         final String debugPort = System.getProperty(ExternalSystemConstants.EXTERNAL_SYSTEM_REMOTE_COMMUNICATION_MANAGER_DEBUG_PORT);
         if (debugPort != null) {

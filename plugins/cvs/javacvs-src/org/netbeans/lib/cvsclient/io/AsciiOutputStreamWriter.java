@@ -28,7 +28,8 @@ public final class AsciiOutputStreamWriter extends AbstractOutputStreamWriter {
 
 	// Implemented ============================================================
 
-	protected void writeChar(char chr, OutputStream outputStream) throws IOException {
+	@Override
+        protected void writeChar(char chr, OutputStream outputStream) throws IOException {
           final int aChar = chr;//(chr & 0xFF00);
           /*
           if (aChar > 0) {

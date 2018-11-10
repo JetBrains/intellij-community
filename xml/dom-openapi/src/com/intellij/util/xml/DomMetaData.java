@@ -78,7 +78,7 @@ public class DomMetaData<T extends DomElement> implements PsiWritableMetaData, P
 
   @NotNull
   @Override
-  public Object[] getDependences() {
+  public Object[] getDependencies() {
     final PsiElement declaration = getDeclaration();
     if (myElement != null && myElement.isValid()) {
       return new Object[]{DomUtil.getRoot(myElement), declaration};

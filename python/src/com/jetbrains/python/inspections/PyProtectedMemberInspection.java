@@ -58,7 +58,7 @@ public class PyProtectedMemberInspection extends PyInspection {
 
 
   private class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+    Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
@@ -82,9 +82,7 @@ public class PyProtectedMemberInspection extends PyInspection {
         return StreamEx
           .of(importSource.getReference(resolveContext).multiResolve(false))
           .map(ResolveResult::getElement)
-          .nonNull()
-          .map(PsiElement::getContainingFile)
-          .nonNull()
+          .select(PyFile.class)
           .map(PsiFile::getContainingDirectory)
           .nonNull()
           .map(PsiDirectory::getVirtualFile)
@@ -106,7 +104,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     private void checkReference(@NotNull final PyReferenceExpression node, @NotNull final PyExpression qualifier) {
       final String name = node.getName();
       final List<LocalQuickFix> quickFixes = new ArrayList<>();
-      quickFixes.add(new PyRenameElementQuickFix());
+      quickFixes.add(new PyRenameElementQuickFix(node));
 
       if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
         final PsiReference reference = node.getReference(getResolveContext());
@@ -169,7 +167,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     @Nullable
     private PyClass getNotPyiClassOwner(@Nullable PsiElement element) {
       final PyClass owner = getClassOwner(element);
-      return owner == null ? null : PyiUtil.stubToOriginal(owner, PyClass.class);
+      return owner == null ? null : PyiUtil.getOriginalElementOrLeaveAsIs(owner, PyClass.class);
     }
 
     @Nullable

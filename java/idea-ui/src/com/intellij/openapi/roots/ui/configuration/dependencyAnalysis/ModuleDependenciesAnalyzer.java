@@ -154,7 +154,7 @@ public class ModuleDependenciesAnalyzer {
      * @param urlExplanations   the url explanations to accumulate
      * @param orderExplanations the explanations for order entries
      */
-    public PathWalker(Map<String, List<OrderPath>> urlExplanations,
+    PathWalker(Map<String, List<OrderPath>> urlExplanations,
                       Map<OrderEntry, List<OrderPath>> orderExplanations) {
       myUrlExplanations = urlExplanations;
       myOrderExplanations = orderExplanations;

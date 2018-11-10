@@ -28,6 +28,7 @@ public class SafeDeletePrivatizeMethod extends SafeDeleteOverrideAnnotation {
     super(method, overridenMethod);
   }
 
+  @Override
   public void performRefactoring() throws IncorrectOperationException {
     PsiUtil.setModifierProperty(getMethod(), PsiModifier.PRIVATE, true);
     super.performRefactoring();

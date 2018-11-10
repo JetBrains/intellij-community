@@ -28,6 +28,8 @@ import com.intellij.ui.TitledSeparator
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.pipenv.PIPENV_ICON
+import com.jetbrains.python.sdk.pipenv.isPipEnv
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JList
@@ -57,7 +59,8 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
   }
 
   private fun appendName(sdk: Sdk) {
-    val name = sdkModifiers?.get(sdk)?.name ?: sdk.name
+    val modificator = sdkModifiers?.get(sdk)
+    val name = modificator?.name ?: sdk.name
     when {
       PythonSdkType.isInvalid(sdk) || PythonSdkType.hasInvalidRemoteCredentials(sdk) ->
         append("[invalid] $name", SimpleTextAttributes.ERROR_ATTRIBUTES)
@@ -68,7 +71,12 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
       else ->
         append(name)
     }
-    val homePath = sdk.homePath
+    if (sdk.isPipEnv) {
+      sdk.versionString?.let {
+        append(" $it", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+      }
+    }
+    val homePath = modificator?.homePath ?: sdk.homePath
     val relHomePath = homePath?.let { FileUtil.getLocationRelativeToUserHome(it) }
     if (relHomePath != null && homePath !in name && relHomePath !in name) {
       append(" $relHomePath", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
@@ -76,7 +84,7 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
   }
 
   companion object {
-    const val SEPARATOR = "separator"
+    const val SEPARATOR: String = "separator"
 
     private fun customizeIcon(sdk: Sdk): Icon? {
       val flavor = PythonSdkFlavor.getPlatformIndependentFlavor(sdk.homePath)
@@ -89,6 +97,11 @@ open class PySdkListCellRenderer(private val sdkModifiers: Map<Sdk, SdkModificat
           wrapIconWithWarningDecorator(icon)
         sdk is PyDetectedSdk ->
           IconLoader.getTransparentIcon(icon)
+        // XXX: We cannot provide pipenv SDK flavor by path since it's just a regular virtualenv. Consider
+        // adding the SDK flavor based on the `Sdk` object itself
+        // TODO: Refactor SDK flavors so they can actually provide icons for SDKs in all cases
+        sdk.isPipEnv ->
+          PIPENV_ICON
         else ->
           icon
       }

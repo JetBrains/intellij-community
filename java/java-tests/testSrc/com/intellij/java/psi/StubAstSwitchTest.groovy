@@ -287,11 +287,11 @@ class B {
   }
 
   void "test concurrent stub and AST reloading"() {
-    def fileNumbers = 0..<10
+    def fileNumbers = 0..<3
     List<PsiJavaFileImpl> files = fileNumbers.collect {
       (PsiJavaFileImpl)myFixture.addFileToProject("a${it}.java", "import foo.bar; class A{}")
     }
-    for (iteration in 0..10) {
+    for (iteration in 0..3) {
       GCUtil.tryGcSoftlyReachableObjects()
       files.each { assert !it.treeElement }
 

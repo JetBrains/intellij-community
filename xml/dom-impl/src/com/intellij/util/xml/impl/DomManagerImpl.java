@@ -97,7 +97,7 @@ public final class DomManagerImpl extends DomManager {
     final PomModel pomModel = PomManager.getModel(project);
     pomModel.addModelListener(new PomModelListener() {
       @Override
-      public void modelChanged(PomModelEvent event) {
+      public void modelChanged(@NotNull PomModelEvent event) {
         if (myChanging) return;
         
         final XmlChangeSet changeSet = (XmlChangeSet)event.getChangeSet(pomModel.getModelAspect(XmlAspect.class));
@@ -112,7 +112,7 @@ public final class DomManagerImpl extends DomManager {
       }
 
       @Override
-      public boolean isAspectChangeInteresting(PomModelAspect aspect) {
+      public boolean isAspectChangeInteresting(@NotNull PomModelAspect aspect) {
         return aspect instanceof XmlAspect;
       }
     }, project);
@@ -221,13 +221,13 @@ public final class DomManagerImpl extends DomManager {
     return new ModelMergerImpl();
   }
 
-  final void fireEvent(DomEvent event) {
+  final void fireEvent(@NotNull DomEvent event) {
     if (mySemService.isInsideAtomicChange()) return;
     incModificationCount();
     myListeners.getMulticaster().eventOccured(event);
   }
 
-  private void fireEvents(Collection<DomEvent> events) {
+  private void fireEvents(@NotNull Collection<DomEvent> events) {
     for (DomEvent event : events) {
       fireEvent(event);
     }
@@ -283,7 +283,6 @@ public final class DomManagerImpl extends DomManager {
   @Override
   @NotNull
   public final <T extends DomElement> DomFileElementImpl<T> getFileElement(final XmlFile file, final Class<T> aClass, String rootTagName) {
-    //noinspection unchecked
     if (file.getUserData(MOCK_DESCRIPTION) == null) {
       file.putUserData(MOCK_DESCRIPTION, new MockDomFileDescription<>(aClass, rootTagName, file.getViewProvider().getVirtualFile()));
       mySemService.clearCache();
@@ -431,12 +430,12 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Override
-  public final <T extends DomElement> T createStableValue(final Factory<T> provider) {
+  public final <T extends DomElement> T createStableValue(final Factory<? extends T> provider) {
     return createStableValue(provider, t -> t.isValid());
   }
 
   @Override
-  public final <T> T createStableValue(final Factory<T> provider, final Condition<T> validator) {
+  public final <T> T createStableValue(final Factory<? extends T> provider, final Condition<? super T> validator) {
     final T initial = provider.create();
     assert initial != null;
     final StableInvocationHandler handler = new StableInvocationHandler<>(initial, provider, validator);

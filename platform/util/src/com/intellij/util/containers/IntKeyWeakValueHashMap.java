@@ -15,20 +15,15 @@
  */
 package com.intellij.util.containers;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
   private final TIntObjectHashMap<MyReference<V>> myMap = new TIntObjectHashMap<MyReference<V>>();
@@ -36,7 +31,6 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
 
   private static class MyReference<T> extends WeakReference<T> {
     private final int key;
-    String name;
 
     private MyReference(int key, @NotNull T referent, ReferenceQueue<? super T> q) {
       super(referent, q);
@@ -57,15 +51,13 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
 
   @Override
   public final V get(int key) {
-    MyReference<V> ref = myMap.get(key);
-    return SoftReference.dereference(ref);
+    return SoftReference.dereference(myMap.get(key));
   }
 
   @Override
   public final V put(int key, @NotNull V value) {
     processQueue();
     MyReference<V> ref = new MyReference<V>(key, value, myQueue);
-    ref.name = value.toString();
     MyReference<V> oldRef = myMap.put(key, ref);
     return SoftReference.dereference(oldRef);
   }
@@ -124,50 +116,78 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
     return values().contains(value);
   }
 
-  private static final Object GCED = ObjectUtils.sentinel("GCED");
   @NotNull
   @Override
-  public Iterable<Entry<V>> entries() {
-    return new Iterable<Entry<V>>() {
-      @NotNull
+  public Set<Entry<V>> entrySet() {
+    return new MyEntrySetView();
+  }
+
+  private class MyEntrySetView extends AbstractSet<Entry<V>> {
+    @NotNull
+    @Override
+    public Iterator<Entry<V>> iterator() {
+      return entriesIterator();
+    }
+
+    @Override
+    public int size() {
+      return IntKeyWeakValueHashMap.this.size();
+    }
+  }
+
+  private static class MovingIterator<V> extends TIntObjectIterator<MyReference<V>> {
+    MovingIterator(TIntObjectHashMap<MyReference<V>> map) {
+      super(map);
+    }
+
+    void removed() {
+      _expectedSize--;
+    }
+  }
+
+  @NotNull
+  private Iterator<Entry<V>> entriesIterator() {
+    final MovingIterator<V> entryIterator = new MovingIterator<V>(myMap);
+    return new Iterator<Entry<V>>() {
+      private Entry<V> nextVEntry;
+      private int lastReturned;
+      {
+        nextAliveEntry();
+      }
       @Override
-      public Iterator<Entry<V>> iterator() {
-        final TIntObjectIterator<MyReference<V>> tIterator = myMap.iterator();
-        return ContainerUtil.filterIterator(new Iterator<Entry<V>>() {
-          @Override
-          public boolean hasNext() {
-            return tIterator.hasNext();
-          }
+      public boolean hasNext() {
+        return nextVEntry != null;
+      }
 
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
-          }
+      @Override
+      public Entry<V> next() {
+        if (!hasNext()) throw new NoSuchElementException();
+        Entry<V> result = nextVEntry;
+        lastReturned = result.getKey();
+        nextAliveEntry();
+        return result;
+      }
 
-          @Override
-          public Entry<V> next() {
-            tIterator.advance();
-            return new Entry<V>() {
-              @Override
-              public int getKey() {
-                return tIterator.key();
-              }
+      private void nextAliveEntry() {
+        while (entryIterator.hasNext()) {
+          entryIterator.advance();
 
-              @NotNull
-              @Override
-              public V getValue() {
-                V v = SoftReference.dereference(tIterator.value());
-                //noinspection unchecked
-                return ObjectUtils.notNull(v, (V)GCED);
-              }
-            };
+          MyReference<V> ref = entryIterator.value();
+          final V v = ref.get();
+          if (v == null) {
+            continue;
           }
-        }, new Condition<Entry<V>>() {
-          @Override
-          public boolean value(Entry<V> o) {
-            return o.getValue() != GCED;
-          }
-        });
+          final int key = entryIterator.key();
+          nextVEntry = new SimpleEntry<V>(key, v);
+          return;
+        }
+        nextVEntry = null;
+      }
+
+      @Override
+      public void remove() {
+        myMap.remove(lastReturned);
+        entryIterator.removed();
       }
     };
   }

@@ -7,8 +7,8 @@ import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.shared.BorderType;
-import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.Label;
+import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.commons.GeneratorAdapter;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
@@ -17,8 +17,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Modifier;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -227,11 +227,12 @@ public class AsmCodeGenerator {
     private int myCreateComponentsAccess;
     private final boolean myExplicitSetupCall;
 
-    public FormClassVisitor(final ClassVisitor cv, final boolean explicitSetupCall) {
+    FormClassVisitor(final ClassVisitor cv, final boolean explicitSetupCall) {
       super(ASM_API_VERSION, cv);
       myExplicitSetupCall = explicitSetupCall;
     }
 
+    @Override
     public void visit(final int version,
                       final int access,
                       final String name,
@@ -251,6 +252,7 @@ public class AsmCodeGenerator {
       return myClassName;
     }
 
+    @Override
     public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
 
       if (name.equals(SETUP_METHOD_NAME) || name.equals(GET_ROOT_COMPONENT_METHOD_NAME) ||
@@ -274,12 +276,14 @@ public class AsmCodeGenerator {
       return methodVisitor != null? new FailSafeMethodVisitor(ASM_API_VERSION, methodVisitor) : null;
     }
 
+    @Override
     public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
       myFieldDescMap.put(name, desc);
       myFieldAccessMap.put(name, new Integer(access));
       return super.visitField(access, name, desc, signature, value);
     }
 
+    @Override
     public void visitEnd() {
       final boolean haveCustomCreateComponents = Utils.getCustomCreateComponentCount(myRootContainer) > 0 &&
                                                  !myIgnoreCustomCreation;
@@ -474,7 +478,7 @@ public class AsmCodeGenerator {
       LwContainer parent = container;
       while(parent != null) {
         final String layoutManager = parent.getLayoutManager();
-        if (layoutManager != null && layoutManager.length() > 0) {
+        if (layoutManager != null && !layoutManager.isEmpty()) {
           if (layoutManager.equals(UIFormXmlConstants.LAYOUT_FORM) &&
               !myContainerLayoutCodeGenerators.containsKey(UIFormXmlConstants.LAYOUT_FORM)) {
             myContainerLayoutCodeGenerators.put(UIFormXmlConstants.LAYOUT_FORM, new FormLayoutCodeGenerator());
@@ -495,8 +499,7 @@ public class AsmCodeGenerator {
                                              final int componentLocal) throws CodeGenerationException {
       // introspected properties
       final LwIntrospectedProperty[] introspectedProperties = lwComponent.getAssignedIntrospectedProperties();
-      for (int i = 0; i < introspectedProperties.length; i++) {
-        final LwIntrospectedProperty property = introspectedProperties[i];
+      for (final LwIntrospectedProperty property : introspectedProperties) {
         if (property instanceof LwIntroComponentProperty) {
           continue;
         }
@@ -530,7 +533,7 @@ public class AsmCodeGenerator {
               descriptor = "(C)V";
             }
             else {
-              descriptor = "(L"+Class.forName(propertyClass).getName().replace('.', '/') + ";)V";
+              descriptor = "(L" + Class.forName(propertyClass).getName().replace('.', '/') + ";)V";
             }
             final InstrumentationClassFinder.PseudoMethod setter = componentClass.findMethodInHierarchy(property.getWriteMethodName(),
                                                                                                         descriptor);
@@ -562,35 +565,35 @@ public class AsmCodeGenerator {
         Object value = lwComponent.getPropertyValue(property);
         Type setterArgType;
         if (propertyClass.equals(Integer.class.getName())) {
-          generator.push(((Integer) value).intValue());
+          generator.push(((Integer)value).intValue());
           setterArgType = Type.INT_TYPE;
         }
         else if (propertyClass.equals(Boolean.class.getName())) {
-          generator.push(((Boolean) value).booleanValue());
+          generator.push(((Boolean)value).booleanValue());
           setterArgType = Type.BOOLEAN_TYPE;
         }
         else if (propertyClass.equals(Double.class.getName())) {
-          generator.push(((Double) value).doubleValue());
+          generator.push(((Double)value).doubleValue());
           setterArgType = Type.DOUBLE_TYPE;
         }
         else if (propertyClass.equals(Float.class.getName())) {
-          generator.push(((Float) value).floatValue());
+          generator.push(((Float)value).floatValue());
           setterArgType = Type.FLOAT_TYPE;
         }
         else if (propertyClass.equals(Long.class.getName())) {
-          generator.push(((Long) value).longValue());
+          generator.push(((Long)value).longValue());
           setterArgType = Type.LONG_TYPE;
         }
         else if (propertyClass.equals(Short.class.getName())) {
-          generator.push(((Short) value).intValue());
+          generator.push(((Short)value).intValue());
           setterArgType = Type.SHORT_TYPE;
         }
         else if (propertyClass.equals(Byte.class.getName())) {
-          generator.push(((Byte) value).intValue());
+          generator.push(((Byte)value).intValue());
           setterArgType = Type.BYTE_TYPE;
         }
         else if (propertyClass.equals(Character.class.getName())) {
-          generator.push(((Character) value).charValue());
+          generator.push(((Character)value).charValue());
           setterArgType = Type.CHAR_TYPE;
         }
         else {
@@ -605,7 +608,7 @@ public class AsmCodeGenerator {
                              ? typeFromClassName(property.getDeclaringClassName())
                              : Type.getType(componentClass.getDescriptor());
         generator.invokeVirtual(declaringType, new Method(property.getWriteMethodName(),
-                                                          Type.VOID_TYPE, new Type[] { setterArgType } ));
+                                                          Type.VOID_TYPE, new Type[]{setterArgType}));
       }
 
       generateClientProperties(lwComponent, componentClass, generator, componentLocal);
@@ -667,11 +670,10 @@ public class AsmCodeGenerator {
       InstrumentationClassFinder.PseudoClass componentClass = getComponentClass(layoutCodeGenerator.mapComponentClass(component.getComponentClassName()), myFinder);
 
       final LwIntrospectedProperty[] introspectedProperties = component.getAssignedIntrospectedProperties();
-      for (int i = 0; i < introspectedProperties.length; i++) {
-        final LwIntrospectedProperty property = introspectedProperties[i];
+      for (final LwIntrospectedProperty property : introspectedProperties) {
         if (property instanceof LwIntroComponentProperty) {
-          String targetId = (String) component.getPropertyValue(property);
-          if (targetId != null && targetId.length() > 0) {
+          String targetId = (String)component.getPropertyValue(property);
+          if (targetId != null && !targetId.isEmpty()) {
             // we may have a reference property pointing to a component which is
             // no longer valid
             final Integer targetLocalInt = myIdToLocalMap.get(targetId);
@@ -684,7 +686,7 @@ public class AsmCodeGenerator {
                                    : Type.getType(componentClass.getDescriptor());
               generator.invokeVirtual(declaringType,
                                       new Method(property.getWriteMethodName(),
-                                                 Type.VOID_TYPE, new Type[] { typeFromClassName(property.getPropertyClassName()) } ));
+                                                 Type.VOID_TYPE, new Type[]{typeFromClassName(property.getPropertyClassName())}));
             }
           }
         }
@@ -705,8 +707,8 @@ public class AsmCodeGenerator {
         try {
           InstrumentationClassFinder.PseudoClass buttonGroupClass = null; // cached
           int groupLocal = generator.newLocal(ourButtonGroupType);
-          for(int groupIndex=0; groupIndex<groups.length; groupIndex++) {
-            String[] ids = groups [groupIndex].getComponentIds();
+          for (IButtonGroup group : groups) {
+            String[] ids = group.getComponentIds();
 
             if (ids.length > 0) {
               generator.newInstance(ourButtonGroupType);
@@ -714,18 +716,18 @@ public class AsmCodeGenerator {
               generator.invokeConstructor(ourButtonGroupType, Method.getMethod("void <init>()"));
               generator.storeLocal(groupLocal);
 
-              if (groups [groupIndex].isBound() && !myIgnoreCustomCreation) {
+              if (group.isBound() && !myIgnoreCustomCreation) {
                 if (buttonGroupClass == null) {
                   buttonGroupClass = myFinder.loadClass(ButtonGroup.class.getName());
                 }
-                validateFieldClass(groups [groupIndex].getName(), buttonGroupClass, null);
+                validateFieldClass(group.getName(), buttonGroupClass, null);
                 generator.loadThis();
                 generator.loadLocal(groupLocal);
-                generator.putField(getMainClassType(), groups [groupIndex].getName(), ourButtonGroupType);
+                generator.putField(getMainClassType(), group.getName(), ourButtonGroupType);
               }
 
-              for(int i = 0; i<ids.length; i++) {
-                Integer localInt = myIdToLocalMap.get(ids [i]);
+              for (String id : ids) {
+                Integer localInt = myIdToLocalMap.get(id);
                 if (localInt != null) {
                   generator.loadLocal(groupLocal);
                   generator.loadLocal(localInt.intValue());
@@ -789,7 +791,7 @@ public class AsmCodeGenerator {
         throw new CodeGenerationException(componentId, "Cannot bind: field does not exist: " + myClassToBind + "." + binding);
       }
 
-      final Type fieldType = Type.getType((String)myFieldDescMap.get(binding));
+      final Type fieldType = Type.getType(myFieldDescMap.get(binding));
       if (fieldType.getSort() != Type.OBJECT) {
         throw new CodeGenerationException(componentId, "Cannot bind: field is of primitive type: " + myClassToBind + "." + binding);
       }
@@ -858,7 +860,7 @@ public class AsmCodeGenerator {
           borderFactoryValue = StringDescriptor.create("com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent");
           container.getDelegeeClientProperties().put(ourBorderFactoryClientProperty, borderFactoryValue);
         }
-        if (borderFactoryValue != null && borderFactoryValue.getValue().length() != 0) {
+        if (borderFactoryValue != null && !borderFactoryValue.getValue().isEmpty()) {
           borderFactoryType = typeFromClassName(borderFactoryValue.getValue());
         }
 
@@ -898,12 +900,13 @@ public class AsmCodeGenerator {
     private boolean mySetupCalled = false;
     private boolean mySuperCalled = false;
 
-    public FormConstructorVisitor(final MethodVisitor mv, final String className, final String superName) {
+    FormConstructorVisitor(final MethodVisitor mv, final String className, final String superName) {
       super(ASM_API_VERSION, mv);
       myClassName = className;
       mySuperName = superName;
     }
 
+    @Override
     public void visitFieldInsn(final int opcode, final String owner, final String name, final String desc) {
       if (opcode == Opcodes.GETFIELD && !mySetupCalled && !callsSelfConstructor && Utils.isBoundField(myRootContainer, name)) {
         callSetupUI();
@@ -911,6 +914,7 @@ public class AsmCodeGenerator {
       super.visitFieldInsn(opcode, owner, name, desc);
     }
 
+    @Override
     public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc, boolean itf) {
       if (opcode == Opcodes.INVOKESPECIAL && name.equals(CONSTRUCTOR_NAME)) {
         if (owner.equals(myClassName)) {
@@ -929,6 +933,7 @@ public class AsmCodeGenerator {
       super.visitMethodInsn(opcode, owner, name, desc, itf);
     }
 
+    @Override
     public void visitJumpInsn(final int opcode, final Label label) {
       if (mySuperCalled) {
         callSetupUI();
@@ -944,6 +949,7 @@ public class AsmCodeGenerator {
       }
     }
 
+    @Override
     public void visitInsn(final int opcode) {
       if (opcode == Opcodes.RETURN && !mySetupCalled && !callsSelfConstructor) {
         callSetupUI();
@@ -955,10 +961,11 @@ public class AsmCodeGenerator {
   private static class FirstPassClassVisitor extends ClassVisitor {
     private boolean myExplicitSetupCall = false;
 
-    public FirstPassClassVisitor() {
+    FirstPassClassVisitor() {
       super(ASM_API_VERSION, new ClassVisitor(ASM_API_VERSION) {});
     }
 
+    @Override
     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
       if (name.equals(CONSTRUCTOR_NAME)) {
         return new FirstPassConstructorVisitor();
@@ -971,10 +978,11 @@ public class AsmCodeGenerator {
     }
 
     private class FirstPassConstructorVisitor extends FailSafeMethodVisitor {
-      public FirstPassConstructorVisitor() {
+      FirstPassConstructorVisitor() {
         super(ASM_API_VERSION, new MethodVisitor(ASM_API_VERSION){});
       }
 
+      @Override
       public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
         if (name.equals(SETUP_METHOD_NAME)) {
           myExplicitSetupCall = true;

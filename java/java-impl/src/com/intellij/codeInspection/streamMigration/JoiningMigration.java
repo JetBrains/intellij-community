@@ -26,9 +26,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -191,8 +189,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
           return PsiTreeUtil.getParentOfType(lambda, PsiMember.class, PsiLambdaExpression.class) == loopBound;
         };
       }
-      return ReferencesSearch.search(variable).forEach((Processor<PsiReference>)reference -> referenceBoundPredicate.test(reference)) &&
-             FinalUtils.canBeFinal(variable);
+      return ReferencesSearch.search(variable).allMatch(referenceBoundPredicate) && FinalUtils.canBeFinal(variable);
     }
 
     String generateTerminal(CommentTracker ct) {
@@ -234,7 +231,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
         if (element.isValid() && element instanceof PsiExpression) {
           PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier((PsiExpression)element);
           if (call != null && "toString".equals(call.getMethodExpression().getReferenceName())) {
-            call.replace(element);
+            new CommentTracker().replaceAndRestoreComments(call, element);
           }
         }
       }
@@ -249,7 +246,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
           PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
           PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
           if (nextCall != null && qualifier != null) {
-            ct.replace(nextCall, ct.markUnchanged(qualifier));
+            ct.replace(nextCall, qualifier);
           }
         }
       }
@@ -655,7 +652,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
       private final @NotNull List<PsiExpression> myPrefixJoinParts;
       private final @NotNull List<PsiExpression> mySuffixJoinParts;
 
-      public PrefixSuffixContext(@Nullable PsiMethodCallExpression beforeLoopStatement,
+      PrefixSuffixContext(@Nullable PsiMethodCallExpression beforeLoopStatement,
                                  @Nullable PsiMethodCallExpression afterLoopStatement,
                                  @NotNull List<PsiExpression> prefixJoinParts,
                                  @NotNull List<PsiExpression> suffixJoinParts) {
@@ -743,7 +740,7 @@ List<PsiExpression> builderStrInitializers = null;
        * @return list of declaration statements or null if error
        */
       @Nullable("when failed to get declaration of any var")
-      static List<PsiDeclarationStatement> getDeclarations(@NotNull List<PsiLocalVariable> variables) {
+      static List<PsiDeclarationStatement> getDeclarations(@NotNull List<? extends PsiLocalVariable> variables) {
         List<PsiDeclarationStatement> list = new ArrayList<>();
         for (PsiLocalVariable var : variables) {
           PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(var, PsiDeclarationStatement.class);
@@ -922,6 +919,7 @@ List<PsiExpression> builderStrInitializers = null;
         myTruncateIfStatement = truncateIfStatement;
       }
 
+      @Override
       void preCleanUp(CommentTracker ct) {
         super.preCleanUp(ct);
         ct.delete(myTruncateIfStatement);
@@ -1035,6 +1033,7 @@ List<PsiExpression> builderStrInitializers = null;
         myDelimiterVariable = delimiterVariable;
       }
 
+      @Override
       void preCleanUp(CommentTracker ct) {
         super.preCleanUp(ct);
         ct.delete(myDelimiterVariable);
@@ -1193,7 +1192,7 @@ List<PsiExpression> builderStrInitializers = null;
       private static List<PsiExpression> copyReplacingVar(@NotNull List<PsiExpression> joinParts,
                                                           @NotNull PsiLocalVariable localVariable,
                                                           @NotNull PsiExpression replacement) {
-        List<PsiExpression> copies = joinParts.stream().map(expression -> (PsiExpression)expression.copy()).collect(Collectors.toList());
+        List<PsiExpression> copies = ContainerUtil.map(joinParts, expression -> (PsiExpression)expression.copy());
         for (PsiElement joinPart : copies) {
           ReferencesSearch.search(localVariable, new LocalSearchScope(joinPart)).forEach(reference -> {
             reference.getElement().replace(replacement);
@@ -1259,7 +1258,7 @@ List<PsiExpression> builderStrInitializers = null;
       private final @NotNull List<PsiExpression> myMainJoinParts;
       private final @NotNull List<PsiExpression> myDelimiterJoinParts;
 
-      public JoinData(@Nullable String delimiter,
+      JoinData(@Nullable String delimiter,
                       @NotNull List<PsiExpression> mainJoinParts,
                       @NotNull List<PsiExpression> delimiterJoinParts) {
         myDelimiter = delimiter;

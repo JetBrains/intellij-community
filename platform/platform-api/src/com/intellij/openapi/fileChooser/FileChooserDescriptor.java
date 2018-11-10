@@ -173,7 +173,7 @@ public class FileChooserDescriptor implements Cloneable {
     return withRoots(Arrays.asList(roots));
   }
 
-  public FileChooserDescriptor withRoots(@NotNull List<VirtualFile> roots) {
+  public FileChooserDescriptor withRoots(@NotNull List<? extends VirtualFile> roots) {
     if (roots.contains(null)) throw new IllegalArgumentException("'null' in roots: " + roots);
     myRoots.clear();
     myRoots.addAll(roots);

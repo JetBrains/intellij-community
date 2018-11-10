@@ -39,4 +39,23 @@ public class RedundantAssignment {
       <warning descr="Variable is already assigned to this value">a</warning> = b;
     }
   }
+
+  class X {
+    int a;
+    int b;
+
+    {
+      a = 0;
+      ((b)) = 0;
+    }
+  }
+}
+class A {
+  String typePath;
+  void f() {
+    StringBuilder typePath = new StringBuilder(this.typePath);
+    for (int index = 0; index < 10; index++) {
+      <warning descr="Variable is already assigned to this value">type<caret>Path</warning> = typePath.append(Integer.valueOf(index));
+    }
+  }
 }

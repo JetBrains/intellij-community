@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author: Eugene Zhuravlev
@@ -74,7 +72,7 @@ public class CompilerTask extends CompilerTaskBase {
   @Deprecated
   public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
                       boolean waitForPreviousSession) {
-    this(project, headlessMode, contentName, forceAsync, waitForPreviousSession, false);
+    this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, false);
   }
 
 
@@ -82,21 +80,8 @@ public class CompilerTask extends CompilerTaskBase {
    * @deprecated please use {@link CompilerTaskFactory} instead of direct call to this constructor
    */
   @Deprecated
-  public CompilerTask(@NotNull Project project,
-                      String contentName,
-                      final boolean headlessMode,
-                      boolean forceAsync,
-                      boolean waitForPreviousSession,
-                      boolean compilationStartedAutomatically) {
-    this(project, headlessMode, contentName, forceAsync, waitForPreviousSession, compilationStartedAutomatically);
-  }
-
-  protected CompilerTask(@NotNull Project project,
-                         boolean headlessMode,
-                         String contentName,
-                         boolean forceAsync,
-                         boolean waitForPreviousSession,
-                         boolean compilationStartedAutomatically) {
+  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
+                      boolean waitForPreviousSession, boolean compilationStartedAutomatically) {
     this(project, contentName, headlessMode, forceAsync, waitForPreviousSession, compilationStartedAutomatically, false);
   }
 
@@ -519,7 +504,7 @@ public class CompilerTask extends CompilerTaskBase {
     }
 
     @Override
-    public void contentRemoved(ContentManagerEvent event) {
+    public void contentRemoved(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         synchronized (myMessageViewLock) {
           if (myErrorTreeView != null) {
@@ -540,7 +525,7 @@ public class CompilerTask extends CompilerTaskBase {
     }
 
     @Override
-    public void contentRemoveQuery(ContentManagerEvent event) {
+    public void contentRemoveQuery(@NotNull ContentManagerEvent event) {
       if (event.getContent() == myContent) {
         if (!myIndicator.isCanceled() && shouldAskUser()) {
           int result = Messages.showOkCancelDialog(
@@ -563,14 +548,14 @@ public class CompilerTask extends CompilerTaskBase {
     }
 
     @Override
-    public void projectClosed(Project project) {
+    public void projectClosed(@NotNull Project project) {
       if (project.equals(myProject) && myContent != null) {
         myContentManager.removeContent(myContent, true);
       }
     }
 
     @Override
-    public void projectClosing(Project project) {
+    public void projectClosing(@NotNull Project project) {
       if (project.equals(myProject)) {
         myIsApplicationExitingOrProjectClosing = true;
       }

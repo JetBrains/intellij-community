@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 
 public class SelectionDifferenceModel extends FileDifferenceModel {
   private final SelectionCalculator myCalculator;
@@ -91,8 +92,15 @@ public class SelectionDifferenceModel extends FileDifferenceModel {
   }
 
   private DocumentContent getDiffContent(Revision r, RevisionProcessingProgress p) {
+    Entry e = r.findEntry();
     String content = myCalculator.getSelectionFor(r, p).getBlockContent();
-    FileType fileType = myGateway.getFileType(r.findEntry().getName());
-    return DiffContentFactory.getInstance().create(content, fileType);
+    VirtualFile virtualFile = myGateway.findVirtualFile(e.getPath());
+    if (virtualFile != null) {
+      return DiffContentFactory.getInstance().create(content, virtualFile);
+    }
+    else {
+      FileType fileType = myGateway.getFileType(e.getName());
+      return DiffContentFactory.getInstance().create(content, fileType);
+    }
   }
 }

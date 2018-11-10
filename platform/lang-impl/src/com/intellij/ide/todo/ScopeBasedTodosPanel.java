@@ -24,7 +24,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -75,8 +74,8 @@ public class ScopeBasedTodosPanel extends TodoPanel {
   }
 
   @Override
-  protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
-    ScopeBasedTodosTreeBuilder builder = new ScopeBasedTodosTreeBuilder(tree, treeModel, project, myScopes);
+  protected TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
+    ScopeBasedTodosTreeBuilder builder = new ScopeBasedTodosTreeBuilder(tree, project, myScopes);
     builder.init();
     return builder;
   }

@@ -88,4 +88,9 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
   public boolean isAlwaysShowPlus() {
     return true;
   }
+
+  @Override
+  public String toString() {
+    return "Caller Hierarchy for " + formatBaseElementText();
+  }
 }

@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MavenGotoFileContributor implements ChooseByNameContributor {
+  @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     List<String> result = new ArrayList<>();
@@ -40,6 +41,7 @@ public class MavenGotoFileContributor implements ChooseByNameContributor {
     return ArrayUtil.toStringArray(result);
   }
 
+  @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, String pattern, Project project, boolean includeNonProjectItems) {
     List<NavigationItem> result = new ArrayList<>();

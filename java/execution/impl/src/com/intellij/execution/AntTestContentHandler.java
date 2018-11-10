@@ -82,19 +82,25 @@ public class AntTestContentHandler extends DefaultHandler {
   @Override
   public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
     if (TESTSUITE.equals(qName)) {
-      final String suiteName = StringUtil.unescapeXml(attributes.getValue(NAME));
-      final String packageName = StringUtil.unescapeXml(attributes.getValue(PACKAGE));
+      String nameValue = attributes.getValue(NAME);
+      final String suiteName = nameValue == null ? null : StringUtil.unescapeXmlEntities(nameValue);
+      String packageValue = attributes.getValue(PACKAGE);
+      final String packageName = packageValue == null ? null : StringUtil.unescapeXmlEntities(packageValue);
       myProcessor
-        .onSuiteStarted(new TestSuiteStartedEvent(suiteName, "java:suite://" + StringUtil.getQualifiedName(packageName, suiteName)));
+        .onSuiteStarted(new TestSuiteStartedEvent(suiteName, "java:suite://" + StringUtil.getQualifiedName(packageName,
+                                                                                                           StringUtil.notNullize(suiteName))));
       mySuites.push(suiteName);
     }
     else if (TESTCASE.equals(qName)) {
-      final String name = StringUtil.unescapeXml(attributes.getValue(NAME));
+      String nameValue = attributes.getValue(NAME);
+      final String name = nameValue == null ? null : StringUtil.unescapeXmlEntities(nameValue);
       myCurrentTest = name;
       myStatus = null;
       myDuration = attributes.getValue(DURATION);
-      String classname = StringUtil.unescapeXml(attributes.getValue(CLASSNAME));
-      final TestStartedEvent startedEvent = new TestStartedEvent(name, "java:test://" + StringUtil.getQualifiedName(classname, name));
+      String classNameValue = attributes.getValue(CLASSNAME);
+      String classname = classNameValue == null ? null : StringUtil.unescapeXmlEntities(classNameValue);
+      String location = StringUtil.isEmpty(classname) ? name : classname + "/" + name;
+      final TestStartedEvent startedEvent = new TestStartedEvent(name, "java:test://" + location);
       myProcessor.onTestStarted(startedEvent);
     }
     else if (ERR.equals(qName)) {
@@ -116,7 +122,7 @@ public class AntTestContentHandler extends DefaultHandler {
 
   @Override
   public void endElement(String uri, String localName, String qName) throws SAXException {
-    final String currentText = StringUtil.unescapeXml(currentValue.toString());
+    final String currentText = StringUtil.unescapeXmlEntities(currentValue.toString());
     currentValue.setLength(0);
     if (TESTSUITE.equals(qName)) {
       myProcessor.onSuiteFinished(new TestSuiteFinishedEvent(mySuites.pop()));

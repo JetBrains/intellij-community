@@ -1,22 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
-import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
@@ -42,8 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MethodReferenceResolver implements ResolveCache.PolyVariantContextResolver<PsiMethodReferenceExpressionImpl> {
-  private static final Logger LOG = Logger.getInstance(MethodReferenceResolver.class);
-
   @NotNull
   @Override
   public JavaResolveResult[] resolve(@NotNull final PsiMethodReferenceExpressionImpl reference, @NotNull final PsiFile containingFile, boolean incompleteCode) {
@@ -59,7 +41,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         if (isConstructor && !canBeConstructed(containingClass)) {
           return JavaResolveResult.EMPTY_ARRAY;
         }
-        final PsiType functionalInterfaceType = getInterfaceType(reference);
+        final PsiType functionalInterfaceType = reference.getFunctionalInterfaceType();
         final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
         final PsiSubstitutor functionalInterfaceSubstitutor = interfaceMethod != null ? LambdaUtil.getSubstitutor(interfaceMethod, resolveResult) : null;
@@ -75,7 +57,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
             }
           }
           ClassCandidateInfo candidateInfo = null;
-          final boolean isArray = PsiEquivalenceUtil.areElementsEquivalent(containingClass, JavaPsiFacade.getElementFactory(reference.getProject()).getArrayClass(PsiUtil.getLanguageLevel(reference)));
+          final boolean isArray = PsiUtil.isArrayClass(containingClass);
           if (signature == null ||
               !isArray && (containingClass.getContainingClass() == null || !isLocatedInStaticContext(containingClass, reference)) && signature.getParameterTypes().length == 0 ||
               isArray && arrayCreationSignature(signature)) {
@@ -190,10 +172,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     return false;
   }
 
-  protected PsiType getInterfaceType(PsiMethodReferenceExpression reference) {
-    return reference.getFunctionalInterfaceType();
-  }
-
   protected PsiConflictResolver createResolver(PsiMethodReferenceExpressionImpl referenceExpression,
                                                PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult,
                                                PsiMethod interfaceMethod,
@@ -301,6 +279,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
       final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
 
       final PsiSubstitutor substitutor = ((MethodCandidateInfo)conflict).getSubstitutor(false);
+      if (((MethodCandidateInfo)conflict).getInferenceErrorMessage() != null) return null;
       final PsiType[] parameterTypes = psiMethod.getSignature(substitutor).getParameterTypes();
 
       final boolean varargs = ((MethodCandidateInfo)conflict).isVarargs();
@@ -361,11 +340,11 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     private CandidateInfo resolveConflicts(List<CandidateInfo> firstCandidates, List<CandidateInfo> secondCandidates, int applicabilityLevel) {
 
       final int firstApplicability = checkApplicability(firstCandidates);
-      checkSpecifics(firstCandidates, applicabilityLevel, myLanguageLevel);
+      checkSpecifics(firstCandidates, applicabilityLevel);
 
       final int secondApplicability = checkApplicability(secondCandidates);
-      checkSpecifics(secondCandidates, applicabilityLevel, myLanguageLevel);
-      
+      checkSpecifics(secondCandidates, applicabilityLevel, null, 1);
+
       if (firstApplicability < secondApplicability) {
         return secondCandidates.size() == 1 ? secondCandidates.get(0) : null;
       }
@@ -405,12 +384,12 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
         final PsiElement element = candidateInfo.getElement();
         if (element instanceof PsiMethod) {
           final boolean isStatic = ((PsiMethod)element).hasModifierProperty(PsiModifier.STATIC);
-          if (shouldBeStatic && isStatic || !shouldBeStatic && !isStatic) {
+          if (shouldBeStatic == isStatic) {
             for (CandidateInfo secondCandidate : secondCandidates) {
               final PsiElement psiElement = secondCandidate.getElement();
               if (psiElement instanceof PsiMethod) {
                 final boolean oppositeStatic = ((PsiMethod)psiElement).hasModifierProperty(PsiModifier.STATIC);
-                if (shouldBeStatic && !oppositeStatic || !shouldBeStatic && oppositeStatic) {
+                if (shouldBeStatic != oppositeStatic) {
                   return null;
                 }
               }
@@ -425,9 +404,6 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
 
   private static boolean arrayCreationSignature(MethodSignature signature) {
     final PsiType[] parameterTypes = signature.getParameterTypes();
-    if (parameterTypes.length == 1 && parameterTypes[0] != null && TypeConversionUtil.isAssignable(PsiType.INT, parameterTypes[0])) {
-      return true;
-    }
-    return false;
+    return parameterTypes.length == 1 && parameterTypes[0] != null && TypeConversionUtil.isAssignable(PsiType.INT, parameterTypes[0]);
   }
 }

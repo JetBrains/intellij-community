@@ -61,7 +61,7 @@ public abstract class ModuleInsight {
     setRoots(Collections.emptyList(), Collections.emptyList(), Collections.emptySet());
   }
 
-  public final void setRoots(final List<File> contentRoots, final List<? extends DetectedSourceRoot> sourceRoots, final Set<String> ignoredNames) {
+  public final void setRoots(final List<? extends File> contentRoots, final List<? extends DetectedSourceRoot> sourceRoots, final Set<String> ignoredNames) {
     myModules = null;
     myLibraries = null;
 
@@ -355,7 +355,7 @@ public abstract class ModuleInsight {
   }
 
   public static Collection<LibraryDescriptor> getLibraryDependencies(ModuleDescriptor module,
-                                                                     @Nullable List<LibraryDescriptor> allLibraries) {
+                                                                     @Nullable List<? extends LibraryDescriptor> allLibraries) {
     final Set<LibraryDescriptor> libs = new HashSet<>();
     if (allLibraries != null) {
       for (LibraryDescriptor library : allLibraries) {
@@ -388,7 +388,7 @@ public abstract class ModuleInsight {
   }
 
 
-  private static List<LibraryDescriptor> buildInitialLibrariesLayout(final Set<File> jars) {
+  private static List<LibraryDescriptor> buildInitialLibrariesLayout(final Set<? extends File> jars) {
     final Map<File, LibraryDescriptor> rootToLibraryMap = new HashMap<>();
     for (File jar : jars) {
       final File parent = jar.getParentFile();

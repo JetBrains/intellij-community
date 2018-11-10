@@ -7,7 +7,6 @@ import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
@@ -27,23 +26,19 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.jetbrains.idea.maven.indices.MavenIndicesManager.IndexUpdatingState.IDLE;
 
-/**
- * @author Vladislav.Soroka
- * @since 10/28/13
- */
-public class MavenRepositoriesHolder extends AbstractProjectComponent {
+public class MavenRepositoriesHolder {
   private static final String UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP = "Unindexed maven repositories gradle detection";
   private static final Key<String> NOTIFICATION_KEY = Key.create(UNINDEXED_MAVEN_REPOSITORIES_NOTIFICATION_GROUP);
+  private final Project myProject;
 
   private volatile Set<MavenRemoteRepository> myRemoteRepositories;
   private volatile Set<String> myNotIndexedUrls;
 
   public MavenRepositoriesHolder(Project project) {
-    super(project);
+    myProject = project;
     myRemoteRepositories = Collections.emptySet();
     myNotIndexedUrls = Collections.emptySet();
   }
@@ -86,9 +81,8 @@ public class MavenRepositoriesHolder extends AbstractProjectComponent {
     notificationData.setListener("#update", new NotificationListener.Adapter() {
       @Override
       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-        List<MavenIndex> notIndexed = indicesManager.getIndices().stream()
-          .filter(index -> isNotIndexed(index.getRepositoryPathOrUrl()))
-          .collect(Collectors.toList());
+        List<MavenIndex> notIndexed =
+          ContainerUtil.filter(indicesManager.getIndices(), index -> isNotIndexed(index.getRepositoryPathOrUrl()));
         indicesManager.scheduleUpdate(myProject, notIndexed).onSuccess(aVoid -> {
           if (myNotIndexedUrls.isEmpty()) return;
           for (MavenIndex index : notIndexed) {

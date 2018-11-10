@@ -16,7 +16,6 @@
     <orderEntry type="library" scope="RUNTIME" name="ASM" level="project" />
     <orderEntry type="library" exported="" scope="RUNTIME" name="cli-parser" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="JDOM" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="Netty" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="protobuf" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="Log4J" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="jna" level="project" />
@@ -41,5 +40,7 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy.rt" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="netty-codec-http" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="netty-handler" level="project" />
   </component>
 </module>

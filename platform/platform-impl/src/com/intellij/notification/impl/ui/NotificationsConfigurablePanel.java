@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationDisplayType;
@@ -50,8 +36,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author spleaner
@@ -100,6 +86,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     myTable.removeSelected();
   }
 
+  @Override
   public void dispose() {
     myTable = null;
   }
@@ -198,7 +185,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private static final int LOG_COLUMN = 2;
     private static final int READ_ALOUD_COLUMN = 3;
 
-    public NotificationsTreeTable() {
+    NotificationsTreeTable() {
       super(new NotificationsTreeTableModel());
       StripeTable.apply(this);
       setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -307,7 +294,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
   private static class TreeColumnCellRenderer extends JLabel implements TreeCellRenderer {
     private final JTable myTable;
 
-    public TreeColumnCellRenderer(@NotNull JTable table) {
+    TreeColumnCellRenderer(@NotNull JTable table) {
       myTable = table;
       setHorizontalAlignment(SwingConstants.CENTER);
       setVerticalAlignment(SwingConstants.CENTER);
@@ -331,7 +318,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private final List<SettingsWrapper> mySettings = new ArrayList<>();
     private JTree myTree;
 
-    public NotificationsTreeTableModel() {
+    NotificationsTreeTableModel() {
       super(null);
 
       List<DefaultMutableTreeNode> rootChildren = new ArrayList<>();

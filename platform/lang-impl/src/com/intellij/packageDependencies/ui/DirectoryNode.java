@@ -100,7 +100,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   @Override
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
     Boolean isRoot = null;

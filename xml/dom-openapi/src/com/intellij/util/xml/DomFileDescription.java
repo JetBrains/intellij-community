@@ -62,6 +62,7 @@ public class DomFileDescription<T> {
     myAllPossibleRootTagNamespaces = allPossibleRootTagNamespaces.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : allPossibleRootTagNamespaces;
   }
 
+  @NotNull
   public String[] getAllPossibleRootTagNamespaces() {
     return myAllPossibleRootTagNamespaces;
   }
@@ -75,6 +76,7 @@ public class DomFileDescription<T> {
    * @deprecated use dom.implementation extension point instead
    * @see #initializeFileDescription()
    */
+  @Deprecated
   public final <T extends DomElement> void registerImplementation(Class<T> domElementClass, Class<? extends T> implementationClass) {
     myImplementations.put(domElementClass, implementationClass);
   }
@@ -86,6 +88,7 @@ public class DomFileDescription<T> {
    * function shouldn't use DOM since it may be not initialized for the file at the moment
    * @deprecated use {@link #registerNamespacePolicy(String, String...)} or override {@link #getAllowedNamespaces(String, com.intellij.psi.xml.XmlFile)} instead
    */
+  @Deprecated
   protected final void registerNamespacePolicy(String namespaceKey, NotNullFunction<XmlTag,List<String>> policy) {
     myNamespacePolicies.put(namespaceKey, policy);
   }
@@ -102,7 +105,6 @@ public class DomFileDescription<T> {
   /**
    * Consider using {@link DomService#getXmlFileHeader(com.intellij.psi.xml.XmlFile)} when implementing this.
    */
-  @SuppressWarnings({"MethodMayBeStatic"})
   @NotNull
   public List<String> getAllowedNamespaces(@NotNull String namespaceKey, @NotNull XmlFile file) {
     final NotNullFunction<XmlTag, List<String>> function = myNamespacePolicies.get(namespaceKey);

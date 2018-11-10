@@ -154,7 +154,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   @Override
-  public void handleInsert(InsertionContext context) {
+  public void handleInsert(@NotNull InsertionContext context) {
     final Document document = context.getDocument();
     final PsiFile file = context.getFile();
     final PsiMethod method = getObject();
@@ -191,7 +191,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     startArgumentLiveTemplate(context, method);
-    showParameterHints(context, method, methodCall);
+    showParameterHints(this, context, method, methodCall);
   }
 
   static PsiCallExpression findCallAtOffset(InsertionContext context, int offset) {
@@ -256,6 +256,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     Editor editor = context.getEditor();
     context.commitDocument();
+    PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
+
     PsiCall call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiCall.class, false);
     PsiExpressionList argList = call == null ? null : call.getArgumentList();
     if (argList == null || !argList.isEmpty()) {
@@ -287,8 +289,12 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     return true;
   }
 
-  public static void showParameterHints(InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
-    if (methodCall == null) return;
+  public static void showParameterHints(LookupElement element, InsertionContext context, PsiMethod method, PsiCallExpression methodCall) {
+    if (methodCall == null ||
+        methodCall.getContainingFile() instanceof PsiCodeFragment ||
+        element.getUserData(JavaMethodMergingContributor.MERGED_ELEMENT) != null) {
+      return;
+    }
     PsiParameterList parameterList = method.getParameterList();
     int parametersCount = parameterList.getParametersCount();
     PsiExpressionList parameterOwner = methodCall.getArgumentList();
@@ -310,16 +316,23 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     CaretModel caretModel = editor.getCaretModel();
     int offset = caretModel.getOffset();
+
+    int afterParenOffset = offset + 1;
+    if (afterParenOffset < document.getTextLength() &&
+        Character.isJavaIdentifierPart(document.getImmutableCharSequence().charAt(afterParenOffset))) {
+      return;
+    }
+
     int braceOffset = offset - 1;
     int numberOfParametersToDisplay = parametersCount > 1 && PsiImplUtil.isVarArgs(method) ? parametersCount - 1 : parametersCount;
     int numberOfCommas = Math.min(numberOfParametersToDisplay, limit) - 1;
-    String commas = StringUtil.repeat(", ", numberOfCommas);
-    editor.getDocument().insertString(offset, commas);
+    String commas = Registry.is("editor.completion.hints.virtual.comma") ? "" : StringUtil.repeat(", ", numberOfCommas);
+    document.insertString(offset, commas);
 
     PsiDocumentManager.getInstance(project).commitDocument(document);
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
-    ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
-    if (handler.findElementForParameterInfo(infoContext) == null) {
+    ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), offset, braceOffset);
+    if (!methodCall.isValid() || handler.findElementForParameterInfo(infoContext) == null) {
       document.deleteString(offset, offset + commas.length());
       return;
     }
@@ -361,19 +374,19 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     AtomicInteger maxEditedVariable = new AtomicInteger(-1);
     editor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         maxEditedVariable.set(Math.max(maxEditedVariable.get(), templateState.getCurrentVariableNumber()));
       }
     }, templateState);
 
     templateState.addTemplateStateListener(new TemplateEditingAdapter() {
       @Override
-      public void currentVariableChanged(TemplateState templateState, Template template, int oldIndex, int newIndex) {
+      public void currentVariableChanged(@NotNull TemplateState templateState, Template template, int oldIndex, int newIndex) {
         maxEditedVariable.set(Math.max(maxEditedVariable.get(), oldIndex));
       }
 
       @Override
-      public void beforeTemplateFinished(TemplateState state, Template template, boolean brokenOff) {
+      public void beforeTemplateFinished(@NotNull TemplateState state, Template template, boolean brokenOff) {
         if (brokenOff) {
           removeUntouchedArguments((TemplateImpl)template);
         }

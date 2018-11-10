@@ -22,9 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 
-/**
- * @author Tagir Valeev
- */
 class CountMigration extends BaseStreamApiMigration {
 
   CountMigration(boolean shouldWarn) {

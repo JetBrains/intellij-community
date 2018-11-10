@@ -58,14 +58,6 @@ public abstract class ModuleExtension implements Disposable {
   public abstract boolean isChanged();
 
   /**
-   * Explicit comparator is used. To be deleted in 2018
-   */
-  @Deprecated
-  public int compareTo(@NotNull final ModuleExtension o) {
-    return getClass().getName().compareTo(o.getClass().getName());
-  }
-
-  /**
    * @deprecated Please implement PersistentStateComponent instead.
    */
   @Deprecated

@@ -35,11 +35,12 @@ import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
+import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogFileFilter;
 import com.intellij.vcs.log.impl.VcsLogRootFilterImpl;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +49,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilter> {
   private static final int FILTER_LABEL_LENGTH = 30;
@@ -57,11 +58,14 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
   private static final FileByNameComparator FILE_BY_NAME_COMPARATOR = new FileByNameComparator();
   private static final FilePathByPathComparator FILE_PATH_BY_PATH_COMPARATOR = new FilePathByPathComparator();
 
+  @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogColorManager myColorManager;
-  @NotNull private final FixedSizeQueue<VcsLogStructureFilter> myHistory = new FixedSizeQueue<>(5);
 
-  StructureFilterPopupComponent(@NotNull FilterModel<VcsLogFileFilter> filterModel, @NotNull VcsLogColorManager colorManager) {
+  StructureFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
+                                @NotNull FilterModel<VcsLogFileFilter> filterModel,
+                                @NotNull VcsLogColorManager colorManager) {
     super("Paths", filterModel);
+    myUiProperties = uiProperties;
     myColorManager = colorManager;
   }
 
@@ -175,7 +179,7 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       }
     }
     List<AnAction> structureActions = new ArrayList<>();
-    for (VcsLogStructureFilter filter : myHistory) {
+    for (VcsLogStructureFilter filter : getRecentFilters()) {
       structureActions.add(new SelectFromHistoryAction(filter));
     }
 
@@ -187,6 +191,12 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     return new DefaultActionGroup(createAllAction(), new SelectFoldersAction(),
                                   new Separator("Roots"), new DefaultActionGroup(rootActions),
                                   new Separator("Recent"), new DefaultActionGroup(structureActions));
+  }
+
+  @NotNull
+  private List<VcsLogStructureFilter> getRecentFilters() {
+    List<List<String>> filterValues = myUiProperties.getRecentlyFilteredGroups(myName);
+    return ContainerUtil.map2List(filterValues, values -> VcsLogClassicFilterUi.FileFilterModel.createStructureFilter(values));
   }
 
   private Set<VirtualFile> getAllRoots() {
@@ -254,12 +264,12 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return isVisible(myRoot);
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (!isEnabled()) {
         setVisibleOnly(myRoot);
       }
@@ -357,17 +367,17 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       if (chooser.showAndGet()) {
         VcsLogStructureFilterImpl structureFilter = new VcsLogStructureFilterImpl(new HashSet<VirtualFile>(chooser.getSelectedFiles()));
         myFilterModel.setFilter(new VcsLogFileFilter(structureFilter, null));
-        myHistory.add(structureFilter);
+        myUiProperties.addRecentlyFilteredGroup(myName, VcsLogClassicFilterUi.FileFilterModel.getFilterValues(structureFilter));
       }
     }
 
     @Override
-    public void update(AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabledAndVisible(e.getProject() != null);
     }
   }
 
-  private class SelectFromHistoryAction extends ToggleAction {
+  private class SelectFromHistoryAction extends ToggleAction implements DumbAware {
     @NotNull private final VcsLogStructureFilter myFilter;
     @NotNull private final Icon myIcon;
     @NotNull private final Icon myEmptyIcon;
@@ -380,12 +390,12 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
     }
 
     @Override
-    public boolean isSelected(AnActionEvent e) {
+    public boolean isSelected(@NotNull AnActionEvent e) {
       return myFilterModel.getFilter() != null && myFilterModel.getFilter().getStructureFilter() == myFilter;
     }
 
     @Override
-    public void setSelected(AnActionEvent e, boolean state) {
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
       myFilterModel.setFilter(new VcsLogFileFilter(myFilter, null));
     }
 
@@ -399,28 +409,6 @@ class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFileFilte
       }
       else {
         presentation.setIcon(myEmptyIcon);
-      }
-    }
-  }
-
-  private static class FixedSizeQueue<T> implements Iterable<T> {
-    @NotNull private final LinkedList<T> myQueue = new LinkedList<>();
-    private final int maxSize;
-
-    FixedSizeQueue(int maxSize) {
-      this.maxSize = maxSize;
-    }
-
-    @NotNull
-    @Override
-    public Iterator<T> iterator() {
-      return ContainerUtil.reverse(myQueue).iterator();
-    }
-
-    public void add(T t) {
-      myQueue.add(t);
-      if (myQueue.size() > maxSize) {
-        myQueue.poll();
       }
     }
   }

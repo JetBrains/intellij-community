@@ -50,7 +50,7 @@ public class PathUtilEx {
   }
 
   @Nullable
-  public static Sdk chooseJdk(Project project, Collection<Module> modules) {
+  public static Sdk chooseJdk(Project project, Collection<? extends Module> modules) {
     Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
     if (projectJdk != null) {
       return projectJdk;
@@ -59,7 +59,7 @@ public class PathUtilEx {
   }
 
   @Nullable
-  public static Sdk chooseJdk(Collection<Module> modules) {
+  public static Sdk chooseJdk(Collection<? extends Module> modules) {
     List<Sdk> jdks = skipNulls(map(skipNulls(modules), MODULE_JDK));
     if (jdks.isEmpty()) {
       return null;

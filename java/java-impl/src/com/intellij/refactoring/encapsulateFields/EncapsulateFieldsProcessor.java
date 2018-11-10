@@ -36,7 +36,6 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -106,6 +105,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return data;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(@NotNull UsageInfo[] usages) {
     FieldDescriptor[] fields = new FieldDescriptor[myFieldDescriptors.length];
@@ -113,11 +113,13 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     return new EncapsulateFieldsViewDescriptor(fields);
   }
 
+  @Override
   @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("encapsulate.fields.command.name", DescriptiveNameUtil.getDescriptiveName(myClass));
   }
 
+  @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
 
@@ -242,6 +244,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @Override
   @NotNull protected UsageInfo[] findUsages() {
     ArrayList<EncapsulateFieldUsageInfo> array = ContainerUtil.newArrayList();
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
@@ -277,6 +280,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     myClass = myFieldDescriptors[0].getField().getContainingClass();
   }
 
+  @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     updateFieldVisibility();
     generateAccessors();

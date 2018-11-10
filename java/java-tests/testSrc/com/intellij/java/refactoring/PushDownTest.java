@@ -18,6 +18,7 @@ package com.intellij.java.refactoring;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.memberPushDown.PushDownProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -34,7 +35,6 @@ import java.util.function.Consumer;
 
 /**
  * @author anna
- * @since 13-Mar-2008
  */
 public class PushDownTest extends LightRefactoringTestCase {
   private static final String BASE_PATH = "/refactoring/pushDown/";
@@ -66,6 +66,7 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testFunctionalExpression() { doTest(true);}
   public void testFunctionalInterface() { doTest(true);}
   public void testFunctionalExpressionDefaultMethod() { doTest();}
+  public void testInlineSuperMethodCall() { BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest());}
   public void testRenameTypeParametersToAvoidHiding() { doTest();}
   public void testNoRenameTypeParametersToAvoidHidingForStatic() { doTest();}
 
@@ -77,9 +78,12 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testDefaultMethodToInterfaceKeepAbstract() {doTestImplements(true);}
   public void testDefaultMethodToClass() {doTest();}
   public void testDefaultMethodToClassKeepAbstract() { doTestImplements(true); }
-
   public void testInterfaceStaticMethodToInterface() { doTest(); }
   public void testInterfaceStaticMethodToClass() { doTest(); }
+  public void testThisSuperExpressions() {doTest();}
+  public void testMethodsInheritedFromSuper() {doTest();}
+  public void testCopyAnnotationsFromSuper() {doTest();}
+  public void testKeepBodyFromInterfaceMethod() {doTest();}
 
   public void testInterfaceMethodToClass() { doTest();}
 
@@ -105,6 +109,10 @@ public class PushDownTest extends LightRefactoringTestCase {
 
   public void testPreserveOverrideAnnotationAfterConflict() {
     doTestImplements(true, true);
+  }
+
+  public void testPassingImplementsToAnonymous() {
+    doTestImplements(false, true);
   }
 
   public void testInterfaceVisibilityInClass() {

@@ -114,7 +114,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
     PsiType[] types = getTypeParameters();
     if (types.length == 0) return name;
 
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     buf.append(name);
     buf.append('<');
     for (int i = 0; i < types.length; i++) {
@@ -132,7 +132,7 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
   }
 
   @Override
-  public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(@NotNull String newElementName) throws IncorrectOperationException {
     //TODO?
     throw new IncorrectOperationException();
   }
@@ -153,12 +153,13 @@ public class LightMemberReference extends LightElement implements PsiJavaCodeRef
     }
   }
 
+  @Override
   public String toString() {
     return "LightClassReference:" + myRefMember.getName();
   }
 
   @Override
-  public boolean isReferenceTo(PsiElement element) {
+  public boolean isReferenceTo(@NotNull PsiElement element) {
     return element instanceof PsiClass && element.getManager().areElementsEquivalent(resolve(), element);
   }
 

@@ -114,11 +114,13 @@ public class JiraRepository extends BaseRepositoryImpl {
   }
 
 
+  @Override
   @NotNull
   public JiraRepository clone() {
     return new JiraRepository(this);
   }
 
+  @Override
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     ensureApiVersionDiscovered();
     String resultQuery = StringUtil.notNullize(query);
@@ -222,9 +224,9 @@ public class JiraRepository extends BaseRepositoryImpl {
   private static boolean isHostedInCloud(@NotNull JsonObject serverInfo) {
     final JsonElement deploymentType = serverInfo.get("deploymentType");
     if (deploymentType != null) {
-      return deploymentType.getAsString().equals("Cloud");  
+      return deploymentType.getAsString().equals("Cloud");
     }
-    // Legacy heuristics 
+    // Legacy heuristics
     final boolean atlassianSubDomain = hostEndsWith(serverInfo.get("baseUrl").getAsString(), ".atlassian.net");
     if (atlassianSubDomain) {
       return true;
@@ -338,7 +340,7 @@ public class JiraRepository extends BaseRepositoryImpl {
   String getPresentableVersion() {
     return StringUtil.notNullize(myJiraVersion, "unknown") + (myInCloud ? " (Cloud)" : "");
   }
-  
+
   private static boolean containsCookie(@NotNull HttpClient client, @NotNull String cookieName) {
     for (Cookie cookie : client.getState().getCookies()) {
       if (cookie.getName().equals(cookieName) && !cookie.isExpired()) {

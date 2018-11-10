@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml;
 
 import com.intellij.lang.ASTNode;
@@ -23,35 +24,42 @@ import org.jetbrains.yaml.psi.impl.*;
 public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes {
   private static final TokenSet myCommentTokens = TokenSet.create(YAMLTokenTypes.COMMENT);
 
+  @Override
   @NotNull
   public Lexer createLexer(final Project project) {
     return new YAMLFlexLexer();
   }
 
+  @Override
   @Nullable
   public PsiParser createParser(final Project project) {
     return new YAMLParser();
   }
 
+  @Override
   public IFileElementType getFileNodeType() {
     return FILE;
   }
 
+  @Override
   @NotNull
   public TokenSet getWhitespaceTokens() {
     return TokenSet.create(YAMLTokenTypes.WHITESPACE);
   }
 
+  @Override
   @NotNull
   public TokenSet getCommentTokens() {
     return myCommentTokens;
   }
 
+  @Override
   @NotNull
   public TokenSet getStringLiteralElements() {
     return TokenSet.create(YAMLTokenTypes.SCALAR_STRING, YAMLTokenTypes.SCALAR_DSTRING, YAMLTokenTypes.TEXT);
   }
 
+  @Override
   @NotNull
   public PsiElement createElement(final ASTNode node) {
     final IElementType type = node.getElementType();
@@ -91,14 +99,22 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
     if (type == SCALAR_QUOTED_STRING) {
       return new YAMLQuotedTextImpl(node);
     }
+    if (type == ANCHOR_NODE) {
+      return new YAMLAnchorImpl(node);
+    }
+    if (type == ALIAS_NODE) {
+      return new YAMLAliasImpl(node);
+    }
     return new YAMLPsiElementImpl(node);
   }
 
+  @Override
   public PsiFile createFile(final FileViewProvider viewProvider) {
     return new YAMLFileImpl(viewProvider);
   }
 
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
+  @Override
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }

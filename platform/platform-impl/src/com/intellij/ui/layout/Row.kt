@@ -2,6 +2,7 @@
 package com.intellij.ui.layout
 
 import com.intellij.ui.components.Label
+import com.intellij.ui.components.RadioButton
 import com.intellij.util.ui.UIUtil.ComponentStyle
 import com.intellij.util.ui.UIUtil.FontColor
 import javax.swing.JComponent
@@ -21,6 +22,12 @@ abstract class Row : Cell() {
   fun label(text: String, gapLeft: Int = 0, style: ComponentStyle? = null, fontColor: FontColor? = null, bold: Boolean = false) {
     val label = Label(text, style, fontColor, bold)
     label(gapLeft = gapLeft)
+  }
+
+  fun <T : Any> LayoutBuilderWithButtonGroup<T>.radioButton(text: String, id: T) {
+    val component = RadioButton(text)
+    propertyManager.addRadioButton(component, id, this@Row)
+    component()
   }
 
   /**
@@ -49,22 +56,26 @@ abstract class Row : Cell() {
   /**
    * Shares cell between components.
    */
-  inline fun cell(init: Cell.() -> Unit) {
-    setCellMode(true)
+  inline fun cell(isVerticalFlow: Boolean = false, init: Cell.() -> Unit) {
+    setCellMode(true, isVerticalFlow)
     init()
-    setCellMode(false)
+    setCellMode(false, isVerticalFlow)
   }
 
   @PublishedApi
   internal abstract fun createRow(label: String?): Row
 
   @PublishedApi
-  internal abstract fun setCellMode(value: Boolean)
+  internal abstract fun setCellMode(value: Boolean, isVerticalFlow: Boolean)
 
   // backward compatibility
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
   operator fun JComponent.invoke(vararg constraints: CCFlags, gapLeft: Int = 0, growPolicy: GrowPolicy? = null) {
     invoke(constraints = *constraints, gapLeft = gapLeft, growPolicy = growPolicy, comment = null)
+  }
+
+  @Deprecated(level = DeprecationLevel.ERROR, message = "Do not create standalone panel, if you want layout components in vertical flow mode, use cell(isVerticalFlow = true)")
+  fun panel(vararg constraints: LCFlags, title: String? = null, init: LayoutBuilder.() -> Unit) {
   }
 }
 

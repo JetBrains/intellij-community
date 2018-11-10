@@ -15,7 +15,8 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.xml.events.*;
+import com.intellij.util.xml.events.DomEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -24,5 +25,5 @@ import java.util.EventListener;
  */
 public interface DomEventListener extends EventListener {
 
-  void eventOccured(DomEvent event);
+  void eventOccured(@NotNull DomEvent event);
 }

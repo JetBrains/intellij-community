@@ -233,7 +233,7 @@ public final class IdeaAntLogger2 extends DefaultLogger {
     private boolean myEnabled = true;
     private final int myMinLevel;
 
-    public StatePriority(int minLevel) {
+    StatePriority(int minLevel) {
       myMinLevel = minLevel;
     }
 

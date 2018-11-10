@@ -22,9 +22,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class SimplifyOptionalCallChainsInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected Sdk getProjectJDK() {
@@ -35,10 +32,6 @@ public class SimplifyOptionalCallChainsInspectionTest extends LightQuickFixParam
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new SimplifyOptionalCallChainsInspection()};
-  }
-
-  public void test() {
-    doAllTests();
   }
 
   @Override

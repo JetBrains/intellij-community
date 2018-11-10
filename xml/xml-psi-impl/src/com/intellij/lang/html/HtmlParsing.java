@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class HtmlParsing {
   @NonNls private static final String TR_TAG = "tr";
   @NonNls private static final String TD_TAG = "td";
@@ -81,7 +83,9 @@ public class HtmlParsing {
 
         tagEndError.error(XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing"));
       }
-      else {
+      else if (hasCustomTopLevelContent()) {
+        error = parseCustomTopLevelContent(error);
+      } else {
         if (error == null) error = mark();
         advance();
       }
@@ -94,13 +98,28 @@ public class HtmlParsing {
     document.done(XmlElementType.HTML_DOCUMENT);
   }
 
+  protected boolean hasCustomTopLevelContent() {
+    return false;
+  }
+
+  protected PsiBuilder.Marker parseCustomTopLevelContent(PsiBuilder.Marker error) {
+    return error;
+  }
+
+  protected boolean hasCustomTagContent() {
+    return false;
+  }
+
+  protected PsiBuilder.Marker parseCustomTagContent(PsiBuilder.Marker xmlText) {
+    return xmlText;
+  }
+
   @Nullable
-  private static PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
+  protected static PsiBuilder.Marker flushError(PsiBuilder.Marker error) {
     if (error != null) {
       error.error(XmlErrorMessages.message("xml.parsing.unexpected.tokens"));
-      error = null;
     }
-    return error;
+    return null;
   }
 
   private void parseDoctype() {
@@ -119,7 +138,7 @@ public class HtmlParsing {
     doctype.done(XmlElementType.XML_DOCTYPE);
   }
 
-  private void parseTag() {
+  public void parseTag() {
     assert token() == XmlTokenType.XML_START_TAG_START : "Tag start expected";
     String originalTagName;
     PsiBuilder.Marker xmlText = null;
@@ -136,7 +155,7 @@ public class HtmlParsing {
           originalTagName = "";
         }
         else {
-          originalTagName = myBuilder.getTokenText();
+          originalTagName = Objects.requireNonNull(myBuilder.getTokenText());
           advance();
         }
 
@@ -169,6 +188,9 @@ public class HtmlParsing {
 
         if (originalTagName != null && isSingleTag(tagName, originalTagName)) {
           final PsiBuilder.Marker footer = mark();
+          while (token() == XmlTokenType.XML_REAL_WHITE_SPACE) {
+            advance();
+          }
           if (token() == XmlTokenType.XML_END_TAG_START) {
             advance();
             if (token() == XmlTokenType.XML_NAME) {
@@ -219,7 +241,7 @@ public class HtmlParsing {
         advance();
 
         if (token() == XmlTokenType.XML_NAME) {
-          String endName = StringUtil.toLowerCase(myBuilder.getTokenText());
+          String endName = StringUtil.toLowerCase(Objects.requireNonNull(myBuilder.getTokenText()));
           final String parentTagName = !myTagNamesStack.isEmpty() ? myTagNamesStack.peek() : "";
           if (!parentTagName.equals(endName) && !endName.endsWith(COMPLETION_NAME)) {
             final boolean isOptionalTagEnd = HtmlUtil.isOptionalEndForHtmlTagL(parentTagName);
@@ -261,6 +283,8 @@ public class HtmlParsing {
       } else if ((token() == XmlTokenType.XML_REAL_WHITE_SPACE || token() == XmlTokenType.XML_DATA_CHARACTERS) && !hasTags()) {
         xmlText = terminateText(xmlText);
         advance();
+      } else if (hasCustomTagContent()) {
+        xmlText = parseCustomTagContent(xmlText);
       } else {
         xmlText = startText(xmlText);
         advance();
@@ -280,7 +304,7 @@ public class HtmlParsing {
     return HtmlUtil.isSingleHtmlTagL(tagName);
   }
 
-  private boolean hasTags() {
+  protected boolean hasTags() {
     return !myTagNamesStack.isEmpty();
   }
 
@@ -288,6 +312,10 @@ public class HtmlParsing {
     myTagNamesStack.pop();
     myOriginalTagNamesStack.pop();
     return myTagMarkersStack.pop();
+  }
+
+  protected String peekTagName() {
+    return myTagNamesStack.peek();
   }
 
   private void doneTag(PsiBuilder.Marker tag) {
@@ -366,12 +394,15 @@ public class HtmlParsing {
   }
 
   @NotNull
-  private PsiBuilder.Marker startText(@Nullable PsiBuilder.Marker xmlText) {
+  protected PsiBuilder.Marker startText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText == null) {
       xmlText = mark();
-      assert xmlText != null;
     }
     return xmlText;
+  }
+
+  protected final PsiBuilder getBuilder() {
+    return myBuilder;
   }
 
   protected final PsiBuilder.Marker mark() {
@@ -379,7 +410,7 @@ public class HtmlParsing {
   }
 
   @Nullable
-  private static PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
+  protected static PsiBuilder.Marker terminateText(@Nullable PsiBuilder.Marker xmlText) {
     if (xmlText != null) {
       xmlText.done(XmlElementType.XML_TEXT);
       xmlText = null;
@@ -387,7 +418,7 @@ public class HtmlParsing {
     return xmlText;
   }
 
-  private void parseCData() {
+  protected void parseCData() {
     assert token() == XmlTokenType.XML_CDATA_START;
     final PsiBuilder.Marker cdata = mark();
     while (token() != XmlTokenType.XML_CDATA_END && !eof()) {
@@ -430,7 +461,7 @@ public class HtmlParsing {
     comment.done(XmlElementType.XML_COMMENT);
   }
 
-  private void parseReference() {
+  protected void parseReference() {
     if (token() == XmlTokenType.XML_CHAR_ENTITY_REF) {
       advance();
     }
@@ -444,7 +475,7 @@ public class HtmlParsing {
     }
   }
 
-  private void parseAttribute() {
+  protected void parseAttribute() {
     assert token() == XmlTokenType.XML_NAME;
     final PsiBuilder.Marker att = mark();
     advance();
@@ -458,7 +489,7 @@ public class HtmlParsing {
     }
   }
 
-  private void parseAttributeValue() {
+  protected void parseAttributeValue() {
     final PsiBuilder.Marker attValue = mark();
     if (token() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
       while (true) {
@@ -534,7 +565,7 @@ public class HtmlParsing {
     prolog.done(XmlElementType.XML_PROLOG);
   }
 
-  private void parseProcessingInstruction() {
+  protected void parseProcessingInstruction() {
     assert token() == XmlTokenType.XML_PI_START;
     final PsiBuilder.Marker pi = mark();
     advance();
@@ -575,7 +606,7 @@ public class HtmlParsing {
     myBuilder.advanceLexer();
   }
 
-  private void error(final String message) {
+  protected void error(@NotNull String message) {
     myBuilder.error(message);
   }
 }

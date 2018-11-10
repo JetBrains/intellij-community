@@ -53,15 +53,18 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
 
   private Parameters myParameters;
 
+  @Override
   @NotNull
   public String getName() {
     return ProjectBundle.message("maven.name");
   }
 
+  @Override
   public Icon getIcon() {
     return MavenIcons.MavenLogo;
   }
 
+  @Override
   public void cleanup() {
     myParameters = null;
     super.cleanup();
@@ -156,6 +159,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     getParameters().myProjectToUpdate = projectToUpdate != null ? projectToUpdate : ProjectManager.getInstance().getDefaultProject();
 
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+      @Override
       public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
         indicator.setText(ProjectBundle.message("maven.locating.files"));
 
@@ -189,6 +193,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     MavenProjectReader reader = new MavenProjectReader(getProjectToUpdate());
     MavenGeneralSettings generalSettings = getGeneralSettings();
     MavenProjectReaderProjectLocator locator = new MavenProjectReaderProjectLocator() {
+      @Override
       public VirtualFile findProjectFile(MavenId coordinates) {
         return null;
       }
@@ -223,6 +228,7 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     // We cannot determinate project in non-EDT thread.
     getParameters().myProjectToUpdate = getProjectOrDefault();
     return runConfigurationProcess(ProjectBundle.message("maven.scanning.projects"), new MavenTask() {
+      @Override
       public void run(MavenProgressIndicator indicator) {
         readMavenProjectTree(indicator);
         indicator.setText2("");
@@ -249,22 +255,27 @@ public class MavenProjectBuilder extends ProjectImportBuilder<MavenProject> {
     getParameters().mySelectedProjects = tree.getRootProjects();
   }
 
+  @Override
   public List<MavenProject> getList() {
     return getParameters().myMavenProjectTree.getRootProjects();
   }
 
+  @Override
   public void setList(List<MavenProject> projects) {
     getParameters().mySelectedProjects = projects;
   }
 
+  @Override
   public boolean isMarked(MavenProject element) {
     return getParameters().mySelectedProjects.contains(element);
   }
 
+  @Override
   public boolean isOpenProjectSettingsAfter() {
     return getParameters().myOpenModulesConfigurator;
   }
 
+  @Override
   public void setOpenProjectSettingsAfter(boolean on) {
     getParameters().myOpenModulesConfigurator = on;
   }

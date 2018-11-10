@@ -88,7 +88,7 @@ public class UnsafeReturnStatementVisitorInspection extends DevKitInspectionBase
     private final String myName;
     private final String[] myMethods;
 
-    public MySkipVisitFix(String name, String[] methods) {
+    MySkipVisitFix(String name, String[] methods) {
       myName = name;
       myMethods = methods;
     }

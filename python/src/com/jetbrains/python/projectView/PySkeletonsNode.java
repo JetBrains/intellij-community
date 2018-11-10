@@ -32,12 +32,12 @@ import org.jetbrains.annotations.Nullable;
  * @author vlan
  */
 public class PySkeletonsNode extends PsiDirectoryNode {
-  private PySkeletonsNode(Project project, PsiDirectory value, ViewSettings viewSettings) {
+  private PySkeletonsNode(Project project, @NotNull PsiDirectory value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
 
   @Override
-  protected void updateImpl(PresentationData data) {
+  protected void updateImpl(@NotNull PresentationData data) {
     data.setPresentableText("Binary Skeletons");
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
@@ -47,7 +47,9 @@ public class PySkeletonsNode extends PsiDirectoryNode {
     final VirtualFile skeletonsVirtualFile = PySdkUtil.findSkeletonsDir(sdk);
     if (skeletonsVirtualFile != null) {
       final PsiDirectory skeletonsDirectory = PsiManager.getInstance(project).findDirectory(skeletonsVirtualFile);
-      return new PySkeletonsNode(project, skeletonsDirectory, settings);
+      if (skeletonsDirectory != null) {
+        return new PySkeletonsNode(project, skeletonsDirectory, settings);
+      }
     }
     return null;
   }

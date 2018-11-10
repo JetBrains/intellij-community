@@ -77,14 +77,7 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
   protected PsiFile getPsiInner(@NotNull final Language target) {
     PsiFileImpl file = myRoots.get(target);
     if (file == null) {
-      if (isPhysical()) {
-        VirtualFile virtualFile = getVirtualFile();
-        if (isIgnored()) return null;
-        VirtualFile parent = virtualFile.getParent();
-        if (parent != null) {
-          getManager().findDirectory(parent);
-        }
-      }
+      if (!shouldCreatePsi()) return null;
       if (target != getBaseLanguage() && !getLanguages().contains(target)) {
         return null;
       }
@@ -208,11 +201,4 @@ public abstract class MultiplePsiFilesPerDocumentFileViewProvider extends Abstra
     super.contentsSynchronized();
   }
 
-  @Override
-  public final void markInvalidated() {
-    for (PsiFileImpl file : myRoots.values()) {
-      file.markInvalidated();
-    }
-    super.markInvalidated();
-  }
 }

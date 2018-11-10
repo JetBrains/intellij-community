@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
 /**
@@ -24,7 +22,7 @@ public final class Consent extends ConsentBase {
     myAccepted = isAccepted;
     myDeleted = deleted;
   }
-  
+
   public String getName() {
     return myName;
   }
@@ -33,6 +31,7 @@ public final class Consent extends ConsentBase {
     return myText;
   }
 
+  @Override
   public boolean isAccepted() {
     return myAccepted;
   }
@@ -52,6 +51,7 @@ public final class Consent extends ConsentBase {
     return attributes;
   }
 
+  @Override
   public String toString() {
     return "Consent{" +
       "id='" + getId() + '\'' +

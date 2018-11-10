@@ -31,7 +31,7 @@ public class JavaDependencyVisitorFactory extends DependencyVisitorFactory {
     private final DependenciesBuilder.DependencyProcessor myProcessor;
     private final VisitorOptions myOptions;
 
-    public MyVisitor(DependenciesBuilder.DependencyProcessor processor, VisitorOptions options) {
+    MyVisitor(DependenciesBuilder.DependencyProcessor processor, VisitorOptions options) {
       myProcessor = processor;
       myOptions = options;
     }

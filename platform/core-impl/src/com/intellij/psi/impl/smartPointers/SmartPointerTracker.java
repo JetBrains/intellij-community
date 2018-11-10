@@ -58,10 +58,10 @@ class SmartPointerTracker {
 
     if (needsExpansion() || isTooSparse()) {
       resize();
-      assert isActual(reference.file, reference.key);
+      if (!isActual(reference.file, reference.key)) throw new AssertionError();
     }
 
-    assert references[nextAvailableIndex] == null : references[nextAvailableIndex];
+    if (references[nextAvailableIndex] != null) throw new AssertionError(references[nextAvailableIndex]);
     storePointerReference(references, nextAvailableIndex++, reference);
     size++;
     mySorted = false;
@@ -102,19 +102,31 @@ class SmartPointerTracker {
     if (index < 0) return;
 
     assertActual(expectedKey, reference.file, reference.key);
-    assert references[index] == reference : "At " + index + " expected " + reference + ", found " + references[index];
+    if (references[index] != reference) {
+      throw new AssertionError("At " + index + " expected " + reference + ", found " + references[index]);
+    }
     references[index].index = -1;
     references[index] = null;
     if (--size == 0) {
-      reference.file.replace(reference.key, this, null);
+      disconnectTracker(reference.file, reference.key);
+    }
+  }
+
+  private void disconnectTracker(VirtualFile file, Key<SmartPointerTracker> key) {
+    if (!file.replace(key, this, null)) {
+      throw new IllegalStateException("Couldn't clear smart pointer tracker " + this + ", current " + file.getUserData(key));
     }
   }
 
   private void assertActual(@NotNull Key<SmartPointerTracker> expectedKey, @NotNull VirtualFile file, @NotNull Key<SmartPointerTracker> refKey) {
-    assert isActual(file, refKey) : "Smart pointer list mismatch mismatch:" +
-                                    " ref.key=" + expectedKey +
-                                    ", manager.key=" + refKey +
-                                    (file.getUserData(refKey) != null ? "; has another pointer list" : "");
+    if (!isActual(file, refKey)) {
+      SmartPointerTracker another = file.getUserData(refKey);
+      throw new AssertionError("Smart pointer list mismatch:" +
+                               " size=" + size +
+                               ", ref.key=" + expectedKey +
+                               ", manager.key=" + refKey +
+                               (another != null ? "; has another pointer list with size " + another.size : ""));
+    }
   }
 
   private void processAlivePointers(@NotNull Processor<? super SmartPsiElementPointerImpl<?>> processor) {
@@ -122,7 +134,7 @@ class SmartPointerTracker {
       PointerReference ref = references[i];
       if (ref == null) continue;
 
-      assert isActual(ref.file, ref.key);
+      if (!isActual(ref.file, ref.key)) throw new AssertionError();
       SmartPsiElementPointerImpl<?> pointer = ref.get();
       if (pointer == null) {
         removeReference(ref, ref.key);
@@ -139,7 +151,7 @@ class SmartPointerTracker {
     if (!mySorted) {
       List<SmartPsiElementPointerImpl<?>> pointers = new ArrayList<>();
       processAlivePointers(new CommonProcessors.CollectProcessor<>(pointers));
-      assert size == pointers.size();
+      if (size != pointers.size()) throw new AssertionError();
 
       pointers
         .sort((p1, p2) -> MarkerCache.INFO_COMPARATOR.compare((SelfElementInfo)p1.getElementInfo(), (SelfElementInfo)p2.getElementInfo()));
@@ -154,7 +166,7 @@ class SmartPointerTracker {
     }
   }
 
-  synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+  synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
     boolean stillSorted = markerCache.updateMarkers(frozen, events);
     if (!stillSorted) {
       mySorted = false;
@@ -162,11 +174,11 @@ class SmartPointerTracker {
   }
 
   @Nullable
-  synchronized Segment getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument document, @NotNull List<DocumentEvent> events) {
+  synchronized Segment getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument document, @NotNull List<? extends DocumentEvent> events) {
     return markerCache.getUpdatedRange(info, document, events);
   }
   @Nullable
-  synchronized Segment getUpdatedRange(@NotNull PsiFile containingFile, @NotNull Segment segment, boolean isSegmentGreedy, @NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
+  synchronized Segment getUpdatedRange(@NotNull PsiFile containingFile, @NotNull Segment segment, boolean isSegmentGreedy, @NotNull FrozenDocument frozen, @NotNull List<? extends DocumentEvent> events) {
     return MarkerCache.getUpdatedRange(containingFile, segment, isSegmentGreedy, frozen, events);
   }
 
@@ -199,7 +211,8 @@ class SmartPointerTracker {
       return;
     }
 
-    if (cachedElement.isValid()) {
+    boolean cachedValid = cachedElement.isValid();
+    if (cachedValid) {
       if (pointerRange == null) {
         // document change could be damaging, but if PSI survived after reparse, let's point to it
         ((SelfElementInfo)pointer.getElementInfo()).switchToAnchor(cachedElement);
@@ -212,7 +225,14 @@ class SmartPointerTracker {
       }
     }
 
-    pointer.cacheElement(pointer.doRestoreElement());
+    E actual = pointer.doRestoreElement();
+    if (actual == null && cachedValid && ((SelfElementInfo)pointer.getElementInfo()).updateRangeToPsi(pointerRange, cachedElement)) {
+      return;
+    }
+
+    if (actual != cachedElement) {
+      pointer.cacheElement(actual);
+    }
   }
 
   private static void storePointerReference(PointerReference[] references, int index, PointerReference ref) {
@@ -258,6 +278,10 @@ class SmartPointerTracker {
     while (true) {
       PointerReference reference = (PointerReference)ourQueue.poll();
       if (reference == null) break;
+
+      if (reference.get() != null) {
+        throw new IllegalStateException("Queued reference has referent!");
+      }
 
       SmartPointerTracker pointers = reference.file.getUserData(reference.key);
       if (pointers != null) {

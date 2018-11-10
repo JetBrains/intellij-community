@@ -21,6 +21,7 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -75,7 +76,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
       startTemplate(editor, template, project, new TemplateEditingAdapter() {
         @Override
-        public void templateFinished(Template template, boolean brokenOff) {
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
           ApplicationManager.getApplication().runWriteAction(() -> {
             try {
               PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
@@ -121,7 +122,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
   @Override
   protected PsiElement getElement() {
-    if (!myConstructorCall.isValid() || !myConstructorCall.getManager().isInProject(myConstructorCall)) return null;
+    if (!myConstructorCall.isValid() || !ScratchFileService.isInProjectOrScratch(myConstructorCall)) return null;
 
     PsiExpressionList argumentList = myConstructorCall.getArgumentList();
     if (argumentList == null) return null;
@@ -152,7 +153,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     PsiElement element = getElement(myConstructorCall);
 
     PsiFile targetFile = getTargetFile(myConstructorCall);
-    if (targetFile != null && !targetFile.getManager().isInProject(targetFile)) {
+    if (targetFile != null && !ScratchFileService.isInProjectOrScratch(targetFile)) {
       return false;
     }
 

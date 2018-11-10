@@ -15,13 +15,62 @@
  */
 package com.siyeh.ig.classlayout;
 
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiEnumConstantInitializer;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
+import org.jetbrains.annotations.NotNull;
 
-public class AnonymousInnerClassInspection extends AnonymousInnerClassInspectionBase {
+public class AnonymousInnerClassInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new MoveAnonymousToInnerClassFix();
+  }
+
+  @Override
+  @NotNull
+  public String getDisplayName() {
+    return InspectionGadgetsBundle.message(
+      "anonymous.inner.class.display.name");
+  }
+
+  @Override
+  @NotNull
+  protected String buildErrorString(Object... infos) {
+    return InspectionGadgetsBundle.message(
+      "anonymous.inner.class.problem.descriptor");
+  }
+
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Override
+  public BaseInspectionVisitor buildVisitor() {
+    return new AnonymousInnerClassVisitor();
+  }
+
+  private static class AnonymousInnerClassVisitor
+    extends BaseInspectionVisitor {
+
+    @Override
+    public void visitClass(@NotNull PsiClass aClass) {
+      //no call to super here, to avoid double counting
+    }
+
+    @Override
+    public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+      super.visitAnonymousClass(aClass);
+      if (aClass instanceof PsiEnumConstantInitializer) {
+        return;
+      }
+      registerClassError(aClass);
+    }
   }
 }

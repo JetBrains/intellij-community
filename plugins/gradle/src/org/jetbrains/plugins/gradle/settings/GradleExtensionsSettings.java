@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 11/16/2016
  */
 @State(name = "GradleExtensions", storages = {@Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)})
 public class GradleExtensionsSettings implements PersistentStateComponent<GradleExtensionsSettings.Settings> {

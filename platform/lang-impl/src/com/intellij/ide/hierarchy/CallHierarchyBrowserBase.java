@@ -54,10 +54,10 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   protected void prependActions(@NotNull DefaultActionGroup actionGroup) {
     actionGroup.add(new ChangeViewTypeActionBase(IdeBundle.message("action.caller.methods.hierarchy"),
                                                  IdeBundle.message("action.caller.methods.hierarchy"),
-                                                 AllIcons.Hierarchy.Caller, CALLER_TYPE));
+                                                 AllIcons.Hierarchy.Supertypes, CALLER_TYPE));
     actionGroup.add(new ChangeViewTypeActionBase(IdeBundle.message("action.callee.methods.hierarchy"),
                                                  IdeBundle.message("action.callee.methods.hierarchy"),
-                                                 AllIcons.Hierarchy.Callee, CALLEE_TYPE));
+                                                 AllIcons.Hierarchy.Subtypes, CALLEE_TYPE));
     actionGroup.add(new AlphaSortAction());
     actionGroup.add(new ChangeScopeAction());
   }
@@ -89,12 +89,12 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public final boolean isSelected(final AnActionEvent event) {
+    public final boolean isSelected(@NotNull final AnActionEvent event) {
       return myTypeName.equals(getCurrentViewType());
     }
 
     @Override
-    public final void setSelected(final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
       if (flag) {
         // invokeLater is called to update state of button before long tree building operation
         ApplicationManager.getApplication().invokeLater(() -> changeView(myTypeName));

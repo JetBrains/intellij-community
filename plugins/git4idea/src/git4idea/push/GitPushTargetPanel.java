@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushTargetPanel;
@@ -40,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.commands.Git;
@@ -202,7 +189,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
         else {
           String message = "Couldn't add remote: " + myResult.getErrorOutputAsHtmlString();
           LOG.warn(message);
-          Messages.showErrorDialog(myProject, message, "Add Remote");
+          Messages.showErrorDialog(myProject, XmlStringUtil.wrapInHtml(message), "Add Remote");
         }
       }
     });
@@ -369,7 +356,6 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
   }
 
-  @SuppressWarnings("NullableProblems")
   @Override
   public void setFireOnChangeAction(@NotNull Runnable action) {
     myFireOnChangeAction = action;
@@ -405,7 +391,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
   public void addTargetEditorListener(@NotNull final PushTargetEditorListener listener) {
     myTargetEditor.addDocumentListener(new DocumentListener() {
       @Override
-      public void documentChanged(DocumentEvent e) {
+      public void documentChanged(@NotNull DocumentEvent e) {
         processActiveUserChanges(listener);
       }
     });

@@ -29,10 +29,18 @@ public class JsonLiteralApiTest extends JsonTestCase {
     return new JsonElementGenerator(getProject()).createStringLiteral(unescapedContent);
   }
 
-  private void checkFragments(@NotNull String rawStringLiteral, Object... fragments) {
+  private void checkFragments(@NotNull String rawStringLiteral, @NotNull Pair<TextRange, String>... fragments) {
     final List<Pair<TextRange, String>> actual = createStringLiteralFromText(rawStringLiteral).getTextFragments();
-    final List<?> expected = Arrays.asList(fragments);
+    final List<Pair<TextRange, String>> expected = Arrays.asList(fragments);
     assertEquals(expected, actual);
+    for (Pair<TextRange, String> fragment : fragments) {
+      final TextRange range = fragment.getFirst();
+      final String unescaped = range.substring(rawStringLiteral);
+      if (!unescaped.contains("\\")) {
+        final String escaped = fragment.getSecond();
+        assertEquals(String.format("Bad range %s: fragment without escaping differs after decoding", range), escaped, unescaped);
+      }
+    }
   }
 
   @NotNull
@@ -71,7 +79,7 @@ public class JsonLiteralApiTest extends JsonTestCase {
                    fragment(4, 10, "\\uCAFE"),
                    fragment(10, 14, "BABE"),
                    fragment(14, 20, "\\u0027"),
-                   fragment(20, 24, "baz"));
+                   fragment(20, 23, "baz"));
   }
 
   public void testStringLiteralValue() {

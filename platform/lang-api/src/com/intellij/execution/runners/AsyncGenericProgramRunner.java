@@ -14,7 +14,7 @@ import org.jetbrains.concurrency.Promise;
 import static com.intellij.execution.runners.GenericProgramRunnerKt.startRunProfile;
 
 /**
- * @deprecated Use AsyncProgramRunner
+ * @deprecated Use {@link AsyncProgramRunner} instead
  */
 @Deprecated
 public abstract class AsyncGenericProgramRunner<Settings extends RunnerSettings> extends BaseProgramRunner<Settings> {

@@ -1,23 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.diagnostic.LogEventException;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.FileASTNode;
@@ -86,10 +70,11 @@ class CompletionAssertions {
     message += "\nvirtualFile.class=" + virtualFile.getClass();
     message += "\n" + DebugUtil.currentStackTrace();
 
-    throw new LogEventException("Commit unsuccessful", message,
-                                new Attachment(virtualFile.getPath() + "_file.txt", StringUtil.notNullize(fileText)),
-                                createAstAttachment(psiFile, psiFile),
-                                new Attachment("docText.txt", document.getText()));
+    throw new RuntimeExceptionWithAttachments(
+      "Commit unsuccessful", message,
+      new Attachment(virtualFile.getPath() + "_file.txt", StringUtil.notNullize(fileText)),
+      createAstAttachment(psiFile, psiFile),
+      new Attachment("docText.txt", document.getText()));
   }
 
   static void checkEditorValid(Editor editor) {
@@ -131,22 +116,23 @@ class CompletionAssertions {
                                                     PsiFile originalFile, PsiElement insertedElement) {
     PsiFile fileCopy = offsets.getFile();
     if (insertedElement == null) {
-      throw new LogEventException("No element at insertion offset",
-                                                                   "offset=" +
-                                                                   offset +
-                                                                   "\n" +
-                                                                   DebugUtil.currentStackTrace(),
-                                                                   createFileTextAttachment(fileCopy, originalFile),
-                                                                   createAstAttachment(fileCopy, originalFile));
+      throw new RuntimeExceptionWithAttachments(
+        "No element at insertion offset",
+        "offset=" + offset,
+        createFileTextAttachment(fileCopy, originalFile),
+        createAstAttachment(fileCopy, originalFile));
     }
 
     final TextRange range = insertedElement.getTextRange();
     CharSequence fileCopyText = fileCopy.getViewProvider().getContents();
     if ((range.getEndOffset() > fileCopyText.length()) ||
         !fileCopyText.subSequence(range.getStartOffset(), range.getEndOffset()).toString().equals(insertedElement.getText())) {
-      throw new LogEventException("Inconsistent completion tree", "range=" + range + "\n" + DebugUtil.currentStackTrace(),
-                                         createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile),
-                                         new Attachment("Element at caret.txt", insertedElement.getText()));
+      throw new RuntimeExceptionWithAttachments(
+        "Inconsistent completion tree",
+        "range=" + range,
+        createFileTextAttachment(fileCopy, originalFile),
+        createAstAttachment(fileCopy, originalFile),
+        new Attachment("Element at caret.txt", insertedElement.getText()));
     }
   }
 
@@ -170,11 +156,10 @@ class CompletionAssertions {
     DocumentEvent killer;
     private RangeMarkerSpy spy;
 
-    public WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
+    WatchingInsertionContext(OffsetMap offsetMap, PsiFile file, char completionChar, List<LookupElement> items, Editor editor) {
       super(offsetMap, completionChar, items.toArray(LookupElement.EMPTY_ARRAY),
             file, editor,
-            completionChar != Lookup.AUTO_INSERT_SELECT_CHAR && completionChar != Lookup.REPLACE_SELECT_CHAR &&
-            completionChar != Lookup.NORMAL_SELECT_CHAR);
+            shouldAddCompletionChar(completionChar));
     }
 
     @Override

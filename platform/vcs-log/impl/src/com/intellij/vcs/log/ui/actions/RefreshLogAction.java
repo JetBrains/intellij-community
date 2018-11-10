@@ -22,10 +22,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.NotNull;
 
 public class RefreshLogAction extends RefreshAction {
   private static final Logger LOG = Logger.getInstance(RefreshLogAction.class);
@@ -35,8 +37,8 @@ public class RefreshLogAction extends RefreshAction {
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    VcsLogUtil.triggerUsage(e);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    VcsLogUsageTriggerCollector.triggerUsage(e);
 
     VcsLogManager logManager = e.getRequiredData(VcsLogInternalDataKeys.LOG_MANAGER);
 
@@ -60,7 +62,7 @@ public class RefreshLogAction extends RefreshAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     VcsLogManager logManager = e.getData(VcsLogInternalDataKeys.LOG_MANAGER);
     e.getPresentation().setEnabledAndVisible(logManager != null && e.getData(VcsLogDataKeys.VCS_LOG_UI) != null);
   }

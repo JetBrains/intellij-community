@@ -48,7 +48,6 @@ import java.util.Set;
  * Not thread-safe.
  *
  * @author Denis Zhdanov
- * @since 8/8/12 10:06 AM
  */
 public class ArrangementAtomMatchConditionComponent implements ArrangementUiComponent {
 
@@ -82,22 +81,22 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   @NotNull private final Set<ArrangementSettingsToken> myAvailableTokens = ContainerUtilRt.newHashSet();
 
-  @NotNull private final BorderStrategy                myBorderStrategy;
-  @NotNull private final String                        myText;
-  @NotNull private final ArrangementColorsProvider     myColorsProvider;
-  @NotNull private final RoundedLineBorder             myBorder;
+  @NotNull private final BorderStrategy myBorderStrategy;
+  @NotNull private final String myText;
+  @NotNull private final ArrangementColorsProvider myColorsProvider;
+  @NotNull private final RoundedLineBorder myBorder;
   @NotNull private final ArrangementAtomMatchCondition myCondition;
-  @NotNull private final ArrangementAnimationPanel     myAnimationPanel;
+  @NotNull private final ArrangementAnimationPanel myAnimationPanel;
 
-  @Nullable private final ActionButton                                     myCloseButton;
-  @Nullable private final Rectangle                                        myCloseButtonBounds;
-  @Nullable private final Consumer<ArrangementAtomMatchConditionComponent> myCloseCallback;
+  @Nullable private final ActionButton myCloseButton;
+  @Nullable private final Rectangle myCloseButtonBounds;
+  @Nullable private final Consumer<? super ArrangementAtomMatchConditionComponent> myCloseCallback;
 
   @NotNull private Color myBackgroundColor;
 
   @Nullable private final Dimension myTextControlSize;
-  @Nullable private       Rectangle myScreenBounds;
-  @Nullable private       Listener  myListener;
+  @Nullable private Rectangle myScreenBounds;
+  @Nullable private Listener myListener;
 
   private boolean myInverted = false;
   private boolean myEnabled = true;
@@ -111,7 +110,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   public ArrangementAtomMatchConditionComponent(@NotNull ArrangementStandardSettingsManager manager,
                                                 @NotNull ArrangementColorsProvider colorsProvider,
                                                 @NotNull ArrangementAtomMatchCondition condition,
-                                                @Nullable Consumer<ArrangementAtomMatchConditionComponent> closeCallback)
+                                                @Nullable Consumer<? super ArrangementAtomMatchConditionComponent> closeCallback)
   {
     myColorsProvider = colorsProvider;
     myCondition = condition;
@@ -419,7 +418,6 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     return -1;
   }
 
-  @SuppressWarnings("NullableProblems")
   @Override
   public void setListener(@NotNull Listener listener) {
     myListener = listener;

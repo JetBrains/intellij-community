@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.FrameStateManager;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
@@ -57,9 +58,12 @@ import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
-import javax.swing.text.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
@@ -72,15 +76,18 @@ import java.util.List;
  * @author spleaner
  */
 public class NotificationsManagerImpl extends NotificationsManager {
-  public static final Color FILL_COLOR = new JBColor(Gray._242, new Color(78, 80, 82));
-  public static final Color BORDER_COLOR = new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205));
+  public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
+  private static final Color TEXT_COLOR = JBColor.namedColor("Notification.foreground", DEFAULT_TEXT_COLOR);
+  public static final Color FILL_COLOR = JBColor.namedColor("Notification.background", new JBColor(Gray._242, new Color(78, 80, 82)));
+  public static final Color BORDER_COLOR = JBColor.namedColor("Notification.borderColor", new JBColor(Gray._178.withAlpha(205), new Color(86, 90, 92, 205)));
+  private static final Color LINK_COLOR = JBColor.namedColor("Notification.Link.foreground", JBUI.CurrentTheme.Link.linkColor());
 
   public NotificationsManagerImpl() {
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(Notifications.TOPIC, new MyNotificationListener(null));
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectClosed(Project project) {
+      public void projectClosed(@NotNull Project project) {
         for (Notification notification : getNotificationsOfType(Notification.class, project)) {
           notification.hideBalloon();
         }
@@ -175,7 +182,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
           else {
             balloon.addListener(new JBPopupAdapter() {
               @Override
-              public void onClosed(LightweightWindowEvent event) {
+              public void onClosed(@NotNull LightweightWindowEvent event) {
                 if (!event.isOk()) {
                   notification.expire();
                 }
@@ -233,9 +240,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
       BalloonLayout layout = ((IdeFrame)window).getBalloonLayout();
       if (layout == null) return null;
 
-      final ProjectManager projectManager = ProjectManager.getInstance();
-      final boolean noProjects = projectManager.getOpenProjects().length == 0;
-      final boolean sticky = NotificationDisplayType.STICKY_BALLOON == displayType || noProjects;
       Ref<BalloonLayoutData> layoutDataRef = new Ref<>();
       if (project == null || project.isDefault()) {
         BalloonLayoutData layoutData = new BalloonLayoutData();
@@ -268,9 +272,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
         layoutDataRef.get().project = project;
       }
       ((BalloonImpl)balloon).startFadeoutTimer(0);
-      if (NotificationDisplayType.BALLOON == displayType) {
-        FrameStateManager.getInstance().getApplicationActive().doWhenDone(() -> {
-          if (!sticky && !balloon.isDisposed()) {
+      if (displayType == NotificationDisplayType.BALLOON || ProjectManager.getInstance().getOpenProjects().length == 0) {
+        frameActivateBalloonListener(balloon, () -> {
+          if (!balloon.isDisposed()) {
             ((BalloonImpl)balloon).startSmartFadeoutTimer(10000);
           }
         });
@@ -278,6 +282,21 @@ public class NotificationsManagerImpl extends NotificationsManager {
       return balloon;
     }
     return null;
+  }
+
+  public static void frameActivateBalloonListener(@NotNull Balloon balloon, @NotNull Runnable callback) {
+    if (ApplicationManager.getApplication().isActive()) {
+      callback.run();
+    }
+    else {
+      FrameStateManager.getInstance().addListener(new FrameStateListener() {
+        @Override
+        public void onFrameActivated() {
+          FrameStateManager.getInstance().removeListener(this);
+          callback.run();
+        }
+      }, balloon);
+    }
   }
 
   @Nullable
@@ -323,6 +342,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
     layoutDataRef.set(layoutData);
 
+    if (layoutData.textColor == null) {
+      layoutData.textColor = TEXT_COLOR;
+    }
     if (layoutData.fillColor == null) {
       layoutData.fillColor = FILL_COLOR;
     }
@@ -332,10 +354,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     boolean actions = !notification.getActions().isEmpty();
     boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationFullContent;
-
-    Color foregroundR = Gray._0;
-    Color foregroundD = Gray._191;
-    final Color foreground = new JBColor(foregroundR, foregroundD);
 
     final JEditorPane text = new JEditorPane() {
       @Override
@@ -353,8 +371,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     };
-    text.setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
-    text.setForeground(foreground);
+    HTMLEditorKit kit = new UIUtil.JBWordWrapHtmlEditorKit();
+    kit.getStyleSheet().addRule("a {color: " + ColorUtil.toHtmlColor(LINK_COLOR) + "}");
+    text.setEditorKit(kit);
+    text.setForeground(layoutData.textColor);
 
     final HyperlinkListener listener = NotificationsUtil.wrapListener(notification);
     if (listener != null) {
@@ -369,11 +389,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth() ? BalloonLayoutConfiguration.MaxFullContentWidthStyle() : null;
     }
 
-    String textR = NotificationsUtil.buildHtml(notification, style, true, foregroundR, fontStyle);
-    String textD = NotificationsUtil.buildHtml(notification, style, true, foregroundD, fontStyle);
-    LafHandler lafHandler = new LafHandler(text, textR, textD);
-    layoutData.lafHandler = lafHandler;
-
+    text.setText(NotificationsUtil.buildHtml(notification, style, true, null, fontStyle));
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -525,12 +541,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     if (notification.hasTitle()) {
       String titleStyle = StringUtil.defaultIfEmpty(fontStyle, "") + "white-space:nowrap;";
-      String titleR = NotificationsUtil.buildHtml(notification, titleStyle, false, foregroundR, null);
-      String titleD = NotificationsUtil.buildHtml(notification, titleStyle, false, foregroundD, null);
       JLabel title = new JLabel();
-      lafHandler.setTitle(title, titleR, titleD);
+      title.setText(NotificationsUtil.buildHtml(notification, titleStyle, false, null, null));
       title.setOpaque(false);
-      title.setForeground(foreground);
+      title.setForeground(layoutData.textColor);
       centerPanel.add(title, BorderLayout.NORTH);
     }
 
@@ -676,7 +690,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
             if (isDarcula) {
               setBorder(new DarculaButtonPainter() {
                 @Override
-                public Color getBorderColor(Component button) {
+                public Paint getBorderPaint(Component button) {
                   return new ColorUIResource(0x717777);
                 }
               });
@@ -816,18 +830,22 @@ public class NotificationsManagerImpl extends NotificationsManager {
       }
     }
 
+    @Override
     public void mousePressed(MouseEvent e) {
       handleEvent(e, true, false);
     }
 
+    @Override
     public void mouseReleased(MouseEvent e) {
       handleEvent(e, false, false);
     }
 
+    @Override
     public void mouseMoved(MouseEvent e) {
       handleEvent(e, false, true);
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
       if (myLastComponent != null) {
         mouseExited(e, myLastComponent);
@@ -933,7 +951,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       @Override
       protected Color getTextColor() {
-        return new JBColor(0x666666, 0x8C8C8C);
+        return JBColor.namedColor("Notification.MoreButton.foreground", new JBColor(0x666666, 0x8C8C8C));
       }
     };
 
@@ -956,9 +974,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        g.setColor(new JBColor(0xE3E3E3, 0x3A3C3D));
+        g.setColor(JBColor.namedColor("Notification.MoreButton.background", new JBColor(0xE3E3E3, 0x3A3C3D)));
         ((Graphics2D)g).fill(new Rectangle2D.Double(1.5, 1, getWidth() - 2.5, getHeight() - 2));
-        g.setColor(new JBColor(0xDBDBDB, 0x353738));
+        g.setColor(JBColor.namedColor("Notification.MoreButton.innerBorderColor", new JBColor(0xDBDBDB, 0x353738)));
         if (SystemInfo.isMac) {
           ((Graphics2D)g).draw(new Rectangle2D.Double(2, 0, getWidth() - 3.5, 0.5));
         }
@@ -1004,7 +1022,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
   private static class DropDownAction extends LinkLabel<Void> {
     Icon myIcon = AllIcons.Ide.Notification.DropTriangle;
 
-    public DropDownAction(String text, @Nullable LinkListener<Void> listener) {
+    DropDownAction(String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);
 
       setHorizontalTextPosition(SwingConstants.LEADING);
@@ -1013,8 +1031,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
       setIcon(new Icon() {
         @Override
         public void paintIcon(Component c, Graphics g, int x, int y) {
-          int lineY = getUI().getBaseline(DropDownAction.this, getWidth(), getHeight()) - getIconHeight();
-          IconUtil.colorize((Graphics2D)g, myIcon, getTextColor()).paintIcon(c, g, x - 1, lineY);
+          IconUtil.colorize((Graphics2D)g, myIcon, getTextColor()).paintIcon(c, g, x - 1, y + 1);
         }
 
         @Override
@@ -1102,7 +1119,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     private JPanel myActionPanel;
     private Component myExpandAction;
 
-    public CenteredLayoutWithActions(JEditorPane text, BalloonLayoutData layoutData) {
+    CenteredLayoutWithActions(JEditorPane text, BalloonLayoutData layoutData) {
       myText = text;
       myLayoutData = layoutData;
     }
@@ -1274,50 +1291,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static class LafHandler implements Runnable {
-    private final JEditorPane myContent;
-    private final String myContentTextR;
-    private final String myContentTextD;
-
-    private JLabel myTitle;
-    private String myTitleTextR;
-    private String myTitleTextD;
-
-    public LafHandler(@NotNull JEditorPane content, @NotNull String textR, @NotNull String textD) {
-      myContent = content;
-      myContentTextR = textR;
-      myContentTextD = textD;
-      updateContent();
-    }
-
-    public void setTitle(@NotNull JLabel title, @NotNull String textR, @NotNull String textD) {
-      myTitle = title;
-      myTitleTextR = textR;
-      myTitleTextD = textD;
-      updateTitle();
-    }
-
-    private void updateTitle() {
-      myTitle.setText(UIUtil.isUnderDarcula() ? myTitleTextD : myTitleTextR);
-    }
-
-    private void updateContent() {
-      myContent.setText(UIUtil.isUnderDarcula() ? myContentTextD : myContentTextR);
-    }
-
-    @Override
-    public void run() {
-      if (myTitle != null) {
-        updateTitle();
-      }
-      updateContent();
-    }
-  }
-
   private static class TextCaret extends DefaultCaret implements UIResource {
     private final BalloonLayoutData myLayoutData;
 
-    public TextCaret(@NotNull BalloonLayoutData layoutData) {
+    TextCaret(@NotNull BalloonLayoutData layoutData) {
       myLayoutData = layoutData;
     }
 

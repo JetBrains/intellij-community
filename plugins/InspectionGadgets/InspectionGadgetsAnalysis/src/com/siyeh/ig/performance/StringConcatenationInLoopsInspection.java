@@ -16,11 +16,11 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -176,20 +175,20 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     private static boolean isUsedCompletely(PsiVariable variable, PsiLoopStatement loop) {
-      return !ReferencesSearch.search(variable, new LocalSearchScope(loop)).forEach(ref -> {
+      return ReferencesSearch.search(variable, new LocalSearchScope(loop)).anyMatch(ref -> {
         PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
-        if (expression == null) return true;
+        if (expression == null) return false;
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
         while (parent instanceof PsiTypeCastExpression || parent instanceof PsiConditionalExpression) {
           parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
         }
         if (parent instanceof PsiExpressionList ||
             parent instanceof PsiAssignmentExpression &&
-             PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getRExpression(), expression, false)) {
+            PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getRExpression(), expression, false)) {
           PsiStatement statement = PsiTreeUtil.getParentOfType(parent, PsiStatement.class);
-          return ControlFlowUtils.isExecutedOnceInLoop(statement, loop) || ControlFlowUtils.isVariableReassigned(statement, variable);
+          return !ControlFlowUtils.isExecutedOnceInLoop(statement, loop) && !ControlFlowUtils.isVariableReassigned(statement, variable);
         }
-        return true;
+        return false;
       });
     }
 
@@ -327,19 +326,19 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
 
   private static boolean canBeNull(PsiVariable var) {
     PsiExpression initializer = var.getInitializer();
-    if (initializer != null && NullnessUtil.getExpressionNullness(initializer, true) != Nullness.NOT_NULL) {
+    if (initializer != null && NullabilityUtil.getExpressionNullability(initializer, true) != Nullability.NOT_NULL) {
       return true;
     }
-    Processor<PsiReference> isNotNullableWrite = (PsiReference ref) -> {
-      if (!(ref instanceof PsiExpression)) return true;
+    Predicate<PsiReference> isPossiblyNullableWrite = ref -> {
+      if (!(ref instanceof PsiExpression)) return false;
       PsiExpression expression = (PsiExpression)ref;
-      if (!PsiUtil.isOnAssignmentLeftHand(expression)) return true;
+      if (!PsiUtil.isOnAssignmentLeftHand(expression)) return false;
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class);
-      if (assignment == null || assignment.getOperationTokenType() != JavaTokenType.EQ) return true;
+      if (assignment == null || assignment.getOperationTokenType() != JavaTokenType.EQ) return false;
       PsiExpression rExpression = assignment.getRExpression();
-      return rExpression == null || NullnessUtil.getExpressionNullness(rExpression, true) == Nullness.NOT_NULL;
+      return rExpression != null && NullabilityUtil.getExpressionNullability(rExpression, true) != Nullability.NOT_NULL;
     };
-    return !ReferencesSearch.search(var).forEach(isNotNullableWrite);
+    return ReferencesSearch.search(var).anyMatch(isPossiblyNullableWrite);
   }
 
   abstract static class AbstractStringBuilderFix extends InspectionGadgetsFix {
@@ -391,7 +390,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                     PsiVariable builderVariable,
                     PsiElement scope,
                     CommentTracker ct,
-                    Predicate<PsiReferenceExpression> skip) {
+                    Predicate<? super PsiReferenceExpression> skip) {
       Query<PsiReference> query =
         scope == null ? ReferencesSearch.search(variable) : ReferencesSearch.search(variable, new LocalSearchScope(scope));
       Collection<PsiReference> refs = query.findAll();
@@ -410,19 +409,19 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       if (myNullables instanceof HashSet) return; // already filled
       myNullables = new HashSet<>();
       PsiExpression initializer = variable.getInitializer();
-      if (initializer != null && NullnessUtil.getExpressionNullness(initializer, true) != Nullness.NOT_NULL) {
+      if (initializer != null && NullabilityUtil.getExpressionNullability(initializer, true) != Nullability.NOT_NULL) {
         myNullables.add(initializer);
       }
       for (PsiReference ref : refs) {
         if (ref instanceof PsiExpression) {
           PsiExpression refExpr = (PsiExpression)ref;
-          if (NullnessUtil.getExpressionNullness(refExpr, true) != Nullness.NOT_NULL) {
+          if (NullabilityUtil.getExpressionNullability(refExpr, true) != Nullability.NOT_NULL) {
             myNullables.add(refExpr);
           }
           if(PsiUtil.isOnAssignmentLeftHand(refExpr)) {
             PsiExpression rExpr =
               ExpressionUtils.getAssignmentTo(PsiTreeUtil.getParentOfType(refExpr, PsiAssignmentExpression.class), variable);
-            if (rExpr != null && NullnessUtil.getExpressionNullness(rExpr, true) != Nullness.NOT_NULL) {
+            if (rExpr != null && NullabilityUtil.getExpressionNullability(rExpr, true) != Nullability.NOT_NULL) {
               myNullables.add(rExpr);
             }
           }

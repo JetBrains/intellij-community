@@ -4,6 +4,7 @@ package com.intellij.tools;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -23,6 +24,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.SchemeElement;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -42,10 +44,14 @@ public class Tool implements SchemeElement {
   private String myName;
   private String myDescription;
   @NotNull private String myGroup = DEFAULT_GROUP_NAME;
+
+  // These 4 fields and everything related are effectively not used anymore, see IDEA-190856.
+  // Let's keep them for a while for compatibility in case we have to reconsider.
   private boolean myShownInMainMenu;
   private boolean myShownInEditor;
   private boolean myShownInProjectViews;
   private boolean myShownInSearchResultsPopup;
+
   private boolean myEnabled;
 
   private boolean myUseConsole;
@@ -254,9 +260,16 @@ public class Tool implements SchemeElement {
   }
 
   public void execute(AnActionEvent event, DataContext dataContext, long executionId, @Nullable final ProcessListener processListener) {
+    executeIfPossible(event, dataContext, executionId, processListener);
+  }
+
+  public boolean executeIfPossible(AnActionEvent event,
+                                   DataContext dataContext,
+                                   long executionId,
+                                   @Nullable final ProcessListener processListener) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
-      return;
+      return false;
     }
 
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -280,7 +293,7 @@ public class Tool implements SchemeElement {
       else {
         GeneralCommandLine commandLine = createCommandLine(dataContext);
         if (commandLine == null) {
-          return;
+          return false;
         }
         OSProcessHandler handler = new OSProcessHandler(commandLine);
         handler.addProcessListener(new ToolProcessAdapter(project, synchronizeAfterExecution(), getName()));
@@ -292,7 +305,9 @@ public class Tool implements SchemeElement {
     }
     catch (ExecutionException ex) {
       ExecutionErrorDialog.show(ex, ToolsBundle.message("tools.process.start.error"), project);
+      return false;
     }
+    return true;
   }
 
   @Nullable
@@ -301,7 +316,9 @@ public class Tool implements SchemeElement {
       setWorkingDirectory("$ProjectFileDir$");
     }
 
-    GeneralCommandLine commandLine = new GeneralCommandLine();
+    GeneralCommandLine commandLine = Registry.is("use.tty.for.external.tools", false)
+                                     ? new PtyCommandLine().withConsoleMode(true)
+                                     : new GeneralCommandLine();
     try {
       String paramString = MacroManager.getInstance().expandMacrosInString(getParameters(), true, dataContext);
       String workingDir = MacroManager.getInstance().expandMacrosInString(getWorkingDirectory(), true, dataContext);
@@ -328,7 +345,7 @@ public class Tool implements SchemeElement {
     catch (Macro.ExecutionCancelledException ignored) {
       return null;
     }
-    return commandLine;
+    return ToolsCustomizer.customizeCommandLine(commandLine, dataContext);
   }
 
   @Override

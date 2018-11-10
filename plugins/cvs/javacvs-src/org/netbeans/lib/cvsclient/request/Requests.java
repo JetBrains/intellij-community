@@ -12,13 +12,16 @@
  */
 package org.netbeans.lib.cvsclient.request;
 
+import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminReader;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
-import org.netbeans.lib.cvsclient.file.*;
+import org.netbeans.lib.cvsclient.file.AbstractFileObject;
+import org.netbeans.lib.cvsclient.file.DirectoryObject;
+import org.netbeans.lib.cvsclient.file.FileObject;
+import org.netbeans.lib.cvsclient.file.ICvsFileSystem;
 import org.netbeans.lib.cvsclient.util.BugLog;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,7 +35,7 @@ public final class Requests {
 
 	// Fields =================================================================
 
-	private final List requestList = new ArrayList();
+	private final List<IRequest> requestList = new ArrayList<>();
 	private final ICvsFileSystem cvsFileSystem;
 	private final IAdminReader adminReader;
 	private final ResponseExpectingRequest responseExpectingRequest;
@@ -106,6 +109,7 @@ public final class Requests {
 		addRequest(new DirectoryRequest(relativeDirPath, repositoryPath));
         if (adminReader.isStatic(directoryObject, cvsFileSystem)){
             addRequest(new AbstractRequest() {
+                @Override
                 public String getRequestString() {
                     return "Static-directory \n";
                 }
@@ -133,7 +137,7 @@ public final class Requests {
 		}
 	}
 
-	public List getRequests() {
+	public List<IRequest> getRequests() {
 		return Collections.unmodifiableList(requestList);
 	}
 

@@ -34,6 +34,7 @@ import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stub.JavaStubImplUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.*;
 import com.intellij.reference.SoftReference;
@@ -248,12 +249,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public boolean isDeprecated() {
-    final PsiMethodStub stub = getGreenStub();
-    if (stub != null) {
-      return stub.isDeprecated() || stub.hasDeprecatedAnnotation() && PsiImplUtil.isDeprecatedByAnnotation(this);
-    }
-
-    return PsiImplUtil.isDeprecatedByDocTag(this) || PsiImplUtil.isDeprecatedByAnnotation(this);
+    return JavaStubImplUtil.isMemberDeprecated(this, getGreenStub());
   }
 
   @Override

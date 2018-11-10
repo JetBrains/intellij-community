@@ -75,6 +75,7 @@ public class XmlFileImpl extends PsiFileImpl implements XmlFile {
     }
   }
 
+  @Override
   public String toString() {
     return "XmlFile:" + getName();
   }

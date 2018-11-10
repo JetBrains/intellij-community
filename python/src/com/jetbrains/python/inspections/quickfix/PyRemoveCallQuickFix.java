@@ -20,9 +20,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class PyRemoveCallQuickFix implements LocalQuickFix {
@@ -43,6 +41,10 @@ public class PyRemoveCallQuickFix implements LocalQuickFix {
       final PyArgumentList argumentList = ((PyCallExpression)call).getArgumentList();
       assert argumentList != null;
       argumentList.delete();
+      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+      // regenerate element for Psi consistency, because it isn't PyCallExpression anymore
+      final PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(call), call.getText());
+      call.replace(expression);
     }
   }
 }

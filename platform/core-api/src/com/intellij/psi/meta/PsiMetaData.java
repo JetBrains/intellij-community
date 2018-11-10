@@ -16,6 +16,7 @@
 package com.intellij.psi.meta;
 
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,5 +42,15 @@ public interface PsiMetaData {
    * @see com.intellij.psi.util.CachedValue
    */
   @NotNull
-  Object[] getDependences();
+  default Object[] getDependencies() {
+    //noinspection deprecation
+    return getDependences();
+  }
+
+  /** @deprecated use {@link PsiMetaData#getDependencies()} */
+  @Deprecated
+  @NotNull
+  default Object[] getDependences() {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
 }

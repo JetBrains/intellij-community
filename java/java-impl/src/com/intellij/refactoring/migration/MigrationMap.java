@@ -31,8 +31,7 @@ public class MigrationMap {
   }
 
   public MigrationMap(MigrationMapEntry[] entries) {
-    for (int i = 0; i < entries.length; i++) {
-      MigrationMapEntry entry = entries[i];
+    for (MigrationMapEntry entry : entries) {
       addEntry(entry);
     }
   }

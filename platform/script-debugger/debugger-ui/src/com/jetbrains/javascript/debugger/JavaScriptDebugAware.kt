@@ -33,7 +33,7 @@ import org.jetbrains.debugger.MemberFilter
  */
 abstract class JavaScriptDebugAware {
   companion object {
-    val EP_NAME = ExtensionPointName.create<JavaScriptDebugAware>("com.jetbrains.javaScriptDebugAware")
+    val EP_NAME: ExtensionPointName<JavaScriptDebugAware> = ExtensionPointName.create<JavaScriptDebugAware>("com.jetbrains.javaScriptDebugAware")
 
     @JvmStatic
     fun isBreakpointAware(fileType: FileType): Boolean {
@@ -64,7 +64,7 @@ abstract class JavaScriptDebugAware {
   open val isOnlySourceMappedBreakpoints: Boolean
     get() = true
 
-  fun canGetEvaluationInfo(file: PsiFile) = file.fileType == fileType
+  fun canGetEvaluationInfo(file: PsiFile): Boolean = file.fileType == fileType
 
   open fun getEvaluationInfo(element: PsiElement, document: Document, expressionInfoFactory: ExpressionInfoFactory): Promise<ExpressionInfo?>? = null
 

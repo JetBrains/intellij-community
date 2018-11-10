@@ -50,7 +50,7 @@ REGEXP_FILE
             PsiElement(CHARACTER)('r')
           RegExpCharImpl: <n>
             PsiElement(CHARACTER)('n')
-        PsiErrorElement:Unclosed group
+        PsiErrorElement:Unclosed conditional
           <empty list>
     PsiElement(UNION)('|')
     RegExpBranchImpl: <maybe-pattern>

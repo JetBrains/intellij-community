@@ -54,7 +54,8 @@ public class CommandException extends Exception {
 		return underlyingException;
 	}
 
-	public final void printStackTrace() {
+	@Override
+        public final void printStackTrace() {
 		if (underlyingException != null) {
 			underlyingException.printStackTrace();
 		}
@@ -63,7 +64,8 @@ public class CommandException extends Exception {
 		}
 	}
 
-	public final void printStackTrace(PrintStream stream) {
+	@Override
+        public final void printStackTrace(PrintStream stream) {
 		if (underlyingException != null) {
 			underlyingException.printStackTrace(stream);
 		}
@@ -72,7 +74,8 @@ public class CommandException extends Exception {
 		}
 	}
 
-	public final void printStackTrace(PrintWriter writer) {
+	@Override
+        public final void printStackTrace(PrintWriter writer) {
 		if (underlyingException != null) {
 			underlyingException.printStackTrace(writer);
 		}
@@ -81,13 +84,15 @@ public class CommandException extends Exception {
 		}
 	}
 
-	public final String getLocalizedMessage() {
+	@Override
+        public final String getLocalizedMessage() {
 		if (localizedMessage != null) return localizedMessage;
 		if (message != null) return message;
 		return super.getMessage();
 	}
 
-	public final String getMessage() {
+	@Override
+        public final String getMessage() {
 		return message;
 	}
 }

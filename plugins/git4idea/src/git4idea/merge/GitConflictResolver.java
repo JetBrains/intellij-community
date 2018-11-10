@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.notification.Notification;
@@ -31,15 +17,12 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import git4idea.util.StringScanner;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,11 +57,30 @@ public class GitConflictResolver {
     private String myErrorNotificationTitle = "";
     private String myErrorNotificationAdditionalDescription = "";
     private String myMergeDescription = "";
-    private MergeDialogCustomizer myMergeDialogCustomizer = new MergeDialogCustomizer() {
-      @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
-        return myMergeDescription;
-      }
-    };
+    private MergeDialogCustomizer myMergeDialogCustomizer;
+
+    public Params() {
+      myMergeDialogCustomizer = new MergeDialogCustomizer() {
+        @NotNull
+        @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+          return myMergeDescription;
+        }
+      };
+    }
+
+    public Params(Project project) {
+      GitMergeProvider provider = (GitMergeProvider)GitVcs.getInstance(project).getMergeProvider();
+
+      myMergeDialogCustomizer = new GitDefaultMergeDialogCustomizer(provider) {
+        @NotNull
+        @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+          if (!StringUtil.isEmpty(myMergeDescription)) {
+            return myMergeDescription;
+          }
+          return super.getMultipleFileMergeDescription(files);
+        }
+      };
+    }
 
     /**
      * @param reverseMerge specify {@code true} if reverse merge provider has to be used for merging - it is the case of rebase or stash.
@@ -108,16 +110,6 @@ public class GitConflictResolver {
       return this;
     }
 
-  }
-
-  /**
-   * @deprecated To remove in IDEA 2017. Use {@link #GitConflictResolver(Project, Git, Collection, Params)}.
-   */
-  @SuppressWarnings("UnusedParameters")
-  @Deprecated
-  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade facade,
-                             @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
-    this(project, git, roots, params);
   }
 
   public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
@@ -246,9 +238,7 @@ public class GitConflictResolver {
     final String description = "Couldn't check the working tree for unmerged files because of an error.";
     VcsNotifier.getInstance(myProject).notifyError(myParams.myErrorNotificationTitle,
                                                    description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
-                                                   e.getLocalizedMessage(),
-                                                   null
-    );
+                                                   e.getLocalizedMessage());
   }
 
   /**
@@ -268,48 +258,13 @@ public class GitConflictResolver {
    * @see #getUnmergedFiles(java.util.Collection
    */
   private Collection<VirtualFile> getUnmergedFiles(@NotNull VirtualFile root) throws VcsException {
-    return unmergedFiles(root);
-  }
-
-  /**
-   * Parse changes from lines
-   *
-   *
-   * @param root    the git root
-   * @return a set of unmerged files
-   * @throws com.intellij.openapi.vcs.VcsException if the input format does not matches expected format
-   */
-  private List<VirtualFile> unmergedFiles(final VirtualFile root) throws VcsException {
     GitRepository repository = myRepositoryManager.getRepositoryForRoot(root);
     if (repository == null) {
       LOG.error("Repository not found for root " + root);
       return Collections.emptyList();
     }
 
-    GitCommandResult result = myGit.getUnmergedFiles(repository);
-    if (!result.success()) {
-      throw new VcsException(result.getErrorOutputAsJoinedString());
-    }
-
-    String output = StringUtil.join(result.getOutput(), "\n");
-    HashSet<String> unmergedPaths = ContainerUtil.newHashSet();
-    for (StringScanner s = new StringScanner(output); s.hasMoreData();) {
-      if (s.isEol()) {
-        s.nextLine();
-        continue;
-      }
-      s.boundedToken('\t');
-      String relative = s.line();
-      unmergedPaths.add(GitUtil.unescapePath(relative));
-    }
-
-    if (unmergedPaths.size() == 0) {
-      return Collections.emptyList();
-    }
-    else {
-      List<File> files = ContainerUtil.map(unmergedPaths, path -> new File(root.getPath(), path));
-      return sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(files));
-    }
+    List<File> files = GitChangeUtils.getUnmergedFiles(repository);
+    return sortVirtualFilesByPresentation(findVirtualFilesWithRefresh(files));
   }
-
 }

@@ -38,7 +38,7 @@ object ContextChecker {
   private val contextTree: ContextTree = ContextTree(writer)
 
   fun getContextDepth(): Int = contextTree.getSize()
-  fun clearContext() = contextTree.clear()
+  fun clearContext(): Unit = contextTree.clear()
 
   fun checkContext(component: Component, inputEvent: InputEvent) {
     val globalContext = getGlobalApplicableContext(component)

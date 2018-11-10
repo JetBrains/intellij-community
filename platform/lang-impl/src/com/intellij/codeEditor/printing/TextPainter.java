@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -21,6 +23,7 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
@@ -58,6 +61,7 @@ class TextPainter extends BasePainter {
   private int myCurrentMethodSeparator;
   private final CodeStyleSettings myCodeStyleSettings;
   private final FileType myFileType;
+  private final Color myMethodSeparatorColor;
   private boolean myPerformActualDrawing;
   
   private final String myPrintDate;
@@ -76,7 +80,7 @@ class TextPainter extends BasePainter {
   @NonNls private static final String DATE_FORMAT = "yyyy-MM-dd";
   @NonNls private static final String TIME_FORMAT = "HH:mm:ss";    
 
-  public TextPainter(@NotNull DocumentEx editorDocument,
+  TextPainter(@NotNull DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fullFileName,
                      String shortFileName,
@@ -86,7 +90,7 @@ class TextPainter extends BasePainter {
          FileSeparatorProvider.getFileSeparators(psiFile, editorDocument), CodeStyle.getSettings(psiFile));
   }
 
-  public TextPainter(@NotNull DocumentEx editorDocument,
+  TextPainter(@NotNull DocumentEx editorDocument,
                      EditorHighlighter highlighter,
                      String fullFileName,
                      String shortFileName,
@@ -117,6 +121,12 @@ class TextPainter extends BasePainter {
     Date date = new Date();
     myPrintDate = new SimpleDateFormat(DATE_FORMAT).format(date);
     myPrintTime = new SimpleDateFormat(TIME_FORMAT).format(date);
+
+    EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    myMethodSeparatorColor = colorsManager.isDarkEditor()
+                             ? colorsManager.getScheme(EditorColorsManager.DEFAULT_SCHEME_NAME)
+                               .getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
+                             : null;
   }
 
   public void setSegment(int segmentStart, int segmentEnd) {
@@ -350,7 +360,7 @@ class TextPainter extends BasePainter {
     double lineY = position.getY();
 
     if (myPerformActualDrawing) {
-      getMethodSeparator(lIterator.getLineNumber());
+      getMethodSeparatorColor(lIterator.getLineNumber());
     }
 
     char[] text = myDocument.getCharsSequence().toString().toCharArray();
@@ -373,10 +383,10 @@ class TextPainter extends BasePainter {
         myOffset = lEnd;
 
         if (myPerformActualDrawing) {
-          LineMarkerInfo marker = getMethodSeparator(lIterator.getLineNumber());
-          if (marker != null) {
+          Color markerColor = getMethodSeparatorColor(lIterator.getLineNumber());
+          if (markerColor != null) {
             Color save = g.getColor();
-            setForegroundColor(g, marker.separatorColor);
+            setForegroundColor(g, markerColor);
             UIUtil.drawLine(g, 0, (int)lineY, (int)clip.getWidth(), (int)lineY);
             setForegroundColor(g, save);
           }
@@ -422,7 +432,8 @@ class TextPainter extends BasePainter {
     g.translate(-clip.getX(), 0);
   }
 
-  private LineMarkerInfo getMethodSeparator(int line) {
+  @Nullable
+  private Color getMethodSeparatorColor(int line) {
     LineMarkerInfo marker = null;
     LineMarkerInfo tmpMarker;
     while (myCurrentMethodSeparator < myMethodSeparators.length &&
@@ -431,7 +442,7 @@ class TextPainter extends BasePainter {
       marker = tmpMarker;
       myCurrentMethodSeparator++;
     }
-    return marker;
+    return marker == null ? null : myMethodSeparatorColor == null ? marker.separatorColor : myMethodSeparatorColor;
   }
 
   private double drawHeader(Graphics2D g, Rectangle2D clip) {

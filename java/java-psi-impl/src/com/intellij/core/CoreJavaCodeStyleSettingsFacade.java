@@ -27,6 +27,11 @@ public class CoreJavaCodeStyleSettingsFacade extends JavaCodeStyleSettingsFacade
   }
 
   @Override
+  public boolean isToImportInDemand(String qualifiedName) {
+    return false;
+  }
+
+  @Override
   public boolean useFQClassNames() {
     return false;
   }

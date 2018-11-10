@@ -36,8 +36,7 @@ import java.util.List;
  * Base class for java line-connected exceptions (line, method, field)
  * @author egor
  */
-public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineBreakpointProperties>
-                                    implements JavaBreakpointType<JavaLineBreakpointProperties> {
+public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineBreakpointProperties> {
   public JavaLineBreakpointType() {
     super("java-line", DebuggerBundle.message("line.breakpoints.tab.title"));
   }
@@ -75,7 +74,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
 
   @NotNull
   @Override
-  public Breakpoint<JavaLineBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint breakpoint) {
+  public Breakpoint<JavaLineBreakpointProperties> createJavaBreakpoint(Project project, XBreakpoint<JavaLineBreakpointProperties> breakpoint) {
     return new LineBreakpoint<>(project, breakpoint);
   }
 
@@ -183,6 +182,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       return myElement != null ? myElement.getIcon(0) : AllIcons.Debugger.Db_set_breakpoint;
     }
 
+    @NotNull
     @Override
     public String getText() {
       return myElement != null ? StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0) : "Line";
@@ -211,6 +211,7 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
       super(position, element, lambdaOrdinal);
     }
 
+    @NotNull
     @Override
     public String getText() {
       return "Line";
@@ -289,10 +290,11 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     return canPutAtElement(file, line, project, (element, document) -> {
       if (element instanceof PsiField) {
         PsiExpression initializer = ((PsiField)element).getInitializer();
-        if (initializer != null) {
+        if (initializer != null && !PsiType.NULL.equals(initializer.getType())) {
           Object value = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper().computeConstantExpression(initializer);
           return value == null;
         }
+        return false;
       }
       else if (element instanceof PsiMethod) {
         PsiCodeBlock body = ((PsiMethod)element).getBody();

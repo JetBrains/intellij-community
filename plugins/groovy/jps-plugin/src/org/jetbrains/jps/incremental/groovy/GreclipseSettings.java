@@ -15,10 +15,12 @@
  */
 package org.jetbrains.jps.incremental.groovy;
 
+import org.jetbrains.jps.model.java.compiler.CompilerOptions;
+
 /**
  * @author peter
  */
-public class GreclipseSettings {
+public class GreclipseSettings implements CompilerOptions {
   public static final String COMPONENT_NAME = "GreclipseSettings";
   public static final String COMPONENT_FILE = "compiler.xml";
 

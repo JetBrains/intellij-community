@@ -16,16 +16,15 @@
 
 package com.intellij.uiDesigner.lw;
 
-import org.jdom.Element;
-import com.jgoodies.forms.layout.FormLayout;
-import com.jgoodies.forms.layout.RowSpec;
-import com.jgoodies.forms.layout.ColumnSpec;
-import com.jgoodies.forms.layout.CellConstraints;
 import com.intellij.uiDesigner.UIFormXmlConstants;
 import com.intellij.uiDesigner.compiler.Utils;
+import com.jgoodies.forms.layout.CellConstraints;
+import com.jgoodies.forms.layout.ColumnSpec;
+import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.RowSpec;
+import org.jdom.Element;
 
 import java.util.List;
-import java.util.Iterator;
 
 /**
  * @author yole
@@ -36,25 +35,24 @@ public class FormLayoutSerializer extends GridLayoutSerializer {
 
   public static FormLayoutSerializer INSTANCE = new FormLayoutSerializer();
 
-  public static CellConstraints.Alignment[] ourHorizontalAlignments = {
+  public static final CellConstraints.Alignment[] ourHorizontalAlignments = {
     CellConstraints.LEFT, CellConstraints.CENTER, CellConstraints.RIGHT, CellConstraints.FILL
   };
-  public static CellConstraints.Alignment[] ourVerticalAlignments = {
+  public static final CellConstraints.Alignment[] ourVerticalAlignments = {
     CellConstraints.TOP, CellConstraints.CENTER, CellConstraints.BOTTOM, CellConstraints.FILL
   };
 
+  @Override
   void readLayout(Element element, LwContainer container) {
     FormLayout layout = new FormLayout();
-    final List rowSpecs = element.getChildren(UIFormXmlConstants.ELEMENT_ROWSPEC, element.getNamespace());
-    for (Iterator iterator = rowSpecs.iterator(); iterator.hasNext();) {
-      Element rowSpecElement = (Element) iterator.next();
+    final List<Element> rowSpecs = element.getChildren(UIFormXmlConstants.ELEMENT_ROWSPEC, element.getNamespace());
+    for (Element rowSpecElement : rowSpecs) {
       final String spec = LwXmlReader.getRequiredString(rowSpecElement, UIFormXmlConstants.ATTRIBUTE_VALUE);
       layout.appendRow(new RowSpec(spec));
     }
 
-    final List colSpecs = element.getChildren(UIFormXmlConstants.ELEMENT_COLSPEC, element.getNamespace());
-    for (Iterator iterator = colSpecs.iterator(); iterator.hasNext();) {
-      Element colSpecElement = (Element) iterator.next();
+    final List<Element> colSpecs = element.getChildren(UIFormXmlConstants.ELEMENT_COLSPEC, element.getNamespace());
+    for (Element colSpecElement : colSpecs) {
       final String spec = LwXmlReader.getRequiredString(colSpecElement, UIFormXmlConstants.ATTRIBUTE_VALUE);
       layout.appendColumn(new ColumnSpec(spec));
     }
@@ -72,7 +70,7 @@ public class FormLayoutSerializer extends GridLayoutSerializer {
 
   private static int[][] readGroups(final Element element, final String elementName) {
     final List groupElements = element.getChildren(elementName, element.getNamespace());
-    if (groupElements.size() == 0) return null;
+    if (groupElements.isEmpty()) return null;
     int[][] groups = new int[groupElements.size()][];
     for(int i=0; i<groupElements.size(); i++) {
       Element groupElement = (Element) groupElements.get(i);
@@ -85,6 +83,7 @@ public class FormLayoutSerializer extends GridLayoutSerializer {
     return groups;
   }
 
+  @Override
   void readChildConstraints(final Element constraintsElement, final LwComponent component) {
     super.readChildConstraints(constraintsElement, component);
     CellConstraints cc = new CellConstraints();

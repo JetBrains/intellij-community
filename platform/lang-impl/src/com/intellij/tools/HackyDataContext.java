@@ -18,6 +18,7 @@ package com.intellij.tools;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,18 +33,18 @@ import static com.intellij.openapi.actionSystem.LangDataKeys.*;
  *
  * @author Konstantin Bulenkov
  */
-class HackyDataContext implements DataContext {
+public class HackyDataContext implements DataContext {
   private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE};
   private final Map<String, Object> values = new HashMap<>();
 
-  HackyDataContext(DataContext context) {
+  public HackyDataContext(DataContext context) {
     for (DataKey key : keys) {
       values.put(key.getName(), key.getData(context));
     }
   }
 
   @Override
-  public Object getData(@NonNls String dataId) {
+  public Object getData(@NotNull @NonNls String dataId) {
     if (values.keySet().contains(dataId)) {
       return values.get(dataId);
     }

@@ -10,6 +10,7 @@ import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -43,12 +44,12 @@ import java.util.Set;
 
 // Boolean - false as not loaded, true as loaded
 public final class ClasspathStorage extends StateStorageBase<Boolean> {
-  private static final Key<Boolean> ERROR_NOTIFIED_KEY =Key.create("ClasspathStorage.ERROR_NOTIFIED_KEY"); 
+  private static final Key<Boolean> ERROR_NOTIFIED_KEY = Key.create("ClasspathStorage.ERROR_NOTIFIED_KEY");
   private static final Logger LOG = Logger.getInstance(ClasspathStorage.class);
 
   private final ClasspathStorageProvider.ClasspathConverter myConverter;
 
-  private final TrackingPathMacroSubstitutor myPathMacroSubstitutor;
+  private final PathMacroSubstitutor myPathMacroSubstitutor;
 
   public ClasspathStorage(@NotNull final Module module, @NotNull StateStorageManager storageManager) {
     String storageType = module.getOptionValue(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
@@ -65,7 +66,7 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
         module.putUserData(ERROR_NOTIFIED_KEY, Boolean.TRUE);
         LOG.info("Classpath storage provider " + storageType + " not found");
       }
-      
+
       myConverter = new MissingClasspathConverter();
     } else {
       myConverter = provider.createConverter(module);
@@ -167,7 +168,9 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
 
     if (myPathMacroSubstitutor != null) {
       myPathMacroSubstitutor.expandPaths(element);
-      myPathMacroSubstitutor.addUnknownMacros("NewModuleRootManager", PathMacrosCollector.getMacroNames(element));
+      if (myPathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
+        ((TrackingPathMacroSubstitutor)myPathMacroSubstitutor).addUnknownMacros("NewModuleRootManager", PathMacrosCollector.getMacroNames(element));
+      }
     }
 
     getStorageDataRef().set(true);
@@ -181,13 +184,13 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
   }
 
   @Override
-  @NotNull
-  public ExternalizationSession startExternalization() {
+  @Nullable
+  public SaveSessionProducer createSaveSessionProducer() {
     return myConverter.startExternalization();
   }
 
   @Override
-  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<String> componentNames) {
+  public void analyzeExternalChangesAndUpdateIfNeed(@NotNull Set<? super String> componentNames) {
     // if some file changed, so, changed
     componentNames.add("NewModuleRootManager");
     getStorageDataRef().set(false);
@@ -253,18 +256,6 @@ public final class ClasspathStorage extends StateStorageBase<Boolean> {
     @Override
     public List<String> getFilePaths() {
       return Collections.emptyList();
-    }
-
-    @NotNull
-    @Override
-    public ExternalizationSession startExternalization() {
-      return new ExternalizationSession() {
-        @Nullable
-        @Override
-        public SaveSession createSaveSession() {
-          return null;
-        }
-      };
     }
 
     @Override

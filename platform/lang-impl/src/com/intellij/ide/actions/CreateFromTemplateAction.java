@@ -48,7 +48,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   }
 
   @Override
-  public final void actionPerformed(final AnActionEvent e) {
+  public final void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
@@ -112,7 +112,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   }
 
   @Override
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 
@@ -128,8 +128,9 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     return project != null && view != null && view.getDirectories().length != 0;
   }
 
-  protected abstract String getActionName(PsiDirectory directory, String newName, String templateName);
+  protected abstract String getActionName(PsiDirectory directory, @NotNull String newName, String templateName);
 
+  @NotNull
   protected String getErrorTitle() {
     return CommonBundle.getErrorTitle();
   }

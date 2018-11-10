@@ -136,11 +136,13 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     collectClassesPerRoots(givenRoots, fromClasses, toClasses);
 
     Graph<VirtualFile> graph = GraphGenerator.generate(new InboundSemiGraph<VirtualFile>() {
+      @NotNull
       @Override
       public Collection<VirtualFile> getNodes() {
         return Arrays.asList(givenRoots);
       }
 
+      @NotNull
       @Override
       public Iterator<VirtualFile> getIn(VirtualFile n) {
         Set<String> classesInCurrentRoot = fromClasses.get(n);
@@ -235,10 +237,10 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
   }
 
   private static class RemoveUnusedLibrary implements QuickFix<ModuleProblemDescriptor> {
-    private final Set<VirtualFile> myFiles;
+    private final Set<? extends VirtualFile> myFiles;
     private final String myLibraryName;
 
-    public RemoveUnusedLibrary(String libraryName, final Set<VirtualFile> files) {
+    RemoveUnusedLibrary(String libraryName, final Set<? extends VirtualFile> files) {
       myLibraryName = libraryName;
       myFiles = files;
     }
@@ -280,7 +282,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     private final ProjectFileIndex myFileIndex;
     private final RefManager myManager;
 
-    public UnusedLibraryGraphAnnotator(RefManager manager) {
+    UnusedLibraryGraphAnnotator(RefManager manager) {
       myManager = manager;
       myFileIndex = ProjectRootManager.getInstance(manager.getProject()).getFileIndex();
     }

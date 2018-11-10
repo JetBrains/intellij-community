@@ -22,7 +22,7 @@ public interface PlatformIcons {
   @NonNls String CLASS_ICON_PATH = "/nodes/class.png";
   Icon CLASS_ICON = AllIcons.Nodes.Class;
   Icon EXCEPTION_CLASS_ICON = AllIcons.Nodes.ExceptionClass;
-  Icon NEW_EXCEPTION = AllIcons.Hierarchy.Caller;
+  Icon NEW_EXCEPTION = AllIcons.Hierarchy.Supertypes;
   Icon ANONYMOUS_CLASS_ICON = AllIcons.Nodes.AnonymousClass;
   Icon ABSTRACT_CLASS_ICON = AllIcons.Nodes.AbstractClass;
   Icon ANNOTATION_TYPE_ICON = AllIcons.Nodes.Annotationtype;
@@ -38,16 +38,17 @@ public interface PlatformIcons {
   Icon LIBRARY_ICON = AllIcons.Nodes.PpLib;
   Icon WEB_ICON = AllIcons.Nodes.PpWeb;
   Icon JAR_ICON = AllIcons.Nodes.PpJar;
-  Icon FILE_ICON = AllIcons.Nodes.PpFile;
+  Icon FILE_ICON = AllIcons.Nodes.Folder;
 
   Icon VARIABLE_READ_ACCESS = AllIcons.Nodes.Read_access;
   Icon VARIABLE_WRITE_ACCESS = AllIcons.Nodes.Write_access;
   Icon VARIABLE_RW_ACCESS = AllIcons.Nodes.Rw_access;
   Icon CUSTOM_FILE_ICON = AllIcons.FileTypes.Custom;
   Icon PROPERTY_ICON = AllIcons.Nodes.Property;
-  Icon NEW_PARAMETER = AllIcons.Hierarchy.Caller;
+  Icon NEW_PARAMETER = AllIcons.Hierarchy.Supertypes;
   Icon ASPECT_ICON = AllIcons.Nodes.Aspect;
-  Icon ADVICE_ICON = AllIcons.Nodes.Advice;
+  @Deprecated
+  Icon ADVICE_ICON = AllIcons.Nodes.Tag;
   Icon ERROR_INTRODUCTION_ICON = AllIcons.Nodes.ErrorIntroduction;
   Icon WARNING_INTRODUCTION_ICON = AllIcons.Nodes.WarningIntroduction;
   Icon JAVA_OUTSIDE_SOURCE_ICON = AllIcons.FileTypes.JavaOutsideSource;
@@ -55,8 +56,8 @@ public interface PlatformIcons {
   Icon PROJECT_ICON = AllIcons.Toolwindows.ToolWindowProject;
   Icon UI_FORM_ICON = AllIcons.FileTypes.UiForm;
   Icon JSP_ICON = AllIcons.FileTypes.Jsp;
-  Icon SMALL_VCS_CONFIGURABLE = AllIcons.General.SmallConfigurableVcs;
-  Icon GROUP_BY_PACKAGES = AllIcons.Toolbar.Folders;
+  Icon SMALL_VCS_CONFIGURABLE = AllIcons.Actions.ShowAsTree;
+  Icon GROUP_BY_PACKAGES = AllIcons.Actions.GroupByPackage;
   Icon ADD_ICON = IconUtil.getAddIcon();
   Icon DELETE_ICON = IconUtil.getRemoveIcon();
   Icon COPY_ICON = AllIcons.Actions.Copy;
@@ -75,11 +76,10 @@ public interface PlatformIcons {
 
   Icon OPEN_EDIT_DIALOG_ICON = AllIcons.Actions.ShowViewer;
   Icon FLATTEN_PACKAGES_ICON = AllIcons.ObjectBrowser.FlattenPackages;
-  Icon EDIT_IN_SECTION_ICON = AllIcons.General.EditItemInSection;
+  Icon EDIT_IN_SECTION_ICON = AllIcons.Actions.Edit;
   Icon CLASS_INITIALIZER = AllIcons.Nodes.ClassInitializer;
 
   Icon CLOSED_MODULE_GROUP_ICON = AllIcons.Nodes.ModuleGroup;
-  @Deprecated Icon OPENED_MODULE_GROUP_ICON = CLOSED_MODULE_GROUP_ICON;
 
   Icon FOLDER_ICON = AllIcons.Nodes.Folder;
   Icon SOURCE_FOLDERS_ICON = AllIcons.Nodes.SourceFolder;
@@ -94,8 +94,8 @@ public interface PlatformIcons {
 
   Icon UP_DOWN_ARROWS = AllIcons.Ide.UpDown;
 
-  Icon COMBOBOX_ARROW_ICON = AllIcons.General.ComboArrow;
-  
+  Icon COMBOBOX_ARROW_ICON = AllIcons.General.ArrowDown;
+
   Icon EXPORT_ICON = AllIcons.ToolbarDecorator.Export;
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;
 

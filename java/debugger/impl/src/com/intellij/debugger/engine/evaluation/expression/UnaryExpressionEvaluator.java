@@ -39,13 +39,14 @@ class UnaryExpressionEvaluator implements Evaluator {
   private final Evaluator myOperandEvaluator;
   private final String myOperationText;
 
-  public UnaryExpressionEvaluator(IElementType operationType, String expectedType, Evaluator operandEvaluator, final String operationText) {
+  UnaryExpressionEvaluator(IElementType operationType, String expectedType, Evaluator operandEvaluator, final String operationText) {
     myOperationType = operationType;
     myExpectedType = expectedType;
     myOperandEvaluator = operandEvaluator;
     myOperationText = operationText;
   }
 
+  @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value operand = (Value)myOperandEvaluator.evaluate(context);
     VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
@@ -80,7 +81,7 @@ class UnaryExpressionEvaluator implements Evaluator {
       }
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.boolean.expected"));
     }
-    
+
     throw EvaluateExceptionUtil.createEvaluateException(
       DebuggerBundle.message("evaluation.error.operation.not.supported", myOperationText)
     );

@@ -17,7 +17,10 @@
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.ui.ColoredListCellRenderer;
@@ -94,11 +97,11 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
 
   class ClearAction extends AnAction {
     ClearAction() {
-      super("Clear", "", AllIcons.Actions.Cross);
+      super("Clear", "", AllIcons.Actions.Close);
     }
 
     @Override
-    public void actionPerformed(AnActionEvent e) {
+    public void actionPerformed(@NotNull AnActionEvent e) {
       myLogModel.clear();
     }
   }

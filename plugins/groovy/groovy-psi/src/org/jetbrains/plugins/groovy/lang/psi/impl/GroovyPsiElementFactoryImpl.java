@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -10,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
+import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -44,7 +43,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClassTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -56,6 +54,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CODE_REFERENCE;
+
 /**
  * @author ven
  */
@@ -64,9 +64,11 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private static final Logger LOG = Logger.getInstance(GroovyPsiElementFactoryImpl.class);
 
   private final Project myProject;
+  private final PsiManager myManager;
 
-  public GroovyPsiElementFactoryImpl(Project project) {
+  public GroovyPsiElementFactoryImpl(Project project, PsiManager manager) {
     myProject = project;
+    myManager = manager;
   }
 
   @Override
@@ -117,9 +119,13 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrCodeReferenceElement createReferenceElementFromText(@NotNull String refName, final PsiElement context) {
-    GroovyFile file = createGroovyFileChecked("(" + refName + ")foo", false, context);
-    GrTypeElement typeElement = ((GrTypeCastExpression) file.getTopStatements()[0]).getCastTypeElement();
-    return ((GrClassTypeElement) typeElement).getReferenceElement();
+    GroovyDummyElement dummyElement = new GroovyDummyElement(CODE_REFERENCE, refName);
+    DummyHolder holder = new DummyHolder(myManager, dummyElement, context);
+    PsiElement element = holder.getFirstChild();
+    if (!(element instanceof GrCodeReferenceElement)) {
+      throw new IncorrectOperationException("Incorrect code reference '" + refName + "'");
+    }
+    return (GrCodeReferenceElement)element;
   }
 
   @NotNull
@@ -561,7 +567,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public GrMethod createMethodFromSignature(@NotNull String name, @NotNull GrClosureSignature signature) {
+  public GrMethod createMethodFromSignature(@NotNull String name, @NotNull GrSignature signature) {
     StringBuilder builder = new StringBuilder("public");
     final PsiType returnType = signature.getReturnType();
     if (returnType != null && returnType != PsiType.NULL) {

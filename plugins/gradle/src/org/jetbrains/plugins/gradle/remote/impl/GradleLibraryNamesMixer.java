@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,6 @@ import java.util.*;
  * Thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 10/19/11 2:04 PM
  */
 public class GradleLibraryNamesMixer {
 
@@ -60,7 +58,6 @@ public class GradleLibraryNamesMixer {
    * 
    * @param libraries  libraries to process
    */
-  @SuppressWarnings("MethodMayBeStatic")
   public void mixNames(@NotNull Collection<DataNode<LibraryData>> libraries) {
     if (libraries.isEmpty()) {
       return;
@@ -173,7 +170,6 @@ public class GradleLibraryNamesMixer {
     }
   }
 
-  @SuppressWarnings("ConstantConditions")
   private static void diversifyName(@NotNull String changeText, @NotNull Wrapped wrapped, @Nullable File file) {
     String name = wrapped.library.getExternalName();
     int i = file == null ? - 1 : name.indexOf(file.getName());

@@ -88,13 +88,7 @@ public class ExtractClassTest extends MultiFileTestCase {
   }
   
   public void testIncrement() {
-    try {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(true);
-      doTestField(null, false);
-    }
-    finally {
-      BaseRefactoringProcessor.ConflictsInTestsException.setTestIgnore(false);
-    }
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(()->doTestField(null, false));
   }
 
   public void testVarargs() {
@@ -134,6 +128,10 @@ public class ExtractClassTest extends MultiFileTestCase {
   }
 
   public void testImplicitReferenceTypeParameters() {
+    doTestMethod();
+  }
+
+  public void testTypeParameters() {
     doTestMethod();
   }
 
@@ -225,8 +223,7 @@ public class ExtractClassTest extends MultiFileTestCase {
                              boolean inner) {
     try {
       ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), StringUtil.getPackageName(aClass.getQualifiedName()), null,
-                                                                  "Extracted", null, generateGettersSetters, Collections.emptyList());
-      processor.setExtractInnerClass(inner);
+                                                                  "Extracted", null, generateGettersSetters, Collections.emptyList(), inner);
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -339,7 +336,7 @@ public class ExtractClassTest extends MultiFileTestCase {
       fields.add(aClass.findFieldByName("myT", false));
 
       final ExtractClassProcessor processor =
-        new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), "", null, "Extracted", PsiModifier.PUBLIC, false, Collections.emptyList());
+        new ExtractClassProcessor(aClass, fields, methods, new ArrayList<>(), "", null, "Extracted", PsiModifier.PUBLIC, false, Collections.emptyList(), false);
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();

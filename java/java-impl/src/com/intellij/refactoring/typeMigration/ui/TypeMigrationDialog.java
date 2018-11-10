@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.find.FindSettings;
@@ -10,7 +8,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -114,8 +111,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   }
 
   @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("reference.typeMigrationDialog");
+  protected String getHelpId() {
+    return "reference.typeMigrationDialog";
   }
 
   public static class MultipleElements extends TypeMigrationDialog {
@@ -169,7 +166,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       myToTypeEditor.setHistory(types != null ? types : new String[]{document.getText()});
       document.addDocumentListener(new DocumentListener() {
         @Override
-        public void documentChanged(final DocumentEvent e) {
+        public void documentChanged(@NotNull final DocumentEvent e) {
           documentManager.commitDocument(document);
           validateButtons();
         }
@@ -254,7 +251,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         return myTypeCodeFragment.getType();
       }
       catch (PsiTypeCodeFragment.TypeSyntaxException | PsiTypeCodeFragment.NoTypeException e) {
-        LOG.info(e);
+        LOG.debug(e);
         return null;
       }
     }
@@ -324,7 +321,4 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       return true;
     }
   }
-
-
-
 }

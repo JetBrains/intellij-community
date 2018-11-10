@@ -17,21 +17,24 @@ package git4idea.commands;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Compound result of the Git command execution performed on several repositories.
- * 
+ *
  * @author Kirill Likhodedov
  */
 public final class GitCompoundResult {
-  
-  private final Map<GitRepository, GitCommandResult> resultsByRepos = new HashMap<>(1);
+
+  private final MultiMap<GitRepository, GitCommandResult> resultsByRepos = new MultiMap<>();
   private final Project myProject;
 
   public GitCompoundResult(Project project) {
@@ -39,7 +42,7 @@ public final class GitCompoundResult {
   }
 
   public void append(GitRepository repository, GitCommandResult result) {
-    resultsByRepos.put(repository, result);
+    resultsByRepos.putValue(repository, result);
   }
 
   public boolean totalSuccess() {
@@ -51,7 +54,7 @@ public final class GitCompoundResult {
   }
 
   /**
-   * @return true if at least one, but not all repositories succeeded. 
+   * @return true if at least one, but not all repositories succeeded.
    */
   public boolean partialSuccess() {
     boolean successFound = false;
@@ -75,15 +78,18 @@ public final class GitCompoundResult {
   @NotNull
   public String getErrorOutputWithReposIndication() {
     StringBuilder sb = new StringBuilder();
-    for (Map.Entry<GitRepository, GitCommandResult> entry : resultsByRepos.entrySet()) {
+    for (Map.Entry<GitRepository, Collection<GitCommandResult>> entry: resultsByRepos.entrySet()) {
       GitRepository repository = entry.getKey();
-      GitCommandResult result = entry.getValue();
-      if (!result.success()) {
+      List<GitCommandResult> errors = ContainerUtil.filter(entry.getValue(), it -> !it.success());
+      if (!errors.isEmpty()) {
         sb.append("<p>");
         if (!GitUtil.justOneGitRepository(myProject)) {
           sb.append("<code>" + repository.getPresentableUrl() + "</code>:<br/>");
         }
-        sb.append(result.getErrorOutputAsHtmlString());
+        for (int i = 0; i < errors.size(); i++) {
+          if (i > 0) sb.append("<br/>");
+          sb.append(errors.get(i).getErrorOutputAsHtmlString());
+        }
         sb.append("</p>");
       }
     }

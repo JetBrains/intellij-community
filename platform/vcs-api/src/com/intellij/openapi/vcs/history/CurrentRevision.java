@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,19 +40,23 @@ public class CurrentRevision implements VcsFileRevision {
     myRevisionNumber = revision;
   }
 
+  @Override
   public String getCommitMessage() {
     return "[" + CURRENT + "]";
   }
 
-  public byte[] loadContent() throws IOException, VcsException {
-    return getContent();
+  @Override
+  public byte[] getContent() {
+    return loadContent();
   }
 
+  @Override
   public Date getRevisionDate() {
     return new Date(myFile.getTimeStamp());
   }
 
-  public byte[] getContent() {
+  @Override
+  public byte[] loadContent() {
     try {
       Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(myFile));
       if (document != null) {
@@ -69,15 +72,18 @@ public class CurrentRevision implements VcsFileRevision {
     }
   }
 
+  @Override
   public String getAuthor() {
     return "";
   }
 
+  @Override
   @NotNull
   public VcsRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
+  @Override
   public String getBranchName() {
     return null;
   }

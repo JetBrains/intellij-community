@@ -31,6 +31,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -59,7 +60,7 @@ public class ProblemPreviewEditorPresentation {
 
 
   public static void setupFoldingsAndHighlightProblems(@NotNull EditorEx editor, @NotNull Container editorContainer,
-                                                       @NotNull List<UsageInfo> usages, @NotNull Project project) {
+                                                       @NotNull List<? extends UsageInfo> usages, @NotNull Project project) {
     final Document doc = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     if (documentManager.isUncommited(doc)) {
@@ -81,8 +82,8 @@ public class ProblemPreviewEditorPresentation {
     highlightProblems(editor, editorContainer, usages, project);
   }
 
-  private static void highlightProblems(EditorEx editor, Container editorContainer, List<UsageInfo> usages, @NotNull Project project) {
-    List<UsageInfo> validUsages = usages.stream().filter(Objects::nonNull).collect(Collectors.toList());
+  private static void highlightProblems(EditorEx editor, Container editorContainer, List<? extends UsageInfo> usages, @NotNull Project project) {
+    List<UsageInfo> validUsages = ContainerUtil.filter(usages, Objects::nonNull);
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
       if (!editor.isDisposed()) {
         editorContainer.invalidate();
@@ -103,7 +104,7 @@ public class ProblemPreviewEditorPresentation {
     });
   }
 
-  public static void setupFoldings(EditorEx editor, SortedSet<PreviewEditorFoldingRegion> foldingRegions) {
+  public static void setupFoldings(EditorEx editor, SortedSet<? extends PreviewEditorFoldingRegion> foldingRegions) {
     editor.getFoldingModel().runBatchFoldingOperation(() -> {
       editor.getFoldingModel().clearFoldRegions();
       editor.getMarkupModel().removeAllHighlighters();

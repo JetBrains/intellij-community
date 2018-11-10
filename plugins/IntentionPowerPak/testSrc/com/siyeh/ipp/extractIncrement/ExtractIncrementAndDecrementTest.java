@@ -32,6 +32,8 @@ public class ExtractIncrementAndDecrementTest extends IPPTestCase {
 
   public void testPrefixIncrement() {doExtractTest("++");}
 
+  public void testSingleDoWhileBody() {doExtractTest("++");}
+
   private void doExtractTest(@NotNull String operator) {
     super.doTest(IntentionPowerPackBundle.message("extract.increment.intention.name", operator));
   }

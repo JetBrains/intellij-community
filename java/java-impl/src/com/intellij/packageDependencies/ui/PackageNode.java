@@ -48,7 +48,8 @@ public class PackageNode extends PackageDependenciesNode {
     myPackageQName = packageQName;
   }
 
-  public void fillFiles(Set<PsiFile> set, boolean recursively) {
+  @Override
+  public void fillFiles(Set<? super PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
     for (int i = 0; i < count; i++) {
@@ -71,10 +72,12 @@ public class PackageNode extends PackageDependenciesNode {
     return myPackageQName;
   }
 
+  @Override
   public PsiElement getPsiElement() {
     return myPackage;
   }
 
+  @Override
   public int getWeight() {
     return 3;
   }
@@ -101,11 +104,13 @@ public class PackageNode extends PackageDependenciesNode {
     return result;
   }
 
+  @Override
   public Icon getIcon() {
     return PlatformIcons.PACKAGE_ICON;
   }
 
 
+  @Override
   public boolean isValid() {
     return myPackage != null && myPackage.isValid();
   }
@@ -113,9 +118,8 @@ public class PackageNode extends PackageDependenciesNode {
   @Override
   public boolean canSelectInLeftTree(final Map<PsiFile, Set<PsiFile>> deps) {
     Set<PsiFile> files = deps.keySet();
-    String packageName = myPackageQName;
     for (PsiFile file : files) {
-      if (file instanceof PsiJavaFile && Comparing.equal(packageName, ((PsiJavaFile)file).getPackageName())) {
+      if (file instanceof PsiJavaFile && Comparing.equal(myPackageQName, ((PsiJavaFile)file).getPackageName())) {
         return true;
       }
     }

@@ -7,11 +7,14 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.junit.Test;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.tree.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -231,6 +234,44 @@ public final class AsyncTreeModelTest {
     })));
   }
 
+  @Test
+  public void testCollapsedNodeUpdateIfChildrenNotLoaded() {
+    TreeNode color = createColorNode();
+    TreeNode digit = createDigitNode();
+    TreeNode greek = createGreekNode();
+    TreeNode root = new Node("root", color, digit, greek);
+    TreePath path = new TreePath(root).pathByAddingChild(greek);
+    testAsync(() -> root, test
+      -> testPathState(test.tree, "   +'root'\n" + CHILDREN, ()
+      -> test.fireStructureChanged(path)));
+  }
+
+  @Test
+  public void testCollapsedNodeUpdateIfChildrenLoaded() {
+    TreeNode color = createColorNode();
+    TreeNode digit = createDigitNode();
+    TreeNode greek = createGreekNode();
+    TreeNode root = new Node("root", color, digit, greek);
+    TreePath path = new TreePath(root);
+    testAsync(() -> root, test
+      -> testPathState(test.tree, "   +'root'\n" + CHILDREN, ()
+      -> test.collapse(path, ()
+      -> testPathState1(test.tree, ()
+      -> test.fireStructureChanged(path)))));
+  }
+
+  @Test
+  public void testExpandedNodeUpdateIfChildrenLoaded() {
+    TreeNode color = createColorNode();
+    TreeNode digit = createDigitNode();
+    TreeNode greek = createGreekNode();
+    TreeNode root = new Node("root", color, digit, greek);
+    TreePath path = new TreePath(root);
+    testAsync(() -> root, test
+      -> testPathState(test.tree, "   +'root'\n" + CHILDREN, ()
+      -> test.fireStructureChanged(path)));
+  }
+
   @NotNull
   private static TreeNode createRoot() {
     return new Node("root");
@@ -304,9 +345,8 @@ public final class AsyncTreeModelTest {
   }
 
   private static void testEventDispatchThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode) {
-    testEventDispatchThread(root, consumer, showLoadingNode, 0);
-    testEventDispatchThread(root, consumer, showLoadingNode, 10);
-    testEventDispatchThread(root, consumer, showLoadingNode, 100);
+    testEventDispatchThread(root, consumer, showLoadingNode, TreeTest.FAST);
+    testEventDispatchThread(root, consumer, showLoadingNode, TreeTest.SLOW);
   }
 
   private static void testEventDispatchThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode, int delay) {
@@ -314,9 +354,8 @@ public final class AsyncTreeModelTest {
   }
 
   private static void testBackgroundThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode) {
-    testBackgroundThread(root, consumer, showLoadingNode, 0);
-    testBackgroundThread(root, consumer, showLoadingNode, 10);
-    testBackgroundThread(root, consumer, showLoadingNode, 100);
+    testBackgroundThread(root, consumer, showLoadingNode, TreeTest.FAST);
+    testBackgroundThread(root, consumer, showLoadingNode, TreeTest.SLOW);
   }
 
   private static void testBackgroundThread(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode, int delay) {
@@ -324,9 +363,8 @@ public final class AsyncTreeModelTest {
   }
 
   private static void testBackgroundPool(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode) {
-    testBackgroundPool(root, consumer, showLoadingNode, 0);
-    testBackgroundPool(root, consumer, showLoadingNode, 10);
-    testBackgroundPool(root, consumer, showLoadingNode, 100);
+    testBackgroundPool(root, consumer, showLoadingNode, TreeTest.FAST);
+    testBackgroundPool(root, consumer, showLoadingNode, TreeTest.SLOW);
   }
 
   private static void testBackgroundPool(Supplier<TreeNode> root, Consumer<ModelTest> consumer, boolean showLoadingNode, int delay) {
@@ -375,7 +413,7 @@ public final class AsyncTreeModelTest {
       this.model = model;
     }
 
-    protected TreeModel createModelForTree(TreeModel model) {
+    protected TreeModel createModelForTree(TreeModel model, Disposable disposable) {
       return model;
     }
 
@@ -383,9 +421,10 @@ public final class AsyncTreeModelTest {
       if (PRINT) System.out.println("start " + toString());
       assert !SwingUtilities.isEventDispatchThread() : "test should be started on the main thread";
       long time = System.currentTimeMillis();
+      Disposable disposable = Disposer.newDisposable();
+
       runOnSwingThread(() -> {
-        //noinspection UndesirableClassUsage
-        tree = new JTree(createModelForTree(model));
+        tree = new JTree(createModelForTree(model, disposable));
         runOnSwingThreadWhenProcessingDone(() -> consumer.accept(this));
       });
       try {
@@ -400,15 +439,13 @@ public final class AsyncTreeModelTest {
         throw exception;
       }
       finally {
-        TreeModel model = tree.getModel();
-        if (model instanceof Disposable) Disposer.dispose((Disposable)model);
+        Disposer.dispose(disposable);
         printTime("done in ", time);
         if (PRINT) System.out.println();
       }
     }
 
     void done() {
-      //noinspection unchecked
       promise.setResult(null);
     }
 
@@ -439,6 +476,24 @@ public final class AsyncTreeModelTest {
       runOnSwingThreadWhenProcessingDone(task);
     }
 
+    private void fireStructureChanged(@NotNull TreePath path) {
+      runOnSwingThread(() -> {
+        tree.getModel().addTreeModelListener(new TreeModelAdapter() {
+          @Override
+          protected void process(@NotNull TreeModelEvent event, @NotNull EventType type) {
+            assertEquals("unexpected tree path", path, event.getTreePath());
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(ModelTest.this::done);
+          }
+        });
+        runOnModelThread(() -> {
+          TreeModelEvent event = new TreeModelEvent(model, path);
+          TreeModelListener[] listeners = ((DefaultTreeModel)model).getTreeModelListeners();
+          for (TreeModelListener listener : listeners) listener.treeStructureChanged(event);
+        });
+      });
+    }
+
     private void updateModelAndWait(Consumer<TreeModel> consumer, @NotNull Runnable task) {
       runOnModelThread(() -> {
         consumer.accept(model);
@@ -449,7 +504,7 @@ public final class AsyncTreeModelTest {
     private void runOnModelThread(@NotNull Runnable task) {
       if (model instanceof InvokerSupplier) {
         InvokerSupplier supplier = (InvokerSupplier)model;
-        supplier.getInvoker().invokeLaterIfNeeded(wrap(task));
+        supplier.getInvoker().runOrInvokeLater(wrap(task));
       }
       else {
         runOnSwingThread(task);
@@ -501,8 +556,8 @@ public final class AsyncTreeModelTest {
     }
 
     @Override
-    protected TreeModel createModelForTree(TreeModel model) {
-      return new AsyncTreeModel(model, showLoadingNode);
+    protected TreeModel createModelForTree(TreeModel model, Disposable disposable) {
+      return new AsyncTreeModel(model, showLoadingNode, disposable);
     }
 
     @Override
@@ -544,7 +599,7 @@ public final class AsyncTreeModelTest {
 
     @Override
     public final Object getChild(Object parent, int index) {
-      pause();
+      if (index == 0) pause(); // do not pause for every child
       return super.getChild(parent, index);
     }
 
@@ -743,7 +798,7 @@ public final class AsyncTreeModelTest {
     private volatile Object myGroup;
 
     public void setGroup(Object group, @NotNull Runnable task) {
-      getInvoker().invokeLaterIfNeeded(() -> {
+      getInvoker().runOrInvokeLater(() -> {
         myGroup = group;
         treeStructureChanged(null, null, null);
         task.run();

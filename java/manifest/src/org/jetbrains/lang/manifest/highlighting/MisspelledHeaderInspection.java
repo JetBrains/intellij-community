@@ -49,8 +49,8 @@ import org.jetbrains.lang.manifest.psi.Header;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Robert F. Beeger (robert@beeger.net)
@@ -103,7 +103,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
         }
       }
 
-      private void addMatches(String headerName, Collection<String> headers, SortedSet<Suggestion> matches) {
+      private void addMatches(String headerName, Collection<String> headers, SortedSet<? super Suggestion> matches) {
         for (String candidate : headers) {
           int distance = EditDistance.optimalAlignment(headerName, candidate, false);
           if (distance <= MAX_DISTANCE) {
@@ -120,7 +120,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
   }
 
   private static class OptionsPanel extends JPanel {
-    public OptionsPanel(final Set<String> headers) {
+    OptionsPanel(final Set<? super String> headers) {
       super(new BorderLayout(5, 5));
 
       add(new JLabel(ManifestBundle.message("inspection.header.ui.label")), BorderLayout.NORTH);
@@ -133,7 +133,7 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
 
       area.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           headers.clear();
           for (String line : StringUtil.split(area.getText(), "\n")) {
             String header = line.trim();
@@ -168,9 +168,9 @@ public class MisspelledHeaderInspection extends LocalInspectionTool {
 
   private static class CustomHeaderQuickFix extends AbstractManifestQuickFix {
     private final String myHeaderName;
-    private final Collection<String> myHeaders;
+    private final Collection<? super String> myHeaders;
 
-    private CustomHeaderQuickFix(Header header, Collection<String> headers) {
+    private CustomHeaderQuickFix(Header header, Collection<? super String> headers) {
       super(header);
       myHeaderName = header.getName();
       myHeaders = headers;

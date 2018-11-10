@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.events;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.NonNls;
@@ -64,7 +65,9 @@ public class VFileCreateEvent extends VFileEvent {
   @NotNull
   @Override
   protected String computePath() {
-    return myParent.getPath() + "/" + myChildName;
+    String parentPath = myParent.getPath();
+    // jar file returns "x.jar!/"
+    return StringUtil.endsWithChar(parentPath, '/') ?  parentPath + myChildName : parentPath + "/" + myChildName;
   }
 
   @Override

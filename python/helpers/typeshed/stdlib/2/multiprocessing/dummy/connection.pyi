@@ -1,7 +1,6 @@
 from Queue import Queue
 from typing import Any, List, Optional, Tuple, Type
 
-__all__ = ...  # type: List[str]
 families = ...  # type: List[None]
 
 class Connection(object):

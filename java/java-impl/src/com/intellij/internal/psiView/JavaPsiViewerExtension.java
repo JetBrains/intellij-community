@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public abstract class JavaPsiViewerExtension implements PsiViewerExtension{
+  @Override
   @NotNull
   public FileType getDefaultFileType() {
     return JavaFileType.INSTANCE;

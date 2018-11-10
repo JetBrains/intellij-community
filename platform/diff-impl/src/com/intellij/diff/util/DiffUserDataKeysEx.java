@@ -84,6 +84,7 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
   Key<DiffTool> FORCE_DIFF_TOOL = Key.create("Diff.ForceDiffTool");
 
   Key<Boolean> SHOW_READ_ONLY_LOCK = Key.create("Diff.ShowReadOnlyLock");
+  Key<Boolean> LAST_REVISION_WITH_LOCAL = Key.create("Diff.LastWithLocal");
 
   //
   // MergeContext / MergeRequest
@@ -99,4 +100,5 @@ public interface DiffUserDataKeysEx extends DiffUserDataKeys {
 
   Key<String> VCS_DIFF_LEFT_CONTENT_TITLE = Key.create("Diff.Left.Panel.Title");
   Key<String> VCS_DIFF_RIGHT_CONTENT_TITLE = Key.create("Diff.Right.Panel.Title");
+  Key<String> VCS_DIFF_CENTER_CONTENT_TITLE = Key.create("Diff.Center.Panel.Title");
 }

@@ -44,23 +44,23 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return name1.compareToIgnoreCase(name2);
   };
 
-  public AntExplorerTreeStructure(final Project project) {
+  AntExplorerTreeStructure(final Project project) {
     myProject = project;
   }
 
   @Override
-  public boolean isToBuildChildrenInBackground(final Object element) {
+  public boolean isToBuildChildrenInBackground(@NotNull final Object element) {
     return true;
   }
 
   @Override
-  public boolean isAlwaysLeaf(Object element) {
+  public boolean isAlwaysLeaf(@NotNull Object element) {
     return element != myRoot && !(element instanceof AntBuildFile);
   }
 
   @Override
   @NotNull
-  public AntNodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
+  public AntNodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element == myRoot) {
       return new RootNodeDescriptor(myProject, parentDescriptor);
     }
@@ -81,8 +81,9 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return null;
   }
 
+  @NotNull
   @Override
-  public Object[] getChildElements(Object element) {
+  public Object[] getChildElements(@NotNull Object element) {
     final AntConfiguration configuration = AntConfiguration.getInstance(myProject);
     if (element == myRoot) {
       if (!configuration.isInitialized()) {
@@ -111,7 +112,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
 
   @Override
   @Nullable
-  public Object getParentElement(Object element) {
+  public Object getParentElement(@NotNull Object element) {
     if (element instanceof AntBuildTarget) {
       if (element instanceof MetaTarget) {
         return ((MetaTarget)element).getBuildFile();
@@ -142,6 +143,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
     return asyncCommitDocuments(myProject);
   }
 
+  @NotNull
   @Override
   public Object getRootElement() {
     return myRoot;
@@ -152,7 +154,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   private final class RootNodeDescriptor extends AntNodeDescriptor {
-    public RootNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
+    RootNodeDescriptor(Project project, NodeDescriptor parentDescriptor) {
       super(project, parentDescriptor);
     }
 
@@ -174,7 +176,7 @@ final class AntExplorerTreeStructure extends AbstractTreeStructure {
   }
 
   private static final class TextInfoNodeDescriptor extends AntNodeDescriptor {
-    public TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
+    TextInfoNodeDescriptor(Project project, NodeDescriptor parentDescriptor, String text) {
       super(project, parentDescriptor);
       myName = text;
       myColor = JBColor.blue;

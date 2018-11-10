@@ -41,7 +41,7 @@ public class PathsList  {
   private static final Function<String, VirtualFile> PATH_TO_DIR = (NullableFunction<String, VirtualFile>)s -> {
     VirtualFile file = PATH_TO_LOCAL_VFILE.fun(s);
     if (file == null) return null;
-    if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getName()) == ArchiveFileType.INSTANCE) {
+    if (!file.isDirectory() && FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence()) == ArchiveFileType.INSTANCE) {
       return StandardFileSystems.jar().findFileByPath(file.getPath() + URLUtil.JAR_SEPARATOR);
     }
     return file;
@@ -96,7 +96,7 @@ public class PathsList  {
     }
   }
 
-  private void addAllLast(Iterable<String> elements, List<String> toArray) {
+  private void addAllLast(Iterable<String> elements, List<? super String> toArray) {
     for (String element : elements) {
       toArray.add(element);
       myPathSet.add(element);

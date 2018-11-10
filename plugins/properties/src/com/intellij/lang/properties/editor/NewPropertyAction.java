@@ -37,17 +37,17 @@ class NewPropertyAction extends AnAction {
 
   private final boolean myEnabledForce;
 
-  public NewPropertyAction() {
+  NewPropertyAction() {
     this(false);
   }
 
-  public NewPropertyAction(final boolean enabledForce) {
+  NewPropertyAction(final boolean enabledForce) {
     super("New Property", null, AllIcons.General.Add);
     myEnabledForce = enabledForce;
   }
 
   @Override
-  public void actionPerformed(final AnActionEvent e) {
+  public void actionPerformed(@NotNull final AnActionEvent e) {
     final Project project = getEventProject(e);
     if (project == null) {
       return;
@@ -188,7 +188,7 @@ class NewPropertyAction extends AnAction {
     private final @Nullable String mySeparator;
 
 
-    public NewPropertyNameValidator(final @NotNull ResourceBundleEditor resourceBundleEditor,
+    NewPropertyNameValidator(final @NotNull ResourceBundleEditor resourceBundleEditor,
                                     final @Nullable String prefix,
                                     final @Nullable String separator) {
       myResourceBundleEditor = resourceBundleEditor;

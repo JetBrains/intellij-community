@@ -19,7 +19,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.FieldCache;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.CachedValue;
@@ -85,7 +85,6 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     }
   };
 
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final Map<String, CachedValue<CanContainAttributeType>> myAnyAttributeCache =
     ConcurrentFactoryMap.createMap(key -> CachedValuesManager.getManager(myTag.getProject()).createCachedValue(() -> {
       THashSet<Object> dependencies = new THashSet<>();
@@ -168,7 +167,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
   private static void addSubstitutionGroups(Map<String, XmlElementDescriptor> result,
                                             XmlNSDescriptorImpl nsDescriptor,
-                                            Set<XmlNSDescriptorImpl> visited) {
+                                            Set<? super XmlNSDescriptorImpl> visited) {
     mainLoop: while (true) {
       for (final XmlElementDescriptor xmlElementDescriptor : result.values()) {
         XmlElementDescriptorImpl descriptor = (XmlElementDescriptorImpl)xmlElementDescriptor;
@@ -191,18 +190,22 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
 
     visited.add(nsDescriptor);
     for (XmlTag tag : nsDescriptor.getTag().getSubTags()) {
-      if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "include")) {
+      if (XmlNSDescriptorImpl.equalsToSchemaName(tag, "include") ||
+          XmlNSDescriptorImpl.equalsToSchemaName(tag, "import")) {
         XmlAttribute location = tag.getAttribute("schemaLocation");
         if (location != null) {
           XmlAttributeValue valueElement = location.getValueElement();
           if (valueElement != null) {
-            PsiElement element = new FileReferenceSet(valueElement).resolve();
-            if (element instanceof XmlFile) {
-              XmlDocument document = ((XmlFile)element).getDocument();
-              if (document != null) {
-                PsiMetaData metaData = document.getMetaData();
-                if (metaData instanceof XmlNSDescriptorImpl && !visited.contains(metaData)) {
-                  addSubstitutionGroups(result, (XmlNSDescriptorImpl)metaData, visited);
+            PsiReference reference = valueElement.getReference();
+            if (reference != null) {
+              PsiElement element = reference.resolve();
+              if (element instanceof XmlFile) {
+                XmlDocument document = ((XmlFile)element).getDocument();
+                if (document != null) {
+                  PsiMetaData metaData = document.getMetaData();
+                  if (metaData instanceof XmlNSDescriptorImpl && !visited.contains(metaData)) {
+                    addSubstitutionGroups(result, (XmlNSDescriptorImpl)metaData, visited);
+                  }
                 }
               }
             }
@@ -210,7 +213,6 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
         }
       }
     }
-
   }
 
   private static void filterAbstractElements(Map<String,XmlElementDescriptor> result) {
@@ -294,7 +296,7 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
     final XmlNSDescriptorImpl documentDescriptor;
     final String expectedDefaultNs;
 
-    public CurrentContextInfo(XmlNSDescriptorImpl _nsDescriptor, String _ns) {
+    CurrentContextInfo(XmlNSDescriptorImpl _nsDescriptor, String _ns) {
       documentDescriptor = _nsDescriptor;
       expectedDefaultNs = _ns;
     }

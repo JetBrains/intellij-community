@@ -244,7 +244,7 @@ public class CompileDriver {
     buildManager.cancelAutoMakeTasks(myProject);
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
-      public void sessionTerminated(final UUID sessionId) {
+      public void sessionTerminated(@NotNull final UUID sessionId) {
         if (compileContext.shouldUpdateProblemsView()) {
           final ProblemsView view = ProblemsView.SERVICE.getInstance(myProject);
           view.clearProgress();
@@ -253,7 +253,7 @@ public class CompileDriver {
       }
 
       @Override
-      public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+      public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
         compileContext.addMessage(CompilerMessageCategory.ERROR, failure.hasDescription()? failure.getDescription() : "", null, -1, -1);
         final String trace = failure.hasStacktrace()? failure.getStacktrace() : null;
         if (trace != null) {

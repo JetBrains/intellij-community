@@ -25,7 +25,6 @@ import java.util.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 7/14/2014
  */
 public class DefaultExternalSourceSet implements ExternalSourceSet {
   private static final long serialVersionUID = 1L;

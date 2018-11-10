@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
-import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -53,12 +37,16 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel");
 
   protected final Project myProject;
-  private final ChooseByNameContributor[] myContributors;
+  private final List<ChooseByNameContributor> myContributors;
 
   protected ContributorsBasedGotoByModel(@NotNull Project project, @NotNull ChooseByNameContributor[] contributors) {
+    this(project, Arrays.asList(contributors));
+  }
+
+  protected ContributorsBasedGotoByModel(@NotNull Project project, @NotNull List<ChooseByNameContributor> contributors) {
     myProject = project;
     myContributors = contributors;
-    assert !Arrays.asList(contributors).contains(null);
+    assert !contributors.contains(null);
   }
 
   @Override
@@ -75,7 +63,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   private volatile boolean myIdFilterForLibraries;
 
   @Override
-  public void processNames(final Processor<String> nameProcessor, final boolean checkBoxState) {
+  public void processNames(final Processor<? super String> nameProcessor, final boolean checkBoxState) {
     long start = System.currentTimeMillis();
     List<ChooseByNameContributor> liveContribs = filterDumb(myContributors);
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
@@ -153,9 +141,9 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     return ArrayUtil.toStringArray(allNames);
   }
 
-  private List<ChooseByNameContributor> filterDumb(ChooseByNameContributor[] contributors) {
-    if (!DumbService.getInstance(myProject).isDumb()) return Arrays.asList(contributors);
-    List<ChooseByNameContributor> answer = new ArrayList<>(contributors.length);
+  private List<ChooseByNameContributor> filterDumb(List<ChooseByNameContributor> contributors) {
+    if (!DumbService.getInstance(myProject).isDumb()) return contributors;
+    List<ChooseByNameContributor> answer = new ArrayList<>(contributors.size());
     for (ChooseByNameContributor contributor : contributors) {
       if (DumbService.isDumbAware(contributor)) {
         answer.add(contributor);
@@ -170,7 +158,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
                                     @NotNull final FindSymbolParameters parameters,
                                     @NotNull final ProgressIndicator canceled) {
     long elementByNameStarted = System.currentTimeMillis();
-    final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
+    final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<>());
 
     Processor<ChooseByNameContributor> processor = contributor -> {
       if (myProject.isDisposed()) {
@@ -197,13 +185,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
           for (NavigationItem item : itemsByName) {
             canceled.checkCanceled();
             if (item == null) {
-              PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
-              if (pluginId != null) {
-                LOG.error(new PluginException("null item from contributor " + contributor + " for name " + name, pluginId));
-              }
-              else {
-                LOG.error("null item from contributor " + contributor + " for name " + name);
-              }
+              LOG.error(PluginManagerCore.createPluginException("null item from contributor " + contributor + " for name " + name, null, contributor.getClass()));
               continue;
             }
 
@@ -265,7 +247,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   }
 
   protected ChooseByNameContributor[] getContributors() {
-    return myContributors;
+    return myContributors.toArray(new ChooseByNameContributor[]{});
   }
 
   /**

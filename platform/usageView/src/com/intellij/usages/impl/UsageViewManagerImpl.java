@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.find.SearchInBackgroundOption;
@@ -21,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -31,6 +18,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -39,6 +27,7 @@ import com.intellij.psi.search.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
+import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageInFile;
@@ -79,6 +68,13 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                      @NotNull Usage[] usages,
                                      @NotNull UsageViewPresentation presentation,
                                      Factory<UsageSearcher> usageSearcherFactory) {
+    for (UsageViewFactory factory : UsageViewFactory.EP_NAME.getExtensionList()) {
+      UsageViewEx result = factory.createUsageView(targets, usages, presentation, usageSearcherFactory);
+      if (result != null) {
+        return result;
+      }
+    }
+
     UsageViewEx usageView = createEmptyUsageView(targets, presentation, usageSearcherFactory);
     if (usages.length != 0) {
       usageView.appendUsagesInBulk(Arrays.asList(usages));
@@ -121,7 +117,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   void showUsageView(@NotNull UsageViewEx usageView, @NotNull UsageViewPresentation presentation) {
-    Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).addContent(
+    Content content = UsageViewContentManager.getInstance(myProject).addContent(
       presentation.getTabText(),
       presentation.getTabName(),
       presentation.getToolwindowTitle(),
@@ -207,7 +203,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @Override
   public UsageView getSelectedUsageView() {
-    final Content content = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent();
+    final Content content = UsageViewContentManager.getInstance(myProject).getSelectedContent();
     if (content != null) {
       return content.getUserData(USAGE_VIEW_KEY);
     }
@@ -268,18 +264,18 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   public static boolean isInScope(@NotNull Usage usage, @NotNull SearchScope searchScope) {
-    PsiElement element = null;
-    VirtualFile file = usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() :
-                       usage instanceof PsiElementUsage
-                       ? PsiUtilCore.getVirtualFile(element = ((PsiElementUsage)usage).getElement())
-                       : null;
-    if (file != null) {
-      return isFileInScope(file, searchScope);
-    }
-    return element != null &&
-           (searchScope instanceof EverythingGlobalScope ||
+    VirtualFile file = ReadAction.compute(() -> {
+      if (usage instanceof PsiElementUsage) {
+        PsiElement element = ((PsiElementUsage)usage).getElement();
+        if (element == null) return null;
+        if (searchScope instanceof EverythingGlobalScope ||
             searchScope instanceof ProjectScopeImpl ||
-            searchScope instanceof ProjectAndLibrariesScope);
+            searchScope instanceof ProjectAndLibrariesScope) return NullVirtualFile.INSTANCE;
+        return PsiUtilCore.getVirtualFile(element);
+      }
+      return usage instanceof UsageInFile ? ((UsageInFile)usage).getFile() : null;
+    });
+    return file == NullVirtualFile.INSTANCE || file != null && isFileInScope(file, searchScope);
   }
 
   private static boolean isFileInScope(@NotNull VirtualFile file, @NotNull SearchScope searchScope) {

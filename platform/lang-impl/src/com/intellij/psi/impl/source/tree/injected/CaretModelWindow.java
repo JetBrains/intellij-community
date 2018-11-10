@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,9 +90,11 @@ class CaretModelWindow implements CaretModel {
   public void addCaretListener(@NotNull final CaretListener listener) {
     CaretListener wrapper = new CaretListener() {
       @Override
-      public void caretPositionChanged(CaretEvent e) {
+      public void caretPositionChanged(@NotNull CaretEvent e) {
         if (!myEditorWindow.getDocument().isValid()) return; // injected document can be destroyed by now
-        CaretEvent event = new CaretEvent(myEditorWindow, createInjectedCaret(e.getCaret()),
+        Caret caret = e.getCaret();
+        assert caret != null;
+        CaretEvent event = new CaretEvent(createInjectedCaret(caret),
                                           myEditorWindow.hostToInjected(e.getOldPosition()),
                                           myEditorWindow.hostToInjected(e.getNewPosition()));
         listener.caretPositionChanged(event);
@@ -242,6 +245,7 @@ class CaretModelWindow implements CaretModel {
     return position == null ? null : myEditorWindow.hostToInjected(position);
   }
 
+  @Contract("null -> null; !null -> !null")
   private InjectedCaret createInjectedCaret(Caret caret) {
     if (caret == null) {
       return null;
@@ -258,22 +262,12 @@ class CaretModelWindow implements CaretModel {
 
   @Override
   public void runForEachCaret(final @NotNull CaretAction action) {
-    myDelegate.runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        action.perform(createInjectedCaret(caret));
-      }
-    });
+    myDelegate.runForEachCaret(caret -> action.perform(createInjectedCaret(caret)));
   }
 
   @Override
   public void runForEachCaret(@NotNull final CaretAction action, boolean reverseOrder) {
-    myDelegate.runForEachCaret(new CaretAction() {
-      @Override
-      public void perform(Caret caret) {
-        action.perform(createInjectedCaret(caret));
-      }
-    }, reverseOrder);
+    myDelegate.runForEachCaret(caret -> action.perform(createInjectedCaret(caret)), reverseOrder);
   }
 
   @Override

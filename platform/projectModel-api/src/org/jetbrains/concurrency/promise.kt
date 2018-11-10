@@ -7,9 +7,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.util.Function
-import com.intellij.util.SmartList
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.toMutableSmartList
 import org.jetbrains.concurrency.InternalPromiseUtil.MessageError
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -20,9 +20,6 @@ val Promise<*>.isRejected: Boolean
 
 val Promise<*>.isPending: Boolean
   get() = state == Promise.State.PENDING
-
-val Promise<*>.isFulfilled: Boolean
-  get() = state == Promise.State.FULFILLED
 
 private val REJECTED: Promise<*> by lazy { DonePromise<Any?>(InternalPromiseUtil.PromiseValue.createRejected(createError("rejected"))) }
 
@@ -60,21 +57,21 @@ fun <T> cancelledPromise(): Promise<T> = InternalPromiseUtil.CANCELLED_PROMISE.v
 interface ObsolescentFunction<Param, Result> : Function<Param, Result>, Obsolescent
 
 abstract class ValueNodeAsyncFunction<PARAM, RESULT>(private val node: Obsolescent) : Function<PARAM, Promise<RESULT>>, Obsolescent {
-  override fun isObsolete() = node.isObsolete
+  override fun isObsolete(): Boolean = node.isObsolete
 }
 
 abstract class ObsolescentConsumer<T>(private val obsolescent: Obsolescent) : Obsolescent, Consumer<T> {
-  override fun isObsolete() = obsolescent.isObsolete
+  override fun isObsolete(): Boolean = obsolescent.isObsolete
 }
 
-inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline handler: (T) -> SUB_RESULT) = then(object : ObsolescentFunction<T, SUB_RESULT> {
+inline fun <T, SUB_RESULT> Promise<T>.then(obsolescent: Obsolescent, crossinline handler: (T) -> SUB_RESULT): Promise<SUB_RESULT> = then(object : ObsolescentFunction<T, SUB_RESULT> {
   override fun `fun`(param: T) = handler(param)
 
   override fun isObsolete() = obsolescent.isObsolete
 })
 
 
-inline fun <T> Promise<T>.onSuccess(node: Obsolescent, crossinline handler: (T) -> Unit) = onSuccess(object : ObsolescentConsumer<T>(node) {
+inline fun <T> Promise<T>.onSuccess(node: Obsolescent, crossinline handler: (T) -> Unit): Promise<T> = onSuccess(object : ObsolescentConsumer<T>(node) {
   override fun accept(param: T) = handler(param)
 })
 
@@ -87,7 +84,7 @@ inline fun Promise<*>.processed(node: Obsolescent, crossinline handler: () -> Un
 }
 
 @Suppress("UNCHECKED_CAST")
-inline fun Promise<*>.doneRun(crossinline handler: () -> Unit) = onSuccess { handler() }
+inline fun Promise<*>.doneRun(crossinline handler: () -> Unit): Promise<out Any> = onSuccess { handler() }
 
 @Suppress("UNCHECKED_CAST")
 inline fun <T> Promise<*>.thenRun(crossinline handler: () -> T): Promise<T> = (this as Promise<Any?>).then { handler() }
@@ -98,7 +95,7 @@ inline fun Promise<*>.processedRun(crossinline handler: () -> Unit): Promise<*> 
 }
 
 
-inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>) = thenAsync(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
+inline fun <T, SUB_RESULT> Promise<T>.thenAsync(node: Obsolescent, crossinline handler: (T) -> Promise<SUB_RESULT>): Promise<SUB_RESULT> = thenAsync(object : ValueNodeAsyncFunction<T, SUB_RESULT>(node) {
   override fun `fun`(param: T) = handler(param)
 })
 
@@ -109,30 +106,59 @@ inline fun <T> Promise<T>.thenAsyncAccept(node: Obsolescent, crossinline handler
   })
 }
 
-inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>) = thenAsync(Function<T, Promise<Any?>> { param ->
+inline fun <T> Promise<T>.thenAsyncAccept(crossinline handler: (T) -> Promise<*>): Promise<Any?> = thenAsync(Function<T, Promise<Any?>> { param ->
   @Suppress("UNCHECKED_CAST")
   (return@Function handler(param) as Promise<Any?>)
 })
 
 
-inline fun Promise<*>.onError(node: Obsolescent, crossinline handler: (Throwable) -> Unit) = onError(object : ObsolescentConsumer<Throwable>(node) {
+inline fun Promise<*>.onError(node: Obsolescent, crossinline handler: (Throwable) -> Unit): Promise<out Any> = onError(object : ObsolescentConsumer<Throwable>(node) {
   override fun accept(param: Throwable) = handler(param)
 })
 
 /**
- * Merge results into one list.
+ * Merge results into one list. Results are ordered as in the promises list.
+ *
+ * `T` here is a not nullable type, if you use this method from Java, take care that all promises are not resolved to `null`.
+ *
+ * If `ignoreErrors = false`, list of the same size is returned.
+ * If `ignoreErrors = true`, list of different size is returned if some promise failed with error.
  */
 @JvmOverloads
-fun <T> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = false): Promise<List<T>> {
+fun <T : Any> Collection<Promise<T>>.collectResults(ignoreErrors: Boolean = false): Promise<List<T>> {
   if (isEmpty()) {
     return resolvedPromise(emptyList())
   }
 
-  val results: MutableList<T> = if (size == 1) SmartList<T>() else ArrayList(size)
-  for (promise in this) {
-    promise.onSuccess { results.add(it) }
+  val result = AsyncPromise<List<T>>()
+  val latch = AtomicInteger(size)
+  val list = Collections.synchronizedList(Collections.nCopies<T?>(size, null).toMutableSmartList())
+
+  fun arrive() {
+    if (latch.decrementAndGet() == 0) {
+      if (ignoreErrors) {
+        list.removeIf { it == null }
+      }
+      @Suppress("UNCHECKED_CAST")
+      result.setResult(list as List<T>)
+    }
   }
-  return all(results, ignoreErrors)
+
+  for ((i, promise) in this.withIndex()) {
+    promise.onSuccess {
+      list.set(i, it)
+      arrive()
+    }
+    promise.onError {
+      if (ignoreErrors) {
+        arrive()
+      }
+      else {
+        result.setError(it)
+      }
+    }
+  }
+  return result
 }
 
 @JvmOverloads

@@ -1,0 +1,16 @@
+0(1) element: null
+1(2) element: PyImportStatement
+2(3) WRITE ACCESS: sys
+3(4) element: PyForStatement
+4(5) element: PyTargetExpression: s
+5(6) WRITE ACCESS: s
+6(7) element: PyIfStatement
+7(8) READ ACCESS: len
+8(9,11) READ ACCESS: s
+9(10) element: PyStatementList. Condition: len(s) == 1:true
+10(3,13) element: PyContinueStatement
+11(12) element: PyExpressionStatement
+12(15) READ ACCESS: sys
+13(14) element: PyRaiseStatement
+14(15) READ ACCESS: Exception
+15() element: null

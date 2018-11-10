@@ -184,7 +184,7 @@ public class PyMoveModuleMembersDialog extends PyBaseMoveDialog {
   }
 
   static class TopLevelSymbolsSelectionTable extends AbstractMemberSelectionTable<PyElement, PyModuleMemberInfo> {
-    public TopLevelSymbolsSelectionTable(Collection<PyModuleMemberInfo> memberInfos,
+    TopLevelSymbolsSelectionTable(Collection<PyModuleMemberInfo> memberInfos,
                                          @Nullable MemberInfoModel<PyElement, PyModuleMemberInfo> memberInfoModel) {
       super(memberInfos, memberInfoModel, null);
     }

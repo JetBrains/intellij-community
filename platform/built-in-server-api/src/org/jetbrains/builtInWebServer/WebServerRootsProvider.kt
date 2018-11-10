@@ -8,12 +8,12 @@ data class PathQuery(val searchInLibs: Boolean = true, val searchInArtifacts: Bo
 
 abstract class WebServerRootsProvider {
   companion object {
-    val EP_NAME = ExtensionPointName.create<WebServerRootsProvider>("org.jetbrains.webServerRootsProvider")
+    val EP_NAME: ExtensionPointName<WebServerRootsProvider> = ExtensionPointName.create<WebServerRootsProvider>("org.jetbrains.webServerRootsProvider")
   }
   
   abstract fun resolve(path: String, project: Project, pathQuery: PathQuery): PathInfo?
 
   abstract fun getPathInfo(file: VirtualFile, project: Project): PathInfo?
 
-  open fun isClearCacheOnFileContentChanged(file: VirtualFile) = false
+  open fun isClearCacheOnFileContentChanged(file: VirtualFile): Boolean = false
 }

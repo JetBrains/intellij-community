@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -45,7 +42,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.AnnotationHint;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.DeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.resolve.caches.FileCacheBuilderProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.MultiProcessor;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
@@ -83,6 +80,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return GroovyFileType.GROOVY_FILE_TYPE;
   }
 
+  @Override
   public String toString() {
     return "Groovy script";
   }
@@ -116,7 +114,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
-  public boolean importClass(PsiClass aClass) {
+  public boolean importClass(@NotNull PsiClass aClass) {
     return addImportForClass(aClass) != null;
   }
 
@@ -167,12 +165,12 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitFile(this);
   }
 
   @Override
-  public void acceptChildren(GroovyElementVisitor visitor) {
+  public void acceptChildren(@NotNull GroovyElementVisitor visitor) {
     PsiElement child = getFirstChild();
     while (child != null) {
       if (child instanceof GroovyPsiElement) {
@@ -226,30 +224,32 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
-    for (PsiScopeProcessor each : GroovyResolverProcessor.allProcessors(processor)) {
+    for (PsiScopeProcessor each : MultiProcessor.allProcessors(processor)) {
       if (!shouldProcessMembers(each)) continue;
-      if (!getAppropriateHolder(processor).processDeclarations(each, state, place)) return false;
+      if (!getAppropriateHolder(getAnnotationHint(processor)).processDeclarations(each, state, place)) return false;
     }
     return true;
   }
 
   @NotNull
-  private DeclarationHolder getAppropriateHolder(@NotNull PsiScopeProcessor processor) {
-    AnnotationHint hint = getAnnotationHint(processor);
+  private DeclarationHolder getAppropriateHolder(@Nullable AnnotationHint hint) {
+    boolean mayUseCache = useCache();
     if (hint == null) {
-      if (useCache()) {
+      if (mayUseCache || myAnnotationsCache.hasUpToDateValue() && myDeclarationsCache.hasUpToDateValue()) {
         return myAllCachedDeclarations;
-      }
-      else {
-        return this::processDeclarationsNoCache;
       }
     }
     else if (hint.isAnnotationResolve()) {
-      return myAnnotationsCache.getValue();
+      if (mayUseCache || myAnnotationsCache.hasUpToDateValue()) {
+        return myAnnotationsCache.getValue();
+      }
     }
     else {
-      return myDeclarationsCache.getValue();
+      if (mayUseCache || myDeclarationsCache.hasUpToDateValue()) {
+        return myDeclarationsCache.getValue();
+      }
     }
+    return this::processDeclarationsNoCache;
   }
 
   private boolean useCache() {
@@ -266,14 +266,12 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
   }
 
   private boolean processDeclarationsNoCache(@NotNull PsiScopeProcessor processor, @NotNull ResolveState state, @NotNull PsiElement place) {
-    final GroovyFileImports imports = getImports();
     if (!processClassesInFile(this, processor, state)) return false;
+    final GroovyFileImports imports = getImports();
     if (!imports.processAllNamedImports(processor, state, place)) return false;
     if (!processClassesInPackage(this, processor, state, place)) return false;
     if (!imports.processAllStarImports(processor, state, place)) return false;
     if (!imports.processDefaultImports(processor, state, place)) return false;
     return true;
   }
-
-  protected abstract GroovyFileImports getImports();
 }

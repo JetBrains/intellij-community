@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -37,7 +23,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.command.impl.CurrentEditorProvider
 import com.intellij.openapi.command.impl.UndoManagerImpl
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
@@ -50,19 +35,21 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.*
-import com.intellij.psi.statistics.StatisticsManager
-import com.intellij.psi.statistics.impl.StatisticsManagerImpl
+import com.intellij.psi.NavigatablePsiElement
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
+import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
 import java.awt.event.KeyEvent
-
 /**
  * @author peter
  */
@@ -991,7 +978,7 @@ class Foo {
         myFixture.configureByText("$a1 $a2 .java", src)
         myFixture.editor.document.addDocumentListener(new DocumentListener() {
           @Override
-          void documentChanged(DocumentEvent e) {
+          void documentChanged(@NotNull DocumentEvent e) {
             if (e.newFragment.toString().contains("a")) {
               fail(e.toString())
             }
@@ -1172,7 +1159,7 @@ class Foo {
     myFixture.configureByText 'a.java', 'class Foo <caret>'
     type 'ext'
 
-    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false)
     edt {
       myFixture.completeBasic()
     }
@@ -1184,7 +1171,7 @@ class Foo {
     myFixture.configureByText 'a.java', 'class Foo {<caret>}'
     type 'pr'
 
-    CompletionAutoPopupHandler.ourTestingAutopopup = false
+    TestModeFlags.set(CompletionAutoPopupHandler.ourTestingAutopopup, false)
     edt {
       myFixture.completeBasic()
     }
@@ -1235,7 +1222,7 @@ public class Test {
     JavaCodeContextType contextType = ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
     ((TemplateImpl)template).templateContext.setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
-    
+
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.testRootDisposable)
     myFixture.configureByText("a.java", """
 public class Test {
@@ -1532,18 +1519,6 @@ class Foo {
     assert !lookup
   }
 
-  void testReplaceTypedPrefixPart() {
-    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable())
-    myFixture.configureByText 'a.java', 'class Foo{ { <caret> }}'
-    for (i in 0..StatisticsManager.OBLIVION_THRESHOLD) {
-      type 'System.out.printl\n\n'
-    }
-    type 'System.out.pr'
-    assert lookup.currentItem.lookupString == 'println'
-    type '\n2'
-    assert myFixture.editor.document.text.contains('.println();2')
-  }
-
   void testQuickBackspaceEnter() {
     myFixture.configureByText 'a.java', '<caret>'
     type 'cl'
@@ -1694,7 +1669,7 @@ class Cls {
   }
   void mySout() {}
 }
-""" 
+"""
     type('sout')
     myFixture.assertPreferredCompletionItems 0, 'sout', 'mySout'
   }
@@ -1723,7 +1698,7 @@ class Cls {
   }
   void mySout() {}
 }
-""" 
+"""
     type('sout')
     assert lookup
     assert 'sout' in myFixture.lookupElementStrings
@@ -1751,7 +1726,7 @@ class Cls {
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement)
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true)
     CodeInsightTestUtil.addTemplate(template, myFixture.testRootDisposable)
-    
+
     myFixture.configureByText 'a.java', '''
 class Foo {
  int tplMn;
@@ -1774,6 +1749,7 @@ class Foo {
     myFixture.configureByText "a.java", "class Foo { { foo.<caret> } }"
     type 'b'
     assert myFixture.lookupElementStrings == ['bar']
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'bar.'
     myFixture.type('\n')
     assert myFixture.editor.document.text.contains('foo.bar. ')
     joinAutopopup()
@@ -1800,7 +1776,7 @@ ita<caret>
 """
     type 'r'
     assert lookup == null
-    
+
     LiveTemplateCompletionContributor.setShowTemplatesInTests(true, myFixture.getTestRootDisposable())
     type '\br'
     assert lookup

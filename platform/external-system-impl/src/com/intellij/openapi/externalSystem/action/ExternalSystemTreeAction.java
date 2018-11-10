@@ -17,27 +17,28 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/20/2014
  */
 public abstract class ExternalSystemTreeAction extends ExternalSystemAction {
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     return super.isEnabled(e) && getTree(e) != null;
   }
 
   @Nullable
-  protected static JTree getTree(AnActionEvent e) {
+  protected static JTree getTree(@NotNull AnActionEvent e) {
     return ExternalSystemDataKeys.PROJECTS_TREE.getData(e.getDataContext());
   }
 
   public static class CollapseAll extends ExternalSystemTreeAction {
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       JTree tree = getTree(e);
       if (tree == null) return;
 
@@ -50,7 +51,8 @@ public abstract class ExternalSystemTreeAction extends ExternalSystemAction {
   }
 
   public static class ExpandAll extends ExternalSystemTreeAction {
-    public void actionPerformed(AnActionEvent e) {
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
       JTree tree = getTree(e);
       if (tree == null) return;
 

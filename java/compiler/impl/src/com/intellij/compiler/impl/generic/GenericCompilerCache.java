@@ -87,7 +87,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
     return myPersistentMap.get(getKeyAndTargetData(key, targetId));
   }
 
-  public void processSources(final int targetId, final Processor<Key> processor) throws IOException {
+  public void processSources(final int targetId, final Processor<? super Key> processor) throws IOException {
     myPersistentMap.processKeysWithExistingMapping(data -> targetId == data.myTarget ? processor.process(data.myKey) : true);
   }
 
@@ -119,7 +119,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   private class SourceItemDataDescriptor implements KeyDescriptor<KeyAndTargetData<Key>> {
     private final KeyDescriptor<Key> myKeyDescriptor;
 
-    public SourceItemDataDescriptor(KeyDescriptor<Key> keyDescriptor) {
+    SourceItemDataDescriptor(KeyDescriptor<Key> keyDescriptor) {
       myKeyDescriptor = keyDescriptor;
     }
 
@@ -152,7 +152,7 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
     private final DataExternalizer<SourceState> mySourceStateExternalizer;
     private final DataExternalizer<OutputState> myOutputStateExternalizer;
 
-    public PersistentStateDataExternalizer(GenericCompiler<Key,SourceState,OutputState> compiler) {
+    PersistentStateDataExternalizer(GenericCompiler<Key,SourceState,OutputState> compiler) {
       mySourceStateExternalizer = compiler.getSourceStateExternalizer();
       myOutputStateExternalizer = compiler.getOutputStateExternalizer();
     }

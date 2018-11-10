@@ -15,7 +15,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -66,9 +66,11 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.intellij.openapi.util.text.StringUtil.nullize;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element>, Disposable {
@@ -135,7 +137,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     Disposer.register(project, myInitialization); // wait for the thread spawned in VcsInitialization to terminate
     projectManager.addProjectManagerListener(project, new ProjectManagerListener() {
       @Override
-      public void projectClosing(Project project) {
+      public void projectClosing(@NotNull Project project) {
         Disposer.dispose(myInitialization);
       }
     });
@@ -156,7 +158,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myContentRevisionCache = new ContentRevisionCache();
     myVcsFileListenerContextHelper = vcsFileListenerContextHelper;
     VcsListener vcsListener = () -> {
-      myVcsHistoryCache.clear();
+      myVcsHistoryCache.clearHistory();
       myVcsFileListenerContextHelper.possiblySwitchActivation(hasActiveVcss());
     };
     myExcludedIndex = excludedFileIndex;
@@ -230,8 +232,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public void projectOpened() {
     addInitializationRequest(VcsInitObject.AFTER_COMMON, () -> {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
-        if (checkers.length != 0) {
+        List<VcsRootChecker> checkers = VcsRootChecker.EXTENSION_POINT_NAME.getExtensionList();
+        if (checkers.size() != 0) {
           VcsRootScanner.start(myProject, checkers);
         }
       }
@@ -268,6 +270,19 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       return null;
     }
     return AllVcses.getInstance(myProject).getByName(vcsName);
+  }
+
+  /**
+   * Common {@link #getVcsFor(VirtualFile)} method uses {@link DefaultVcsRootPolicy#getMatchContext(VirtualFile)} if default mapping is
+   * present. Some implementations, like {@link ModuleDefaultVcsRootPolicy}, rely on indices state, which could be critical for some code
+   * flows. For instance, when processing {@link com.intellij.openapi.project.ModuleListener#moduleAdded(Project, Module)} events. In such
+   * cases, we could explicitly specify context (i.e. {@link Module}) to get correct result.
+   */
+  AbstractVcs<?> getVcsFor(@NotNull VirtualFile file, @Nullable Object matchContext) {
+    VcsDirectoryMapping mapping = myMappings.getMappingFor(file, matchContext);
+    String vcsName = mapping != null ? nullize(mapping.getVcs()) : null;
+
+    return vcsName != null ? AllVcses.getInstance(myProject).getByName(vcsName) : null;
   }
 
   @Override
@@ -674,11 +689,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public void updateActiveVcss() {
-    // not needed
-  }
-
-  @Override
   public void notifyDirectoryMappingChanged() {
     BackgroundTaskUtil.syncPublisher(myProject, VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
   }
@@ -715,7 +725,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
     }
     boolean defaultProject = Boolean.TRUE.toString().equals(element.getAttributeValue(ATTRIBUTE_DEFAULT_PROJECT));
-    // run autodetection if there's no VCS in default project and 
+    // run autodetection if there's no VCS in default project and
     if (haveNonEmptyMappings || !defaultProject) {
       myMappingsLoaded = true;
     }

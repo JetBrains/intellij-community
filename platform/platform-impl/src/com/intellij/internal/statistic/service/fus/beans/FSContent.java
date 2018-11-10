@@ -52,7 +52,7 @@ public class FSContent {
   }
 
   public final String asJsonString() {
-    return new GsonBuilder().create().toJson(this, FSContent.class);
+    return new GsonBuilder().disableHtmlEscaping().create().toJson(this, FSContent.class);
   }
 
   public static FSContent fromJson(@NotNull String gson) {

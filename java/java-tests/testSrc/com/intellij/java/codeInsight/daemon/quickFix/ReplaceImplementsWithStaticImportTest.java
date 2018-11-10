@@ -27,10 +27,6 @@ public class ReplaceImplementsWithStaticImportTest extends LightQuickFixParamete
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void test() {
-    doAllTests();
-  }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/replaceImplementsWithStaticImport";

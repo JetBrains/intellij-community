@@ -12,6 +12,8 @@ import java.lang.annotation.RetentionPolicy;
  */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Storage {
+  String NOT_ROAMABLE_FILE = "other.xml";
+
   /**
    * @deprecated Use {@link #value()}.
    */
@@ -60,4 +62,9 @@ public @interface Storage {
 
   // internal use only
   boolean exclusive() default false;
+
+  /**
+   * Is exportable (Export Settings dialog) regardless of roaming type.
+   */
+  boolean exportable() default false;
 }

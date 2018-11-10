@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
-/** @noinspection SynchronizationOnLocalVariableOrMethodParameter*/
+/** */
 public final class FilesDelta {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FilesDelta");
   private final ReentrantLock myDataLock = new ReentrantLock();

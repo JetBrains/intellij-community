@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -39,8 +40,6 @@ import java.util.*
 import java.util.function.Function
 
 private const val VERSION = "1.0"
-private const val SCOPE = "scope"
-private const val NAME = "name"
 private const val PROJECT_DEFAULT_PROFILE_NAME = "Project Default"
 
 private val defaultSchemeDigest = loadElement("""<component name="InspectionProjectProfileManager">
@@ -81,10 +80,10 @@ class ProjectInspectionProfileManager(val project: Project,
 
   private val schemeManagerIprProvider = if (project.isDirectoryBased) null else SchemeManagerIprProvider("profile")
 
-  override val schemeManager = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
+  override val schemeManager: SchemeManager<InspectionProfileImpl> = schemeManagerFactory.create("inspectionProfiles", object : InspectionProfileProcessor() {
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
-                              attributeProvider: Function<String, String?>,
+                              attributeProvider: Function<in String, String?>,
                               isBundled: Boolean): InspectionProfileImpl {
       val profile = InspectionProfileImpl(name, InspectionToolRegistrar.getInstance(), this@ProjectInspectionProfileManager, dataHolder)
       profile.isProjectLevel = true
@@ -150,7 +149,7 @@ class ProjectInspectionProfileManager(val project: Project,
     schemeManager.loadSchemes()
   }
 
-  fun isCurrentProfileInitialized() = currentProfile.wasInitialized()
+  fun isCurrentProfileInitialized(): Boolean = currentProfile.wasInitialized()
 
   override fun schemeRemoved(scheme: InspectionProfileImpl) {
     scheme.cleanup(project)
@@ -239,7 +238,7 @@ class ProjectInspectionProfileManager(val project: Project,
     }
   }
 
-  override fun getScopesManager() = scopeManager
+  override fun getScopesManager(): DependencyValidationManager = scopeManager
 
   @Synchronized override fun getProfiles(): Collection<InspectionProfileImpl> {
     currentProfile

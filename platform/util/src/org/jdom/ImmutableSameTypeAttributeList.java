@@ -14,18 +14,19 @@
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.EmptyIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 class ImmutableSameTypeAttributeList implements List<Attribute> {
-  private static final String[] EMPTY_STRING_ARRAY = new String[0];
+  private static final String[] EMPTY_STRING_ARRAY = ArrayUtil.EMPTY_STRING_ARRAY;
   private final String[] myNameValues;
-  private final int myType;
+  private final AttributeType myType;
   private final Namespace myNs;
 
-  ImmutableSameTypeAttributeList(@NotNull String[] nameValues, int type, @NotNull Namespace ns) {
+  ImmutableSameTypeAttributeList(@NotNull String[] nameValues, AttributeType type, @NotNull Namespace ns) {
     myNameValues = nameValues.length == 0 ? EMPTY_STRING_ARRAY : nameValues;
     myType = type;
     myNs = ns;

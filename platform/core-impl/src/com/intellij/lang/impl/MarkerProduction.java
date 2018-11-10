@@ -17,6 +17,7 @@ package com.intellij.lang.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ObjectUtils;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,18 +63,8 @@ final class MarkerProduction extends TIntArrayList {
   }
 
   private int findMarkerAtLexeme(int lexemeIndex) {
-    int low = 0;
-    int high = size() - LINEAR_SEARCH_LIMIT;
-
-    while (low <= high) {
-      int mid = (low + high) >>> 1;
-      int midVal = getLexemeIndexAt(mid);
-
-      if (midVal < lexemeIndex) low = mid + 1;
-      else if (midVal > lexemeIndex) high = mid - 1;
-      else return findSameLexemeGroupStart(lexemeIndex, mid);
-    }
-    return -1;
+    int i = ObjectUtils.binarySearch(0, size() - LINEAR_SEARCH_LIMIT, mid -> Integer.compare(getLexemeIndexAt(mid), lexemeIndex));
+    return i < 0 ? -1 : findSameLexemeGroupStart(lexemeIndex, i);
   }
 
   private int findSameLexemeGroupStart(int lexemeIndex, int prodIndex) {

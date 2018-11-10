@@ -48,6 +48,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -58,7 +59,7 @@ import java.net.ServerSocket;
 import java.util.*;
 
 public abstract class JavaTestFrameworkRunnableState<T extends
-  ModuleBasedConfiguration<JavaRunConfigurationModule>
+  ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
   & CommonJavaRunConfigurationParameters
   & ConfigurationWithCommandLineShortener
   & SMRunnerConsolePropertiesProvider> extends JavaCommandLineState implements RemoteConnectionCreator {
@@ -117,7 +118,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
   @Override
   protected GeneralCommandLine createCommandLine() throws ExecutionException {
-    GeneralCommandLine commandLine = super.createCommandLine();
+    GeneralCommandLine commandLine = super.createCommandLine().withInput(InputRedirectAware.getInputFile(getConfiguration()));
     Map<String, String> content = commandLine.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
     if (content != null) {
       content.forEach((key, value) -> myArgumentFileFilters.add(new ArgumentFileFilter(key, value)));
@@ -216,11 +217,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     final Object[] patchers = Extensions.getExtensions(ExtensionPoints.JUNIT_PATCHER);
     for (Object patcher : patchers) {
-      ((JUnitPatcher)patcher).patchJavaParameters(module, javaParameters);
+      ((JUnitPatcher)patcher).patchJavaParameters(project, module, javaParameters);
     }
 
     // Append coverage parameters if appropriate
-    for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+    for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
       ext.updateJavaParameters(getConfiguration(), javaParameters, getRunnerSettings());
     }
 
@@ -285,8 +286,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     try {
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
-      final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
-      try {
+      try (PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8)) {
         ShortenCommandLine shortenCommandLine = getConfiguration().getShortenCommandLine();
         boolean useDynamicClasspathForForkMode = shortenCommandLine == null
                                                  ? JdkUtil.useDynamicClasspath(getConfiguration().getProject())
@@ -303,9 +303,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
           writer.println(vmParameter);
         }
       }
-      finally {
-        writer.close();
-      }
 
       passForkMode(getForkMode(), tempFile, javaParameters);
     }
@@ -321,7 +318,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     final Object[] listeners = Extensions.getExtensions(epName);
     for (final Object listener : listeners) {
       boolean enabled = true;
-      for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
+      for (RunConfigurationExtension ext : RunConfigurationExtension.EP_NAME.getExtensionList()) {
         if (ext.isListenerDisabled(configuration, listener, getRunnerSettings())) {
           enabled = false;
           break;
@@ -387,13 +384,16 @@ public abstract class JavaTestFrameworkRunnableState<T extends
    * Configuration based on package which spans multiple modules
    */
   protected boolean forkPerModule() {
-    final String workingDirectory = getConfiguration().getWorkingDirectory();
-    //noinspection deprecation
     return getScope() != TestSearchScope.SINGLE_MODULE &&
-           (PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory) ||
-            PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory) ||
-            ProgramParametersConfigurator.MODULE_WORKING_DIR.equals(workingDirectory)) &&
+           toChangeWorkingDirectory(getConfiguration().getWorkingDirectory()) &&
            spansMultipleModules(getConfiguration().getPackage());
+  }
+
+  private static boolean toChangeWorkingDirectory(final String workingDirectory) {
+    //noinspection deprecation
+    return PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory) ||
+           PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory) ||
+           ProgramParametersConfigurator.MODULE_WORKING_DIR.equals(workingDirectory);
   }
 
   protected void createTempFiles(JavaParameters javaParameters) {
@@ -415,11 +415,15 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
 
-      final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8);
-      try {
+      String workingDirectory = getConfiguration().getWorkingDirectory();
+      //when only classpath should be changed, e.g. for starting tests in IDEA's project when some modules can never appear on the same classpath,
+      //like plugin and corresponding IDE register the same components twice
+      boolean toChangeWorkingDirectory = toChangeWorkingDirectory(workingDirectory);
+
+      try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8)) {
         wWriter.println(packageName);
         for (Module module : perModule.keySet()) {
-          wWriter.println(PathMacroUtil.getModuleDir(module.getModuleFilePath()));
+          wWriter.println(toChangeWorkingDirectory ? PathMacroUtil.getModuleDir(module.getModuleFilePath()) : workingDirectory);
           wWriter.println(module.getName());
 
           if (classpath == null) {
@@ -441,9 +445,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
             wWriter.println(className);
           }
         }
-      }
-      finally {
-        wWriter.close();
       }
     }
   }

@@ -23,11 +23,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class DefaultConsoleFiltersProvider implements ConsoleFilterProviderEx {
+  @Override
   @NotNull
   public Filter[] getDefaultFilters(@NotNull Project project) {
     return getDefaultFilters(project, GlobalSearchScope.allScope(project));
   }
 
+  @Override
   public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
     List<Filter> filters = ExceptionFilters.getFilters(scope);
     filters.add(new YourkitFilter(project));

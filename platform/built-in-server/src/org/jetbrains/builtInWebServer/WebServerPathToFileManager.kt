@@ -1,12 +1,14 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.google.common.base.Function
+import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.intellij.ProjectTopics
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
@@ -24,21 +26,21 @@ import com.intellij.util.io.exists
 import java.nio.file.Paths
 import java.util.concurrent.TimeUnit
 
-private val cacheSize: Long = 4096 * 4
+private const val cacheSize: Long = 4096 * 4
 
 /**
  * Implement [WebServerRootsProvider] to add your provider
  */
 class WebServerPathToFileManager(application: Application, private val project: Project) {
-  val pathToInfoCache = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()!!
+  val pathToInfoCache: Cache<String, PathInfo> = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(10, TimeUnit.MINUTES).build<String, PathInfo>()!!
   // time to expire should be greater than pathToFileCache
   private val virtualFileToPathInfo = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(11, TimeUnit.MINUTES).build<VirtualFile, PathInfo>()
-  
+
   internal val pathToExistShortTermCache = CacheBuilder.newBuilder().maximumSize(cacheSize).expireAfterAccess(5, TimeUnit.SECONDS).build<String, Boolean>()!!
 
   /**
    * https://youtrack.jetbrains.com/issue/WEB-25900
-   * 
+   *
    * Compute suitable roots for oldest parent (web/foo/my/file.dart -> oldest is web and we compute all suitable roots for it in advance) to avoid linear search
    * (i.e. to avoid two queries for root if files web/foo and web/bar requested if root doesn't have web dir)
    */
@@ -65,7 +67,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
       }
       suitableRoots
     }))!!
-  
+
   init {
     application.messageBus.connect(project).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
       override fun after(events: List<VFileEvent>) {
@@ -94,7 +96,8 @@ class WebServerPathToFileManager(application: Application, private val project: 
   }
 
   companion object {
-    @JvmStatic fun getInstance(project: Project) = ServiceManager.getService(project, WebServerPathToFileManager::class.java)!!
+    @JvmStatic
+    fun getInstance(project: Project) = project.service<WebServerPathToFileManager>()
   }
 
   private fun clearCache() {
@@ -104,19 +107,21 @@ class WebServerPathToFileManager(application: Application, private val project: 
     parentToSuitableRoot.invalidateAll()
   }
 
-  @JvmOverloads fun findVirtualFile(path: String, cacheResult: Boolean = true, pathQuery: PathQuery = defaultPathQuery): VirtualFile? {
+  @JvmOverloads
+  fun findVirtualFile(path: String, cacheResult: Boolean = true, pathQuery: PathQuery = defaultPathQuery): VirtualFile? {
     return getPathInfo(path, cacheResult, pathQuery)?.getOrResolveVirtualFile()
   }
 
-  @JvmOverloads fun getPathInfo(path: String, cacheResult: Boolean = true, pathQuery: PathQuery = defaultPathQuery): PathInfo? {
+  @JvmOverloads
+  fun getPathInfo(path: String, cacheResult: Boolean = true, pathQuery: PathQuery = defaultPathQuery): PathInfo? {
     var pathInfo = pathToInfoCache.getIfPresent(path)
     if (pathInfo == null || !pathInfo.isValid) {
       if (pathToExistShortTermCache.getIfPresent(path) == false) {
         return null
       }
-      
+
       pathInfo = doFindByRelativePath(path, pathQuery)
-      if (cacheResult) { 
+      if (cacheResult) {
         if (pathInfo != null && pathInfo.isValid) {
           pathToInfoCache.put(path, pathInfo)
         }
@@ -128,7 +133,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
     return pathInfo
   }
 
-  fun getPath(file: VirtualFile) = getPathInfo(file)?.path
+  fun getPath(file: VirtualFile): String? = getPathInfo(file)?.path
 
   fun getPathInfo(child: VirtualFile): PathInfo? {
     var result = virtualFileToPathInfo.getIfPresent(child)
@@ -149,7 +154,7 @@ class WebServerPathToFileManager(application: Application, private val project: 
     return result
   }
 
-  fun getResolver(path: String) = if (path.isEmpty()) EMPTY_PATH_RESOLVER else RELATIVE_PATH_RESOLVER
+  fun getResolver(path: String): FileResolver = if (path.isEmpty()) EMPTY_PATH_RESOLVER else RELATIVE_PATH_RESOLVER
 }
 
 interface FileResolver {

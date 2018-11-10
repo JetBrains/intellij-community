@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface AbstractExtractDialog {
 
+  @NotNull
   String getChosenMethodName();
   VariableData[] getChosenParameters();
   @PsiModifier.ModifierConstant

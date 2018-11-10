@@ -22,13 +22,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 class BekBranchMerger {
-  @NotNull private final List<BekBranch> myBekBranches;
+  @NotNull private final List<? extends BekBranch> myBekBranches;
   @NotNull private final BekEdgeRestrictions myEdgeRestrictions;
   @NotNull private final TimestampGetter myTimestampGetter;
 
   @NotNull private final List<Integer> myInverseResultList = ContainerUtil.newArrayList();
 
-  public BekBranchMerger(@NotNull List<BekBranch> bekBranches,
+  BekBranchMerger(@NotNull List<? extends BekBranch> bekBranches,
                          @NotNull BekEdgeRestrictions edgeRestrictions,
                          @NotNull TimestampGetter timestampGetter) {
     myBekBranches = bekBranches;

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
@@ -8,6 +6,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.util.TextRange
 import org.assertj.core.api.Assertions.assertThat
@@ -123,25 +122,29 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testExports() {
     addFile("pkg/empty/package-info.java", "package pkg.empty;")
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
-    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
     highlight("""
         module M {
           exports <error descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</error>;
           exports <error descr="Package is empty: pkg.empty">pkg.empty</error>;
           exports pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate 'exports' target: M2">M2</error>;
         }""".trimIndent())
+
+    addTestFile("pkg/tests/T.java", "package pkg.tests;\nclass T { }", M_TEST)
+    highlight("module-info.java", "module M { exports pkg.tests; }".trimIndent(), M_TEST, true)
   }
 
   fun testOpens() {
-    addFile("pkg/empty/package-info.java", "package pkg.empty;")
     addFile("pkg/main/C.java", "package pkg.main;\nclass C { }")
-    addFile("pkg/other/C.groovy", "package pkg.other\nclass C { }")
+    addFile("pkg/resources/resource.txt", "...")
     highlight("""
         module M {
           opens <warning descr="Package not found: pkg.missing.unknown">pkg.missing.unknown</warning>;
-          opens <warning descr="Package is empty: pkg.empty">pkg.empty</warning>;
           opens pkg.main to <warning descr="Module not found: M.missing">M.missing</warning>, M2, <error descr="Duplicate 'opens' target: M2">M2</error>;
+          opens pkg.resources;
         }""".trimIndent())
+
+    addTestFile("pkg/tests/T.java", "package pkg.tests;\nclass T { }", M_TEST)
+    highlight("module-info.java", "module M { opens pkg.tests; }".trimIndent(), M_TEST, true)
   }
 
   fun testWeakModule() {
@@ -290,11 +293,62 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
         }}
         """.trimIndent()
     if (moduleFileInTests != checkFileInTests) {
-      checkFileText = Regex("(<error [^>]+>)([^<]+)(</error>)").replace(checkFileText, {
+      checkFileText = Regex("(<error [^>]+>)([^<]+)(</error>)").replace(checkFileText) {
         if (it.value.contains("unreachable")) it.value else it.groups[2]!!.value
-      })
+      }
     }
-    highlight("test.java", checkFileText, checkFileInTests)
+    highlight("test.java", checkFileText, isTest = checkFileInTests)
+  }
+
+  fun testPackageAccessibilityOverTestScope() {
+    addFile("module-info.java", "module M2 { exports pkg.m2; exports pkg.m2.impl to close.friends.only; }", M2)
+    addFile("pkg/m2/C2.java", "package pkg.m2;\npublic class C2 { }", M2)
+    addFile("pkg/m2/impl/C2Impl.java", "package pkg.m2.impl;\nimport pkg.m2.C2;\npublic class C2Impl { public static int I; public static C2 make() {} }", M2)
+
+    highlight("module-info.java", "module M.test { requires M2; }", M_TEST, isTest = true)
+
+    val highlightText = """
+        import pkg.m2.C2;
+        import pkg.m2.*;
+        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M.test'">pkg.m2.impl</error>.C2Impl;
+        import <error descr="Package 'pkg.m2.impl' is declared in module 'M2', which does not export it to module 'M.test'">pkg.m2.impl</error>.*;
+        """.trimIndent()
+    highlight("test.java", highlightText, M_TEST, isTest = true)
+  }
+
+  fun testPrivateJdkPackage() {
+    addFile("module-info.java", "module M { }")
+    highlight("test.java", """
+        import <error descr="Package 'jdk.internal' is declared in module 'java.base', which does not export it to module 'M'">jdk.internal</error>.*;
+        """.trimIndent())
+  }
+
+  fun testPrivateJdkPackageFromUnnamed() {
+    highlight("test.java", """
+        import <error descr="Package 'jdk.internal' is declared in module 'java.base', which does not export it to the unnamed module">jdk.internal</error>.*;
+        """.trimIndent())
+  }
+
+  fun testNonRootJdkModule() {
+    highlight("test.java", """
+        import <error descr="Package 'java.non.root' is declared in module 'java.non.root', which is not in the module graph">java.non.root</error>.*;
+        """.trimIndent())
+  }
+
+  fun testUpgradeableModuleOnClasspath() {
+    highlight("test.java", """
+        import java.xml.bind.*;
+        import java.xml.bind.C;
+        """.trimIndent())
+  }
+
+  fun testUpgradeableModuleOnModulePath() {
+    myFixture.enableInspections(DeprecationInspection(), MarkedForRemovalInspection())
+    highlight("""
+        module M {
+          requires <error descr="'java.xml.bind' is deprecated and marked for removal">java.xml.bind</error>;
+          requires java.xml.ws;
+        }""".trimIndent())
   }
 
   fun testLinearModuleGraphBug() {
@@ -403,8 +457,8 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   //<editor-fold desc="Helpers.">
   private fun highlight(text: String) = highlight("module-info.java", text)
 
-  private fun highlight(path: String, text: String, isTest: Boolean = false) {
-    myFixture.configureFromExistingVirtualFile(if (isTest) addTestFile(path, text) else addFile(path, text))
+  private fun highlight(path: String, text: String, module: ModuleDescriptor = MAIN, isTest: Boolean = false) {
+    myFixture.configureFromExistingVirtualFile(if (isTest) addTestFile(path, text, module) else addFile(path, text, module))
     myFixture.checkHighlighting()
   }
 

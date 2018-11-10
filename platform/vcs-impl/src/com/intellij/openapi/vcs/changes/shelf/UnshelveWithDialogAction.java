@@ -53,7 +53,7 @@ import static com.intellij.util.containers.ContainerUtil.newArrayList;
 
 public class UnshelveWithDialogAction extends DumbAwareAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = ObjectUtils.assertNotNull(getEventProject(e));
     DataContext dataContext = e.getDataContext();
     final List<ShelvedChangeList> changeLists = ShelvedChangesViewManager.getShelvedLists(dataContext);
@@ -105,13 +105,13 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(getEventProject(e) != null && !ShelvedChangesViewManager.getShelvedLists(e.getDataContext()).isEmpty());
   }
 
   private static class MyUnshelveDialog extends ApplyPatchDifferentiatedDialog {
 
-    public MyUnshelveDialog(@NotNull Project project,
+    MyUnshelveDialog(@NotNull Project project,
                             @NotNull VirtualFile patchFile,
                             @NotNull ShelvedChangeList changeList,
                             @NotNull List<ShelvedBinaryFilePatch> binaryShelvedPatches,

@@ -15,8 +15,6 @@ public class FoldExpressionIntoStreamInspectionTest extends LightQuickFixParamet
     return new LocalInspectionTool[]{new FoldExpressionIntoStreamInspection()};
   }
 
-  public void test() { doAllTests(); }
-
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/foldIntoStream";

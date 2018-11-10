@@ -27,6 +27,7 @@ import org.netbeans.lib.cvsclient.command.Watch;
 import org.netbeans.lib.cvsclient.command.watch.WatchMode;
 
 public abstract class AbstractWatchAction extends AbstractActionFromEditGroup {
+  @Override
   protected CvsHandler getCvsHandler(CvsContext context) {
     CvsConfiguration configuration = CvsConfiguration.getInstance(context.getProject());
     WatcherDialog dialog = createDialog(configuration, context);
@@ -37,8 +38,8 @@ public abstract class AbstractWatchAction extends AbstractActionFromEditGroup {
     saveWatch(configuration, watch);
     WatchOperation watchOperation = new WatchOperation(getWatchOperation(), watch);
     VirtualFile[] files = context.getSelectedFiles();
-    for (int i = 0; i < files.length; i++) {
-      watchOperation.addFile(files[i]);
+    for (VirtualFile file : files) {
+      watchOperation.addFile(file);
     }
     return new CommandCvsHandler(getTitle(context), watchOperation);
   }

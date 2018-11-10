@@ -18,12 +18,17 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
-import icons.GithubIcons
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.data.GithubUserDetailed
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
+import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
+import org.jetbrains.plugins.github.util.GithubImageResizer
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -31,11 +36,14 @@ import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
-private const val ACCOUNT_PICTURE_SIZE: Int = 40
 private const val LINK_TAG = "EDIT_LINK"
 
-internal class GithubAccountsPanel(private val project: Project, private val accountInformationProvider: GithubAccountInformationProvider)
-  : BorderLayoutPanel(), Disposable {
+internal class GithubAccountsPanel(private val project: Project,
+                                   private val executorFactory: GithubApiRequestExecutor.Factory,
+                                   private val avatarLoader: CachingGithubUserAvatarLoader,
+                                   private val imageResizer: GithubImageResizer) : BorderLayoutPanel(), Disposable {
+
+  private val accountIconSize = JBValue.UIInteger("Github.Profile.Avatar.Size", 40)
 
   private val accountListModel = CollectionListModel<GithubAccountDecorator>().apply {
     // disable link handler when there are no errors
@@ -46,10 +54,11 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
     })
   }
   private val accountList = JBList<GithubAccountDecorator>(accountListModel).apply {
-    cellRenderer = GithubAccountDecoratorRenderer()
+    val decoratorRenderer = GithubAccountDecoratorRenderer()
+    cellRenderer = decoratorRenderer
+    UIUtil.putClientProperty(this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, listOf(decoratorRenderer))
+
     selectionMode = ListSelectionModel.SINGLE_SELECTION
-    selectionForeground = UIUtil.getListForeground()
-    selectionBackground = JBColor(0xE9EEF5, 0x464A4D)
     emptyText.apply {
       appendText("No GitHub accounts added.")
       appendSecondaryText("Add account", SimpleTextAttributes.LINK_ATTRIBUTES, { addAccount() })
@@ -60,6 +69,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   private val progressManager = createListProgressManager()
   private val errorLinkHandler = createLinkActivationListener()
   private var errorLinkHandlerInstalled = false
+  private var currentTokensMap = mapOf<GithubAccount, String?>()
   private val newTokensMap = mutableMapOf<GithubAccount, String>()
 
   init {
@@ -69,7 +79,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
                   .setAddAction { addAccount() }
                   .addExtraAction(object : ToolbarDecorator.ElementActionButton("Set default",
                                                                                 AllIcons.Actions.Checked) {
-                    override fun actionPerformed(e: AnActionEvent?) {
+                    override fun actionPerformed(e: AnActionEvent) {
                       if (accountList.selectedValue.projectDefault) return
                       for (accountData in accountListModel.items) {
                         if (accountData == accountList.selectedValue) {
@@ -83,7 +93,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
                       }
                     }
 
-                    override fun updateButton(e: AnActionEvent?) {
+                    override fun updateButton(e: AnActionEvent) {
                       isEnabled = isEnabled && !accountList.selectedValue.projectDefault
                     }
                   })
@@ -93,11 +103,9 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   }
 
   private fun addAccount() {
-    val dialog = GithubLoginDialog(project,
-                                   ::isAccountUnique,
-                                   this)
+    val dialog = GithubLoginDialog(executorFactory, project, this, ::isAccountUnique)
     if (dialog.showAndGet()) {
-      val githubAccount = GithubAccount(dialog.getLogin(), dialog.getServer())
+      val githubAccount = GithubAccountManager.createAccount(dialog.getLogin(), dialog.getServer())
       newTokensMap[githubAccount] = dialog.getToken()
 
       val accountData = GithubAccountDecorator(githubAccount, false)
@@ -107,12 +115,10 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   }
 
   private fun editAccount(decorator: GithubAccountDecorator) {
-    val dialog = GithubLoginDialog(project,
-                                   { _, _ -> true },
-                                   this,
-                                   host = decorator.account.server.toString(),
-                                   editableHost = false,
-                                   login = decorator.account.name)
+    val dialog = GithubLoginDialog(executorFactory, project, this).apply {
+      withServer(decorator.account.server.toString(), false)
+      withCredentials(decorator.account.name)
+    }
     if (dialog.showAndGet()) {
       decorator.account.name = dialog.getLogin()
       newTokensMap[decorator.account] = dialog.getToken()
@@ -172,7 +178,7 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
 
       val rendererComponent = accountList.cellRenderer.getListCellRendererComponent(accountList, decorator, idx, true, true)
       rendererComponent.setBounds(cellBounds.x, cellBounds.y, cellBounds.width, cellBounds.height)
-      layoutRecursively(rendererComponent)
+      UIUtil.layoutRecursively(rendererComponent)
 
       val rendererRelativeX = point.x - cellBounds.x
       val rendererRelativeY = point.y - cellBounds.y
@@ -206,23 +212,29 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   }
 
   private fun loadAccountDetails(accountData: GithubAccountDecorator) {
-    val newToken: String? = newTokensMap[accountData.account]
+    val account = accountData.account
+    val token = newTokensMap[account] ?: currentTokensMap[account]
+    if (token == null) {
+      accountListModel.contentsChanged(accountData.apply {
+        loadingError = "Missing access token"
+        showLoginLink = true
+      })
+      return
+    }
+    val executor = executorFactory.create(token)
     progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
-      lateinit var data: Pair<GithubUserDetailed, Image>
+      lateinit var loadedDetails: GithubAuthenticatedUser
 
       override fun run(indicator: ProgressIndicator) {
-        data = if (newToken != null) {
-          accountInformationProvider.getAccountInformationWithPicture(indicator, accountData.account.server, newToken)
-        }
-        else {
-          accountInformationProvider.getAccountInformationWithPicture(indicator, accountData.account)
-        }
+        loadedDetails = executor.execute(indicator, GithubApiRequests.CurrentUser.get(account.server))
       }
 
       override fun onSuccess() {
         accountListModel.contentsChanged(accountData.apply {
-          fullName = data.first.name
-          profilePicture = data.second
+          details = loadedDetails
+          iconProvider = CachingGithubAvatarIconsProvider(avatarLoader, imageResizer, executor, accountIconSize, accountList).apply {
+            Disposer.register(this@GithubAccountsPanel, this)
+          }
           loadingError = null
           showLoginLink = false
         })
@@ -242,9 +254,10 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
     override fun getModalityState() = ModalityState.any()
   }
 
-  fun setAccounts(accounts: Set<GithubAccount>, defaultAccount: GithubAccount?) {
+  fun setAccounts(accounts: Map<GithubAccount, String?>, defaultAccount: GithubAccount?) {
     accountListModel.removeAll()
-    accountListModel.addAll(0, accounts.map { GithubAccountDecorator(it, it == defaultAccount) })
+    accountListModel.addAll(0, accounts.keys.map { GithubAccountDecorator(it, it == defaultAccount) })
+    currentTokensMap = accounts
   }
 
   /**
@@ -264,17 +277,6 @@ internal class GithubAccountsPanel(private val project: Project, private val acc
   }
 
   override fun dispose() {}
-
-  companion object {
-    private fun layoutRecursively(component: Component) {
-      if (component is JComponent) {
-        component.doLayout()
-        for (child in component.components) {
-          layoutRecursively(child)
-        }
-      }
-    }
-  }
 }
 
 private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDecorator>, JPanel() {
@@ -317,31 +319,27 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    UIUtil.setBackgroundRecursively(this, if (isSelected) list.selectionBackground else list.background)
-
-    val textColor = if (isSelected) list.selectionForeground else list.foreground
-    val grayTextColor = if (isSelected) list.selectionForeground else Gray._120
+    UIUtil.setBackgroundRecursively(this, GithubUIUtil.List.WithTallRow.background(list, isSelected))
+    val primaryTextColor = GithubUIUtil.List.WithTallRow.foreground(list, isSelected)
+    val secondaryTextColor = GithubUIUtil.List.WithTallRow.secondaryForeground(list, isSelected)
 
     accountName.apply {
       text = value.account.name
-      setBold(if (value.fullName == null) value.projectDefault else false)
-      foreground = if (value.fullName == null) textColor else grayTextColor
+      setBold(if (value.details?.name == null) value.projectDefault else false)
+      foreground = if (value.details?.name == null) primaryTextColor else secondaryTextColor
     }
     serverName.apply {
       text = value.account.server.toString()
-      foreground = grayTextColor
+      foreground = secondaryTextColor
     }
     profilePicture.apply {
-      icon = value.profilePicture?.let {
-        val size = JBUI.scale(ACCOUNT_PICTURE_SIZE)
-        JBImageIcon(it.getScaledInstance(size, size, java.awt.Image.SCALE_FAST))
-      } ?: GithubIcons.DefaultAvatar_40
+      icon = value.getIcon()
     }
     fullName.apply {
-      text = value.fullName
+      text = value.details?.name
       setBold(value.projectDefault)
-      isVisible = value.fullName != null
-      foreground = textColor
+      isVisible = value.details?.name != null
+      foreground = primaryTextColor
     }
     loadingError.apply {
       clear()
@@ -349,8 +347,9 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
         append(it, SimpleTextAttributes.ERROR_ATTRIBUTES)
         append(" ")
         if (value.showLoginLink) append("Log In",
-                                        if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE, JBColor.link())
-                                        else SimpleTextAttributes(STYLE_PLAIN, JBColor.link()),
+                                        if (value.errorLinkPointedAt) SimpleTextAttributes(STYLE_UNDERLINE,
+                                                                                           JBUI.CurrentTheme.Link.linkColor())
+                                        else SimpleTextAttributes(STYLE_PLAIN, JBUI.CurrentTheme.Link.linkColor()),
                                         LINK_TAG)
       }
     }
@@ -368,10 +367,10 @@ private class GithubAccountDecoratorRenderer : ListCellRenderer<GithubAccountDec
  * Account + auxillary info + info loading error
  */
 private class GithubAccountDecorator(val account: GithubAccount, var projectDefault: Boolean) {
-  var fullName: String? = null
-  var profilePicture: Image? = null
-  var loadingError: String? = null
+  var details: GithubAuthenticatedUser? = null
+  var iconProvider: CachingGithubAvatarIconsProvider? = null
 
+  var loadingError: String? = null
   var showLoginLink = false
   var errorLinkPointedAt = false
 
@@ -389,4 +388,6 @@ private class GithubAccountDecorator(val account: GithubAccount, var projectDefa
   override fun hashCode(): Int {
     return account.hashCode()
   }
+
+  fun getIcon() = details?.let { iconProvider?.getIcon(it) }
 }

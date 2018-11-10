@@ -52,7 +52,6 @@ import java.util.List;
 
 /**
  * @author anna
- * @since Feb 10, 2005
  */
 public class ModulesDependenciesPanel extends JPanel implements Disposable {
   public static final String HELP_ID = "module.dependencies.tool.window";
@@ -117,7 +116,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     project.getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
-      public void rootsChanged(ModuleRootEvent event) {
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
         updateModuleGraph();
         updateSplitterProportion();
         updateLeftTree();
@@ -246,7 +245,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     group.add(new AnAction(CommonBundle.message("action.close"), null, AllIcons.Actions.Cancel) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         DependenciesAnalyzeManager.getInstance(myProject).closeContent(myContent);
       }
     });
@@ -254,24 +253,24 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     final AnAction analyzeDepsAction = ActionManager.getInstance().getAction(IdeActions.ACTION_ANALYZE_DEPENDENCIES);
     group.add(new AnAction(analyzeDepsAction.getTemplatePresentation().getText(), null, AllIcons.Toolwindows.ToolWindowInspection) {
       @Override
-      public void actionPerformed(AnActionEvent e) {
+      public void actionPerformed(@NotNull AnActionEvent e) {
         analyzeDepsAction.actionPerformed(e);
       }
 
       @Override
-      public void update(AnActionEvent e) {
+      public void update(@NotNull AnActionEvent e) {
         analyzeDepsAction.update(e);
       }
     });
 
     group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.direction")) {
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return !myState.forwardDirection;
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myState.forwardDirection = !state;
         updateLeftTree();
       }
@@ -285,12 +284,12 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
 
     group.add(new ToggleAction(AnalysisScopeBundle.message("action.module.dependencies.tests"), null, AllIcons.Modules.TestSourceFolder) {
       @Override
-      public boolean isSelected(AnActionEvent e) {
+      public boolean isSelected(@NotNull AnActionEvent e) {
         return myState.includeTests;
       }
 
       @Override
-      public void setSelected(AnActionEvent e, boolean state) {
+      public void setSelected(@NotNull AnActionEvent e, boolean state) {
         myState.includeTests = state;
         updateModuleGraph();
         updateLeftTree();
@@ -357,7 +356,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     private final Module myModule;
     private final boolean myInCycle;
 
-    public MyUserObject(boolean inCycle, Module module) {
+    MyUserObject(boolean inCycle, Module module) {
       myInCycle = inCycle;
       myModule = module;
     }
@@ -402,7 +401,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     private final Tree myTree;
     private final Project myProject;
 
-    public MyTreePanel(Tree tree, Project project) {
+    MyTreePanel(Tree tree, Project project) {
       super(new BorderLayout());
       myTree = tree;
       myProject = project;
@@ -410,7 +409,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     }
 
     @Override
-    public Object getData(String dataId) {
+    public Object getData(@NotNull String dataId) {
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
@@ -443,7 +442,7 @@ public class ModulesDependenciesPanel extends JPanel implements Disposable {
     private final Tree myTree;
     private final boolean myEnableExpandAll;
 
-    public MyTreeExpander(Tree tree, boolean enableExpandAll) {
+    MyTreeExpander(Tree tree, boolean enableExpandAll) {
       myTree = tree;
       myEnableExpandAll = enableExpandAll;
     }

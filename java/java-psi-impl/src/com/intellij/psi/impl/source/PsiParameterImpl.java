@@ -134,7 +134,6 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   @NotNull
-  @SuppressWarnings("Duplicates")
   public PsiType getType() {
     PsiParameterStub stub = getStub();
     if (stub != null) {
@@ -170,7 +169,6 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
   public PsiTypeElement getTypeElement() {
     for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiTypeElement) {
-        //noinspection unchecked
         return (PsiTypeElement)child;
       }
     }
@@ -301,7 +299,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiMethod) {
         PsiElement originalMethod = gParent.getOriginalElement();
-        if (originalMethod instanceof PsiMethod) {
+        if (originalMethod instanceof PsiMethod && originalMethod != gParent) {
           int index = ((PsiParameterList)parent).getParameterIndex(this);
           PsiParameter[] originalParameters = ((PsiMethod)originalMethod).getParameterList().getParameters();
           if (index < originalParameters.length) {

@@ -152,7 +152,7 @@ public class ImplementAbstractMethodHandler {
     }, CodeInsightBundle.message("intention.implement.abstract.method.command.name"), null);
   }
 
-  private PsiClass[] getClassImplementations(final PsiClass psiClass, Ref<String> problemDetected) {
+  private PsiClass[] getClassImplementations(final PsiClass psiClass, Ref<? super String> problemDetected) {
     ArrayList<PsiClass> list = new ArrayList<>();
     Set<String> classNamesWithPotentialImplementations = new LinkedHashSet<>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass)) {

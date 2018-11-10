@@ -44,10 +44,10 @@ interface ObjectValue : Value {
   /**
    * It must return quickly. Return [com.intellij.util.ThreeState.UNSURE] otherwise.
    */
-  fun hasProperties() = ThreeState.UNSURE
+  fun hasProperties(): ThreeState = ThreeState.UNSURE
 
   /**
    * It must return quickly. Return [com.intellij.util.ThreeState.UNSURE] otherwise.
    */
-  fun hasIndexedProperties() = ThreeState.NO
+  fun hasIndexedProperties(): ThreeState = ThreeState.NO
 }

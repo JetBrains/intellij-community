@@ -32,7 +32,9 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.util.proximity.KnownElementWeigher;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -306,15 +308,15 @@ public class PreferByKindWeigher extends LookupElementWeigher {
 
   @NotNull
   private ThreeState isProbableKeyword(String keyword) {
+    PsiStatement parentStatement = PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class);
     if (PsiKeyword.RETURN.equals(keyword)) {
-      PsiStatement parentStatement = PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class);
       if (isLastStatement(parentStatement) && !isOnTopLevelInVoidMethod(parentStatement)) {
         return ThreeState.YES;
       }
     }
     if ((PsiKeyword.BREAK.equals(keyword) || PsiKeyword.CONTINUE.equals(keyword)) &&
         PsiTreeUtil.getParentOfType(myPosition, PsiLoopStatement.class) != null &&
-        isLastStatement(PsiTreeUtil.getParentOfType(myPosition, PsiStatement.class))) {
+        isLastStatement(parentStatement)) {
       return ThreeState.YES;
     }
     if (PsiKeyword.ELSE.equals(keyword) || PsiKeyword.FINALLY.equals(keyword) || PsiKeyword.CATCH.equals(keyword)) {
@@ -325,7 +327,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
         boolean inReturn = psiElement().withParents(PsiReferenceExpression.class, PsiReturnStatement.class).accepts(myPosition);
         return inReturn ? ThreeState.YES : ThreeState.UNSURE;
       } else if (Arrays.stream(myExpectedTypes).anyMatch(info -> PsiType.BOOLEAN.isAssignableFrom(info.getDefaultType())) &&
-          PsiTreeUtil.getParentOfType(myPosition, PsiIfStatement.class, true, PsiStatement.class, PsiMember.class) == null) {
+                 !(myPosition.getParent() instanceof PsiIfStatement)) {
         return ThreeState.YES;
       }
     }
@@ -339,7 +341,20 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       boolean inCallArg = psiElement().withParents(PsiReferenceExpression.class, PsiExpressionList.class).accepts(myPosition);
       return inCallArg || isInMethodTypeArg(myPosition) ? ThreeState.NO : ThreeState.UNSURE;
     }
+    if (PsiKeyword.FINAL.equals(keyword) && isBeforeVariableOnSameLine(parentStatement)) {
+      return ThreeState.YES;
+    }
     return ThreeState.UNSURE;
+  }
+
+  private boolean isBeforeVariableOnSameLine(@Nullable PsiStatement parentStatement) {
+    return parentStatement != null &&
+           parentStatement.getTextRange().getStartOffset() == myPosition.getTextRange().getStartOffset() &&
+           JBIterable.generate(parentStatement, PsiElement::getNextSibling)
+                     .takeWhile(e -> !e.textContains('\n'))
+                     .skip(1)
+                     .filter(PsiStatement.class)
+                     .isNotEmpty();
   }
 
   private boolean isAccessibleFieldGetter(Object object) {

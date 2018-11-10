@@ -16,12 +16,13 @@
 package com.intellij.java.execution.filters;
 
 import com.intellij.execution.filters.ExceptionExFilterFactory;
+import com.intellij.execution.filters.ExceptionInfoCache;
 import com.intellij.execution.filters.ExceptionWorker;
 import com.intellij.execution.filters.FilterMixin;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
@@ -79,29 +80,49 @@ public class ExceptionWorkerTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testAnomalyParenthesisParsing() {
-    String[][] data = new String[][]{
-      {"at youtrack.jetbrains.com.Issue.IDEA_125137()(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()",
-        "FooTest.groovy:2"},
-      {"at youtrack.jetbrains.com.Issue.IDEA_125137()Hmm(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()Hmm",
-        "FooTest.groovy:2"},
-      {"p1.Cl.mee(p1.Cl.java:87) (A MESSAGE) IDEA-133794 (BUG START WITH 1)\n", "p1.Cl", "mee", "p1.Cl.java:87"}
-    };
-    for (String[] datum : data) {
-      assertParsed(datum[0], datum[1], datum[2], datum[3]);
-    }
+    assertParsed("at youtrack.jetbrains.com.Issue.IDEA_125137()(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()", "FooTest.groovy", 2);
+    assertParsed("at youtrack.jetbrains.com.Issue.IDEA_125137()Hmm(FooTest.groovy:2)\n", "youtrack.jetbrains.com.Issue", "IDEA_125137()Hmm", "FooTest.groovy", 2);
+    assertParsed("p1.Cl.mee(p1.Cl.java:87) (A MESSAGE) IDEA-133794 (BUG START WITH 1)\n", "p1.Cl", "mee", "p1.Cl.java", 87);
   }
 
-  private static void assertParsed(String line, String className, String methodName, String fileLine) {
+  private static void assertParsed(String line, String className, String methodName, String fileName, int lineIndex) {
     assertTrue(line.endsWith("\n"));
-    Trinity<TextRange, TextRange, TextRange> trinity = ExceptionWorker.parseExceptionLine(line);
+    ExceptionWorker.ParsedLine trinity = ExceptionWorker.parseExceptionLine(line);
     assertNotNull(trinity);
-    assertEquals(className, trinity.first.subSequence(line));
-    assertEquals(methodName, trinity.second.subSequence(line));
-    assertEquals(fileLine, trinity.third.subSequence(line));
+    assertEquals(className, trinity.classFqnRange.subSequence(line));
+    assertEquals(methodName, trinity.methodNameRange.subSequence(line));
+    assertEquals(fileName, trinity.fileName);
+    assertEquals(lineIndex, trinity.lineNumber);
   }
 
   public void testYourKitFormat() {
     assertParsed("com.intellij.util.concurrency.Semaphore.waitFor(long) Semaphore.java:89\n",
-                 "com.intellij.util.concurrency.Semaphore", "waitFor", "Semaphore.java:89");
+                 "com.intellij.util.concurrency.Semaphore", "waitFor", "Semaphore.java", 89);
+  }
+
+  public void testForcedJstackFormat() {
+    assertParsed(" - java.lang.ref.ReferenceQueue.remove(long) @bci=151, line=143 (Compiled frame)\n",
+                 "java.lang.ref.ReferenceQueue", "remove", null, 143);
+
+  }
+
+  public void testJava9ModulePrefixed() {
+    String line = "at mod.name/p.A.foo(A.java:2)\n";
+    assertParsed(line, "p.A", "foo", "A.java", 2);
+
+    PsiClass psiClass = myFixture.addClass("package p; public class A {\n" +
+                                           "  public void foo() {}\n" +
+                                           "}");
+    ExceptionWorker worker = new ExceptionWorker(new ExceptionInfoCache(GlobalSearchScope.projectScope(getProject())));
+    worker.execute(line, line.length());
+    PsiClass aClass = worker.getPsiClass();
+    assertNotNull(aClass);
+    assertEquals(psiClass, aClass);
+  }
+
+  public void testNonClassInTheLine() {
+    String line = "2016-12-20 10:58:36,617 [   5740]   INFO - llij.ide.plugins.PluginManager - Loaded bundled plugins: Android Support (10.2.2), Ant Support (1.0), Application Servers View (0.2.0), AspectJ Support (1.2), CFML Support (3.53), CSS Support (163.7743.44), CVS Integration (11), Cloud Foundry integration (1.0), CloudBees integration (1.0), Copyright (8.1), Coverage (163.7743.44), DSM Analysis (1.0.0), Database Tools and SQL (1.0), Eclipse Integration (3.0), EditorConfig (163.7743.44), Emma (163.7743.44), Flash/Flex Support (163.7743.44)";
+    assertNull(ExceptionWorker.parseExceptionLine(line));
+    assertNull(ExceptionWorker.parseExceptionLine(line + "\n"));
   }
 }

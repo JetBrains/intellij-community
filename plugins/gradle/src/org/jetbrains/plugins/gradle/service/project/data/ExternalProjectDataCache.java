@@ -41,7 +41,6 @@ import java.util.Queue;
 
 /**
  * @author Vladislav.Soroka
- * @since 9/29/2015
  */
 public class ExternalProjectDataCache {
   private static final Logger LOG = Logger.getInstance(ExternalProjectDataCache.class);

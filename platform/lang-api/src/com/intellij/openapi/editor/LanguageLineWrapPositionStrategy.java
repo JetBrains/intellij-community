@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
  * Exposes {@link LineWrapPositionStrategy} implementations to their clients.
  *
  * @author Denis Zhdanov
- * @since Aug 25, 2010 11:30:21 AM
  */
 public class LanguageLineWrapPositionStrategy extends LanguageExtension<LineWrapPositionStrategy> {
 

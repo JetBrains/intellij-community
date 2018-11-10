@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -22,13 +8,18 @@ import java.util.*;
 
 public class SortedListModel<T> extends AbstractListModel<T> {
   private List<T> myItems = new ArrayList<>();
-  private final Comparator<T> myComparator;
+  private final Comparator<? super T> myComparator;
 
-  public SortedListModel(Comparator<T> comparator) {
+  public SortedListModel(Comparator<? super T> comparator) {
     myComparator = comparator;
   }
 
-  public static <T> SortedListModel<T> create(Comparator<T> comparator) {
+  public SortedListModel(Collection<? extends T> items, Comparator<? super T> comparator) {
+    this(comparator);
+    addAll(items);
+  }
+
+  public static <T> SortedListModel<T> create(Comparator<? super T> comparator) {
     return new SortedListModel<>(comparator);
   }
 
@@ -49,11 +40,11 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     return addAll(Arrays.asList(items));
   }
 
-  public int[] addAll(Iterator<T> iterator) {
+  public int[] addAll(Iterator<? extends T> iterator) {
     return addAll(ContainerUtil.collect(iterator));
   }
 
-  public int[] addAll(Collection<T> items) {
+  public int[] addAll(Collection<? extends T> items) {
     int[] indices = new int[items.size()];
     int i = 0;
     for (T item : items) {
@@ -135,7 +126,7 @@ public class SortedListModel<T> extends AbstractListModel<T> {
     private final Iterator<T> myIterator;
     private int myCounter = -1;
 
-    public MyIterator() {
+    MyIterator() {
       myIterator = myItems.iterator();
     }
 

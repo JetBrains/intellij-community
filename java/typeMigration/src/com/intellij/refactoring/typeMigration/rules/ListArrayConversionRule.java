@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.rules;
 
 import com.intellij.openapi.util.Pair;
@@ -15,11 +16,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public class ListArrayConversionRule extends TypeConversionRule {
+  @Override
   public TypeConversionDescriptorBase findConversion(final PsiType from,
-                                                 final PsiType to,
-                                                 PsiMember member,
-                                                 final PsiExpression context,
-                                                 final TypeMigrationLabeler labeler) {
+                                                     final PsiType to,
+                                                     PsiMember member,
+                                                     final PsiExpression context,
+                                                     final TypeMigrationLabeler labeler) {
     PsiExpression expression = context;
     PsiClassType classType = from instanceof PsiClassType ? (PsiClassType)from : to instanceof PsiClassType ? (PsiClassType)to : null;
     PsiArrayType arrayType = from instanceof PsiArrayType ? (PsiArrayType)from : to instanceof PsiArrayType ? (PsiArrayType)to : null;

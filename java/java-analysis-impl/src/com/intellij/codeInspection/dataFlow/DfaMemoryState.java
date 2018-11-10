@@ -19,6 +19,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,16 +33,24 @@ public interface DfaMemoryState {
   /**
    * Pops single value from the top of the stack and returns it
    * @return popped value
-   * @throws com.intellij.codeInspection.dataFlow.instructions.EmptyStackInstruction if stack is empty
+   * @throws java.util.EmptyStackException if stack is empty
    */
   @NotNull DfaValue pop();
 
   /**
    * Reads a value from the top of the stack without popping it
    * @return top of stack value
-   * @throws com.intellij.codeInspection.dataFlow.instructions.EmptyStackInstruction if stack is empty
+   * @throws java.util.EmptyStackException if stack is empty
    */
   @NotNull DfaValue peek();
+
+  /**
+   * Reads a value from the stack at given offset from the top without popping it
+   * @param offset value from the stack (0 = top of stack, 1 = the next one, etc.)
+   * @return stack value; null if stack does not deep enough
+   * @throws IndexOutOfBoundsException if offset is negative
+   */
+  @Nullable DfaValue getStackValue(int offset);
 
   /**
    * Pushes given value to the stack
@@ -58,11 +67,20 @@ public interface DfaMemoryState {
    *
    * @param type the type to cast to
    * @return true if cast is successful; false if top-of-stack value type is incompatible with supplied type
-   * @throws com.intellij.codeInspection.dataFlow.instructions.EmptyStackInstruction if stack is empty
+   * @throws java.util.EmptyStackException if stack is empty
    */
   boolean castTopOfStack(@NotNull DfaPsiType type);
 
   boolean applyCondition(DfaValue dfaCond);
+
+  /**
+   * Returns true if given two values are known to be equal
+   *
+   * @param value1 first value to check
+   * @param value2 second value to check
+   * @return true if they are equal; false if not equal or not known
+   */
+  boolean areEqual(@NotNull DfaValue value1, @NotNull DfaValue value2);
 
   boolean applyContractCondition(DfaValue dfaCond);
 
@@ -103,7 +121,7 @@ public interface DfaMemoryState {
    * problems under assumption that the state is still valid.
    * <p>
    *   E.g. if it's proven that nullable variable is dereferenced, for the sake of subsequent analysis one might call
-   *   {@code forceVariableFact(var, CAN_BE_NULL, false)}
+   *   {@code forceVariableFact(var, NULLABILITY, NOT_NULL)}
    * </p>
    *
    * @param var the variable to modify
@@ -112,6 +130,15 @@ public interface DfaMemoryState {
    * @param <T> type of fact value
    */
   <T> void forceVariableFact(@NotNull DfaVariableValue var, @NotNull DfaFactType<T> factType, @Nullable T value);
+
+  /**
+   * Returns a map of known facts associated with given variable
+   *
+   * @param variable a variable to query the facts from
+   * @return facts map
+   */
+  @NotNull
+  DfaFactMap getFacts(@NotNull DfaVariableValue variable);
 
   void flushFields();
 
@@ -123,8 +150,15 @@ public interface DfaMemoryState {
 
   boolean isNotNull(DfaValue dfaVar);
 
+  /**
+   * Returns a constant value which equals to given value, if such.
+   *
+   * @param value a value to find a corresponding constant
+   * @return found constant or null
+   */
   @Nullable
-  DfaConstValue getConstantValue(@NotNull DfaVariableValue value);
+  @Contract("null -> null")
+  DfaConstValue getConstantValue(@Nullable DfaValue value);
 
   /**
    * Ephemeral means a state that was created when considering a method contract and checking if one of its arguments is null.
@@ -136,6 +170,4 @@ public interface DfaMemoryState {
   boolean isEphemeral();
 
   boolean isEmptyStack();
-
-  void cleanUpTempVariables();
 }

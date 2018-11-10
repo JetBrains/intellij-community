@@ -23,6 +23,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -56,12 +57,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private Dimension myHoldSize;
   private final MySelectionModel mySelectionModel = new MySelectionModel();
-  private boolean myHorizontalAutoScrolling = Registry.is("ide.tree.horizontal.default.autoscrolling", false);
+  private ThreeState myHorizontalAutoScrolling = ThreeState.UNSURE;
 
   private TreePath rollOverPath;
 
   public Tree() {
-    this(getDefaultTreeModel());
+    this(new DefaultMutableTreeNode());
   }
 
   public Tree(TreeNode root) {
@@ -118,7 +119,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void setUI(TreeUI ui) {
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
-      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection() && !UIUtil.isUnderGTKLookAndFeel()) {
+      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection()) {
         actualUI = new WideSelectionTreeUI(isWideSelection(), getWideSelectionBackgroundCondition());
       }
     }
@@ -155,7 +156,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
    * @return a strategy which determines if a wide selection should be drawn for a target row (it's number is
    * {@link Condition#value(Object) given} as an argument to the strategy)
    */
-  @SuppressWarnings("unchecked")
   @NotNull
   protected Condition<Integer> getWideSelectionBackgroundCondition() {
     return Conditions.alwaysTrue();
@@ -185,7 +185,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   @Override
   public Color getBackground() {
-    return isBackgroundSet() ? super.getBackground() : UIUtil.getTreeTextBackground();
+    return isBackgroundSet() ? super.getBackground() : UIUtil.getTreeBackground();
   }
 
   @Override
@@ -403,21 +403,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         int modifiers = e.getModifiers() & ~(InputEvent.CTRL_MASK | InputEvent.BUTTON1_MASK) | InputEvent.BUTTON3_MASK;
         e2 = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), modifiers, e.getX(), e.getY(), e.getClickCount(),
                             true, MouseEvent.BUTTON3);
-      }
-    }
-    else if (UIUtil.isUnderGTKLookAndFeel()) {
-      if (SwingUtilities.isLeftMouseButton(e) && (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_CLICKED)) {
-        TreePath path = getClosestPathForLocation(e.getX(), e.getY());
-        if (path != null) {
-          Rectangle bounds = getPathBounds(path);
-          if (bounds != null &&
-              e.getY() > bounds.y && e.getY() < bounds.y + bounds.height &&
-              (e.getX() >= bounds.x + bounds.width ||
-               e.getX() < bounds.x && !isLocationInExpandControl(path, e.getX(), e.getY()))) {
-            int newX = bounds.x + bounds.width - 2;
-            e2 = MouseEventAdapter.convert(e, e.getComponent(), newX, e.getY());
-          }
-        }
       }
     }
 
@@ -655,7 +640,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return (PresentableNodeDescriptor)userObject;
   }
 
-  public TreePath getPath(PresentableNodeDescriptor node) {
+  public TreePath getPath(@NotNull PresentableNodeDescriptor node) {
     AbstractTreeBuilder builder = AbstractTreeBuilder.getBuilderFor(this);
     DefaultMutableTreeNode treeNode = builder.getNodeForElement(node);
 
@@ -868,11 +853,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public boolean isHorizontalAutoScrollingEnabled() {
-    return myHorizontalAutoScrolling;
+    return myHorizontalAutoScrolling != ThreeState.UNSURE ? myHorizontalAutoScrolling == ThreeState.YES : Registry.is("ide.tree.horizontal.default.autoscrolling", false);
   }
 
   public void setHorizontalAutoScrollingEnabled(boolean enabled) {
-    myHorizontalAutoScrolling = enabled;
+    myHorizontalAutoScrolling = enabled ? ThreeState.YES : ThreeState.NO;
   }
 
   /**

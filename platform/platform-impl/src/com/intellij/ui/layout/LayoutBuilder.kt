@@ -11,7 +11,7 @@ import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
-class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
+open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
   inline fun row(label: String, init: Row.() -> Unit) = row(label = Label(label), init = init)
 
   inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
@@ -20,15 +20,24 @@ class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal va
     return row
   }
 
+  inline fun titledRow(title: String, init: Row.() -> Unit): Row {
+    val row = builder.newTitledRow(title)
+    row.init()
+    return row
+  }
+
   // linkHandler is not an optional for backward compatibility
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
    */
-  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
+  @JvmOverloads
+  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)? = null) {
     builder.noteRow(text, linkHandler)
   }
 
-  fun noteRow(text: String) = noteRow(text, null)
+  fun commentRow(text: String) {
+    builder.commentRow(text)
+  }
 
   inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
     LayoutBuilder(builder, ButtonGroup()).init()
@@ -45,8 +54,8 @@ class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal va
     return group
   }
 
-  fun chooseFile(descriptor: FileChooserDescriptor, event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
-    FileChooser.chooseFile(descriptor, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChosen)
+  inline fun <T : Any> buttonGroup(propertyManager: ChoicePropertyUiManager<T>, init: LayoutBuilderWithButtonGroup<T>.() -> Unit) {
+    LayoutBuilderWithButtonGroup(builder, propertyManager).init()
   }
 
   @Suppress("PropertyName")
@@ -54,4 +63,11 @@ class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal va
   @Deprecated("", replaceWith = ReplaceWith("builder"), level = DeprecationLevel.ERROR)
   internal val `$`: LayoutBuilderImpl
     get() = builder
+}
+
+@Suppress("unused")
+class LayoutBuilderWithButtonGroup<T : Any> @PublishedApi internal constructor(builder: LayoutBuilderImpl, internal val propertyManager: ChoicePropertyUiManager<T>) : LayoutBuilder(builder)
+
+fun FileChooserDescriptor.chooseFile(event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
+  FileChooser.chooseFile(this, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChosen)
 }

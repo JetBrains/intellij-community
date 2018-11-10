@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -39,7 +40,7 @@ public class CreatePackageAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.actions.CreatePackageAction");
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final IdeView view = e.getData(LangDataKeys.IDE_VIEW);
     if (view == null) {
       return;
@@ -98,13 +99,13 @@ public class CreatePackageAction extends DumbAwareAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     boolean enabled = isEnabled(e);
     e.getPresentation().setVisible(enabled);
     e.getPresentation().setEnabled(enabled);
   }
 
-  private static boolean isEnabled(AnActionEvent e) {
+  private static boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     final IdeView ideView = e.getData(LangDataKeys.IDE_VIEW);
     if (project == null || ideView == null) {

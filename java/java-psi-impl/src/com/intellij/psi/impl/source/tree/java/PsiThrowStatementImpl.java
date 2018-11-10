@@ -89,6 +89,7 @@ public class PsiThrowStatementImpl extends CompositePsiElement implements PsiThr
     }
   }
 
+  @Override
   public String toString() {
     return "PsiThrowStatement";
   }

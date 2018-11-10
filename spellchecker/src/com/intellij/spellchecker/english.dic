@@ -2620,6 +2620,8 @@ Bacchus
 Bacchus's
 Bach
 Bach's
+backorder
+backorders
 Backus
 Backus's
 Bacon
@@ -16833,6 +16835,7 @@ LCM
 LDC
 LED
 LIFO
+LGTM
 LL
 LLB
 LLD
@@ -36652,6 +36655,7 @@ attitudinize
 attitudinized
 attitudinizes
 attitudinizing
+atto
 attorney
 attorney's
 attorneys
@@ -37119,6 +37123,7 @@ awakes
 awaking
 award
 awarded
+awardee
 awarding
 awards
 aware
@@ -45240,6 +45245,7 @@ centerpiece
 centerpiece's
 centerpieces
 centers
+centi
 centigram
 centigram's
 centigramme
@@ -54129,6 +54135,7 @@ debutantes
 debuted
 debuting
 debuts
+deca
 decade
 decade's
 decadence
@@ -54245,6 +54252,7 @@ deceptive
 deceptively
 deceptiveness
 deceptiveness's
+deci
 decibel
 decibel's
 decibels
@@ -54402,6 +54410,9 @@ decompresses
 decompressing
 decompression
 decompression's
+decompressor
+decompressor's
+decompressors
 decongestant
 decongestants
 deconstruct
@@ -55415,6 +55426,7 @@ denominations
 denominator
 denominator's
 denominators
+denormalize
 denotation
 denotation's
 denotational
@@ -63212,6 +63224,7 @@ ewer's
 ewers
 ewes
 ex
+exa
 exacerbate
 exacerbated
 exacerbates
@@ -65192,6 +65205,7 @@ feminizes
 feminizing
 femoral
 fems
+femto
 femur
 femur's
 femurs
@@ -69863,6 +69877,7 @@ gifting
 gifts
 gig
 gig's
+giga
 gigabyte
 gigabytes
 gigahertz
@@ -73521,6 +73536,7 @@ hectares
 hectic
 hectically
 hectics
+hecto
 hectogram
 hectogram's
 hectogramme
@@ -79867,9 +79883,11 @@ invite
 invited
 invitee
 invitees
+inviter
 invites
 inviting
 invitingly
+invitor
 invocation
 invocation's
 invocations
@@ -87820,6 +87838,7 @@ millennium's
 millenniums
 millepede's
 millers
+milli
 milliard
 milliard's
 milliards
@@ -88015,6 +88034,7 @@ minicams
 minicomputer
 minicomputer's
 minicomputers
+minification
 minifloppies
 minifloppieses
 minim
@@ -89247,6 +89267,7 @@ monopoly's
 monorail
 monorail's
 monorails
+monorepo
 monostable
 monosyllabic
 monosyllable
@@ -90592,6 +90613,7 @@ namings
 nannied
 nannies
 nannying
+nano
 nanobot
 nanobots
 nanometer
@@ -97922,6 +97944,7 @@ pestles
 pestling
 pesto
 pests
+peta
 petal
 petal's
 petaled
@@ -98539,6 +98562,7 @@ picnicker's
 picnickers
 picnicking
 picnics
+pico
 picoseconds
 picot
 picot's
@@ -102939,6 +102963,7 @@ proximity
 proximity's
 proxy
 proxy's
+proxying
 prude
 prude's
 prudent
@@ -105258,6 +105283,7 @@ realness
 realpolitik
 realpolitik's
 realtor's
+realtime
 realty
 realty's
 ream
@@ -112073,6 +112099,7 @@ screed's
 screeds
 screen
 screen's
+screencast
 screened
 screening
 screening's
@@ -113662,6 +113689,7 @@ shapes
 shaping
 sharable
 shard
+sharded
 shard's
 shards
 share
@@ -123745,6 +123773,7 @@ tepidness
 tequila
 tequila's
 tequilas
+tera
 terabyte
 terabytes
 terbium
@@ -130033,6 +130062,7 @@ unstuck
 unstudied
 unsubdued
 unsubscribe
+unsubscribed
 unsubsidised
 unsubsidized
 unsubstantial
@@ -135224,6 +135254,7 @@ yob's
 yobbo
 yobbos
 yobs
+yocto
 yodel
 yodeled
 yodeler
@@ -135261,6 +135292,7 @@ yolks
 yon
 yonder
 yonks
+yotta
 yore
 yore's
 yorkers
@@ -135378,6 +135410,7 @@ zephyr's
 zephyrs
 zeppelin
 zeppelins
+zepto
 zero
 zero's
 zeroed
@@ -135398,6 +135431,7 @@ zesty
 zeta
 zeta's
 zetas
+zetta
 zeugma
 zeugma's
 zigamorph

@@ -136,10 +136,10 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       private final CreateFileFromTemplateDialog myDialog;
       private final Project myProject;
 
-      public BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
-        myDialog = dialog;
-        myProject = project;
-      }
+     BuilderImpl(CreateFileFromTemplateDialog dialog, Project project) {
+      myDialog = dialog;
+      myProject = project;
+    }
 
       @Override
       public Builder setTitle(String title) {
@@ -170,7 +170,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
         myDialog.myCreator = new ElementCreator(myProject, errorTitle) {
 
         @Override
-        protected PsiElement[] create(String newName)  {
+        protected PsiElement[] create(@NotNull String newName)  {
            T element = creator.createFile(myDialog.getEnteredName(), myDialog.getKindCombo().getSelectedName());
 
           if (element != null) {created.set(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element));

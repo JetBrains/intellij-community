@@ -3,24 +3,32 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.JavaHomeFinder;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.projectRoots.ui.ProjectJdksEditor;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.lang.JavaVersion;
+import com.intellij.util.ui.StatusText;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,15 +39,14 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.*;
 
 public class JdkChooserPanel extends JPanel {
   private final @Nullable Project myProject;
   private final DefaultListModel<Sdk> myListModel;
-  private final JList<Sdk> myList;
+  private final JBList<Sdk> myList;
+  private final LoadingDecorator myLoadingDecorator;
   private Sdk myCurrentJdk;
   private SdkType[] myAllowedJdkTypes = null;
 
@@ -62,14 +69,24 @@ public class JdkChooserPanel extends JPanel {
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         if (myProject == null) {
           editJdkTable();
+          return true;
         }
-        return true;
+        return false;
       }
     }.installOn(myList);
 
-    JPanel panel = new JPanel(new BorderLayout());
+    JPanel panel = new JPanel(new BorderLayout()) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        size.height = Math.max(size.height, myList.getVisibleRowCount() * myList.getFixedCellHeight());
+        return size;
+      }
+    };
     panel.add(ScrollPaneFactory.createScrollPane(myList), BorderLayout.CENTER);
-    add(panel, BorderLayout.CENTER);
+    myLoadingDecorator = new LoadingDecorator(panel, project, 0, true);
+    myLoadingDecorator.setLoadingText("Looking for JDKs...");
+    add(myLoadingDecorator.getComponent(), BorderLayout.CENTER);
     if (myListModel.getSize() > 0) {
       myList.setSelectedIndex(0);
     }
@@ -144,11 +161,10 @@ public class JdkChooserPanel extends JPanel {
   }
 
   public void fillList(final @Nullable SdkType type, final @Nullable Sdk[] globalSdks) {
-    myListModel.clear();
-    final Sdk[] jdks;
+    final ArrayList<Sdk> knownJdks = new ArrayList<>();
     if (myProject == null || myProject.isDefault()) {
       final Sdk[] allJdks = globalSdks != null ? globalSdks : ProjectJdkTable.getInstance().getAllJdks();
-      jdks = getCompatibleJdks(type, Arrays.asList(allJdks));
+      knownJdks.addAll(getCompatibleJdks(type, Arrays.asList(allJdks)));
     }
     else {
       final ProjectSdksModel projectJdksModel = ProjectStructureConfigurable.getInstance(myProject).getProjectJdksModel();
@@ -156,22 +172,88 @@ public class JdkChooserPanel extends JPanel {
         projectJdksModel.reset(myProject);
       }
       final Collection<Sdk> collection = projectJdksModel.getProjectSdks().values();
-      jdks = getCompatibleJdks(type, collection);
+      knownJdks.addAll(getCompatibleJdks(type, collection));
     }
-    Arrays.sort(jdks, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
-    for (Sdk jdk : jdks) {
-      myListModel.addElement(jdk);
+    final ArrayList<Sdk> allJdks = new ArrayList<>(knownJdks);
+
+    if (Registry.is("autodetect.all.jdks") && (type == null || type instanceof JavaSdkType)) {
+      myList.getEmptyText().setText("");
+      myLoadingDecorator.startLoading(false);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        List<String> homePaths = JavaHomeFinder.suggestHomePaths();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          outer:
+          for (String homePath : homePaths) {
+            for (Sdk jdk : knownJdks) {
+              if (Comparing.equal(jdk.getHomePath(), homePath)) continue outer;
+            }
+            VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(homePath);
+            if (virtualFile != null) {
+              JavaSdk sdkType = JavaSdk.getInstance();
+              JavaVersion version = JavaVersion.tryParse(sdkType.getVersionString(homePath));
+              String suggestedName;
+              if (version != null) {
+                suggestedName = version.toString();
+              } else {
+                suggestedName = SimpleJavaSdkType.suggestJavaSdkName(sdkType, "", homePath);
+              }
+              Sdk jdk = sdkType.createJdk(suggestedName, homePath, false);
+              if (jdk instanceof ProjectJdkImpl) {
+                ProjectJdkImpl tmp = SdkConfigurationUtil.createSdk(allJdks.toArray(new Sdk[0]), virtualFile, sdkType, null, suggestedName);
+                String improvedName = tmp.getName();
+                ((ProjectJdkImpl)jdk).setName(improvedName);
+              }
+              allJdks.add(jdk);
+            }
+          }
+          updateListModel(allJdks, knownJdks);
+          myLoadingDecorator.stopLoading();
+          myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
+        }, ModalityState.any());
+      });
+    } else {
+      updateListModel(allJdks, knownJdks);
     }
   }
 
-  private Sdk[] getCompatibleJdks(final @Nullable SdkType type, final Collection<Sdk> collection) {
+  private void updateListModel(ArrayList<Sdk> allJdks, ArrayList<Sdk> knownJdks) {
+    Sdk oldSelection = myList.getSelectedValue();
+
+    myListModel.clear();
+    Collections.sort(allJdks, (o1, o2) -> {
+      boolean unknown1 = !knownJdks.contains(o1);
+      boolean unknown2 = !knownJdks.contains(o2);
+      if (unknown1 != unknown2) {
+        return unknown1 ? 1 : -1;
+      }
+      String v1 = o1.getVersionString();
+      String v2 = o2.getVersionString();
+      if (v1 != null & v2 != null) {
+        try {
+          return -JavaVersion.parse(v1).compareTo(JavaVersion.parse(v2));
+        }
+        catch (IllegalArgumentException ignored) {
+          //
+        }
+      }
+      return -o1.getName().compareToIgnoreCase(o2.getName());
+    });
+    for (Sdk jdk : allJdks) {
+      myListModel.addElement(jdk);
+    }
+    if (oldSelection != null) {
+      ScrollingUtil.selectItem(myList, oldSelection);
+    }
+  }
+
+  private List<Sdk> getCompatibleJdks(final @Nullable SdkType type, final Collection<Sdk> collection) {
     final Set<Sdk> compatibleJdks = new HashSet<>();
     for (Sdk projectJdk : collection) {
       if (isCompatibleJdk(projectJdk, type)) {
         compatibleJdks.add(projectJdk);
       }
     }
-    return compatibleJdks.toArray(new Sdk[0]);
+    return new ArrayList<>(compatibleJdks);
   }
 
   private boolean isCompatibleJdk(final Sdk projectJdk, final @Nullable SdkType type) {
@@ -188,10 +270,9 @@ public class JdkChooserPanel extends JPanel {
     return myList;
   }
 
-  public void selectJdk(Sdk defaultJdk) {
-    final int index = myListModel.indexOf(defaultJdk);
-    if (index >= 0) {
-      myList.setSelectedIndex(index);
+  public void selectJdk(@Nullable Sdk defaultJdk) {
+    if (defaultJdk != null) {
+      ScrollingUtil.selectItem(myList, defaultJdk);
     }
   }
 
@@ -230,7 +311,13 @@ public class JdkChooserPanel extends JPanel {
     if (jdk == null) {
       return null;
     }
-    ApplicationManager.getApplication().runWriteAction(() -> ProjectRootManager.getInstance(project).setProjectSdk(jdk));
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      ProjectJdkTable table = ProjectJdkTable.getInstance();
+      if (!table.getSdksOfType(jdk.getSdkType()).contains(jdk)) {
+        table.addJdk(jdk);
+      }
+      ProjectRootManager.getInstance(project).setProjectSdk(jdk);
+    });
     return jdk;
   }
 
@@ -244,10 +331,12 @@ public class JdkChooserPanel extends JPanel {
       updateOkButton();
     }
 
+    @Override
     protected String getDimensionServiceKey() {
       return "#com.intellij.ide.util.projectWizard.JdkChooserPanel.MyDialog";
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
       updateOkButton();
     }
@@ -256,30 +345,35 @@ public class JdkChooserPanel extends JPanel {
       setOKActionEnabled(myList.getSelectedValue() != null);
     }
 
+    @Override
     public void dispose() {
       myList.removeListSelectionListener(this);
       super.dispose();
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       return JdkChooserPanel.this;
     }
 
+    @Override
     @NotNull
     protected Action[] createActions() {
       return new Action[]{new ConfigureAction(), getOKAction(), getCancelAction()};
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myList;
     }
 
     private final class ConfigureAction extends AbstractAction {
-      public ConfigureAction() {
+      ConfigureAction() {
         super(IdeBundle.message("button.configure.e"));
         putValue(Action.MNEMONIC_KEY, new Integer('E'));
       }
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         editJdkTable();
       }

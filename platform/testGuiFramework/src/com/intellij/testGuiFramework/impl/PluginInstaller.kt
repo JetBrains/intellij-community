@@ -34,7 +34,7 @@ class PluginInstaller: GuiTestCase() {
 
     welcomeFrame {
       actionLink("Configure").click()
-      popupClick("Plugins")
+      popupMenu("Plugins").clickSearchedItem()
       dialog("Plugins") {
         button("Install JetBrains plugin...").click()
         dialog("Browse JetBrains Plugins ") {

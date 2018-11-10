@@ -53,6 +53,7 @@ public class TitledBorderWithMnemonic extends TitledBorder {
     myOriginalTitle = title;
   }
 
+  @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
     Point textLoc = new Point();
     Border border = getBorder();
@@ -71,7 +72,7 @@ public class TitledBorderWithMnemonic extends TitledBorder {
     Color color = g.getColor();
 
     g.setFont(getFont(c));
-    
+
     FontMetrics fm = g.getFontMetrics();
     int         fontHeight = fm.getHeight();
     int         descent = fm.getDescent();

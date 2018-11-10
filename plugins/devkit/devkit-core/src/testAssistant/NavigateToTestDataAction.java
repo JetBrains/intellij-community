@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -47,24 +33,29 @@ import java.util.List;
  */
 public class NavigateToTestDataAction extends AnAction implements TestTreeViewAction {
   @Override
-  public void actionPerformed(AnActionEvent e) {
+  public void actionPerformed(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) :
+                                popupFactory.guessBestPopupLocation(dataContext);
+
     List<String> fileNames = findTestDataFiles(dataContext);
     if (fileNames == null || fileNames.isEmpty()) {
       String testData = guessTestData(dataContext);
       if (testData == null) {
-        String message = "Cannot find testdata files for class";
-        final Notification notification = new Notification("testdata", "Found no testdata files", message, NotificationType.INFORMATION);
+        Notification notification = new Notification(
+          "testdata",
+          "Found no test data files",
+          "Cannot find test data files for class",
+          NotificationType.INFORMATION);
         Notifications.Bus.notify(notification, project);
         return;
       }
       fileNames = Collections.singletonList(testData);
     }
-
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) : popupFactory.guessBestPopupLocation(dataContext);
 
     TestDataNavigationHandler.navigate(point, fileNames, project);
   }
@@ -112,7 +103,7 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(findTargetMethod(e.getDataContext()) != null);
   }
 

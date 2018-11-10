@@ -23,6 +23,7 @@ import com.intellij.psi.filters.FilterPositionUtil;
 /**
  * @deprecated please consider using {@link com.intellij.patterns.ElementPattern} or checks in code instead
  */
+@Deprecated
 public class LeftNeighbour extends PositionElementFilter{
 
   public LeftNeighbour(ElementFilter filter){

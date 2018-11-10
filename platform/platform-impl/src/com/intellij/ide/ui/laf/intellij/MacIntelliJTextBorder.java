@@ -14,6 +14,8 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.paintOutlineBorder;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -38,7 +40,8 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
     return BW.getFloat();
   }
 
-  protected Color getOutlineColor(boolean enabled) {
+  @Override
+  protected Color getOutlineColor(boolean enabled, boolean focused) {
     return OUTLINE_COLOR;
   }
 
@@ -71,7 +74,12 @@ public class MacIntelliJTextBorder extends DarculaTextBorder {
       g2.fill(path);
 
       if (c.hasFocus()) {
-        DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
+        Object op = c.getClientProperty("JComponent.outline");
+        if (op != null) {
+          paintOutlineBorder(g2, r.width, r.height, arc, true, true, DarculaUIUtil.Outline.valueOf(op.toString()));
+        } else {
+          DarculaUIUtil.paintFocusBorder(g2, r.width, r.height, arc, true);
+        }
       }
     }
     finally {

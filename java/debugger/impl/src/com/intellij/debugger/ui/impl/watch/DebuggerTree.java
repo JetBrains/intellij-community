@@ -18,6 +18,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ThreadsViewSettings;
@@ -140,7 +141,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   @Override
-  public Object getData(String dataId) {
+  public Object getData(@NotNull String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }
@@ -324,17 +325,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
     myDebuggerContext = context;
     saveState();
-    process.getManagerThread().schedule(new DebuggerCommandImpl() {
-      @Override
-      protected void action() {
-        getNodeFactory().setHistoryByContext(context);
-      }
-      @Override
-      public Priority getPriority() {
-        return Priority.NORMAL;
-      }
-    });
-
+    process.getManagerThread().schedule(PrioritizedTask.Priority.NORMAL, () -> getNodeFactory().setHistoryByContext(context));
     build(context);
   }
 
@@ -523,7 +514,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   private class BuildValueNodeCommand extends BuildNodeCommand implements ChildrenBuilder {
-    public BuildValueNodeCommand(DebuggerTreeNodeImpl node) {
+    BuildValueNodeCommand(DebuggerTreeNodeImpl node) {
       super(node);
     }
 
@@ -605,7 +596,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   private class BuildStaticNodeCommand extends BuildNodeCommand {
-    public BuildStaticNodeCommand(DebuggerTreeNodeImpl node) {
+    BuildStaticNodeCommand(DebuggerTreeNodeImpl node) {
       super(node);
     }
 
@@ -628,7 +619,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
   }
 
   private class BuildThreadCommand extends BuildNodeCommand {
-    public BuildThreadCommand(DebuggerTreeNodeImpl threadNode) {
+    BuildThreadCommand(DebuggerTreeNodeImpl threadNode) {
       super(threadNode, ((ThreadDescriptorImpl)threadNode.getDescriptor()).getThreadReference());
     }
 
@@ -673,7 +664,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     private final DebuggerTreeNodeImpl myNode;
     protected final List<DebuggerTreeNodeImpl> myChildren = new LinkedList<>();
 
-    public BuildThreadGroupCommand(DebuggerTreeNodeImpl node) {
+    BuildThreadGroupCommand(DebuggerTreeNodeImpl node) {
       myNode = node;
     }
 

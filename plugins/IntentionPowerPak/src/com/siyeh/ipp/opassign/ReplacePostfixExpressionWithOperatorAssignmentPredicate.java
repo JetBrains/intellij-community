@@ -15,14 +15,15 @@
  */
 package com.siyeh.ipp.opassign;
 
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPostfixExpression;
-import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ReplacePostfixExpressionWithOperatorAssignmentPredicate implements PsiElementPredicate {
 
+  @Override
   public boolean satisfiedBy(PsiElement element) {
     if (!(element instanceof PsiPostfixExpression)) {
       return false;

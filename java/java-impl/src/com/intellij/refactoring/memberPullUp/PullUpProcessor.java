@@ -52,7 +52,7 @@ import java.util.*;
 
 public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpData {
   private static final Logger LOG = Logger.getInstance(PullUpProcessor.class);
-
+  @NotNull
   private final PsiClass mySourceClass;
   private final PsiClass myTargetSuperClass;
   private final MemberInfo[] myMembersToMove;
@@ -61,7 +61,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   private Set<PsiMember> myMovedMembers;
   private final Map<Language, PullUpHelper<MemberInfo>> myProcessors = ContainerUtil.newHashMap();
 
-  public PullUpProcessor(PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
+  public PullUpProcessor(@NotNull PsiClass sourceClass, PsiClass targetSuperClass, MemberInfo[] membersToMove, DocCommentPolicy javaDocPolicy) {
     super(sourceClass.getProject());
     mySourceClass = sourceClass;
     myTargetSuperClass = targetSuperClass;
@@ -161,8 +161,8 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
   }
 
   public void moveMembersToBase() throws IncorrectOperationException {
-    myMovedMembers = ContainerUtil.newHashSet();
-    myMembersAfterMove = ContainerUtil.newHashSet();
+    myMovedMembers = ContainerUtil.newLinkedHashSet();
+    myMembersAfterMove = ContainerUtil.newLinkedHashSet();
 
     // build aux sets
     for (MemberInfo info : myMembersToMove) {
@@ -318,6 +318,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
       return ContainerUtil.map(myMembersToMove, info -> info.getMember(), PsiElement.EMPTY_ARRAY);
     }
 
+    @NotNull
     @Override
     public String getCodeReferencesText(int usagesCount, int filesCount) {
       return "Class to pull up members to \"" + RefactoringUIUtil.getDescription(myTargetSuperClass, true) + "\"";
