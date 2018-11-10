@@ -207,16 +207,11 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
     }
     final PsiType type2 = method2.getReturnType();
     if (type1 instanceof PsiClassType && type2 instanceof PsiClassType) {
-      if (((PsiClassType)type1).resolve() != ((PsiClassType)type2).resolve()) {
-        // class type can resolve to two different type parameters with the same name (e.g. T)
-        // for which an equals() call still returns true because they have the same canonical text
-        return false;
-      }
       final PsiClass superClass = method2.getContainingClass();
       final PsiClass aClass = method1.getContainingClass();
       if (aClass == null || superClass == null) return false;
       final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-      return type1.equals(substitutor.substitute(type2));
+      return type1.equals(substitutor.substitute(type2)) && !(((PsiClassType)type1).resolve() instanceof PsiTypeParameter);
     }
     else {
       return type1.equals(type2);
