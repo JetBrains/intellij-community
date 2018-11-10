@@ -43,7 +43,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
 
   private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = true;
-  private boolean myReopenLastProject = true;
+  private boolean myReopenLastProject = false;
   private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDDEN, Boolean.FALSE);
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;

@@ -5,15 +5,15 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrSpreadArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType
 import org.jetbrains.plugins.groovy.lang.resolve.api.*
 import java.util.*
 
-fun GrMethodCall.getArguments(): Arguments? {
-  val argumentList = argumentList
+fun GrCall.getArguments(): Arguments? {
+  val argumentList = argumentList ?: return null
   return getArguments(argumentList.namedArguments, argumentList.expressionArguments, closureArguments, this)
 }
 

@@ -15,6 +15,7 @@ import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.RecentsManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
   protected abstract String validateName(String name);
   
   @Nullable
-  protected String validateQualifiedName(String packageName, String extractedSuperName) {
+  protected String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
     return null;
   }
 
@@ -77,6 +78,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract String getPackageNameLabelText();
 
+  @NotNull
   protected abstract String getEntityName();
 
   protected abstract void preparePackage() throws OperationFailedException;
@@ -197,6 +199,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     getPreviewAction().setEnabled(!isExtractSuperclass());
   }
 
+  @NotNull
   public String getExtractedSuperName() {
     return myExtractedSuperNameField.getText().trim();
   }
@@ -222,7 +225,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     final String packageName = getTargetPackageName();
     RecentsManager.getInstance(myProject).registerRecentEntry(getDestinationPackageRecentKey(), packageName);
 
-    if (extractedSuperName != null && extractedSuperName.isEmpty()) {
+    if (extractedSuperName.isEmpty()) {
       // TODO just disable OK button
       errorString[0] = getExtractedSuperNameNotSpecifiedMessage();
       myExtractedSuperNameField.requestFocusInWindow();

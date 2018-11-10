@@ -128,7 +128,7 @@ public class MessagesServiceImpl implements MessagesService {
       return getTestInputImplementation().show(message, validator);
     }
 
-    final InputDialog dialog = project != null
+    final Messages.InputDialog dialog = project != null
                                ? new PasswordInputDialog(project, message, title, icon, validator)
                                : new PasswordInputDialog(message, title, icon, validator);
     dialog.show();
@@ -159,9 +159,9 @@ public class MessagesServiceImpl implements MessagesService {
       return getTestInputImplementation().show(message, validator);
     }
 
-    InputDialog dialog = new InputDialog(project, message, title, icon, initialValue, validator,
-                                         new String[]{OK_BUTTON, CANCEL_BUTTON},
-                                         0, comment);
+    Messages.InputDialog dialog = new Messages.InputDialog(project, message, title, icon, initialValue, validator,
+                                                           new String[]{OK_BUTTON, CANCEL_BUTTON},
+                                                           0, comment);
 
     final JTextComponent field = dialog.getTextField();
     if (selection != null) {

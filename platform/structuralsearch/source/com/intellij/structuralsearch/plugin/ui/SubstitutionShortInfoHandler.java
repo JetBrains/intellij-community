@@ -148,7 +148,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
       if (constraint.getRegExp() != null && !constraint.getRegExp().isEmpty()) {
         append(buf, SSRBundle.message("text.tooltip.message",
                                       constraint.isInvertRegExp() ? 1 : 0,
-                                      StringUtil.escapeXml(constraint.getRegExp()),
+                                      StringUtil.escapeXmlEntities(constraint.getRegExp()),
                                       constraint.isWholeWordsOnly() ? 1 : 0,
                                       constraint.isWithinHierarchy() ? 1 : 0,
                                       inactiveTextColor));
@@ -157,28 +157,30 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
         append(buf, SSRBundle.message("hierarchy.tooltip.message"));
       }
       if (!StringUtil.isEmpty(constraint.getReferenceConstraint())) {
-        final String text = StringUtil.escapeXml(StringUtil.unquoteString(constraint.getReferenceConstraint()));
+        final String text = StringUtil.escapeXmlEntities(StringUtil.unquoteString(constraint.getReferenceConstraint()));
         append(buf, SSRBundle.message("reference.target.tooltip.message", constraint.isInvertReference() ? 1 : 0, text));
       }
 
-      if (constraint.getNameOfExprType() != null && !constraint.getNameOfExprType().isEmpty()) {
+      constraint.getNameOfExprType();
+      if (!constraint.getNameOfExprType().isEmpty()) {
         append(buf, SSRBundle.message("exprtype.tooltip.message",
                                       constraint.isInvertExprType() ? 1 : 0,
-                                      StringUtil.escapeXml(constraint.getNameOfExprType()),
+                                      StringUtil.escapeXmlEntities(constraint.getNameOfExprType()),
                                       constraint.isExprTypeWithinHierarchy() ? 1 : 0,
                                       inactiveTextColor));
       }
 
-      if (constraint.getNameOfFormalArgType() != null && !constraint.getNameOfFormalArgType().isEmpty()) {
+      constraint.getNameOfFormalArgType();
+      if (!constraint.getNameOfFormalArgType().isEmpty()) {
         append(buf, SSRBundle.message("expected.type.tooltip.message",
                                       constraint.isInvertFormalType() ? 1 : 0,
-                                      StringUtil.escapeXml(constraint.getNameOfFormalArgType()),
+                                      StringUtil.escapeXmlEntities(constraint.getNameOfFormalArgType()),
                                       constraint.isFormalArgTypeWithinHierarchy() ? 1 : 0,
                                       inactiveTextColor));
       }
 
       if (StringUtil.isNotEmpty(constraint.getWithinConstraint())) {
-        final String text = StringUtil.escapeXml(StringUtil.unquoteString(constraint.getWithinConstraint()));
+        final String text = StringUtil.escapeXmlEntities(StringUtil.unquoteString(constraint.getWithinConstraint()));
         append(buf, SSRBundle.message("within.constraints.tooltip.message", constraint.isInvertWithinConstraint() ? 1 : 0, text));
       }
 
@@ -194,7 +196,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
     final String script = namedScriptableDefinition.getScriptCodeConstraint();
     if (script != null && script.length() > 2) {
-      final String text = "<pre><code>" + StringUtil.escapeXml(StringUtil.unquoteString(script)) + "</code></pre>";
+      final String text = "<pre><code>" + StringUtil.escapeXmlEntities(StringUtil.unquoteString(script)) + "</code></pre>";
       append(buf, SSRBundle.message("script.tooltip.message", text));
     }
 

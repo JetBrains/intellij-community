@@ -61,7 +61,7 @@ public class TextToCDataIntention implements IntentionAction {
 
     StringBuilder text = new StringBuilder();
     for (PsiElement element : texts) {
-      text.append(StringUtil.unescapeXml(element.getText()));
+      text.append(StringUtil.unescapeXmlEntities(element.getText()));
     }
     int start = 0;
     while (true) {

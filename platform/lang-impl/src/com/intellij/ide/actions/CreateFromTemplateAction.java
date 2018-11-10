@@ -128,8 +128,9 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     return project != null && view != null && view.getDirectories().length != 0;
   }
 
-  protected abstract String getActionName(PsiDirectory directory, String newName, String templateName);
+  protected abstract String getActionName(PsiDirectory directory, @NotNull String newName, String templateName);
 
+  @NotNull
   protected String getErrorTitle() {
     return CommonBundle.getErrorTitle();
   }

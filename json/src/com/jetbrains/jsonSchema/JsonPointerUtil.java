@@ -27,6 +27,7 @@ public class JsonPointerUtil {
     return "#".equals(ref) || "#/".equals(ref) || StringUtil.isEmpty(ref);
   }
 
+  @NotNull
   public static List<String> split(@NotNull String pointer) {
     return StringUtil.split(pointer, "/", true, false);
   }

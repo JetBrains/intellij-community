@@ -798,10 +798,10 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implements Pers
         return;
       }
 
-      if (!ApplicationManager.getApplication().isOnAir() && activeEditor == null) {
-        AutoPopupController.runTransactionWithEverythingCommitted(myProject, this);
-        return;
-      }
+      //if (!ApplicationManager.getApplication().isOnAir() && activeEditor == null) {
+      //  AutoPopupController.runTransactionWithEverythingCommitted(myProject, this);
+      //  return;
+      //}
       if (RefResolveService.ENABLED &&
           !RefResolveService.getInstance(myProject).isUpToDate() &&
           RefResolveService.getInstance(myProject).getQueueSize() == 1) {

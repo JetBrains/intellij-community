@@ -31,6 +31,7 @@ class ExtractClassUsageViewDescriptor implements UsageViewDescriptor {
     }
 
 
+    @NotNull
     @Override
     public String getCodeReferencesText(int usagesCount, int filesCount) {
         return RefactorJBundle.message("references.to.extract") + MyUsageViewUtil.getUsageCountInfo(usagesCount, filesCount, "reference");

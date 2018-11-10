@@ -49,9 +49,7 @@ class PsiViewerSourceWrapper implements Comparable<PsiViewerSourceWrapper> {
 
   @NotNull
   public static List<PsiViewerSourceWrapper> getExtensionBasedWrappers() {
-    return PsiViewerExtension.EP_NAME.getExtensionList().stream()
-      .map(el -> new PsiViewerSourceWrapper(el))
-      .collect(Collectors.toList());
+    return ContainerUtil.map(PsiViewerExtension.EP_NAME.getExtensionList(), el -> new PsiViewerSourceWrapper(el));
   }
 
   @NotNull

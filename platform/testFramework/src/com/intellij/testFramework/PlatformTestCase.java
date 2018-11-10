@@ -280,15 +280,16 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   public static String publishHeapDump(@NotNull String fileNamePrefix) {
     String fileName = fileNamePrefix + ".hprof.zip";
-    String dumpPath = FileUtil.getTempDirectory() + "/" + fileName;
-    System.out.println("##teamcity[publishArtifacts '" + fileName + "']");
+    File dumpFile = new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), fileName);
     try {
-      FileUtil.delete(new File(dumpPath));
-      MemoryDumpHelper.captureMemoryDumpZipped(dumpPath);
+      FileUtil.delete(dumpFile);
+      MemoryDumpHelper.captureMemoryDumpZipped(dumpFile);
     }
     catch (Exception ex) {
       ex.printStackTrace();
     }
+    String dumpPath = dumpFile.getAbsolutePath();
+    System.out.println("##teamcity[publishArtifacts '" + dumpPath + "']");
     return dumpPath;
   }
 

@@ -198,7 +198,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     XmlTag rootTag = extractRootTag(annotationsFile);
 
     TreeMap<String, List<ExternalAnnotation>> ownerToAnnotations = StreamEx.of(annotations)
-      .mapToEntry(annotation -> StringUtil.escapeXml(getExternalName(annotation.getOwner())), Function.identity())
+      .mapToEntry(annotation -> StringUtil.escapeXmlEntities(getExternalName(annotation.getOwner())), Function.identity())
       .distinct()
       .grouping(() -> new TreeMap<>(Comparator.nullsFirst(Comparator.naturalOrder())));
 
@@ -511,13 +511,15 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         }
 
         for (XmlTag tag : rootTag.getSubTags()) {
-          String className = StringUtil.unescapeXml(tag.getAttributeValue("name"));
+          String nameValue = tag.getAttributeValue("name");
+          String className = nameValue == null ? null : StringUtil.unescapeXmlEntities(nameValue);
           if (Comparing.strEqual(className, oldExternalName)) {
             WriteCommandAction
               .runWriteCommandAction(myPsiManager.getProject(), ExternalAnnotationsManagerImpl.class.getName(), null, () -> {
                 PsiDocumentManager.getInstance(myPsiManager.getProject()).commitAllDocuments();
                 try {
-                  tag.setAttribute("name", StringUtil.escapeXml(getExternalName(element)));
+                  String name = getExternalName(element);
+                  tag.setAttribute("name", name == null ? null : StringUtil.escapeXmlEntities(name));
                   commitChanges(file);
                 }
                 catch (IncorrectOperationException e) {
@@ -576,7 +578,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
         final List<XmlTag> tagsToProcess = new ArrayList<>();
         for (XmlTag tag : rootTag.getSubTags()) {
-          String className = StringUtil.unescapeXml(tag.getAttributeValue("name"));
+          String nameValue = tag.getAttributeValue("name");
+          String className = nameValue == null ? null : StringUtil.unescapeXmlEntities(nameValue);
           if (!Comparing.strEqual(className, externalName)) {
             continue;
           }
@@ -765,8 +768,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     if (values != null && values.length != 0) {
       text = "  <annotation name=\'" + annotationFQName + "\'>\n";
       text += StringUtil.join(values, pair -> "<val" +
-                                          (pair.getName() != null ? " name=\"" + pair.getName() + "\"" : "") +
-                                          " val=\"" + StringUtil.escapeXml(pair.getValue().getText()) + "\"/>", "    \n");
+                                              (pair.getName() != null ? " name=\"" + pair.getName() + "\"" : "") +
+                                              " val=\"" + StringUtil.escapeXmlEntities(pair.getValue().getText()) + "\"/>", "    \n");
       text += "  </annotation>";
     }
     else {

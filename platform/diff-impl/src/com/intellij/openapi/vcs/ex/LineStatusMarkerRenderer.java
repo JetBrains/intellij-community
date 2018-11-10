@@ -713,12 +713,8 @@ public abstract class LineStatusMarkerRenderer {
   }
 
 
-  private class MyActiveGutterRenderer implements ActiveGutterRenderer, VCSGutterRenderer {
-    @NotNull private final Range myRange;
+  private class MyActiveGutterRenderer implements ActiveGutterRenderer {
 
-    public MyActiveGutterRenderer(@NotNull Range range) {
-      myRange = range;
-    }
     @Override
     public void paint(Editor editor, Graphics g, Rectangle r) {
       LineStatusMarkerRenderer.this.paint(editor, g);
@@ -744,10 +740,6 @@ public abstract class LineStatusMarkerRenderer {
     @Override
     public String getAccessibleName() {
       return "VCS marker: changed line";
-    }
-    @Override
-    public Byte getGutterMarkType() {
-      return myRange.getType();
     }
   }
 }

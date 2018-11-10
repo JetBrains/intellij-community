@@ -171,8 +171,8 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   }
 
   @NotNull
-  private static String plainTextPostProcess(String text) {
-    return StringUtil.escapeXml(text).replace("\\n", "<br/>");
+  private static String plainTextPostProcess(@NotNull String text) {
+    return StringUtil.escapeXmlEntities(text).replace("\\n", "<br/>");
   }
 
   @Nullable

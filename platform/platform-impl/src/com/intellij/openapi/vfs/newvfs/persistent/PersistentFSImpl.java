@@ -772,8 +772,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   private void groupCreations(@NotNull List<? extends VFileEvent> events,
                               int start,
                               int end,
-                              @NotNull List<? superVFileEvent> outValidated,
-                              @NotNull List<? superRunnable> outApplyEvents) {
+                              @NotNull List<? super VFileEvent> outValidated,
+                              @NotNull List<? super Runnable> outApplyEvents) {
     MultiMap<VirtualDirectoryImpl, VFileCreateEvent> grouped = null;
 
     for (int i = start; i < end; i++) {
@@ -817,8 +817,8 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
   private void groupDeletions(@NotNull List<? extends VFileEvent> events,
                               int start,
                               int end,
-                              @NotNull List<? superVFileEvent> outValidated,
-                              @NotNull List<? superRunnable> outApplyEvents) {
+                              @NotNull List<? super VFileEvent> outValidated,
+                              @NotNull List<? super Runnable> outApplyEvents) {
     MultiMap<VirtualDirectoryImpl, VFileDeleteEvent> grouped =  null ;
     boolean hasValidEvents = false;
     for (int i = start; i < end; i++) {
@@ -1341,7 +1341,7 @@ public class PersistentFSImpl extends PersistentFS implements BaseComponent, Dis
     }
   }
 
-  private static void doCleanPersistedContent(int id) {
+  private void doCleanPersistedContent(int id) {
     setFlag(id, MUST_RELOAD_CONTENT, true);
   }
 

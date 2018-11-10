@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 public class PsiSuperMethodUtil {
@@ -128,15 +127,4 @@ public class PsiSuperMethodUtil {
     return JavaPsiFacade.getInstance(psiClass.getProject()).findClass(qualifiedName, resolveScope);
   }
 
-  @NotNull
-  public static Optional<PsiMethod> correctMethodByScope(PsiMethod method, final GlobalSearchScope resolveScope) {
-    if (method == null) return Optional.empty();
-    final PsiClass aClass = method.getContainingClass();
-    if (aClass == null) return Optional.empty();
-    final PsiClass correctedClass = correctClassByScope(aClass, resolveScope);
-    if (correctedClass == null) return Optional.empty();
-    else if (correctedClass == aClass) return Optional.of(method);
-    final PsiMethod correctedClassMethodBySignature = correctedClass.findMethodBySignature(method, false);
-    return correctedClassMethodBySignature == null ? Optional.empty() : Optional.of(correctedClassMethodBySignature);
-  }
 }

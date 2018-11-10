@@ -2,7 +2,10 @@
 package com.intellij.json.codeinsight;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
 import com.intellij.json.JsonDialectUtil;
@@ -150,7 +153,7 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     public void visitComment(PsiComment comment) {
       if (!allowComments() && myWarnAboutComments) {
         if (JsonStandardComplianceProvider.shouldWarnAboutComment(comment)) {
-          myHolder.registerProblem(comment, JsonBundle.message("inspection.compliance.msg.comments"), ProblemHighlightType.WEAK_WARNING);
+          myHolder.registerProblem(comment, JsonBundle.message("inspection.compliance.msg.comments"));
         }
       }
     }

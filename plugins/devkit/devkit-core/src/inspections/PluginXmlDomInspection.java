@@ -685,7 +685,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
                                        DomElementAnnotationHolder holder) {
     if (!DomUtil.hasXml(domValue)) return;
 
-    String value = StringUtil.notNullize(StringUtil.removeHtmlTags(domValue.getStringValue()));
+    String value = StringUtil.removeHtmlTags(StringUtil.notNullize(domValue.getStringValue()));
     value = StringUtil.replace(value, CommonXmlStrings.CDATA_START, "");
     value = StringUtil.replace(value, CommonXmlStrings.CDATA_END, "");
 

@@ -4,9 +4,8 @@ Reports cases when <b>.equals()</b> is called to compare a String with an empty 
 it shows you exactly what you're checking.
 <!-- tooltip end -->
 <p>
-  Some checks, for example, the <b>"".equals(str)</b> check, return false when <b>str</b> is null. It means that an explicit null-check
-  could be inserted when you are replacing <b>.equals()</b> with <b>isEmpty()</b>. Use a checkbox below to suppress the warning when a
-  string value could be nullable.
+  <b>"".equals(str)</b> returns false when <b>str</b> is null. For safety, this inspection's quick fix inserts an explicit null-check when 
+  the <b>equals()</b> argument is nullable. Use the checkbox below to suppress the warning in this case.
 </p>
 </body>
 </html>

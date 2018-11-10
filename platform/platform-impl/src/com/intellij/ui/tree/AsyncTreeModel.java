@@ -10,6 +10,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.Command;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.tree.AbstractTreeModel;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -32,7 +33,6 @@ import java.util.function.ToIntFunction;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
@@ -899,7 +899,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
     private void updatePaths(@NotNull Object oldObject, @NotNull Object newObject) {
       if (paths.stream().anyMatch(path -> contains(path, oldObject))) {
         // replace instance of user's object in all internal maps to avoid memory leaks
-        List<TreePath> updated = paths.stream().map(path -> update(path, oldObject, newObject)).collect(toList());
+        List<TreePath> updated = ContainerUtil.map(paths, path -> update(path, oldObject, newObject));
         paths.clear();
         paths.addAll(updated);
         forEachChildExceptLoading(child -> child.updatePaths(oldObject, newObject));

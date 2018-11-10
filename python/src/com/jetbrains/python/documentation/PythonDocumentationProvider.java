@@ -182,7 +182,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @NotNull
   static ChainIterable<String> describeTarget(@NotNull PyTargetExpression target, @NotNull TypeEvalContext context) {
     final ChainIterable<String> result = new ChainIterable<>();
-    result.addItem(StringUtil.escapeXml(StringUtil.notNullize(target.getName())));
+    result.addItem(StringUtil.escapeXmlEntities(StringUtil.notNullize(target.getName())));
     result.addItem(": ");
     describeTypeWithLinks(context.getType(target), context, target, result);
     // Can return not physical elements such as foo()[0] for assignments like x, _ = foo()
@@ -192,10 +192,10 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       final String initializerText = value.getText();
       final int index = initializerText.indexOf("\n");
       if (index < 0) {
-        result.addItem(StringUtil.escapeXml(initializerText));
+        result.addItem(StringUtil.escapeXmlEntities(initializerText));
       }
       else {
-        result.addItem(StringUtil.escapeXml(initializerText.substring(0, index))).addItem("...");
+        result.addItem(StringUtil.escapeXmlEntities(initializerText.substring(0, index))).addItem("...");
       }
     }
     return result;
@@ -204,7 +204,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @NotNull
   static ChainIterable<String> describeParameter(@NotNull PyNamedParameter parameter, @NotNull TypeEvalContext context) {
     final ChainIterable<String> result = new ChainIterable<>();
-    result.addItem(StringUtil.escapeXml(StringUtil.notNullize(parameter.getName())));
+    result.addItem(StringUtil.escapeXmlEntities(StringUtil.notNullize(parameter.getName())));
     result.addItem(": ");
     describeTypeWithLinks(context.getType(parameter), context, parameter, result);
     return result;
@@ -746,7 +746,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @NotNull
   private static String escaped(@NotNull String unescaped) {
-    return StringUtil.escapeXml(unescaped);
+    return StringUtil.escapeXmlEntities(unescaped);
   }
 
   @NotNull

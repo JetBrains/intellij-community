@@ -88,10 +88,10 @@ public enum ActionType {
       XmlTag actionTag = (XmlTag)actions.add(actions.createChildTag(myName, actions.getNamespace(), null, false));
       actionTag.setAttribute("id", dialog.getActionId());
       actionTag.setAttribute("class", klass.getQualifiedName());
-      actionTag.setAttribute("text", StringUtil.escapeXml(dialog.getActionText()));
+      actionTag.setAttribute("text", StringUtil.escapeXmlEntities(dialog.getActionText()));
       String description = dialog.getActionDescription();
       if (description != null && description.length() > 0) {
-        actionTag.setAttribute("description", StringUtil.escapeXml(description));
+        actionTag.setAttribute("description", StringUtil.escapeXmlEntities(description));
       }
 
       String groupId = dialog.getSelectedGroupId();

@@ -3,6 +3,23 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 
+internal fun syncIcons(context: Context,
+                       devIcons: Map<String, GitObject>,
+                       icons: Map<String, GitObject>) {
+  if (context.doSyncIconsRepo || context.doSyncIconsAndCreateReview) {
+    log("Syncing icons repo:")
+    syncAdded(context.addedByDev, devIcons, File(context.iconsRepoDir)) { context.iconsRepo }
+    syncModified(context.modifiedByDev, icons, devIcons)
+    syncRemoved(context.removedByDev, icons)
+  }
+  if (context.doSyncDevRepo || context.doSyncDevIconsAndCreateReview) {
+    log("Syncing dev repo:")
+    syncAdded(context.addedByDesigners, icons, File(context.devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
+    syncModified(context.modifiedByDesigners, devIcons, icons)
+    if (context.doSyncRemovedIconsInDev) syncRemoved(context.removedByDesigners, devIcons)
+  }
+}
+
 internal fun syncAdded(added: Collection<String>,
                        sourceRepoMap: Map<String, GitObject>,
                        targetDir: File, targetRepo: (File) -> File) {

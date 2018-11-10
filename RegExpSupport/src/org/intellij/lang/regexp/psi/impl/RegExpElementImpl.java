@@ -75,6 +75,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         getNode().getTreeParent().removeChild(getNode());
     }
 
+    @NotNull
     @Override
     public final String getUnescapedText() {
         if (InjectedLanguageUtil.isInInjectedLanguagePrefixSuffix(this)) {

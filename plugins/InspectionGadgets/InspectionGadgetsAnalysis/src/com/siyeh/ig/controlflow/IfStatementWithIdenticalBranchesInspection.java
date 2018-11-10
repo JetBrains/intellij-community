@@ -1041,7 +1041,10 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
     // From else variable to then variable name
     final Map<PsiLocalVariable, String> mySubstitutionTable = new HashMap<>(0); // supposed to use rare
 
-    private LocalEquivalenceChecker(Set<PsiLocalVariable> variables) {myLocalVariables = variables;}
+    private LocalEquivalenceChecker(Set<PsiLocalVariable> variables) {
+      super(false);
+      myLocalVariables = variables;
+    }
 
     public boolean topLevelVarsAreEqualNotConsideringInitializers(@NotNull PsiStatement first,
                                                                   @NotNull PsiStatement second) {

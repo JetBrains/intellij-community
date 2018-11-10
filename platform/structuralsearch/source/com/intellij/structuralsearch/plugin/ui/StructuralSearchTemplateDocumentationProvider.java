@@ -31,8 +31,8 @@ public class StructuralSearchTemplateDocumentationProvider extends AbstractDocum
     }
 
     Configuration configuration = ((ConfigurationElement)element).getConfiguration();
-    return DocumentationMarkup.DEFINITION_START + StringUtil.escapeXml(configuration.getName()) + DocumentationMarkup.DEFINITION_END +
-           DocumentationMarkup.CONTENT_START + StringUtil.escapeXml(StringUtil.notNullize(configuration.getMatchOptions().getSearchPattern())) +
+    return DocumentationMarkup.DEFINITION_START + StringUtil.escapeXmlEntities(configuration.getName()) + DocumentationMarkup.DEFINITION_END +
+           DocumentationMarkup.CONTENT_START + StringUtil.escapeXmlEntities(configuration.getMatchOptions().getSearchPattern()) +
            DocumentationMarkup.CONTENT_END;
   }
 

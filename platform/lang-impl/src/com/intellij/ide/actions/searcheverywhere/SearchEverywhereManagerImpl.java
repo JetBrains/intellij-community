@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -76,9 +77,8 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     Collections.sort(contributors, Comparator.comparingInt(SearchEverywhereContributor::getSortWeight));
     myContributorFilters.computeIfAbsent(ALL_CONTRIBUTORS_GROUP_ID,
                                          s -> {
-                                           List<String> ids = contributors.stream()
-                                                                          .map(contributor -> contributor.getSearchProviderId())
-                                                                          .collect(Collectors.toList());
+                                           List<String> ids =
+                                             ContainerUtil.map(contributors, contributor -> contributor.getSearchProviderId());
                                            return new PersistentSearchEverywhereContributorFilter<>(ids,
                                                                                                     SearchEverywhereConfiguration.getInstance(project),
                                                                                                     id -> contributorsNames.get(id), id -> null);

@@ -287,9 +287,14 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
 
         PsiBlockStatement codeBlock = (PsiBlockStatement) factory.createStatementFromText("{}", ifStatement);
-        codeBlock.getCodeBlock().addRange(first, last);
-        ct.replaceAndRestoreComments(ifStatement.getThenBranch(), codeBlock);
-        first.getParent().deleteChildRange(first, last);
+        if (first == last && PsiUtil.isJavaToken(last, JavaTokenType.RBRACE)) {
+          ct.replaceAndRestoreComments(ifStatement.getThenBranch(), codeBlock);
+        }
+        else {
+          codeBlock.getCodeBlock().addRange(first, last);
+          ct.replaceAndRestoreComments(ifStatement.getThenBranch(), codeBlock);
+          first.getParent().deleteChildRange(first, last);
+        }
       }
       codeStyle.reformat(ifStatement);
       return ifStatement;

@@ -13,14 +13,14 @@ import org.jetbrains.plugins.groovy.lang.psi.util.checkKind
 import org.jetbrains.plugins.groovy.lang.psi.util.getAccessorName
 import org.jetbrains.plugins.groovy.lang.resolve.AccessorResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument
 import org.jetbrains.plugins.groovy.lang.resolve.imports.importedNameKey
 
 class AccessorProcessor(
   propertyName: String,
   private val propertyKind: PropertyKind,
-  private val arguments: List<Argument>?,
+  private val arguments: Arguments?,
   private val place: PsiElement
 ) : ProcessorWithCommonHints(), GrResolverProcessor<GroovyResolveResult> {
 

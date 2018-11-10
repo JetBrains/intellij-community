@@ -113,6 +113,10 @@ public class AutoPopupController implements Disposable {
       return;
     }
 
+    if (ApplicationManager.getApplication().isOnAir()) {
+      return;
+    }
+
     final CompletionProgressIndicator currentCompletion = CompletionServiceImpl.getCurrentCompletionProgressIndicator();
     if (currentCompletion != null) {
       currentCompletion.closeAndFinish(true);

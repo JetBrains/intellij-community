@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.SmartList;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
@@ -19,11 +21,17 @@ import static com.intellij.util.containers.ContainerUtil.newSmartList;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
 
 class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrMethodComparator.Context {
 
+  private final @NotNull PsiType[] myTypeArguments;
+  private final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
+
   GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
     super(ref, kinds);
+    myTypeArguments = ref.getTypeArguments();
+    myArgumentTypes = NullableLazyValue.createValue(() -> buildTopLevelArgumentTypes((GrCall)myRef.getParent()));
   }
 
   @Override
@@ -102,7 +110,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrM
   protected List<GroovyResolveResult> filterCorrectParameterCount(Collection<? extends GroovyResolveResult> candidates) {
     PsiType[] argumentTypes = myArgumentTypes.getValue();
     if (argumentTypes == null) return ContainerUtil.newArrayList(candidates);
-    final List<GroovyResolveResult> result = ContainerUtil.newSmartList();
+    final List<GroovyResolveResult> result = newSmartList();
     for (GroovyResolveResult candidate : candidates) {
       if (candidate instanceof GroovyMethodResult) {
         if (((GroovyMethodResult)candidate).getElement().getParameterList().getParametersCount() == argumentTypes.length) {

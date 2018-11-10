@@ -54,7 +54,7 @@ open class KindsResolverProcessor(
     }
     else {
       require(kind in kinds) {
-        "Unneeded kind. ${elementInfo(element)}"
+        "Unneeded kind: $kind. ${elementInfo(element)}"
       }
     }
 

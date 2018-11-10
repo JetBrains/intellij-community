@@ -611,7 +611,7 @@ public class KeymapUtil {
    * @return string presentation of shortcut if {@code event} was called with shortcut. In other cases null is returned
    */
   @Nullable
-  public static String getEventCallerShortcut(@NotNull AnActionEvent event) {
+  public static String getEventCallerKeystrokeText(@NotNull AnActionEvent event) {
     if (event.getInputEvent() instanceof KeyEvent) {
       KeyEvent ke = (KeyEvent)event.getInputEvent();
       return getKeystrokeText(KeyStroke.getKeyStroke(ke.getKeyCode(), ke.getModifiers()));

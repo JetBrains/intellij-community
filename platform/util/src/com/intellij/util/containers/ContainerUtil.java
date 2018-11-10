@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass"})
+@SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
@@ -53,13 +53,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
+  public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap() {
     return ContainerUtilRt.newTreeMap();
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
+  public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
     return ContainerUtilRt.newTreeMap(map);
   }
 
@@ -146,7 +146,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> ArrayList<T> newArrayList() {
-    return ContainerUtilRt.newArrayList();
+    return new ArrayList<T>();
   }
 
   @NotNull
@@ -164,7 +164,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
-    return ContainerUtilRt.newArrayListWithCapacity(size);
+    return new ArrayList<T>(size);
   }
 
   @NotNull
@@ -197,12 +197,10 @@ public class ContainerUtil extends ContainerUtilRt {
     if (size == 0) {
       return emptyList();
     }
-    else if (size == 1) {
+    if (size == 1) {
       return Collections.singletonList(originalList.get(0));
     }
-    else {
-      return Collections.unmodifiableList(newArrayList(originalList));
-    }
+    return Collections.unmodifiableList(new ArrayList<T>(originalList));
   }
 
   @NotNull
@@ -215,9 +213,7 @@ public class ContainerUtil extends ContainerUtilRt {
     if (size == 1) {
       return Collections.singletonList(original.iterator().next());
     }
-    else {
-      return Collections.unmodifiableCollection(original);
-    }
+    return Collections.unmodifiableCollection(original);
   }
 
   @NotNull
@@ -230,9 +226,7 @@ public class ContainerUtil extends ContainerUtilRt {
     if (size == 1) {
       return Collections.singletonList(original.iterator().next());
     }
-    else {
-      return Collections.unmodifiableList(original);
-    }
+    return Collections.unmodifiableList(original);
   }
 
   @NotNull
@@ -245,9 +239,7 @@ public class ContainerUtil extends ContainerUtilRt {
     if (size == 1) {
       return Collections.singleton(original.iterator().next());
     }
-    else {
-      return Collections.unmodifiableSet(original);
-    }
+    return Collections.unmodifiableSet(original);
   }
 
   @NotNull
@@ -399,19 +391,13 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> TreeSet<T> newTreeSet() {
+  public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
     return ContainerUtilRt.newTreeSet();
   }
 
   @NotNull
   @Contract(pure=true)
-  public static <T> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
-    return ContainerUtilRt.newTreeSet(elements);
-  }
-
-  @NotNull
-  @Contract(pure=true)
-  public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
+  public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
     return ContainerUtilRt.newTreeSet(elements);
   }
 
@@ -475,7 +461,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Set<T> union(@NotNull Set<? extends T> set, @NotNull Set<? extends T> set2) {
-    return union((Collection<T>)set, set2);
+    return union((Collection<? extends T>)set, set2);
   }
 
   @NotNull
@@ -537,7 +523,8 @@ public class ContainerUtil extends ContainerUtilRt {
     }
 
     if (!result.isEmpty() && result.keySet().iterator().next() instanceof Comparable) {
-      return new KeyOrderedMultiMap<K, V>(result);
+      //noinspection unchecked
+      return new KeyOrderedMultiMap(result);
     }
     return result;
   }
@@ -1416,7 +1403,7 @@ public class ContainerUtil extends ContainerUtilRt {
     };
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   @NotNull
   @Contract(pure=true)
   public static <T> Iterable<T> concat(@NotNull final Iterable<? extends T>... iterables) {
@@ -1725,8 +1712,9 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   @Contract(pure=true)
-  public static <T> T[] toArray(@Nullable Collection<T> c, @NotNull ArrayFactory<? extends T> factory) {
-    return c != null ? c.toArray(factory.create(c.size())) : factory.create(0);
+  public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull ArrayFactory<? extends T> factory) {
+    T[] a = factory.create(c.size());
+    return c.toArray(a);
   }
 
   @NotNull
@@ -1837,7 +1825,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> sorted(@NotNull Collection<? extends T> list, @NotNull Comparator<? super T> comparator) {
-    return sorted((Iterable<T>)list, comparator);
+    return sorted((Iterable<? extends T>)list, comparator);
   }
 
   @NotNull
@@ -2758,6 +2746,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T> Collection<T> toCollection(@NotNull Iterable<? extends T> iterable) {
+    //noinspection unchecked
     return iterable instanceof Collection ? (Collection<T>)iterable : newArrayList(iterable);
   }
 
@@ -2853,8 +2842,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return sb.toString();
   }
 
-  public static class KeyOrderedMultiMap<K, V> extends MultiMap<K, V> {
-
+  public static class KeyOrderedMultiMap<K extends Comparable<K>, V> extends MultiMap<K, V> {
     public KeyOrderedMultiMap() {
     }
 
@@ -2876,8 +2864,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
     @NotNull
     public NavigableSet<K> navigableKeySet() {
-      //noinspection unchecked
-      return ((TreeMap)myMap).navigableKeySet();
+      return ((TreeMap<K, Collection<V>>)myMap).navigableKeySet();
     }
   }
 

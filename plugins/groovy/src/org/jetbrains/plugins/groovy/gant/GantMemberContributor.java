@@ -82,12 +82,13 @@ public class GantMemberContributor extends NonCodeMembersContributor {
       }
     }
 
-    if (!antTasksProcessed && ResolveUtilKt.shouldProcessMethods(processor)) {
+    if (!antTasksProcessed) {
       processAntTasks(processor, place, state);
     }
   }
 
   private static boolean processAntTasks(PsiScopeProcessor processor, PsiElement place, ResolveState state) {
+    if (!ResolveUtilKt.shouldProcessMethods(processor)) return true;
     for (LightMethodBuilder task : AntTasksProvider.getAntTasks(place)) {
       if (!ResolveUtil.processElement(processor, task, state)) {
         return false;

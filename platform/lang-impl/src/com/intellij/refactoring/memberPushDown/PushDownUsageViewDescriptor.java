@@ -39,6 +39,7 @@ public class PushDownUsageViewDescriptor<MemberInfo extends MemberInfoBase<Membe
     return myMembers;
   }
 
+  @NotNull
   @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("classes.to.push.down.members.to", UsageViewBundle.getReferencesString(usagesCount, filesCount));

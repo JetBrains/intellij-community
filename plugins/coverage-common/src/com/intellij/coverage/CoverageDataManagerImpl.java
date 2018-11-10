@@ -413,7 +413,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
    * Called from EDT, on external coverage suite choosing
    */
   public void addRootsToWatch(List<CoverageSuite> suites) {
-    myCurrentSuiteRoots = suites.stream().map(suite -> suite.getCoverageDataFileName()).collect(Collectors.toList());
+    myCurrentSuiteRoots = ContainerUtil.map(suites, suite -> suite.getCoverageDataFileName());
     LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     myCurrentSuiteRoots.forEach(path -> fileSystem.refreshAndFindFileByPath(path));
     myWatchRequests = fileSystem.addRootsToWatch(myCurrentSuiteRoots, true);

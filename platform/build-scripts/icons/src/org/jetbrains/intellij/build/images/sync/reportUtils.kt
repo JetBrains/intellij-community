@@ -3,17 +3,24 @@ package org.jetbrains.intellij.build.images.sync
 
 import java.io.File
 import java.util.*
-import java.util.function.Consumer
 import java.util.stream.Stream
 import kotlin.streams.toList
 
-internal fun report(context: Context,
-                    root: File,
-                    devIcons: Int,
-                    icons: Int,
-                    skipped: Int,
-                    consistent: Collection<String>,
-                    errorHandler: Consumer<String>) {
+internal fun report(context: Context, root: File, devIcons: Int, icons: Int, skipped: Int, consistent: Collection<String>) {
+  if (isUnderTeamCity()) {
+    val isInvestigationAssigned = isInvestigationAssigned()
+    if (isInvestigationAssigned) {
+      log("Skipping review creation since investigation is assigned")
+    }
+    else {
+      createReviews(root, context)
+    }
+    val investigator = if (!context.isSuccess() && context.assignInvestigation && !isInvestigationAssigned) {
+      assignInvestigation(root, context)
+    }
+    else null
+    if (context.notifySlack) sendNotification(investigator, context)
+  }
   log("Skipped $skipped dirs")
   fun Collection<String>.logIcons(description: String) = "$size $description${if (size < 100) ": ${joinToString()}" else ""}"
   val report = """
@@ -26,17 +33,11 @@ internal fun report(context: Context,
     | ${context.removedByDesigners.logIcons("removed")}
     | ${context.modifiedByDesigners.logIcons("modified")}
     |${consistent.size} consistent icons in both repos
+    |${if (context.createdReviews.isNotEmpty()) "Created reviews: ${context.createdReviews.map(Review::url)}" else ""}
   """.trimMargin()
   log(report)
-  if (isUnderTeamCity()) {
-    createReviews(root, context)
-    val investigator = if (!context.isSuccess() && context.assignInvestigation && !isInvestigationAssigned()) {
-      assignInvestigation(root, context)
-    }
-    else null
-    if (context.notifySlack) sendNotification(investigator, context)
-    if (!context.isSuccess()) errorHandler.accept(report)
-  }
+  val success = context.isSuccess() || context.doSyncIconsAndCreateReview && context.createdReviews.isNotEmpty()
+  if (isUnderTeamCity() && !success) context.errorHandler.accept(report)
 }
 
 private val UPSOURCE_ICONS_PROJECT_ID = System.getProperty("intellij.icons.upsource.project.id")
@@ -52,23 +53,31 @@ private fun createReviewForDev(root: File, context: Context, user: String, email
   if (changes.isNotEmpty()) {
     val commits = findInvestigator(context.iconsRepo, changes.asSequence()).commits
     if (commits.isNotEmpty()) {
+      val verificationPassed = try {
+        context.devIconsVerifier?.run()
+        true
+      }
+      catch (e: Exception) {
+        e.printStackTrace()
+        false
+      }
       val review = pushAndCreateReview(UPSOURCE_DEV_PROJECT_ID, user, email, commits.commitMessage(), changes.asSequence()
         .map { File(root, it).absolutePath }
         .map { findGitRepoRoot(it, silent = true) }
         .distinct()
         .toList())
       addReviewer(UPSOURCE_DEV_PROJECT_ID, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
-      try {
-        context.devIconsVerifier?.run()
-      }
-      catch (e: Exception) {
-        e.printStackTrace()
-        postComment(UPSOURCE_DEV_PROJECT_ID, review, "Some checks were failed, see build log ${thisBuildReportableLink()}")
-      }
+      postVerificationResultToReview(verificationPassed, review)
       return review
     }
   }
   return null
+}
+
+private fun postVerificationResultToReview(success: Boolean, review: Review) {
+  val runConfigurations = System.getProperty("sync.dev.icons.checks")?.splitNotBlank(";") ?: return
+  val comment = if (success) "Following checks were successful:" else "Some of the following checks failed:"
+  postComment(UPSOURCE_DEV_PROJECT_ID, review, "$comment ${runConfigurations.joinToString()}, see build log ${thisBuildReportableLink()}")
 }
 
 private fun createReviewForIcons(root: File, context: Context, user: String, email: String): Review? {

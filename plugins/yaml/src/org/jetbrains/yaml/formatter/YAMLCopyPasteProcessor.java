@@ -4,7 +4,6 @@ package org.jetbrains.yaml.formatter;
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -63,10 +62,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   private static String indentText(@NotNull String text, @NotNull String curLineIndent) {
     List<String> lines = LineTokenizer.tokenizeIntoList(text, false, false);
     if (lines.isEmpty()) {
-      // Such situation should not be possible
-      Logger.getInstance(YAMLCopyPasteProcessor.class).error(text.isEmpty()
-                                                             ? "Pasted empty text"
-                                                             : "Text '" + text + "' was converted into empty line list");
+      // Such situation sometimes happens but I don't know how it is possible
       return text;
     }
     int minIndent = calculateMinBlockIndent(lines);

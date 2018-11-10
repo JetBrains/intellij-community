@@ -1839,7 +1839,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static String unescapeTokenText(ASTNode token, IElementType type) {
     String text = token.getText();
     if (ESCAPED_TOKENS.contains(type) && StringUtil.startsWithChar(text, '&')) {
-      text = StringUtil.unescapeXml(text);
+      text = StringUtil.unescapeXmlEntities(text);
     }
     return text;
   }

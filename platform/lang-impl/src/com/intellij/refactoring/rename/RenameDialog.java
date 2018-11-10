@@ -167,6 +167,7 @@ public class RenameDialog extends RefactoringDialog {
     return ArrayUtil.toStringArray(result);
   }
 
+  @NotNull
   public String getNewName() {
     return myNameSuggestionsField.getEnteredName().trim();
   }

@@ -22,6 +22,7 @@ import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -212,8 +213,18 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       final PsiClass containingClass = method.getContainingClass();
       final boolean isInterface = containingClass != null && containingClass.isInterface();
-      for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
-        collectCorrectedSuperMethods(methodSignature, resolveScope, isInterface, superMethods);
+
+      for (HierarchicalMethodSignature methodSignature : PsiSuperMethodImplUtil.getHierarchicalMethodSignature(method, resolveScope).getSuperSignatures()) {
+        PsiMethod superMethod = methodSignature.getMethod();
+        if (!isInterface) {
+          superMethods.add(superMethod);
+        }
+        else {
+          PsiClass aClass = superMethod.getContainingClass();
+          if (aClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
+            superMethods.add(superMethod);
+          }
+        }
       }
     }
     for (int i = 0; i < conflicts.size(); i++) {
@@ -258,29 +269,6 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             !existing.isAccessible()) { //prefer methods from outer class to inaccessible base class methods
           signatures.put(signature, info);
         }
-      }
-    }
-  }
-
-  private static void collectCorrectedSuperMethods(HierarchicalMethodSignature methodSignature,
-                                                   GlobalSearchScope resolveScope,
-                                                   boolean isInterface,
-                                                   Set<? super PsiMethod> superMethods) {
-    PsiMethod methodCandidate = methodSignature.getMethod();
-
-    PsiMethod superMethod = PsiSuperMethodUtil.correctMethodByScope(methodCandidate, resolveScope).orElse(null);
-    if (superMethod == null) {
-      for (HierarchicalMethodSignature signature : methodSignature.getSuperSignatures()) {
-        collectCorrectedSuperMethods(signature, resolveScope, isInterface, superMethods);
-      }
-    }
-    else if (!isInterface) {
-      superMethods.add(superMethod);
-    }
-    else {
-      final PsiClass aClass = superMethod.getContainingClass();
-      if (aClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-        superMethods.add(superMethod);
       }
     }
   }

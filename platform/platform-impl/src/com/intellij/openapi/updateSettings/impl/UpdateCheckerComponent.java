@@ -197,7 +197,7 @@ public class UpdateCheckerComponent implements Disposable, BaseComponent {
         }
 
         String message = ((blogPost == null) ? IdeBundle.message("update.snap.message")
-                                             : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXml(blogPost)));
+                                             : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost)));
 
         UpdateChecker.NOTIFICATIONS.createNotification(IdeBundle.message("update.notifications.title"),
                                                        message,

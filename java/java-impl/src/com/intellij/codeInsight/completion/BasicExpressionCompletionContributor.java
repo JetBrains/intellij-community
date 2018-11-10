@@ -65,9 +65,8 @@ public class BasicExpressionCompletionContributor {
         addKeyword(result, position, PsiKeyword.TRUE);
         addKeyword(result, position, PsiKeyword.FALSE);
 
-        final PsiElement parent = position.getParent();
-        if (parent != null && !(parent.getParent() instanceof PsiSwitchLabelStatement)) {
-          for (final PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
+        if (!JavaCompletionContributor.IN_SWITCH_LABEL.accepts(position)) {
+          for (PsiExpression expression : ThisGetter.getThisExpressionVariants(position)) {
             result.consume(new ExpressionLookupItem(expression));
           }
         }

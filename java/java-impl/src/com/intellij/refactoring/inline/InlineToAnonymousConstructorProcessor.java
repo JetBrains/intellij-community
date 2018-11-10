@@ -251,7 +251,7 @@ class InlineToAnonymousConstructorProcessor {
   private PsiVariable generateOuterClassLocal() {
     PsiClass outerClass = myClass.getContainingClass();
     assert outerClass != null;
-    return generateLocal(StringUtil.decapitalize(outerClass.getName()),
+    return generateLocal(StringUtil.decapitalize(StringUtil.notNullize(outerClass.getName())),
                          myElementFactory.createType(outerClass), myNewExpression.getQualifier());
   }
 

@@ -277,7 +277,7 @@ public class TestResultsXmlFormatter {
     StringBuilder output = new StringBuilder();
     StringTokenizer t = new StringTokenizer(text.toString(), "\n");
     while (t.hasMoreTokens()) {
-      output.append(StringUtil.escapeXml(t.nextToken())).append("\n");
+      output.append(StringUtil.escapeXmlEntities(t.nextToken())).append("\n");
     }
 
     Map<String, String> a = new HashMap<>();

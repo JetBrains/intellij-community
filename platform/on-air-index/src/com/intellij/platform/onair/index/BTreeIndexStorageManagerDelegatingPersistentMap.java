@@ -41,7 +41,7 @@ public class BTreeIndexStorageManagerDelegatingPersistentMap<V> implements Persi
   }
 
   @Override
-  public boolean processKeys(final Processor<Integer> processor) throws IOException {
+  public boolean processKeys(final Processor<? super Integer> processor) throws IOException {
     return delegate().processKeys(integer -> processor.process(remoteToLocalId.applyAsInt(integer)));
   }
 

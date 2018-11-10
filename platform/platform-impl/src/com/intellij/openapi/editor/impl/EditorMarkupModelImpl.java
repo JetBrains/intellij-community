@@ -60,7 +60,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private static final TooltipGroup ERROR_STRIPE_TOOLTIP_GROUP = new TooltipGroup("ERROR_STRIPE_TOOLTIP_GROUP", 0);
   private static final int EDITOR_FRAGMENT_POPUP_BORDER = 1;
 
-  public int getMinMarkHeight() {
+  private int getMinMarkHeight() {
     return JBUI.scale(myMinMarkHeight);
   }
 
@@ -1240,7 +1240,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 String s = tooltip instanceof HighlightInfo ? ((HighlightInfo)tooltip).getDescription() : String.valueOf(tooltip);
                 if (StringUtil.isEmpty(s)) continue;
                 s = s.replaceAll("&nbsp;", " ").replaceAll("\\s+", " ");
-                s = StringUtil.unescapeXml(s);
+                s = StringUtil.unescapeXmlEntities(s);
 
                 LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(hEndOffset);
                 int endOfLineOffset = myEditor.getDocument().getLineEndOffset(logicalPosition.line);

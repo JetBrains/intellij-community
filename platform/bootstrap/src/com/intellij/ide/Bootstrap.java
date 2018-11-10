@@ -4,8 +4,6 @@ package com.intellij.ide;
 import com.intellij.openapi.application.PathManager;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author max
@@ -16,13 +14,9 @@ public class Bootstrap {
   private Bootstrap() { }
 
   public static void main(String[] args, String mainClass, String methodName) throws Exception {
-    main(args, mainClass, methodName, Collections.emptyList(), null);
-  }
-
-  public static void main(String[] args, String mainClass, String methodName, List<String> classpath, ClassLoader parent) throws Exception {
     PathManager.loadProperties();
 
-    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(parent, classpath);
+    ClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader();
     Thread.currentThread().setContextClassLoader(newClassLoader);
 
     WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);

@@ -32,12 +32,15 @@ internal class Review(val id: String, val url: String)
 @Suppress("ReplaceSingleLineLet")
 internal fun createReview(projectId: String, branch: String, commits: Collection<String>): Review {
   var revisions = emptyList<String>()
-  repeat(20) {
+  loop@ for (i in 1..20) {
     revisions = getBranchRevisions(projectId, branch, commits.size)
-    if (revisions.isEmpty()) {
-      if (it == 19) error("$commits are not found")
-      log("Upsource hasn't updated branch list yet. Retrying in 30s..")
-      TimeUnit.SECONDS.sleep(30)
+    when {
+      revisions.isNotEmpty() -> break@loop
+      i == 20 -> error("$commits are not found")
+      else -> {
+        log("Upsource hasn't updated branch list yet. Retrying in 30s..")
+        TimeUnit.SECONDS.sleep(30)
+      }
     }
   }
   val reviewId = upsourcePost("createReview", """{

@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -16,9 +15,10 @@ import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
 class ReplaceAssertEqualsFix extends InspectionGadgetsFix {
+  @NotNull
   private final String myMethodName;
 
-  ReplaceAssertEqualsFix(String methodName) {
+  ReplaceAssertEqualsFix(@NotNull String methodName) {
     myMethodName = methodName;
   }
 

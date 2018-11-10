@@ -68,8 +68,8 @@ class JsonSchemaAnnotatorChecker {
       if (!result.myExcludingSchemas.isEmpty()) {
         // we can have several oneOf groups, each about, for instance, a part of properties
         // - then we should allow properties from neighbour schemas (even if additionalProperties=false)
-        final List<JsonSchemaAnnotatorChecker> list = result.myExcludingSchemas.stream()
-          .map(group -> processSchemasVariants(group, elementToCheck, true, options).getSecond()).collect(Collectors.toList());
+        final List<JsonSchemaAnnotatorChecker> list =
+          ContainerUtil.map(result.myExcludingSchemas, group -> processSchemasVariants(group, elementToCheck, true, options).getSecond());
         checkers.add(mergeErrors(list, options, result.myExcludingSchemas));
       }
     }
@@ -1120,8 +1120,8 @@ class JsonSchemaAnnotatorChecker {
                                      errors.stream().map(e -> (JsonValidationError.MissingMultiplePropsIssueData)e.getIssueData())
                                     .map(d -> d.getMessage(false)).collect(Collectors.joining(", or ")),
                                      isOneOf ? JsonValidationError.FixableIssueKind.MissingOneOfProperty : JsonValidationError.FixableIssueKind.MissingAnyOfProperty,
-                                     new JsonValidationError.MissingOneOfPropsIssueData(errors.stream().map(e -> (JsonValidationError.MissingMultiplePropsIssueData)e.getIssueData()).collect(
-                                       Collectors.toList())), errors.iterator().next().getPriority());
+                                     new JsonValidationError.MissingOneOfPropsIssueData(
+                                       ContainerUtil.map(errors, e -> (JsonValidationError.MissingMultiplePropsIssueData)e.getIssueData())), errors.iterator().next().getPriority());
     }
 
     if (commonIssueKind == JsonValidationError.FixableIssueKind.ProhibitedType) {

@@ -94,7 +94,7 @@ public class PaletteItemsComponent extends JBList {
           }
 
           tooltip = "<html><body><center><b>" +
-                    StringUtil.escapeXml(title) +
+                    StringUtil.escapeXmlEntities(title) +
                     "</b>" +
                     version +
                     "</center><p style='width: 300px'>" +

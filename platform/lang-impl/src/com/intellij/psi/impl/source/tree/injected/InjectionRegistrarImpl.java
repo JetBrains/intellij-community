@@ -49,13 +49,13 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("deprecation")
 class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHostRegistrar {
@@ -91,7 +91,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
   @Nullable("null means nobody cared to call .doneInjecting()")
   @Deprecated
   public List<Pair<Place, PsiFile>> getResult() {
-    return resultFiles == null ? null : resultFiles.stream().map(file -> Pair.create(InjectedLanguageUtil.getShreds(file), file)).collect(Collectors.toList());
+    return resultFiles == null ? null : ContainerUtil.map(resultFiles, file -> Pair.create(InjectedLanguageUtil.getShreds(file), file));
   }
 
   @Nullable

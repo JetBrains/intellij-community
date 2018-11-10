@@ -34,22 +34,14 @@ public class BootstrapClassLoaderUtil extends ClassUtilCore {
   }
 
   @NotNull
-  public static ClassLoader initClassLoader(ClassLoader parent, List<String> cp) throws MalformedURLException {
+  public static ClassLoader initClassLoader() throws MalformedURLException {
     Collection<URL> classpath = new LinkedHashSet<>();
-    if (parent == null) {
-      addParentClasspath(classpath, false);
-    }
+    addParentClasspath(classpath, false);
     addIDEALibraries(classpath);
     addAdditionalClassPath(classpath);
-    if (parent == null) {
-      addParentClasspath(classpath, true);
-    }
-    for (String s : cp) {
-      classpath.add(new File(s).toURI().toURL());
-    }
+    addParentClasspath(classpath, true);
 
     UrlClassLoader.Builder builder = UrlClassLoader.build()
-      .parent(parent == null ? null : new URLClassLoader(new URL[]{}))
       .urls(filterClassPath(new ArrayList<>(classpath)))
       .allowLock()
       .usePersistentClasspathIndexForLocalClassDirectories()

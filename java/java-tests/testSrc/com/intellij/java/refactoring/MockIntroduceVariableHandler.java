@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.openapi.editor.Editor;
@@ -24,8 +10,8 @@ import com.intellij.refactoring.introduceVariable.InputValidator;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableSettings;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
-import org.jetbrains.annotations.NonNls;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -36,38 +22,36 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
   private final boolean myReplaceAll;
   private final boolean myDeclareFinal;
   private final boolean myReplaceLValues;
-  private final String myExpectedTypeCanonicalName;
+  private final String myExpectedTypeText;
   private final boolean myLookForType;
 
-  MockIntroduceVariableHandler(@NonNls final String name, final boolean replaceAll,
-                                      final boolean declareFinal, final boolean replaceLValues,
-                                      @NonNls final String expectedTypeCanonicalName) {
-    this(name, replaceAll, declareFinal, replaceLValues, expectedTypeCanonicalName, false);
+  MockIntroduceVariableHandler(String name, boolean replaceAll, boolean declareFinal, boolean replaceLValues, String expectedTypeText) {
+    this(name, replaceAll, declareFinal, replaceLValues, expectedTypeText, false);
   }
 
-  MockIntroduceVariableHandler(@NonNls final String name, final boolean replaceAll,
-                                      final boolean declareFinal, final boolean replaceLValues,
-                                      @NonNls final String expectedTypeCanonicalName, boolean lookForType) {
-
+  MockIntroduceVariableHandler(String name, boolean replaceAll, boolean declareFinal, boolean replaceLValues, String expectedTypeText, boolean lookForType) {
     myName = name;
     myReplaceAll = replaceAll;
     myDeclareFinal = declareFinal;
     myReplaceLValues = replaceLValues;
-    myExpectedTypeCanonicalName = expectedTypeCanonicalName;
+    myExpectedTypeText = expectedTypeText;
     myLookForType = lookForType;
   }
 
   @Override
-  public IntroduceVariableSettings getSettings(Project project, Editor editor,
-                                               PsiExpression expr, final PsiExpression[] occurrences,
+  public IntroduceVariableSettings getSettings(Project project,
+                                               Editor editor,
+                                               PsiExpression expr,
+                                               PsiExpression[] occurrences,
                                                TypeSelectorManagerImpl typeSelectorManager,
-                                               final boolean declareFinalIfAll,
+                                               boolean declareFinalIfAll,
                                                boolean anyAssignmentLHS,
                                                InputValidator validator,
-                                               PsiElement anchor, final JavaReplaceChoice replaceChoice) {
-    final PsiType type = myLookForType ? findType(typeSelectorManager.getTypesForAll(), typeSelectorManager.getDefaultType())
-                                       : typeSelectorManager.getDefaultType();
-    assertTrue(type.getInternalCanonicalText(), type.getInternalCanonicalText().equals(myExpectedTypeCanonicalName));
+                                               PsiElement anchor,
+                                               JavaReplaceChoice replaceChoice) {
+    PsiType defaultType = typeSelectorManager.getDefaultType();
+    PsiType type = myLookForType ? findType(typeSelectorManager.getTypesForAll(), defaultType) : defaultType;
+    assertEquals(myExpectedTypeText, type.getInternalCanonicalText());
     IntroduceVariableSettings introduceVariableSettings = new IntroduceVariableSettings() {
       @Override
       public String getEnteredName() {
@@ -99,12 +83,12 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
         return true;
       }
     };
-    final boolean validationResult = validator.isOK(introduceVariableSettings);
+    boolean validationResult = validator.isOK(introduceVariableSettings);
     assertValidationResult(validationResult);
     return introduceVariableSettings;
   }
 
-  protected void assertValidationResult(final boolean validationResult) {
+  protected void assertValidationResult(boolean validationResult) {
     assertTrue(validationResult);
   }
 
@@ -115,7 +99,7 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
 
   private PsiType findType(final PsiType[] candidates, PsiType defaultType) {
     for (PsiType candidate : candidates) {
-      if (candidate.equalsToText(myExpectedTypeCanonicalName)) return candidate;
+      if (candidate.equalsToText(myExpectedTypeText)) return candidate;
     }
     return defaultType;
   }

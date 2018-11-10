@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ChooseDialog;
 import com.intellij.openapi.ui.InputDialog;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.messages.ChooseDialog;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;

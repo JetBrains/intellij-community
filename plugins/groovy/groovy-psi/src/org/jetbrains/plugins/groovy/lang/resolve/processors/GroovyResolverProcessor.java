@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
@@ -34,16 +33,12 @@ import static java.util.Collections.singletonList;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isPropertyName;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint, MultiProcessor {
 
   protected final @NotNull GrReferenceExpression myRef;
   private final @NotNull String myName;
   protected final @NotNull EnumSet<GroovyResolveKind> myAcceptableKinds;
-
-  protected final @NotNull PsiType[] myTypeArguments;
-  protected final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
 
   protected final List<GrResolverProcessor<? extends GroovyResolveResult>> myAccessorProcessors;
   protected final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
@@ -55,9 +50,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     myRef = ref;
     myAcceptableKinds = kinds;
     myName = getReferenceName(ref);
-
-    myTypeArguments = ref.getTypeArguments();
-    myArgumentTypes = NullableLazyValue.createValue(() -> buildTopLevelArgumentTypes(myRef));
     myAccessorProcessors = calcAccessorProcessors();
   }
 
@@ -175,14 +167,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
   @NotNull
   public abstract List<GroovyResolveResult> getCandidates();
-
-  public final GroovyResolveResult[] getCandidatesArray() {
-    final List<GroovyResolveResult> candidates = getCandidates();
-    final int size = candidates.size();
-    if (size == 0) return GroovyResolveResult.EMPTY_ARRAY;
-    if (size == 1) return new GroovyResolveResult[]{candidates.get(0)};
-    return candidates.toArray(new GroovyResolveResult[size]);
-  }
 
   private static GroovyResolveKind getResolveKind(PsiNamedElement element) {
     if (element instanceof PsiClass) {

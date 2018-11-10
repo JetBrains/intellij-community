@@ -71,9 +71,15 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
             highlightingPass.doApplyInformationToEditor();
         }
 
-        ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
+        repaintErrorStripeAndIcon(editor, project);
       }
     });
+  }
+
+  static void repaintErrorStripeAndIcon(@NotNull Editor editor, @NotNull Project project) {
+    EditorMarkupModelImpl markup = (EditorMarkupModelImpl)editor.getMarkupModel();
+    markup.repaintTrafficLightIcon();
+    ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
   }
 
   @Override
@@ -97,10 +103,9 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
                                                          ProperTextRange.create(priorityRange),
                                                          groupId);
       if (editor != null) {
-        ErrorStripeUpdateManager.getInstance(project).repaintErrorStripePanel(editor);
+        repaintErrorStripeAndIcon(editor, project);
       }
     });
-
   }
 
   @Override
@@ -164,10 +169,9 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         if (myeditor == null) {
           myeditor = PsiUtilBase.findEditor(file);
         }
-        if (myeditor == null || myeditor.isDisposed()) return;
-        EditorMarkupModelImpl markup = (EditorMarkupModelImpl)myeditor.getMarkupModel();
-        markup.repaintTrafficLightIcon();
-        ErrorStripeUpdateManager.getInstance(myProject).repaintErrorStripePanel(myeditor);
+        if (myeditor != null && !myeditor.isDisposed()) {
+          repaintErrorStripeAndIcon(myeditor, myProject);
+        }
       }, 50, null);
     }
   }

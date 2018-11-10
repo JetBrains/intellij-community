@@ -1220,31 +1220,34 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
             PsiMethod method = (PsiMethod)resolved;
             PsiClass containingClass = method.getContainingClass();
             if (containingClass != null) {
-              String methodName = "";
-              String findMethodName;
+              String find;
               String bind = "";
               if (method.isConstructor()) {
-                findMethodName = "findConstructor";
+                find = "findConstructor(" + containingClass.getQualifiedName() + ".class, mt)";
+              }
+              else if (qualifier instanceof PsiSuperExpression) {
+                find = "in(" + containingClass.getQualifiedName() + ".class).findSpecial(" +
+                       containingClass.getQualifiedName() + ".class, \"" + method.getName() + "\", mt, " +
+                       containingClass.getQualifiedName() + ".class)";
+                bind = "mh = mh.bindTo(" + qualifier.getText() + ");\n";
               }
               else {
-                methodName = ", \"" + method.getName() + "\"";
+                find = containingClass.getQualifiedName() + ".class, \"" + method.getName() + "\", mt)";
                 if (method.hasModifier(JvmModifier.STATIC)) {
-                  findMethodName = "findStatic";
+                  find = "findStatic(" + find;
                 }
                 else {
-                  findMethodName = "findVirtual";
-                  bind = "mh = mh.bindTo(" + qualifier.getText() + ")\n";
+                  find = "findVirtual(" + find;
+                  bind = "mh = mh.bindTo(" + qualifier.getText() + ");\n";
                 }
               }
               code =
                 "MethodType mt = MethodType.fromMethodDescriptorString(\"" + JVMNameUtil.getJVMSignature(method) + "\", null);\n" +
-                "MethodHandle mh = MethodHandles.publicLookup()." + findMethodName + "(" +
-                containingClass.getQualifiedName() + ".class " + methodName + ", mt);\n" +
+                "MethodHandle mh = MethodHandles.lookup()." + find + ";\n" +
                 bind +
                 "MethodHandleProxies.asInterfaceInstance(" + interfaceType.getCanonicalText() + ".class, mh);";
             }
           } else if (PsiUtil.isArrayClass(resolved)) {
-            // TODO: may use MethodHandles#arrayConstructor when we move to Java 9
             code =
               "MethodType mt = MethodType.methodType(Object.class, Class.class, int.class);\n" +
               "MethodHandle mh = MethodHandles.publicLookup().findStatic(Array.class, \"newInstance\", mt);\n" +

@@ -454,7 +454,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
     if (SystemInfo.isMac && InputEvent.ALT_DOWN_MASK == e.getModifiersEx() && Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
       // the myIgnoreNextKeyTypedEvent changes event processing to support Alt-based mnemonics on Mac only
-      if (KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled() || hasMnemonicInWindow(focusOwner, e)) {
+      if ((KeyEvent.KEY_TYPED == e.getID() && !IdeEventQueue.getInstance().isInputMethodEnabled()) || hasMnemonicInWindow(focusOwner, e)) {
         myIgnoreNextKeyTypedEvent = true;
         return false;
       }

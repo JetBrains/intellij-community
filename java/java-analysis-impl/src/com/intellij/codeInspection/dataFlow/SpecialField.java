@@ -27,9 +27,7 @@ public enum SpecialField implements DfaVariableSource {
   ARRAY_LENGTH(null, "length", true, LongRangeSet.indexRange()) {
     @Override
     boolean isMyAccessor(PsiMember accessor) {
-      return accessor instanceof PsiField && "length".equals(accessor.getName()) &&
-             JavaPsiFacade.getElementFactory(accessor.getProject()).getArrayClass(PsiUtil.getLanguageLevel(accessor)) ==
-             accessor.getContainingClass();
+      return accessor instanceof PsiField && "length".equals(accessor.getName()) && PsiUtil.isArrayClass(accessor.getContainingClass());
     }
 
     @Override

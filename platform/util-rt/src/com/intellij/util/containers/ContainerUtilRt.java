@@ -67,13 +67,13 @@ public class ContainerUtilRt {
 
   @NotNull
   @Contract(value = " -> new", pure = true)
-  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
+  public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap() {
     return new TreeMap<K, V>();
   }
 
   @NotNull
   @Contract(value = "_ -> new", pure = true)
-  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
+  public static <K extends Comparable<? super K>, V> TreeMap<K, V> newTreeMap(@NotNull Map<? extends K, ? extends V> map) {
     return new TreeMap<K, V>(map);
   }
 
@@ -135,7 +135,7 @@ public class ContainerUtilRt {
   @NotNull
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
-    ArrayList<T> list = newArrayListWithCapacity(elements.length);
+    ArrayList<T> list = new ArrayList<T>(elements.length);
     Collections.addAll(list, elements);
     return list;
   }
@@ -144,10 +144,11 @@ public class ContainerUtilRt {
   @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull Iterable<? extends T> elements) {
     if (elements instanceof Collection) {
-      @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
+      @SuppressWarnings("unchecked")
+      Collection<? extends T> collection = (Collection<? extends T>)elements;
       return new ArrayList<T>(collection);
     }
-    return copy(ContainerUtilRt.<T>newArrayList(), elements);
+    return copy(new ArrayList<T>(), elements);
   }
 
   @NotNull
@@ -223,21 +224,13 @@ public class ContainerUtilRt {
 
   @NotNull
   @Contract(value = " -> new", pure = true)
-  public static <T> TreeSet<T> newTreeSet() {
+  public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet() {
     return new TreeSet<T>();
   }
 
   @NotNull
   @Contract(value = "_ -> new", pure = true)
-  public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
-    TreeSet<T> set = newTreeSet();
-    Collections.addAll(set, elements);
-    return set;
-  }
-
-  @NotNull
-  @Contract(value = "_ -> new", pure = true)
-  public static <T> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
+  public static <T extends Comparable<? super T>> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
     return copy(ContainerUtilRt.<T>newTreeSet(), elements);
   }
 

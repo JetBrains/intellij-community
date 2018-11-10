@@ -121,7 +121,7 @@ public class HighlightInfo implements Segment {
 
   private static String encodeTooltip(String toolTip, String description) {
     if (toolTip == null || description == null) return toolTip;
-    String unescaped = StringUtil.unescapeXml(XmlStringUtil.stripHtml(toolTip));
+    String unescaped = StringUtil.unescapeXmlEntities(XmlStringUtil.stripHtml(toolTip));
 
     String encoded = description.isEmpty() ? unescaped : StringUtil.replace(unescaped, description, DESCRIPTION_PLACEHOLDER);
     //noinspection StringEquality

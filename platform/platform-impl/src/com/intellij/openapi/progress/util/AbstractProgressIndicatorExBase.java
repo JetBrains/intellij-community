@@ -168,8 +168,8 @@ public class AbstractProgressIndicatorExBase extends AbstractProgressIndicatorBa
   }
 
   @Override
-  public final void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
-    myStateDelegates.remove(delegate);
+  public void removeStateDelegate(@NotNull ProgressIndicatorEx delegate) {
+
   }
 
   protected void delegateProgressChange(@NotNull IndicatorAction action) {

@@ -2959,7 +2959,7 @@ public class UIUtil {
   public static <T> T htmlInjectionGuard(T toRender) {
     if (toRender instanceof String && ((String)toRender).toLowerCase(Locale.US).startsWith("<html>")) {
       //noinspection unchecked
-      return (T) ("<html>" + StringUtil.escapeXml((String)toRender));
+      return (T) ("<html>" + StringUtil.escapeXmlEntities((String)toRender));
     }
     return toRender;
   }

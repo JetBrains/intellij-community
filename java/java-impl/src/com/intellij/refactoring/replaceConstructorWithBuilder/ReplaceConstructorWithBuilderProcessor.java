@@ -57,6 +57,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   public static final String REFACTORING_NAME = "Replace Constructor with Builder";
   private final PsiMethod[] myConstructors;
   private final Map<String, ParameterData> myParametersMap;
+  @NotNull
   private final String myClassName;
   private final String myPackageName;
   private final boolean myCreateNewBuilderClass;
@@ -67,7 +68,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
   public ReplaceConstructorWithBuilderProcessor(Project project,
                                                 PsiMethod[] constructors,
                                                 Map<String, ParameterData> parametersMap,
-                                                String className,
+                                                @NotNull String className,
                                                 String packageName,
                                                 MoveDestination moveDestination, boolean createNewBuilderClass) {
     super(project);

@@ -39,6 +39,12 @@ public class GrConstructorInvocationImpl extends GrCallImpl implements GrConstru
     return "Constructor invocation";
   }
 
+  @NotNull
+  @Override
+  public GroovyReference getConstructorReference() {
+    return myConstructorReference;
+  }
+
   @Override
   public boolean isSuperCall() {
     return getKeywordType() == GroovyTokenTypes.kSUPER;

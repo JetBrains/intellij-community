@@ -213,7 +213,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
           return SERVICE_KEY;
         }
       };
-      myDialog.setUndecorated(true);
+      myDialog.setUndecorated(!Registry.is("ide.find.as.popup.decorated"));
 
       Disposer.register(myDialog.getDisposable(), myDisposable);
 

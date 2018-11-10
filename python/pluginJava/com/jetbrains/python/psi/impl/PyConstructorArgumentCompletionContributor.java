@@ -73,7 +73,7 @@ public class PyConstructorArgumentCompletionContributor extends CompletionContri
           if (type instanceof PsiClassType) {
             final PsiClass parameterClass = ((PsiClassType)type).resolve();
             if (parameterClass != null) {
-              result.addElement(PyUtil.createNamedParameterLookup(StringUtil.decapitalize(parameterClass.getName()), origin));
+              result.addElement(PyUtil.createNamedParameterLookup(StringUtil.decapitalize(StringUtil.notNullize(parameterClass.getName())), origin));
               for (PsiMethod parameterMethod : parameterClass.getMethods()) {
                 result.addElement(PyUtil.createNamedParameterLookup(parameterMethod.getName(), origin));
               }

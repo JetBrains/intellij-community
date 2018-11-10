@@ -3294,6 +3294,30 @@ public class PyTypeTest extends PyTestCase {
            "   expr = a");
   }
 
+  // PY-32533
+  public void testSuperWithAnotherType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> doTest("A",
+                   "class A:\n" +
+                   "    def f(self):\n" +
+                   "        return 'A'\n" +
+                   "\n" +
+                   "class B:\n" +
+                   "    def f(self):\n" +
+                   "        return 'B'\n" +
+                   "\n" +
+                   "class C(B):\n" +
+                   "    def f(self):\n" +
+                   "        return 'C'\n" +
+                   "\n" +
+                   "class D(C, A):\n" +
+                   "    def f(self):\n" +
+                   "        expr = super(B, self)\n" +
+                   "        return expr.f()")
+    );
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());

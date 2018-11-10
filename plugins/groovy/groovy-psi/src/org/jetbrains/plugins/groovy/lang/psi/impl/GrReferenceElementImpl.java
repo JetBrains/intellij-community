@@ -137,8 +137,18 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     throw new IncorrectOperationException("Cannot bind to:" + element + " of class " + element.getClass());
   }
 
+  private GrReferenceElement<Q> bindWithQualifiedRef(@NotNull String qName) {
+    GrReferenceElement<Q> qualifiedRef = createQualifiedRef(qName);
+    final GrTypeArgumentList list = getTypeArgumentList();
+    if (list != null) {
+      qualifiedRef.getNode().addChild(list.copy().getNode());
+    }
+    getNode().getTreeParent().replaceChild(getNode(), qualifiedRef.getNode());
+    return qualifiedRef;
+  }
 
-  protected abstract GrReferenceElement<Q> bindWithQualifiedRef(@NotNull String qName);
+  @NotNull
+  protected abstract GrReferenceElement<Q> createQualifiedRef(@NotNull String qName);
 
   protected boolean bindsCorrectly(PsiElement element) {
     return isReferenceTo(element);

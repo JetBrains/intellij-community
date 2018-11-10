@@ -22,6 +22,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrI
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
+import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
 class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, private val candidate: MethodCandidate) {
 
@@ -113,8 +115,8 @@ class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, priv
         val resolveResult = advancedResolve()
         if (resolveResult is GroovyMethodResult) {
           val methodCandidate = MethodCandidate(resolveResult.element, resolveResult.partialSubstitutor,
-                                                buildArguments(referenceElement!!), call)
-          return methodCandidate.argumentMapping[Argument(null, call)]?.second
+                                                grandParent.getArguments(), call)
+          return methodCandidate.argumentMapping[ExpressionArgument(call)]?.second
         }
       }
       return null

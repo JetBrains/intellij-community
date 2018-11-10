@@ -215,3 +215,34 @@ class DifferentAnonymous2 extends DifferentAnonymous {
     return new Object() {};
   }
 }
+/////////////////
+class P {
+  void f(boolean b, int i) {
+    String a = "" + (a = "");
+    new Object() {
+      void x(int i, int j) {
+        i++;
+        x(i, j);
+      }
+    };
+    int z = 1;
+    z++;
+
+  }
+}
+class ABCD extends P {
+  void <warning descr="Method 'f()' is identical to its super method">f</warning>(boolean b, int i) {
+    String s = "" + (s = "");
+    new Object() {
+
+      void x(int k, /**/ final  int l) {
+        k++;
+        x(k, l);
+      }
+      // glucose & glutamine
+    };
+    int z1 = 1;
+    z1++;
+  }
+
+}

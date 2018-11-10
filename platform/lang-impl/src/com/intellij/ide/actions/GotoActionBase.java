@@ -334,7 +334,7 @@ public abstract class GotoActionBase extends AnAction {
       }
       else {
         seManager.setShownContributor(searchProviderID);
-        FUSUsageContext context = Optional.ofNullable(KeymapUtil.getEventCallerShortcut(evnt))
+        FUSUsageContext context = Optional.ofNullable(KeymapUtil.getEventCallerKeystrokeText(evnt))
           .map(shortcut -> FUSUsageContext.create(searchProviderID, shortcut))
           .orElseGet(() -> FUSUsageContext.create(searchProviderID));
         SearchEverywhereUsageTriggerCollector.trigger(evnt.getProject(), SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, context);

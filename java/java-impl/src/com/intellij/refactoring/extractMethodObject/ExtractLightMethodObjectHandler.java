@@ -80,7 +80,7 @@ public class ExtractLightMethodObjectHandler {
   public static ExtractedData extractLightMethodObject(final Project project,
                                                        @Nullable PsiElement originalContext,
                                                        @NotNull final PsiCodeFragment fragment,
-                                                       final String methodName,
+                                                       @NotNull String methodName,
                                                        @Nullable JavaSdkVersion javaVersion) throws PrepareFailedException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     PsiElement[] elements = completeToStatementArray(fragment, elementFactory);
@@ -325,13 +325,15 @@ public class ExtractLightMethodObjectHandler {
 
   private static class LightExtractMethodObjectDialog implements AbstractExtractDialog {
     private final ExtractMethodObjectProcessor myProcessor;
+    @NotNull
     private final String myMethodName;
 
-    LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, String methodName) {
+    LightExtractMethodObjectDialog(ExtractMethodObjectProcessor processor, @NotNull String methodName) {
       myProcessor = processor;
       myMethodName = methodName;
     }
 
+    @NotNull
     @Override
     public String getChosenMethodName() {
       return myMethodName;

@@ -659,9 +659,15 @@ public class PyCallExpressionHelper {
           return getSuperClassUnionType(firstClass, context);
         }
         if (secondClass.isSubclass(firstClass, context)) {
-          final Iterator<PyClass> iterator = firstClass.getAncestorClasses(context).iterator();
-          if (iterator.hasNext()) {
-            return new PyClassTypeImpl(iterator.next(), false); // super(Foo, self) has type of Foo, modulo __get__()
+          final PyClass nextAfterFirstInMro = StreamEx
+            .of(secondClass.getAncestorClasses(context))
+            .dropWhile(it -> it != firstClass)
+            .skip(1)
+            .findFirst()
+            .orElse(null);
+
+          if (nextAfterFirstInMro != null) {
+            return new PyClassTypeImpl(nextAfterFirstInMro, false);
           }
         }
       }

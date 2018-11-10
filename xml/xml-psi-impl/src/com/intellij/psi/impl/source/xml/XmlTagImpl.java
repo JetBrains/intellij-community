@@ -376,7 +376,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
         descriptor = descriptors.get(0);
       }
       else if (descriptors.size() > 1) {
-        descriptor = new MultiFileNsDescriptor(descriptors.stream().map(descriptor1 -> (XmlNSDescriptorImpl)descriptor1).collect(Collectors.toList()));
+        descriptor = new MultiFileNsDescriptor(ContainerUtil.map(descriptors, descriptor1 -> (XmlNSDescriptorImpl)descriptor1));
       }
       if (descriptor == null) {
         return new Result<>(null, this, file[0] == null ? this : file[0],

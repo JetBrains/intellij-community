@@ -91,7 +91,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
   @Override
   public boolean checkComments(IntentionAction intention) {
     String intentionText = intention.getText();
-    boolean commentChangingActions = intentionText.startsWith("Replace with end-of-line comment") ||
+    boolean isCommentChangingAction = intentionText.startsWith("Replace with end-of-line comment") ||
                                      intentionText.startsWith("Replace with block comment") ||
                                      intentionText.startsWith("Remove //noinspection") ||
                                      intentionText.startsWith("Unwrap 'if' statement") || //remove ifs content
@@ -118,9 +118,9 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.contains("'ordering inconsistent with equals'") || //javadoc will be changed
                                      intentionText.matches("Simplify '.*' to .*") ||
                                      intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
-                                     intentionText.matches("Remove '.*' from '.*' throws list")
-      ;
-    return !commentChangingActions;
+                                     intentionText.matches("Remove '.*' from '.*' throws list") ||
+                                     intentionText.matches("Remove .+ suppression");
+    return !isCommentChangingAction;
   }
 
   @Override

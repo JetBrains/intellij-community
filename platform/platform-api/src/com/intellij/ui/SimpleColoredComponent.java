@@ -634,8 +634,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  private static String convertFragment(String fragment) {
-    return StringUtil.escapeXml(fragment).replaceAll("\\\\n", "<br>");
+  private static String convertFragment(@NotNull String fragment) {
+    return StringUtil.escapeXmlEntities(fragment).replaceAll("\\\\n", "<br>");
   }
 
   private static void formatStyle(final StringBuilder builder, final SimpleTextAttributes attributes) {

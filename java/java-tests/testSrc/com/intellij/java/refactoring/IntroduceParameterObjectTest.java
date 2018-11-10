@@ -196,17 +196,17 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     doTest(true, false);
   }
 
-  private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors) {
+  private void doTestExistingClass(@NotNull String existingClassName, final String existingClassPackage, final boolean generateAccessors) {
     doTestExistingClass(existingClassName, existingClassPackage, generateAccessors, null);
   }
 
-  private void doTestExistingClass(final String existingClassName, final String existingClassPackage, final boolean generateAccessors,
+  private void doTestExistingClass(@NotNull String existingClassName, final String existingClassPackage, final boolean generateAccessors,
                                    final String newVisibility) {
     doTestExistingClass(existingClassName, existingClassPackage, generateAccessors, newVisibility,
                         IntroduceParameterObjectTest::generateParams);
   }
 
-  private void doTestExistingClass(final String existingClassName,
+  private void doTestExistingClass(@NotNull String existingClassName,
                                    final String existingClassPackage,
                                    final boolean generateAccessors,
                                    final String newVisibility,
@@ -243,7 +243,7 @@ public class IntroduceParameterObjectTest extends MultiFileTestCase {
     checkExceptionThrown("Integer", "java.lang", "Setter for field 'value' is required");
   }
 
-  private void checkExceptionThrown(String existingClassName, String existingClassPackage, String exceptionMessage) {
+  private void checkExceptionThrown(@NotNull String existingClassName, String existingClassPackage, String exceptionMessage) {
     try {
       doTestExistingClass(existingClassName, existingClassPackage, false);
     }

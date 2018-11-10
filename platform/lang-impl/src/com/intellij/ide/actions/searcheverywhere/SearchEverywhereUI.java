@@ -498,9 +498,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
                                      .collect(Collectors.toSet()));
           }
           else {
-            List<SESearcher.ElementInfo> lst = commands.stream()
-              .map(command -> new SESearcher.ElementInfo(command, 0, stubCommandContributor))
-              .collect(Collectors.toList());
+            List<SESearcher.ElementInfo> lst =
+              ContainerUtil.map(commands, command -> new SESearcher.ElementInfo(command, 0, stubCommandContributor));
             myListModel.addElements(lst, stubCommandContributor);
             ScrollingUtil.ensureSelectionExists(myResultsList);
           }
@@ -567,7 +566,6 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     };
 
     registerAction(SearchEverywhereActions.AUTOCOMPLETE_COMMAND, CompleteCommandAction::new);
-    registerSelectItemAction();
     registerAction(SearchEverywhereActions.SWITCH_TO_NEXT_TAB, nextTabAction);
     registerAction(SearchEverywhereActions.SWITCH_TO_PREV_TAB, prevTabAction);
     registerAction(IdeActions.ACTION_NEXT_TAB, nextTabAction);
@@ -591,6 +589,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
       FUSUsageContext context = getEventShortcut(e).map(shortcut -> FUSUsageContext.create(shortcut)).orElse(null);
       featureTriggered(SearchEverywhereUsageTriggerCollector.GROUP_NAVIGATE, context);
     });
+    registerSelectItemAction();
 
     AnAction escape = ActionManager.getInstance().getAction("EditorEscape");
     DumbAwareAction.create(__ -> closePopup())
@@ -701,7 +700,7 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
   }
 
   private static Optional<String> getEventShortcut(AnActionEvent event) {
-    return Optional.ofNullable(KeymapUtil.getEventCallerShortcut(event));
+    return Optional.ofNullable(KeymapUtil.getEventCallerKeystrokeText(event));
   }
 
   private void triggerTabSwitched(AnActionEvent e) {
