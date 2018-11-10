@@ -98,9 +98,7 @@ private class InferenceVisitor(val tree : LighterAST) : RecursiveLighterASTNodeW
 }
 
 fun getIndexedData(method: PsiMethodImpl): MethodData? {
-  val fileData = CachedValuesManager.getCachedValue(method) {
-    val file = method.containingFile
-    CachedValueProvider.Result.create(gist.getFileData(file), file)
-  }
+  val file = method.containingFile
+  val fileData = CachedValuesManager.getCachedValue(file) { CachedValueProvider.Result.create(gist.getFileData(file), file) }
   return fileData?.get(JavaStubImplUtil.getMethodStubIndex(method))
 }
