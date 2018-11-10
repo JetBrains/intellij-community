@@ -18,6 +18,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.JBIterable;
@@ -78,7 +80,15 @@ public class FindUnusedTestDataAction extends DumbAwareAction {
               nothingToDo();
             }
             else {
-              application.invokeLater(() -> FindUtil.showInUsageView(null, files, "Unused Test Data", project));
+              application.invokeLater(
+                () -> FindUtil.showInUsageView(
+                  null, files,
+                  file -> new UsageInfo2UsageAdapter(new UsageInfo(file)),
+                  "Unused Test Data",
+                  p -> {
+                    p.setCodeUsages(false);
+                    p.setUsagesWord("file");
+                  }, project));
             }
           });
         }
