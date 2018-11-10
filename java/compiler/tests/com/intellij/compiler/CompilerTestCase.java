@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @deprecated use {@link BaseCompilerTestCase} instead
  */
+@Deprecated
 public abstract class CompilerTestCase extends ModuleTestCase {
   private static final int COMPILING_TIMEOUT = 2 * 60 * 1000;
   protected static final String SOURCE = "source";
