@@ -83,10 +83,6 @@ public class TreeConflictRefreshablePanel implements Disposable {
   }
 
   public static boolean descriptionsEqual(TreeConflictDescription d1, TreeConflictDescription d2) {
-    if (d1.isPropertyConflict() != d2.isPropertyConflict()) return false;
-    if (d1.isTextConflict() != d2.isTextConflict()) return false;
-    if (d1.isTreeConflict() != d2.isTreeConflict()) return false;
-
     if (!d1.getOperation().equals(d2.getOperation())) return false;
     if (!d1.getConflictAction().equals(d2.getConflictAction())) return false;
     if (!Comparing.equal(d1.getConflictReason(), d2.getConflictReason())) return false;

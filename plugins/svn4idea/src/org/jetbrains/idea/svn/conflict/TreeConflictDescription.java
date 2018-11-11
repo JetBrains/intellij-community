@@ -34,19 +34,6 @@ public class TreeConflictDescription extends BaseNodeDescription {
     mySourceRightVersion = sourceRightVersion;
   }
 
-  // TODO: is*Conflict() methods are not really necessary in any logic - remove them
-  public boolean isTextConflict() {
-    return false;
-  }
-
-  public boolean isPropertyConflict() {
-    return false;
-  }
-
-  public boolean isTreeConflict() {
-    return true;
-  }
-
   public File getPath() {
     return myPath;
   }
