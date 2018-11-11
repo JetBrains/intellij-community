@@ -17,7 +17,13 @@ import java.util.stream.Collectors
 private lateinit var icons: Map<String, GitObject>
 private lateinit var devIcons: Map<String, GitObject>
 
-fun main(args: Array<String>) = checkIcons()
+fun main(args: Array<String>) = try {
+  checkIcons()
+}
+catch (e: Throwable) {
+  log(e.message ?: e::class.java.name)
+  e.printStackTrace()
+}
 
 internal fun checkIcons(context: Context = Context(),
                         loggerImpl: Consumer<String> = Consumer { println(it) },
@@ -174,8 +180,9 @@ private fun removedByDev(
 
 private fun latestChangeTime(file: String, repos: Collection<File>): Long {
   for (repo in repos) {
-    if (file.startsWith(repo.absolutePath)) {
-      val lct = latestChangeTime(file.removePrefix("${repo.absolutePath}/"), repo)
+    val prefix = "${repo.absolutePath}/"
+    if (file.startsWith(prefix)) {
+      val lct = latestChangeTime(file.removePrefix(prefix), repo)
       if (lct > 0) return lct
     }
   }

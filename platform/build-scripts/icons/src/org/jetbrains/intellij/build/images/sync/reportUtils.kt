@@ -51,21 +51,27 @@ private fun createReviewForDev(root: File, context: Context, user: String, email
   if (!context.doSyncDevIconsAndCreateReview) return null
   val changes = context.addedByDesigners + context.removedByDesigners + context.modifiedByDesigners
   if (changes.isNotEmpty()) {
+    val repos = changes.asSequence()
+      .map { File(root, it).absolutePath }
+      .map { findGitRepoRoot(it, silent = true) }
+      .distinct()
+      .toList()
     val commits = findInvestigator(context.iconsRepo, changes.asSequence()).commits
     if (commits.isNotEmpty()) {
       val verificationPassed = try {
         context.devIconsVerifier?.run()
+        repos.forEach { repo ->
+          gitStatus(repo)
+            .takeIf { it.isNotEmpty() }
+            ?.also { addChangesToGit(it, repo) }
+        }
         true
       }
       catch (e: Exception) {
         e.printStackTrace()
         false
       }
-      val review = pushAndCreateReview(UPSOURCE_DEV_PROJECT_ID, user, email, commits.commitMessage(), changes.asSequence()
-        .map { File(root, it).absolutePath }
-        .map { findGitRepoRoot(it, silent = true) }
-        .distinct()
-        .toList())
+      val review = pushAndCreateReview(UPSOURCE_DEV_PROJECT_ID, user, email, commits.commitMessage(), repos)
       addReviewer(UPSOURCE_DEV_PROJECT_ID, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
       postVerificationResultToReview(verificationPassed, review)
       return review

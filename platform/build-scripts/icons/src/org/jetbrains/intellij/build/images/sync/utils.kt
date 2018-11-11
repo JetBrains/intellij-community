@@ -22,7 +22,10 @@ internal fun execute(workingDir: File?, vararg command: String, silent: Boolean 
       .directory(workingDir)
       .redirectOutput(ProcessBuilder.Redirect.PIPE)
       .redirectError(errOutputFile)
-      .start()
+      .apply {
+        environment()["GIT_SSH_COMMAND"] = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+        environment()["LANG"] = "en_US.UTF-8"
+      }.start()
     val output = process.inputStream.bufferedReader().use { it.readText() }
     process.waitFor(1, TimeUnit.MINUTES)
     val error = errOutputFile.readText().trim()

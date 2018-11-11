@@ -43,7 +43,7 @@ private fun listGitTree(
     callSafely {
       execute(repo, GIT, "rebase", "--abort")
     }
-    log("Unable to pull changes for $repo")
+    log("Unable to pull changes for $repo: ${e.message}")
   }
   return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList, silent = true)
     .trim().lines().stream()
@@ -285,3 +285,13 @@ internal fun initGit(repo: File, user: String, email: String) {
   execute(repo, GIT, "config", "user.name", user)
   execute(repo, GIT, "config", "user.email", email)
 }
+
+internal fun gitStatus(repo: File) =
+  execute(repo, GIT, "status", "--short", "--untracked-files=no", "--ignored=no")
+    .lineSequence()
+    .map { it.trim() }
+    .filter { it.isNotEmpty() }
+    .map { if (it.contains("->")) it.split("->").last() else it }
+    .map { if (it.contains(" ")) it.split(" ").last() else it }
+    .map { it.trim() }
+    .toList()
