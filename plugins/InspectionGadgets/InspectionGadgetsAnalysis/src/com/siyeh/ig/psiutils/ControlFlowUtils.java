@@ -928,7 +928,10 @@ public class ControlFlowUtils {
         }
       }
       if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() != cur) {
-        return false;
+        PsiElement ternaryParent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
+        return ternaryParent instanceof PsiReturnStatement ||
+               (ternaryParent instanceof PsiAssignmentExpression && ternaryParent.getParent() instanceof PsiExpressionStatement &&
+                PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)ternaryParent).getRExpression()) == parent);
       }
       if(parent instanceof PsiMethodCallExpression) {
         PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)parent).getMethodExpression();
