@@ -6,4 +6,6 @@ import com.intellij.psi.PsiType
 interface Argument {
 
   val type: PsiType?
+
+  val topLevelType: PsiType? get() = type
 }

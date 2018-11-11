@@ -66,17 +66,12 @@ fun buildQualifier(ref: GrReferenceExpression, state: ResolveState): Argument {
 
 fun GrCall.buildTopLevelArgumentTypes(): Array<PsiType?>? {
   return getArguments()?.map { argument ->
-    if (argument is ExpressionArgument) {
-      getTopLevelTypeCached(argument.expression)
+    val type = argument.topLevelType
+    if (type is GrMapType) {
+      TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, this)
     }
     else {
-      val type = argument.type
-      if (type is GrMapType) {
-        TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, this)
-      }
-      else {
-        type
-      }
+      type
     }
   }?.toTypedArray()
 }

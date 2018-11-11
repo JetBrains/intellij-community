@@ -44,8 +44,7 @@ class MethodCandidate(val method: PsiMethod,
   private val typeComputer: (Argument) -> PsiType? = ::computeType
 
   private fun computeType(argument: Argument): PsiType? {
-    val type = if (argument is ExpressionArgument) getTopLevelTypeCached(argument.expression) else argument.type
-
+    val type = argument.topLevelType
     return if (type is GrMapType) {
       TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_UTIL_MAP, context)
     }
