@@ -1,65 +1,17 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn.conflict;
+package org.jetbrains.idea.svn.conflict
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.api.BaseNodeDescription;
-import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.api.BaseNodeDescription
+import org.jetbrains.idea.svn.api.NodeKind
 
-import java.io.File;
+import java.io.File
 
-public class TreeConflictDescription extends BaseNodeDescription {
-
-  private final File myPath;
-  private final ConflictAction myConflictAction;
-  private final ConflictReason myConflictReason;
-
-  private final ConflictOperation myOperation;
-  private final ConflictVersion mySourceLeftVersion;
-  private final ConflictVersion mySourceRightVersion;
-
-  public TreeConflictDescription(File path,
-                                 @NotNull NodeKind nodeKind,
-                                 ConflictAction conflictAction,
-                                 ConflictReason conflictReason,
-                                 ConflictOperation operation,
-                                 ConflictVersion sourceLeftVersion,
-                                 ConflictVersion sourceRightVersion) {
-    super(nodeKind);
-    myPath = path;
-    myConflictAction = conflictAction;
-    myConflictReason = conflictReason;
-
-    myOperation = operation;
-    mySourceLeftVersion = sourceLeftVersion;
-    mySourceRightVersion = sourceRightVersion;
-  }
-
-  public File getPath() {
-    return myPath;
-  }
-
-  public ConflictAction getConflictAction() {
-    return myConflictAction;
-  }
-
-  public ConflictReason getConflictReason() {
-    return myConflictReason;
-  }
-
-  public ConflictOperation getOperation() {
-    return myOperation;
-  }
-
-  public ConflictVersion getSourceLeftVersion() {
-    return mySourceLeftVersion;
-  }
-
-  public ConflictVersion getSourceRightVersion() {
-    return mySourceRightVersion;
-  }
-
-  @NotNull
-  public String toPresentableString() {
-    return "local " + getConflictReason() + ", incoming " + getConflictAction() + " upon " + getOperation();
-  }
+class TreeConflictDescription(val path: File,
+                              nodeKind: NodeKind,
+                              val conflictAction: ConflictAction,
+                              val conflictReason: ConflictReason,
+                              val operation: ConflictOperation,
+                              val sourceLeftVersion: ConflictVersion?,
+                              val sourceRightVersion: ConflictVersion?) : BaseNodeDescription(nodeKind) {
+  fun toPresentableString() = "local $conflictReason, incoming $conflictAction upon $operation"
 }
