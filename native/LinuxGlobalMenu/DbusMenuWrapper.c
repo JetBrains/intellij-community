@@ -439,10 +439,10 @@ DbusmenuMenuitem *addRootMenu(WndInfo *wi, int uid, const char * label) {
   if (wi == NULL || wi->menuroot == NULL)
     return NULL;
   // _logmsg(LOG_LEVEL_INFO, "add root %d", uid);
-  return addMenuItem(wi->menuroot, uid, label, true);
+  return addMenuItem(wi->menuroot, uid, label, true, -1);
 }
 
-DbusmenuMenuitem *addMenuItem(DbusmenuMenuitem *parent, int uid, const char * label, int type) {
+DbusmenuMenuitem *addMenuItem(DbusmenuMenuitem *parent, int uid, const char * label, int type, int position) {
   // _logmsg(LOG_LEVEL_INFO, "add menu item %s (%d) [p %s]", label, uid, _getItemLabel(parent));
 
   DbusmenuMenuitem *item = dbusmenu_menuitem_new();
@@ -469,22 +469,31 @@ DbusmenuMenuitem *addMenuItem(DbusmenuMenuitem *parent, int uid, const char * la
     if (data == NULL)
       _logmsg(LOG_LEVEL_ERROR, "parent of item %d hasn't jhandler", uid);
     g_object_set_data(G_OBJECT(item), MENUITEM_JHANDLER_PROPERTY, data);
-    dbusmenu_menuitem_child_append(parent, item);
+    if (position < 0)
+      dbusmenu_menuitem_child_append(parent, item);
+    else
+      dbusmenu_menuitem_child_add_position(parent, item, position);
   }
 
   return item;
 }
 
-DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid) {
+DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid, int position) {
   DbusmenuMenuitem* item = dbusmenu_menuitem_new();
   dbusmenu_menuitem_property_set(item, DBUSMENU_MENUITEM_PROP_TYPE, "separator");
   dbusmenu_menuitem_property_set_int(item, MENUITEM_UID_PROPERTY, uid);
   dbusmenu_menuitem_property_set_bool(item, DBUSMENU_MENUITEM_PROP_VISIBLE, TRUE);
-  if (parent != NULL)
-    dbusmenu_menuitem_child_append(parent, item);
+  if (parent != NULL) {
+    if (position < 0)
+      dbusmenu_menuitem_child_append(parent, item);
+    else
+      dbusmenu_menuitem_child_add_position(parent, item, position);
+  }
 
   return item;
 }
+
+void reorderMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item, int position) { dbusmenu_menuitem_child_reorder(parent, item, position); }
 
 void removeMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item) { dbusmenu_menuitem_child_delete(parent, item); }
 

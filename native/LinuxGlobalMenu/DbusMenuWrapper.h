@@ -50,9 +50,10 @@ void clearRootMenu(WndInfo* wi);
 void clearMenu(DbusmenuMenuitem* menu);
 
 DbusmenuMenuitem* addRootMenu(WndInfo* wi, int uid, const char * label);
-DbusmenuMenuitem* addMenuItem(DbusmenuMenuitem * parent, int uid, const char * label, int type);
-DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid);
+DbusmenuMenuitem* addMenuItem(DbusmenuMenuitem * parent, int uid, const char * label, int type, int position);
+DbusmenuMenuitem* addSeparator(DbusmenuMenuitem * parent, int uid, int position);
 
+void reorderMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item, int position);
 void removeMenuItem(DbusmenuMenuitem * parent, DbusmenuMenuitem* item);
 
 void setItemLabel(DbusmenuMenuitem* item, const char * label);
