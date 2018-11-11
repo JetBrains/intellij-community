@@ -215,11 +215,6 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     if (myWindowHandle != null) {
       _trace("bind new window 0x%X", xid);
       ourLib.bindNewWindow(myWindowHandle, xid);
-      if (frame instanceof JFrame) {
-        final JFrame jfr = (JFrame)frame;
-        if (jfr.getJMenuBar() != null)
-          jfr.getJMenuBar().setVisible(false);
-      }
     }
   }
 
