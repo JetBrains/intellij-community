@@ -209,7 +209,6 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
       "  <option name=\"preferLongerNames\" value=\"true\" />\n" +
       "  <option name=\"preferParametersWrap\" value=\"false\" />\n" +
       "  <option name=\"repeatSynchronized\" value=\"true\" />\n" +
-      "  <option name=\"replaceCast\" value=\"false\" />\n" +
       "  <option name=\"replaceInstanceOf\" value=\"false\" />\n" +
       "  <option name=\"replaceNullCheck\" value=\"true\" />\n" +
       "  <option name=\"resourceListLeftParenOnNextLine\" value=\"false\" />\n" +
