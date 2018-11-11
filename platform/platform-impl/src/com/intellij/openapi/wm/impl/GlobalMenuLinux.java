@@ -53,9 +53,10 @@ interface GlobalMenuLib extends Library {
   void clearMenu(Pointer dbmi);
 
   Pointer addRootMenu(Pointer wi, int uid, String label);
-  Pointer addMenuItem(Pointer parent, int uid, String label, int type);
-  Pointer addSeparator(Pointer wi, int uid);
+  Pointer addMenuItem(Pointer parent, int uid, String label, int type, int position);
+  Pointer addSeparator(Pointer wi, int uid, int position);
 
+  void reorderMenuItem(Pointer parent, Pointer item, int position);
   void removeMenuItem(Pointer parent, Pointer item);
 
   void setItemLabel(Pointer item, String label);
@@ -378,22 +379,24 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     // 1. mark all kids to delete
     mi.clearChildrenSwingRefs();
     for (MenuItemInternal cmi: mi.children)
-      cmi.toDelete = true;
+      cmi.position = -1; // mark item to be deleted
     if (stats != null) stats[STAT_DELETED] += mi.children.size();
 
     // 2. check all children from ActionMenu
+    int itemPos = 0;
     for (Component each : am.getPopupMenu().getComponents()) {
       MenuItemInternal cmi = mi.findCorrespondingChild(each);
       if (cmi == null) {
         cmi = _createInternalFromSwing(each);
         if (cmi != null) {
+          cmi.position = itemPos++;
           mi.children.add(cmi);
           if (stats != null) ++stats[STAT_CREATED];
           if (each instanceof JMenuItem)
             cmi.updateBySwingPeer((JMenuItem)each);
         }
       } else {
-        cmi.toDelete = false;
+        cmi.position = itemPos++;
         if (stats != null) --stats[STAT_DELETED];
         if (each instanceof JMenuItem) {
           final boolean changed = cmi.updateBySwingPeer((JMenuItem)each);
@@ -412,24 +415,40 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     if (mi.nativePeer == null)
       return;
 
-    for (MenuItemInternal child: mi.children) {
+    // sort
+    mi.children.sort((i0, i1) -> i0.position - i1.position);
+
+    // remove marked items
+    Iterator<MenuItemInternal> i = mi.children.iterator();
+    while (i.hasNext()) {
+      final MenuItemInternal child = i.next();
+      if (child.position != -1)
+        break;
+
       if (child.nativePeer != null) {
-        if (child.toDelete) {
-          ourLib.removeMenuItem(mi.nativePeer, child.nativePeer);
-          child.nativePeer = null;
-        } else {
-          child.updateNative();
-        }
-      } else {
+        ourLib.removeMenuItem(mi.nativePeer, child.nativePeer);
+        child.nativePeer = null;
+      }
+      i.remove();
+    }
+
+    // update/create and reorder
+    for (int pos = 0; pos < mi.children.size(); ++pos) {
+      final MenuItemInternal child = mi.children.get(pos);
+
+      if (child.nativePeer == null) {
         if (child.action == null) {
-          child.nativePeer = ourLib.addSeparator(mi.nativePeer, child.uid);
+          child.nativePeer = ourLib.addSeparator(mi.nativePeer, child.uid, pos);
           continue;
         }
 
-        child.nativePeer = ourLib.addMenuItem(mi.nativePeer, child.uid, child.txt, child.type);
-        child.updateNative();
+        child.nativePeer = ourLib.addMenuItem(mi.nativePeer, child.uid, child.txt, child.type, child.position);
+      } else if (child.position != pos) {
+        // System.out.printf("reorder: '%s' [%d] -> [%d]\n", child, child.position, pos);
+        ourLib.reorderMenuItem(mi.nativePeer, child.nativePeer, child.position);
       }
 
+      child.updateNative();
       _processChildren(child);
     }
   }
@@ -565,7 +584,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
     JMenuItem jitem;
     Pointer nativePeer;
-    boolean toDelete = false;
+    int position = -1;
 
     long lastClosedMs = 0;
 
@@ -648,7 +667,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
       if (target instanceof JSeparator) {
         for (MenuItemInternal child : children)
-          if (child.toDelete && child.action == null)
+          if (child.position == -1 && child.action == null)
             return child;
         return null;
       }
@@ -719,14 +738,14 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     @Override
     public String toString() {
       String res = String.format("'%s' (uid=%d, act=%s)", txt, uid, String.valueOf(action));
-      if (toDelete)
+      if (position == -1)
         res = res + " [toDelele]";
       return res;
     }
 
     String toStringShort() {
       String res = String.format("'%s'", txt);
-      if (toDelete)
+      if (position == -1)
         res = res + " [D]";
       if (isRoot())
         res = "Root " + res;
