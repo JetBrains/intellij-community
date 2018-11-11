@@ -576,6 +576,12 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     if (!(parent instanceof JFrame))
       return;
 
+    if (frame instanceof JFrame) {
+      final JFrame jfr = (JFrame)frame;
+      if (jfr.getJMenuBar() != null)
+        jfr.getJMenuBar().setVisible(false); // all children of IdeFrame mustn't show swing-menubar
+    }
+
     final JFrame fr = (JFrame)parent;
     if (fr.getJMenuBar() instanceof IdeMenuBar) {
       final IdeMenuBar frameMenuBar = (IdeMenuBar)fr.getJMenuBar();
