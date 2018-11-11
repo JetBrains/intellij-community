@@ -5,7 +5,7 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
-internal lateinit var logger: Consumer<String>
+internal var logger: Consumer<String> = Consumer { println(it) }
 
 internal fun log(msg: String) = logger.accept(msg)
 

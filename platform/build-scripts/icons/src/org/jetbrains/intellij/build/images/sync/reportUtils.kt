@@ -36,7 +36,7 @@ internal fun report(context: Context, root: File, devIcons: Int, icons: Int, ski
     |${if (context.createdReviews.isNotEmpty()) "Created reviews: ${context.createdReviews.map(Review::url)}" else ""}
   """.trimMargin()
   log(report)
-  val success = context.isSuccess() || context.doSyncIconsAndCreateReview && context.createdReviews.isNotEmpty()
+  val success = context.isSuccess() || context.doSyncDevIconsAndCreateReview && context.createdReviews.isNotEmpty()
   if (isUnderTeamCity() && !success) context.errorHandler.accept(report)
 }
 

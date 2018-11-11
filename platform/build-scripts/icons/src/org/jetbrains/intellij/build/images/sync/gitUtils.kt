@@ -174,7 +174,7 @@ internal fun latestChangeCommit(path: String, repo: File? = null): CommitInfo? {
       }
     }
   }
-  return latestChangeCommits[file]
+  return latestChangeCommits[file]!!
 }
 
 /**

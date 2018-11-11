@@ -50,9 +50,7 @@ internal fun createReview(projectId: String, branch: String, commits: Collection
     ]}""")
     .let { extract(it, Regex(""""reviewId":\{([^}]+)""")) }
     .let { extract(it, Regex(""""reviewId":"([^,"]+)"""")) }
-  val review = Review(reviewId, "$UPSOURCE/$projectId/review/$reviewId")
-  removeReviewer(projectId, review, System.getProperty("upsource.user.email"))
-  return review
+  return Review(reviewId, "$UPSOURCE/$projectId/review/$reviewId")
 }
 
 private fun getBranchRevisions(projectId: String, branch: String, limit: Int) =
@@ -64,23 +62,8 @@ private fun getBranchRevisions(projectId: String, branch: String, limit: Int) =
 
 internal fun addReviewer(projectId: String, review: Review, email: String) {
   try {
-    actionOnReviewer("addParticipantToReview", projectId, review, email)
-  }
-  catch (e: Exception) {
-    e.printStackTrace()
-    if (email != DEFAULT_INVESTIGATOR) addReviewer(projectId, review, DEFAULT_INVESTIGATOR)
-  }
-}
-
-private fun removeReviewer(projectId: String, review: Review, email: String) {
-  callSafely {
-    actionOnReviewer("removeParticipantFromReview", projectId, review, email)
-  }
-}
-
-private fun actionOnReviewer(action: String, projectId: String, review: Review, email: String) {
-  val userId = userId(email, projectId)
-  upsourcePost(action, """{
+    val userId = userId(email, projectId)
+    upsourcePost("addParticipantToReview", """{
     "reviewId" : {
       "projectId" : "$projectId",
       "reviewId" : "${review.id}"
@@ -90,6 +73,11 @@ private fun actionOnReviewer(action: String, projectId: String, review: Review, 
       "role" : 2
      }
   }""")
+  }
+  catch (e: Exception) {
+    e.printStackTrace()
+    if (email != DEFAULT_INVESTIGATOR) addReviewer(projectId, review, DEFAULT_INVESTIGATOR)
+  }
 }
 
 private fun userId(email: String, projectId: String): String {
