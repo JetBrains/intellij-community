@@ -148,7 +148,11 @@ class TestGitImpl : GitImpl() {
   fun reset() {
     myRebaseShouldFail = { false }
     myPushHandler = { null }
+    myBranchDeleteHandler = { null }
     interactiveRebaseEditor = null
+    pushListener = null
+    stashListener = null
+    mergeListener = null
   }
 
   private fun failOrCallRebase(repository: GitRepository, delegate: () -> GitRebaseCommandResult): GitRebaseCommandResult {
