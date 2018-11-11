@@ -39,9 +39,9 @@ class TestGitImpl : GitImpl() {
   @Volatile var mergeListener: ((GitRepository) -> Unit)? = null
   @Volatile var pushListener: ((GitRepository) -> Unit)? = null
 
-  @Volatile private var myRebaseShouldFail: (GitRepository) -> Boolean = { false }
-  @Volatile private var myPushHandler: (GitRepository) -> GitCommandResult? = { null }
-  @Volatile private var myBranchDeleteHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile private var rebaseShouldFail: (GitRepository) -> Boolean = { false }
+  @Volatile private var pushHandler: (GitRepository) -> GitCommandResult? = { null }
+  @Volatile private var branchDeleteHandler: (GitRepository) -> GitCommandResult? = { null }
   @Volatile private var interactiveRebaseEditor: InteractiveRebaseEditor? = null
 
   class InteractiveRebaseEditor(val entriesEditor: ((String) -> String)?,
@@ -51,14 +51,14 @@ class TestGitImpl : GitImpl() {
                     pushParams: GitPushParams,
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
     pushListener?.invoke(repository)
-    return myPushHandler(repository) ?: super.push(repository, pushParams, *listeners)
+    return pushHandler(repository) ?: super.push(repository, pushParams, *listeners)
   }
 
   override fun branchDelete(repository: GitRepository,
                             branchName: String,
                             force: Boolean,
                             vararg listeners: GitLineHandlerListener?): GitCommandResult {
-    return myBranchDeleteHandler(repository) ?: super.branchDelete(repository, branchName, force, *listeners)
+    return branchDeleteHandler(repository) ?: super.branchDelete(repository, branchName, force, *listeners)
   }
 
   override fun rebase(repository: GitRepository, params: GitRebaseParams, vararg listeners: GitLineHandlerListener): GitRebaseCommandResult {
@@ -130,15 +130,15 @@ class TestGitImpl : GitImpl() {
   }
 
   fun setShouldRebaseFail(shouldFail: (GitRepository) -> Boolean) {
-    myRebaseShouldFail = shouldFail
+    rebaseShouldFail = shouldFail
   }
 
-  fun onPush(pushHandler: (GitRepository) -> GitCommandResult?) {
-    myPushHandler = pushHandler;
+  fun onPush(handler: (GitRepository) -> GitCommandResult?) {
+    pushHandler = handler
   }
 
-  fun onBranchDelete(branchDeleteHandler: (GitRepository) -> GitCommandResult?) {
-    myBranchDeleteHandler = branchDeleteHandler
+  fun onBranchDelete(handler: (GitRepository) -> GitCommandResult?) {
+    branchDeleteHandler = handler
   }
 
   fun setInteractiveRebaseEditor(editor: InteractiveRebaseEditor) {
@@ -146,9 +146,9 @@ class TestGitImpl : GitImpl() {
   }
 
   fun reset() {
-    myRebaseShouldFail = { false }
-    myPushHandler = { null }
-    myBranchDeleteHandler = { null }
+    rebaseShouldFail = { false }
+    pushHandler = { null }
+    branchDeleteHandler = { null }
     interactiveRebaseEditor = null
     pushListener = null
     stashListener = null
@@ -156,7 +156,7 @@ class TestGitImpl : GitImpl() {
   }
 
   private fun failOrCallRebase(repository: GitRepository, delegate: () -> GitRebaseCommandResult): GitRebaseCommandResult {
-    return if (myRebaseShouldFail(repository)) {
+    return if (rebaseShouldFail(repository)) {
       GitRebaseCommandResult.normal(fatalResult())
     }
     else {
