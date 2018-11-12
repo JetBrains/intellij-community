@@ -1,19 +1,14 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
-import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.impl.DefaultMethodComparatorContext;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -27,7 +22,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.OverloadsKt.chooseOverloads;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.OverloadsKt.filterByArgumentsCount;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
 
 class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrResolverProcessor<GroovyResolveResult> {
 
@@ -35,7 +29,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrR
 
   GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
     super(ref, kinds);
-    myComparatorContext = new ComparatorContext(ref);
+    myComparatorContext = new DefaultMethodComparatorContext(ref, myArguments);
   }
 
   @Override
@@ -121,36 +115,5 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrR
     }
 
     return Collections.emptyList();
-  }
-
-  private static final class ComparatorContext implements Context {
-
-    private final @NotNull GrReferenceExpression myRef;
-    private final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
-
-    private ComparatorContext(@NotNull GrReferenceExpression ref) {
-      myRef = ref;
-      myArgumentTypes = NullableLazyValue.createValue(() -> {
-        PsiType[] types = buildTopLevelArgumentTypes((GrCall)myRef.getParent());
-        return types == null ? null : ContainerUtil.map(types, TypeConversionUtil::erasure, PsiType.EMPTY_ARRAY);
-      });
-    }
-
-    @Nullable
-    @Override
-    public PsiType[] getArgumentTypes() {
-      return myArgumentTypes.getValue();
-    }
-
-    @NotNull
-    @Override
-    public PsiElement getPlace() {
-      return myRef;
-    }
-
-    @Override
-    public boolean isConstructor() {
-      return false;
-    }
   }
 }
