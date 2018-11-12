@@ -4,6 +4,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -45,9 +46,10 @@ public class EditorHistoryManagerTest extends PlatformTestCase {
     });
 
     GCUtil.tryGcSoftlyReachableObjects();
-    if (FileDocumentManager.getInstance().getCachedDocument(virtualFile) != null) {
-      String dumpPath = publishHeapDump("EditorHistoryManagerTest");
-      fail("Document wasn't collected, see heap dump at " + dumpPath);
+    Document document = FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+    if (document != null) {
+      fail("Document wasn't collected, see heap dump at " + publishHeapDump(EditorHistoryManagerTest.class.getName()));
+      System.out.println("Keeping a reference to the document: " + document);
     }
 
     openProjectPerformTaskCloseProject(dir, project -> {});
