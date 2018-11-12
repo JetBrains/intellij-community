@@ -5,6 +5,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.icons.AllIcons.General;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.fields.ExtendableTextField;
@@ -52,7 +53,10 @@ public final class ShortcutTextField extends ExtendableTextField {
         return;
       }
     }
-    if (e.getID() == KeyEvent.KEY_PRESSED) {
+
+    // NOTE: when user presses 'Alt + Right' at Linux the IDE can receive next sequence KeyEvents: ALT_PRESSED -> RIGHT_RELEASED ->  ALT_RELEASED
+    // RIGHT_PRESSED can be skipped, it depends on WM
+    if (e.getID() == KeyEvent.KEY_PRESSED || (SystemInfo.isLinux && e.getID() == KeyEvent.KEY_RELEASED)) {
       if (keyCode != KeyEvent.VK_SHIFT &&
           keyCode != KeyEvent.VK_ALT &&
           keyCode != KeyEvent.VK_CONTROL &&
