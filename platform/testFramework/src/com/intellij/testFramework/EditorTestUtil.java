@@ -464,14 +464,13 @@ public class EditorTestUtil {
 
   public static void waitForLoading(Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (editor == null) return;
-    if (!ApplicationManager.getApplication().isWriteAccessAllowed()) {
+    if (EditorUtil.isRealFileEditor(editor)) {
       UIUtil.dispatchAllInvocationEvents(); // if editor is loaded synchronously,
                                             // background loading thread stays blocked in 'invokeAndWait' call
-    }
-    while (!AsyncEditorLoader.isEditorLoaded(editor)) {
-      LockSupport.parkNanos(100_000_000);
-      UIUtil.dispatchAllInvocationEvents();
+      while (!AsyncEditorLoader.isEditorLoaded(editor)) {
+        LockSupport.parkNanos(100_000_000);
+        UIUtil.dispatchAllInvocationEvents();
+      }
     }
   }
 
