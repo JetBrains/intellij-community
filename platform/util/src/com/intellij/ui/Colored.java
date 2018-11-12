@@ -31,6 +31,8 @@ import static java.lang.annotation.ElementType.TYPE;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({TYPE})
 public @interface Colored {
+  String colorName();
+
   /**
    * @return color as hex-string
    */
@@ -41,5 +43,5 @@ public @interface Colored {
    * @return color as hex-string
    */
   @RegExp(prefix = "[0-9a-f]{6}")
-  String darkVariant();
+  String darkColor();
 }

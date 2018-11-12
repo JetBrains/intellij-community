@@ -27,7 +27,6 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.ArrayUtil;
-import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +37,8 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author spleaner
@@ -128,14 +125,17 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
   }
 
   private void updateCustomButton() {
-    final Object item = myScopeComboBox.getSelectedItem();
+    Object item = myScopeComboBox.getSelectedItem();
     if (item instanceof String) {
       Color color = myConfiguration == null ? null : ColorUtil.fromHex(myConfiguration.getColorName(), null);
+      Class<?> cls = myScopeNames.get(item).getClass();
+
       if (color == null) {
-        color = ColorUtil.getColor(myScopeNames.get(item).getClass());
+        color = ColorUtil.getColor(cls);
       }
+
       if (color != null) {
-        final String colorName = ColorSelectionComponent.findColorName(color);
+        String colorName = ColorUtil.getColorName(cls);
         if (colorName != null) {
           myColorSelectionComponent.setSelectedColor(colorName);
         } else {

@@ -6,7 +6,6 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -251,21 +250,14 @@ public class ColorUtil {
   @Nullable
   public static Color getColor(@NotNull Class<?> cls) {
     final Colored colored = cls.getAnnotation(Colored.class);
-    if (colored != null) {
-      return new JBColor(new NotNullProducer<Color>() {
-        @NotNull
-        @Override
-        public Color produce() {
-          String colorString = UIUtil.isUnderDarcula() ? colored.darkVariant() : colored.color();
-          Color color = fromHex(colorString, null);
-          if (color == null) {
-            throw new IllegalArgumentException("Can't parse " + colorString);
-          }
-          return color;
-        }
-      });
-    }
-    return null;
+    return colored != null ? JBColor.namedColor("FileColor." + colored.colorName(),
+                                                new JBColor(fromHex(colored.color()), fromHex(colored.darkColor()))) : null;
+  }
+
+  @Nullable
+  public static String getColorName(@NotNull Class<?> cls) {
+    Colored colored = cls.getAnnotation(Colored.class);
+    return colored != null ? colored.colorName() : null;
   }
 
   /**

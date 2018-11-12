@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  * @author Sergey Malenkov
  */
-@Colored(color = "e7fadb", darkVariant = "2A3B2C")
+@Colored(colorName="Green", color = "e7fadb", darkColor = "425444")
 public final class TestsScope extends NamedScope {
   public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
   public static final TestsScope INSTANCE = new TestsScope();

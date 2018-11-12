@@ -4,6 +4,7 @@ package com.intellij.ui.tabs;
 import com.intellij.notification.impl.ui.StickyButton;
 import com.intellij.notification.impl.ui.StickyButtonUI;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +94,7 @@ public abstract class ColorButtonBase extends StickyButton {
 
     @Override
     protected int getArcSize() {
-      return 20;
+      return JBUI.scale(15);
     }
   }
 }

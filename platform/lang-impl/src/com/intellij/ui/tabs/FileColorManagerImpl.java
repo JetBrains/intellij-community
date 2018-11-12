@@ -110,15 +110,6 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     if (color != null) {
       return color;
     }
-
-    if ("ffffe4".equals(name) || "494539".equals(name)) {
-      return new JBColor(0xffffe4, 0x494539);
-    }
-
-    if ("e7fadb".equals(name) || "2a3b2c".equals(name)) {
-      return new JBColor(0xe7fadb, 0x2a3b2c);
-    }
-
     return ColorUtil.fromHex(name, null);
   }
 

@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  * @author Sergey Malenkov
  */
-@Colored(color = "ffffe4", darkVariant = "494539")
+@Colored(colorName="Yellow", color = "ffffe4", darkColor = "4F4838")
 public final class NonProjectFilesScope extends NamedScope {
   public static final String NAME = IdeUICustomization.getInstance().getNonProjectFilesScopeTitle();
   public static final NonProjectFilesScope INSTANCE = new NonProjectFilesScope();
