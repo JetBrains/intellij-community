@@ -117,7 +117,7 @@ class SaveFilesOnFrameDeactivationGuiTest : GuiTestCase() {
     val dummyUIAppClassStr: String = DummyUIApp::class.java.name.replace(".", "/") + ".class"
     val cl = this.javaClass.classLoader.getResource(dummyUIAppClassStr)
     val classpath = File(cl.toURI()).path.dropLast(dummyUIAppClassStr.length)
-    val javaPath = System.getenv("JAVA_HOME") ?: System.getProperty("java.home") ?: throw Exception("Unable to locate java")
+    val javaPath = System.getenv("JDK_18") ?: System.getProperty("java.home") ?: throw Exception("Unable to locate java")
     val javaFilePath = Paths.get(javaPath, "bin", "java").toFile().path
     return ProcessBuilder(javaFilePath, "-classpath", classpath, DummyUIApp::class.java.name).apply { inheritIO() }
   }
