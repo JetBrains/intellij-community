@@ -140,7 +140,7 @@ abstract class FirstStart(val ideType: IdeType) {
         click()
         checkboxContainingText("i confirm", true, Timeouts.noTimeout).select()
         LOG.info("Accept License Agreement/Privacy Policy dialog")
-        button("Accept", Timeouts.seconds05).click()
+        button("Continue", Timeouts.seconds05).click()
       }
     }
     catch (e: WaitTimedOutError) {
