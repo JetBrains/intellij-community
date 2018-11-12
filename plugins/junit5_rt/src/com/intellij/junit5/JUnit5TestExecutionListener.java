@@ -342,9 +342,14 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       .orElse("0");
   }
 
-  static String getLocationHint(TestIdentifier root) {
+  
+  private String getLocationHint(TestIdentifier root) {
+    return getLocationHint(root, myTestPlan.getParent(root).orElse(null));
+  }
+
+  static String getLocationHint(TestIdentifier root, final TestIdentifier rootParent) {
     return root.getSource()
-      .map(testSource -> getLocationHintValue(testSource))
+      .map(testSource -> getLocationHintValue(testSource, rootParent != null ? rootParent.getSource().orElse(null) : null))
       .filter(maybeLocationHintValue -> !NO_LOCATION_HINT_VALUE.equals(maybeLocationHintValue))
       .map(locationHintValue -> "locationHint=\'" + locationHintValue + "\'" + getMetainfo(root))
       .orElse(NO_LOCATION_HINT);
@@ -357,12 +362,12 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       .orElse(NO_LOCATION_HINT);
   }
   
-  static String getLocationHintValue(TestSource testSource) {
+  static String getLocationHintValue(TestSource testSource, TestSource parentSource) {
 
     if (testSource instanceof CompositeTestSource) {
       CompositeTestSource compositeTestSource = ((CompositeTestSource)testSource);
       for (TestSource sourceFromComposite : compositeTestSource.getSources()) {
-        String locationHintValue = getLocationHintValue(sourceFromComposite);
+        String locationHintValue = getLocationHintValue(sourceFromComposite, parentSource);
         if (!NO_LOCATION_HINT_VALUE.equals(locationHintValue)) {
           return locationHintValue;
         }
@@ -387,6 +392,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     if (testSource instanceof ClassSource) {
       String className = ((ClassSource)testSource).getClassName();
       return javaLocation(className, null, false);
+    }
+
+    if (parentSource != null) {
+      return getLocationHintValue(parentSource,null);
     }
 
     return NO_LOCATION_HINT_VALUE;
