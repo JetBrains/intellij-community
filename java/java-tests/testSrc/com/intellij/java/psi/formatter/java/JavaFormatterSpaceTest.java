@@ -703,7 +703,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSwitchLabelSpacing() {
-    doMethodTest("switch (i) { case\n1\n:break;\ndefault\n:break;}",
+    doMethodTest("switch (i) { case\n1\n:break;\ndefault\n:break; }",
                  "switch (i) {\n" +
                  "    case 1:\n        break;\n" +
                  "    default:\n        break;\n" +
@@ -711,11 +711,26 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSwitchLabeledRuleSpacing() {
-    doMethodTest("switch (i) { case\n1\n->\nfoo();\ncase\n2->{bar()};\ndefault->throw new Exception();}",
+    doMethodTest("switch (i) { case\n1\n->\nfoo();\ncase\n2->{bar()};\ndefault->throw new Exception(); }",
                  "switch (i) {\n" +
                  "    case 1 -> foo();\n" +
                  "    case 2 -> {\n        bar()\n    };\n" +
                  "    default -> throw new Exception();\n" +
+                 "}");
+  }
+
+  public void testMultiValueLabel() {
+    doMethodTest("switch(i) { case 1,2,  3: break; }",
+                 "switch (i) {\n" +
+                 "    case 1, 2, 3:\n" +
+                 "        break;\n" +
+                 "}");
+  }
+
+  public void testMultiValueLabeledRule() {
+    doMethodTest("switch(i) { case 1,2,  3 -> foo(); }",
+                 "switch (i) {\n" +
+                 "    case 1, 2, 3 -> foo();\n" +
                  "}");
   }
 }
