@@ -41,10 +41,7 @@ class UastContext(val project: Project) : UastLanguagePlugin {
   val languagePlugins: Collection<UastLanguagePlugin>
     get() = UastLanguagePlugin.getInstances()
 
-  fun findPlugin(element: PsiElement): UastLanguagePlugin? {
-    val language = element.language
-    return languagePlugins.firstOrNull { it.language == language }
-  }
+  fun findPlugin(element: PsiElement): UastLanguagePlugin? = UastLanguagePlugin.byLanguage(element.language)
 
   override fun isFileSupported(fileName: String): Boolean = languagePlugins.any { it.isFileSupported(fileName) }
 
