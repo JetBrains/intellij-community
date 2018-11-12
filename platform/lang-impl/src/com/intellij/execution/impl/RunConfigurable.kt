@@ -475,6 +475,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       when (dataId) {
         RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
         TouchbarDataKeys.ACTIONS_KEY.name -> touchbarActions
+        CommonDataKeys.PROJECT.name -> project
         else -> null
       }
     }
