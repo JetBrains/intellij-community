@@ -526,6 +526,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ConcatMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ShowParameterInfoMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteSmartMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ClassNameCompleteMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SubstringBeforeMacro"/>
