@@ -3,14 +3,10 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 
-import java.util.EnumSet;
 import java.util.Objects;
-
-import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
 
 public final class GroovyResolverProcessorBuilder {
 
@@ -22,7 +18,7 @@ public final class GroovyResolverProcessorBuilder {
       return new AllVariantsProcessor(Objects.requireNonNull(ref.getReferenceName()), ref);
     }
     else {
-      return new GroovyResolverProcessorImpl(ref, computeKinds(ref));
+      throw new IllegalStateException();
     }
   }
 
@@ -34,21 +30,5 @@ public final class GroovyResolverProcessorBuilder {
   public GroovyResolverProcessorBuilder setIncomplete(boolean incomplete) {
     myIncomplete = incomplete;
     return this;
-  }
-
-  @NotNull
-  private static EnumSet<GroovyResolveKind> computeKinds(@NotNull GrReferenceExpression ref) {
-    assert !ref.hasAt();
-    assert !ref.hasMemberPointer();
-    assert ref.getParent() instanceof GrMethodCall;
-
-    final EnumSet<GroovyResolveKind> result = EnumSet.allOf(GroovyResolveKind.class);
-    result.remove(CLASS);
-    result.remove(PACKAGE);
-    result.remove(TYPE_PARAMETER);
-
-    if (ref.isQualified()) result.remove(BINDING);
-
-    return result;
   }
 }

@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.MixinMemberContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GrDelegatingScopeProcessorWithHints;
@@ -131,6 +132,7 @@ public class GdkMethodUtil {
                                                 ResolveState state,
                                                 PsiElement lastParent,
                                                 PsiElement place) {
+    if (!ResolveUtilKt.shouldProcessMethods(processor)) return true;
     GrStatement[] statements = run.getStatements();
     for (GrStatement statement : statements) {
       if (statement == lastParent) break;

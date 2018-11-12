@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.psi.*;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -11,8 +10,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ClassUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
 
 import java.util.Map;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.sorryCannotKnowElementKind;
 
 /**
  * @author Sergey Evdokimov
@@ -30,7 +32,7 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull PsiElement place,
                                      @NotNull ResolveState state) {
-    if (!ResolveUtil.shouldProcessProperties(processor.getHint(ElementClassHint.KEY))) return;
+    if (!ResolveUtilKt.shouldProcessMethods(processor) && !ResolveUtilKt.shouldProcessProperties(processor)) return;
 
     PsiElement grCall = place.getParent();
     if (grCall instanceof GrMethodCall) {
@@ -51,7 +53,7 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
       }
     }
 
-    processPageElements(processor, aClass, state);
+    processPageElements(processor, aClass, state.put(sorryCannotKnowElementKind, true));
   }
 
   public static boolean processPageElements(PsiScopeProcessor processor,

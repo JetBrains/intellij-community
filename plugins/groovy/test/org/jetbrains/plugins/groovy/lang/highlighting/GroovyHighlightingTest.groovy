@@ -1394,7 +1394,7 @@ def bar() {
 
 def testConfig = bar()
 print testConfig.list[0]
-print testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning>
+print <warning descr="Method call is ambiguous">testConfig.foo<warning descr="'testConfig.foo' cannot be applied to '()'">()</warning></warning>
 ''', true, false, false, GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection)
   }
 

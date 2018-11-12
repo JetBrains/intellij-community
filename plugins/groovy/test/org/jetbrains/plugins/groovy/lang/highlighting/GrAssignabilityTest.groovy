@@ -359,7 +359,7 @@ def foo(Function<String, String> function) {
 foo<warning descr="'foo' in '_' cannot be applied to '(Function<java.lang.Double,java.lang.Double>)'">({println  it.byteValue()} as Function<Double, Double>)</warning>
 foo({println  it.substring(1)} as Function)
 foo({println  it.substring(1)} as Function<String, String>)
-foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure)'">({println  it})</warning>
+foo<warning descr="'foo' in '_' cannot be applied to '(groovy.lang.Closure)'">({println <warning descr="Method call is ambiguous">it</warning>})</warning>
 
 ''')
   }
@@ -537,10 +537,10 @@ class X {
 X i() { new X() }
 
 print i()[1]
-print i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer, java.lang.Integer])'">[1, 2]</warning>
-print i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning>
+print <warning descr="Method call is ambiguous">i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer, java.lang.Integer])'">[1, 2]</warning></warning>
+print <warning descr="Method call is ambiguous">i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning></warning>
 print i()['a']
-print i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.String, java.lang.String])'">['a', 'b']</warning>
+print <warning descr="Method call is ambiguous">i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.String, java.lang.String])'">['a', 'b']</warning></warning>
 ''')
   }
 
@@ -553,10 +553,10 @@ class X {
 X i = new X()
 
 print i[1]
-print i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer, java.lang.Integer])'">[1, 2]</warning>
-print i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning>
+print <warning descr="Method call is ambiguous">i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer, java.lang.Integer])'">[1, 2]</warning></warning>
+print <warning descr="Method call is ambiguous">i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning></warning>
 print i['a']
-print i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.String, java.lang.String])'">['a', 'b']</warning>
+print <warning descr="Method call is ambiguous">i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.String, java.lang.String])'">['a', 'b']</warning></warning>
 ''')
   }
 
@@ -762,7 +762,7 @@ void bug(Collection<String> foo, Collection<String> bar) {
     testHighlighting('''\
 print 1 + 2
 
-print 4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()
+print <warning descr="Method call is ambiguous">4 <warning descr="'plus' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.util.ArrayList)'">+</warning> new ArrayList()</warning>
 ''')
   }
 
