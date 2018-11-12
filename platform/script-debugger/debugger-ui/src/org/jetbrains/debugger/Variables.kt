@@ -151,7 +151,7 @@ private fun addAditionalVariables(additionalVariables: Collection<Variable>,
         // we prefer additionalVariable here because it is more smart variable (e.g. NavigatableVariable)
         val vmValue = vmVariable.value
         // to avoid evaluation, use vm value directly
-        if (vmValue != null && variable.value == null) {
+        if (vmValue != null) {
           variable.value = vmValue
         }
 
