@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
+import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
@@ -13,6 +14,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -58,7 +60,6 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NonNls;
@@ -234,7 +235,7 @@ public class StructuralSearchDialog extends DialogWrapper {
           myFilterButtonEnabled = compiled;
           setSearchTargets(myConfiguration.getMatchOptions());
           getOKAction().setEnabled(valid);
-        });
+        }, ModalityState.stateForComponent(getRootPane()));
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -606,24 +607,16 @@ public class StructuralSearchDialog extends DialogWrapper {
     return panel;
   }
 
-  private List<String> getVariablesFromListeners() {
-    final List<String> result = getVarsFrom(mySearchCriteriaEdit.getEditor());
+  private List<String> computeConfigurationVariableNames() {
+    final List<String> result = new ArrayList<>(TemplateImplUtil.parseVariables(myConfiguration.getMatchOptions().getSearchPattern()).keySet());
     if (myReplace) {
-      for (String var : getVarsFrom(myReplaceCriteriaEdit.getEditor())) {
+      for (String var : TemplateImplUtil.parseVariables(myConfiguration.getReplaceOptions().getReplacement()).keySet()) {
         if (!result.contains(var)) {
           result.add(var + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
         }
       }
     }
     return result;
-  }
-
-  private static List<String> getVarsFrom(Editor editor) {
-    if (editor == null) {
-      return new SmartList<>();
-    }
-    final SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(editor);
-    return (handler == null) ? new SmartList<>() : new ArrayList<>(handler.getVariables());
   }
 
   private Project getProject() {
@@ -698,7 +691,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private void removeUnusedVariableConstraints() {
-    final List<String> variableNames = getVariablesFromListeners();
+    final List<String> variableNames = computeConfigurationVariableNames();
     variableNames.add(Configuration.CONTEXT_VAR_NAME);
     myConfiguration.getMatchOptions().retainVariableConstraints(variableNames);
   }
