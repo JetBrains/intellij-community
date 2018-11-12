@@ -1321,13 +1321,13 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitSwitchStatement(PsiSwitchStatement statement) {
-    if (myRole1 == ChildRole.SWITCH_KEYWORD && myRole2 == ChildRole.LPARENTH) {
+    if (myType1 == JavaTokenType.SWITCH_KEYWORD && myType2 == JavaTokenType.LPARENTH) {
       createSpaceInCode(mySettings.SPACE_BEFORE_SWITCH_PARENTHESES);
     }
-    else if (myRole1 == ChildRole.LPARENTH || myRole2 == ChildRole.RPARENTH) {
+    else if (myType1 == JavaTokenType.LPARENTH || myType2 == JavaTokenType.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_SWITCH_PARENTHESES);
     }
-    else if (myRole2 == ChildRole.SWITCH_BODY) {
+    else if (myType2 == JavaElementType.CODE_BLOCK) {
       myResult = getSpaceBeforeLBrace(myChild2, mySettings.SPACE_BEFORE_SWITCH_LBRACE, null);
     }
   }
@@ -1335,26 +1335,15 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitLambdaExpression(PsiLambdaExpression expression) {
     boolean spaceAroundArrow = mySettings.SPACE_AROUND_LAMBDA_ARROW;
+    int braceStyle = mySettings.LAMBDA_BRACE_STYLE;
 
-    if (myRole1 == ChildRole.PARAMETER_LIST && myRole2 == ChildRole.ARROW) {
-      createSpaceInCode(spaceAroundArrow);
+    if (myType1 == JavaTokenType.ARROW && myType2 == JavaElementType.CODE_BLOCK &&
+        (braceStyle == NEXT_LINE || braceStyle == NEXT_LINE_SHIFTED || braceStyle == NEXT_LINE_SHIFTED2)) {
+      int space = spaceAroundArrow ? 1 : 0;
+      myResult = Spacing.createSpacing(space, space, 1, mySettings.KEEP_LINE_BREAKS, 0);
     }
-    else if (myRole1 == ChildRole.ARROW) {
-      if (myRole2 == ChildRole.LBRACE) {
-        switch (mySettings.LAMBDA_BRACE_STYLE) {
-          case NEXT_LINE:
-          case NEXT_LINE_SHIFTED:
-          case NEXT_LINE_SHIFTED2:
-            int space = spaceAroundArrow ? 1 : 0;
-            myResult = Spacing.createSpacing(space, space, 1, mySettings.KEEP_LINE_BREAKS, 0);
-            break;
-          default:
-            createSpaceInCode(spaceAroundArrow);
-        }
-      }
-      else if (myRole2 == ChildRole.EXPRESSION) {
-        createSpaceInCode(spaceAroundArrow);
-      }
+    else if (myType1 == JavaTokenType.ARROW || myType2 == JavaTokenType.ARROW) {
+      createSpaceInCode(spaceAroundArrow);
     }
   }
 
@@ -1383,9 +1372,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-    if ((myRole1 == ChildRole.DOUBLE_COLON && myRole2 == ChildRole.REFERENCE_NAME) ||
-        (myRole1 == ChildRole.EXPRESSION && myRole2 == ChildRole.DOUBLE_COLON) ||
-        (myRole1 == ChildRole.CLASS_REFERENCE && myRole2 == ChildRole.DOUBLE_COLON)) {
+    if (myType1 == JavaTokenType.DOUBLE_COLON || myType2 == JavaTokenType.DOUBLE_COLON) {
       createSpaceInCode(mySettings.SPACE_AROUND_METHOD_REF_DBL_COLON);
     }
   }

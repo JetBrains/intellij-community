@@ -48,14 +48,10 @@ public class MethodReferenceElementType extends FunctionalExpressionElementType<
 
       @Override
       public int getChildRole(@NotNull ASTNode child) {
-        final IElementType elType = child.getElementType();
-        if (elType == JavaTokenType.DOUBLE_COLON) {
-          return ChildRole.DOUBLE_COLON;
-        } else if (elType == JavaTokenType.IDENTIFIER) {
-          return ChildRole.REFERENCE_NAME;
-        } else if (elType == JavaElementType.REFERENCE_EXPRESSION) {
-          return ChildRole.CLASS_REFERENCE;
-        }
+        IElementType elType = child.getElementType();
+        if (elType == JavaTokenType.DOUBLE_COLON) return ChildRole.DOUBLE_COLON;
+        if (elType == JavaTokenType.IDENTIFIER) return ChildRole.REFERENCE_NAME;
+        if (elType == JavaElementType.REFERENCE_EXPRESSION) return ChildRole.CLASS_REFERENCE;
         return ChildRole.EXPRESSION;
       }
     };

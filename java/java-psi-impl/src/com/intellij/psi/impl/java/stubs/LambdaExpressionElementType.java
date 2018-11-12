@@ -41,16 +41,11 @@ public class LambdaExpressionElementType extends FunctionalExpressionElementType
 
       @Override
       public int getChildRole(@NotNull ASTNode child) {
-        final IElementType elType = child.getElementType();
-        if (elType == JavaTokenType.ARROW) {
-          return ChildRole.ARROW;
-        } else if (elType == JavaElementType.PARAMETER_LIST) {
-          return ChildRole.PARAMETER_LIST;
-        } else if (elType == JavaElementType.CODE_BLOCK) {
-          return ChildRole.LBRACE;
-        } else {
-          return ChildRole.EXPRESSION;
-        }
+        IElementType elType = child.getElementType();
+        if (elType == JavaTokenType.ARROW) return ChildRole.ARROW;
+        if (elType == JavaElementType.PARAMETER_LIST) return ChildRole.PARAMETER_LIST;
+        if (elType == JavaElementType.CODE_BLOCK) return ChildRole.LBRACE;
+        return ChildRole.EXPRESSION;
       }
     };
   }
