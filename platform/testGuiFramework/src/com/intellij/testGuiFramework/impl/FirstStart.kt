@@ -122,7 +122,7 @@ abstract class FirstStart(val ideType: IdeType) {
     return GuiTestUtilKt.withPauseWhenNull(timeout = Timeouts.defaultTimeout) {
       try {
         myRobot.finder().find {
-          it is JDialog && (it.title.contains("License Agreement") || it.title.contains("Privacy Policy"))
+          it is JDialog && (it.title.contains("License Agreement") || it.title.contains("Privacy Policy") || it.title.contains("User Agreement"))
         } as JDialog
       }
       catch (cle: ComponentLookupException) {
