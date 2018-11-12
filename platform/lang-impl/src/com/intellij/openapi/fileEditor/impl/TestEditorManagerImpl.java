@@ -478,6 +478,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
       myVirtualFile2Editor.put(file, editor);
     }
 
+    editor.getSelectionModel().removeSelection();
     descriptor.navigateIn(editor);
     myActiveFile = file;
 
