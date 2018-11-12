@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -96,7 +96,7 @@ public class ConvertDoubleToFloatFix implements IntentionAction {
                                         @NotNull PsiElement context) {
     if (!candidate.isStaticsScopeCorrect()) return;
     PsiMethod method = (PsiMethod)candidate.getElement();
-    if (method != null && ScratchFileService.isInProjectOrScratch(method)) {
+    if (method != null && BaseIntentionAction.canModify(method)) {
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       if (parameters.length == expressions.length) {
         for (int i = 0, length = parameters.length; i < length; i++) {

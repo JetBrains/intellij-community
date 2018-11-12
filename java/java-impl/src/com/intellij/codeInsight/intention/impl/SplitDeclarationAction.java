@@ -4,7 +4,6 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -35,7 +34,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
 
     if (element instanceof PsiCompiledElement) return false;
-    if (!ScratchFileService.isInProjectOrScratch(element)) return false;
+    if (!canModify(element)) return false;
     if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
 
     final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, PsiClass.class);

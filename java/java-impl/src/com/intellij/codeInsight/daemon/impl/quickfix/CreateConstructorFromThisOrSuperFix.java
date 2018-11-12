@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -141,7 +140,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
 
   @Override
   protected PsiElement getElement() {
-    if (!myMethodCall.isValid() || !ScratchFileService.isInProjectOrScratch(myMethodCall)) return null;
+    if (!myMethodCall.isValid() || !canModify(myMethodCall)) return null;
     return myMethodCall;
   }
 }

@@ -17,10 +17,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -83,7 +83,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     if (containingClass instanceof PsiAnonymousClass) {
       final PsiClassType baseClassType = ((PsiAnonymousClass)containingClass).getBaseClassType();
       final PsiClass baseClass = baseClassType.resolve();
-      if (baseClass != null && ScratchFileService.isInProjectOrScratch(baseClass)) {
+      if (baseClass != null && BaseIntentionAction.canModify(baseClass)) {
         pullUp(method, containingClass, baseClass);
       }
     }
@@ -117,7 +117,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
   private static void collectClassesToPullUp(PsiManager manager, LinkedHashSet<? super PsiClass> classesToPullUp, PsiClassType[] extendsListTypes) {
     for (PsiClassType extendsListType : extendsListTypes) {
       PsiClass resolve = extendsListType.resolve();
-      if (resolve != null && ScratchFileService.isInProjectOrScratch(resolve)) {
+      if (resolve != null && BaseIntentionAction.canModify(resolve)) {
         classesToPullUp.add(resolve);
       }
     }
@@ -147,7 +147,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
       final PsiClassType baseClassType = ((PsiAnonymousClass)containingClass).getBaseClassType();
       final PsiClass baseClass = baseClassType.resolve();
       if (baseClass == null) return;
-      if (!ScratchFileService.isInProjectOrScratch(baseClass)) return;
+      if (!BaseIntentionAction.canModify(baseClass)) return;
       if (!baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
         name = "Pull method \'" + methodWithOverrides.getName() + "\' up and make it abstract";
       }

@@ -18,7 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -55,7 +55,7 @@ public class GeneralizeCatchFix implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(myElement.isValid()
           && myUnhandledException.isValid()
-          && ScratchFileService.isInProjectOrScratch(myElement))) return false;
+          && BaseIntentionAction.canModify(myElement))) return false;
     // find enclosing try
     PsiElement element = myElement;
     while (element != null) {

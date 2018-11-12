@@ -29,7 +29,6 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
@@ -116,7 +115,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
     }
 
-    if (shouldCreateInnerClass(psiClass) && !ScratchFileService.isInProjectOrScratch(file)) {
+    if (shouldCreateInnerClass(psiClass) && !canModify(file)) {
       return false;
     }
 

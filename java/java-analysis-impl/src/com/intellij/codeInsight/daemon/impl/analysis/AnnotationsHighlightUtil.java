@@ -8,7 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -467,7 +467,7 @@ public class AnnotationsHighlightUtil {
       if (aClass == resolvedClass) {
         return true;
       }
-      if (!checked.add(resolvedClass) || !ScratchFileService.isInProjectOrScratch(resolvedClass)) return false;
+      if (!checked.add(resolvedClass) || !BaseIntentionAction.canModify(resolvedClass)) return false;
       final PsiMethod[] methods = resolvedClass.getMethods();
       for (PsiMethod method : methods) {
         if (cyclicDependencies(aClass, method.getReturnType(), checked,manager)) return true;
