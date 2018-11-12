@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.console.parsing;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
@@ -28,10 +29,19 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author traff
  */
-public class PyConsoleParser extends PyParser{
+public class PyConsoleParser extends PyParser {
   private StatementParsing.FUTURE myFutureFlag;
   private final PythonConsoleData myPythonConsoleData;
   private boolean myIPythonStartSymbol;
+
+  private static final ImmutableSet<IElementType> IPYTHON_START_SYMBOLS = new ImmutableSet.Builder<IElementType>().add(
+    PyConsoleTokenTypes.QUESTION_MARK,
+    PyConsoleTokenTypes.PLING,
+    PyTokenTypes.PERC,
+    PyTokenTypes.COMMA,
+    PyTokenTypes.SEMICOLON,
+    PyTokenTypes.DIV
+  ).build();
 
   public PyConsoleParser(PythonConsoleData pythonConsoleData, LanguageLevel languageLevel) {
     myPythonConsoleData = pythonConsoleData;
@@ -59,10 +69,8 @@ public class PyConsoleParser extends PyParser{
 
   public static boolean startsWithIPythonSpecialSymbol(PsiBuilder builder) {
     IElementType tokenType = builder.getTokenType();
-    return builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK || tokenType == PyTokenTypes.PERC || tokenType == PyTokenTypes.COMMA || tokenType == PyTokenTypes.SEMICOLON ||
-      "/".equals(builder.getTokenText());
+    return IPYTHON_START_SYMBOLS.contains(tokenType);
   }
-
 
   @Override
   protected ParsingContext createParsingContext(PsiBuilder builder, LanguageLevel languageLevel, StatementParsing.FUTURE futureFlag) {

@@ -59,6 +59,9 @@ public class PyConsoleParsingContext extends ParsingContext {
 
     @Override
     public void parseStatement() {
+      if (parseIPythonHelp()) {
+        return;
+      }
       if (myStartsWithIPythonSymbol) {
         parseIPythonCommand();
       }
@@ -77,6 +80,60 @@ public class PyConsoleParsingContext extends ParsingContext {
         }
         super.parseStatement();
       }
+    }
+
+    private boolean parseIPythonHelp() {
+      return parseIPythonGlobalHelp() ||
+             parseIPythonSuffixHelp();
+    }
+
+    /**
+     * Parse statements consisting of the single question mark.
+     */
+    private boolean parseIPythonGlobalHelp() {
+      PsiBuilder.Marker ipythonHelp = myBuilder.mark();
+      if (myBuilder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
+        myBuilder.advanceLexer();
+        if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK || myBuilder.eof()) {
+          ipythonHelp.done(PyElementTypes.EMPTY_EXPRESSION);
+          myBuilder.advanceLexer();
+          return true;
+        }
+      }
+      ipythonHelp.rollbackTo();
+      return false;
+    }
+
+    /**
+     * Parse statements ending with a question mark.
+     */
+    private boolean parseIPythonSuffixHelp() {
+      PsiBuilder.Marker ipythonHelp = myBuilder.mark();
+      while (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK &&
+             myBuilder.getTokenType() != PyTokenTypes.LINE_BREAK &&
+             !myBuilder.eof()
+      ) {
+        myBuilder.advanceLexer();
+      }
+      if (myBuilder.rawLookup(-1) != PyConsoleTokenTypes.QUESTION_MARK) {
+        ipythonHelp.rollbackTo();
+        return false;
+      }
+      int lookupIndex = -2;
+      if (myBuilder.rawLookup(lookupIndex) == PyConsoleTokenTypes.QUESTION_MARK) {
+        --lookupIndex;
+      }
+      if (myBuilder.rawLookup(lookupIndex) == PyTokenTypes.MULT) {
+        ipythonHelp.rollbackTo();
+        parseIPythonCommand();
+        return true;
+      }
+      if (myBuilder.rawLookup(lookupIndex) != PyTokenTypes.IDENTIFIER) {
+        myBuilder.error("Help request must follow the name");
+      }
+      ipythonHelp.done(PyElementTypes.EMPTY_EXPRESSION);
+      myBuilder.advanceLexer();
+      return true;
     }
 
     private void parseIPythonCommand() {
@@ -107,12 +164,11 @@ public class PyConsoleParsingContext extends ParsingContext {
           return;
         }
         else {
-          if (builder.getTokenType() == PyConsoleTokenTypes.PLING || builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
+          if (builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK && builder.rawLookup(-1) == PyTokenTypes.IDENTIFIER) {
             builder.advanceLexer();
-            if (builder.getTokenType() == PyConsoleTokenTypes.PLING || builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
+            if (builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
               builder.advanceLexer();
             }
-
             return;
           }
           builder.error("End of statement expected");
@@ -139,6 +195,10 @@ public class PyConsoleParsingContext extends ParsingContext {
 
         myBuilder.advanceLexer();
 
+        if (myBuilder.getTokenType() == PyConsoleTokenTypes.PLING) {
+          myBuilder.advanceLexer();
+        }
+
         if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
           myBuilder.advanceLexer();
           command.done(getReferenceType());
@@ -158,6 +218,39 @@ public class PyConsoleParsingContext extends ParsingContext {
       else {
         return super.parseExpressionOptional();
       }
+    }
+
+    @Override
+    public boolean parseYieldOrTupleExpression(boolean isTargetExpression) {
+      if (parseIPythonCaptureExpression()) {
+        return true;
+      }
+      else {
+        return super.parseYieldOrTupleExpression(isTargetExpression);
+      }
+    }
+
+    private boolean parseIPythonCaptureExpression() {
+      if (myBuilder.getTokenType() == PyConsoleTokenTypes.PLING) {
+        captureIPythonExpression();
+        return true;
+      }
+      if (myBuilder.getTokenType() == PyTokenTypes.PERC) {
+        if (myBuilder.lookAhead(1) == PyTokenTypes.PERC) {
+          myBuilder.error("Multiline magic can't be used as an expression");
+        }
+        captureIPythonExpression();
+        return true;
+      }
+      return false;
+    }
+
+    private void captureIPythonExpression() {
+      PsiBuilder.Marker mark = myBuilder.mark();
+      while (myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK) {
+        myBuilder.advanceLexer();
+      }
+      mark.done(PyElementTypes.EMPTY_EXPRESSION);
     }
   }
 }
