@@ -32,7 +32,8 @@ public class GlobalSearchScopes extends GlobalSearchScopesCore {
 
   @NotNull
   public static GlobalSearchScope openFilesScope(@NotNull Project project) {
-    final VirtualFile[] files = FileEditorManager.getInstance(project).getOpenFiles();
+    FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+    final VirtualFile[] files = fileEditorManager != null ? fileEditorManager.getOpenFiles() : VirtualFile.EMPTY_ARRAY;
     return GlobalSearchScope.filesScope(project, Arrays.asList(files), IdeBundle.message("scope.open.files"));
   }
 }
