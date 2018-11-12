@@ -96,6 +96,16 @@ import java.util.List;
  * shown (Ctrl+Alt+Shift+W / Cmd+Alt+Shift+W), the action also copies the debug info to the the Clipboard.
  * <p>
  *
+ * Q: Elements in the lookup are sorted in an unexpected way, the weights I provide are not honored, why?<br>
+ * A: To be more responsive, when first lookup elements are produced, completion infrastructure waits for some small time
+ * and then displays the lookup with whatever items are ready. After that, few the most relevant of the displayed items
+ * are considered "frozen" and not re-sorted anymore, to avoid changes around the selected item that the user already sees
+ * and can interact with. Even if new, more relevant items are added, they won't make it to the top of the list anymore.
+ * Therefore you should try to create most relevant items as early as possible. If you can't reliably produce
+ * most relevant items first, you could also return all your items in batch via {@link CompletionResultSet#addAllElements} to ensure
+ * that this batch is all sorted and displayed together.
+ * <p>
+ *
  * Q: My completion is not working! How do I debug it?<br>
  * A: One source of common errors is that the pattern you gave to {@link #extend(CompletionType, ElementPattern, CompletionProvider)} method
  * may be incorrect. To debug this problem you can still override {@link #fillCompletionVariants(CompletionParameters, CompletionResultSet)} in
