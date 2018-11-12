@@ -151,7 +151,7 @@ fun getName(state: ResolveState, element: PsiNamedElement): String? {
   return state[importedNameKey] ?: element.name
 }
 
-fun valid(allCandidates: Collection<GroovyResolveResult>): List<GroovyResolveResult> = allCandidates.filter {
+fun <T : GroovyResolveResult> valid(allCandidates: Collection<T>): List<T> = allCandidates.filter {
   it.isValidResult
 }
 

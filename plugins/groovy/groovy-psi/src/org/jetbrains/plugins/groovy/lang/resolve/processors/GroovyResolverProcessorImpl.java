@@ -17,11 +17,15 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.newSmartList;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
+import static org.jetbrains.plugins.groovy.lang.resolve.impl.OverloadsKt.chooseOverloads;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
 
@@ -40,13 +44,14 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
 
   @Override
   @NotNull
-  public List<GroovyResolveResult> getResults() {
+  public List<? extends GroovyResolveResult> getResults() {
     final List<GroovyResolveResult> variables = getCandidates(VARIABLE);
     if (!variables.isEmpty()) {
       return variables;
     }
 
-    final List<? extends GroovyResolveResult> methods = getAllCandidates(METHOD);
+    //noinspection unchecked
+    final List<? extends GroovyMethodResult> methods = (List<? extends GroovyMethodResult>)getAllCandidates(METHOD);
     final List<? extends GroovyResolveResult> properties = getAllCandidates(PROPERTY);
     final List<? extends GroovyResolveResult> fields = getAllCandidates(FIELD);
 
@@ -60,9 +65,9 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
         return new SmartList<>(methods);
       }
       else {
-        List<GroovyResolveResult> validMethods = valid(methods);
+        List<? extends GroovyMethodResult> validMethods = valid(methods);
         if (!validMethods.isEmpty()) {
-          return filterMethodCandidates(validMethods);
+          return chooseOverloads(validMethods, this);
         }
       }
     }
@@ -73,9 +78,9 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
       return singleOrValid(fields);
     }
 
-    final List<GroovyResolveResult> validMethods = valid(methods);
+    final List<? extends GroovyMethodResult> validMethods = valid(methods);
     if (!validMethods.isEmpty()) {
-      return filterMethodCandidates(validMethods);
+      return chooseOverloads(validMethods, this);
     }
     final List<GroovyResolveResult> validProperties = valid(properties);
     if (!validProperties.isEmpty()) {
@@ -98,9 +103,9 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
   }
 
   @NotNull
-  protected List<GroovyResolveResult> getAllCandidates() {
+  protected List<? extends GroovyResolveResult> getAllCandidates() {
     for (GroovyResolveKind kind : myAcceptableKinds) {
-      List<GroovyResolveResult> results = getAllCandidates(kind);
+      List<? extends GroovyResolveResult> results = getAllCandidates(kind);
       if (!results.isEmpty()) {
         return ContainerUtil.newArrayList(ResolveUtil.filterSameSignatureCandidates(
           filterCorrectParameterCount(results)
@@ -127,38 +132,6 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
     }
     if (!result.isEmpty()) return result;
     return ContainerUtil.newArrayList(candidates);
-  }
-
-  protected List<GroovyResolveResult> filterMethodCandidates(List<GroovyResolveResult> candidates) {
-    if (candidates.size() <= 1) return candidates;
-
-    final List<GroovyResolveResult> results = ContainerUtil.newArrayList();
-    final Iterator<GroovyResolveResult> itr = candidates.iterator();
-
-    results.add(itr.next());
-
-    Outer:
-    while (itr.hasNext()) {
-      final GroovyResolveResult resolveResult = itr.next();
-      if (resolveResult instanceof GroovyMethodResult) {
-        for (Iterator<GroovyResolveResult> iterator = results.iterator(); iterator.hasNext(); ) {
-          final GroovyResolveResult otherResolveResult = iterator.next();
-          if (otherResolveResult instanceof GroovyMethodResult) {
-            int res = GrMethodComparator.compareMethods((GroovyMethodResult)resolveResult, (GroovyMethodResult)otherResolveResult, this);
-            if (res > 0) {
-              continue Outer;
-            }
-            else if (res < 0) {
-              iterator.remove();
-            }
-          }
-        }
-      }
-
-      results.add(resolveResult);
-    }
-
-    return results;
   }
 
   @Nullable

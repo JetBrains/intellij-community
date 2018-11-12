@@ -163,7 +163,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   }
 
   @NotNull
-  protected List<GroovyResolveResult> getAllCandidates(@NotNull GroovyResolveKind kind) {
+  protected List<? extends GroovyResolveResult> getAllCandidates(@NotNull GroovyResolveKind kind) {
     List<GroovyResolveResult> results = new SmartList<>(myCandidates.get(kind));
     if (kind == GroovyResolveKind.PROPERTY) {
       myAccessorProcessors.forEach(it -> results.addAll(it.getResults()));

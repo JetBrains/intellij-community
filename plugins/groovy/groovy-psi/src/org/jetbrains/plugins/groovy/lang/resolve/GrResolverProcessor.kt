@@ -6,5 +6,5 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 
 interface GrResolverProcessor<out T : GroovyResolveResult> : PsiScopeProcessor {
 
-  val results: List<T>
+  val results: List<@JvmWildcard T>
 }
