@@ -1223,6 +1223,24 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     }).usesAllCPUCores().assertTiming();
   }
 
+  public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
+    String listBody = StringUtil.join(Collections.nCopies(2000, "\"foo\""), ",\n");
+    String text = "class S { " +
+                  "String[] s = {" + listBody + "};\n" +
+                  "void foo(String... s) { foo(" + listBody + "); }\n" +
+                  "}";
+    configureByText(StdFileTypes.JAVA, text);
+
+    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 50_000, () -> {
+      assertEmpty(highlightErrors());
+
+      type("k");
+      assertNotEmpty(highlightErrors());
+
+      backspace();
+    }).usesAllCPUCores().assertTiming();
+  }
+
   public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
     String text = "class Foo { native Foo foo(); }\n" +
                   "class Bar<T extends Foo> extends Foo {\n" +
