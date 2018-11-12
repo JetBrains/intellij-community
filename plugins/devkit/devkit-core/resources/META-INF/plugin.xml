@@ -184,6 +184,10 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
+    <localInspection language="UAST" shortName="UnregisteredNamedColor" displayName="Unregistered named color"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" isInternal="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.UnregisteredNamedColorInspection"/>
 
     <intentionAction>
       <className>org.jetbrains.idea.devkit.codeStyle.bean.CodeStyleBeanIntention</className>

@@ -8,6 +8,7 @@ import java.awt.*;
 import java.util.Set;
 
 /**
+ * @see org.jetbrains.idea.devkit.inspections.UnregisteredNamedColorInspection
  * @see ThemeJsonCompletionContributor
  * @see javax.swing.UIDefaults
  * @see com.intellij.ui.JBColor#namedColor(String, Color)
