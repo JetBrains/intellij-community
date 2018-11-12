@@ -775,9 +775,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       return false;
     }
     EdtInvocationManager.getInstance().invokeLater(
-      () -> reportMessage("Note that this template contains a Groovy Script filter " +
-                          "and the script has access to the complete " + ApplicationNamesInfo.getInstance().getFullProductName() +
-                          " internals. Please make sure that the script does not cause damage before using this template.",
+      () -> reportMessage(SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName()),
                           false, myOptionsToolbar));
     return true;
   }
@@ -996,7 +994,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
 
     private void init() {
-      getTemplatePresentation().setText(myReplace ? "Switch to Search" : "Switch to Replace");
+      getTemplatePresentation().setText(SSRBundle.message(myReplace ? "switch.to.search.action" : "switch.to.replace.action"));
       final ActionManager actionManager = ActionManager.getInstance();
       final ShortcutSet searchShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralSearchAction").getShortcutSet();
       final ShortcutSet replaceShortcutSet = actionManager.getAction("StructuralSearchPlugin.StructuralReplaceAction").getShortcutSet();
@@ -1010,7 +1008,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   private class CopyConfigurationAction extends AnAction implements DumbAware {
 
     CopyConfigurationAction() {
-      super("Copy Template to Clipboard");
+      super(SSRBundle.message("export.template.action"));
     }
 
     @Override
@@ -1022,14 +1020,14 @@ public class StructuralSearchDialog extends DialogWrapper {
   private class PasteConfigurationAction extends AnAction implements DumbAware {
 
     PasteConfigurationAction() {
-      super("Paste Template from Clipboard");
+      super(SSRBundle.message("import.template.action"));
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final String contents = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
       if (!loadConfiguration(contents)) {
-        reportMessage("No template found on the clipboard", false, myOptionsToolbar);
+        reportMessage(SSRBundle.message("no.template.found.warning"), false, myOptionsToolbar);
       }
     }
   }
