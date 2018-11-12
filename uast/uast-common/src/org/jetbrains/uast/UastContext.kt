@@ -61,6 +61,10 @@ class UastContext(val project: Project) : UastLanguagePlugin {
   }
 
   override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
+    if (element is PsiWhiteSpace) {
+      return null
+    }
+
     val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
     if (cachedElement != null) {
       return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null

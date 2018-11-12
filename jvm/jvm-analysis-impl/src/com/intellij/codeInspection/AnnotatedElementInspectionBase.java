@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public abstract class AnnotatedElementInspectionBase extends LocalInspectionTool
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
-        if (element instanceof PsiLanguageInjectionHost) {
+        if (element instanceof PsiLanguageInjectionHost || element instanceof LeafPsiElement) {
           return; // better performance
         }
 
