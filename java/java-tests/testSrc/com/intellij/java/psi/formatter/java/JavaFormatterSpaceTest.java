@@ -733,4 +733,9 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "    case 1, 2, 3 -> foo();\n" +
                  "}");
   }
+
+  public void testSwitchExpression() {
+    doMethodTest("String s = switch\n(i   ){}",
+                 "String s = switch (i) {\n}");
+  }
 }

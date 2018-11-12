@@ -1321,8 +1321,17 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitSwitchStatement(PsiSwitchStatement statement) {
+    processSwitchBlock();
+  }
+
+  @Override
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    processSwitchBlock();
+  }
+
+  private void processSwitchBlock() {
     if (myType1 == JavaTokenType.SWITCH_KEYWORD && myType2 == JavaTokenType.LPARENTH) {
-      createSpaceInCode(mySettings.SPACE_BEFORE_SWITCH_PARENTHESES);
+      createSpaceProperty(mySettings.SPACE_BEFORE_SWITCH_PARENTHESES, false, 0);
     }
     else if (myType1 == JavaTokenType.LPARENTH || myType2 == JavaTokenType.RPARENTH) {
       createSpaceInCode(mySettings.SPACE_WITHIN_SWITCH_PARENTHESES);
