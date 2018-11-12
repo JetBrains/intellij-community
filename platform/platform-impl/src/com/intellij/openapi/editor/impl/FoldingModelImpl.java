@@ -349,12 +349,12 @@ public class FoldingModelImpl extends InlayModel.SimpleAdapter
     }
 
     List<Caret> carets = myEditor.getCaretModel().getAllCarets();
-    for (Caret caret : carets) {
-      LogicalPosition caretPosition = caret.getLogicalPosition();
-      int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
+    if (myDoNotCollapseCaret) {
+      for (Caret caret : carets) {
+        LogicalPosition caretPosition = caret.getLogicalPosition();
+        int caretOffset = myEditor.logicalPositionToOffset(caretPosition);
 
-      if (FoldRegionsTree.containsStrict(region, caretOffset)) {
-        if (myDoNotCollapseCaret) return;
+        if (FoldRegionsTree.containsStrict(region, caretOffset)) return;
       }
     }
     for (Caret caret : carets) {
