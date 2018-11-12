@@ -136,8 +136,12 @@ public class DependencyResolverImpl implements DependencyResolver {
 
     for (Dependency dep : conf.getIncoming().getDependencies()) {
       if (dep instanceof ProjectDependency) {
+        Configuration targetConfiguration = getTargetConfiguration((ProjectDependency)dep);
+        // TODO handle broken dependencies
+        if(targetConfiguration == null) continue;
+
         map.put(toComponentIdentifier(dep.getGroup(), dep.getName(), dep.getVersion()), (ProjectDependency)dep);
-        projectDeps(getTargetConfiguration((ProjectDependency)dep), map, processedConfigurations);
+        projectDeps(targetConfiguration, map, processedConfigurations);
       }
     }
     return map;
@@ -762,8 +766,9 @@ public class DependencyResolverImpl implements DependencyResolver {
           projectDependency.setVersion(project.getVersion().toString());
           projectDependency.setScope(scope);
           projectDependency.setProjectPath(project.getPath());
-          projectDependency.setConfigurationName(targetConfiguration.getName());
-          Set<File> artifacts = new LinkedHashSet<File>(targetConfiguration.getAllArtifacts().getFiles().getFiles());
+          projectDependency.setConfigurationName(targetConfiguration == null ? "default" : targetConfiguration.getName());
+          Set<File> artifacts = new LinkedHashSet<File>(targetConfiguration == null ? Collections.<File>emptySet() :
+                                                        targetConfiguration.getAllArtifacts().getFiles().getFiles());
           projectDependency.setProjectDependencyArtifacts(artifacts);
           projectDependency.setProjectDependencyArtifactsSources(findArtifactSources(artifacts, mySourceSetFinder));
 
@@ -809,11 +814,12 @@ public class DependencyResolverImpl implements DependencyResolver {
     return result;
   }
 
+  @Nullable
   public static Configuration getTargetConfiguration(ProjectDependency projectDependency) {
 
     try {
       return !is4OrBetter ?  (Configuration)projectDependency.getClass().getMethod("getProjectConfiguration").invoke(projectDependency) :
-             projectDependency.getDependencyProject().getConfigurations().getByName(projectDependency.getTargetConfiguration() != null
+             projectDependency.getDependencyProject().getConfigurations().findByName(projectDependency.getTargetConfiguration() != null
                                                                                     ? projectDependency.getTargetConfiguration()
                                                                                     : "default");
     }
