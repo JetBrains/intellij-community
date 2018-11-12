@@ -43,8 +43,9 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   @Override
   public Collection<? extends ActionOrGroup> getVariants(ConvertContext context) {
     final List<ActionOrGroup> variants = new ArrayList<>();
+    final Set<String> processedVariants = new HashSet<>();
     PairProcessor<String, ActionOrGroup> collectProcessor = (s, actionOrGroup) -> {
-      if (isRelevant(actionOrGroup)) {
+      if (isRelevant(actionOrGroup) && processedVariants.add(s)) {
         variants.add(actionOrGroup);
       }
       return true;
