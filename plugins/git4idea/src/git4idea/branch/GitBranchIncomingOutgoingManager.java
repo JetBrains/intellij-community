@@ -5,11 +5,13 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.vcs.log.Hash;
@@ -36,6 +38,8 @@ import static java.util.stream.Collectors.toSet;
 import static one.util.streamex.StreamEx.of;
 
 public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeListener, GitAuthenticationListener {
+
+  private static final Logger LOG = Logger.getInstance(GitBranchIncomingOutgoingManager.class);
 
   //store map from local branch to related cached remote branch hash per repository
   @NotNull private final Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToPull = newConcurrentMap();
@@ -218,10 +222,28 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
       GitPushTarget pushTarget = GitPushSupport.getPushTargetIfExist(gitRepository, branch);
       Hash remoteHash = pushTarget != null ? branchesCollection.getHash(pushTarget.getBranch()) : null;
       if (remoteHash != null && !Objects.equals(branchesCollection.getHash(branch), remoteHash)) {
-        branchesToPush.put(branch, remoteHash);
+        if (hasOutgoingCommitsForBranch(gitRepository, branch)) {
+          branchesToPush.put(branch, remoteHash);
+        }
       }
     }
     return branchesToPush;
+  }
+
+  private static boolean hasOutgoingCommitsForBranch(@NotNull GitRepository repository, @NotNull GitLocalBranch localBranch) {
+    //run git rev-list --count localName@{push}..localName
+    GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REV_LIST);
+    handler.setSilent(true);
+    String branchName = localBranch.getName();
+    handler.addParameters("--count", branchName + "@{push}.." + branchName);
+    try {
+      String output = Git.getInstance().runCommand(handler).getOutputOrThrow().trim();
+      return !StringUtil.startsWithChar(output, '0');
+    }
+    catch (VcsException e) {
+      LOG.warn("Can't get outgoing info (git rev-list " + branchName + " failed):" + e.getMessage());
+      return false;
+    }
   }
 
   @NotNull
