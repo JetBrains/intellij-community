@@ -15,21 +15,20 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.ElementAwareLocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.Joining;
@@ -45,7 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspection {
+public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @SuppressWarnings("PublicField")
   public boolean ignoreSwitchStatementsWithDefault = true;
@@ -56,11 +55,8 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspectio
     return InspectionGadgetsBundle.message("enum.switch.statement.which.misses.cases.display.name");
   }
 
-  @Override
   @NotNull
-  public String buildErrorString(Object... infos) {
-    final String enumName = (String)infos[0];
-    @SuppressWarnings("unchecked") Set<String> names = (Set<String>)infos[1];
+  String buildErrorString(String enumName, Set<String> names) {
     if (names.size() == 1) {
       return InspectionGadgetsBundle
         .message("enum.switch.statement.which.misses.cases.problem.descriptor.single", enumName, names.iterator().next());
@@ -81,78 +77,79 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspectio
                                           this, "ignoreSwitchStatementsWithDefault");
   }
 
+  @NotNull
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new EnumSwitchStatementWhichMissesCasesVisitor();
-  }
-
-  @Nullable
-  @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    @SuppressWarnings("unchecked") Set<String> names = (Set<String>)infos[1];
-    return new CreateMissingSwitchBranchesFix(names);
-  }
-
-  private class EnumSwitchStatementWhichMissesCasesVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
-      super.visitSwitchStatement(statement);
-      final PsiExpression expression = statement.getExpression();
-      if (expression == null) return;
-      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-      if (aClass == null || !aClass.isEnum()) return;
-      Set<String> constants = StreamEx.of(aClass.getAllFields()).select(PsiEnumConstant.class).map(PsiEnumConstant::getName)
-        .toCollection(LinkedHashSet::new);
-      if (constants.isEmpty()) return;
-      ProblemHighlightType highlighting = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-      for (final PsiSwitchLabelStatement child : PsiTreeUtil.getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatement.class)) {
-        if (child.isDefaultCase()) {
-          if (ignoreSwitchStatementsWithDefault) {
-            if (!isOnTheFly()) return;
-            highlighting = ProblemHighlightType.INFORMATION;
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new JavaElementVisitor() {
+      @Override
+      public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
+        super.visitSwitchStatement(statement);
+        final PsiExpression expression = statement.getExpression();
+        if (expression == null) return;
+        final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+        if (aClass == null || !aClass.isEnum()) return;
+        Set<String> constants = StreamEx.of(aClass.getAllFields()).select(PsiEnumConstant.class).map(PsiEnumConstant::getName)
+          .toCollection(LinkedHashSet::new);
+        if (constants.isEmpty()) return;
+        ProblemHighlightType highlighting = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        for (final PsiSwitchLabelStatement child : PsiTreeUtil
+          .getChildrenOfTypeAsList(statement.getBody(), PsiSwitchLabelStatement.class)) {
+          if (child.isDefaultCase()) {
+            if (ignoreSwitchStatementsWithDefault) {
+              if (!isOnTheFly) return;
+              highlighting = ProblemHighlightType.INFORMATION;
+            }
+            continue;
           }
-          continue;
+          PsiEnumConstant enumConstant = findEnumConstant(child);
+          if (enumConstant == null || enumConstant.getContainingClass() != aClass) {
+            // Syntax error or unresolved constant: do not report anything on incomplete code
+            return;
+          }
+          constants.remove(enumConstant.getName());
         }
-        PsiEnumConstant enumConstant = findEnumConstant(child);
-        if (enumConstant == null || enumConstant.getContainingClass() != aClass) {
-          // Syntax error or unresolved constant: do not report anything on incomplete code
-          return;
-        }
-        constants.remove(enumConstant.getName());
-      }
-      if (constants.isEmpty()) return;
-      CommonDataflow.DataflowResult dataflow = CommonDataflow.getDataflowResult(expression);
-      if (dataflow != null) {
-        Set<Object> values = dataflow.getValuesNotEqualToExpression(expression);
-        for (Object value : values) {
-          if (value instanceof PsiEnumConstant) {
-            constants.remove(((PsiEnumConstant)value).getName());
+        if (constants.isEmpty()) return;
+        CommonDataflow.DataflowResult dataflow = CommonDataflow.getDataflowResult(expression);
+        if (dataflow != null) {
+          Set<Object> values = dataflow.getValuesNotEqualToExpression(expression);
+          for (Object value : values) {
+            if (value instanceof PsiEnumConstant) {
+              constants.remove(((PsiEnumConstant)value).getName());
+            }
           }
         }
-      }
-      if (constants.isEmpty()) return;
-      Object[] infos = {aClass.getQualifiedName(), constants};
-      if (highlighting == ProblemHighlightType.INFORMATION ||
-          InspectionProjectProfileManager.isInformationLevel(getShortName(), statement)) {
-        registerError(statement, ProblemHighlightType.INFORMATION, infos);
-      }
-      else {
-        int length = statement.getFirstChild().getTextLength();
-        registerErrorAtOffset(statement, 0, length, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, infos);
-        if (isOnTheFly()) {
-          registerErrorAtOffset(statement, length, statement.getTextLength() - length, ProblemHighlightType.INFORMATION, infos);
+        if (constants.isEmpty()) return;
+        String message = buildErrorString(aClass.getQualifiedName(), constants);
+        CreateMissingSwitchBranchesFix fix = new CreateMissingSwitchBranchesFix(statement, constants);
+        if (highlighting == ProblemHighlightType.INFORMATION ||
+            InspectionProjectProfileManager.isInformationLevel(getShortName(), statement)) {
+          holder.registerProblem(statement, message, ProblemHighlightType.INFORMATION, fix);
+        }
+        else {
+          int length = statement.getFirstChild().getTextLength();
+          holder.registerProblem(statement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new TextRange(0, length), fix);
+          if (isOnTheFly) {
+            TextRange range = new TextRange(length, statement.getTextLength());
+            holder.registerProblem(statement, message, ProblemHighlightType.INFORMATION, range, fix);
+          }
         }
       }
-    }
+    };
   }
 
-
-  private static class CreateMissingSwitchBranchesFix extends InspectionGadgetsFix implements ElementAwareLocalQuickFix {
+  private static class CreateMissingSwitchBranchesFix implements LocalQuickFix, IntentionAction {
     private final Set<String> myNames;
+    private final SmartPsiElementPointer<PsiSwitchStatement> myStatement;
 
-    private CreateMissingSwitchBranchesFix(Set<String> names) {
+    private CreateMissingSwitchBranchesFix(@NotNull PsiSwitchStatement statement, Set<String> names) {
+      myStatement = SmartPointerManager.createPointer(statement);
       myNames = names;
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return getName();
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -173,8 +170,22 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspectio
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
-      PsiSwitchStatement switchStatement = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiSwitchStatement.class);
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      invoke();
+    }
+
+    @Override
+    public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+      invoke();
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return true;
+    }
+
+    public void invoke() {
+      PsiSwitchStatement switchStatement = myStatement.getElement();
       if (switchStatement == null) return;
       final PsiCodeBlock body = switchStatement.getBody();
       final PsiExpression switchExpression = switchStatement.getExpression();
@@ -228,10 +239,12 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends BaseInspectio
     }
 
     @Override
-    public boolean isAvailable(Project project, ProblemDescriptor descriptor, PsiElement element) {
-      PsiSwitchStatement fromDescriptor = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiSwitchStatement.class);
-      PsiSwitchStatement fromCurrentElement = PsiTreeUtil.getNonStrictParentOfType(element, PsiSwitchStatement.class);
-      return fromDescriptor == fromCurrentElement;
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      PsiSwitchStatement startSwitch = myStatement.getElement();
+      if (startSwitch == null) return false;
+      int offset = Math.min(editor.getCaretModel().getOffset(), startSwitch.getTextRange().getEndOffset() - 1);
+      PsiSwitchStatement currentSwitch = PsiTreeUtil.getNonStrictParentOfType(file.findElementAt(offset), PsiSwitchStatement.class);
+      return currentSwitch == startSwitch;
     }
 
     private static void addSwitchLabelStatementBefore(PsiEnumConstant missingEnumElement, PsiElement anchor) {
