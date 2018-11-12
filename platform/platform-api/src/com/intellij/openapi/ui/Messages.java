@@ -177,7 +177,8 @@ public class Messages {
   @NotNull
   public static Runnable createMessageDialogRemover(@Nullable Project project) {
     Window projectWindow = project == null ? null : WindowManager.getInstance().suggestParentWindow(project);
-    return () -> UIUtil.invokeLaterIfNeeded(() -> makeCurrentMessageDialogGoAway(
+    //noinspection SSBasedInspection
+    return () -> SwingUtilities.invokeLater(() -> makeCurrentMessageDialogGoAway(
       projectWindow != null ? projectWindow.getOwnedWindows() : Window.getWindows()));
   }
 
