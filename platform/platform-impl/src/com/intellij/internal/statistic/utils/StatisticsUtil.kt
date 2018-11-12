@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DefaultProjectFactory
@@ -187,39 +188,63 @@ private fun addAll(result: ObjectIntHashMap<String>, usages: Set<UsageDescriptor
   }
 }
 
-private val repositoryPluginIds: Set<String>
+private val safeToReportPluginIds: Set<String>
   get() {
     val project = DefaultProjectFactory.getInstance().defaultProject
     return CachedValuesManager.getManager(project).getCachedValue(project) {
-      var plugins = emptyList<IdeaPluginDescriptor>()
-      try {
-        val cached = RepositoryHelper.loadCachedPlugins()
-        if (cached != null) {
-          plugins = cached
-        }
-        else {
-          // schedule plugins loading, will take them the next time
-          ApplicationManager.getApplication().executeOnPooledThread {
-            try {
-              RepositoryHelper.loadPlugins(null)
-            }
-            catch (ignored: IOException) {
-            }
-          }
-        }
-      }
-      catch (ignored: IOException) {
-      }
-
+      val plugins = collectSafePluginDescriptors()
       val ids = StreamEx.of(plugins).map<PluginId> { descriptor: PluginDescriptor -> descriptor.pluginId }.nonNull().
         map<String> { id: PluginId -> id.idString }.toSet()
       CachedValueProvider.Result.create(ids, DelayModificationTracker(1, TimeUnit.HOURS))
     }
   }
 
-fun isFromPluginRepository(descriptor: IdeaPluginDescriptor?): Boolean {
+/**
+ * We are safe to report only plugins which are bundled or in our official plugin repository due to GDPR
+ */
+private fun collectSafePluginDescriptors(): List<IdeaPluginDescriptor> {
+  // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository
+  if (ApplicationInfoEx.getInstanceEx().isPluginManagerUrlDefault) {
+    try {
+      val cached = RepositoryHelper.loadCachedPlugins()
+      if (cached != null) {
+        val plugins = ArrayList<IdeaPluginDescriptor>()
+        plugins.addAll(cached)
+        plugins.addAll(getBundledPluginDescriptors())
+        return plugins
+      }
+      else {
+        // schedule plugins loading, will take them the next time
+        ApplicationManager.getApplication().executeOnPooledThread {
+          try {
+            RepositoryHelper.loadPlugins(null)
+          }
+          catch (ignored: IOException) {
+          }
+        }
+        return emptyList() //report nothing until repo plugins loaded
+      }
+    }
+    catch (ignored: IOException) {
+    }
+  }
+
+  return getBundledPluginDescriptors()
+}
+
+private fun getBundledPluginDescriptors(): List<IdeaPluginDescriptor> {
+  return PluginManager.getPlugins().filter { it.isBundled }.toList()
+}
+
+/**
+ * Checks this plugin is bundled or from official repository, so API from it may be reported
+ */
+fun isSafeToReportFrom(descriptor: IdeaPluginDescriptor?): Boolean {
   if (descriptor == null) {
     return false
+  }
+  if(descriptor.isBundled){
+    return true
   }
   var path: String
   try {
@@ -231,13 +256,18 @@ fun isFromPluginRepository(descriptor: IdeaPluginDescriptor?): Boolean {
   }
 
   if (path.startsWith(PathManager.getPluginsPath())) {
-    return isFromPluginRepository(descriptor.pluginId?.idString)
+    return isSafeToReport(descriptor.pluginId?.idString)
   }
   return false
 }
 
-fun isFromPluginRepository(pluginId: String?): Boolean {
-  return pluginId != null && repositoryPluginIds.contains(pluginId)
+/**
+ * Checks plugin with same id is bundled or from official repository, so pluginId may be reported.
+ * However it may reuse existing id, and it's better to check isSafeToReportFrom(descriptor: IdeaPluginDescriptor?)
+ * before reporting API from this plugin
+ */
+fun isSafeToReport(pluginId: String?): Boolean {
+  return pluginId != null && safeToReportPluginIds.contains(pluginId)
 }
 
 private class DelayModificationTracker internal constructor(delay: Long, unit: TimeUnit) : ModificationTracker {
