@@ -314,3 +314,41 @@ class LocalModelWrapper<T extends LocalModel> extends LocalModelGraphElementWrap
   public T getElement()  { return super.getElement(); }
 }
 interface LocalModel {}
+///////////////
+class X7 {
+  Object x() {
+    return new Object() {
+      void a() {
+        b(); // used before declaration
+      }
+      void b() {
+        a();
+      }
+    };
+  }
+}
+class X8 extends X7 {
+  @java.lang.Override
+  Object <warning descr="Method 'x()' is identical to its super method">x</warning>() {
+    return new Object() {
+      void b(){
+        a();
+      }
+      void a() {
+        b();
+      }
+    };
+  }
+}
+////////////////
+class X9 {
+
+  void x(@NotNull Object o) {
+    x(null);
+  }
+}
+class X10 extends X9{
+  void x(@NotNull Object o) {
+    ((X2)o).x(null);
+  }
+}

@@ -28,9 +28,9 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,7 +107,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
       }
       final PsiCodeBlock superBody = superMethod.getBody();
 
-      final EquivalenceChecker checker = new EquivalenceChecker(true);
+      final TrackingEquivalenceChecker checker = new TrackingEquivalenceChecker();
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
       for (int i = 0; i < parameters.length; i++) {
