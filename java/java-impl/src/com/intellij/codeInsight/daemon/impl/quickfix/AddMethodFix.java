@@ -3,8 +3,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -78,7 +78,7 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
     return methodPrototype != null &&
            methodPrototype.isValid() &&
-           ScratchFileService.isInProjectOrScratch(myClass) &&
+           BaseIntentionAction.canModify(myClass) &&
            myText != null &&
            MethodSignatureUtil.findMethodBySignature(myClass, methodPrototype, false) == null
       ;

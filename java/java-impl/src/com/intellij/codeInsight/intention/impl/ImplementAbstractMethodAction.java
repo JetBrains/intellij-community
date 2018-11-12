@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -45,7 +44,7 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     if (method == null || !method.isValid() || method.isConstructor()) return false;
     setText(getIntentionName(method));
 
-    if (!ScratchFileService.isInProjectOrScratch(method)) return false;
+    if (!canModify(method)) return false;
 
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null) return false;

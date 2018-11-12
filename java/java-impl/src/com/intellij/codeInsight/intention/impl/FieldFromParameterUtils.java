@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -281,7 +280,7 @@ public final class FieldFromParameterUtils {
                                     boolean findIndirectAssignments) {
     return myParameter != null
            && myParameter.isValid()
-           && ScratchFileService.isInProjectOrScratch(myParameter)
+           && BaseIntentionAction.canModify(myParameter)
            && myParameter.getDeclarationScope() instanceof PsiMethod
            && ((PsiMethod)myParameter.getDeclarationScope()).getBody() != null
            && type != null

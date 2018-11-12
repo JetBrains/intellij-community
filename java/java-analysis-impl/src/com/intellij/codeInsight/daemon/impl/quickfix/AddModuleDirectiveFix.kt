@@ -2,8 +2,8 @@
 package com.intellij.codeInsight.daemon.impl.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
@@ -13,7 +13,7 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : LocalQuickFixAndIn
   override fun getFamilyName(): String = QuickFixBundle.message("module.info.add.directive.family.name")
 
   override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean =
-    startElement is PsiJavaModule && PsiUtil.isLanguageLevel9OrHigher(file) && ScratchFileService.isInProjectOrScratch(startElement)
+    startElement is PsiJavaModule && PsiUtil.isLanguageLevel9OrHigher(file) && BaseIntentionAction.canModify(startElement)
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement): Unit =
     invoke(project, file, editor, startElement as PsiJavaModule)

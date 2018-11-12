@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -49,7 +49,7 @@ public class NavigateToAlreadyDeclaredVariableFix implements IntentionAction {
     if (!myVariable.isValid()) {
       return false;
     }
-    return ScratchFileService.isInProjectOrScratch(myVariable);
+    return BaseIntentionAction.canModify(myVariable);
   }
 
   @Override

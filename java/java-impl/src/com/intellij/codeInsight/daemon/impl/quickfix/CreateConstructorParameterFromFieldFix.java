@@ -24,9 +24,9 @@ import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.AssignFieldFromParameterAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.FieldFromParameterUtils;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -91,7 +91,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   private static boolean isAvailable(PsiField field) {
     PsiClass containingClass = field == null ? null : field.getContainingClass();
     return field != null
-           && ScratchFileService.isInProjectOrScratch(field)
+           && BaseIntentionAction.canModify(field)
            && !field.hasModifierProperty(PsiModifier.STATIC)
            && containingClass != null
            && !(containingClass instanceof PsiSyntheticClass)

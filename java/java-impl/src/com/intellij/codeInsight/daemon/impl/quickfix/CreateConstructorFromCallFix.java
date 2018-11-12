@@ -21,7 +21,6 @@ import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -122,7 +121,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
 
   @Override
   protected PsiElement getElement() {
-    if (!myConstructorCall.isValid() || !ScratchFileService.isInProjectOrScratch(myConstructorCall)) return null;
+    if (!myConstructorCall.isValid() || !canModify(myConstructorCall)) return null;
 
     PsiExpressionList argumentList = myConstructorCall.getArgumentList();
     if (argumentList == null) return null;
@@ -153,7 +152,7 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
     PsiElement element = getElement(myConstructorCall);
 
     PsiFile targetFile = getTargetFile(myConstructorCall);
-    if (targetFile != null && !ScratchFileService.isInProjectOrScratch(targetFile)) {
+    if (targetFile != null && !canModify(targetFile)) {
       return false;
     }
 

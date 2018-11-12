@@ -18,9 +18,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -68,7 +68,7 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (file != null && file.isValid()) {
       myFileName = file.getName();
-      return ScratchFileService.isInProjectOrScratch(file);
+      return BaseIntentionAction.canModify(file);
     }
     else {
       return false;

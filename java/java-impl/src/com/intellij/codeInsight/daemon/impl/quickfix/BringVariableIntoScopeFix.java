@@ -18,7 +18,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -65,7 +65,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
     if (referenceName == null) return false;
 
     PsiManager manager = file.getManager();
-    if (!myUnresolvedReference.isValid() || !ScratchFileService.isInProjectOrScratch(myUnresolvedReference)) return false;
+    if (!myUnresolvedReference.isValid() || !BaseIntentionAction.canModify(myUnresolvedReference)) return false;
 
     PsiElement container = PsiTreeUtil.getParentOfType(myUnresolvedReference, PsiCodeBlock.class, PsiClass.class);
     if (!(container instanceof PsiCodeBlock)) return false;

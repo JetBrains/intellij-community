@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -80,7 +80,7 @@ public class MoveBoundClassToFrontFix extends ExtendsListFix {
     PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
 
     return
-      ScratchFileService.isInProjectOrScratch(myClass)
+      BaseIntentionAction.canModify(myClass)
       && classToExtendFrom != null
       && classToExtendFrom.isValid()
     ;

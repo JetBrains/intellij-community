@@ -20,7 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
-import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -42,7 +42,7 @@ public class EnableOptimizeImportsOnTheFlyFix implements IntentionAction, LowPri
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return ScratchFileService.isInProjectOrScratch(file)
+    return BaseIntentionAction.canModify(file)
            && file instanceof PsiJavaFile
            && !CodeInsightWorkspaceSettings.getInstance(project).optimizeImportsOnTheFly;
   }
