@@ -16,12 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyProperty;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -31,8 +29,7 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isPropertyName;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
-import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint, MultiProcessor {
 
@@ -163,33 +160,6 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
   public Collection<? extends PsiScopeProcessor> getProcessors() {
     return myStopExecutingMethods ? singletonList(this)
                                   : concat(singletonList(this), myAccessorProcessors);
-  }
-
-  private static GroovyResolveKind getResolveKind(PsiNamedElement element) {
-    if (element instanceof PsiClass) {
-      return GroovyResolveKind.CLASS;
-    }
-    else if (element instanceof PsiPackage) {
-      return GroovyResolveKind.PACKAGE;
-    }
-    if (element instanceof PsiMethod) {
-      return GroovyResolveKind.METHOD;
-    }
-    else if (element instanceof PsiField) {
-      return GroovyResolveKind.FIELD;
-    }
-    else if (element instanceof GrBindingVariable) {
-      return GroovyResolveKind.BINDING;
-    }
-    else if (element instanceof PsiVariable) {
-      return GroovyResolveKind.VARIABLE;
-    }
-    else if (element instanceof GroovyProperty) {
-      return GroovyResolveKind.PROPERTY;
-    }
-    else {
-      return null;
-    }
   }
 
   @NotNull
