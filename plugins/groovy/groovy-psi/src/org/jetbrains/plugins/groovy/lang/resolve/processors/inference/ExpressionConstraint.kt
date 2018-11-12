@@ -3,18 +3,18 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
 class ExpressionConstraint(private val leftType: PsiType?, private val expression: GrExpression) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     when (expression) {
       is GrMethodCall -> {
-        val invokedExpression = expression.invokedExpression as? GrReferenceExpression ?: return true
-        constraints.add(MethodCallConstraint(invokedExpression, leftType))
+        val result = expression.advancedResolve() as? GroovyMethodResult ?: return true
+        constraints.add(MethodCallConstraint(leftType, result, expression))
       }
       is GrClosableBlock -> if (leftType != null) constraints.add(ClosureConstraint(expression, leftType))
       else -> if (leftType != null) constraints.add(TypeConstraint(leftType, expression.type, expression))
