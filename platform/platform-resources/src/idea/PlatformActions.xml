@@ -16,6 +16,7 @@
 <idea-plugin>
   <actions>
     <action id="QuickActionPopup" text="Show Quick Actions Popup" class="com.intellij.ui.switcher.ShowQuickActionPopupAction"/>
+    <action id="RunConfigurationTemplatesForNewProjects" class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction"/>
 
     <group id="Other.KeymapGroup"/> <!-- grouping for Settings -> Keymap -> Others -->
     <group id="Vcs.KeymapGroup" text="Version Control Systems"/> <!-- grouping for Settings -> Keymap -> Version Control Systems -->
@@ -292,8 +293,9 @@
         <group id="FileMainSettingsGroup">
           <action id="ShowSettings" class="com.intellij.ide.actions.ShowSettingsAction"/>
           <group id="FileOtherSettingsGroup" class="com.intellij.ide.actions.SmartPopupActionGroup">
-             <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
-             <group id="FileSettingsGroup"/>
+            <action id="TemplateProjectProperties" class="com.intellij.ide.actions.TemplateProjectPropertiesAction"/>
+            <reference ref="RunConfigurationTemplatesForNewProjects"/>
+            <group id="FileSettingsGroup"/>
           </group>
           <separator/>
           <group id="ExportImportGroup">
@@ -678,7 +680,7 @@
     <group id="WelcomeScreen.Configure">
       <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
       <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction"/>
-      <action id="WelcomeScreen.Configure.RunConfigurations" class="com.intellij.execution.actions.EditRunConfigurationTemplatesForNewProjectsAction"/>
+      <reference ref="RunConfigurationTemplatesForNewProjects"/>
 
       <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.ToolbarDecorator.Import"/>
       <action id="WelcomeScreen.Configure.Export" class="com.intellij.configurationStore.ExportSettingsAction" icon="AllIcons.ToolbarDecorator.Export"/>

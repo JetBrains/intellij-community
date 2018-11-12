@@ -384,7 +384,7 @@
     </group>
 
     <action id="WelcomeScreen.Configure.ProjectStructure" class="com.intellij.ide.actions.TemplateProjectStructureAction">
-      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="WelcomeScreen.Configure.RunConfigurations"/>
+      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="RunConfigurationTemplatesForNewProjects"/>
     </action>
 
     <action id="AddFrameworkSupport" class="com.intellij.ide.util.frameworkSupport.AddFrameworkSupportAction">
