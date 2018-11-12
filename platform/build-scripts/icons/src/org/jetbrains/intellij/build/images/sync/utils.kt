@@ -15,7 +15,7 @@ internal fun String.splitNotBlank(delimiter: String): List<String> = this.split(
 
 internal fun String.splitWithTab(): List<String> = this.split("\t".toRegex())
 
-internal fun execute(workingDir: File?, vararg command: String, silent: Boolean = false): String {
+internal fun execute(workingDir: File?, vararg command: String, withTimer: Boolean = false): String {
   val errOutputFile = File.createTempFile("errOutput", "txt")
   val processCall = {
     val process = ProcessBuilder(*command.filter { it.isNotBlank() }.toTypedArray())
@@ -35,7 +35,7 @@ internal fun execute(workingDir: File?, vararg command: String, silent: Boolean 
     output
   }
   return try {
-    if (silent) processCall() else callWithTimer("Executing command ${command.joinToString(" ")}", processCall)
+    if (withTimer) callWithTimer("Executing command ${command.joinToString(" ")}", processCall) else processCall()
   }
   finally {
     errOutputFile.delete()
@@ -59,7 +59,6 @@ internal fun <T> callSafely(call: () -> T): T? = try {
 }
 catch (e: Exception) {
   e.printStackTrace()
-  log(e.message ?: e.javaClass.canonicalName)
   null
 }
 

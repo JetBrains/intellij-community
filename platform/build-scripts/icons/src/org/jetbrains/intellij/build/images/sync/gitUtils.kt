@@ -9,7 +9,7 @@ import java.util.stream.Stream
 private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?: "git").also {
   val noGitFound = "Git is not found, please specify path to git executable in TEAMCITY_GIT_PATH or GIT or add it to PATH"
   try {
-    val gitVersion = execute(File(System.getProperty("user.dir")), it, "--version", silent = true)
+    val gitVersion = execute(File(System.getProperty("user.dir")), it, "--version")
     if (gitVersion.isBlank()) error(noGitFound)
     log(gitVersion)
   }
@@ -45,7 +45,7 @@ private fun listGitTree(
     }
     log("Unable to pull changes for $repo: ${e.message}")
   }
-  return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList, silent = true)
+  return execute(repo, GIT, "ls-tree", "HEAD", "-r", relativeDirToList)
     .trim().lines().stream()
     .filter { it.isNotBlank() }.map { line ->
       // format: <mode> SP <type> SP <object> TAB <file>
@@ -118,7 +118,7 @@ private fun splitAndTry(factor: Int, files: List<String>, repo: File) {
   log("Executing git add for ${repo.absolutePath} in batches with $factor elements each")
   files.split(factor).forEach {
     try {
-      execute(repo, GIT, "add", *it.toTypedArray(), silent = true)
+      execute(repo, GIT, "add", *it.toTypedArray())
     }
     catch (e: Exception) {
       val finerFactor: Int = factor / 2
@@ -147,10 +147,10 @@ internal fun deleteBranch(repo: File, branch: String) {
 
 private fun push(repo: File, spec: String) =
   retry(doRetry = { it.message?.contains("remote end hung up unexpectedly") == true }) {
-    execute(repo, GIT, "push", "origin", spec)
+    execute(repo, GIT, "push", "origin", spec, withTimer = true)
   }
 
-internal fun getOriginUrl(repo: File) = execute(repo, GIT, "ls-remote", "--get-url", "origin", silent = true)
+internal fun getOriginUrl(repo: File) = execute(repo, GIT, "ls-remote", "--get-url", "origin")
   .removeSuffix(System.lineSeparator())
   .trim()
 
@@ -193,10 +193,10 @@ internal fun latestChangeTime(path: String, repo: File): Long {
  */
 private fun findMergeCommit(repo: File, commit: String, searchUntil: String = "HEAD"): CommitInfo? {
   // list commits that are both descendants of commit hash and ancestors of HEAD
-  val ancestryPathList = execute(repo, GIT, "rev-list", "$commit..$searchUntil", "--ancestry-path", silent = true)
+  val ancestryPathList = execute(repo, GIT, "rev-list", "$commit..$searchUntil", "--ancestry-path")
     .lineSequence().filter { it.isNotBlank() }
   // follow only the first parent commit upon seeing a merge commit
-  val firstParentList = execute(repo, GIT, "rev-list", "$commit..$searchUntil", "--first-parent", silent = true)
+  val firstParentList = execute(repo, GIT, "rev-list", "$commit..$searchUntil", "--first-parent")
     .lineSequence().filter { it.isNotBlank() }.toSet()
   // last common commit may be the latest merge
   return ancestryPathList
@@ -246,7 +246,7 @@ private fun head(repo: File): String {
   if (!heads.containsKey(repo)) {
     synchronized(headsGuard) {
       if (!heads.containsKey(repo)) {
-        heads += repo to execute(repo, GIT, "rev-parse", "--abbrev-ref", "HEAD", silent = true).removeSuffix(System.lineSeparator())
+        heads += repo to execute(repo, GIT, "rev-parse", "--abbrev-ref", "HEAD").removeSuffix(System.lineSeparator())
       }
     }
   }
@@ -254,7 +254,7 @@ private fun head(repo: File): String {
 }
 
 private fun commitInfo(repo: File, vararg args: String): CommitInfo? {
-  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%ce/%s", "--date=raw", *args, silent = true)
+  val output = execute(repo, GIT, "log", "--max-count", "1", "--format=%H/%cd/%P/%ce/%s", "--date=raw", *args)
     .splitNotBlank("/")
   // <hash>/<timestamp> <timezone>/<parent hashes>/committer email/<subject>
   return if (output.size >= 5) {

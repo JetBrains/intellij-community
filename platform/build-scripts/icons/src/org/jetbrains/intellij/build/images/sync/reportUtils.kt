@@ -56,7 +56,7 @@ private fun createReviewForDev(root: File, context: Context, user: String, email
       .map { findGitRepoRoot(it, silent = true) }
       .distinct()
       .toList()
-    val commits = findInvestigator(context.iconsRepo, changes.asSequence()).commits
+    val commits = findCommitsByRepo(context.iconsRepo, changes.asSequence())
     if (commits.isNotEmpty()) {
       val verificationPassed = try {
         context.devIconsVerifier?.run()
@@ -90,12 +90,16 @@ private fun createReviewForIcons(root: File, context: Context, user: String, ema
   if (!context.doSyncIconsAndCreateReview) return null
   val changes = context.addedByDev + context.removedByDev + context.modifiedByDev
   if (changes.isNotEmpty()) {
-    val investigator = findInvestigator(root, changes.asSequence())
-    if (investigator.commits.isNotEmpty()) {
+    val commits = findCommitsByRepo(root, changes.asSequence())
+    if (commits.isNotEmpty()) {
       val review = pushAndCreateReview(UPSOURCE_ICONS_PROJECT_ID, user, email,
-                                       investigator.commits.commitMessage(),
+                                       commits.commitMessage(),
                                        listOf(context.iconsRepo))
-      addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, investigator.email)
+      commits.values.parallelStream()
+        .flatMap { it.stream() }
+        .map { it.committerEmail }
+        .distinct()
+        .forEach { addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, it) }
       return review
     }
   }
@@ -121,21 +125,23 @@ private fun assignInvestigation(root: File, context: Context): Investigator? =
   }
 
 private fun findInvestigator(root: File, changes: Sequence<String>): Investigator {
-  val commits = changes.map {
-    val path = File(root, it).absolutePath
-    val commit = latestChangeCommit(path)
-    if (commit != null) commit to it else null
-  }.filterNotNull().toList()
-  return commits
-           .groupBy { it.first.committerEmail }
+  val commits = findCommits(root, changes).toList()
+  return commits.groupBy { it.committerEmail }
            .maxBy { it.value.size }
            ?.let { entry ->
              Investigator(entry.key, commits.asSequence()
-               .map { it.first }
                .distinctBy { it.hash }
                .groupBy { it.repo })
            } ?: Investigator()
 }
+
+private fun findCommitsByRepo(root: File, changes: Sequence<String>) =
+  findCommits(root, changes).distinctBy { it.hash }.groupBy { it.repo }
+
+private fun findCommits(root: File, changes: Sequence<String>) = changes
+  .map { File(root, it).absolutePath }
+  .map { latestChangeCommit(it) }
+  .filterNotNull()
 
 private fun pushAndCreateReview(project: String, user: String, email: String, message: String, repos: Collection<File>): Review {
   val branch = "icons-sync/${UUID.randomUUID()}"
@@ -144,9 +150,7 @@ private fun pushAndCreateReview(project: String, user: String, email: String, me
       initGit(it, user, email)
       commitAndPush(it, branch, message)
     }
-    return createReview(project, branch, commits).also {
-      log("Review successfully created: ${it.url}")
-    }
+    return createReview(project, branch, commits)
   }
   catch (e: Throwable) {
     repos.forEach {

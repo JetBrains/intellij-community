@@ -13,6 +13,8 @@ import java.io.PrintStream
 import java.nio.file.Path
 import java.util.function.Consumer
 import java.util.stream.Collectors
+import java.util.stream.Stream
+import kotlin.streams.toList
 
 private lateinit var icons: Map<String, GitObject>
 private lateinit var devIcons: Map<String, GitObject>
@@ -21,7 +23,6 @@ fun main(args: Array<String>) = try {
   checkIcons()
 }
 catch (e: Throwable) {
-  log(e.message ?: e::class.java.name)
   e.printStackTrace()
 }
 
@@ -51,35 +52,51 @@ internal fun checkIcons(context: Context = Context(),
     devIconsTmp.remove(icon)
   }
   context.addedByDev = devIconsTmp.keys
-  context.modifiedByDev = callWithTimer("Searching for modified by developers") {
-    modifiedByDev(modified)
-  }
-  context.removedByDev = callWithTimer("Searching for removed by developers") {
-    removedByDev(context.addedByDesigners, devRepoVcsRoots, File(context.devRepoDir))
-  }
-  context.modifiedByDesigners = modified.filter { !context.modifiedByDev.contains(it) }.toMutableList()
-  context.removedByDesigners = callWithTimer("Searching for removed by designers") {
-    removedByDesigners(context.addedByDev, context.iconsRepo, File(context.iconsRepoDir).relativeTo(context.iconsRepo).path.let {
-      if (it.isEmpty()) "" else "$it/"
-    })
+  callWithTimer("Searching for changed icons..") {
+    Stream.of(
+      { SearchType.MODIFIED to modifiedByDev(modified) },
+      { SearchType.REMOVED_BY_DEV to removedByDev(context.addedByDesigners, devRepoVcsRoots, File(context.devRepoDir)) },
+      {
+        val iconsDir = File(context.iconsRepoDir).relativeTo(context.iconsRepo).path.let { if (it.isEmpty()) "" else "$it/" }
+        SearchType.REMOVED_BY_DESIGNERS to removedByDesigners(context.addedByDev, context.iconsRepo, iconsDir)
+      }
+    ).parallel().map { it() }.toList().forEach {
+      val (searchType, searchResult) = it
+      when (searchType) {
+        SearchType.MODIFIED -> {
+          context.modifiedByDev = searchResult
+          context.modifiedByDesigners = modified.filter { file ->
+            !context.modifiedByDev.contains(file)
+          }.toMutableList()
+        }
+        SearchType.REMOVED_BY_DEV -> {
+          context.removedByDev = searchResult
+          context.addedByDesigners.removeAll(searchResult)
+        }
+        SearchType.REMOVED_BY_DESIGNERS -> {
+          context.removedByDesigners = searchResult
+          context.addedByDev.removeAll(searchResult)
+        }
+      }
+    }
   }
   syncIcons(context, devIcons, icons)
   report(context, devRepoRoot, devIcons.size, icons.size, skippedDirs.size, consistent)
 }
 
-private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) =
+private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
+
+private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) = protectStdErr {
   listGitObjects(iconsRepo, iconsRepoDir) {
     // read icon hashes
     isValidIcon(it.toPath())
   }.also {
     if (it.isEmpty()) error("Icons repo doesn't contain icons")
   }
+}
 
-private fun readDevRepo(devRepoRoot: File,
-                        devRepoDir: String,
-                        devRepoVcsRoots: List<File>,
-                        skipDirsPattern: String?
-): MutableMap<String, GitObject> {
+private fun readDevRepo(devRepoRoot: File, devRepoDir: String,
+                        devRepoVcsRoots: List<File>, skipDirsPattern: String?) = protectStdErr {
   val testRoots = searchTestRoots(devRepoRoot.absolutePath)
   log("Found ${testRoots.size} test roots")
   if (skipDirsPattern != null) log("Using pattern $skipDirsPattern to skip dirs")
@@ -98,7 +115,7 @@ private fun readDevRepo(devRepoRoot: File,
     listGitObjects(devRepoRoot, devRepoVcsRoots, devRepoIconFilter)
   }
   if (devIcons.isEmpty()) error("Dev repo doesn't contain icons")
-  return devIcons.toMutableMap()
+  devIcons.toMutableMap()
 }
 
 private fun searchTestRoots(devRepoDir: String) = try {
@@ -110,22 +127,29 @@ private fun searchTestRoots(devRepoDir: String) = try {
   }.mapTo(mutableSetOf()) { it.file }
 }
 catch (e: IOException) {
-  log(e.message!!)
+  e.printStackTrace()
   emptySet<File>()
+}
+
+private inline fun <T> protectStdErr(block: () -> T): T {
+  val err = System.err
+  return try {
+    block()
+  }
+  finally {
+    System.setErr(err)
+  }
 }
 
 private val mutedStream = PrintStream(object : OutputStream() {
   override fun write(b: ByteArray) {}
-
   override fun write(b: ByteArray, off: Int, len: Int) {}
-
   override fun write(b: Int) {}
 })
 
-private fun isValidIcon(file: Path): Boolean {
-  val err = System.err
-  System.setErr(mutedStream)
-  return try {
+private fun isValidIcon(file: Path) = protectStdErr {
+  try {
+    System.setErr(mutedStream)
     // image
     isImage(file) && imageSize(file)?.let { size ->
       val pixels = if (file.fileName.toString().contains("@2x")) 64 else 32
@@ -136,9 +160,6 @@ private fun isValidIcon(file: Path): Boolean {
   catch (e: Exception) {
     log("WARNING: $file: ${e.message}")
     false
-  }
-  finally {
-    System.setErr(err)
   }
 }
 
@@ -156,27 +177,20 @@ private fun inTestRoot(file: File, testRoots: Set<File>, skipDirsRegex: Regex?):
          || file.parentFile != null && inTestRoot(file.parentFile, testRoots, skipDirsRegex)
 }
 
-private fun removedByDesigners(
-  addedByDev: MutableCollection<String>,
-  iconsRepo: File, iconsDir: String) = addedByDev.parallelStream()
-  .filter {
-    val latestChangeTimeByDesigners = latestChangeTime("$iconsDir$it", iconsRepo)
-    // latest changes are made by designers
-    latestChangeTimeByDesigners > 0 && latestChangeTime(devIcons[it]) < latestChangeTimeByDesigners
-  }.collect(Collectors.toList()).also {
-    addedByDev.removeAll(it)
-  }
+private fun removedByDesigners(addedByDev: Collection<String>,
+                               iconsRepo: File, iconsDir: String) = addedByDev.parallelStream().filter {
+  val byDesigners = latestChangeTime("$iconsDir$it", iconsRepo)
+  // latest changes are made by designers
+  byDesigners > 0 && latestChangeTime(devIcons[it]) < byDesigners
+}.toList()
 
-private fun removedByDev(
-  addedByDesigners: MutableCollection<String>,
-  devRepos: Collection<File>, devRepoDir: File) = addedByDesigners.parallelStream()
-  .filter { path ->
-    val latestChangeTimeByDev = latestChangeTime(File(devRepoDir, path).absolutePath, devRepos)
-    // latest changes are made by developers
-    latestChangeTimeByDev > 0 && latestChangeTime(icons[path]) < latestChangeTimeByDev
-  }.collect(Collectors.toList()).also {
-    addedByDesigners.removeAll(it)
-  }
+private fun removedByDev(addedByDesigners: Collection<String>,
+                         devRepos: Collection<File>,
+                         devRepoDir: File) = addedByDesigners.parallelStream().filter {
+  val byDev = latestChangeTime(File(devRepoDir, it).absolutePath, devRepos)
+  // latest changes are made by developers
+  byDev > 0 && latestChangeTime(icons[it]) < byDev
+}.toList()
 
 private fun latestChangeTime(file: String, repos: Collection<File>): Long {
   for (repo in repos) {

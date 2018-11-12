@@ -63,7 +63,7 @@ internal fun isInvestigationAssigned() = teamCityGet("investigations?locator=bui
 internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
   try {
     val id = teamCityGet("users/email:${investigator.email}/id")
-    val text = investigator.run {
+    val text = with(investigator) {
       (if (commits.isNotEmpty()) "commits: ${commits.entries.joinToString {
         "${getOriginUrl(it.key)} : ${it.value.map(CommitInfo::hash)}"
       }},"
