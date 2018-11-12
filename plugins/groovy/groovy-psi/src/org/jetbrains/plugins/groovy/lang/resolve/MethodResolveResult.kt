@@ -3,13 +3,13 @@ package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveState
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
-import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildQualifier
@@ -19,7 +19,9 @@ import kotlin.reflect.jvm.isAccessible
 class MethodResolveResult(
   method: PsiMethod,
   ref: GrReferenceExpression,
-  state: ResolveState
+  state: ResolveState,
+  private val arguments: Arguments?,
+  private val typeArguments: Array<out PsiType>
 ) : BaseGroovyResolveResult<PsiMethod>(method, ref, state), GroovyMethodResult {
 
   override fun getContextSubstitutor(): PsiSubstitutor {
@@ -27,11 +29,10 @@ class MethodResolveResult(
   }
 
   private val siteSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    contextSubstitutor.putAll(method.typeParameters, ref.typeArguments)
+    contextSubstitutor.putAll(method.typeParameters, typeArguments)
   }
 
   private val methodCandidate by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    val arguments = (ref.parent as? GrMethodCall)?.getArguments()
     if (arguments != null && method is GrGdkMethod) {
       val newArguments = listOf(buildQualifier(ref, state)) + arguments
       MethodCandidate(method.staticMethod, siteSubstitutor, newArguments, ref)
@@ -42,7 +43,7 @@ class MethodResolveResult(
   }
 
   private val applicabilitySubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    if (ref.typeArguments.isNotEmpty()) {
+    if (typeArguments.isNotEmpty()) {
       siteSubstitutor
     }
     else {
@@ -51,7 +52,7 @@ class MethodResolveResult(
   }
 
   private val fullSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    if (ref.typeArguments.isNotEmpty()) {
+    if (typeArguments.isNotEmpty()) {
       siteSubstitutor
     }
     else {

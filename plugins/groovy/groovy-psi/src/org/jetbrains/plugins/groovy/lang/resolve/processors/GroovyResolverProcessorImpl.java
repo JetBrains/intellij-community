@@ -14,7 +14,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -25,7 +24,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator.Conte
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
-import static org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt.getArguments;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.OverloadsKt.chooseOverloads;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.OverloadsKt.filterByArgumentsCount;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
@@ -33,12 +31,10 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.Inf
 
 class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrResolverProcessor<GroovyResolveResult> {
 
-  private final List<Argument> myArguments;
   private final Context myComparatorContext;
 
   GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
     super(ref, kinds);
-    myArguments = getArguments((GrCall)myRef.getParent());
     myComparatorContext = new ComparatorContext(ref);
   }
 

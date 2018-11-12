@@ -14,12 +14,14 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.BaseGroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -30,12 +32,14 @@ import static com.intellij.util.containers.ContainerUtil.concat;
 import static java.util.Collections.singletonList;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PropertyUtilKt.isPropertyName;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.*;
+import static org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt.getArguments;
 
 public abstract class GroovyResolverProcessor implements PsiScopeProcessor, ElementClassHint, NameHint, DynamicMembersHint, MultiProcessor {
 
   protected final @NotNull GrReferenceExpression myRef;
   private final @NotNull String myName;
   protected final @NotNull EnumSet<GroovyResolveKind> myAcceptableKinds;
+  protected final List<Argument> myArguments;
 
   protected final List<GrResolverProcessor<? extends GroovyResolveResult>> myAccessorProcessors;
   protected final MultiMap<GroovyResolveKind, GroovyResolveResult> myCandidates = MultiMap.create();
@@ -47,6 +51,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
     myRef = ref;
     myAcceptableKinds = kinds;
     myName = getReferenceName(ref);
+    myArguments = getArguments((GrCall)myRef.getParent());
     myAccessorProcessors = calcAccessorProcessors();
   }
 
@@ -95,7 +100,7 @@ public abstract class GroovyResolverProcessor implements PsiScopeProcessor, Elem
 
     final GroovyResolveResult candidate;
     if (kind == GroovyResolveKind.METHOD) {
-      candidate = new MethodResolveResult((PsiMethod)namedElement, myRef, state);
+      candidate = new MethodResolveResult((PsiMethod)namedElement, myRef, state, myArguments, myRef.getTypeArguments());
     }
     else {
       candidate = new BaseGroovyResolveResult<>(namedElement, myRef, state);
