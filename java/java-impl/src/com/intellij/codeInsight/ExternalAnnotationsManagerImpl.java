@@ -344,7 +344,13 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     XmlElementFactory elementFactory = XmlElementFactory.getInstance(myPsiManager.getProject());
     XmlTag newItemTag = elementFactory.createTagFromText(createItemTag(ownerName, annotation));
 
-    PsiElement addedElement = rootTag.addAfter(newItemTag, anchor);
+    PsiElement addedElement;
+    if (anchor != null) {
+      addedElement = rootTag.addAfter(newItemTag, anchor);
+    } else {
+      addedElement = rootTag.addSubTag(newItemTag, true);
+    }
+
     if (!(addedElement instanceof XmlTag)) {
       throw new IncorrectOperationException("Failed to add annotation " + annotation + " after " + anchor);
     }
