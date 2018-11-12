@@ -52,7 +52,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         clearCache();
       }
     });
-    LowMemoryWatcher.register(() -> clearCache(), project);
+    LowMemoryWatcher.register(() -> myCache = null, project);
   }
 
   @NotNull
