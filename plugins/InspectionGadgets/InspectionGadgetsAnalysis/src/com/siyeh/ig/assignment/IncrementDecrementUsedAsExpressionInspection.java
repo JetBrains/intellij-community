@@ -322,6 +322,22 @@ public class IncrementDecrementUsedAsExpressionInspection
     PsiReplacementUtil.replaceExpression((PsiExpression)element, operandText);
   }
 
+  public static boolean isSuitableForReplacement(@NotNull PsiUnaryExpression expression) {
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiExpressionStatement ||
+        (parent instanceof PsiExpressionList &&
+         parent.getParent() instanceof
+           PsiExpressionListStatement)) {
+      return false;
+    }
+    final IElementType tokenType = expression.getOperationTokenType();
+    if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
+        !tokenType.equals(JavaTokenType.MINUSMINUS)) {
+      return false;
+    }
+    return PsiTreeUtil.getParentOfType(expression, PsiStatement.class) != null;
+  }
+
   @Override
   public BaseInspectionVisitor buildVisitor() {
     return new IncrementDecrementUsedAsExpressionVisitor();
@@ -334,19 +350,10 @@ public class IncrementDecrementUsedAsExpressionInspection
     public void visitUnaryExpression(
       @NotNull PsiUnaryExpression expression) {
       super.visitUnaryExpression(expression);
-      final PsiElement parent = expression.getParent();
-      if (parent instanceof PsiExpressionStatement ||
-          (parent instanceof PsiExpressionList &&
-           parent.getParent() instanceof
-             PsiExpressionListStatement)) {
-        return;
+
+      if (isSuitableForReplacement(expression)) {
+        registerError(expression, expression);
       }
-      final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.PLUSPLUS) &&
-          !tokenType.equals(JavaTokenType.MINUSMINUS)) {
-        return;
-      }
-      registerError(expression, expression);
     }
   }
 }
