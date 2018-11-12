@@ -4,6 +4,7 @@ package com.intellij.remoteServer.util;
 import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.agent.util.CloudAgentConfigBase;
 import com.intellij.remoteServer.agent.util.CloudProxySettings;
@@ -147,5 +148,22 @@ public class CloudConfigurationBase<Self extends CloudConfigurationBase<Self>>
   protected static CredentialAttributes createCredentialAttributes(String serviceName, String credentialsUser) {
     return StringUtil.isEmpty(serviceName) || StringUtil.isEmpty(credentialsUser) ?
            null : new CredentialAttributes(serviceName, credentialsUser);
+  }
+
+  @Override
+  public void loadState(@NotNull Self state) {
+    super.loadState(state);
+    migrateToPasswordSafe();
+  }
+
+  protected void migrateToPasswordSafe() {
+    final String unsafePassword = getPassword();
+    if (!StringUtil.isEmpty(unsafePassword)) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!StringUtil.isEmpty(unsafePassword)) {
+          setPasswordSafe(unsafePassword);
+        }
+      });
+    }
   }
 }
