@@ -450,6 +450,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
+  public boolean isPluginManagerUrlDefault() {
+    return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl);
+  }
+
+  @Override
   public String getPluginsListUrl() {
     return myPluginsListUrl;
   }
