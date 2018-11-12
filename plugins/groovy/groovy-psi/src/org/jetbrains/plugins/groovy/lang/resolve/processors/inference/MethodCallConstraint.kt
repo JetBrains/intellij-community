@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 
-class ReferenceExpressionConstraint(private val callRef: GrReferenceExpression, private val leftType: PsiType?) : GrConstraintFormula() {
+class MethodCallConstraint(private val callRef: GrReferenceExpression, private val leftType: PsiType?) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     val resolved = callRef.advancedResolve()

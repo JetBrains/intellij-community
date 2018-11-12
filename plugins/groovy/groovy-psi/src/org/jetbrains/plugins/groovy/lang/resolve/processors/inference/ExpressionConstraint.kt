@@ -14,7 +14,7 @@ class ExpressionConstraint(private val expression: GrExpression, private val lef
     when (expression) {
       is GrMethodCall -> {
         val invokedExpression = expression.invokedExpression as? GrReferenceExpression ?: return true
-        constraints.add(ReferenceExpressionConstraint(invokedExpression, leftType))
+        constraints.add(MethodCallConstraint(invokedExpression, leftType))
       }
       is GrClosableBlock -> if (leftType != null) constraints.add(ClosureConstraint(expression, leftType))
       else -> if (leftType != null) constraints.add(TypeConstraint(leftType, expression.type, expression))
