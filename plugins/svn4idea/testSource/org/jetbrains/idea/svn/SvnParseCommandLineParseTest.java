@@ -16,7 +16,6 @@ import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.info.SvnInfoHandler;
 import org.jetbrains.idea.svn.status.CmdStatusClient;
 import org.jetbrains.idea.svn.status.PortableStatus;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
@@ -48,16 +47,6 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
   private Path getTestData() {
     String fileName = PlatformTestUtil.getTestName(getTestName(), true);
     return Paths.get(getPluginHome(), "testData", "parse", fileName + ".xml");
-  }
-
-  @Test
-  public void testInfo() throws Exception {
-    final Info[] info = new Info[1];
-    final SvnInfoHandler handler = new SvnInfoHandler(new File("C:/base/"), info1 -> info[0] = info1);
-    SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-    parser.parse(inputStream(getTestData()), handler);
-
-    assertNotNull(info[0]);
   }
 
   @Test

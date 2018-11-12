@@ -23,12 +23,6 @@ import javax.xml.parsers.SAXParserFactory
 
 private val LOG = logger<CmdInfoClient>()
 
-private fun parseResult(base: File?, result: String?): Info? {
-  val ref = Ref<Info?>()
-  parseResult(InfoConsumer(ref::set), base, result)
-  return ref.get()
-}
-
 private fun parseResult(handler: InfoConsumer, base: File?, result: String?) {
   if (isEmptyOrSpaces(result)) return
 
@@ -135,6 +129,14 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
       if (handler != null) {
         parseResult(handler, base, result)
       }
+    }
+  }
+
+  companion object {
+    fun parseResult(base: File?, result: String?): Info? {
+      val ref = Ref<Info?>()
+      parseResult(InfoConsumer(ref::set), base, result)
+      return ref.get()
     }
   }
 }
