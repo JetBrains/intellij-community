@@ -16,6 +16,8 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.*;
+import org.jetbrains.yaml.psi.YAMLDocument;
+import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 
@@ -190,7 +192,22 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
                                                          int caretOffset, int indent) {
     while (true) {
       // TODO: RUBY-22437 support JSON-like mappings
-      YAMLBlockMappingImpl blockMapping = PsiTreeUtil.getParentOfType(element, YAMLBlockMappingImpl.class);
+      YAMLBlockMappingImpl blockMapping;
+      if (element.getParent() instanceof YAMLFile) {
+        // We are at the end of the file
+        PsiElement prev = element.getPrevSibling();
+        if (!(prev instanceof YAMLDocument)) {
+          return null;
+        }
+        element = ((YAMLDocument)prev).getTopLevelValue();
+        if (!(element instanceof YAMLBlockMappingImpl)) {
+          return null;
+        }
+        blockMapping = ((YAMLBlockMappingImpl)element);
+      }
+      else {
+        blockMapping = PsiTreeUtil.getParentOfType(element, YAMLBlockMappingImpl.class);
+      }
       if (blockMapping == null) {
         return null;
       }
