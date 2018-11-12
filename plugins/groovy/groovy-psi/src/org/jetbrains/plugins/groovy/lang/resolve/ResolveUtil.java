@@ -488,7 +488,7 @@ public class ResolveUtil {
       if (currentResult instanceof GroovyMethodResult) {
         final GroovyMethodResult currentMethodResult = (GroovyMethodResult)currentResult;
         currentMethod = currentMethodResult.getElement();
-        currentSubstitutor = currentMethodResult.getPartialSubstitutor();
+        currentSubstitutor = currentMethodResult.getContextSubstitutor();
       }
       else if (currentResult.getElement() instanceof PsiMethod) {
         currentMethod = (PsiMethod)currentResult.getElement();
@@ -508,7 +508,7 @@ public class ResolveUtil {
         if (otherResult instanceof GroovyMethodResult) {
           final GroovyMethodResult otherMethodResult = (GroovyMethodResult)otherResult;
           otherMethod = otherMethodResult.getElement();
-          otherSubstitutor = otherMethodResult.getPartialSubstitutor();
+          otherSubstitutor = otherMethodResult.getContextSubstitutor();
         }
         else if (otherResult.getElement() instanceof PsiMethod) {
           otherMethod = (PsiMethod)otherResult.getElement();
