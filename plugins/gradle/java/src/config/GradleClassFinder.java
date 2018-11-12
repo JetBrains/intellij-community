@@ -67,12 +67,7 @@ public class GradleClassFinder extends NonClasspathClassFinder {
   @Override
   public void clearCache() {
     super.clearCache();
-    // The parent class can publish a reference to this object before the constructor has returned.
-    // Thus, it's possible that not all fields of this object are initialized by the time they
-    // are accessed in clearCache(). Workaround is to null check.
-    if (myCaches != null) {
-      myCaches.clear();
-    }
+    myCaches.clear();
   }
 
   @Override
