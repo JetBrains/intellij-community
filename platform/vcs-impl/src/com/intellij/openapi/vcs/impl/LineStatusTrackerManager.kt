@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.impl
 import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
 import com.intellij.icons.AllIcons
-import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -78,7 +77,7 @@ class LineStatusTrackerManager(
 
   private var partialChangeListsEnabled = VcsApplicationSettings.getInstance().ENABLE_PARTIAL_CHANGELISTS && Registry.`is`("vcs.enable.partial.changelists")
   private val documentsInDefaultChangeList = HashSet<Document>()
-  private var batchChangeTaskCounter: Int = 0
+  private var clmFreezeCounter: Int = 0
 
   private val filesWithDamagedInactiveRanges = HashSet<VirtualFile>()
   private val fileStatesAwaitingRefresh = HashMap<VirtualFile, PartialLocalLineStatusTracker.State>()
@@ -107,7 +106,7 @@ class LineStatusTrackerManager(
 
       val busConnection = project.messageBus.connect(this)
       busConnection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
-      busConnection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
+      busConnection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
 
       val fsManager = FileStatusManager.getInstance(project)
       fsManager.addFileStatusListener(MyFileStatusListener(), this)
@@ -405,7 +404,7 @@ class LineStatusTrackerManager(
       refreshTracker(tracker)
       eventDispatcher.multicaster.onTrackerAdded(tracker)
 
-      if (batchChangeTaskCounter > 0) {
+      if (clmFreezeCounter > 0) {
         tracker.freeze()
       }
 
@@ -764,12 +763,11 @@ class LineStatusTrackerManager(
     }
   }
 
-  private inner class MyBatchFileChangeListener : BatchFileChangeListener {
-    override fun batchChangeStarted(eventProject: Project, activityName: String?) {
-      if (eventProject != project) return
+  private inner class MyFreezeListener : VcsFreezingProcess.Listener {
+    override fun onFreeze() {
       runReadAction {
         synchronized(LOCK) {
-          if (batchChangeTaskCounter == 0) {
+          if (clmFreezeCounter == 0) {
             for (data in trackers.values) {
               try {
                 data.tracker.freeze()
@@ -779,17 +777,16 @@ class LineStatusTrackerManager(
               }
             }
           }
-          batchChangeTaskCounter++
+          clmFreezeCounter++
         }
       }
     }
 
-    override fun batchChangeCompleted(eventProject: Project) {
-      if (eventProject != project) return
+    override fun onUnfreeze() {
       runInEdt(ModalityState.any()) {
         synchronized(LOCK) {
-          batchChangeTaskCounter--
-          if (batchChangeTaskCounter == 0) {
+          clmFreezeCounter--
+          if (clmFreezeCounter == 0) {
             for (data in trackers.values) {
               try {
                 data.tracker.unfreeze()

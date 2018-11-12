@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor;
 
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.util.text.StringUtil;
@@ -82,6 +83,7 @@ public class FoldingStressTest extends LightPlatformTestCase {
   }
 
   public void testRestoreManyFoldRegionsPerformance() {
+    System.out.println("In stress test: " + ApplicationInfoImpl.isInStressTest());
     int N = 100_000;
     DocumentImpl doc = new DocumentImpl(StringUtil.repeat("x", N));
     Editor editor = EditorFactory.getInstance().createEditor(doc);
