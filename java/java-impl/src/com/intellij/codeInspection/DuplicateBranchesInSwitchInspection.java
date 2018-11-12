@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +94,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     Comments comments = new Comments();
 
     Branch previousBranch = null;
-    Map<Integer, List<Branch>> branchesByLength = new HashMap<>();
+    TIntObjectHashMap<List<Branch>> branchesByLength = new TIntObjectHashMap<>();
     for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiSwitchLabelStatement) {
         PsiSwitchLabelStatement switchLabel = (PsiSwitchLabelStatement)child;
@@ -116,11 +117,14 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     }
 
     addBranchToMap(branchesByLength, statementList, true, comments, previousBranch);
-    return branchesByLength.values();
+
+    Collection<List<Branch>> result = new ArrayList<>();
+    branchesByLength.forEachValue(result::add); // mini-hack: ArrayList.add() always returns true
+    return result;
   }
 
   @Nullable
-  private static Branch addBranchToMap(@NotNull Map<Integer, List<Branch>> branchesByLength,
+  private static Branch addBranchToMap(@NotNull TIntObjectHashMap<List<Branch>> branchesByLength,
                                        @Nullable List<PsiStatement> statementList,
                                        boolean hasImplicitBreak,
                                        @NotNull Comments comments,
@@ -130,7 +134,10 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
     }
     Branch branch = new Branch(statementList, hasImplicitBreak, comments.fetchTexts());
     if (previousBranch == null || !previousBranch.canFallThrough()) {
-      List<Branch> branches = branchesByLength.computeIfAbsent(branch.length(), unused -> new ArrayList<>());
+      List<Branch> branches = branchesByLength.get(branch.length());
+      if (branches == null) {
+        branchesByLength.put(branch.length(), branches = new ArrayList<>());
+      }
       branches.add(branch);
     }
     return branch;
@@ -323,6 +330,7 @@ public class DuplicateBranchesInSwitchInspection extends LocalInspectionTool {
         if (switchLabel.isDefaultCase()) {
           return PsiKeyword.DEFAULT;
         }
+        //todo support multi-value label
         PsiExpression value = switchLabel.getCaseValue();
         if (value != null) {
           return PsiKeyword.CASE + ' ' + value.getText();
