@@ -12,7 +12,7 @@ class ArgumentsConstraint(private val candidate: MethodCandidate, private val co
     for ((argument, parameter) in mapping) {
       val leftType = parameter.second ?: continue
       if (argument is ExpressionArgument) {
-        constraints.add(ExpressionConstraint(argument.expression, leftType))
+        constraints.add(ExpressionConstraint(leftType, argument.expression))
       }
       else {
         val type = argument.type

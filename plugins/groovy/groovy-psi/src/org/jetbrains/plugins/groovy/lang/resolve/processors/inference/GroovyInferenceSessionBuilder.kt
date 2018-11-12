@@ -60,7 +60,7 @@ class GroovyInferenceSessionBuilder(private val ref: PsiElement, private val can
     if (startFromTop) {
       val session = GroovyInferenceSession(PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, ref, closureSkipList, skipClosureBlock)
       val methodCall = ref.parent as? GrMethodCall ?: return session
-      session.addConstraint(ExpressionConstraint(getMostTopLevelCall(methodCall), left))
+      session.addConstraint(ExpressionConstraint(left, getMostTopLevelCall(methodCall)))
       return session
     }
     else {

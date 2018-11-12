@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 
-class ExpressionConstraint(private val expression: GrExpression, private val leftType: PsiType?) : GrConstraintFormula() {
+class ExpressionConstraint(private val leftType: PsiType?, private val expression: GrExpression) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     when (expression) {
