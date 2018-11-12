@@ -300,9 +300,9 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   }
 
   @TestOnly
-  public void reset() {
+  public void reset(@Nullable RunManagerImpl runManager) {
     mySavedActiveTargetId = null;
     myActiveTarget = null;
-    myRunManager = null;
+    myRunManager = runManager;
   }
 }
