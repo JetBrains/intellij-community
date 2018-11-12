@@ -60,7 +60,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       String pluginIdString = pluginId == null ? null : pluginId.getIdString();
       String pluginIdToReport;
       if (pluginIdString != null && !pluginIdString.equals(PluginManagerCore.CORE_PLUGIN_ID) &&
-          StatisticsUtilKt.isFromPluginRepository(pluginIdString)) {
+          StatisticsUtilKt.isSafeToReport(pluginIdString)) {
         pluginIdToReport = pluginIdString;
       }
       else {

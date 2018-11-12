@@ -26,7 +26,10 @@ public abstract class AbstractToolsUsagesCollector extends ProjectUsagesCollecto
     return descriptor != null && descriptor.isBundled();
   };
 
-  private static final Predicate<ScopeToolState> LISTED = state -> StatisticsUtilKt.isFromPluginRepository(getIdeaPluginDescriptor(state));
+  private static final Predicate<ScopeToolState> LISTED = state -> {
+    IdeaPluginDescriptor descriptor = getIdeaPluginDescriptor(state);
+    return descriptor != null && !descriptor.isBundled() && StatisticsUtilKt.isSafeToReportFrom(descriptor);
+  };
 
   private static IdeaPluginDescriptor getIdeaPluginDescriptor(final ScopeToolState state) {
     final InspectionEP extension = state.getTool().getExtension();

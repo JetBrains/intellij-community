@@ -21,7 +21,7 @@ public class DisabledPluginsUsagesCollector extends ApplicationUsagesCollector {
   @Override
   @NotNull
   public Set<UsageDescriptor> getUsages() {
-    return PluginManagerCore.getDisabledPlugins().stream().filter(id -> StatisticsUtilKt.isFromPluginRepository(id))
+    return PluginManagerCore.getDisabledPlugins().stream().filter(id -> StatisticsUtilKt.isSafeToReport(id))
       .map(descriptor -> new UsageDescriptor(descriptor, 1)).collect(Collectors.toSet());
   }
 }
