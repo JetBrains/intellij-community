@@ -21,7 +21,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.isThisExpression
 import org.jetbrains.plugins.groovy.lang.psi.util.treeWalkUpAndGet
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT
 import org.jetbrains.plugins.groovy.lang.resolve.processors.CodeFieldProcessor
-import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessorBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.LocalVariableProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ReferenceExpressionClassProcessor
 
@@ -79,14 +78,6 @@ class GrReferenceResolveRunner(val place: GrReferenceExpression, val processor: 
   }
 }
 
-
-fun GrReferenceExpression.resolveReferenceExpression(incomplete: Boolean): Collection<GroovyResolveResult> {
-  val processor = GroovyResolverProcessorBuilder.builder()
-    .setIncomplete(incomplete)
-    .build(this)
-  GrReferenceResolveRunner(this, processor).resolveReferenceExpression()
-  return processor.results
-}
 
 private fun GrReferenceExpression.resolvePackageOrClass() = doResolvePackageOrClass()?.let(::ElementResolveResult)
 

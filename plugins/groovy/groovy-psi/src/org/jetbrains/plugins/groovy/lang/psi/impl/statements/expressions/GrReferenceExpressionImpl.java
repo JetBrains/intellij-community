@@ -55,7 +55,7 @@ import static kotlin.LazyKt.lazy;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.getRValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
-import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveReferenceExpression;
+import static org.jetbrains.plugins.groovy.lang.resolve.impl.IncompleteKt.resolveIncomplete;
 
 /**
  * @author ilyas
@@ -566,7 +566,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
   };
 
-  private static final GroovyResolver<GrReferenceExpression> INCOMPLETE_RESOLVER = (ref, inc) -> resolveReferenceExpression(ref, true);
+  private static final GroovyResolver<GrReferenceExpression> INCOMPLETE_RESOLVER = (ref, inc) -> resolveIncomplete(ref);
 
   @NotNull
   @Override
