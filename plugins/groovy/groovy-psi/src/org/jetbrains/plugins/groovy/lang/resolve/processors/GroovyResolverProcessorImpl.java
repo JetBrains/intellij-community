@@ -13,9 +13,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -23,23 +23,23 @@ import java.util.EnumSet;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.newSmartList;
+import static org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator.Context;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
+import static org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt.getArguments;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.OverloadsKt.chooseOverloads;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
 
-class GroovyResolverProcessorImpl extends GroovyResolverProcessor
-  implements GrMethodComparator.Context, GrResolverProcessor<GroovyResolveResult> {
+class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrResolverProcessor<GroovyResolveResult> {
 
-  private final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
+  private final List<Argument> myArguments;
+  private final Context myComparatorContext;
 
   GroovyResolverProcessorImpl(@NotNull final GrReferenceExpression ref, @NotNull EnumSet<GroovyResolveKind> kinds) {
     super(ref, kinds);
-    myArgumentTypes = NullableLazyValue.createValue(() -> {
-      PsiType[] types = buildTopLevelArgumentTypes((GrCall)myRef.getParent());
-      return types == null ? null : ContainerUtil.map(types, TypeConversionUtil::erasure, PsiType.EMPTY_ARRAY);
-    });
+    myArguments = getArguments((GrCall)myRef.getParent());
+    myComparatorContext = new ComparatorContext(ref);
   }
 
   @Override
@@ -67,7 +67,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
       else {
         List<? extends GroovyMethodResult> validMethods = valid(methods);
         if (!validMethods.isEmpty()) {
-          return chooseOverloads(validMethods, this);
+          return chooseOverloads(validMethods, myComparatorContext);
         }
       }
     }
@@ -80,7 +80,7 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
 
     final List<? extends GroovyMethodResult> validMethods = valid(methods);
     if (!validMethods.isEmpty()) {
-      return chooseOverloads(validMethods, this);
+      return chooseOverloads(validMethods, myComparatorContext);
     }
     final List<GroovyResolveResult> validProperties = valid(properties);
     if (!validProperties.isEmpty()) {
@@ -117,12 +117,13 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
   }
 
   protected List<GroovyResolveResult> filterCorrectParameterCount(Collection<? extends GroovyResolveResult> candidates) {
-    PsiType[] argumentTypes = myArgumentTypes.getValue();
-    if (argumentTypes == null) return ContainerUtil.newArrayList(candidates);
+    final List<Argument> arguments = myArguments;
+    if (arguments == null) return ContainerUtil.newArrayList(candidates);
+    final int argumentsCount = arguments.size();
     final List<GroovyResolveResult> result = newSmartList();
     for (GroovyResolveResult candidate : candidates) {
       if (candidate instanceof GroovyMethodResult) {
-        if (((GroovyMethodResult)candidate).getElement().getParameterList().getParametersCount() == argumentTypes.length) {
+        if (((GroovyMethodResult)candidate).getElement().getParameterList().getParametersCount() == argumentsCount) {
           result.add(candidate);
         }
       }
@@ -134,20 +135,34 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor
     return ContainerUtil.newArrayList(candidates);
   }
 
-  @Nullable
-  @Override
-  public PsiType[] getArgumentTypes() {
-    return myArgumentTypes.getValue();
-  }
+  private static final class ComparatorContext implements Context {
 
-  @NotNull
-  @Override
-  public PsiElement getPlace() {
-    return myRef;
-  }
+    private final @NotNull GrReferenceExpression myRef;
+    private final @NotNull NullableLazyValue<PsiType[]> myArgumentTypes;
 
-  @Override
-  public boolean isConstructor() {
-    return false;
+    private ComparatorContext(@NotNull GrReferenceExpression ref) {
+      myRef = ref;
+      myArgumentTypes = NullableLazyValue.createValue(() -> {
+        PsiType[] types = buildTopLevelArgumentTypes((GrCall)myRef.getParent());
+        return types == null ? null : ContainerUtil.map(types, TypeConversionUtil::erasure, PsiType.EMPTY_ARRAY);
+      });
+    }
+
+    @Nullable
+    @Override
+    public PsiType[] getArgumentTypes() {
+      return myArgumentTypes.getValue();
+    }
+
+    @NotNull
+    @Override
+    public PsiElement getPlace() {
+      return myRef;
+    }
+
+    @Override
+    public boolean isConstructor() {
+      return false;
+    }
   }
 }
