@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.impl
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 
 fun chooseOverloads(candidates: List<GroovyMethodResult>, context: GrMethodComparator.Context): List<GroovyMethodResult> {
   if (candidates.size <= 1) return candidates
@@ -31,4 +32,16 @@ fun chooseOverloads(candidates: List<GroovyMethodResult>, context: GrMethodCompa
   }
 
   return results
+}
+
+/**
+ * @return results that have the same numbers of parameters as passed arguments,
+ * or original results if it's not possible to compute arguments number or if there are no matching results
+ */
+fun filterByArgumentsCount(results: List<GroovyMethodResult>, arguments: Arguments?): List<GroovyMethodResult> {
+  val argumentsCount = arguments?.size ?: return results
+  val filtered = results.filterTo(SmartList()) {
+    it.element.parameterList.parametersCount == argumentsCount
+  }
+  return if (filtered.isEmpty()) results else filtered
 }

@@ -14,20 +14,20 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.newSmartList;
 import static org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator.Context;
+import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.singleOrValid;
 import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.valid;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.ArgumentsKt.getArguments;
 import static org.jetbrains.plugins.groovy.lang.resolve.impl.OverloadsKt.chooseOverloads;
+import static org.jetbrains.plugins.groovy.lang.resolve.impl.OverloadsKt.filterByArgumentsCount;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind.*;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt.buildTopLevelArgumentTypes;
 
@@ -105,34 +105,26 @@ class GroovyResolverProcessorImpl extends GroovyResolverProcessor implements GrR
   @NotNull
   protected List<? extends GroovyResolveResult> getAllCandidates() {
     for (GroovyResolveKind kind : myAcceptableKinds) {
-      List<? extends GroovyResolveResult> results = getAllCandidates(kind);
-      if (!results.isEmpty()) {
-        return ContainerUtil.newArrayList(ResolveUtil.filterSameSignatureCandidates(
-          filterCorrectParameterCount(results)
-        ));
+      if (kind == METHOD) {
+        //noinspection unchecked
+        List<? extends GroovyMethodResult> results = (List<? extends GroovyMethodResult>)getAllCandidates(kind);
+        if (!results.isEmpty()) {
+          return ContainerUtil.newArrayList(filterSameSignatureCandidates(
+            filterByArgumentsCount(results, myArguments)
+          ));
+        }
+      }
+      else {
+        List<? extends GroovyResolveResult> results = getAllCandidates(kind);
+        if (!results.isEmpty()) {
+          return ContainerUtil.newArrayList(filterSameSignatureCandidates(
+            results
+          ));
+        }
       }
     }
 
     return Collections.emptyList();
-  }
-
-  protected List<GroovyResolveResult> filterCorrectParameterCount(Collection<? extends GroovyResolveResult> candidates) {
-    final List<Argument> arguments = myArguments;
-    if (arguments == null) return ContainerUtil.newArrayList(candidates);
-    final int argumentsCount = arguments.size();
-    final List<GroovyResolveResult> result = newSmartList();
-    for (GroovyResolveResult candidate : candidates) {
-      if (candidate instanceof GroovyMethodResult) {
-        if (((GroovyMethodResult)candidate).getElement().getParameterList().getParametersCount() == argumentsCount) {
-          result.add(candidate);
-        }
-      }
-      else {
-        result.add(candidate);
-      }
-    }
-    if (!result.isEmpty()) return result;
-    return ContainerUtil.newArrayList(candidates);
   }
 
   private static final class ComparatorContext implements Context {
