@@ -212,12 +212,11 @@ public class ShelvedChangesViewManager implements Disposable {
 
   @CalledInAwt
   private void updateChangesContent() {
-    final List<ShelvedChangeList> changeLists = new ArrayList<>(myShelveChangesManager.getShelvedChangeLists());
-    changeLists.addAll(myShelveChangesManager.getRecycledShelvedChangeLists());
-    if (changeLists.size() == 0) {
+    if (myShelveChangesManager.getAllLists().isEmpty()) {
       if (myContent != null) {
         myContentManager.removeContent(myContent);
         myContentManager.selectContent(ChangesViewContentManager.LOCAL_CHANGES);
+        VcsNotifier.getInstance(myProject).hideAllNotificationsByType(ShelfNotification.class);
       }
       myContent = null;
     }
@@ -340,6 +339,8 @@ public class ShelvedChangesViewManager implements Disposable {
 
   public void activateView(@Nullable final ShelvedChangeList list) {
     runAfterUpdate(() -> {
+      if (myContent == null) return;
+
       if (list != null) {
         selectShelvedList(list);
       }

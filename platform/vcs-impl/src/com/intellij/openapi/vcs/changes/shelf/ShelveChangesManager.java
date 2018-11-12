@@ -394,6 +394,11 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
       filter(mySchemeManager.getAllSchemes(), list -> recycled == list.isRecycled() && !list.isDeleted()));
   }
 
+  @NotNull
+  public List<ShelvedChangeList> getAllLists() {
+    return newUnmodifiableList(mySchemeManager.getAllSchemes());
+  }
+
   public ShelvedChangeList shelveChanges(final Collection<Change> changes, final String commitMessage, final boolean rollback)
     throws IOException, VcsException {
     return shelveChanges(changes, commitMessage, rollback, false);

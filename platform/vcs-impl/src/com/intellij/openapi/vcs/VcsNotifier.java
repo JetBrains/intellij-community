@@ -185,10 +185,14 @@ public class VcsNotifier {
   }
 
   public void showNotificationAndHideExisting(@NotNull Notification notificationToShow, @NotNull Class<? extends Notification> klass) {
+    hideAllNotificationsByType(klass);
+    notificationToShow.notify(myProject);
+  }
+
+  public void hideAllNotificationsByType(@NotNull Class<? extends Notification> klass) {
     NotificationsManager notificationsManager = NotificationsManager.getNotificationsManager();
     for (Notification notification : notificationsManager.getNotificationsOfType(klass, myProject)) {
       notification.expire();
     }
-    notificationToShow.notify(myProject);
   }
 }
