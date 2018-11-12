@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.PsiType
-import com.intellij.psi.ResolveState
+import com.intellij.psi.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -18,11 +15,11 @@ import kotlin.reflect.jvm.isAccessible
 
 class MethodResolveResult(
   method: PsiMethod,
-  ref: GrReferenceExpression,
+  place: PsiElement,
   state: ResolveState,
   private val arguments: Arguments?,
   private val typeArguments: Array<out PsiType>
-) : BaseGroovyResolveResult<PsiMethod>(method, ref, state), GroovyMethodResult {
+) : BaseGroovyResolveResult<PsiMethod>(method, place, state), GroovyMethodResult {
 
   override fun getContextSubstitutor(): PsiSubstitutor {
     return super.getSubstitutor()
@@ -33,12 +30,12 @@ class MethodResolveResult(
   }
 
   private val methodCandidate by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    if (arguments != null && method is GrGdkMethod) {
-      val newArguments = listOf(buildQualifier(ref, state)) + arguments
-      MethodCandidate(method.staticMethod, siteSubstitutor, newArguments, ref)
+    if (arguments != null && method is GrGdkMethod && place is GrReferenceExpression) {
+      val newArguments = listOf(buildQualifier(place, state)) + arguments
+      MethodCandidate(method.staticMethod, siteSubstitutor, newArguments, place)
     }
     else {
-      MethodCandidate(method, siteSubstitutor, arguments, ref)
+      MethodCandidate(method, siteSubstitutor, arguments, place)
     }
   }
 
@@ -47,7 +44,7 @@ class MethodResolveResult(
       siteSubstitutor
     }
     else {
-      GroovyInferenceSessionBuilder(ref, methodCandidate).build().inferSubst()
+      GroovyInferenceSessionBuilder(place, methodCandidate).build().inferSubst()
     }
   }
 
@@ -56,7 +53,7 @@ class MethodResolveResult(
       siteSubstitutor
     }
     else {
-      GroovyInferenceSessionBuilder(ref, methodCandidate)
+      GroovyInferenceSessionBuilder(place, methodCandidate)
         .addReturnConstraint()
         .resolveMode(false)
         .startFromTop(true)

@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Pair
 import com.intellij.psi.*
 import com.intellij.psi.util.TypeConversionUtil
 import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider.checkProviders
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
@@ -21,7 +20,7 @@ import java.util.*
 class MethodCandidate(val method: PsiMethod,
                       val siteSubstitutor: PsiSubstitutor,
                       private val arguments: Arguments?,
-                      private val context: GroovyPsiElement) {
+                      private val context: PsiElement) {
 
   val argumentMapping: Map<Argument, Pair<PsiParameter, PsiType?>> by lazy(LazyThreadSafetyMode.PUBLICATION) {
     mapArguments(typeComputer)

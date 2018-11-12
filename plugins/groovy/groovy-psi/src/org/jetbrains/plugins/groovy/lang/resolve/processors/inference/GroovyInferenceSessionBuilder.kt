@@ -25,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.getArguments
 
-class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, private val candidate: MethodCandidate) {
+class GroovyInferenceSessionBuilder(private val ref: PsiElement, private val candidate: MethodCandidate) {
 
   private var closureSkipList = mutableListOf<GrMethodCall>()
 
@@ -65,7 +65,9 @@ class GroovyInferenceSessionBuilder(private val ref: GrReferenceExpression, priv
     }
     else {
       val session = GroovyInferenceSession(candidate.method.typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock)
-      session.addConstraint(MethodCallConstraint(ref, candidate))
+      if (ref is GrReferenceExpression) {
+        session.addConstraint(MethodCallConstraint(ref, candidate))
+      }
       val left = left ?: return session
 
       val returnType = PsiUtil.getSmartReturnType(candidate.method)
