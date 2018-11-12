@@ -1068,8 +1068,6 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag, HintedReferenc
       }
       while (first != last && (first = next) != null);
     }
-    catch (IncorrectOperationException ignored) {
-    }
     finally {
       clearCaches();
     }
