@@ -19,7 +19,7 @@ class ReferenceExpressionConstraint(private val callRef: GrReferenceExpression, 
       session.nestedSessions[resolved] = nestedSession
       nestedSession.propagateVariables(session)
 
-      nestedSession.addConstraint(MethodCallConstraint(callRef, it))
+      nestedSession.addConstraint(ArgumentsConstraint(callRef, it))
       nestedSession.repeatInferencePhases()
       val returnType = session.siteSubstitutor.substitute(PsiUtil.getSmartReturnType(it.method))
       val substitutedLeft = session.siteSubstitutor.substitute(session.substituteWithInferenceVariables(leftType))

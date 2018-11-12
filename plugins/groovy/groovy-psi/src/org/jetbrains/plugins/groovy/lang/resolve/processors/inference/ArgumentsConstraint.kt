@@ -5,7 +5,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.Constrain
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 
-class MethodCallConstraint(private val callRef: GrReferenceExpression, private val candidate: MethodCandidate) : GrConstraintFormula() {
+class ArgumentsConstraint(private val callRef: GrReferenceExpression, private val candidate: MethodCandidate) : GrConstraintFormula() {
 
   override fun reduce(session: GroovyInferenceSession, constraints: MutableList<ConstraintFormula>): Boolean {
     processArguments(constraints)

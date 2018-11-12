@@ -66,7 +66,7 @@ class GroovyInferenceSessionBuilder(private val ref: PsiElement, private val can
     else {
       val session = GroovyInferenceSession(candidate.method.typeParameters, candidate.siteSubstitutor, ref, closureSkipList, skipClosureBlock)
       if (ref is GrReferenceExpression) {
-        session.addConstraint(MethodCallConstraint(ref, candidate))
+        session.addConstraint(ArgumentsConstraint(ref, candidate))
       }
       val left = left ?: return session
 
