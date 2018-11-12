@@ -20,7 +20,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -450,7 +449,7 @@ public class MessageBusImpl implements MessageBus {
 
   @NotNull
   static <T> ThreadLocal<Queue<T>> createThreadLocalQueue() {
-    return ThreadLocal.withInitial(ConcurrentLinkedQueue::new);
+    return ThreadLocal.withInitial(ArrayDeque::new);
   }
 
   public static class RootBus extends MessageBusImpl {
