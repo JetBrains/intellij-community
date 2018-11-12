@@ -612,7 +612,7 @@ public class StatementParser {
   }
 
   @NotNull
-  private PsiBuilder.Marker parseExprInParenthWithBlock(PsiBuilder builder, IElementType type, boolean block) {
+  public PsiBuilder.Marker parseExprInParenthWithBlock(@NotNull PsiBuilder builder, @NotNull IElementType type, boolean block) {
     PsiBuilder.Marker statement = builder.mark();
     builder.advanceLexer();
 

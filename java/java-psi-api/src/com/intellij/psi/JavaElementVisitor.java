@@ -381,6 +381,10 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitExpression(expression);
   }
 
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    visitExpression(expression);
+  }
+
   public void visitModule(PsiJavaModule module) {
     visitElement(module);
   }

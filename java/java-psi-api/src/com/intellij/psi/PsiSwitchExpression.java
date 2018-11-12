@@ -2,9 +2,9 @@
 package com.intellij.psi;
 
 /**
- * Represents a Java {@code switch} statement.
+ * Represents a Java {@code switch} expression.
  *
  * @see PsiSwitchLabelStatement
  * @see PsiSwitchLabeledRuleStatement
  */
-public interface PsiSwitchStatement extends PsiSwitchBlock, PsiStatement { }
+public interface PsiSwitchExpression extends PsiSwitchBlock, PsiExpression { }
