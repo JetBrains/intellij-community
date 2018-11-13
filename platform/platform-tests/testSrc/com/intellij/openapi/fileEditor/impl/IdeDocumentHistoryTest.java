@@ -53,7 +53,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
         myHistory.onCommandStarted();
         runnable.run();
         myHistory.onSelectionChanged();
-        myHistory.onCommandFinished(groupId);
+        myHistory.onCommandFinished(getProject(), groupId);
       }
     };
 
@@ -88,7 +88,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
 
   public void testNoHistoryRecording() {
     myHistory.onCommandStarted();
-    myHistory.onCommandFinished(null);
+    myHistory.onCommandFinished(getProject(), null);
 
     assertFalse(myHistory.isBackAvailable());
     assertFalse(myHistory.isForwardAvailable());
@@ -185,7 +185,7 @@ public class IdeDocumentHistoryTest extends PlatformTestCase {
   private void makeNavigationChange(MyState newState) {
     myHistory.onCommandStarted();
     myHistory.onSelectionChanged();
-    myHistory.onCommandFinished(null);
+    myHistory.onCommandFinished(getProject(), null);
     myEditorState = newState;
   }
 
