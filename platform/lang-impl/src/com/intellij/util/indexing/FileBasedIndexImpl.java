@@ -1764,7 +1764,10 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         for (int i = 0, size = nontrivialFileIndexedStates.size(); i < size; ++i) {
           final ID<?, ?> indexId = nontrivialFileIndexedStates.get(i);
           if (needsFileContentLoading(indexId)) {
-            getIndex(indexId).resetIndexedStateForFile(fileId);
+            UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+            if (index != null) {
+              index.resetIndexedStateForFile(fileId);
+            }
           }
         }
 
