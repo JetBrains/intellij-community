@@ -4,10 +4,15 @@ package org.jetbrains.plugins.groovy.extensions;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
+import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument;
+
+import java.util.List;
 
 @ApiStatus.Experimental
 public abstract class GroovyApplicabilityProvider {
@@ -19,14 +24,20 @@ public abstract class GroovyApplicabilityProvider {
    * @return null if provider could not be applied in this case
    */
   @Nullable
-  public abstract ApplicabilityResult isApplicable(@NotNull PsiType[] argumentTypes, @NotNull PsiMethod method);
+  public abstract ApplicabilityResult isApplicable(@NotNull List<Argument> arguments, @NotNull PsiMethod method);
 
   @Nullable
-  public static ApplicabilityResult checkProviders(@NotNull PsiType[] argumentTypes, @NotNull PsiMethod method) {
+  public static ApplicabilityResult checkProviders(@NotNull List<Argument> arguments, @NotNull PsiMethod method) {
     for (GroovyApplicabilityProvider applicabilityProvider : EP_NAME.getExtensions()) {
-      ApplicabilityResult result = applicabilityProvider.isApplicable(argumentTypes, method);
+      ApplicabilityResult result = applicabilityProvider.isApplicable(arguments, method);
       if (result != null) return result;
     }
     return null;
+  }
+
+  @Deprecated
+  @Nullable
+  public static ApplicabilityResult checkProviders(@NotNull PsiType[] argumentTypes, @NotNull PsiMethod method) {
+    return checkProviders(ContainerUtil.map(argumentTypes, JustTypeArgument::new), method);
   }
 }
