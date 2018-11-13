@@ -75,9 +75,9 @@ public final class ValueElementReaderTest extends LightPlatformTestCase {
     assertNull(read(Color.class, null));
     assertNull(read(Color.class, ""));
     assertNull(read(Color.class, "Z"));
-    assertEquals(new Color(0x00CAFE), read(Color.class, "CAFE"));
+    assertEquals(new Color(0x00CAFE), read(Color.class, "00CAFE"));
     assertEquals(new Color(0x123456), read(Color.class, "0x123456"));
-    assertEquals(new Color(0x345678), read(Color.class, "12345678"));
+    assertEquals(new Color(0x78123456, true), read(Color.class, "12345678"));
   }
 
   public void testEnum() throws Exception {
