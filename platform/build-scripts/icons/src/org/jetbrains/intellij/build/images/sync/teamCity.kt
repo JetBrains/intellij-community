@@ -63,7 +63,7 @@ internal fun isInvestigationAssigned() = teamCityGet("investigations?locator=bui
 internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
   try {
     val id = teamCityGet("users/email:${investigator.email}/id")
-    val text = context.report() +
+    val text = context.report().let { if (it.isNotEmpty()) "$it, " else it } +
                (if (investigator.commits.isNotEmpty()) "commits: ${investigator.commits.description()}," else "") +
                " build: ${thisBuildReportableLink()}," +
                " see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"

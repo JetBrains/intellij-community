@@ -174,21 +174,26 @@ private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel"
 private val ICONS_REPO_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
 private val DEV_REPO_SYNC_BUILD_CONF = System.getProperty("intellij.icons.dev.sync.build.conf")
 
-internal fun Context.report() : String {
+internal fun Context.report(slack: Boolean = false): String {
   val iconsSync = when {
     !iconsSyncRequired() -> ""
     iconsReview() != null -> iconsReview()!!.let {
-      "To sync ${iconsRepoName} see <${it.url}|${it.id}>\n"
+      val link = if (slack) slackLink(it.id, it.url) else it.url
+      "To sync $iconsRepoName see $link\n"
     }
     else -> "Use 'Icons processing/*$ICONS_REPO_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n"
   }
   val devSync = when {
     !devSyncRequired() -> ""
     devReview() != null -> devReview()!!.let {
-      "To sync $devRepoName see <${it.url}|${it.id}>\n"
+      val link = if (slack) slackLink(it.id, it.url) else it.url
+      "To sync $devRepoName see $link\n"
     }
     DEV_REPO_SYNC_BUILD_CONF != null -> {
-      "To sync $devRepoName run <${buildConfReportableLink(DEV_REPO_SYNC_BUILD_CONF)}|this build>"
+      val link = buildConfReportableLink(DEV_REPO_SYNC_BUILD_CONF).let {
+        if (slack) slackLink("this build", it) else it
+      }
+      "To sync $devRepoName run $link"
     }
     else -> ""
   }
@@ -203,8 +208,10 @@ private fun notifySlackChannel(investigator: Investigator?, context: Context) {
   }
 
   val reaction = if (context.isFail()) ":scream:" else ":white_check_mark:"
-  val build = "<${thisBuildReportableLink()}|See build log>"
-  val text = "*${context.iconsRepoName}* $reaction\n" + investigation + context.report() + build
+  val build = slackLink("See build log", thisBuildReportableLink())
+  val text = "*${context.iconsRepoName}* $reaction\n" + investigation + context.report(slack = true) + build
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
   if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response")
 }
+
+private fun slackLink(name: String, link: String) = "<$link|$name>"
