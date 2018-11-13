@@ -115,12 +115,12 @@ internal fun addChangesToGit(files: List<String>, repo: File) {
 }
 
 private fun splitAndTry(factor: Int, files: List<String>, repo: File) {
-  log("Executing git add for ${repo.absolutePath} in batches with $factor elements each")
   files.split(factor).forEach {
     try {
-      execute(repo, GIT, "add", *it.toTypedArray())
+      execute(repo, GIT, "add", "--ignore-errors", *it.toTypedArray())
     }
     catch (e: Exception) {
+      if (e.message?.contains("did not match any files") == true) return
       val finerFactor: Int = factor / 2
       if (finerFactor < 1) throw e
       log("Git add command failed with ${e.message}")

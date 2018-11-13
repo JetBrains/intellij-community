@@ -62,21 +62,25 @@ private fun withTmpBranch(repos: Collection<File>, action: (String) -> Review?):
 
 private fun createReviewForDev(root: File, context: Context, user: String, email: String): Review? {
   if (!context.doSyncDevIconsAndCreateReview) return null
-  val changes = context.addedByDesigners + context.removedByDesigners + context.modifiedByDesigners
+  val changes = context.addedByDesigners + context.modifiedByDesigners + if (context.doSyncRemovedIconsInDev) {
+    context.removedByDesigners
+  }
+  else emptyList()
   if (changes.isEmpty()) return null
   val repos = changes.asSequence()
     .map { File(root, it).absolutePath }
     .map { findGitRepoRoot(it, silent = true) }
     .distinct()
     .toList()
-  val commits = findCommitsByRepo(context.iconsRepo, changes.asSequence())
+  val commits = findCommitsByRepo(File(context.iconsRepoDir), changes.asSequence())
   if (commits.isEmpty()) return null
   val verificationPassed = try {
     context.verifyDevIcons()
     repos.forEach { repo ->
-      gitStatus(repo)
-        .takeIf { it.isNotEmpty() }
-        ?.also { addChangesToGit(it, repo) }
+      val status = gitStatus(repo)
+      if (status.isNotEmpty()) {
+        addChangesToGit(status, repo)
+      }
     }
     true
   }
@@ -218,9 +222,9 @@ private fun notifySlackChannel(investigator: Investigator?, context: Context) {
 
   val reaction = if (context.isFail()) ":scream:" else ":white_check_mark:"
   val build = slackLink("See build log", thisBuildReportableLink())
-  val text = "*${context.iconsRepoName}* $reaction\n" + investigation + context.report(slack = true) + build
+  val text = "*${context.devRepoName}* $reaction\n" + investigation + context.report(slack = true) + build
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
   if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response")
 }
 
-private fun slackLink(name: String, link: String) = "<$link|$name>"
+private fun slackLink(name: String, link: String) = if (link == name) link else "<$link|$name>"

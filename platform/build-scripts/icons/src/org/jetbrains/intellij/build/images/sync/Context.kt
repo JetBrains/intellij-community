@@ -68,9 +68,9 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
     val assignInvestigationArg = "assign.investigation"
     val notifySlackArg = "notify.slack"
     val repos = System.getProperty(repoArg)?.split(",") ?: emptyList()
-    iconsRepoName = System.getProperty(iconsRepoNameArg) ?: ""
-    devRepoName = System.getProperty(devRepoNameArg) ?: ""
-    if (repos.size < 2 || iconsRepoName.isEmpty() || devRepoName.isEmpty()) error("""
+    iconsRepoName = System.getProperty(iconsRepoNameArg) ?: "icons repo"
+    devRepoName = System.getProperty(devRepoNameArg) ?: "dev repo"
+    if (repos.size < 2) error("""
       |Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [option=...]
       |Options:
       |* `$repoArg` - comma-separated repository paths, first is developers' repo, second is designers'
