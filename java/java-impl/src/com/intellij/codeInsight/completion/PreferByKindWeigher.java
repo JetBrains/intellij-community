@@ -387,6 +387,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
     
     PsiMethod method = (PsiMethod)object;
     if (!PropertyUtilBase.hasGetterName(method)) return false;
+    if (method.hasTypeParameters()) return false;
     
     return !KnownElementWeigher.isGetClass(method);
   }
