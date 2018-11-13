@@ -5,7 +5,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -202,6 +201,7 @@ public class ColorUtil {
 
   /**
    * Return Color object from string. The following formats are allowed:
+   * {@code 0xA1B2C3},
    * {@code #abc123},
    * {@code ABC123},
    * {@code ab5},
@@ -212,19 +212,29 @@ public class ColorUtil {
    */
   @NotNull
   public static Color fromHex(@NotNull String str) {
-    str = StringUtil.trimStart(str, "#");
-    if (str.length() == 3) {
-      return new Color(
-        17 * Integer.valueOf(String.valueOf(str.charAt(0)), 16).intValue(),
-        17 * Integer.valueOf(String.valueOf(str.charAt(1)), 16).intValue(),
-        17 * Integer.valueOf(String.valueOf(str.charAt(2)), 16).intValue());
-    }
-    else if (str.length() == 6) {
-      return Color.decode("0x" + str);
-    }
-    else {
-      throw new IllegalArgumentException("Should be String of 3 or 6 chars length.");
-    }
+    int pos = str.startsWith("#") ? 1 : str.startsWith("0x") ? 2 : 0;
+    int len = str.length() - pos;
+    if (len == 3) return new Color(fromHex1(str, pos), fromHex1(str, pos + 1), fromHex1(str, pos + 2), 255);
+    if (len == 4) return new Color(fromHex1(str, pos), fromHex1(str, pos + 1), fromHex1(str, pos + 2), fromHex1(str, pos + 3));
+    if (len == 6) return new Color(fromHex2(str, pos), fromHex2(str, pos + 2), fromHex2(str, pos + 4), 255);
+    if (len == 8) return new Color(fromHex2(str, pos), fromHex2(str, pos + 2), fromHex2(str, pos + 4), fromHex2(str, pos + 6));
+    throw new IllegalArgumentException("unsupported length:" + str);
+  }
+
+  private static int fromHex(@NotNull String str, int pos) {
+    char ch = str.charAt(pos);
+    if (ch >= '0' && ch <= '9') return ch - '0';
+    if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
+    if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
+    throw new IllegalArgumentException("unsupported char at " + pos + ":" + str);
+  }
+
+  private static int fromHex1(@NotNull String str, int pos) {
+    return 17 * fromHex(str, pos);
+  }
+
+  private static int fromHex2(@NotNull String str, int pos) {
+    return 16 * fromHex(str, pos) + fromHex(str, pos + 1);
   }
 
   @Nullable

@@ -18,6 +18,7 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +132,7 @@ class ValueElementReader {
     }
     if (Color.class.equals(type)) {
       //noinspection unchecked
-      return (T)toColor(value);
+      return (T)ColorUtil.fromHex(value);
     }
     if (Enum.class.isAssignableFrom(type)) {
       //noinspection unchecked
@@ -151,16 +152,5 @@ class ValueElementReader {
       }
     }
     throw new IllegalArgumentException(value);
-  }
-
-  private static Color toColor(String value) {
-    int rgb;
-    try {
-      rgb = Integer.parseInt(value, 16);
-    }
-    catch (NumberFormatException ignored) {
-      rgb = Integer.decode(value);
-    }
-    return new Color(rgb);
   }
 }
