@@ -58,6 +58,9 @@ public abstract class EventHandler {
   public void setSelection(@NotNull CellPluginComponent component, boolean scrollAndFocus) {
   }
 
+  public void setSelection(@NotNull List<CellPluginComponent> components) {
+  }
+
   public void clear() {
   }
 
