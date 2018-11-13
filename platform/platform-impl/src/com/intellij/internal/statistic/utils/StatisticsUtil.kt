@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -199,7 +198,7 @@ private val safeToReportPluginIds: Set<String>
   }
 
 /**
- * We are safe to report only plugins which are bundled or in our official plugin repository due to GDPR
+ * We are safe to report only plugins which are developed by JetBrains or in our official plugin repository due to GDPR
  */
 private fun collectSafePluginDescriptors(): List<IdeaPluginDescriptor> {
   // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository
@@ -236,11 +235,11 @@ private fun collectSafePluginDescriptors(): List<IdeaPluginDescriptor> {
  * so isBundled check is not enough
  */
 private fun getBundledJetBrainsPluginDescriptors(): List<IdeaPluginDescriptor> {
-  return PluginManager.getPlugins().filter { it.isBundled && isDevelopedByJetBrains(it.pluginId) }.toList()
+  return PluginManager.getPlugins().filter { it.isBundled && PluginManagerMain.isDevelopedByJetBrains(it) }.toList()
 }
 
 /**
- * Checks this plugin is bundled or from official repository, so API from it may be reported
+ * Checks this plugin is created by JetBrains or from official repository, so API from it may be reported
  */
 fun isSafeToReportFrom(descriptor: IdeaPluginDescriptor?): Boolean {
   if (descriptor == null) {
@@ -249,24 +248,11 @@ fun isSafeToReportFrom(descriptor: IdeaPluginDescriptor?): Boolean {
   if (isDevelopedByJetBrains(descriptor.pluginId)) {
     return true
   }
-  val path = try {
-    //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin
-    descriptor.path.canonicalPath
-  }
-  catch (e: IOException) {
-    descriptor.path.absolutePath
-  }
-
-  if (path.startsWith(PathManager.getPluginsPath())) {
-    return isSafeToReport(descriptor.pluginId?.idString)
-  }
-  return false
+  return isSafeToReport(descriptor.pluginId?.idString)
 }
 
 /**
- * Checks plugin with same id is bundled or from official repository, so pluginId may be reported.
- * However it may reuse existing id, and it's better to check isSafeToReportFrom(descriptor: IdeaPluginDescriptor?)
- * before reporting API from this plugin
+ * Checks plugin with same id is created by JetBrains or from official repository, so pluginId may be reported.
  *
  * On the very first invocation may need to load cached plugins later; in that case no plugins are considered safe
  */
