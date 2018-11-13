@@ -54,7 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParamsEnhancer
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCallReference;
 
 import java.util.List;
@@ -79,7 +79,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (type instanceof GrClosureType) {
       if (argumentTypes == null) return true;
 
-      ApplicabilityResult result =
+      Applicability result =
         PsiUtil.isApplicableConcrete(argumentTypes, (GrClosureType)type, info.getCall());
       switch (result) {
         case inapplicable:
@@ -281,7 +281,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
     final PsiMethod method = (PsiMethod)element;
 
-    ApplicabilityResult applicable = calcApplicability(method, methodResolveResult.getSubstitutor(), info);
+    Applicability applicable = calcApplicability(method, methodResolveResult.getSubstitutor(), info);
 
     switch (applicable) {
       case inapplicable:
@@ -297,9 +297,9 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     }
   }
 
-  private static <T extends GroovyPsiElement> ApplicabilityResult calcApplicability(@NotNull PsiMethod method,
-                                                                                    @NotNull PsiSubstitutor substitutor,
-                                                                                    @NotNull CallInfo<T> info) {
+  private static <T extends GroovyPsiElement> Applicability calcApplicability(@NotNull PsiMethod method,
+                                                                              @NotNull PsiSubstitutor substitutor,
+                                                                              @NotNull CallInfo<T> info) {
     if ("call".equals(method.getName()) && info.getInvokedExpression() instanceof GrReferenceExpression) {
       final GrExpression qualifierExpression = ((GrReferenceExpression)info.getInvokedExpression()).getQualifierExpression();
       if (qualifierExpression != null) {

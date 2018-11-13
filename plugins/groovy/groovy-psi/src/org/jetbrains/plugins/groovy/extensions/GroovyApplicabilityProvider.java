@@ -8,7 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.JustTypeArgument;
 
@@ -24,12 +24,12 @@ public abstract class GroovyApplicabilityProvider {
    * @return null if provider could not be applied in this case
    */
   @Nullable
-  public abstract ApplicabilityResult isApplicable(@NotNull List<Argument> arguments, @NotNull PsiMethod method);
+  public abstract Applicability isApplicable(@NotNull List<Argument> arguments, @NotNull PsiMethod method);
 
   @Nullable
-  public static ApplicabilityResult checkProviders(@NotNull List<Argument> arguments, @NotNull PsiMethod method) {
+  public static Applicability checkProviders(@NotNull List<Argument> arguments, @NotNull PsiMethod method) {
     for (GroovyApplicabilityProvider applicabilityProvider : EP_NAME.getExtensions()) {
-      ApplicabilityResult result = applicabilityProvider.isApplicable(arguments, method);
+      Applicability result = applicabilityProvider.isApplicable(arguments, method);
       if (result != null) return result;
     }
     return null;
@@ -37,7 +37,7 @@ public abstract class GroovyApplicabilityProvider {
 
   @Deprecated
   @Nullable
-  public static ApplicabilityResult checkProviders(@NotNull PsiType[] argumentTypes, @NotNull PsiMethod method) {
+  public static Applicability checkProviders(@NotNull PsiType[] argumentTypes, @NotNull PsiMethod method) {
     return checkProviders(ContainerUtil.map(argumentTypes, JustTypeArgument::new), method);
   }
 }
