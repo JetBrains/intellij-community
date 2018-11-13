@@ -6,56 +6,45 @@ import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
-import com.intellij.openapi.vfs.CharsetToolkit
-import org.jetbrains.idea.svn.api.BaseSvnClient
-import org.jetbrains.idea.svn.api.Depth
-import org.jetbrains.idea.svn.api.Revision
+import org.jetbrains.idea.svn.SvnUtil.createUrl
+import org.jetbrains.idea.svn.SvnUtil.resolvePath
+import org.jetbrains.idea.svn.api.*
 import org.jetbrains.idea.svn.api.Target
-import org.jetbrains.idea.svn.commandLine.*
+import org.jetbrains.idea.svn.checkin.CommitInfo
+import org.jetbrains.idea.svn.commandLine.CommandUtil
+import org.jetbrains.idea.svn.commandLine.CommandUtil.parse
 import org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent
-import org.xml.sax.SAXException
-import java.io.ByteArrayInputStream
+import org.jetbrains.idea.svn.commandLine.LineCommandAdapter
+import org.jetbrains.idea.svn.commandLine.SvnBindException
+import org.jetbrains.idea.svn.commandLine.SvnCommandName
+import org.jetbrains.idea.svn.conflict.TreeConflictDescription
+import org.jetbrains.idea.svn.lock.Lock
 import java.io.File
-import java.io.IOException
-import javax.xml.parsers.ParserConfigurationException
-import javax.xml.parsers.SAXParserFactory
+import javax.xml.bind.JAXBException
+import javax.xml.bind.annotation.*
 
 private val LOG = logger<CmdInfoClient>()
 
-private fun parseResult(handler: InfoConsumer, base: File?, result: String?) {
-  if (isEmptyOrSpaces(result)) return
-
-  val infoHandler = SvnInfoHandler(base) {
-    try {
-      handler.consume(it)
-    }
-    catch (e: SvnBindException) {
-      throw SvnExceptionWrapper(e)
-    }
-  }
-
-  parseResult(result!!, infoHandler)
-}
-
-private fun parseResult(result: String, handler: SvnInfoHandler) {
+private fun parseResult(handler: InfoConsumer, base: File?, result: String) {
   try {
-    SAXParserFactory.newInstance().newSAXParser().parse(
-      ByteArrayInputStream(result.trim { it <= ' ' }.toByteArray(CharsetToolkit.UTF8_CHARSET)), handler)
+    val infoRoot = parse(result, InfoRoot::class.java)
+
+    if (infoRoot != null) {
+      for (entry in infoRoot.entries) {
+        val file = base?.let { resolvePath(it, entry.path) }
+        val url = entry.url?.let { createUrl(it) }
+        val repositoryRootUrl = entry.repository?.root?.let { createUrl(it) }
+        val copyFromUrl = entry.workingCopyInfo?.copyFromUrl?.let { createUrl(it) }
+
+        val info = Info(file, url, Revision.of(entry.revisionNumber), entry.nodeKind, repositoryRootUrl, entry.repository?.uuid,
+                        entry.commit?.build(), entry.workingCopyInfo?.schedule, entry.workingCopyInfo?.depth, copyFromUrl,
+                        Revision.of(entry.workingCopyInfo?.copyFromRevision ?: -1L), entry.lock?.build(), entry.conflict?.previousBaseFile,
+                        entry.conflict?.currentBaseFile, entry.conflict?.previousWorkingCopyFile, entry.treeConflict?.build(base!!))
+        handler.consume(info)
+      }
+    }
   }
-  catch (e: SvnExceptionWrapper) {
-    LOG.info("info output $result")
-    throw SvnBindException(e.cause)
-  }
-  catch (e: IOException) {
-    LOG.info("info output $result")
-    throw SvnBindException(e)
-  }
-  catch (e: SAXException) {
-    LOG.info("info output $result")
-    throw SvnBindException(e)
-  }
-  catch (e: ParserConfigurationException) {
+  catch (e: JAXBException) {
     LOG.info("info output $result")
     throw SvnBindException(e)
   }
@@ -133,10 +122,72 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
   }
 
   companion object {
-    fun parseResult(base: File?, result: String?): Info? {
+    fun parseResult(base: File?, result: String): Info? {
       val ref = Ref<Info?>()
       parseResult(InfoConsumer(ref::set), base, result)
       return ref.get()
     }
   }
+}
+
+@XmlRootElement(name = "info")
+@XmlAccessorType(XmlAccessType.NONE)
+private class InfoRoot {
+  @XmlElement(name = "entry")
+  val entries = mutableListOf<Entry>()
+}
+
+@XmlAccessorType(XmlAccessType.FIELD)
+private class Entry {
+  @XmlAttribute(required = true)
+  var path = ""
+
+  @XmlAttribute(name = "kind", required = true)
+  var nodeKind = NodeKind.UNKNOWN
+
+  @XmlAttribute(name = "revision", required = true)
+  var revisionNumber = -1L
+
+  var url: String? = null
+  var repository: Repository? = null
+
+  @XmlElement(name = "wc-info")
+  var workingCopyInfo: WorkingCopyInfo? = null
+
+  var commit: CommitInfo.Builder? = null
+  var lock: Lock.Builder? = null
+  var conflict: Conflict? = null
+
+  @XmlElement(name = "tree-conflict")
+  var treeConflict: TreeConflictDescription.Builder? = null
+}
+
+@XmlAccessorType(XmlAccessType.FIELD)
+private class Repository {
+  var root: String? = null
+  var uuid: String? = null
+}
+
+@XmlAccessorType(XmlAccessType.FIELD)
+private class WorkingCopyInfo {
+  var schedule: String? = null
+  var depth: Depth = Depth.UNKNOWN
+
+  @XmlElement(name = "copy-from-url")
+  var copyFromUrl: String? = null
+
+  @XmlElement(name = "copy-from-rev")
+  var copyFromRevision = -1L
+}
+
+@XmlAccessorType(XmlAccessType.NONE)
+private class Conflict {
+  @XmlElement(name = "prev-base-file", required = true)
+  var previousBaseFile = ""
+
+  @XmlElement(name = "prev-wc-file")
+  var previousWorkingCopyFile: String? = null
+
+  @XmlElement(name = "cur-base-file", required = true)
+  var currentBaseFile = ""
 }
