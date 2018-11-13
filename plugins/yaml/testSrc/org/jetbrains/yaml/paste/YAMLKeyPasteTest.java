@@ -74,6 +74,14 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("some strange text");
   }
 
+  public void testDoNotPasteKeysWithBadPattern2() {
+    doTest("some. strange. text");
+  }
+
+  public void testDoNotPasteArrayAsKeys() {
+    doTest("[x.y]");
+  }
+
   // It is disputable behaviour
   public void testDoNotPasteKeysForOneWord() {
     doTest("word");
@@ -99,6 +107,11 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
   // It is disputable behaviour
   public void testPasteKeysInEmptyKeyValue2() {
     doTest("next.subKey");
+  }
+
+  // It is disputable behaviour
+  public void testPasteKeysWithStrangeSymbols1() {
+    doTest("workspace{w1}/next.^sub[Key]*(%magic%)");
   }
 
   private void doTest(@NotNull String pasteText) {
