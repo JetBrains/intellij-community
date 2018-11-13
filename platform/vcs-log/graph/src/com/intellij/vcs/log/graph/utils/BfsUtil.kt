@@ -23,12 +23,14 @@ class BfsWalk(val start: Int, private val graph: LiteLinearGraph, private val vi
 
   fun isFinished() = queue.isEmpty()
 
+  fun currentNodes(): List<Int> = queue
+
   fun step(): List<Int> {
     while (!queue.isEmpty()) {
       val node = queue.poll()
       if (!visited.get(node)) {
         visited.set(node, true)
-        val next = graph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN)
+        val next = graph.getNodes(node, LiteLinearGraph.NodeFilter.DOWN).sorted()
         queue.addAll(next)
         return next
       }
