@@ -635,7 +635,8 @@ public class SearchEverywhereUI extends BigPopupUI implements DataProvider, Quic
     mySearchField.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
-        if (!isHintComponent(e.getOppositeComponent())) {
+        Component oppositeComponent = e.getOppositeComponent();
+        if (!isHintComponent(oppositeComponent) && !UIUtil.haveCommonOwner(SearchEverywhereUI.this, oppositeComponent)) {
           closePopup();
         }
       }
