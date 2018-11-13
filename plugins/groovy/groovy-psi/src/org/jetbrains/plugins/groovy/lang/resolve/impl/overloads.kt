@@ -11,6 +11,20 @@ import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 
+/**
+ * Applicable results and a flag whether overload should be selected.
+ *
+ * There may be cases when we don't know types of arguments, so we cannot select a method 100% sure.
+ * Consider the example:
+ * ```
+ * def foo(Integer a) {}
+ * def foo(Number b) {}
+ * foo(unknownArgument)
+ * ```
+ * If we were to choose an overload with most specific signature, then only `foo(Integer)` would be chosen.
+ * In such case we assume both overloads as [potentially applicable][canBeApplicable]
+ * and offer navigation to both of them, etc.
+ */
 typealias ApplicabilitiesResult = Pair<List<GroovyMethodResult>, Boolean>
 
 fun List<GroovyMethodResult>.applicable(argumentTypes: Array<out PsiType?>?, place: PsiElement): ApplicabilitiesResult {
