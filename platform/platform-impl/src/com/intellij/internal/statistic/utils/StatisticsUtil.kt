@@ -77,7 +77,7 @@ fun mergeWithEventData(data: Map<String, Any>, context: FUSUsageContext?, value 
 
 fun isDevelopedByJetBrains(pluginId: PluginId?): Boolean {
   val plugin = PluginManager.getPlugin(pluginId)
-  return plugin == null || plugin.isBundled || PluginManagerMain.isDevelopedByJetBrains(plugin.vendor)
+  return plugin == null || PluginManagerMain.isDevelopedByJetBrains(plugin.vendor)
 }
 
 /**
@@ -223,7 +223,7 @@ private fun collectSafePluginDescriptors(): List<IdeaPluginDescriptor> {
       if (cached != null) {
         val plugins = ArrayList<IdeaPluginDescriptor>()
         plugins.addAll(cached)
-        plugins.addAll(getBundledPluginDescriptors())
+        plugins.addAll(getBundledJetBrainsPluginDescriptors())
         return plugins
       }
       else {
@@ -242,11 +242,15 @@ private fun collectSafePluginDescriptors(): List<IdeaPluginDescriptor> {
     }
   }
 
-  return getBundledPluginDescriptors()
+  return getBundledJetBrainsPluginDescriptors()
 }
 
-private fun getBundledPluginDescriptors(): List<IdeaPluginDescriptor> {
-  return PluginManager.getPlugins().filter { it.isBundled }.toList()
+/**
+ * Note that there may be private custom IDE build with bundled custom plugins;
+ * so isBundled check is not enough
+ */
+private fun getBundledJetBrainsPluginDescriptors(): List<IdeaPluginDescriptor> {
+  return PluginManager.getPlugins().filter { it.isBundled && isDevelopedByJetBrains(it.pluginId) }.toList()
 }
 
 /**
@@ -256,7 +260,7 @@ fun isSafeToReportFrom(descriptor: IdeaPluginDescriptor?): Boolean {
   if (descriptor == null) {
     return false
   }
-  if(descriptor.isBundled){
+  if (isDevelopedByJetBrains(descriptor.pluginId)) {
     return true
   }
   val path = try {
