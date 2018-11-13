@@ -170,7 +170,7 @@ public class GrClosureSignatureUtil {
       return results.get(0).third;
     }
     else {
-      return ApplicabilityResult.ambiguous;
+      return ApplicabilityResult.applicable;
     }
   }
 
@@ -276,7 +276,9 @@ public class GrClosureSignatureUtil {
   }
 
   public enum ApplicabilityResult {
-    applicable, inapplicable, canBeApplicable, ambiguous
+    applicable,
+    inapplicable,
+    canBeApplicable
   }
 
   @Nullable
