@@ -8,10 +8,10 @@ import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider.check
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult.applicable
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.mapParametersToArguments
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.applicable
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument

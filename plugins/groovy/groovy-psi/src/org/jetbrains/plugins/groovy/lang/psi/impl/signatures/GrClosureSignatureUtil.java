@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.LazyFqnClassType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult;
 
 import java.util.*;
 
@@ -273,12 +274,6 @@ public class GrClosureSignatureUtil {
 
   public static boolean isVarArgsImpl(@NotNull GrClosureParameter[] parameters) {
     return parameters.length > 0 && parameters[parameters.length - 1].getType() instanceof PsiArrayType;
-  }
-
-  public enum ApplicabilityResult {
-    applicable,
-    inapplicable,
-    canBeApplicable
   }
 
   @Nullable

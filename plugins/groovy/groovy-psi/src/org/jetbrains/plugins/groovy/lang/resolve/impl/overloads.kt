@@ -5,11 +5,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult.canBeApplicable
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult.inapplicable
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isApplicableConcrete
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.canBeApplicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.inapplicable
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 
 /**

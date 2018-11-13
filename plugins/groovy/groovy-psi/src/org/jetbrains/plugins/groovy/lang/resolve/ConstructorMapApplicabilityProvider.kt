@@ -5,9 +5,9 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.InheritanceUtil.isInheritor
 import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult.applicable
-import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult.inapplicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.applicable
+import org.jetbrains.plugins.groovy.lang.resolve.api.ApplicabilityResult.inapplicable
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 
 open class ConstructorMapApplicabilityProvider : GroovyApplicabilityProvider() {
