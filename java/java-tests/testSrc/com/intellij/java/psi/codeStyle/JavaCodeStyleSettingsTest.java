@@ -78,7 +78,11 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     CodeStylePropertyMapper mapper =
       LanguageCodeStyleSettingsProvider.forLanguage(JavaLanguage.INSTANCE).getPropertyMapper(settings);
     StringBuilder builder = new StringBuilder();
-    for (String property : mapper.enumProperties()) {
+    for (String property : mapper.enumPropertiesFor(
+      JavaCodeStyleSettings.class,
+      CommonCodeStyleSettings.class,
+      CommonCodeStyleSettings.IndentOptions.class)
+    ) {
       String value = mapper.getProperty(property);
       if (value != null) {
         builder.append(property).append(" = ").append(value).append('\n');

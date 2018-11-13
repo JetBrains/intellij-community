@@ -42,6 +42,11 @@ public abstract class CodeStylePropertyAccessor<T> {
     return null;
   }
 
+  @NotNull
+  public Class getObjectClass() {
+    return myObject.getClass();
+  }
+
   protected boolean isEmpty(@NotNull T value) {
     return false;
   }

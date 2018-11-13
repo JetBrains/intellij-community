@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ApiStatus.Experimental
@@ -43,6 +44,18 @@ public class CodeStylePropertyMapper {
 
   public List<String> enumProperties() {
     return myAccessorMap.keySet().stream().sorted().collect(Collectors.toList());
+  }
+
+  public List<String> enumPropertiesFor(@NotNull Class... codeStyleClass) {
+    return myAccessorMap.keySet().stream().filter(name -> {
+      CodeStylePropertyAccessor accessor = myAccessorMap.get(name);
+      for (Class aClass : codeStyleClass) {
+        if (accessor.getObjectClass().equals(aClass)) {
+          return true;
+        }
+      }
+      return false;
+    }).sorted().collect(Collectors.toList());
   }
 
   private void fillMap() {
