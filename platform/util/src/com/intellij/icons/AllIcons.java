@@ -77,6 +77,7 @@ public class AllIcons {
     public static final Icon NewFolder = IconLoader.getIcon("/actions/newFolder.svg"); // 16x16
     public static final Icon NextOccurence = IconLoader.getIcon("/actions/nextOccurence.svg"); // 16x16
     public static final Icon OfflineMode = IconLoader.getIcon("/actions/offlineMode.svg"); // 16x16
+    public static final Icon OpenNewTab = IconLoader.getIcon("/actions/openNewTab.svg"); // 16x16
     public static final Icon Pause = IconLoader.getIcon("/actions/pause.svg"); // 16x16
     public static final Icon PopFrame = IconLoader.getIcon("/actions/popFrame.svg"); // 16x16
     public static final Icon Preview = IconLoader.getIcon("/actions/preview.svg"); // 16x16
