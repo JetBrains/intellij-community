@@ -79,6 +79,7 @@ private fun isCallExpressionParameter(argumentExpression: UElement,
                                       parameterIndex: Int,
                                       callPattern: ElementPattern<UCallExpression>): Boolean {
   val call = argumentExpression.uastParent.getUCallExpression() as? UCallExpressionEx ?: return false
+  if (call.kind.let { it != UastCallKind.CONSTRUCTOR_CALL && it != UastCallKind.METHOD_CALL }) return false
   return call.getArgumentForParameter(parameterIndex) == argumentExpression && callPattern.accepts(call)
 }
 

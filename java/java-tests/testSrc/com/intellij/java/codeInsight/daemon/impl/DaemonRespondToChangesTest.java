@@ -1231,7 +1231,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                   "}";
     configureByText(StdFileTypes.JAVA, text);
 
-    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 50_000, () -> {
+    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 30_000, () -> {
       assertEmpty(highlightErrors());
 
       type("k");
