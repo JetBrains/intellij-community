@@ -1,12 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.graph.impl
+package com.intellij.vcs.log.graph.utils
 
 import com.intellij.vcs.log.graph.TestGraphBuilder
 import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.graph
-import com.intellij.vcs.log.graph.utils.BfsWalk
-import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import com.intellij.vcs.log.graph.utils.getCorrespondingParent
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 import org.junit.Test
 import kotlin.test.assertEquals
