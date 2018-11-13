@@ -132,7 +132,7 @@ class ValueElementReader {
     }
     if (Color.class.equals(type)) {
       //noinspection unchecked
-      return (T)ColorUtil.fromHex(value);
+      return (T)toColor(value);
     }
     if (Enum.class.isAssignableFrom(type)) {
       //noinspection unchecked
@@ -152,5 +152,22 @@ class ValueElementReader {
       }
     }
     throw new IllegalArgumentException(value);
+  }
+
+  private static Color toColor(String value) {
+    try {
+      return ColorUtil.fromHex(value);
+    }
+    catch (Exception exception) {
+      LOG.debug(exception);
+      int rgb;
+      try {
+        rgb = Integer.parseInt(value, 16);
+      }
+      catch (NumberFormatException ignored) {
+        rgb = Integer.decode(value);
+      }
+      return new Color(rgb);
+    }
   }
 }
