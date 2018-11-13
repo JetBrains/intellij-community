@@ -33,6 +33,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -365,6 +366,32 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       condition.accept(this);
 
       myResult = new IfStatementEvaluator(new UnBoxingEvaluator(myResult), thenEvaluator, elseEvaluator);
+    }
+
+    @Override
+    public void visitSwitchStatement(PsiSwitchStatement statement) {
+      PsiCodeBlock body = statement.getBody();
+      if (body != null) {
+        Evaluator expressionEvaluator = accept(statement.getExpression());
+        if (expressionEvaluator != null) {
+          myResult = new SwitchStatementEvaluator(expressionEvaluator, visitStatements(body.getStatements()), getLabel(statement));
+        }
+      }
+    }
+
+    @Override
+    public void visitSwitchLabelStatement(PsiSwitchLabelStatement statement) {
+      List<Evaluator> evaluators = ContainerUtil.newSmartList();
+      PsiExpressionList caseValues = statement.getCaseValues();
+      if (caseValues != null) {
+        for (PsiExpression expression : caseValues.getExpressions()) {
+          Evaluator evaluator = accept(expression);
+          if (evaluator != null) {
+            evaluators.add(evaluator);
+          }
+        }
+      }
+      myResult = new SwitchStatementEvaluator.SwitchCaseEvaluator(evaluators, statement.isDefaultCase());
     }
 
     @Override
