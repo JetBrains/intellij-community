@@ -704,6 +704,12 @@ public class CtrlMouseHandler {
         }));
     }
 
+    private ReadTask.Continuation createDisposalContinuation() {
+      return new ReadTask.Continuation(() -> {
+        if (!isTaskOutdated(myHostEditor)) disposeHighlighter();
+      });
+    }
+
     @Nullable
     private ReadTask.Continuation doExecute() {
       if (isTaskOutdated(myHostEditor)) return null;
@@ -712,18 +718,18 @@ public class CtrlMouseHandler {
       int offset = editor.logicalPositionToOffset(getPosition(editor));
 
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-      if (file == null) return null;
+      if (file == null) return createDisposalContinuation();
 
       final Info info;
       final DocInfo docInfo;
       try {
         info = getInfoAt(editor, file, offset, myBrowseMode);
-        if (info == null) return null;
+        if (info == null) return createDisposalContinuation();
         docInfo = info.getInfo();
       }
       catch (IndexNotReadyException e) {
         showDumbModeNotification(myProject);
-        return null;
+        return createDisposalContinuation();
       }
 
       LOG.debug("Obtained info about element under cursor");
