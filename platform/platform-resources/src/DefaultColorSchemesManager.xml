@@ -63,6 +63,7 @@
 
       <option name="ScrollBar.foreground" value="E6E6E6"/>
       <option name="ScrollBar.background" value="F5F5F5"/>
+      <option name="ScrollBar.NonOpaque.Hovered.background" value="8080801A"/>
     </colors>
 
     <attributes>
@@ -1198,6 +1199,7 @@
 
       <option name="ScrollBar.foreground" value="3F4244"/>
       <option name="ScrollBar.background" value="3F4244"/>
+      <option name="ScrollBar.NonOpaque.Hovered.background" value="8080801A"/>
     </colors>
     <attributes>
       <option name="ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES">

@@ -15,13 +15,17 @@
  */
 package com.intellij.ui.components;
 
+import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBScrollPane.Alignment;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -56,6 +60,8 @@ class DefaultScrollBarUI extends ScrollBarUI {
       repaint();
     }
   };
+
+  private final ScrollTrackPainter myTrackPainter = new ScrollTrackPainter(getColor(this::getTrackHoveredBackground));
 
   private final Rectangle myThumbBounds = new Rectangle();
   private final Rectangle myTrackBounds = new Rectangle();
@@ -127,8 +133,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Track.DARCULA : ScrollPainter.Track.DEFAULT;
-    paint(p, g, x, y, width, height, c, myTrackAnimator.myValue, false);
+    paint(myTrackPainter, g, x, y, width, height, c, myTrackAnimator.myValue, false);
   }
 
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
@@ -170,6 +175,15 @@ class DefaultScrollBarUI extends ScrollBarUI {
     if (value <= 0) return offset;
     if (value >= 1) return 0;
     return (int)(.5f + offset * (1 - value));
+  }
+
+  @NotNull
+  ColorKey getTrackHoveredBackground() {
+    return ScrollColorProducer.TRACK_HOVERED;
+  }
+
+  private Color getColor(@NotNull NotNullProducer<ColorKey> supplier) {
+    return new JBColor(() -> ScrollColorProducer.getColor(supplier.produce(), myScrollBar));
   }
 
   void repaint() {

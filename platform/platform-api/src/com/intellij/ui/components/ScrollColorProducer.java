@@ -34,6 +34,8 @@ import static com.intellij.ui.components.JBScrollPane.BRIGHTNESS_FROM_VIEW;
  * @author Sergey.Malenkov
  */
 final class ScrollColorProducer {
+  static final ColorKey TRACK_HOVERED = createKey("ScrollBar.NonOpaque.Hovered.background", 0x1A808080, 0x1A808080);
+
   private static final ColorKey FOREGROUND = createKey("ScrollBar.foreground", 0xFFE6E6E6, 0xFF3F4244);
   private static final ColorKey BACKGROUND = createKey("ScrollBar.background", 0xFFF5F5F5, 0xFF3F4244);
 
