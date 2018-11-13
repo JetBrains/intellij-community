@@ -45,6 +45,7 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -82,6 +83,8 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Class should be final and singleton since some code checks its instance by ref.
@@ -722,11 +725,11 @@ public final class PythonSdkType extends SdkType {
       }
 
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
-      if (libDir != null && isUnderLibDirButNotSitePackages(originFile, libDir)) {
+      if (libDir != null && isUnderLibDirButNotSitePackages(originFile, libDir, pythonSdk)) {
         return true;
       }
       final VirtualFile venvLibDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
-      if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, venvLibDir)) {
+      if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, venvLibDir, pythonSdk)) {
         return true;
       }
       if (PyUserSkeletonsUtil.isStandardLibrarySkeleton(vFile)) {
@@ -739,11 +742,24 @@ public final class PythonSdkType extends SdkType {
     return false;
   }
 
-  private static boolean isUnderLibDirButNotSitePackages(@NotNull File originFile, @NotNull VirtualFile libDir) {
-    final File libDirFile = VfsUtilCore.virtualToIoFile(libDir);
-    if (VfsUtilCore.isAncestor(libDirFile, originFile, false)) {
+  @NotNull
+  private static File mapToRemoteIfNecessary(@NotNull File localRoot, @NotNull File localOrRemoteFile, @NotNull Sdk sdk) {
+    final RemoteSdkAdditionalData remoteSdkData = as(sdk.getSdkAdditionalData(), RemoteSdkAdditionalData.class);
+    if (remoteSdkData != null) {
+      final PathMappingSettings pathMappings = remoteSdkData.getPathMappings();
+      final boolean isRemotePath = pathMappings.canReplaceRemote(localOrRemoteFile.getPath());
+      if (isRemotePath) {
+        return new File(pathMappings.convertToRemote(localRoot.getPath()));
+      }
+    }
+    return localRoot;
+  }
+
+  private static boolean isUnderLibDirButNotSitePackages(@NotNull File originFile, @NotNull VirtualFile libDir, @NotNull Sdk sdk) {
+    final File libDirFile = mapToRemoteIfNecessary(VfsUtilCore.virtualToIoFile(libDir), originFile, sdk);
+    if (FileUtil.isAncestor(libDirFile, originFile, false)) {
       final File sitePackages = new File(libDirFile, PyNames.SITE_PACKAGES);
-      return !sitePackages.exists() || !FileUtil.isAncestor(sitePackages, originFile, false);
+      return !FileUtil.isAncestor(sitePackages, originFile, false);
     }
     return false;
   }
