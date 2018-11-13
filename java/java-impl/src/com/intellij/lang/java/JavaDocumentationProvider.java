@@ -41,7 +41,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -736,42 +735,51 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   @Nullable
   public static List<String> findUrlForClass(@NotNull PsiClass aClass) {
     String qName = aClass.getQualifiedName();
-    if (qName == null) return null;
-
-    PsiFile file = aClass.getContainingFile();
-    if (!(file instanceof PsiJavaFile)) return null;
-
-    VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile == null) return null;
-
-    String packageName = ((PsiJavaFile)file).getPackageName();
-    String relPath;
-    if (packageName.isEmpty()) {
-      relPath = qName + HTML_EXTENSION;
-    }
-    else {
-      relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + HTML_EXTENSION;
+    if (qName != null) {
+      PsiFile file = aClass.getContainingFile();
+      if (file instanceof PsiJavaFile) {
+        VirtualFile virtualFile = file.getVirtualFile();
+        if (virtualFile != null) {
+          String pkgName = ((PsiJavaFile)file).getPackageName();
+          String relPath = (pkgName.isEmpty() ? qName : pkgName.replace('.', '/') + '/' + qName.substring(pkgName.length() + 1)) + HTML_EXTENSION;
+          return findUrlForVirtualFile(file.getProject(), virtualFile, relPath);
+        }
+      }
     }
 
-    return findUrlForVirtualFile(file.getProject(), virtualFile, relPath);
+    return null;
   }
 
   @Nullable
-  public static List<String> findUrlForVirtualFile(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull String relPath) {
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+  public static List<String> findUrlForPackage(@NotNull PsiPackage aPackage) {
+    String qName = aPackage.getQualifiedName().replace('.', '/') + '/' + PACKAGE_SUMMARY_FILE;
+    for (PsiDirectory directory : aPackage.getDirectories()) {
+      List<String> url = findUrlForVirtualFile(aPackage.getProject(), directory.getVirtualFile(), qName);
+      if (url != null) {
+        return url;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+
     Module module = fileIndex.getModuleForFile(virtualFile);
     if (module == null) {
-      final VirtualFileSystem fs = virtualFile.getFileSystem();
+      VirtualFileSystem fs = virtualFile.getFileSystem();
       if (fs instanceof JarFileSystem) {
-        final VirtualFile jar = ((JarFileSystem)fs).getVirtualFileForJar(virtualFile);
+        VirtualFile jar = ((JarFileSystem)fs).getLocalByEntry(virtualFile);
         if (jar != null) {
           module = fileIndex.getModuleForFile(jar);
         }
       }
     }
     if (module != null) {
-      String[] javadocPaths = JavaModuleExternalPaths.getInstance(module).getJavadocUrls();
-      final List<String> httpRoots = PlatformDocumentationUtil.getHttpRoots(javadocPaths, relPath);
+      String[] extPaths = JavaModuleExternalPaths.getInstance(module).getJavadocUrls();
+      List<String> httpRoots = PlatformDocumentationUtil.getHttpRoots(extPaths, relPath);
       // if found nothing and the file is from library classes, fall back to order entries
       if (httpRoots != null || !fileIndex.isInLibraryClasses(virtualFile)) {
         return httpRoots;
@@ -782,35 +790,21 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
         if (root.getFileSystem() == JarFileSystem.getInstance()) {
           VirtualFile file = root.findFileByRelativePath(relPath);
-          List<Url> urls = file == null ? null : BuiltInWebBrowserUrlProviderKt.getBuiltInServerUrls(file, project, null);
-          if (!ContainerUtil.isEmpty(urls)) {
-            List<String> result = new SmartList<>();
-            for (Url url : urls) {
-              result.add(url.toExternalForm());
+          if (file != null) {
+            List<Url> urls = BuiltInWebBrowserUrlProviderKt.getBuiltInServerUrls(file, project, null);
+            if (!urls.isEmpty()) {
+              return ContainerUtil.map(urls, Url::toExternalForm);
             }
-            return result;
           }
         }
       }
 
-      List<String> httpRoot = PlatformDocumentationUtil.getHttpRoots(JavadocOrderRootType.getUrls(orderEntry), relPath);
-      if (httpRoot != null) {
-        return httpRoot;
+      List<String> httpRoots = PlatformDocumentationUtil.getHttpRoots(JavadocOrderRootType.getUrls(orderEntry), relPath);
+      if (httpRoots != null) {
+        return httpRoots;
       }
     }
-    return null;
-  }
 
-  @Nullable
-  public static List<String> findUrlForPackage(PsiPackage aPackage) {
-    String qName = aPackage.getQualifiedName();
-    qName = qName.replace('.', '/') + '/' + PACKAGE_SUMMARY_FILE;
-    for (PsiDirectory directory : aPackage.getDirectories()) {
-      List<String> url = findUrlForVirtualFile(aPackage.getProject(), directory.getVirtualFile(), qName);
-      if (url != null) {
-        return url;
-      }
-    }
     return null;
   }
 
