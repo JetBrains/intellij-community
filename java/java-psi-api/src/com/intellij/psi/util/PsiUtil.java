@@ -396,7 +396,8 @@ public final class PsiUtil extends PsiUtilCore {
     }
 
     if (element instanceof PsiExpressionStatement) {
-      return isStatement(((PsiExpressionStatement)element).getExpression());
+      return parent instanceof PsiSwitchLabeledRuleStatement && ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock() instanceof PsiSwitchExpression ||
+             isStatement(((PsiExpressionStatement)element).getExpression());
     }
 
     if (element instanceof PsiDeclarationStatement) {

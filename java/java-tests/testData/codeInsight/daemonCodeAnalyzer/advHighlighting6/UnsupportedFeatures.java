@@ -32,6 +32,9 @@ class UnsupportedFeatures {
     switch (list.size()) {
       case <error descr="Enhanced 'switch' blocks are not supported at language level '6'">1, 2</error>:
     }
+    System.out.println(<error descr="'switch' expressions are not supported at language level '6'">switch (list.size()) {
+      default -> "whoa!";
+    }</error>);
   }
 
   void f(<error descr="Receiver parameters are not supported at language level '6'">Object this</error>) { }

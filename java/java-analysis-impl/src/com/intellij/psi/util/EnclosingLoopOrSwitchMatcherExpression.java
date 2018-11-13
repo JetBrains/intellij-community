@@ -11,7 +11,7 @@ public class EnclosingLoopOrSwitchMatcherExpression extends EnclosingLoopMatcher
 
   @Override
   public Boolean match(PsiElement element) {
-    if (element instanceof PsiSwitchStatement) return Boolean.TRUE;
+    if (element instanceof PsiSwitchBlock) return Boolean.TRUE;
     return super.match(element);
   }
 }

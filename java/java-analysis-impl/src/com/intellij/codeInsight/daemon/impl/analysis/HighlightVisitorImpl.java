@@ -1591,9 +1591,20 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitSwitchStatement(PsiSwitchStatement statement) {
     super.visitSwitchStatement(statement);
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSwitchBlockStatements(statement, myLanguageLevel, myFile));
-    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSwitchSelectorType(statement, myLanguageLevel));
-    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkSwitchLabelValues(statement));
+    checkSwitchBlock(statement);
+  }
+
+  @Override
+  public void visitSwitchExpression(PsiSwitchExpression expression) {
+    super.visitSwitchExpression(expression);
+    if (!myHolder.hasErrorResults()) myHolder.add(checkFeature(expression, Feature.SWITCH_EXPRESSION));
+    checkSwitchBlock(expression);
+  }
+
+  private void checkSwitchBlock(PsiSwitchBlock switchBlock) {
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSwitchBlockStatements(switchBlock, myLanguageLevel, myFile));
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkSwitchSelectorType(switchBlock, myLanguageLevel));
+    if (!myHolder.hasErrorResults()) myHolder.addAll(HighlightUtil.checkSwitchLabelValues(switchBlock));
   }
 
   @Override

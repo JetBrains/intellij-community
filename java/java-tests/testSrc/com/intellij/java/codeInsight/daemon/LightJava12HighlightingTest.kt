@@ -9,6 +9,7 @@ class LightJava12HighlightingTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/advHighlighting12"
 
   fun testEnhancedSwitchStatements() = doTest()
+  fun testSwitchExpressions() = doTest()
 
   private fun doTest() {
     myFixture.configureByFile(getTestName(false) + ".java")
