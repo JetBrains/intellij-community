@@ -2536,6 +2536,10 @@
                      key="inspection.simplifiable.if.statement.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.SimplifiableIfStatementInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ArrayCanBeReplacedWithEnumValues" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="array.can.be.replaced.with.enum.values" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
+                     implementationClass="com.siyeh.ig.style.ArrayCanBeReplacedWithEnumValuesInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection groupPath="Java" language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"
