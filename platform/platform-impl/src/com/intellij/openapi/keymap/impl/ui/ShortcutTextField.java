@@ -56,7 +56,11 @@ public final class ShortcutTextField extends ExtendableTextField {
 
     // NOTE: when user presses 'Alt + Right' at Linux the IDE can receive next sequence KeyEvents: ALT_PRESSED -> RIGHT_RELEASED ->  ALT_RELEASED
     // RIGHT_PRESSED can be skipped, it depends on WM
-    if (e.getID() == KeyEvent.KEY_PRESSED || (SystemInfo.isLinux && e.getID() == KeyEvent.KEY_RELEASED)) {
+    final boolean useReleaseEvents = SystemInfo.isLinux && (e.isAltDown() || e.isAltGraphDown());
+    if (
+      (!useReleaseEvents && e.getID() == KeyEvent.KEY_PRESSED)
+      || (useReleaseEvents && e.getID() == KeyEvent.KEY_RELEASED)
+    ) {
       if (keyCode != KeyEvent.VK_SHIFT &&
           keyCode != KeyEvent.VK_ALT &&
           keyCode != KeyEvent.VK_CONTROL &&
