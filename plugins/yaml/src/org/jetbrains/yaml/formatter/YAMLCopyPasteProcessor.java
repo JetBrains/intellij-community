@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
-  private final static String CONFIG_KEY_SEQUENCE_PATTERN = "([\\w$-]+\\.)+[\\w$-]+:?\\s*";
+  private final static String CONFIG_KEY_SEQUENCE_PATTERN = "([^\\s{}\\[\\]][^\\s]*\\.)+[^\\s{}\\[\\].][^\\s.]*:?\\s*";
 
   @Nullable
   @Override
