@@ -611,10 +611,15 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
     @Override
     protected void disposeContent(@NotNull Content content) {
-      RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
-      getSyncPublisher().contentRemoved(descriptor, myExecutor);
-      if (descriptor != null) {
-        Disposer.dispose(descriptor);
+      try {
+        RunContentDescriptor descriptor = getRunContentDescriptorByContent(content);
+        getSyncPublisher().contentRemoved(descriptor, myExecutor);
+        if (descriptor != null) {
+          Disposer.dispose(descriptor);
+        }
+      }
+      finally {
+        content.release();
       }
     }
 
