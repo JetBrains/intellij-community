@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.Function
@@ -53,7 +54,9 @@ open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.Completa
           handler.accept(value)
         }
         catch (e: Throwable) {
-          logger<AsyncPromise<*>>().error(e)
+          if (e !is ControlFlowException) {
+            logger<AsyncPromise<*>>().error(e)
+          }
         }
       }
     }
