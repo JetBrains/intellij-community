@@ -64,6 +64,8 @@ import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
+import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -700,25 +702,31 @@ public final class PythonSdkType extends SdkType {
   }
 
   public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
-    final VirtualFile resolved = ObjectUtils.notNull(vFile.getCanonicalFile(), vFile);
     if (pythonSdk != null) {
-      final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
-      if (libDir != null) {
-        final VirtualFile resolvedLibDir = ObjectUtils.notNull(libDir.getCanonicalFile(), libDir);
-        if (VfsUtilCore.isAncestor(resolvedLibDir, resolved, false)) {
-          return isNotSitePackages(resolved, resolvedLibDir);
+      final VirtualFile resolved = ObjectUtils.notNull(vFile.getCanonicalFile(), vFile);
+      final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
+      File originFile = VfsUtilCore.virtualToIoFile(resolved);
+      if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, resolved, false)) {
+        final PySkeletonRefresher.SkeletonHeader header = PySkeletonRefresher.readSkeletonHeader(originFile);
+        if (header != null) {
+          final String binaryPath = header.getBinaryFile();
+          if (binaryPath.equals(SkeletonVersionChecker.BUILTIN_NAME)) {
+            return true;
+          }
+          originFile = new File(binaryPath);
         }
+        else {
+          LOG.warn("Can't parse header for the skeleton " + originFile);
+          return Comparing.equal(vFile.getParent(), skeletonsDir);
+        }
+      }
+
+      final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
+      if (libDir != null && isUnderLibDirButNotSitePackages(originFile, libDir)) {
+        return true;
       }
       final VirtualFile venvLibDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
-      if (venvLibDir != null) {
-        final VirtualFile resolvedVenvLibDir = ObjectUtils.notNull(venvLibDir.getCanonicalFile(), venvLibDir);
-        if (VfsUtilCore.isAncestor(resolvedVenvLibDir, resolved, false)) {
-          return isNotSitePackages(resolved, resolvedVenvLibDir);
-        }
-      }
-      final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
-      if (skeletonsDir != null &&
-          Comparing.equal(vFile.getParent(), skeletonsDir)) {   // note: this will pick up some of the binary libraries not in packages
+      if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, venvLibDir)) {
         return true;
       }
       if (PyUserSkeletonsUtil.isStandardLibrarySkeleton(vFile)) {
@@ -731,12 +739,13 @@ public final class PythonSdkType extends SdkType {
     return false;
   }
 
-  private static boolean isNotSitePackages(VirtualFile vFile, VirtualFile libDir) {
-    final VirtualFile sitePackages = libDir.findChild(PyNames.SITE_PACKAGES);
-    if (sitePackages != null && VfsUtilCore.isAncestor(sitePackages, vFile, false)) {
-      return false;
+  private static boolean isUnderLibDirButNotSitePackages(@NotNull File originFile, @NotNull VirtualFile libDir) {
+    final File libDirFile = VfsUtilCore.virtualToIoFile(libDir);
+    if (VfsUtilCore.isAncestor(libDirFile, originFile, false)) {
+      final File sitePackages = new File(libDirFile, PyNames.SITE_PACKAGES);
+      return !sitePackages.exists() || !FileUtil.isAncestor(sitePackages, originFile, false);
     }
-    return true;
+    return false;
   }
 
   /**
