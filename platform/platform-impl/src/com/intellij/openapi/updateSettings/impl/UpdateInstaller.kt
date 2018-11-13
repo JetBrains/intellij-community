@@ -21,10 +21,14 @@ import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.zip.ZipFile
 import javax.swing.UIManager
 
 object UpdateInstaller {
   const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
+
+  private const val PATCH_FILE_NAME = "patch-file.zip"
+  private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
   private val patchesUrl: URL
     get() = URL(System.getProperty("idea.patches.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.patchesUrl)
@@ -51,6 +55,11 @@ object UpdateInstaller {
         }
       }
       HttpRequests.request(url).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, partIndicator)
+      ZipFile(patchFile).use { it ->
+        if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
+          throw IOException("Corrupted patch file: ${patchFile.name}")
+        }
+      }
       files += patchFile
     }
 
