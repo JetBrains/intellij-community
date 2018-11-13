@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="tcServiceMessages">
+  <library name="tcServiceMessages" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.teamcity:serviceMessages:2018.1" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/serviceMessages.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/teamcity/serviceMessages/2018.1/serviceMessages-2018.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/serviceMessages_279xxx_src.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/teamcity/serviceMessages/2018.1/serviceMessages-2018.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
