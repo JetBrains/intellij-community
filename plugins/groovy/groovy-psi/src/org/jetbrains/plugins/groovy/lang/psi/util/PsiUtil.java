@@ -141,7 +141,7 @@ public class PsiUtil {
     GrSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor, eraseParameterTypes);
 
     GrClosureSignatureUtil.ApplicabilityResult result =
-      GroovyApplicabilityProvider.checkProviders(argumentTypes, method, substitutor, place, eraseParameterTypes);
+      GroovyApplicabilityProvider.checkProviders(argumentTypes, method);
     if (result != null) return result;
 
     result = GrClosureSignatureUtil.isSignatureApplicableConcrete(singletonList(signature), argumentTypes, place);

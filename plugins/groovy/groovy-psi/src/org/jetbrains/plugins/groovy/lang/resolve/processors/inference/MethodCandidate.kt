@@ -34,7 +34,7 @@ class MethodCandidate(val method: PsiMethod,
     if (substitutor.substitutionMap.isEmpty() && argumentMapping.size == method.parameters.size) { //fast pass
       if (argumentMapping.size == arguments?.size) return true
       val erasedArguments = erasedArguments ?: return true
-      return checkProviders(erasedArguments, method, substitutor, context, true) == applicable
+      return checkProviders(erasedArguments, method) == applicable
     }
 
     return PsiUtil.isApplicable(erasedArguments, method, substitutor, context, true)
