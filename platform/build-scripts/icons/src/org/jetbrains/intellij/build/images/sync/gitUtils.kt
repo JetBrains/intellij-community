@@ -150,9 +150,22 @@ private fun push(repo: File, spec: String) =
     execute(repo, GIT, "push", "origin", spec, withTimer = true)
   }
 
-internal fun getOriginUrl(repo: File) = execute(repo, GIT, "ls-remote", "--get-url", "origin")
-  .removeSuffix(System.lineSeparator())
-  .trim()
+@Volatile
+private var origins = emptyMap<File, String>()
+private val originsGuard = Any()
+
+internal fun getOriginUrl(repo: File): String {
+  if (!origins.containsKey(repo)) {
+    synchronized(originsGuard) {
+      if (!origins.containsKey(repo)) {
+        origins += repo to execute(repo, GIT, "ls-remote", "--get-url", "origin")
+          .removeSuffix(System.lineSeparator())
+          .trim()
+      }
+    }
+  }
+  return origins[repo]!!
+}
 
 @Volatile
 private var latestChangeCommits = emptyMap<String, CommitInfo>()

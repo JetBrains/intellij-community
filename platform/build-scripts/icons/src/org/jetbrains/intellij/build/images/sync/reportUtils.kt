@@ -15,7 +15,9 @@ internal fun report(context: Context, root: File, devIcons: Int, icons: Int, ski
     else {
       createReviews(root, context)
     }
-    val investigator = if (!context.isSuccess() && context.assignInvestigation && !isInvestigationAssigned) {
+    val investigator = if (context.isFail() &&
+                           context.assignInvestigation &&
+                           !isInvestigationAssigned) {
       assignInvestigation(root, context)
     }
     else null
@@ -36,16 +38,14 @@ internal fun report(context: Context, root: File, devIcons: Int, icons: Int, ski
     |${if (context.createdReviews.isNotEmpty()) "Created reviews: ${context.createdReviews.map(Review::url)}" else ""}
   """.trimMargin()
   log(report)
-  val success = context.isSuccess() || context.doSyncDevIconsAndCreateReview && context.createdReviews.isNotEmpty()
-  if (isUnderTeamCity() && !success) context.errorHandler.accept(report)
+  if (isUnderTeamCity() && context.isFail()) context.doFail(report)
 }
 
-private val UPSOURCE_ICONS_PROJECT_ID = System.getProperty("intellij.icons.upsource.project.id")
-private val UPSOURCE_DEV_PROJECT_ID = System.getProperty("intellij.icons.upsource.dev.project.id")
+internal fun Map<File, Collection<CommitInfo>>.description() = entries.joinToString(System.lineSeparator()) { entry ->
+  "${getOriginUrl(entry.key)}: ${entry.value.joinToString { it.hash }}"
+}
 
-private fun Map<File, Collection<CommitInfo>>.commitMessage() = "Synchronization of changed icons from\n" + map {
-  "${getOriginUrl(it.key)}: ${it.value.map(CommitInfo::hash)}"
-}.joinToString(System.lineSeparator())
+private fun Map<File, Collection<CommitInfo>>.commitMessage() = "Synchronization of changed icons from ${description()}"
 
 private fun createReviewForDev(root: File, context: Context, user: String, email: String): Review? {
   if (!context.doSyncDevIconsAndCreateReview) return null
@@ -59,7 +59,7 @@ private fun createReviewForDev(root: File, context: Context, user: String, email
     val commits = findCommitsByRepo(context.iconsRepo, changes.asSequence())
     if (commits.isNotEmpty()) {
       val verificationPassed = try {
-        context.devIconsVerifier?.run()
+        context.verifyDevIcons()
         repos.forEach { repo ->
           gitStatus(repo)
             .takeIf { it.isNotEmpty() }
@@ -150,7 +150,9 @@ private fun pushAndCreateReview(project: String, user: String, email: String, me
       initGit(it, user, email)
       commitAndPush(it, branch, message)
     }
-    return createReview(project, branch, commits)
+    val review = createReview(project, branch, commits)
+    postComment(project, review, message)
+    return review
   }
   catch (e: Throwable) {
     repos.forEach {
@@ -169,7 +171,29 @@ private fun sendNotification(investigator: Investigator?, context: Context) {
 }
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
-private val INTELLIJ_ICONS_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
+private val ICONS_REPO_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
+private val DEV_REPO_SYNC_BUILD_CONF = System.getProperty("intellij.icons.dev.sync.build.conf")
+
+internal fun Context.report() : String {
+  val iconsSync = when {
+    !iconsSyncRequired() -> ""
+    iconsReview() != null -> iconsReview()!!.let {
+      "To sync ${iconsRepoName} see <${it.url}|${it.id}>\n"
+    }
+    else -> "Use 'Icons processing/*$ICONS_REPO_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n"
+  }
+  val devSync = when {
+    !devSyncRequired() -> ""
+    devReview() != null -> devReview()!!.let {
+      "To sync $devRepoName see <${it.url}|${it.id}>\n"
+    }
+    DEV_REPO_SYNC_BUILD_CONF != null -> {
+      "To sync $devRepoName run <${buildConfReportableLink(DEV_REPO_SYNC_BUILD_CONF)}|this build>"
+    }
+    else -> ""
+  }
+  return iconsSync + devSync
+}
 
 private fun notifySlackChannel(investigator: Investigator?, context: Context) {
   val investigation = when {
@@ -177,14 +201,10 @@ private fun notifySlackChannel(investigator: Investigator?, context: Context) {
     investigator.isAssigned -> "Investigation is assigned to ${investigator.email}\n"
     else -> "Unable to assign investigation to ${investigator.email}\n"
   }
-  val hint = when {
-    context.isSuccess() -> ""
-    context.createdReviews.isNotEmpty() -> "Reviews created: ${context.createdReviews.joinToString { "<${it.url}|${it.id}>" }}\n"
-    else -> "Use 'Icons processing/*$INTELLIJ_ICONS_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n"
-  }
-  val reaction = if (context.isSuccess()) ":white_check_mark:" else ":scream:"
+
+  val reaction = if (context.isFail()) ":scream:" else ":white_check_mark:"
   val build = "<${thisBuildReportableLink()}|See build log>"
-  val text = "*${System.getProperty("teamcity.buildConfName")}* $reaction\n$investigation$hint$build"
+  val text = "*${context.iconsRepoName}* $reaction\n" + investigation + context.report() + build
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
   if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response")
 }

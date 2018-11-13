@@ -31,7 +31,7 @@ private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
 
 internal fun isNotificationRequired(context: Context): Boolean {
   val request = "builds?locator=buildType:$BUILD_CONF,count:1"
-  return if (context.isSuccess()) {
+  return if (!context.isFail()) {
     // notify on fail -> success
     val previousBuild = teamCityGet(request)
     previousBuild.contains("status=\"FAILURE\"")
@@ -63,13 +63,10 @@ internal fun isInvestigationAssigned() = teamCityGet("investigations?locator=bui
 internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
   try {
     val id = teamCityGet("users/email:${investigator.email}/id")
-    val text = with(investigator) {
-      (if (commits.isNotEmpty()) "commits: ${commits.entries.joinToString {
-        "${getOriginUrl(it.key)} : ${it.value.map(CommitInfo::hash)}"
-      }},"
-      else "") +
-      (if (context.createdReviews.isNotEmpty()) " reviews created: ${context.createdReviews.map(Review::url)}," else "")
-    } + " build: ${thisBuildReportableLink()}, see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
+    val text = context.report() +
+               (if (investigator.commits.isNotEmpty()) "commits: ${investigator.commits.description()}," else "") +
+               " build: ${thisBuildReportableLink()}," +
+               " see also: https://confluence.jetbrains.com/display/IDEA/Working+with+icons+in+IntelliJ+Platform"
     teamCityPost("investigations", """
       <investigation state="TAKEN">
           <assignee id="$id"/>
@@ -100,6 +97,9 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
 
 internal fun thisBuildReportableLink() =
   "${System.getProperty("intellij.icons.report.buildserver")}/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF"
+
+internal fun buildConfReportableLink(buildTypeId: String) =
+  "${System.getProperty("intellij.icons.report.buildserver")}/viewType.html?buildTypeId=$buildTypeId"
 
 internal fun triggeredBy() = System.getProperty("teamcity.build.triggeredBy.username")
   ?.takeIf { it.isNotBlank() }

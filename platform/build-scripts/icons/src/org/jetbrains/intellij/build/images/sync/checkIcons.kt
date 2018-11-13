@@ -26,12 +26,9 @@ catch (e: Throwable) {
   e.printStackTrace()
 }
 
-internal fun checkIcons(context: Context = Context(),
-                        loggerImpl: Consumer<String> = Consumer { println(it) },
-                        errorHandler: Consumer<String> = Consumer { error(it) }) {
+internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<String> = Consumer { println(it) }) {
   logger = loggerImpl
   context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
-  context.errorHandler = errorHandler
   icons = readIconsRepo(context.iconsRepo, context.iconsRepoDir)
   val devRepoRoot = findGitRepoRoot(context.devRepoDir)
   val devRepoVcsRoots = vcsRoots(devRepoRoot)
