@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -55,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.CODE_REFERENCE;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TYPE_ELEMENT;
 
 /**
  * @author ven
@@ -119,13 +122,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrCodeReferenceElement createReferenceElementFromText(@NotNull String refName, final PsiElement context) {
-    GroovyDummyElement dummyElement = new GroovyDummyElement(CODE_REFERENCE, refName);
-    DummyHolder holder = new DummyHolder(myManager, dummyElement, context);
-    PsiElement element = holder.getFirstChild();
-    if (!(element instanceof GrCodeReferenceElement)) {
-      throw new IncorrectOperationException("Incorrect code reference '" + refName + "'");
-    }
-    return (GrCodeReferenceElement)element;
+    return createElementFromText(refName, context, CODE_REFERENCE, GrCodeReferenceElement.class);
   }
 
   @NotNull
@@ -433,19 +430,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   @NotNull
   public GrTypeElement createTypeElement(@NotNull String typeText, @Nullable final PsiElement context) throws IncorrectOperationException {
-    final GroovyFile file = createGroovyFileChecked("def " + typeText + " someVar", false, context);
-
-    GrTopStatement[] topStatements = file.getTopStatements();
-
-    if (topStatements == null || topStatements.length == 0) throw new IncorrectOperationException("can't create type element from:" + typeText);
-    GrTopStatement statement = topStatements[0];
-
-    if (!(statement instanceof GrVariableDeclaration)) throw new IncorrectOperationException("can't create type element from:" + typeText);
-    GrVariableDeclaration decl = (GrVariableDeclaration) statement;
-    final GrTypeElement element = decl.getTypeElementGroovy();
-    if (element == null) throw new IncorrectOperationException("can't create type element from:" + typeText);
-
-    return element;
+    return createElementFromText(typeText, context, TYPE_ELEMENT, GrTypeElement.class);
   }
 
   @NotNull
@@ -1241,5 +1226,20 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public boolean isValidLocalVariableName(@NotNull String name) {
     return GroovyNamesUtil.isIdentifier(name);
+  }
+
+  @NotNull
+  private <T> T createElementFromText(@NotNull String text,
+                                      @Nullable PsiElement context,
+                                      @NotNull GroovyElementType elementType,
+                                      @NotNull Class<T> elementClass) {
+    final GroovyDummyElement dummyElement = new GroovyDummyElement(elementType, text);
+    final DummyHolder holder = new DummyHolder(myManager, dummyElement, context);
+    final PsiElement element = holder.getFirstChild();
+    final T result = ObjectUtils.tryCast(element, elementClass);
+    if (result == null) {
+      throw new IncorrectOperationException("Cannot create '" + elementClass.getName() + "' from text '" + text + "'");
+    }
+    return result;
   }
 }
