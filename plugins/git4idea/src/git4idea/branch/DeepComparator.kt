@@ -295,6 +295,7 @@ class DeepComparator(private val project: Project,
       val timeToSourceCommit = TroveUtil.group(sourceBranchCommits) { dataGetter.getAuthorTime(it) }
       val authorToSourceCommit = TroveUtil.group(sourceBranchCommits) { dataGetter.getAuthor(it) }
 
+      val commitsToRemove = TIntHashSet()
       for (targetCommit in targetBranchCommits) {
         val time = dataGetter.getAuthorTime(targetCommit)
         val author = dataGetter.getAuthor(targetCommit)
@@ -303,9 +304,14 @@ class DeepComparator(private val project: Project,
                                                    authorToSourceCommit[author] ?: TIntHashSet())
         if (sourceCandidates.isNotEmpty()) {
           selectSourceCommit(targetCommit, sourceCandidates, dataGetter)?.let { sourceCommit ->
-            sourceBranchCommits.remove(sourceCommit)
+            commitsToRemove.add(sourceCommit)
           }
         }
+      }
+      TroveUtil.removeAll(sourceBranchCommits, commitsToRemove)
+      if (!commitsToRemove.isEmpty) {
+        LOG.debug("Using index, detected ${commitsToRemove.size()} commits in ${sourceBranch}#${root.name}" +
+                  " that were picked to the current branch")
       }
 
       return sourceBranchCommits
