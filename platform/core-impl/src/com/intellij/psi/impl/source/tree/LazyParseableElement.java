@@ -178,27 +178,25 @@ public class LazyParseableElement extends CompositeElement {
     CharSequence text;
     synchronized (lock) {
       if (myParsed) return;
+
       text = myText.get();
       assert text != null;
-    }
 
-    FileElement fileElement = TreeUtil.getFileElement(this);
-    if (fileElement == null) {
-      LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
-    }
-    else {
-      fileElement.assertReadAccessAllowed();
-    }
+      FileElement fileElement = TreeUtil.getFileElement(this);
+      if (fileElement == null) {
+        LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
+      }
+      else {
+        fileElement.assertReadAccessAllowed();
+      }
 
-    DebugUtil.performPsiModification("lazy-parsing", () -> {
-      TreeElement parsedNode = (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this);
-      assertTextLengthIntact(text, parsedNode);
+      if (rawFirstChild() != null) {
+        LOG.error("Reentrant parsing?");
+      }
 
-      synchronized (lock) {
-        if (myParsed) return;
-        if (rawFirstChild() != null) {
-          LOG.error("Reentrant parsing?");
-        }
+      DebugUtil.performPsiModification("lazy-parsing", () -> {
+        TreeElement parsedNode = (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this);
+        assertTextLengthIntact(text, parsedNode);
 
         if (parsedNode != null) {
           setChildren(parsedNode);
@@ -206,9 +204,9 @@ public class LazyParseableElement extends CompositeElement {
 
         myParsed = true;
         myText = new SoftReference<>(text);
-      }
-    });
-  }
+      });
+    }
+}
 
   private void assertTextLengthIntact(CharSequence text, TreeElement child) {
     int length = 0;
