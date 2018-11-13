@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -25,6 +27,7 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import git4idea.ignore.GitRepositoryIgnoredHolder;
 import git4idea.util.GitFileUtils;
 import git4idea.util.GitVcsConsoleWriter;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +112,12 @@ public class GitVFSListener extends VcsVFSListener {
           List<VirtualFile> files = e.getValue();
           pi.setText(root.getPresentableUrl());
           try {
-            retainedFiles.addAll(myGit.untrackedFiles(myProject, root, files));
+            Set<VirtualFile> untrackedForRepo = myGit.untrackedFiles(myProject, root, files);
+            if (Registry.is("git.process.ignored")) {
+              List<VirtualFile> ignoredForRepo = ContainerUtil.filter(files, file -> !untrackedForRepo.contains(file));
+              getIgnoreRepoHolder(root).addFiles(ignoredForRepo);
+            }
+            retainedFiles.addAll(untrackedForRepo);
           }
           catch (VcsException ex) {
             myVcsConsoleWriter.showMessage(ex.getMessage());
@@ -120,6 +128,11 @@ public class GitVFSListener extends VcsVFSListener {
         AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> originalExecuteAdd(addedFiles, copiedFiles));
       }
     });
+  }
+
+  @NotNull
+  private GitRepositoryIgnoredHolder getIgnoreRepoHolder(@NotNull VirtualFile repoRoot) {
+    return ObjectUtils.assertNotNull(GitUtil.getRepositoryManager(myProject).getRepositoryForRootQuick(repoRoot)).getIgnoredFilesHolder();
   }
 
   /**

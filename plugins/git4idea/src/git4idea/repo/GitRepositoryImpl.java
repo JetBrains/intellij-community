@@ -6,6 +6,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.changes.ChangesViewI;
+import com.intellij.openapi.vcs.changes.ChangesViewManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.util.StopWatch;
@@ -13,6 +17,9 @@ import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
+import git4idea.commands.Git;
+import git4idea.ignore.GitRepositoryIgnoredHolder;
+import git4idea.ignore.GitRepositoryIgnoredHolderUpdateAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +40,7 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @NotNull private final GitRepositoryFiles myRepositoryFiles;
 
   @Nullable private final GitUntrackedFilesHolder myUntrackedFilesHolder;
+  @Nullable private final GitRepositoryIgnoredHolder myIgnoredRepositoryFilesHolder;
 
   @NotNull private volatile GitRepoInfo myInfo;
 
@@ -47,12 +55,17 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     myRepositoryFiles = GitRepositoryFiles.getInstance(gitDir);
     myReader = new GitRepositoryReader(myRepositoryFiles);
     myInfo = readRepoInfo();
+
     if (!light) {
       myUntrackedFilesHolder = new GitUntrackedFilesHolder(this, myRepositoryFiles);
       Disposer.register(this, myUntrackedFilesHolder);
+      myIgnoredRepositoryFilesHolder = new GitRepositoryIgnoredHolder(project, this, Git.getInstance());
+      Disposer.register(this, myIgnoredRepositoryFilesHolder);
+      myIgnoredRepositoryFilesHolder.addUpdateStateListener(new MyRepositoryIgnoredHolderUpdateAdapter(getProject()));
     }
     else {
       myUntrackedFilesHolder = null;
+      myIgnoredRepositoryFilesHolder = null;
     }
   }
 
@@ -80,6 +93,9 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   private void setupUpdater() {
     GitRepositoryUpdater updater = new GitRepositoryUpdater(this, myRepositoryFiles);
     Disposer.register(this, updater);
+    if (myIgnoredRepositoryFilesHolder != null) {
+      myIgnoredRepositoryFilesHolder.startRescan();
+    }
   }
 
   @Deprecated
@@ -205,7 +221,8 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     Collection<GitRemote> remotes = config.parseRemotes();
     GitBranchState state = myReader.readState(remotes);
     boolean isShallow = myReader.hasShallowCommits();
-    Collection<GitBranchTrackInfo> trackInfos = config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
+    Collection<GitBranchTrackInfo> trackInfos =
+      config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
     GitHooksInfo hooksInfo = myReader.readHooksInfo();
     Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
     sw.report();
@@ -219,7 +236,9 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
     return new File(VfsUtilCore.virtualToIoFile(getRoot()), ".gitmodules");
   }
 
-  private static void notifyIfRepoChanged(@NotNull final GitRepository repository, @NotNull GitRepoInfo previousInfo, @NotNull GitRepoInfo info) {
+  private static void notifyIfRepoChanged(@NotNull final GitRepository repository,
+                                          @NotNull GitRepoInfo previousInfo,
+                                          @NotNull GitRepoInfo info) {
     if (!repository.getProject().isDisposed() && !info.equals(previousInfo)) {
       notifyListenersAsync(repository);
     }
@@ -236,5 +255,50 @@ public class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   @Override
   public String toLogString() {
     return "GitRepository " + getRoot() + " : " + myInfo;
+  }
+
+  @NotNull
+  @Override
+  public GitRepositoryIgnoredHolder getIgnoredFilesHolder() {
+    if (myIgnoredRepositoryFilesHolder == null) throw new UnsupportedOperationException("Unsupported for light Git repository");
+    return myIgnoredRepositoryFilesHolder;
+  }
+
+  private static class MyRepositoryIgnoredHolderUpdateAdapter extends GitRepositoryIgnoredHolderUpdateAdapter {
+    @NotNull private final ChangesViewI myChangesViewI;
+    @NotNull private final VcsDirtyScopeManager myDirtyScopeManager;
+
+    MyRepositoryIgnoredHolderUpdateAdapter(@NotNull Project project) {
+      myChangesViewI = ChangesViewManager.getInstance(project);
+      myDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+    }
+
+    @Override
+    public void updateStarted(@NotNull String gitIgnorePath) {
+      myChangesViewI.scheduleRefresh();
+    }
+
+    @Override
+    public void updateStarted() {
+      myChangesViewI.scheduleRefresh();
+    }
+
+    @Override
+    public void updateFinished(@NotNull String gitIgnorePath) {
+      markGitignoreContainingFolderAsDirty(gitIgnorePath);
+      myChangesViewI.scheduleRefresh();
+    }
+
+    @Override
+    public void updateFinished() {
+      myChangesViewI.scheduleRefresh();
+    }
+
+    private void markGitignoreContainingFolderAsDirty(@NotNull String gitIgnorePath) {
+      VirtualFile gitIgnore = LocalFileSystem.getInstance().findFileByPath(gitIgnorePath);
+      if (gitIgnore != null && gitIgnore.getParent() != null) {
+        myDirtyScopeManager.dirDirtyRecursively(gitIgnore.getParent());
+      }
+    }
   }
 }
