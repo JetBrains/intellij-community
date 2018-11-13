@@ -209,7 +209,9 @@ public final class NavigationUtil {
         final Editor text = ((TextEditor)editor).getEditor();
         final int offset = text.getCaretModel().getOffset();
 
-        if (range.containsOffset(offset)) {
+
+        if (!fem.isFileOpen(vFile) && // [tav] todo: temp workaround to prevent multiple add/remove of jcef viewer
+            range.containsOffset(offset)) {
           // select the file
           fem.openFile(vFile, requestFocus, searchForOpen);
           return true;

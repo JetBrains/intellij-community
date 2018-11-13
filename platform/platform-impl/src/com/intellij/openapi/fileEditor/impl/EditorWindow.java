@@ -647,9 +647,15 @@ public class EditorWindow {
     if (editor != null) {
       onBeforeSetEditor(editor.getFile());
       if (myTabbedPane == null) {
-        myPanel.removeAll ();
-        myPanel.add (new TCompForTablessMode(this, editor), BorderLayout.CENTER);
-        myOwner.validate();
+        // [tav] todo: temp workaround to prevent multiple add/remove of jcef viewer
+        if (myPanel.getComponentCount() == 0 ||
+            !(myPanel.getComponent(0) instanceof TCompForTablessMode) ||
+            !((TCompForTablessMode)myPanel.getComponent(0)).getEditorWindow().getSelectedFile().equals(this.getSelectedFile()))
+        {
+          myPanel.removeAll();
+          myPanel.add(new TCompForTablessMode(this, editor), BorderLayout.CENTER);
+          myOwner.validate();
+        }
         if (selectEditor) {
           setSelectedEditor(editor, focusEditor);
         }

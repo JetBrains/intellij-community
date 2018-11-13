@@ -7,6 +7,7 @@ import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -16,7 +17,6 @@ import com.sun.webkit.WebPage;
 import javafx.application.Platform;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 import org.cef.CefApp;
@@ -51,12 +51,13 @@ public class JavaFxHtmlPanel implements Disposable {
 
   private static final CefApp ourCefApp;
   private static final CefClient ourCefClient;
-  private static final Map<CefBrowser, JavaFxHtmlPanel> ourBrowser2Panel = new HashMap<>();
+  private static final Map<CefBrowser, JavaFxHtmlPanel> ourCefBrowser2Panel = new HashMap<>();
   // browser requires some correct URL for loading
   private final static String ourUrl = JavaFxHtmlPanel.class.getResource(JavaFxHtmlPanel.class.getSimpleName() + ".class").toExternalForm();
 
   private @NotNull final CefBrowser myCefBrowser;
   private boolean myIsCefBrowserCreated;
+  private boolean myIsCefBrowserClosed;
   private @Nullable String myHtml;
 
   static {
@@ -68,8 +69,8 @@ public class JavaFxHtmlPanel implements Disposable {
     ourCefClient.addLifeSpanHandler(new CefLifeSpanHandlerAdapter() {
       @Override
       public void onAfterCreated(CefBrowser browser) {
-        JavaFxHtmlPanel panel = ourBrowser2Panel.get(browser);
-        if (panel != null) {
+        JavaFxHtmlPanel panel = ourCefBrowser2Panel.get(browser);
+        if (panel != null && !panel.myIsCefBrowserClosed) {
           panel.myIsCefBrowserCreated = true;
           if (panel.myHtml != null) {
             browser.loadString(panel.myHtml, ourUrl);
@@ -81,13 +82,14 @@ public class JavaFxHtmlPanel implements Disposable {
     ourCefClient.addLoadHandler(new CefLoadHandlerAdapter() {
       @Override
       public void onLoadEnd(CefBrowser browser, CefFrame frame, int i) {
-        JavaFxHtmlPanel panel = ourBrowser2Panel.get(browser);
-        if (panel != null && browser.getURL() != null && panel.isHtmlLoaded()) {
+        JavaFxHtmlPanel panel = ourCefBrowser2Panel.get(browser);
+        if (panel != null && !panel.myIsCefBrowserClosed && browser.getURL() != null && panel.isHtmlLoaded()) {
           browser.getUIComponent().setSize(panel.myPanelWrapper.getSize());
           panel.myPanelWrapper.revalidate();
         }
       }
     });
+    Disposer.register(ApplicationManager.getApplication(), () -> ourCefApp.dispose()); // todo: crashes on exit
   }
 
   public JavaFxHtmlPanel() {
@@ -95,17 +97,21 @@ public class JavaFxHtmlPanel implements Disposable {
       @Override
       public void removeNotify() {
         super.removeNotify();
-        ourBrowser2Panel.remove(myCefBrowser);
+        ourCefBrowser2Panel.remove(myCefBrowser);
+        myIsCefBrowserClosed = true;
+        myCefBrowser.close(true);
       }
+
       @Override
       public void addNotify() {
-        ourBrowser2Panel.put(myCefBrowser, JavaFxHtmlPanel.this);
         super.addNotify();
+        if (myIsCefBrowserClosed) throw new IllegalStateException("CefBrowser has been closed");
       }
     };
     myPanelWrapper.setBackground(JBColor.background());
 
     myCefBrowser = ourCefClient.createBrowser("about:blank", false, false);
+    ourCefBrowser2Panel.put(myCefBrowser, this);
 
     // workaround for the UI garbage issue: keep the browser component min until the browser loads html
     myPanelWrapper.setLayout(null);
@@ -198,6 +204,7 @@ public class JavaFxHtmlPanel implements Disposable {
   }
 
   public void setHtml(@NotNull String html) {
+    if (myIsCefBrowserClosed) return;
     final String htmlToRender = prepareHtml(html);
     //runInPlatformWhenAvailable(() -> getWebViewGuaranteed().getEngine().loadContent(htmlToRender));
     if (!myIsCefBrowserCreated) {
