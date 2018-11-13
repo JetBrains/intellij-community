@@ -34,7 +34,6 @@ import java.awt.Color;
  *
  * @author Sergey.Malenkov
  */
-@SuppressWarnings("UseJBColor")
 class ValueElementReader {
   @NonNls private static final String VALUE = "value";
   @NonNls private static final String MAC = "mac";
@@ -156,18 +155,20 @@ class ValueElementReader {
 
   private static Color toColor(String value) {
     try {
-      return ColorUtil.fromHex(value);
+      if (6 <= value.length()) return ColorUtil.fromHex(value);
+      LOG.debug("short color value: ", value);
     }
     catch (Exception exception) {
-      LOG.debug(exception);
-      int rgb;
-      try {
-        rgb = Integer.parseInt(value, 16);
-      }
-      catch (NumberFormatException ignored) {
-        rgb = Integer.decode(value);
-      }
-      return new Color(rgb);
+      LOG.debug("wrong color value: ", value);
     }
+    int rgb;
+    try {
+      rgb = Integer.parseInt(value, 16);
+    }
+    catch (NumberFormatException ignored) {
+      rgb = Integer.decode(value);
+    }
+    //noinspection UseJBColor
+    return new Color(rgb);
   }
 }
