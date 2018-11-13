@@ -178,7 +178,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Nullable
   private static ResourceBundle getActionsResourceBundle(ClassLoader loader, IdeaPluginDescriptor plugin) {
-    final String resBundleName = plugin != null && !"com.intellij".equals(plugin.getPluginId().getIdString())
+    final String resBundleName = plugin != null && !PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId().getIdString())
                                          ? plugin.getResourceBundleBaseName() : ACTIONS_BUNDLE;
     ResourceBundle bundle = null;
     if (resBundleName != null) {

@@ -433,7 +433,7 @@ public class PluginGroups {
     IdeaPluginDescriptor descriptor = findPlugin(id);
     if (descriptor != null) {
       for (PluginId pluginId : descriptor.getDependentPluginIds()) {
-        if (pluginId.getIdString().equals("com.intellij")) continue;
+        if (pluginId.getIdString().equals(PluginManagerCore.CORE_PLUGIN_ID)) continue;
         if (!ArrayUtil.contains(pluginId, descriptor.getOptionalDependentPluginIds())) {
           result.add(pluginId.getIdString());
         }
