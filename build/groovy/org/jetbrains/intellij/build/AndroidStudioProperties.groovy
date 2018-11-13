@@ -449,9 +449,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
         context.ant.copy(todir: "$simpleperfTarget/linux-x86") {
           fileset(dir: "$root/prebuilts/tools/linux-x86/simpleperf")
         }
+        extraExecutables.add("$simpleperfTarget/linux-x86/simpleperf/simpleperf")
+
         context.ant.copy(todir: "$simpleperfTarget/linux-x86_64") {
           fileset(dir: "$root/prebuilts/tools/linux-x86_64/simpleperf")
         }
+        extraExecutables.add("$simpleperfTarget/linux-x86_64/simpleperf/simpleperf")
       }
     }
   }
@@ -498,9 +501,12 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       context.ant.copy(todir: "$simpleperfTarget/darwin-x86") {
         fileset(dir: "$root/prebuilts/tools/darwin-x86/simpleperf")
       }
+      extraExecutables.add("$simpleperfTarget/darwin-x86/simpleperf/simpleperf")
+
       context.ant.copy(todir: "$simpleperfTarget/darwin-x86_64") {
         fileset(dir: "$root/prebuilts/tools/darwin-x86_64/simpleperf")
       }
+      extraExecutables.add("$simpleperfTarget/darwin-x86_64/simpleperf/simpleperf")
     }
   }
 
