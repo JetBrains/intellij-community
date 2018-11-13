@@ -351,7 +351,7 @@ public class GrClosureSignatureUtil {
       map[cur] = new ArgInfo<>(args[i], type);
     }
     for (int i = 0; i < map.length; i++) {
-      if (map[i] == null) map[i] = new ArgInfo<>(Collections.emptyList(), false, null);
+      if (map[i] == null) map[i] = ArgInfo.empty();
     }
     return map;
   }
@@ -443,7 +443,7 @@ public class GrClosureSignatureUtil {
       }
       if (isApplicableInternal(0, 0, notOptionals)) {
         for (int i = 0; i < map.length; i++) {
-          if (map[i] == null) map[i] = new ArgInfo<>(false, null);
+          if (map[i] == null) map[i] = ArgInfo.empty();
         }
         return map;
       }
@@ -512,6 +512,7 @@ public class GrClosureSignatureUtil {
 
   public static class ArgInfo<ArgType> {
     private static final ArgInfo[] EMPTY_ARRAY = new ArgInfo[0];
+    private static final ArgInfo<?> EMPTY = new ArgInfo<>(Collections.emptyList(), false, null);
 
     public final @NotNull List<ArgType> args;
     public final boolean isMultiArg;
@@ -527,10 +528,15 @@ public class GrClosureSignatureUtil {
       this(Collections.singletonList(arg), false, type);
     }
 
-    public ArgInfo(boolean isMultiArg, PsiType type) {
-      this(Collections.emptyList(), isMultiArg, type);
+    @Contract(pure = true)
+    @NotNull
+    public static <ArgType> ArgInfo<ArgType> empty() {
+      //noinspection unchecked
+      return (ArgInfo<ArgType>)EMPTY;
     }
 
+    @Contract(pure = true)
+    @NotNull
     public static <ArgType> ArgInfo<ArgType>[] empty_array() {
       //noinspection unchecked
       return EMPTY_ARRAY;
