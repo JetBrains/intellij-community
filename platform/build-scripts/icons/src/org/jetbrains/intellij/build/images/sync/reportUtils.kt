@@ -47,37 +47,56 @@ internal fun Map<File, Collection<CommitInfo>>.description() = entries.joinToStr
 
 private fun Map<File, Collection<CommitInfo>>.commitMessage() = "Synchronization of changed icons from ${description()}"
 
+private fun withTmpBranch(repos: Collection<File>, action: (String) -> Review?): Review? {
+  val branch = "icons-sync/${UUID.randomUUID()}"
+  return try {
+    action(branch)
+  }
+  catch (e: Throwable) {
+    repos.forEach {
+      deleteBranch(it, branch)
+    }
+    throw e
+  }
+}
+
 private fun createReviewForDev(root: File, context: Context, user: String, email: String): Review? {
   if (!context.doSyncDevIconsAndCreateReview) return null
   val changes = context.addedByDesigners + context.removedByDesigners + context.modifiedByDesigners
-  if (changes.isNotEmpty()) {
-    val repos = changes.asSequence()
-      .map { File(root, it).absolutePath }
-      .map { findGitRepoRoot(it, silent = true) }
-      .distinct()
-      .toList()
-    val commits = findCommitsByRepo(context.iconsRepo, changes.asSequence())
-    if (commits.isNotEmpty()) {
-      val verificationPassed = try {
-        context.verifyDevIcons()
-        repos.forEach { repo ->
-          gitStatus(repo)
-            .takeIf { it.isNotEmpty() }
-            ?.also { addChangesToGit(it, repo) }
-        }
-        true
-      }
-      catch (e: Exception) {
-        e.printStackTrace()
-        false
-      }
-      val review = pushAndCreateReview(UPSOURCE_DEV_PROJECT_ID, user, email, commits.commitMessage(), repos)
+  if (changes.isEmpty()) return null
+  val repos = changes.asSequence()
+    .map { File(root, it).absolutePath }
+    .map { findGitRepoRoot(it, silent = true) }
+    .distinct()
+    .toList()
+  val commits = findCommitsByRepo(context.iconsRepo, changes.asSequence())
+  if (commits.isEmpty()) return null
+  val verificationPassed = try {
+    context.verifyDevIcons()
+    repos.forEach { repo ->
+      gitStatus(repo)
+        .takeIf { it.isNotEmpty() }
+        ?.also { addChangesToGit(it, repo) }
+    }
+    true
+  }
+  catch (e: Exception) {
+    e.printStackTrace()
+    false
+  }
+  return withTmpBranch(repos) { branch ->
+    val commitsForReview = commitAndPush(branch, user, email, commits.commitMessage(), repos)
+    if (UPSOURCE_DEV_PROJECT_ID.isNullOrEmpty()) {
+      log("WARNING: unable to create Upsource review for ${context.devRepoName}, just plain old branch review")
+      PlainOldReview(branch, UPSOURCE_DEV_PROJECT_ID)
+    }
+    else {
+      val review = createReview(UPSOURCE_DEV_PROJECT_ID, branch, commits.commitMessage(), commitsForReview)
       addReviewer(UPSOURCE_DEV_PROJECT_ID, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
       postVerificationResultToReview(verificationPassed, review)
-      return review
+      review
     }
   }
-  return null
 }
 
 private fun postVerificationResultToReview(success: Boolean, review: Review) {
@@ -89,21 +108,20 @@ private fun postVerificationResultToReview(success: Boolean, review: Review) {
 private fun createReviewForIcons(root: File, context: Context, user: String, email: String): Review? {
   if (!context.doSyncIconsAndCreateReview) return null
   val changes = context.addedByDev + context.removedByDev + context.modifiedByDev
-  if (changes.isNotEmpty()) {
-    val commits = findCommitsByRepo(root, changes.asSequence())
-    if (commits.isNotEmpty()) {
-      val review = pushAndCreateReview(UPSOURCE_ICONS_PROJECT_ID, user, email,
-                                       commits.commitMessage(),
-                                       listOf(context.iconsRepo))
-      commits.values.parallelStream()
-        .flatMap { it.stream() }
-        .map { it.committerEmail }
-        .distinct()
-        .forEach { addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, it) }
-      return review
-    }
+  if (changes.isEmpty()) return null
+  val commits = findCommitsByRepo(root, changes.asSequence())
+  if (commits.isEmpty()) return null
+  val repos = listOf(context.iconsRepo)
+  return withTmpBranch(repos) { branch ->
+    val commitsForReview = commitAndPush(branch, user, email, commits.commitMessage(), repos)
+    val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commits.commitMessage(), commitsForReview)
+    commits.values.parallelStream()
+      .flatMap { it.stream() }
+      .map { it.committerEmail }
+      .distinct()
+      .forEach { addReviewer(UPSOURCE_ICONS_PROJECT_ID, review, it) }
+    review
   }
-  return null
 }
 
 private fun createReviews(root: File, context: Context) = callSafely {
@@ -143,23 +161,14 @@ private fun findCommits(root: File, changes: Sequence<String>) = changes
   .map { latestChangeCommit(it) }
   .filterNotNull()
 
-private fun pushAndCreateReview(project: String, user: String, email: String, message: String, repos: Collection<File>): Review {
-  val branch = "icons-sync/${UUID.randomUUID()}"
-  try {
-    val commits = repos.map {
-      initGit(it, user, email)
-      commitAndPush(it, branch, message)
-    }
-    val review = createReview(project, branch, commits)
-    postComment(project, review, message)
-    return review
-  }
-  catch (e: Throwable) {
-    repos.forEach {
-      deleteBranch(it, branch)
-    }
-    throw e
-  }
+private fun commitAndPush(branch: String, user: String, email: String, message: String, repos: Collection<File>) = repos.map {
+  initGit(it, user, email)
+  commitAndPush(it, branch, message)
+}
+
+private fun createReview(project: String, branch: String,
+                         message: String, commits: Collection<String>) = createReview(project, branch, commits).also {
+  postComment(project, it, message)
 }
 
 private fun sendNotification(investigator: Investigator?, context: Context) {
