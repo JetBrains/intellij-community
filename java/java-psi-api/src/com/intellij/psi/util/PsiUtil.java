@@ -699,6 +699,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @Nullable
+  @Contract("null -> null")
   public static PsiExpression deparenthesizeExpression(PsiExpression expression) {
     while (true) {
       if (expression instanceof PsiParenthesizedExpression) {
