@@ -39,7 +39,7 @@ class MethodResolveResult(
     }
   }
 
-  private val applicabilitySubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  private val myPartialSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
     if (typeArguments.isNotEmpty()) {
       siteSubstitutor
     }
@@ -63,7 +63,7 @@ class MethodResolveResult(
 
   override fun getCandidate(): MethodCandidate? = methodCandidate
 
-  override fun getPartialSubstitutor(): PsiSubstitutor = applicabilitySubstitutor
+  override fun getPartialSubstitutor(): PsiSubstitutor = myPartialSubstitutor
 
   override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor
 
