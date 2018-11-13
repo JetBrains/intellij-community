@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,15 +97,7 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
           }
           final PsiElement parent = expression.getParent();
           if (parent instanceof PsiExpressionList) {  //try to find corresponding formal parameter
-            int idx = -1;
-            final PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
-            for (int i = 0; i < args.length; i++) {
-              PsiExpression arg = args[i];
-              if (PsiTreeUtil.isAncestor(arg, expression, false)) {
-                idx = i;
-                break;
-              }
-            }
+            int idx = ArrayUtil.indexOf(((PsiExpressionList)parent).getExpressions(), expression);
 
             if (idx > -1) {
               PsiElement grParent = parent.getParent();
