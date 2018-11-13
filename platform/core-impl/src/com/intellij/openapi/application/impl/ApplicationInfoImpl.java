@@ -450,7 +450,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public boolean isPluginManagerUrlDefault() {
+  public boolean usesJetBrainsPluginRepository() {
     return DEFAULT_PLUGINS_HOST.equalsIgnoreCase(myPluginManagerUrl) ||
            (DEFAULT_PLUGINS_HOST + "/").equalsIgnoreCase(myPluginManagerUrl);//see ***ApplicationInfo.xml
   }

@@ -21,7 +21,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ObjectIntHashMap
 import gnu.trove.THashSet
-import one.util.streamex.StreamEx
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -193,8 +192,8 @@ private val safeToReportPluginIds: Set<String>
     val project = DefaultProjectFactory.getInstance().defaultProject
     return CachedValuesManager.getManager(project).getCachedValue(project) {
       val plugins = collectSafePluginDescriptors()
-      val ids = StreamEx.of(plugins).map<PluginId> { descriptor: PluginDescriptor -> descriptor.pluginId }.nonNull().
-        map<String> { id: PluginId -> id.idString }.toSet()
+      val ids = mutableSetOf<String>()
+      plugins.mapNotNullTo(ids) { descriptor: PluginDescriptor -> descriptor.pluginId?.idString }
       CachedValueProvider.Result.create(ids, DelayModificationTracker(1, TimeUnit.HOURS))
     }
   }
@@ -204,7 +203,7 @@ private val safeToReportPluginIds: Set<String>
  */
 private fun collectSafePluginDescriptors(): List<IdeaPluginDescriptor> {
   // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository
-  if (ApplicationInfoEx.getInstanceEx().isPluginManagerUrlDefault) {
+  if (ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()) {
     try {
       val cached = RepositoryHelper.loadCachedPlugins()
       if (cached != null) {
@@ -246,13 +245,12 @@ fun isSafeToReportFrom(descriptor: IdeaPluginDescriptor?): Boolean {
   if(descriptor.isBundled){
     return true
   }
-  var path: String
-  try {
+  val path = try {
     //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin
-    path = descriptor.path.canonicalPath
+    descriptor.path.canonicalPath
   }
   catch (e: IOException) {
-    path = descriptor.path.absolutePath
+    descriptor.path.absolutePath
   }
 
   if (path.startsWith(PathManager.getPluginsPath())) {
@@ -265,6 +263,8 @@ fun isSafeToReportFrom(descriptor: IdeaPluginDescriptor?): Boolean {
  * Checks plugin with same id is bundled or from official repository, so pluginId may be reported.
  * However it may reuse existing id, and it's better to check isSafeToReportFrom(descriptor: IdeaPluginDescriptor?)
  * before reporting API from this plugin
+ *
+ * On the very first invocation may need to load cached plugins later; in that case no plugins are considered safe
  */
 fun isSafeToReport(pluginId: String?): Boolean {
   return pluginId != null && safeToReportPluginIds.contains(pluginId)
