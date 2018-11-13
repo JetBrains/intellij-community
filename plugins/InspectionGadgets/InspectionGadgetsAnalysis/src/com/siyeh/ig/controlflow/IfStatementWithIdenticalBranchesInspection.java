@@ -806,12 +806,14 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                                                 boolean isOnTheFly) {
       ThenElse thenElse = from(ifStatement, thenBranch, elseBranch, isOnTheFly);
       if (thenElse == null) return null;
+      boolean isNotInCodeBlock = !(ifStatement.getParent() instanceof PsiCodeBlock);
       boolean mayChangeSemantics = thenElse.myMayChangeSemantics;
       CommonPartType type = thenElse.myCommonPartType;
       ExtractCommonIfPartsFix fix = new ExtractCommonIfPartsFix(type, mayChangeSemantics, isOnTheFly);
-      PsiElement elementToHighlight = mayChangeSemantics ? ifStatement : ifStatement.getFirstChild();
+      boolean isInfoLevel = mayChangeSemantics || isNotInCodeBlock;
+      PsiElement elementToHighlight = isInfoLevel ? ifStatement : ifStatement.getFirstChild();
       if (type == CommonPartType.VARIABLES_ONLY && !isOnTheFly) return null;
-      return new IfInspectionResult(elementToHighlight, type != CommonPartType.WITH_VARIABLES_EXTRACT && !mayChangeSemantics, fix,
+      return new IfInspectionResult(elementToHighlight, type != CommonPartType.WITH_VARIABLES_EXTRACT && !isInfoLevel, fix,
                                     type.getMessage(mayChangeSemantics));
     }
 
