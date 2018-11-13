@@ -44,6 +44,13 @@ class GrAssignabilityTest extends GrHighlightingTestBase {
 
   void testClosureWithDefaultParameters() { doTest() }
 
+  void 'test method with default parameters and varargs'() {
+    testHighlighting '''\
+def go(String a, String b = 'b', String c, int ... i) {}
+go('a', 'c', 1, 2, 3)
+'''
+  }
+
   void testClosureApplicability() { doTest() }
 
   void testSingleParameterMethodApplicability() { doTest() }
