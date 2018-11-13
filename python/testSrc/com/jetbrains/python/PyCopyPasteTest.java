@@ -468,4 +468,29 @@ public class PyCopyPasteTest extends PyTestCase {
   public void testInvalidExistingIndentWhenCaretAtFirstColumn() {
     doTest();
   }
+
+  // PY-22563
+  public void testBeginningOfIndentedLineSelectedAndReplacedWithWord() {
+    doTest();
+  }
+
+  // PY-22563
+  public void testWholeIndentedLineSelectedWithoutIndentAndReplacedWithWord() {
+    doTest();
+  }
+
+  // PY-22563
+  public void testWholeIndentedLineSelectedWithIndentAndReplacedWithWord() {
+    doTest();
+  }
+  
+  // PY-22563
+  public void testWholeIndentedLineSelectedWithPartialIndentAndReplacedWithWord() {
+    doTest();
+  }
+
+  // PY-29506
+  public void testBeginningOfIndentedLinePrecededByPastedWord() {
+    doTest();
+  }
 }
