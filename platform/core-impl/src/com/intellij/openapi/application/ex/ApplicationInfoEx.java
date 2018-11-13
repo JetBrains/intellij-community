@@ -89,7 +89,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getPluginManagerUrl();
 
-  public abstract boolean isPluginManagerUrlDefault();
+  public abstract boolean usesJetBrainsPluginRepository();
 
   public abstract String getPluginsListUrl();
 
