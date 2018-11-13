@@ -398,9 +398,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitBreakStatement(PsiBreakStatement statement) {
     super.visitBreakStatement(statement);
-    if (!myHolder.hasErrorResults()) {
-      myHolder.add(HighlightUtil.checkLabelDefined(statement.getLabelIdentifier(), statement.findExitedStatement()));
-    }
+    if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkLabelDefined(statement.getLabelIdentifier(), statement.findExitedStatement()));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkBreakOutsideLoop(statement));
   }
 
