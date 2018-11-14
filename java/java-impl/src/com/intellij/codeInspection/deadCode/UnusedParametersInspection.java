@@ -120,7 +120,7 @@ class UnusedParametersInspection extends GlobalJavaBatchInspectionTool {
                                           @Override
                                           public boolean execute(PsiReference element) {
                                             refParameter.parameterReferenced(false);
-                                            processor.ignoreElement(refMethod);
+                                            processor.ignoreElement(refParameter);
                                             found[0] = true;
                                             return false;
                                           }
