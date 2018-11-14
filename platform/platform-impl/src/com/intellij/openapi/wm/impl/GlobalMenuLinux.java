@@ -44,7 +44,7 @@ interface GlobalMenuLib extends Library {
   void execOnMainLoop(JRunnable run);
 
   Pointer registerWindow(long windowXid, EventHandler handler);
-  void releaseWindowOnMainLoop(Pointer wi);
+  void releaseWindowOnMainLoop(Pointer wi, JRunnable onReleased);
 
   void bindNewWindow(Pointer wi, long windowXid); // can be called from EDT (invokes only g_dbus_proxy_call, stateless)
   void unbindWindow(Pointer wi, long windowXid);  // can be called from EDT (invokes only g_dbus_proxy_call, stateless)
@@ -108,7 +108,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final Logger LOG = Logger.getInstance(GlobalMenuLinux.class);
   private static final GlobalMenuLib ourLib;
   private static final GlobalMenuLib.JLogger ourGLogger;
-  private static final GlobalMenuLib.JRunnable ourProcessQueue;
+  private static final GlobalMenuLib.JRunnable ourUpdateAllRoots;
   private static final GlobalMenuLib.JRunnable ourOnAppmenuServiceAppeared;
   private static final GlobalMenuLib.JRunnable ourOnAppmenuServiceVanished;
   private static final Map<Long, GlobalMenuLinux> ourInstances = new ConcurrentHashMap<>();
@@ -118,8 +118,11 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private final @NotNull JFrame myFrame;
   private List<MenuItemInternal> myRoots;
   private Pointer myWindowHandle;
-  private boolean myIsProcessed = false;
+  private boolean myIsRootsUpdated = false;
+  private boolean myIsEnabled = true;
+  private boolean myIsDisposed = false;
 
+  private final GlobalMenuLib.JRunnable myOnWindowReleased;
   private final EventFilter myEventFilter = new EventFilter();
 
   static {
@@ -136,19 +139,19 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
           LOG.error(msg);
         }
       };
-      ourProcessQueue = () -> {
+      ourUpdateAllRoots = () -> {
         // exec at glib-thread
         if (!ourIsServiceAvailable)
           return;
 
         for (GlobalMenuLinux gml: ourInstances.values())
-          gml._processRoots();
+          gml._updateRoots();
       };
       ourOnAppmenuServiceAppeared = () -> {
         // exec at glib-thread
         LOG.info("Appeared dbus-service 'com.canonical.AppMenu.Registrar'");
         ourIsServiceAvailable = true;
-        ourProcessQueue.run();
+        ourUpdateAllRoots.run();
       };
       ourOnAppmenuServiceVanished = () -> {
         // exec at glib-thread
@@ -176,7 +179,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       }
     } else {
       ourGLogger = null;
-      ourProcessQueue = null;
+      ourUpdateAllRoots = null;
       ourOnAppmenuServiceAppeared = null;
       ourOnAppmenuServiceVanished = null;
     }
@@ -191,22 +194,40 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     LOG.info("created instance of GlobalMenuLinux for xid=0x" + Long.toHexString(xid));
     myXid = xid;
     myFrame = frame;
+    myOnWindowReleased = () -> {
+      // exec at glib-thread
+      myWindowHandle = null;
+      if (myRoots != null) {
+        for (MenuItemInternal root : myRoots) {
+          root.nativePeer = null;
+          root.children.clear();
+        }
+      }
+      if (myIsDisposed)
+        ourInstances.remove(myXid);
+    };
     ourInstances.put(myXid, this);
   }
 
   @Override
   public void dispose() {
-    if (ourLib == null)
+    // exec at EDT
+    if (ourLib == null || myIsDisposed)
       return;
 
+    myIsDisposed = true;
+
     if (myWindowHandle != null) {
-      LOG.info("scheduled destroying of GlobalMenuLinux for xid=0x" + Long.toHexString(myXid));
-      ourLib.releaseWindowOnMainLoop(myWindowHandle);
+      _trace("dispose frame, scheduled destroying of GlobalMenuLinux for xid=0x%X", myXid);
+      ourLib.releaseWindowOnMainLoop(myWindowHandle, myOnWindowReleased);
     }
   }
 
   public void bindNewWindow(@NotNull Window frame) {
     // exec at EDT
+    if (ourLib == null)
+      return;
+
     final long xid = _getX11WindowXid(frame);
     if (xid == 0) {
       LOG.warn("can't obtain XID of window: " + frame + ", skip global menu binding");
@@ -220,6 +241,9 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
   public void unbindWindow(@NotNull Window frame) {
     // exec at EDT
+    if (ourLib == null)
+      return;
+
     final long xid = _getX11WindowXid(frame);
     if (xid == 0) {
       LOG.warn("can't obtain XID of window: " + frame + ", skip global menu unbinding");
@@ -232,6 +256,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   }
 
   public void setRoots(List<ActionMenu> roots) {
+    // exec at EDT
     if (ourLib == null)
       return;
 
@@ -251,16 +276,16 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
     myRoots = newRoots;
     _trace("set new menu roots, count=%d", size);
-    myIsProcessed = false;
-    ourLib.execOnMainLoop(ourProcessQueue);
+    myIsRootsUpdated = false;
+    ourLib.execOnMainLoop(ourUpdateAllRoots);
   }
 
-  private void _processRoots() {
+  private void _updateRoots() {
     // exec at glib-thread
-    if (myIsProcessed)
+    if (myIsRootsUpdated || !myIsEnabled || myIsDisposed)
       return;
 
-    myIsProcessed = true;
+    myIsRootsUpdated = true;
 
     if (myWindowHandle == null) {
       myWindowHandle = ourLib.registerWindow(myXid, this);
@@ -280,7 +305,35 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       mi.nativePeer = ourLib.addRootMenu(myWindowHandle, mi.uid, mi.txt);
 
     if (!SHOW_SWING_MENU)
-      ApplicationManager.getApplication().invokeLater(()->myFrame.getJMenuBar().setVisible(false));
+      ApplicationManager.getApplication().invokeLater(()->{
+        if (myIsEnabled)
+          myFrame.getJMenuBar().setVisible(false);
+      });
+  }
+
+  public void toggle(boolean enabled) {
+    if (ourLib == null || myIsDisposed)
+      return;
+
+    if (myIsEnabled == enabled)
+      return;
+
+    myIsEnabled = enabled;
+
+    if (enabled) {
+      _trace("enable global-menu");
+      myIsRootsUpdated = false;
+      ourLib.execOnMainLoop(ourUpdateAllRoots);
+    } else {
+      if (myWindowHandle != null) {
+        _trace("disable global menu, scheduled destroying of GlobalMenuLinux for xid=0x%X", myXid);
+        ourLib.releaseWindowOnMainLoop(myWindowHandle, myOnWindowReleased);
+      }
+
+      final JMenuBar frameMenu = myFrame.getJMenuBar();
+      if (frameMenu != null)
+        frameMenu.setVisible(true);
+    }
   }
 
   private MenuItemInternal _findMenuItem(int uid) {
