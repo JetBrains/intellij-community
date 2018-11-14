@@ -20,7 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.expressions.JavaUExpressionList
-import org.jetbrains.uast.java.internal.ArrayMappingListView
+import org.jetbrains.uast.java.internal.PsiArrayToUElementListMappingView
 import org.jetbrains.uast.psi.UElementWithLocation
 
 class JavaUCallExpression(
@@ -42,7 +42,7 @@ class JavaUCallExpression(
   override val valueArgumentCount: Int by lz { psi.argumentList.expressions.size }
 
   override val valueArguments: List<UExpression> =
-    ArrayMappingListView(psi.argumentList.expressions) { JavaConverter.convertOrEmpty(it, this@JavaUCallExpression) }
+    PsiArrayToUElementListMappingView(psi.argumentList.expressions) { JavaConverter.convertOrEmpty(it, this@JavaUCallExpression) }
 
   override fun getArgumentForParameter(i: Int): UExpression? {
     val resolved = multiResolve().mapNotNull { it.element as? PsiMethod }
