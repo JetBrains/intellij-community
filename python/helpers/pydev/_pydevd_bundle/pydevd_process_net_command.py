@@ -18,7 +18,7 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
     CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
-    CMD_LOAD_FULL_VALUE
+    CMD_LOAD_FULL_VALUE, CMD_PROCESS_CREATED_MSG_RECEIVED
 from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
     NEXT_VALUE_SEPARATOR
 
@@ -708,6 +708,13 @@ def process_net_command(py_db, cmd_id, seq, text):
 
                     mode = text.strip() == true_str
                     pydevd_dont_trace.trace_filter(mode)
+
+            elif cmd_id == CMD_PROCESS_CREATED_MSG_RECEIVED:
+                event = py_db.process_created_msg_received_event
+
+                if event:
+                    py_db.process_created_msg_received_event = None
+                    event.set()
 
             else:
                 #I have no idea what this is all about
