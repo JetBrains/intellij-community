@@ -6,21 +6,28 @@ import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
 
-fun LinearGraph.getReachableNodes(headNodes: Set<Int>?): UnsignedBitSet {
-  if (headNodes == null) {
+/**
+ * Get nodes reachable from the specified by down edges of the graph.
+ * @return reachable nodes or all nodes if startNodes is null
+ */
+fun LinearGraph.getReachableNodes(startNodes: Set<Int>?): UnsignedBitSet {
+  if (startNodes == null) {
     val nodesVisibility = UnsignedBitSet()
     nodesVisibility.set(0, nodesCount() - 1, true)
     return nodesVisibility
   }
 
   val result = UnsignedBitSet()
-  DfsWalk(headNodes, this).walk(true) { node: Int ->
+  DfsWalk(startNodes, this).walk(true) { node: Int ->
     result.set(node, true)
     true
   }
   return result
 }
 
+/**
+ * Check whether lowerNode is an ancestor of the upperNode.
+ */
 fun LiteLinearGraph.isAncestor(lowerNode: Int, upperNode: Int): Boolean {
   val visited = BitSetFlags(nodesCount(), false)
 
@@ -46,6 +53,10 @@ fun LiteLinearGraph.isAncestor(lowerNode: Int, upperNode: Int): Boolean {
   return result.get()
 }
 
+/**
+ * Find a parent of the startNode which is on the path to the endNode.
+ * Fails when there is no path from startNode to endNode.
+ */
 fun LiteLinearGraph.getCorrespondingParent(startNode: Int, endNode: Int, visited: Flags): Int {
   val candidates = getNodes(startNode, LiteLinearGraph.NodeFilter.DOWN)
   if (candidates.size == 1) return candidates[0]
