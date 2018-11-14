@@ -922,9 +922,11 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     LibraryLevel level;
     final GradleModuleVersion moduleVersion = dependency.getGradleModuleVersion();
 
-    // Gradle API doesn't explicitly provide information about unresolved libraries (http://issues.gradle.org/browse/GRADLE-1995).
+    // Gradle API doesn't explicitly provide information about unresolved libraries
+    // original discussion http://issues.gradle.org/browse/GRADLE-1995
+    // github issue https://github.com/gradle/gradle/issues/7733
     // That's why we use this dirty hack here.
-    boolean unresolved = binaryPath.getPath().startsWith(UNRESOLVED_DEPENDENCY_PREFIX);
+    boolean unresolved = binaryPath.getName().startsWith(UNRESOLVED_DEPENDENCY_PREFIX);
 
     if (moduleVersion == null) {
       if (binaryPath.isFile()) {
@@ -951,7 +953,7 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
 
       if (unresolved) {
         // Gradle uses names like 'unresolved dependency - commons-collections commons-collections 3.2' for unresolved dependencies.
-        libraryName = binaryPath.getPath().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
+        libraryName = binaryPath.getName().substring(UNRESOLVED_DEPENDENCY_PREFIX.length());
         int i = libraryName.indexOf(' ');
         if (i >= 0) {
           i = CharArrayUtil.shiftForward(libraryName, i + 1, " ");
@@ -991,8 +993,8 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     }
 
     // add packaging type to distinguish different artifact dependencies with same groupId:artifactId:version
-    if (StringUtil.isNotEmpty(libraryName) && !FileUtilRt.extensionEquals(binaryPath.getPath(), "jar")) {
-      libraryName += (":" + FileUtilRt.getExtension(binaryPath.getPath()));
+    if (StringUtil.isNotEmpty(libraryName) && !FileUtilRt.extensionEquals(binaryPath.getName(), "jar")) {
+      libraryName += (":" + FileUtilRt.getExtension(binaryPath.getName()));
     }
 
     final LibraryData library = new LibraryData(GradleConstants.SYSTEM_ID, libraryName, unresolved);
