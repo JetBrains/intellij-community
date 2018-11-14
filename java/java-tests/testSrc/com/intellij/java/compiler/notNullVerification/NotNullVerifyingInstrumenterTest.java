@@ -7,6 +7,7 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -288,7 +289,8 @@ public class NotNullVerifyingInstrumenterTest {
     String testName = PlatformTestUtil.getTestName(this.testName.getMethodName(), false);
     File testFile = IdeaTestUtil.findSourceFile(testDir + testName);
     File classesDir = tempDir.newFolder("output");
-    List<String> args = ContainerUtil.newArrayList("-classpath", testDir + "annotations.jar");
+    List<String> libRoots = IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("jetbrains-annotations-java5");
+    List<String> args = ContainerUtil.newArrayList("-cp", StringUtil.join(libRoots, File.pathSeparator));
     if (withDebugInfo) args.add("-g");
     IdeaTestUtil.compileFile(testFile, classesDir, ArrayUtil.toStringArray(args));
 
