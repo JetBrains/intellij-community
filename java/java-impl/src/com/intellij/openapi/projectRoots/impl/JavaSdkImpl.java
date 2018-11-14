@@ -492,14 +492,7 @@ public class JavaSdkImpl extends JavaSdk {
 
     VirtualFile apiDocs = findDocs(jdkHome, "docs/api");
     if (apiDocs != null) {
-      if (apiDocs.findChild("java.base") != null) {
-        Stream.of(apiDocs.getChildren())
-          .filter(f -> f.isDirectory() && f.findChild("module-summary.html") != null)
-          .forEach(root -> sdkModificator.addRoot(root, docRootType));
-      }
-      else {
-        sdkModificator.addRoot(apiDocs, docRootType);
-      }
+      sdkModificator.addRoot(apiDocs, docRootType);
     }
     else if (SystemInfo.isMac) {
       VirtualFile commonDocs = findDocs(jdkHome, "docs");
