@@ -55,7 +55,7 @@ object UpdateInstaller {
         }
       }
       HttpRequests.request(url).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, partIndicator)
-      ZipFile(patchFile).use { it ->
+      ZipFile(patchFile).use {
         if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
           throw IOException("Corrupted patch file: ${patchFile.name}")
         }
