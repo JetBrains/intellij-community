@@ -26,17 +26,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.reference.SoftReference;
 import com.intellij.remote.*;
@@ -45,7 +41,6 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -66,6 +61,7 @@ import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher.SkeletonHeader;
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
@@ -706,30 +702,35 @@ public final class PythonSdkType extends SdkType {
 
   public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
     if (pythonSdk != null) {
-      final VirtualFile resolved = ObjectUtils.notNull(vFile.getCanonicalFile(), vFile);
-      final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
-      File originFile = VfsUtilCore.virtualToIoFile(resolved);
-      if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, resolved, false)) {
-        final PySkeletonRefresher.SkeletonHeader header = PySkeletonRefresher.readSkeletonHeader(originFile);
-        if (header != null) {
-          final String binaryPath = header.getBinaryFile();
-          if (binaryPath.equals(SkeletonVersionChecker.BUILTIN_NAME)) {
-            return true;
-          }
-          originFile = new File(binaryPath);
+      VirtualFile originFile = ObjectUtils.notNull(vFile.getCanonicalFile(), vFile);
+      
+      String originPath = originFile.getPath();
+      boolean checkOnRemoteFS = false; 
+      // All binary skeletons are collected under the same root regardless of their original location.
+      // Because of that we need to use paths to the corresponding binary modules recorded in their headers.
+      final SkeletonHeader header = readSkeletonHeader(originFile, pythonSdk);
+      if (header != null) {
+        final String binaryPath = header.getBinaryFile();
+        if (binaryPath.equals(SkeletonVersionChecker.BUILTIN_NAME)) {
+          return true;
+        }
+        if (isRemote(pythonSdk)) {
+          checkOnRemoteFS = true;
+          // Actual file is on remote file system and not available
+          originFile = null;
         }
         else {
-          LOG.warn("Can't parse header for the skeleton " + originFile);
-          return Comparing.equal(vFile.getParent(), skeletonsDir);
+          originFile = VfsUtil.findFileByIoFile(new File(binaryPath), true);
         }
+        originPath = binaryPath;
       }
-
+      
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
-      if (libDir != null && isUnderLibDirButNotSitePackages(originFile, libDir, pythonSdk)) {
+      if (libDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, libDir, pythonSdk, checkOnRemoteFS)) {
         return true;
       }
       final VirtualFile venvLibDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
-      if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, venvLibDir, pythonSdk)) {
+      if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, venvLibDir, pythonSdk, checkOnRemoteFS)) {
         return true;
       }
       if (PyUserSkeletonsUtil.isStandardLibrarySkeleton(vFile)) {
@@ -742,24 +743,44 @@ public final class PythonSdkType extends SdkType {
     return false;
   }
 
+  @Nullable
+  private static SkeletonHeader readSkeletonHeader(@NotNull VirtualFile file, @NotNull Sdk pythonSdk) {
+    final VirtualFile skeletonsDir = PySdkUtil.findSkeletonsDir(pythonSdk);
+    if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, file, false)) {
+      return PySkeletonRefresher.readSkeletonHeader(VfsUtilCore.virtualToIoFile(file));
+    }
+    return null;
+  }
+
   @NotNull
-  private static File mapToRemoteIfNecessary(@NotNull File localRoot, @NotNull File localOrRemoteFile, @NotNull Sdk sdk) {
+  private static String mapToRemote(@NotNull String localRoot, @NotNull Sdk sdk) {
     final RemoteSdkAdditionalData remoteSdkData = as(sdk.getSdkAdditionalData(), RemoteSdkAdditionalData.class);
     if (remoteSdkData != null) {
-      final PathMappingSettings pathMappings = remoteSdkData.getPathMappings();
-      final boolean isRemotePath = pathMappings.canReplaceRemote(localOrRemoteFile.getPath());
-      if (isRemotePath) {
-        return new File(pathMappings.convertToRemote(localRoot.getPath()));
-      }
+      return remoteSdkData.getPathMappings().convertToRemote(localRoot);
     }
     return localRoot;
   }
 
-  private static boolean isUnderLibDirButNotSitePackages(@NotNull File originFile, @NotNull VirtualFile libDir, @NotNull Sdk sdk) {
-    final File libDirFile = mapToRemoteIfNecessary(VfsUtilCore.virtualToIoFile(libDir), originFile, sdk);
-    if (FileUtil.isAncestor(libDirFile, originFile, false)) {
-      final File sitePackages = new File(libDirFile, PyNames.SITE_PACKAGES);
-      return !FileUtil.isAncestor(sitePackages, originFile, false);
+  private static boolean isUnderLibDirButNotSitePackages(@Nullable VirtualFile file,
+                                                         @NotNull String path,
+                                                         @NotNull VirtualFile libDir,
+                                                         @NotNull Sdk sdk, 
+                                                         boolean checkOnRemoteFS) {
+    String libDirPath = libDir.getPath();
+    if (checkOnRemoteFS) {
+      libDirPath = mapToRemote(libDirPath, sdk);
+    }
+
+    // This check is more brittle and thus used as a fallback measure
+    if (checkOnRemoteFS || file == null) {
+      final String normalizedLidDirPath = FileUtil.toSystemIndependentName(libDirPath);
+      final String sitePackagesPath = normalizedLidDirPath + "/" + PyNames.SITE_PACKAGES;
+      final String normalizedPath = FileUtil.toSystemIndependentName(path);
+      return FileUtil.startsWith(normalizedPath, normalizedLidDirPath) && !FileUtil.startsWith(normalizedPath, sitePackagesPath);
+    }
+    else if (VfsUtilCore.isAncestor(libDir, file, false)) {
+      final VirtualFile sitePackagesDir = libDir.findChild(PyNames.SITE_PACKAGES);
+      return sitePackagesDir == null || !VfsUtilCore.isAncestor(sitePackagesDir, file, false);
     }
     return false;
   }
