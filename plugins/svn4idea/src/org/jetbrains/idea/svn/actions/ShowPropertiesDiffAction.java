@@ -6,12 +6,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -24,22 +22,17 @@ import org.jetbrains.idea.svn.SvnBaseContentRevision;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
-import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffRequest;
 import org.jetbrains.idea.svn.difftool.properties.SvnPropertiesDiffRequest.PropertyContent;
+import org.jetbrains.idea.svn.history.SvnLazyPropertyContentRevision;
 import org.jetbrains.idea.svn.history.SvnRepositoryContentRevision;
-import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT;
@@ -193,8 +186,6 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
     return revision == null ? "not exists" : revision.toString();
   }
 
-  private final static String ourPropertiesDelimiter = "\n";
-
   @NotNull
   private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs,
                                                     @Nullable ContentRevision contentRevision,
@@ -212,83 +203,6 @@ public class ShowPropertiesDiffAction extends AnAction implements DumbAware {
       target = Target.on(ioFile, revision);
     }
 
-    return getPropertyList(vcs, target, revision);
-  }
-
-  @NotNull
-  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull Url url, @Nullable Revision revision)
-    throws SvnBindException {
-    return getPropertyList(vcs, Target.on(url, revision), revision);
-  }
-
-  @NotNull
-  public static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull File ioFile, @Nullable Revision revision)
-    throws SvnBindException {
-    return getPropertyList(vcs, Target.on(ioFile, revision), revision);
-  }
-
-  @NotNull
-  private static List<PropertyData> getPropertyList(@NotNull SvnVcs vcs, @NotNull Target target, @Nullable Revision revision)
-    throws SvnBindException {
-    List<PropertyData> lines = new ArrayList<>();
-    PropertyConsumer propertyHandler = createHandler(revision, lines);
-
-    vcs.getFactory(target).createPropertyClient().list(target, revision, Depth.EMPTY, propertyHandler);
-
-    return lines;
-  }
-
-  @NotNull
-  private static PropertyConsumer createHandler(Revision revision, @NotNull List<? super PropertyData> lines) {
-    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    if (indicator != null) {
-      indicator.checkCanceled();
-      indicator.setText(SvnBundle.message("show.properties.diff.progress.text.revision.information", revision.toString()));
-    }
-
-    return new PropertyConsumer() {
-      @Override
-      public void handleProperty(File path, PropertyData property) {
-        registerProperty(property);
-      }
-
-      @Override
-      public void handleProperty(Url url, PropertyData property) {
-        registerProperty(property);
-      }
-
-      @Override
-      public void handleProperty(long revision, PropertyData property) {
-        // revision properties here
-      }
-
-      private void registerProperty(@NotNull PropertyData property) {
-        if (indicator != null) {
-          indicator.checkCanceled();
-          indicator.setText2(SvnBundle.message("show.properties.diff.progress.text2.property.information", property.getName()));
-        }
-        lines.add(property);
-      }
-    };
-  }
-
-  @NotNull
-  public static String toSortedStringPresentation(@NotNull List<? extends PropertyData> lines) {
-    StringBuilder sb = new StringBuilder();
-
-    Collections.sort(lines, Comparator.comparing(PropertyData::getName));
-
-    for (PropertyData line : lines) {
-      addPropertyPresentation(line, sb);
-    }
-
-    return sb.toString();
-  }
-
-  private static void addPropertyPresentation(@NotNull PropertyData property, @NotNull StringBuilder sb) {
-    if (sb.length() != 0) {
-      sb.append(ourPropertiesDelimiter);
-    }
-    sb.append(property.getName()).append("=").append(StringUtil.notNullize(PropertyValue.toString(property.getValue())));
+    return SvnLazyPropertyContentRevision.getPropertyList(vcs, target, revision);
   }
 }
