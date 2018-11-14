@@ -13,6 +13,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.UnknownConfigurationType;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -23,6 +24,8 @@ import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsPr
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
+import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager;
+import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -30,8 +33,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSchemes;
@@ -381,7 +386,6 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @Test
   public void testSavePackagePrefixAfterReOpenProject() throws IOException {
     @Language("Groovy") String buildScript = new GradleBuildScriptBuilderEx().withJavaPlugin().generate();
-    createProjectSubDir("src/main/java");
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(buildScript);
     Application application = ApplicationManager.getApplication();
@@ -389,24 +393,102 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     try {
       Module module = modelsProvider.findIdeModule("project.main");
       ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
-      SourceFolder sourceFolder = findSource(modifiableRootModel, "java");
+      SourceFolder sourceFolder = findSource(modifiableRootModel, "src/main/java");
       sourceFolder.setPackagePrefix("prefix.package.some");
       application.invokeAndWait(() -> application.runWriteAction(() -> modelsProvider.commit()));
     }
     finally {
       application.invokeAndWait(() -> modelsProvider.dispose());
     }
-    assertSourcePackagePrefix("project.main", "java", "prefix.package.some");
+    assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     importProject(buildScript);
-    assertSourcePackagePrefix("project.main", "java", "prefix.package.some");
+    assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
+  }
+
+  @Test
+  public void testRemovingSourceFolderManagerMemLeaking() throws IOException {
+    refreshRecursively(myProjectRoot);
+    SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(myProject);
+    String javaSourcePath = FileUtil.toCanonicalPath(myProjectRoot.getPath() + "/java");
+    String javaSourceUrl = VfsUtilCore.pathToUrl(javaSourcePath);
+    {
+      importProject(
+        new GradleBuildScriptBuilderEx()
+          .withJavaPlugin()
+          .addPostfix("sourceSets {")
+          .addPostfix("  main.java.srcDirs += 'java'")
+          .addPostfix("}")
+          .generate());
+      Set<String> sourceFolders = sourceFolderManager.getSourceFolders("project.main");
+      assertTrue(sourceFolders.contains(javaSourceUrl));
+    }
+    {
+      importProject(
+        new GradleBuildScriptBuilderEx()
+          .withJavaPlugin()
+          .generate());
+      Set<String> sourceFolders = sourceFolderManager.getSourceFolders("project.main");
+      assertFalse(sourceFolders.contains(javaSourceUrl));
+    }
+  }
+
+  @Test
+  public void testSourceFolderIsDisposedAfterProjectDisposing() throws IOException {
+    importProject(new GradleBuildScriptBuilder().generate());
+    Application application = ApplicationManager.getApplication();
+    Ref<Project> projectRef = new Ref<>();
+    application.invokeAndWait(() -> projectRef.set(ProjectUtil.openOrImport(myProjectRoot.getPath(), null, false)));
+    Project project = projectRef.get();
+    SourceFolderManagerImpl sourceFolderManager = (SourceFolderManagerImpl)SourceFolderManager.getInstance(project);
+    try {
+      assertFalse(project.isDisposed());
+      assertFalse(sourceFolderManager.isDisposed());
+    }
+    finally {
+      application.invokeAndWait(() -> ProjectUtil.closeAndDispose(project));
+    }
+    assertTrue(project.isDisposed());
+    assertTrue(sourceFolderManager.isDisposed());
+  }
+
+  @Ignore // Remove after published plugin ext with package prefix configuration
+  @Test
+  public void testPostponedImportPackagePrefix() throws IOException {
+    refreshRecursively(myProjectRoot);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+    });
+    createProjectSubFile("src/main/java/Main.java", "");
+    importProject(
+      new GradleBuildScriptBuilderEx()
+        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withJavaPlugin()
+        .withKotlinPlugin("1.3.0")
+        .addPostfix("idea {")
+        .addPostfix("  module {")
+        .addPostfix("    settings {")
+        .addPostfix("      packagePrefix['src/main/java'] = 'prefix.package.some'")
+        .addPostfix("      packagePrefix['src/main/kotlin'] = 'prefix.package.other'")
+        .addPostfix("      packagePrefix['src/test/java'] = 'prefix.package.some.test'")
+        .addPostfix("    }")
+        .addPostfix("  }")
+        .addPostfix("}")
+        .generate());
+    assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
+    assertSourceNotExists("project.main", "src/main/kotlin");
+    assertSourceNotExists("project.test", "src/test/java");
+    createProjectSubFile("src/main/kotlin/Main.kt", "");
+    refreshRecursively(myProjectRoot);
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+    });
+    assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
+    assertSourcePackagePrefix("project.main", "src/main/kotlin", "prefix.package.other");
+    assertSourceNotExists("project.test", "src/test/java");
   }
 
   @Ignore // Remove after published plugin ext with package prefix configuration
   @Test
   public void testPartialImportPackagePrefix() throws IOException {
-    createProjectSubDir("src/main/java");
     createProjectSubFile("src/main/java/Main.java", "");
-    createProjectSubDir("src/main/kotlin");
     createProjectSubFile("src/main/kotlin/Main.kt", "");
     importProject(
       new GradleBuildScriptBuilderEx()
@@ -421,14 +503,39 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
         .addPostfix("  }")
         .addPostfix("}")
         .generate());
-    assertSourcePackagePrefix("project.main", "java", "prefix.package.some");
-    assertSourcePackagePrefix("project.main", "kotlin", "");
+    assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
+    assertSourcePackagePrefix("project.main", "src/main/kotlin", "");
+  }
+
+  @Ignore // Remove after published plugin ext with package prefix configuration
+  @Test
+  public void testImportPackagePrefixWithRemoteSourceRoot() throws IOException {
+    createProjectSubFile("src/test/java/Main.java", "");
+    createProjectSubFile("../subproject/src/test/java/Main.java", "");
+    importProject(
+      new GradleBuildScriptBuilderEx()
+        .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
+        .withJavaPlugin()
+        .addPostfix("sourceSets {")
+        .addPostfix("  test.java.srcDirs += '../subproject/src/test/java'")
+        .addPostfix("}")
+        .addPostfix("idea {")
+        .addPostfix("  module {")
+        .addPostfix("    settings {")
+        .addPostfix("      packagePrefix['src/test/java'] = 'prefix.package.some'")
+        .addPostfix("      packagePrefix['../subproject/src/test/java'] = 'prefix.package.other'")
+        .addPostfix("    }")
+        .addPostfix("  }")
+        .addPostfix("}")
+        .generate());
+    printProjectStructure();
+    assertSourcePackagePrefix("project.test", "src/test/java", "prefix.package.some");
+    assertSourcePackagePrefix("project.test", "../subproject/src/test/java", "prefix.package.other");
   }
 
   @Ignore // Remove after published plugin ext with package prefix configuration
   @Test
   public void testImportPackagePrefix() throws IOException {
-    createProjectSubDir("src/main/java");
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
       new GradleBuildScriptBuilderEx()
@@ -442,13 +549,12 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
         .addPostfix("  }")
         .addPostfix("}")
         .generate());
-    assertSourcePackagePrefix("project.main", "java", "prefix.package.some");
+    assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
   }
 
   @Ignore // Remove after published plugin ext with package prefix configuration
   @Test
   public void testChangeImportPackagePrefix() throws IOException {
-    createProjectSubDir("src/main/java");
     createProjectSubFile("src/main/java/Main.java", "");
     importProject(
       new GradleBuildScriptBuilderEx()
@@ -462,7 +568,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
         .addPostfix("  }")
         .addPostfix("}")
         .generate());
-    assertSourcePackagePrefix("project.main", "java", "prefix.package.some");
+    assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.some");
     importProject(
       new GradleBuildScriptBuilderEx()
         .withGradleIdeaExtPluginIfCan(IDEA_EXT_PLUGIN_VERSION)
@@ -475,7 +581,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
         .addPostfix("  }")
         .addPostfix("}")
         .generate());
-    assertSourcePackagePrefix("project.main", "java", "prefix.package.other");
+    assertSourcePackagePrefix("project.main", "src/main/java", "prefix.package.other");
   }
 
   /**
@@ -488,9 +594,9 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       System.out.println(module);
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       for (ContentEntry contentEntry : moduleRootManager.getContentEntries()) {
-        System.out.println(contentEntry.getUrl());
+        System.out.println("content root = " + contentEntry.getUrl());
         for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
-          System.out.println(sourceFolder);
+          System.out.println("source root = " + sourceFolder);
           String packagePrefix = sourceFolder.getPackagePrefix();
           if (packagePrefix.isEmpty()) continue;
           System.out.println("package prefix = " + packagePrefix);
@@ -514,6 +620,11 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
       script;
   }
 
+  protected void assertSourceNotExists(@NotNull String moduleName, @NotNull String sourcePath) {
+    SourceFolder sourceFolder = findSource(moduleName, sourcePath);
+    assertNull("Source folder " + sourcePath + " found in module " + moduleName + "but shouldn't", sourceFolder);
+  }
+
   protected void assertSourcePackagePrefix(@NotNull String moduleName, @NotNull String sourcePath, @NotNull String packagePrefix) {
     SourceFolder sourceFolder = findSource(moduleName, sourcePath);
     assertNotNull("Source folder " + sourcePath + " not found in module " + moduleName, sourceFolder);
@@ -529,18 +640,12 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   protected SourceFolder findSource(@NotNull ModuleRootModel moduleRootManager, @NotNull String sourcePath) {
     ContentEntry[] contentRoots = moduleRootManager.getContentEntries();
     Module module = moduleRootManager.getModule();
-    String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(module) : null;
+    String rootUrl = getAbsolutePath(ExternalSystemApiUtil.getExternalProjectPath(module));
     for (ContentEntry contentRoot : contentRoots) {
       for (SourceFolder f : contentRoot.getSourceFolders()) {
-        rootUrl = getAbsolutePath(rootUrl == null ? contentRoot.getUrl() : rootUrl);
-        String folderUrl = getAbsolutePath(f.getUrl());
-        if (folderUrl.startsWith(rootUrl)) {
-          int length = rootUrl.length() + 1;
-          folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
-        }
-        if (folderUrl.equals(sourcePath)) {
-          return f;
-        }
+        String folderPath = getAbsolutePath(f.getUrl());
+        String rootPath = getAbsolutePath(rootUrl + "/" + sourcePath);
+        if (folderPath.equals(rootPath)) return f;
       }
     }
     return null;

@@ -3,30 +3,31 @@ package com.intellij.openapi.externalSystem.service.project.settings
 
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
+import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.SourceFolder
-import com.intellij.openapi.vfs.VfsUtil
-import java.io.File
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+
 
 class PackagePrefixConfigurationHandler : ConfigurationHandler {
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    val contentRoots = modelsProvider.getContentRoots(module).map { it.canonicalPath }
-    val sourceFolders = getAllSourceFolders(modelsProvider)
-    configuration.forEachPackagePrefix { sourcePath, packagePrefix ->
-      val expectedFolders = contentRoots.mapNotNull { findVirtualFile(it, sourcePath)?.path }
-      for (sourceFolder in sourceFolders) {
-        val actualFolder = sourceFolder.file?.path ?: continue
-        if (!expectedFolders.contains(actualFolder)) continue
-        sourceFolder.packagePrefix = packagePrefix
-        return@forEachPackagePrefix
+    configuration.onPackagePrefixes {
+      val sourceFolders = getAllSourceFolders(modelsProvider)
+        .map { it to VfsUtilCore.urlToPath(it.url) }
+      val sourceFolderManager = SourceFolderManager.getInstance(module.project)
+      forEachPackagePrefix { path, packagePrefix ->
+        val url = VfsUtilCore.pathToUrl(FileUtil.toCanonicalPath(path))
+        sourceFolderManager.setSourceFolderPackagePrefix(url, packagePrefix)
+        for ((sourceFolder, sourcePath) in sourceFolders) {
+          if (!FileUtil.pathsEqual(path, sourcePath)) continue
+          sourceFolder.packagePrefix = packagePrefix
+        }
       }
-      LOG.warn("source directory $sourcePath not found")
     }
   }
 
   companion object {
-    private fun findVirtualFile(rootPath: String, relativePath: String) = VfsUtil.findFileByIoFile(File(rootPath, relativePath), true)
-
     private fun getSourceFolders(module: Module, modelsProvider: IdeModifiableModelsProvider): List<SourceFolder> {
       val modifiableRootModel = modelsProvider.getModifiableRootModel(module)
       val contentEntries = modifiableRootModel.contentEntries
@@ -37,10 +38,14 @@ class PackagePrefixConfigurationHandler : ConfigurationHandler {
       return modelsProvider.modules.map { getSourceFolders(it, modelsProvider) }.flatten()
     }
 
-    private fun ConfigurationData.forEachPackagePrefix(action: (String, String) -> Unit) {
-      val packagePrefixes = find("packagePrefix")
-      if (packagePrefixes !is Map<*, *>) return
-      for ((sourcePath, packagePrefix) in packagePrefixes) {
+    private fun ConfigurationData.onPackagePrefixes(action: Map<*, *>.() -> Unit) {
+      val data = find("packagePrefix")
+      if (data !is Map<*, *>) return
+      data.action()
+    }
+
+    private fun Map<*, *>.forEachPackagePrefix(action: (String, String) -> Unit) {
+      for ((sourcePath, packagePrefix) in this) {
         if (sourcePath !is String) {
           LOG.warn("unexpected value type: ${sourcePath?.javaClass?.name}, skipping")
           continue
