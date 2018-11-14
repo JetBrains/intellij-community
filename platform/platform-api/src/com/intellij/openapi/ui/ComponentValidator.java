@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -17,9 +18,14 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.basic.BasicHTML;
+import javax.swing.text.DefaultCaret;
+import javax.swing.text.EditorKit;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.View;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
@@ -34,6 +40,7 @@ public class ComponentValidator {
 
   private final Disposable parentDisposable;
   private Consumer<ComponentValidator> validator;
+  private HyperlinkListener hyperlinkListener;
 
   private ValidationInfo validationInfo;
 
@@ -49,6 +56,11 @@ public class ComponentValidator {
 
   public ComponentValidator withValidator(@NotNull Consumer<ComponentValidator> validator) {
     this.validator = validator;
+    return this;
+  }
+
+  public ComponentValidator withHyperlinkListener(@NotNull HyperlinkListener hyperlinkListener) {
+    this.hyperlinkListener = hyperlinkListener;
     return this;
   }
 
@@ -150,13 +162,35 @@ public class ComponentValidator {
         }
 
         if (StringUtil.isNotEmpty(validationInfo.message)) {
-          JLabel tipComponent = new JLabel();
+          JEditorPane tipComponent = new JEditorPane();
           View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", validationInfo.message));
-          String labelText = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
+          String text = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
                              String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), validationInfo.message) :
                              String.format("<html><div>%s</div></html>", validationInfo.message);
 
-          tipComponent.setText(labelText);
+          tipComponent.setContentType("text/html");
+          tipComponent.setEditable(false);
+          tipComponent.addHyperlinkListener(hyperlinkListener);
+          tipComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+
+          EditorKit kit = tipComponent.getEditorKit();
+          if (kit instanceof HTMLEditorKit) {
+            StyleSheet css = ((HTMLEditorKit)kit).getStyleSheet();
+
+            css.addRule("a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}");
+            css.addRule("a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}");
+            css.addRule("a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}");
+            css.addRule("a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}");
+            css.addRule("body {background-color:#" + ColorUtil.toHex(validationInfo.warning ? warningBackgroundColor() : errorBackgroundColor()) + ";}");
+          }
+
+          if (tipComponent.getCaret() instanceof DefaultCaret) {
+            ((DefaultCaret)tipComponent.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+          }
+
+          tipComponent.setCaretPosition(0);
+          tipComponent.setText(text);
+
           tipComponent.setBackground(validationInfo.warning ? warningBackgroundColor() : errorBackgroundColor());
           tipComponent.setOpaque(true);
           tipComponent.setBorder(getBorder());

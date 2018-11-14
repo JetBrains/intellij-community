@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
@@ -139,21 +140,27 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       GridBagConstraints gc = new GridBagConstraints(0, 0, 1, 1, 1.0, 0, GridBagConstraints.LINE_START, GridBagConstraints.HORIZONTAL, JBUI.insets(5, 0), 0, 0);
 
       JTextField text1 = new JTextField();
-      new ComponentValidator(getDisposable()).withValidator(v -> {
-        String tt = text1.getText();
-        if (StringUtil.isNotEmpty(tt)) {
-          try {
-            Integer.parseInt(tt);
+      new ComponentValidator(getDisposable()).
+        withHyperlinkListener(e -> {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            System.out.println("Text1 link clicked. Desc = " + e.getDescription());
+          }
+        }).withValidator(v -> {
+          String tt = text1.getText();
+          if (StringUtil.isNotEmpty(tt)) {
+            try {
+              Integer.parseInt(tt);
+              v.updateInfo(null);
+            }
+            catch (NumberFormatException nex) {
+              v.updateInfo(new ValidationInfo("Warning, expecting a number.<br/>Visit the <a href=\"#link.one\">information link</a>" +
+                                              "<br/>Or <a href=\"#link.two\">another link</a>", text1).asWarning());
+            }
+          }
+          else {
             v.updateInfo(null);
           }
-          catch (NumberFormatException nex) {
-            v.updateInfo(new ValidationInfo("Enter a number", text1).asWarning());
-          }
-        }
-        else {
-          v.updateInfo(null);
-        }
-      }).installOn(text1);
+        }).installOn(text1);
 
       Dimension d = text1.getPreferredSize();
       text1.setPreferredSize(new Dimension(JBUI.scale(100), d.height));
@@ -164,12 +171,17 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         moveCommentRight().createPanel(), gc);
 
       JTextField text2 = new JTextField();
-      new ComponentValidator(getDisposable()).withValidator(v -> {
-        String tt = text2.getText();
-        v.updateInfo(
-          StringUtil.isEmpty(tt) || tt.length() < 5 ? new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.",
-                                                                         text2) : null);
-      }).andStartOnFocusLost().installOn(text2);
+      new ComponentValidator(getDisposable()).
+        withHyperlinkListener(e -> {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            System.out.println("Text2 link clicked. Desc = " + e.getDescription());
+          }
+        }).withValidator(v -> {
+          String tt = text2.getText();
+          v.updateInfo(
+            StringUtil.isEmpty(tt) || tt.length() < 5 ? new ValidationInfo("Message is too short.<br/>Should contain at least 5 symbols.<br/>Please <a href=\"#check.rules\">check rules.</a>",
+                                                                           text2) : null);
+        }).andStartOnFocusLost().installOn(text2);
 
       gc.gridy++;
       topPanel.add(UI.PanelFactory.panel(text2).withLabel("&Path:").createPanel(), gc);
@@ -189,7 +201,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
 
       text2.getDocument().addDocumentListener(new DocumentAdapter() {
         @Override
-        protected void textChanged(DocumentEvent e) {
+        protected void textChanged(@NotNull DocumentEvent e) {
           ComponentValidator.getInstance(text2).ifPresent(v -> v.revalidate());
         }
       });
