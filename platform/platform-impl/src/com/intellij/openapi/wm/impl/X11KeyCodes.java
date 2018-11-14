@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl;
 import java.awt.event.KeyEvent;
 
+@SuppressWarnings("unused")
 class X11KeyCodes {
   // This list hast been created with the following bash command:
   // (echo -e -n "// This file hast been created with the following bash command:\n// $CMD\n\npackage com.sun.jna.examples.unix;\n\npublic class X11KeyCodes {\n"; cat /usr/include/X11/keysymdef.h | sed -r -e 's/^#(ifdef|endif)/\/\/#\1/g' -e 's/^#define\s\s*([a-zA-Z0-9_]+\s+)([0-9a-zA-Z]+)/public static final int \1 = \2;/g' | sed -e 's/^/\t/'; echo "}") > X11KeySymDef.java
@@ -2334,8 +2335,11 @@ class X11KeyCodes {
     if (jcode >= KeyEvent.VK_NUMPAD0 && jcode <= KeyEvent.VK_NUMPAD9)
       return XK_KP_0 + (jcode - KeyEvent.VK_NUMPAD0);
 
-    if (jcode >= KeyEvent.VK_F1 && jcode <= KeyEvent.VK_F24)
+    if (jcode >= KeyEvent.VK_F1 && jcode <= KeyEvent.VK_F12)
       return XK_F1 + (jcode - KeyEvent.VK_F1);
+
+    if (jcode >= KeyEvent.VK_F13 && jcode <= KeyEvent.VK_F24)
+      return XK_F13 + (jcode - KeyEvent.VK_F1);
 
     if (jcode == KeyEvent.VK_SHIFT) {
       if ((location & KeyEvent.KEY_LOCATION_RIGHT) != 0)
