@@ -19,5 +19,5 @@ package org.intellij.lang.regexp;
  * @author Bas Leijdekkers
  */
 public enum RegExpMatchResult {
-  MATCHES, NO_MATCH, TIMEOUT, BAD_REGEXP
+  MATCHES, NO_MATCH, TIMEOUT, BAD_REGEXP, HIT_END
 }

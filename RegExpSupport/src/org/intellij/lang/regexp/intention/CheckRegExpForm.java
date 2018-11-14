@@ -40,6 +40,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -191,6 +192,9 @@ public class CheckRegExpForm {
       case BAD_REGEXP:
         myMessage.setText("Bad pattern");
         break;
+      case HIT_END:
+        myMessage.setText("Go on typing \u2026");
+        break;
     }
     myRootPanel.revalidate();
     Balloon balloon = JBPopupFactory.getInstance().getParentBalloonFor(myRootPanel);
@@ -243,8 +247,11 @@ public class CheckRegExpForm {
 
     try {
       //noinspection MagicConstant
-      return Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000)).matches()
+      Matcher matcher = Pattern.compile(regExp, patternFlags).matcher(StringUtil.newBombedCharSequence(sampleText, 1000));
+      return matcher.matches()
              ? RegExpMatchResult.MATCHES
+             : matcher.hitEnd()
+               ? RegExpMatchResult.HIT_END
              : RegExpMatchResult.NO_MATCH;
     } catch (ProcessCanceledException pc) {
       return RegExpMatchResult.TIMEOUT;
