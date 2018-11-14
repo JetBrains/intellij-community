@@ -2808,7 +2808,8 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightControlFlowUtil.checkVariableMustBeFinal((PsiVariable)resolved, ref, languageLevel);
     }
 
-    if (resolved instanceof PsiClass &&
+    if (containingFile instanceof PsiClassOwner &&
+        resolved instanceof PsiClass &&
         ((PsiClass)resolved).getContainingClass() == null &&
         PsiUtil.isFromDefaultPackage(resolved) &&
         (PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null ||
