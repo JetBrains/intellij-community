@@ -21,9 +21,9 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -38,6 +38,12 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   }
 
   public EverythingGlobalScope() {
+  }
+
+  @NotNull
+  @Override
+  public String getDisplayName() {
+    return "All Places";
   }
 
   @Override
