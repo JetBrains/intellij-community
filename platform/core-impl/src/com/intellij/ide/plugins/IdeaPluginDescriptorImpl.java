@@ -128,6 +128,10 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   public void readExternal(@NotNull Element element, @NotNull URL url, boolean ignoreMissingInclude, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
+    myAppComponents = Collections.emptyList();
+    myProjectComponents = Collections.emptyList();
+    myModuleComponents = Collections.emptyList();
+
     // root element always `!isIncludeElement` and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
@@ -233,10 +237,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
         myHelpSets[i] = new HelpSetPath(pluginHelpSet.file, pluginHelpSet.path);
       }
     }
-
-    myAppComponents = Collections.emptyList();
-    myProjectComponents = Collections.emptyList();
-    myModuleComponents = Collections.emptyList();
 
     // we cannot use our new kotlin-aware XmlSerializer, so, will be used different bean cache,
     // but it is not a problem because in any case new XmlSerializer is not used for our core classes (plugin bean, component config and so on).
