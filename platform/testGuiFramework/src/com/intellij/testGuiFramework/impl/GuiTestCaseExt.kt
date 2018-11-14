@@ -129,7 +129,7 @@ fun GuiTestCase.waitAMoment() {
     }
   }
 
-  val maxAttemptsWaitForBackgroundTasks = 3
+  val maxAttemptsWaitForBackgroundTasks = 5
   var currentAttempt = maxAttemptsWaitForBackgroundTasks
   while (isWaitIndicatorPresent() && currentAttempt >= 0){
     waitBackgroundTaskOneAttempt()
