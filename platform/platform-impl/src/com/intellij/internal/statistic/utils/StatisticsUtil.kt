@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.internal.statistic.beans.UsageDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.FUSUsageContext
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
@@ -249,19 +248,10 @@ fun isSafeToReportFrom(descriptor: IdeaPluginDescriptor?): Boolean {
   if (isDevelopedByJetBrains(descriptor.pluginId)) {
     return true
   }
-  val path = try {
-    //to avoid paths like this /home/kb/IDEA/bin/../config/plugins/APlugin
-    descriptor.path.canonicalPath
-  }
-  catch (e: IOException) {
-    descriptor.path.absolutePath
-  }
 
-  //only installed from some repository (not bundled and not provided via classpath in development IDE instance) would be reported
-  if (path.startsWith(PathManager.getPluginsPath())) {
-    return isSafeToReport(descriptor.pluginId?.idString)
-  }
-  return false
+  // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance -
+  // they are also considered bundled) would be reported
+  return !descriptor.isBundled && isSafeToReport(descriptor.pluginId?.idString)
 }
 
 /**
