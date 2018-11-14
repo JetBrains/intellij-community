@@ -4,6 +4,7 @@ package com.intellij.lang.java;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.codeInsight.documentation.QuickDocUtil;
@@ -23,6 +24,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * @author Maxim.Mossienko
@@ -787,9 +792,18 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     }
 
     for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
+      String altRelPath = null;
+      if (orderEntry instanceof JdkOrderEntry && JavaSdkVersionUtil.isAtLeast(((JdkOrderEntry)orderEntry).getJdk(), JavaSdkVersion.JDK_11)) {
+        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByFile(virtualFile, project);
+        if (javaModule != null) {
+          altRelPath = javaModule.getName() + '/' + relPath;
+        }
+      }
+
       for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
         if (root.getFileSystem() == JarFileSystem.getInstance()) {
           VirtualFile file = root.findFileByRelativePath(relPath);
+          if (file == null && altRelPath != null) file = root.findFileByRelativePath(altRelPath);
           if (file != null) {
             List<Url> urls = BuiltInWebBrowserUrlProviderKt.getBuiltInServerUrls(file, project, null);
             if (!urls.isEmpty()) {
@@ -799,9 +813,16 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
         }
       }
 
-      List<String> httpRoots = PlatformDocumentationUtil.getHttpRoots(JavadocOrderRootType.getUrls(orderEntry), relPath);
-      if (httpRoots != null) {
-        return httpRoots;
+      String[] webUrls = JavadocOrderRootType.getUrls(orderEntry);
+      if (webUrls.length > 0) {
+        List<String> httpRoots = new ArrayList<>();
+        if (altRelPath != null) {
+          httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, altRelPath), Collections.emptyList()));
+        }
+        httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, relPath), Collections.emptyList()));
+        if (!httpRoots.isEmpty()) {
+          return httpRoots;
+        }
       }
     }
 

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * @author anna
@@ -85,8 +84,8 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
       JavadocQuarantineStatusCleaner.cleanIfNeeded(files);
       List<VirtualFile> docRoots = ContainerUtil.newArrayListWithCapacity(files.length);
 
-      for (VirtualFile file : files) {
-        VirtualFile docRoot = null;
+      for (int i = 0; i < files.length; i++) {
+        VirtualFile file = files[i], docRoot = null;
 
         if (file.getName().equalsIgnoreCase("docs")) {
           docRoot = file.findChild("api");
@@ -95,17 +94,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
           docRoot = file.findFileByRelativePath("docs/api");
         }
 
-        if (docRoot == null) {
-          docRoots.add(file);
-        }
-        else if (docRoot.findChild("java.base") != null) {
-          Stream.of(docRoot.getChildren())
-            .filter(f -> f.isDirectory() && f.findChild("module-summary.html") != null)
-            .forEach(root -> docRoots.add(root));
-        }
-        else {
-          docRoots.add(docRoot);
-        }
+        if (docRoot != null) files[i] = docRoot;
       }
 
       return VfsUtilCore.toVirtualFileArray(docRoots);
