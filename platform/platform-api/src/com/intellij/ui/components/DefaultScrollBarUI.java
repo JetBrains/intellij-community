@@ -61,7 +61,13 @@ class DefaultScrollBarUI extends ScrollBarUI {
     }
   };
 
-  private final ScrollTrackPainter myTrackPainter = new ScrollTrackPainter(getColor(this::getTrackHoveredBackground));
+  final ScrollTrackPainter myTrackPainter = new ScrollTrackPainter(
+    getColor(() -> ScrollColorProducer.TRACK_HOVERED_BACKGROUND));
+  final ScrollThumbPainter myThumbPainter = new ScrollThumbPainter(
+    getColor(() -> isOpaque() ? ScrollColorProducer.THUMB_OPAQUE_BACKGROUND : ScrollColorProducer.THUMB_BACKGROUND),
+    getColor(() -> isOpaque() ? ScrollColorProducer.THUMB_OPAQUE_HOVERED_BACKGROUND : ScrollColorProducer.THUMB_HOVERED_BACKGROUND),
+    getColor(() -> isOpaque() ? ScrollColorProducer.THUMB_OPAQUE_FOREGROUND : ScrollColorProducer.THUMB_FOREGROUND),
+    getColor(() -> isOpaque() ? ScrollColorProducer.THUMB_OPAQUE_HOVERED_FOREGROUND : ScrollColorProducer.THUMB_HOVERED_FOREGROUND));
 
   private final Rectangle myThumbBounds = new Rectangle();
   private final Rectangle myTrackBounds = new Rectangle();
@@ -86,11 +92,11 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   int getThickness() {
-    return scale(myScrollBar == null || isOpaque(myScrollBar) ? myThickness : myThicknessMax);
+    return scale(isOpaque() ? myThickness : myThicknessMax);
   }
 
   int getMinimalThickness() {
-    return scale(myScrollBar == null || isOpaque(myScrollBar) ? myThickness : myThicknessMin);
+    return scale(isOpaque() ? myThickness : myThicknessMin);
   }
 
   static boolean isOpaque(JComponent c) {
@@ -98,6 +104,10 @@ class DefaultScrollBarUI extends ScrollBarUI {
     Container parent = c.getParent();
     // do not allow non-opaque scroll bars, because default layout does not support them
     return parent instanceof JScrollPane && parent.getLayout() instanceof ScrollPaneLayout.UIResource;
+  }
+
+  private boolean isOpaque() {
+    return myScrollBar == null || isOpaque(myScrollBar);
   }
 
   boolean isAbsolutePositioning(MouseEvent event) {
@@ -109,7 +119,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   boolean isTrackClickable() {
-    return isOpaque(myScrollBar) || myTrackAnimator.myValue > 0;
+    return isOpaque() || myTrackAnimator.myValue > 0;
   }
 
   boolean isTrackExpandable() {
@@ -137,8 +147,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.DARCULA : ScrollPainter.Thumb.DEFAULT;
-    paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, ScrollSettings.isThumbSmallIfOpaque() && isOpaque(c));
+    paint(myThumbPainter, g, x, y, width, height, c, myThumbAnimator.myValue, ScrollSettings.isThumbSmallIfOpaque() && isOpaque(c));
   }
 
   void onThumbMove() {
@@ -175,11 +184,6 @@ class DefaultScrollBarUI extends ScrollBarUI {
     if (value <= 0) return offset;
     if (value >= 1) return 0;
     return (int)(.5f + offset * (1 - value));
-  }
-
-  @NotNull
-  ColorKey getTrackHoveredBackground() {
-    return ScrollColorProducer.TRACK_HOVERED;
   }
 
   private Color getColor(@NotNull NotNullProducer<ColorKey> supplier) {

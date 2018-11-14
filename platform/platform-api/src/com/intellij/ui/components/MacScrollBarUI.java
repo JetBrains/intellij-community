@@ -22,7 +22,6 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.Alarm;
 import com.intellij.util.Producer;
-import com.intellij.util.ui.RegionPainter;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
@@ -101,12 +100,10 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
     if (isOpaque(c)) {
-      RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.Mac.DARCULA : ScrollPainter.Thumb.Mac.DEFAULT;
-      paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, true);
+      paint(myThumbPainter, g, x, y, width, height, c, myThumbAnimator.myValue, true);
     }
     else if (myThumbAnimator.myValue > 0) {
-      RegionPainter<Float> p = ScrollColorProducer.isDark(c) ? ScrollPainter.Thumb.Mac.Overlay.DARCULA : ScrollPainter.Thumb.Mac.Overlay.DEFAULT;
-      paint(p, g, x, y, width, height, c, myThumbAnimator.myValue, false);
+      paint(myThumbPainter, g, x, y, width, height, c, myThumbAnimator.myValue, false);
     }
   }
 

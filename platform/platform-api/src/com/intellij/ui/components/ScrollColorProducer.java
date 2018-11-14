@@ -34,7 +34,15 @@ import static com.intellij.ui.components.JBScrollPane.BRIGHTNESS_FROM_VIEW;
  * @author Sergey.Malenkov
  */
 final class ScrollColorProducer {
-  static final ColorKey TRACK_HOVERED = createKey("ScrollBar.NonOpaque.Hovered.background", 0x1A808080, 0x1A808080);
+  static final ColorKey THUMB_OPAQUE_FOREGROUND = createKey("ScrollBar.Thumb.foreground", 0x33000000, 0x59262626);
+  static final ColorKey THUMB_OPAQUE_BACKGROUND = createKey("ScrollBar.Thumb.background", 0x33000000, 0x59808080);
+  static final ColorKey THUMB_OPAQUE_HOVERED_FOREGROUND = createKey("ScrollBar.Thumb.Hovered.foreground", 0x80000000, 0x8C262626);
+  static final ColorKey THUMB_OPAQUE_HOVERED_BACKGROUND = createKey("ScrollBar.Thumb.Hovered.background", 0x80000000, 0x8C808080);
+  static final ColorKey THUMB_FOREGROUND = createKey("ScrollBar.Thumb.NonOpaque.foreground", 0x00000000, 0x00262626);
+  static final ColorKey THUMB_BACKGROUND = createKey("ScrollBar.Thumb.NonOpaque.background", 0x00000000, 0x00808080);
+  static final ColorKey THUMB_HOVERED_FOREGROUND = createKey("ScrollBar.Thumb.NonOpaque.Hovered.foreground", 0x80000000, 0x8C262626);
+  static final ColorKey THUMB_HOVERED_BACKGROUND = createKey("ScrollBar.Thumb.NonOpaque.Hovered.background", 0x80000000, 0x8C808080);
+  static final ColorKey TRACK_HOVERED_BACKGROUND = createKey("ScrollBar.NonOpaque.Hovered.background", 0x1A808080, 0x1A808080);
 
   private static final ColorKey FOREGROUND = createKey("ScrollBar.foreground", 0xFFE6E6E6, 0xFF3F4244);
   private static final ColorKey BACKGROUND = createKey("ScrollBar.background", 0xFFF5F5F5, 0xFF3F4244);
