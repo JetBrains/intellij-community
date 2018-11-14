@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -26,6 +27,13 @@ import java.util.Map;
 public class ActionsCollectorImpl extends ActionsCollector implements PersistentStateComponent<ActionsCollector.State> {
   private static final String DEFAULT_ID = "third.party.plugin.action";
 
+  private static final HashMap<String, String> ourPrefixesBlackList = new HashMap<>();
+  static {
+    ourPrefixesBlackList.put("RemoteTool_", "Remote External Tool");
+    ourPrefixesBlackList.put("Tool_", "External Tool");
+    ourPrefixesBlackList.put("Macro.", "Invoke Macro");
+  }
+
   @Override
   public void record(@Nullable String actionId, @NotNull Class context, boolean isContextMenu, @Nullable String place) {
     if (actionId == null) return;
@@ -33,9 +41,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     State state = getState();
     if (state == null) return;
 
-    String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
-    key = isDevelopedByJetBrains(context) ? key : DEFAULT_ID;
-
+    String key = toReportedId(actionId, context);
     final Map<String, Object> data = ContainerUtil.newHashMap(FUSUsageContext.OS_CONTEXT.getData());
     data.put("context_menu", isContextMenu);
     if (isContextMenu && place!= null) {
@@ -54,6 +60,21 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
       value = count == null ? 1 : count + 1;
       state.myContextMenuValues.put(key, value);
     }
+  }
+
+  @NotNull
+  private static String toReportedId(@NotNull String actionId, @NotNull Class context) {
+    final String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
+    if (!isDevelopedByJetBrains(context)) {
+      return DEFAULT_ID;
+    }
+
+    for (Map.Entry<String, String> prefix : ourPrefixesBlackList.entrySet()) {
+      if (key.startsWith(prefix.getKey())) {
+        return prefix.getValue();
+      }
+    }
+    return key;
   }
 
   private static boolean isDevelopedByJetBrains(@NotNull Class aClass) {
