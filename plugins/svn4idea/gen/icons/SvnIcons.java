@@ -15,7 +15,6 @@ public final class SvnIcons {
   }
 
   public static final Icon Common = load("/icons/Common.png"); // 16x16
-  public static final Icon ConfigureBranches = load("/icons/ConfigureBranches.png"); // 16x16
   public static final Icon Conflictc = load("/icons/conflictc.png"); // 16x16
   public static final Icon Conflictcp = load("/icons/conflictcp.png"); // 16x16
   public static final Icon Conflictct = load("/icons/conflictct.png"); // 16x16
