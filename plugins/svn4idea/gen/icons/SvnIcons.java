@@ -14,7 +14,6 @@ public final class SvnIcons {
     return IconLoader.getIcon(path, SvnIcons.class);
   }
 
-  public static final Icon AllRevisions = load("/icons/allRevisions.png"); // 16x16
   public static final Icon Common = load("/icons/Common.png"); // 16x16
   public static final Icon ConfigureBranches = load("/icons/ConfigureBranches.png"); // 16x16
   public static final Icon Conflictc = load("/icons/conflictc.png"); // 16x16
@@ -34,11 +33,8 @@ public final class SvnIcons {
   public static final Icon MarkAsNotMerged = load("/icons/MarkAsNotMerged.png"); // 16x16
   public static final Icon MergeSourcesDetails = load("/icons/mergeSourcesDetails.png"); // 16x16
   public static final Icon Notintegrated = load("/icons/Notintegrated.png"); // 16x16
-  public static final Icon OnDefault = load("/icons/OnDefault.png"); // 16x16
   public static final Icon PropertiesDiff = load("/icons/PropertiesDiff.png"); // 16x16
-  public static final Icon PropertiesDiffWithLocal = load("/icons/PropertiesDiffWithLocal.png"); // 16x16
   public static final Icon ShowIntegratedFrom = load("/icons/ShowIntegratedFrom.png"); // 16x16
-  public static final Icon ShowIntegratedTo = load("/icons/ShowIntegratedTo.png"); // 16x16
   public static final Icon ShowWorkingCopies = load("/icons/ShowWorkingCopies.png"); // 16x16
   public static final Icon UndoIntegrateToBranch = load("/icons/UndoIntegrateToBranch.png"); // 16x16
 }
