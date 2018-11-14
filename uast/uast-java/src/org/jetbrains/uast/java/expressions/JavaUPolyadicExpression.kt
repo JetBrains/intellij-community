@@ -20,7 +20,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UPolyadicExpression
 import org.jetbrains.uast.UastBinaryOperator
-import org.jetbrains.uast.java.internal.ArrayMappingListView
+import org.jetbrains.uast.java.internal.PsiArrayToUElementListMappingView
 
 
 class JavaUPolyadicExpression(
@@ -28,7 +28,7 @@ class JavaUPolyadicExpression(
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UPolyadicExpression {
 
-  override val operands: List<UExpression> = ArrayMappingListView(psi.operands) { JavaConverter.convertOrEmpty(it, this) }
+  override val operands: List<UExpression> = PsiArrayToUElementListMappingView(psi.operands) { JavaConverter.convertOrEmpty(it, this) }
 
   override val operator: UastBinaryOperator by lz { psi.operationTokenType.getOperatorType() }
 }
