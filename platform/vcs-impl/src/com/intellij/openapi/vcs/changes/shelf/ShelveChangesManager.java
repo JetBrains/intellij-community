@@ -2,11 +2,11 @@
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.components.PathMacroManager;
-import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
@@ -41,6 +41,8 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -67,18 +69,17 @@ import static com.intellij.util.ObjectUtils.assertNotNull;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.containers.ContainerUtil.*;
 
-public class ShelveChangesManager implements JDOMExternalizable, ProjectComponent {
+@State(name = "ShelveChangesManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+public class ShelveChangesManager implements PersistentStateComponent<Element>, ProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager");
   @NonNls private static final String ELEMENT_CHANGELIST = "changelist";
   @NonNls private static final String ELEMENT_RECYCLED_CHANGELIST = "recycled_changelist";
   @NonNls private static final String DEFAULT_PATCH_NAME = "shelved";
-  @NonNls private static final String REMOVE_FILES_FROM_SHELF_STRATEGY = "remove_strategy";
 
   @NotNull private final PathMacroManager myPathMacroSubstitutor;
   @NotNull private SchemeManager<ShelvedChangeList> mySchemeManager;
 
   private ScheduledFuture<?> myCleaningFuture;
-  private boolean myRemoveFilesFromShelf;
 
   public static ShelveChangesManager getInstance(Project project) {
     return project.getComponent(ShelveChangesManager.class);
@@ -86,6 +87,31 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
 
   private static final String SHELVE_MANAGER_DIR_PATH = "shelf";
   public static final String DEFAULT_PROJECT_PRESENTATION_PATH = "<Project>/shelf";
+
+  private static final Element EMPTY_ELEMENT = new Element("state");
+
+  private State myState = new State();
+
+  public static class State {
+    @OptionTag("remove_strategy")
+    public boolean myRemoveFilesFromShelf;
+    @Attribute("show_recycled")
+    public boolean myShowRecycled;
+  }
+
+  @Nullable
+  @Override
+  public Element getState() {
+    //provide new element if all State fields have their default values  - > to delete existing settings in xml,
+    return chooseNotNull(XmlSerializer.serialize(myState), EMPTY_ELEMENT);
+  }
+
+  @Override
+  public void loadState(@NotNull Element state) {
+    myState = XmlSerializer.deserialize(state, State.class);
+    migrateOldShelfInfo(state, false);
+    migrateOldShelfInfo(state, true);
+  }
 
   /**
    * System independent file-path for non-default project
@@ -117,10 +143,7 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   private final Project myProject;
   private final MessageBus myBus;
 
-  @NonNls private static final String ATTRIBUTE_SHOW_RECYCLED = "show_recycled";
-
   public static final Topic<ChangeListener> SHELF_TOPIC = new Topic<>("shelf updates", ChangeListener.class);
-  private boolean myShowRecycled;
 
   public ShelveChangesManager(final Project project, final MessageBus bus) {
     myPathMacroSubstitutor = PathMacroManager.getInstance(project);
@@ -286,21 +309,6 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
     return data;
   }
 
-  @Override
-  @NonNls
-  @NotNull
-  public String getComponentName() {
-    return "ShelveChangesManager";
-  }
-
-  @Override
-  public void readExternal(Element element) throws InvalidDataException {
-    myShowRecycled = Boolean.parseBoolean(element.getAttributeValue(ATTRIBUTE_SHOW_RECYCLED));
-    myRemoveFilesFromShelf = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, REMOVE_FILES_FROM_SHELF_STRATEGY));
-    migrateOldShelfInfo(element, true);
-    migrateOldShelfInfo(element, false);
-  }
-
   //load old shelf information from workspace.xml without moving .patch and binary files into new directory
   private void migrateOldShelfInfo(@NotNull Element element, boolean recycled) throws InvalidDataException {
     for (Element changeSetElement : element.getChildren(recycled ? ELEMENT_RECYCLED_CHANGELIST : ELEMENT_CHANGELIST)) {
@@ -371,16 +379,6 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
       }
     }
     return nonMigratedPaths;
-  }
-
-  @Override
-  public void writeExternal(Element element) throws WriteExternalException {
-    if (myShowRecycled) {
-      element.setAttribute(ATTRIBUTE_SHOW_RECYCLED, Boolean.toString(true));
-    }
-    if (isRemoveFilesFromShelf()) {
-      JDOMExternalizerUtil.writeField(element, REMOVE_FILES_FROM_SHELF_STRATEGY, Boolean.toString(true));
-    }
   }
 
   @NotNull
@@ -776,11 +774,11 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   }
 
   public void setRemoveFilesFromShelf(boolean removeFilesFromShelf) {
-    myRemoveFilesFromShelf = removeFilesFromShelf;
+    myState.myRemoveFilesFromShelf = removeFilesFromShelf;
   }
 
   public boolean isRemoveFilesFromShelf() {
-    return myRemoveFilesFromShelf;
+    return myState.myRemoveFilesFromShelf;
   }
 
   private void markDeletedSystemUnshelved() {
@@ -1211,11 +1209,11 @@ public class ShelveChangesManager implements JDOMExternalizable, ProjectComponen
   }
 
   public boolean isShowRecycled() {
-    return myShowRecycled;
+    return myState.myShowRecycled;
   }
 
   public void setShowRecycled(final boolean showRecycled) {
-    myShowRecycled = showRecycled;
+    myState.myShowRecycled = showRecycled;
     notifyStateChanged();
   }
 }
