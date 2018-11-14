@@ -152,6 +152,11 @@ public abstract class IdeFrameDecorator implements Disposable {
       if (myFrame != null) {
         myRequestedState = state;
         X11UiUtil.toggleFullScreenMode(myFrame);
+
+        if (myFrame.getJMenuBar() instanceof IdeMenuBar) {
+          final IdeMenuBar frameMenuBar = (IdeMenuBar)myFrame.getJMenuBar();
+          frameMenuBar.onToggleFullScreen(state);
+        }
       }
       return ActionCallback.DONE;
     }
