@@ -415,7 +415,14 @@ public class InferenceSession {
           if (arg instanceof PsiLambdaExpression && ignoreConstraintTree(ignoredConstraints, arg, parameterType)) {
             continue;
           }
-          additionalConstraints.add(new ExpressionCompatibilityConstraint(arg, parameterType));
+
+          ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType);
+          if (dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
+            ignoredConstraints.add(compatibilityConstraint);
+            continue;
+          }
+
+          additionalConstraints.add(compatibilityConstraint);
         }
         additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(arg, parameterType));
         if (arg instanceof PsiCall) {
@@ -437,6 +444,23 @@ public class InferenceSession {
     }
   }
 
+  private boolean dependsOnIgnoredConstraint(Set<ConstraintFormula> ignoredConstraints, ExpressionCompatibilityConstraint compatibilityConstraint) {
+    if (!ignoredConstraints.isEmpty()) {
+      Set<InferenceVariable> inputVariables = compatibilityConstraint.getInputVariables(this);
+
+      if (inputVariables != null) {
+        for (ConstraintFormula ignoredConstraint : ignoredConstraints) {
+          if (ignoredConstraint instanceof InputOutputConstraintFormula) {
+            Set<InferenceVariable> inputsOfIgnored = ((InputOutputConstraintFormula)ignoredConstraint).getInputVariables(this);
+            Set<InferenceVariable> outputVariables = ((InputOutputConstraintFormula)ignoredConstraint).getOutputVariables(inputsOfIgnored, this);
+            if (outputVariables != null && ContainerUtil.intersects(outputVariables, inputVariables)) return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+  
   private static boolean ignoreConstraintTree(Set<? super ConstraintFormula> ignoredConstraints, PsiExpression arg, PsiType parameterType) {
     for (Object expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
       if (PsiTreeUtil.getParentOfType((PsiElement)expr, PsiLambdaExpression.class) == arg) {
