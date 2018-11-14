@@ -395,6 +395,9 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
       if (resolve instanceof PsiVariable) {
         PsiType type = ((PsiVariable)resolve).getType();
         ret = type instanceof PsiEllipsisType ? ((PsiEllipsisType)type).toArrayType() : type;
+        if (ret != null && !ret.isValid()) {
+          PsiUtil.ensureValidType(ret, "invalid type of " + resolve + " of class " + resolve.getClass() + ", valid=" + resolve.isValid());
+        }
         if (resolve instanceof PsiField && !((PsiField)resolve).hasModifierProperty(PsiModifier.STATIC)) {
           owner = ((PsiField)resolve).getContainingClass();
         }
