@@ -1241,7 +1241,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         arrayWriteTarget = null;
       }
     }
-    DfaValue arrayValue = myFactory.withFact(myFactory.createTypeValue(type, Nullability.NOT_NULL), DfaFactType.LOCALITY, true);
+    DfaFactMap arrayFacts = DfaFactMap.EMPTY
+      .with(DfaFactType.TYPE_CONSTRAINT, type == null ? null : TypeConstraint.exact(myFactory.createDfaType(type)))
+      .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+      .with(DfaFactType.LOCALITY, true)
+      .with(DfaFactType.SPECIAL_FIELD_VALUE, SpecialField.ARRAY_LENGTH.withValue(expression.getInitializers().length, PsiType.INT));
+    DfaValue arrayValue = myFactory.getFactFactory().createValue(arrayFacts);
     if (arrayWriteTarget != null) {
       addInstruction(new PushInstruction(arrayWriteTarget, null, true));
       addInstruction(new PushInstruction(arrayValue, expression));
@@ -1283,9 +1288,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new PushInstruction(arrayValue, expression));
       addInstruction(new AssignInstruction(originalExpression, var));
     }
-    // Declaration: write array length
-    DfaConstValue lengthValue = getFactory().getInt(expression.getInitializers().length);
-    new CFGBuilder(this).assignAndPop(SpecialField.ARRAY_LENGTH.createValue(getFactory(), var), lengthValue);
   }
 
   @Override

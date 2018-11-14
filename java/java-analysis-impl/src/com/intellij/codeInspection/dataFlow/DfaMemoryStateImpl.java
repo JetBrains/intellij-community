@@ -33,6 +33,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
@@ -233,7 +234,12 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     DfaVariableState state = getVariableState(var).withValue(value);
     if (value instanceof DfaFactMapValue) {
-      setVariableState(var, state.withFacts(((DfaFactMapValue)value).getFacts()));
+      DfaFactMap facts = ((DfaFactMapValue)value).getFacts();
+      setVariableState(var, state.withFacts(facts));
+      SpecialFieldValue specialFieldValue = facts.get(DfaFactType.SPECIAL_FIELD_VALUE);
+      if (specialFieldValue != null) {
+        setVarValue((DfaVariableValue)specialFieldValue.getField().createValue(myFactory, var), specialFieldValue.toConstant(myFactory));
+      }
     }
     else if (DfaUtil.isComparedByEquals(value.getType()) && !DfaUtil.isComparedByEquals(var.getType())) {
       // Like Object x = "foo" or Object x = 5;
@@ -925,32 +931,34 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return applyUnboxedRelation(dfaLeft, dfaRight, isNegated);
   }
 
-  @NotNull
-  private List<Couple<DfaValue>> getDependentPairs(DfaValue left, DfaValue right) {
-    StreamEx<Couple<DfaValue>> stream = StreamEx.empty();
-    if (left instanceof DfaVariableValue && right instanceof DfaConstValue) {
-      stream = stream.append(StreamEx.of(new ArrayList<>(((DfaVariableValue)left).getDependentVariables()))
-                               .filter(leftVar -> leftVar.getQualifier() == left &&
-                                                  leftVar.getSource() == SpecialField.STRING_LENGTH)
-        .map(leftVar -> Couple.of(leftVar, ((SpecialField)leftVar.getSource()).createValue(myFactory, right))));
+  @Nullable
+  private Couple<DfaValue> getDependentPair(DfaValue left, DfaValue right) {
+    if (left instanceof DfaVariableValue) {
+      return getSpecialEquivalencePair((DfaVariableValue)left, right);
     }
-    if (right instanceof DfaVariableValue && left instanceof DfaConstValue) {
-      stream = stream.append(StreamEx.of(new ArrayList<>(((DfaVariableValue)right).getDependentVariables()))
-                               .filter(rightVar -> rightVar.getQualifier() == right &&
-                                                   rightVar.getSource() == SpecialField.STRING_LENGTH)
-        .map(rightVar -> Couple.of(((SpecialField)rightVar.getSource()).createValue(myFactory, left), rightVar)));
+    if (right instanceof DfaVariableValue) {
+      return getSpecialEquivalencePair((DfaVariableValue)right, left);
     }
-    return stream.distinct().toList();
+    return null;
+  }
+
+  private Couple<DfaValue> getSpecialEquivalencePair(DfaVariableValue left, DfaValue right) {
+    if (right instanceof DfaConstValue && TypeUtils.isJavaLangString(left.getType())) {
+      return Couple.of(SpecialField.STRING_LENGTH.createValue(myFactory, left),
+                       SpecialField.STRING_LENGTH.createValue(myFactory, right));
+    }
+    if (right instanceof DfaFactMapValue) {
+      SpecialFieldValue value = ((DfaFactMapValue)right).get(DfaFactType.SPECIAL_FIELD_VALUE);
+      if (value != null) {
+        return Couple.of(value.getField().createValue(myFactory, left), value.toConstant(myFactory));
+      }
+    }
+    return null;
   }
 
   private boolean applyDependentFieldsEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
-    List<Couple<DfaValue>> pairs = getDependentPairs(left, right);
-    for (Couple<DfaValue> pair : pairs) {
-      if (!applyCondition(myFactory.createCondition(pair.getFirst(), RelationType.EQ, pair.getSecond()))) {
-        return false;
-      }
-    }
-    return true;
+    Couple<DfaValue> pair = getDependentPair(left, right);
+    return pair == null || applyCondition(myFactory.createCondition(pair.getFirst(), RelationType.EQ, pair.getSecond()));
   }
 
   private boolean applyUnboxedRelation(@NotNull DfaValue dfaLeft, DfaValue dfaRight, boolean negated) {

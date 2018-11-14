@@ -217,6 +217,10 @@ public enum SpecialField implements DfaVariableSource {
                            ContractValue.argument(0).specialField(this), returnFalse())};
   }
 
+  public SpecialFieldValue withValue(Object value, @NotNull PsiType type) {
+    return new SpecialFieldValue(this, value, type);
+  }
+  
   @Override
   public String toString() {
     return myMethodName;

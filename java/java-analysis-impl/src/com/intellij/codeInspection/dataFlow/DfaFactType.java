@@ -251,6 +251,10 @@ public abstract class DfaFactType<T> extends Key<T> {
       return fact ? "local object" : "";
     }
   };
+  
+  public static final DfaFactType<SpecialFieldValue> SPECIAL_FIELD_VALUE = new DfaFactType<SpecialFieldValue>("Special field value") {
+    
+  };
 
   @NotNull
   private final String myName;
