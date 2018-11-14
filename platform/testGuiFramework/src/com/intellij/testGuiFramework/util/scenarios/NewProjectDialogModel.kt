@@ -552,7 +552,8 @@ fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: Librar
 fun NewProjectDialogModel.waitLoadingTemplates() {
   GuiTestUtilKt.waitProgressDialogUntilGone(
     GuiRobotHolder.robot,
-    progressTitle = progressLoadingTemplates
+    progressTitle = progressLoadingTemplates,
+    timeoutToAppear = Timeouts.seconds05
   )
 }
 
