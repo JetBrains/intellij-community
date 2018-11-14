@@ -26,11 +26,9 @@ public final class SvnIcons {
   public static final Icon FilterNotIntegrated = load("/icons/FilterNotIntegrated.png"); // 16x16
   public static final Icon FilterOthers = load("/icons/FilterOthers.png"); // 16x16
   public static final Icon Integrated = load("/icons/Integrated.png"); // 16x16
-  public static final Icon IntegrateToBranch = load("/icons/IntegrateToBranch.png"); // 16x16
   public static final Icon IntegrationStatusUnknown = load("/icons/IntegrationStatusUnknown.png"); // 16x16
   public static final Icon MarkAsMerged = load("/icons/MarkAsMerged.png"); // 16x16
   public static final Icon MarkAsNotMerged = load("/icons/MarkAsNotMerged.png"); // 16x16
-  public static final Icon MergeSourcesDetails = load("/icons/mergeSourcesDetails.png"); // 16x16
   public static final Icon Notintegrated = load("/icons/Notintegrated.png"); // 16x16
   public static final Icon PropertiesDiff = load("/icons/PropertiesDiff.png"); // 16x16
   public static final Icon ShowIntegratedFrom = load("/icons/ShowIntegratedFrom.png"); // 16x16

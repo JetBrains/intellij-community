@@ -585,7 +585,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     @Override
     protected void updateWithChecker(AnActionEvent e, SelectedCommittedStuffChecker checker) {
       if (myIntegrate) {
-        e.getPresentation().setIcon(SvnIcons.IntegrateToBranch);
+        e.getPresentation().setIcon(AllIcons.Vcs.Merge);
       }
       else {
         e.getPresentation().setIcon(SvnIcons.UndoIntegrateToBranch);

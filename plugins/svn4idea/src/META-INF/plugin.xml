@@ -28,7 +28,7 @@
 
 
     <action id="IntegrateChangeSetAction" class="org.jetbrains.idea.svn.actions.IntegrateChangeSetAction" popup="true"
-            icon="SvnIcons.IntegrateToBranch">
+            icon="AllIcons.Vcs.Merge">
       <add-to-group group-id="Vcs.RepositoryChangesBrowserToolbar" anchor="last"/>
     </action>
 
