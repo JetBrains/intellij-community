@@ -20,3 +20,5 @@ fun <E> Collection<E>.toArray(empty: Array<E>): Array<E> {
   @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN", "UNCHECKED_CAST")
   return (this as java.util.Collection<E>).toArray(empty)
 }
+
+fun <T> lazyPub(initializer: () -> T) = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)

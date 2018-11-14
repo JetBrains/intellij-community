@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors.inference
 import com.intellij.openapi.util.Pair
 import com.intellij.psi.*
 import com.intellij.psi.util.TypeConversionUtil
+import com.intellij.util.lazyPub
 import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider.checkProviders
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
@@ -22,11 +23,11 @@ class MethodCandidate(val method: PsiMethod,
                       private val arguments: Arguments?,
                       private val context: PsiElement) {
 
-  val argumentMapping: Map<Argument, Pair<PsiParameter, PsiType?>> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  val argumentMapping: Map<Argument, Pair<PsiParameter, PsiType?>> by lazyPub {
     mapArguments(typeComputer)
   }
 
-  private val erasedArguments: Array<PsiType?>? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  private val erasedArguments: Array<PsiType?>? by lazyPub {
     arguments?.map(typeComputer)?.map(TypeConversionUtil::erasure)?.toTypedArray()
   }
 

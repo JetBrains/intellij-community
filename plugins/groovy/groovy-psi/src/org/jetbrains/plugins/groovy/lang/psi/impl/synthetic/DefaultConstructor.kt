@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic
 
 import com.intellij.psi.*
@@ -10,7 +10,7 @@ import com.intellij.psi.impl.light.LightParameterListBuilder
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod
 import com.intellij.util.IncorrectOperationException
-import kotlin.LazyThreadSafetyMode.PUBLICATION
+import com.intellij.util.lazyPub
 
 class DefaultConstructor(
   private val myConstructedClass: PsiClass
@@ -24,11 +24,11 @@ class DefaultConstructor(
 
   override fun hasModifierProperty(name: String): Boolean = false
 
-  private val myModifierList by lazy(PUBLICATION) { LightModifierList(manager, language) }
+  private val myModifierList by lazyPub { LightModifierList(manager, language) }
 
   override fun getModifierList(): PsiModifierList = myModifierList
 
-  private val myParameterList by lazy(PUBLICATION) {
+  private val myParameterList by lazyPub {
     LightParameterListBuilder(manager, language).apply {
       if (myConstructedClass.hasModifierProperty(PsiModifier.STATIC)) return@apply
       val enclosingClass = myConstructedClass.containingClass ?: return@apply
@@ -53,7 +53,7 @@ class DefaultConstructor(
 
   override fun getTypeParameters(): Array<PsiTypeParameter> = PsiTypeParameter.EMPTY_ARRAY
 
-  private val myThrowsList by lazy(PUBLICATION) { LightReferenceList(manager) }
+  private val myThrowsList by lazyPub { LightReferenceList(manager) }
 
   override fun getThrowsList(): PsiReferenceList = myThrowsList
 

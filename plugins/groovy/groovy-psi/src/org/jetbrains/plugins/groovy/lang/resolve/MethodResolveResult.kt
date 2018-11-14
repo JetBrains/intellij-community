@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
+import com.intellij.util.lazyPub
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
@@ -25,11 +26,11 @@ class MethodResolveResult(
     return super.getSubstitutor()
   }
 
-  private val siteSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  private val siteSubstitutor by lazyPub {
     contextSubstitutor.putAll(method.typeParameters, typeArguments)
   }
 
-  private val methodCandidate by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  private val methodCandidate by lazyPub {
     if (arguments != null && method is GrGdkMethod && place is GrReferenceExpression) {
       val newArguments = listOf(buildQualifier(place, state)) + arguments
       MethodCandidate(method.staticMethod, siteSubstitutor, newArguments, place)
@@ -39,7 +40,7 @@ class MethodResolveResult(
     }
   }
 
-  private val myPartialSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  private val myPartialSubstitutor by lazyPub {
     if (typeArguments.isNotEmpty()) {
       siteSubstitutor
     }
@@ -48,7 +49,7 @@ class MethodResolveResult(
     }
   }
 
-  private val fullSubstitutor by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  private val fullSubstitutor by lazyPub {
     if (typeArguments.isNotEmpty()) {
       siteSubstitutor
     }
