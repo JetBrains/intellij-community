@@ -5,20 +5,22 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.uast.UElement
 
 
-internal class PsiArrayToUElementListMappingView<T : UElement, R : PsiElement>(
+internal class PsiArrayToUElementListMappingView<T : UElement, R : PsiElement> private constructor(
   private val sourceList: Array<R>,
+  private val lazyCached: Lazy<List<Lazy<T>>>, // ideally it should be something like lazy-paging-list
+  // which will provide an index-based access but will not allocate the whole `sourceList.size` elements until necessary
   private val startIndex: Int,
-  private val endIndex: Int,
-  private val mapper: (R) -> T) : AbstractList<T>() {
+  private val endIndex: Int) : AbstractList<T>() {
 
-  constructor(sourceList: Array<R>, mapper: (R) -> T) : this(sourceList, 0, sourceList.size, mapper)
+  constructor(sourceList: Array<R>, mapper: (R) -> T) :
+    this(sourceList, lazy { sourceList.map { lazy { mapper(it) } } }, 0, sourceList.size)
 
   init {
     require(startIndex >= 0 && endIndex <= sourceList.size)
   }
 
   override val size: Int = endIndex - startIndex
-  override fun get(index: Int): T = mapper(sourceList[startIndex + index])
+  override fun get(index: Int): T = lazyCached.value[startIndex + index].value
 
   override fun contains(element: T): Boolean {
     val sourcePsi = element.sourcePsi ?: return super.contains(element)
@@ -30,5 +32,5 @@ internal class PsiArrayToUElementListMappingView<T : UElement, R : PsiElement>(
   }
 
   override fun subList(fromIndex: Int, toIndex: Int): List<T> =
-    PsiArrayToUElementListMappingView(sourceList, startIndex + fromIndex, startIndex + toIndex, mapper)
+    PsiArrayToUElementListMappingView(sourceList, lazyCached, startIndex + fromIndex, startIndex + toIndex)
 }
