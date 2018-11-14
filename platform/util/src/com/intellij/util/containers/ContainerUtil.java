@@ -937,15 +937,22 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(pure=true)
   public static <T, V> V[] map2Array(@NotNull T[] array, @NotNull Class<? super V> aClass, @NotNull Function<? super T, ? extends V> mapper) {
-    return map2Array(Arrays.asList(array), aClass, mapper);
+    @SuppressWarnings("unchecked") V[] result = (V[])Array.newInstance(aClass, array.length);
+    for (int i = 0; i < array.length; i++) {
+      result[i] = mapper.fun(array[i]);
+    }
+    return result;
   }
 
   @NotNull
   @Contract(pure=true)
   public static <T, V> V[] map2Array(@NotNull Collection<? extends T> collection, @NotNull Class<? super V> aClass, @NotNull Function<? super T, ? extends V> mapper) {
-    final List<V> list = map2List(collection, mapper);
-    @SuppressWarnings("unchecked") V[] array = (V[])Array.newInstance(aClass, list.size());
-    return list.toArray(array);
+    @SuppressWarnings("unchecked") V[] result = (V[])Array.newInstance(aClass, collection.size());
+    int i = 0;
+    for (T t : collection) {
+      result[i++] = mapper.fun(t);
+    }
+    return result;
   }
 
   @NotNull
