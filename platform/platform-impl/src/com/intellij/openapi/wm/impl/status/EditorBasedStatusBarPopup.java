@@ -200,9 +200,6 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       if (isDisposed()) return;
 
       VirtualFile file = getSelectedFile();
-      actionEnabled = false;
-      String widgetText;
-      String toolTipText;
 
       WidgetState state = getWidgetState(file);
       if (state == WidgetState.NO_CHANGE) {
@@ -223,9 +220,8 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
       actionEnabled = state.actionEnabled && file != null && file.isWritable();
 
-      widgetText = state.text;
-
-      toolTipText = state.toolTip;
+      String widgetText = state.text;
+      String toolTipText = state.toolTip;
       if (actionEnabled) {
         myComponent.setForeground(UIUtil.getActiveTextColor());
         myComponent.setTextAlignment(Component.LEFT_ALIGNMENT);
