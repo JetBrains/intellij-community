@@ -30,7 +30,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -1001,8 +1000,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    ThreeState equalByConstants = equalByConstant(c1Index, c2Index);
-    if (equalByConstants != ThreeState.UNSURE) return equalByConstants.toBoolean() != isNegated;
+    RelationType constantRelation = getConstantRelation(c1Index, c2Index);
+    if (constantRelation != null) {
+      return (constantRelation == RelationType.EQ) != isNegated;
+    }
     if (!isNegated) { //Equals
       if (isUnstableValue(dfaLeft) || isUnstableValue(dfaRight)) return true;
       if (!uniteClasses(dfaLeft, dfaRight)) return false;
@@ -1049,8 +1050,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    ThreeState equalByConstants = equalByConstant(c1Index, c2Index);
-    if (equalByConstants != ThreeState.UNSURE) return !equalByConstants.toBoolean();
+    RelationType constantRelation = getConstantRelation(c1Index, c2Index);
+    if (constantRelation != null) {
+      return constantRelation == RelationType.LT;
+    }
     if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
     myCachedHash = null;
     return myDistinctClasses.addOrdered(c1Index, c2Index);
@@ -1083,20 +1086,28 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
            c2 == null && c1 instanceof PsiVariable;
   }
 
-  @NotNull
-  private ThreeState equalByConstant(int i1, int i2) {
-    if (i1 == i2) return ThreeState.YES;
+  @Nullable
+  private RelationType getConstantRelation(int i1, int i2) {
+    if (i1 == i2) return RelationType.EQ;
     EqClass ec1 = myEqClasses.get(i1);
     EqClass ec2 = myEqClasses.get(i2);
-    if (ec1 == null || ec2 == null) return ThreeState.UNSURE;
+    if (ec1 == null || ec2 == null) return null;
     DfaConstValue const1 = ec1.findConstant();
     DfaConstValue const2 = ec2.findConstant();
-    if (const1 == null || const2 == null) return ThreeState.UNSURE;
+    if (const1 == null || const2 == null) return null;
     Number value1 = ObjectUtils.tryCast(const1.getValue(), Number.class);
     Number value2 = ObjectUtils.tryCast(const2.getValue(), Number.class);
-    if (value1 == null || value2 == null) return ThreeState.UNSURE;
-    if (value1 instanceof Long && value2 instanceof Long) return ThreeState.fromBoolean(value1.equals(value2));
-    return ThreeState.fromBoolean(value1.doubleValue() == value2.doubleValue());
+    if (value1 == null || value2 == null) return null;
+    int cmp;
+    if (value1 instanceof Long && value2 instanceof Long) {
+      cmp = Long.compare((Long)value1, (Long)value2);
+    } else {
+      double double1 = value1.doubleValue();
+      double double2 = value2.doubleValue();
+      if (double1 == 0.0 && double2 == 0.0) return RelationType.EQ;
+      cmp = Double.compare(double1, double2);
+    }
+    return cmp == 0 ? RelationType.EQ : cmp < 0 ? RelationType.LT : RelationType.GT;
   }
 
   @Override

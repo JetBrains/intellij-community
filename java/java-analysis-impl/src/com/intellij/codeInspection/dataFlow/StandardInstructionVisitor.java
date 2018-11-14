@@ -645,10 +645,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final IElementType opSign = instruction.getOperationSign();
     RelationType relationType = RelationType.fromElementType(opSign);
     if (relationType != null) {
-      DfaInstructionState[] states = handleConstantComparison(instruction, runner, memState, dfaRight, dfaLeft, relationType);
-      if (states == null) {
-        states = handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft, relationType);
-      }
+      DfaInstructionState[] states = handleRelationBinop(instruction, runner, memState, dfaRight, dfaLeft, relationType);
       if (states != null) {
         return states;
       }
@@ -709,7 +706,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         Object value = ((DfaConstValue)condition).getValue();
         if (Boolean.FALSE.equals(value)) continue;
         if (Boolean.TRUE.equals(value)) {
-          return makeBooleanResultArray(instruction, runner, memState, relationType.isSubRelation(relation));
+          DfaInstructionState state =
+            makeBooleanResult(instruction, runner, memState, ThreeState.fromBoolean(relationType.isSubRelation(relation)));
+          return new DfaInstructionState[]{state};
         }
       }
       final DfaMemoryState copy = i == relations.length - 1 && !states.isEmpty() ? memState : memState.createCopy();
@@ -807,114 +806,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       myUsefulInstanceofs.add(instruction);
     }
     return states.toArray(DfaInstructionState.EMPTY_ARRAY);
-  }
-
-  @Nullable
-  private DfaInstructionState[] handleConstantComparison(BinopInstruction instruction,
-                                                         DataFlowRunner runner,
-                                                         DfaMemoryState memState,
-                                                         DfaValue dfaRight,
-                                                         DfaValue dfaLeft, RelationType relationType) {
-    if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
-      Number leftValue = getKnownNumberValue(memState, (DfaVariableValue)dfaLeft);
-      Number rightValue = getKnownNumberValue(memState, (DfaVariableValue)dfaRight);
-      if (leftValue != null && rightValue != null) {
-        return checkComparisonWithKnownValue(instruction, runner, memState, relationType, leftValue, rightValue);
-      }
-    }
-
-    if (dfaRight instanceof DfaConstValue && dfaLeft instanceof DfaVariableValue) {
-      Object value = ((DfaConstValue)dfaRight).getValue();
-      if (value instanceof Number) {
-        DfaInstructionState[] result = checkComparingWithConstant(instruction, runner, memState, (DfaVariableValue)dfaLeft, relationType,
-                                                                  (Number)value);
-        if (result != null) {
-          return result;
-        }
-      }
-    }
-    if (dfaRight instanceof DfaVariableValue && dfaLeft instanceof DfaConstValue) {
-      return handleConstantComparison(instruction, runner, memState, dfaLeft, dfaRight, relationType.getFlipped());
-    }
-
-    if (relationType != RelationType.EQ && relationType != RelationType.NE) {
-      return null;
-    }
-
-    if (dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue && 
-        !(TypeUtils.isJavaLangString(dfaLeft.getType())) && !(TypeUtils.isJavaLangString(dfaRight.getType())) ||
-        DfaConstValue.isContractFail(dfaLeft) || DfaConstValue.isContractFail(dfaRight)) {
-      boolean negated = (relationType == RelationType.NE) ^ (DfaMemoryStateImpl.isNaN(dfaLeft) || DfaMemoryStateImpl.isNaN(dfaRight));
-      boolean result = dfaLeft == dfaRight ^ negated;
-      return makeBooleanResultArray(instruction, runner, memState, result);
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private DfaInstructionState[] checkComparingWithConstant(BinopInstruction instruction,
-                                                           DataFlowRunner runner,
-                                                           DfaMemoryState memState,
-                                                           DfaVariableValue var,
-                                                           RelationType opSign, Number comparedWith) {
-    Number knownValue = getKnownNumberValue(memState, var);
-    if (knownValue != null) {
-      return checkComparisonWithKnownValue(instruction, runner, memState, opSign, knownValue, comparedWith);
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Number getKnownNumberValue(DfaMemoryState memState, DfaVariableValue var) {
-    DfaConstValue knownConstantValue = memState.getConstantValue(var);
-    return knownConstantValue != null && knownConstantValue.getValue() instanceof Number ? (Number)knownConstantValue.getValue() : null;
-  }
-
-  private DfaInstructionState[] checkComparisonWithKnownValue(BinopInstruction instruction,
-                                                              DataFlowRunner runner,
-                                                              DfaMemoryState memState,
-                                                              RelationType opSign,
-                                                              Number leftValue,
-                                                              Number rightValue) {
-    int cmp = compare(leftValue, rightValue);
-    Boolean result = null;
-    boolean hasNaN = DfaUtil.isNaN(leftValue) || DfaUtil.isNaN(rightValue);
-    if (cmp < 0 || cmp > 0) {
-      if(opSign == RelationType.EQ) result = false;
-      else if (opSign == RelationType.NE) result = true;
-    }
-    if (opSign == RelationType.LT) {
-      result = !hasNaN && cmp < 0;
-    }
-    else if (opSign == RelationType.GT) {
-      result = !hasNaN && cmp > 0;
-    }
-    else if (opSign == RelationType.LE) {
-      result = !hasNaN && cmp <= 0;
-    }
-    else if (opSign == RelationType.GE) {
-      result = !hasNaN && cmp >= 0;
-    }
-    if (result == null) {
-      return null;
-    }
-    return makeBooleanResultArray(instruction, runner, memState, result);
-  }
-
-  private static int compare(Number a, Number b) {
-    long aLong = a.longValue();
-    long bLong = b.longValue();
-    if (aLong != bLong) return aLong > bLong ? 1 : -1;
-
-    return a.doubleValue() == 0.0 && b.doubleValue() == 0.0 ? 0 : Double.compare(a.doubleValue(), b.doubleValue());
-  }
-
-  private DfaInstructionState[] makeBooleanResultArray(BinopInstruction instruction,
-                                                       DataFlowRunner runner,
-                                                       DfaMemoryState memState,
-                                                       boolean result) {
-    return new DfaInstructionState[]{makeBooleanResult(instruction, runner, memState, ThreeState.fromBoolean(result))};
   }
 
   private DfaInstructionState makeBooleanResult(BinopInstruction instruction,
