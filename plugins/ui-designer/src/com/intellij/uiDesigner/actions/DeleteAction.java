@@ -2,6 +2,7 @@
 
 package com.intellij.uiDesigner.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -9,7 +10,6 @@ import com.intellij.uiDesigner.CaptionSelection;
 import com.intellij.uiDesigner.FormEditingUtil;
 import com.intellij.uiDesigner.UIDesignerBundle;
 import com.intellij.uiDesigner.designSurface.GuiEditor;
-import icons.UIDesignerIcons;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 */
 public final class DeleteAction extends AnAction {
   public DeleteAction() {
-    getTemplatePresentation().setIcon(UIDesignerIcons.DeleteCell);
+    getTemplatePresentation().setIcon(AllIcons.General.Remove);
   }
 
   @Override
