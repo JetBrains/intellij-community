@@ -53,26 +53,28 @@ public class PluginClassLoader extends UrlClassLoader {
     return c;
   }
 
-  private interface ActionWithClassloader<T, T2> {
-    T execute(String name, ClassLoader classloader, T2 extraParameter);
+  private interface ActionWithClassloader<Result, ParameterType> {
+    Result execute(String name, ClassLoader classloader, ParameterType parameter);
   }
 
-  private abstract static class ActionWithPluginClassLoader<T, T2> {
-    T execute(String name, PluginClassLoader classloader, Set<ClassLoader> visited,
-              ActionWithPluginClassLoader<T, T2> action, ActionWithClassloader<T, T2> action2, T2 extraParameter) {
-      T resource = doExecute(name, classloader, extraParameter);
+  private abstract static class ActionWithPluginClassLoader<Result, ParameterType> {
+    Result execute(String name, PluginClassLoader classloader, Set<ClassLoader> visited,
+                   ActionWithPluginClassLoader<Result, ParameterType> actionWithPluginClassLoader, 
+                   ActionWithClassloader<Result, ParameterType> actionWithClassloader, 
+                   ParameterType parameter) {
+      Result resource = doExecute(name, classloader, parameter);
       if (resource != null) return resource;
-      return classloader.processResourcesInParents(name, action, action2, visited, extraParameter);
+      return classloader.processResourcesInParents(name, actionWithPluginClassLoader, actionWithClassloader, visited, parameter);
     }
 
-    protected abstract T doExecute(String name, PluginClassLoader classloader, T2 extraParameter);
+    protected abstract Result doExecute(String name, PluginClassLoader classloader, ParameterType parameter);
   }
 
   @Nullable
-  private <T, T2> T processResourcesInParents(String name,
-                                              ActionWithPluginClassLoader<T, T2> actionWithPluginClassLoader,
-                                              ActionWithClassloader<T, T2> actionWithClassloader,
-                                              Set<ClassLoader> visited, T2 extraParameter) {
+  private <Result, ParameterType> Result processResourcesInParents(String name,
+                                                                   ActionWithPluginClassLoader<Result, ParameterType> actionWithPluginClassLoader,
+                                                                   ActionWithClassloader<Result, ParameterType> actionWithClassloader,
+                                                                   Set<ClassLoader> visited, ParameterType parameter) {
     for (ClassLoader parent : myParents) {
       if (visited == null) visited = ContainerUtilRt.newHashSet(this);
       if (!visited.add(parent)) {
@@ -80,15 +82,15 @@ public class PluginClassLoader extends UrlClassLoader {
       }
 
       if (parent instanceof PluginClassLoader) {
-        T resource = actionWithPluginClassLoader.execute(name, (PluginClassLoader)parent, visited, actionWithPluginClassLoader,
-                                                         actionWithClassloader, extraParameter);
+        Result resource = actionWithPluginClassLoader.execute(name, (PluginClassLoader)parent, visited, actionWithPluginClassLoader,
+                                                              actionWithClassloader, parameter);
         if (resource != null) {
           return resource;
         }
         continue;
       }
 
-      T resource = actionWithClassloader.execute(name, parent, extraParameter);
+      Result resource = actionWithClassloader.execute(name, parent, parameter);
       if (resource != null) return resource;
     }
 
@@ -100,21 +102,21 @@ public class PluginClassLoader extends UrlClassLoader {
     Class execute(String name,
                   PluginClassLoader classloader,
                   Set<ClassLoader> visited,
-                  ActionWithPluginClassLoader<Class, Void> action,
-                  ActionWithClassloader<Class, Void> action2,
-                  Void extraParameter) {
+                  ActionWithPluginClassLoader<Class, Void> actionWithPluginClassLoader,
+                  ActionWithClassloader<Class, Void> actionWithClassloader,
+                  Void parameter) {
       return classloader.tryLoadingClass(name, false, visited);
     }
 
     @Override
-    protected Class doExecute(String name, PluginClassLoader classloader, Void extraParameter) {
+    protected Class doExecute(String name, PluginClassLoader classloader, Void parameter) {
       return null;
     }
   };
 
   private static final ActionWithClassloader<Class, Void> loadClassInCl = new ActionWithClassloader<Class, Void>() {
     @Override
-    public Class execute(String name, ClassLoader classloader, Void extraParameter) {
+    public Class execute(String name, ClassLoader classloader, Void parameter) {
       try {
         return classloader.loadClass(name);
       }
@@ -159,7 +161,7 @@ public class PluginClassLoader extends UrlClassLoader {
   );
 
   private static boolean mustBeLoadedByPlatform(String className) {
-    if (className.startsWith("java.") || className.startsWith("javax.")) return true;
+    if (className.startsWith("java.")) return true;
     //some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
@@ -193,14 +195,14 @@ public class PluginClassLoader extends UrlClassLoader {
   
   private static final ActionWithPluginClassLoader<URL, Void> findResourceInPluginCL = new ActionWithPluginClassLoader<URL, Void>() {
     @Override
-    protected URL doExecute(String name, PluginClassLoader classloader, Void extraParameter) {
+    protected URL doExecute(String name, PluginClassLoader classloader, Void parameter) {
       return classloader.findOwnResource(name);
     }
   };
   
   private static final ActionWithClassloader<URL, Void> findResourceInCl = new ActionWithClassloader<URL, Void>() {
     @Override
-    public URL execute(String name, ClassLoader classloader, Void extraParameter) {
+    public URL execute(String name, ClassLoader classloader, Void parameter) {
       return classloader.getResource(name);
     }
   };
@@ -223,14 +225,14 @@ public class PluginClassLoader extends UrlClassLoader {
   private static final ActionWithPluginClassLoader<InputStream, Void>
     getResourceAsStreamInPluginCL = new ActionWithPluginClassLoader<InputStream, Void>() {
     @Override
-    protected InputStream doExecute(String name, PluginClassLoader classloader, Void extraParameter) {
+    protected InputStream doExecute(String name, PluginClassLoader classloader, Void parameter) {
       return classloader.getOwnResourceAsStream(name);
     }
   };
 
   private static final ActionWithClassloader<InputStream, Void> getResourceAsStreamInCl = new ActionWithClassloader<InputStream, Void>() {
     @Override
-    public InputStream execute(String name, ClassLoader classloader, Void extraParameter) {
+    public InputStream execute(String name, ClassLoader classloader, Void parameter) {
       return classloader.getResourceAsStream(name);
     }
   };
@@ -255,9 +257,9 @@ public class PluginClassLoader extends UrlClassLoader {
     @Override
     protected Void doExecute(String name,
                              PluginClassLoader classloader,
-                             List<Enumeration<URL>> extraParameter) {
+                             List<Enumeration<URL>> enumerations) {
       try {
-        extraParameter.add(classloader.findOwnResources(name));
+        enumerations.add(classloader.findOwnResources(name));
       } catch (IOException ignore) {}
       return null;
     }
@@ -266,9 +268,9 @@ public class PluginClassLoader extends UrlClassLoader {
   private static final ActionWithClassloader<Void, List<Enumeration<URL>>>
     findResourcesInCl = new ActionWithClassloader<Void, List<Enumeration<URL>>>() {
     @Override
-    public Void execute(String name, ClassLoader classloader, List<Enumeration<URL>> extraParameter) {
+    public Void execute(String name, ClassLoader classloader, List<Enumeration<URL>> enumerations) {
       try {
-        extraParameter.add(classloader.getResources(name));
+        enumerations.add(classloader.getResources(name));
       } catch (IOException ignore) {}
       return null;
     }
