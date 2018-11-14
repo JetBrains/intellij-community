@@ -6,10 +6,36 @@ import com.intellij.util.containers.OpenTHashSet
 import com.intellij.vcs.log.VcsLogFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.VcsLogFilterCollection.FilterKey
+import com.intellij.vcs.log.VcsLogTextFilter
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl
+import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl
+import com.intellij.vcs.log.util.VcsLogUtil
 import gnu.trove.TObjectHashingStrategy
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
+
+object VcsLogFilterObject {
+  @JvmStatic
+  fun fromPattern(text: String, isRegexpAllowed: Boolean = false, isMatchCase: Boolean = false): VcsLogTextFilter {
+    if (isRegexpAllowed && VcsLogUtil.maybeRegexp(text)) {
+      try {
+        return VcsLogRegexTextFilter(Pattern.compile(text, if (isMatchCase) 0 else Pattern.CASE_INSENSITIVE))
+      }
+      catch (ignored: PatternSyntaxException) {
+      }
+    }
+    return VcsLogTextFilterImpl(text, isMatchCase)
+  }
+
+  @JvmStatic
+  fun fromPatternsList(patterns: List<String>, isMatchCase: Boolean = false): VcsLogTextFilter {
+    if (patterns.isEmpty()) return fromPattern("", false, isMatchCase)
+    if (patterns.size == 1) return fromPattern(patterns.single(), false, isMatchCase)
+    return VcsLogMultiplePatternsTextFilter(patterns, isMatchCase)
+  }
+}
 
 fun createFilterCollection(vararg filters: VcsLogFilter?): VcsLogFilterCollection {
   val filterSet = createFilterSet()

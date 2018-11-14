@@ -10,7 +10,11 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
-import com.intellij.vcs.log.impl.*;
+import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.RequirementsImpl;
+import com.intellij.vcs.log.impl.VcsCommitMetadataImpl;
+import com.intellij.vcs.log.impl.VcsUserImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
 import git4idea.config.GitVersion;
 import git4idea.test.GitSingleRepoTest;
@@ -24,7 +28,6 @@ import java.util.Set;
 
 import static com.intellij.openapi.vcs.Executor.echo;
 import static com.intellij.openapi.vcs.Executor.touch;
-import static com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl.createTextFilter;
 import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.readAllRefs;
@@ -174,11 +177,11 @@ public class GitLogProviderTest extends GitSingleRepoTest {
 
     String text = "[git]";
     assertEquals(Collections.singletonList(smallBrackets),
-                 getFilteredHashes(createFilterCollection(createTextFilter(text, false, true))));
+                 getFilteredHashes(createFilterCollection(VcsLogFilterObject.fromPattern(text, false, true))));
     assertEquals(Arrays.asList(bigNoBrackets, smallNoBrackets, bigBrackets, smallBrackets, initial),
-                 getFilteredHashes(createFilterCollection(createTextFilter(text, true, false))));
+                 getFilteredHashes(createFilterCollection(VcsLogFilterObject.fromPattern(text, true, false))));
     assertEquals(Arrays.asList(smallNoBrackets, smallBrackets, initial),
-                 getFilteredHashes(createFilterCollection(createTextFilter(text, true, true))));
+                 getFilteredHashes(createFilterCollection(VcsLogFilterObject.fromPattern(text, true, true))));
   }
 
   public void test_filter_by_text_no_regex() throws Exception {
@@ -193,7 +196,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     echo(fileName, "content" + Math.random());
 
     assertEquals(Arrays.asList(bigBrackets, smallBrackets),
-                 getFilteredHashes(createFilterCollection(createTextFilter("[git]", false, false))));
+                 getFilteredHashes(createFilterCollection(VcsLogFilterObject.fromPattern("[git]", false, false))));
   }
 
   private void assumeFixedStringsWorks() {
@@ -208,7 +211,8 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME),
                                                            Collections.emptyMap(),
                                                            singleton(user));
-    assertEquals(hashes, getFilteredHashes(createFilterCollection(userFilter, createTextFilter(regexp ? ".*" : "", regexp, false))));
+    assertEquals(hashes,
+                 getFilteredHashes(createFilterCollection(userFilter, VcsLogFilterObject.fromPattern(regexp ? ".*" : "", regexp, false))));
   }
 
   public void test_filter_by_text_with_regex_and_user() throws Exception {

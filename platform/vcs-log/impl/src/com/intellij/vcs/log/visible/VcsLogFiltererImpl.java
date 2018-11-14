@@ -17,11 +17,11 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.visible.filters.VcsLogHashFilterImpl;
-import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.StopWatch;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
+import com.intellij.vcs.log.visible.filters.VcsLogHashFilterImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,7 +189,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         if (commitId != null) hashFilterResult.add(myStorage.getCommitIndex(commitId.getHash(), commitId.getRoot()));
       }
     }
-    VcsLogTextFilter textFilter = VcsLogTextFilterImpl.createTextFilter(ContainerUtil.newArrayList(hashes), false);
+    VcsLogTextFilter textFilter = VcsLogFilterObject.fromPatternsList(ContainerUtil.newArrayList(hashes), false);
     FilterByDetailsResult textFilterResult = filterByDetails(dataPack, createFilterCollection(textFilter),
                                                              commitCount, dataPack.getLogProviders().keySet(), null);
     if (hashFilterResult.isEmpty() && matchesNothing(textFilterResult.matchingCommits)) return null;

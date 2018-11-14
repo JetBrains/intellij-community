@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogTextFilter;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -18,7 +19,6 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.overwrite;
-import static com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl.createTextFilter;
 import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
 import static hg4idea.test.HgExecutor.hg;
 import static hg4idea.test.log.HgUserFilterTest.findLogProvider;
@@ -40,11 +40,11 @@ public class HgTextFilterTest extends HgPlatformTest {
     String text = "[hg]";
 
     assertSameElements(Arrays.asList(bigBrackets, smallBrackets),
-                       getFilteredCommits(provider, createTextFilter(text, false, false)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern(text, false, false)));
     assertSameElements(Collections.singletonList(smallBrackets),
-                       getFilteredCommits(provider, createTextFilter(text, false, true)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern(text, false, true)));
     assertSameElements(Arrays.asList(bigNoBrackets, smallNoBrackets, bigBrackets, smallBrackets),
-                       getFilteredCommits(provider, createTextFilter(text, true, false)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern(text, true, false)));
   }
 
   public void testRegexp() throws Exception {
@@ -57,9 +57,9 @@ public class HgTextFilterTest extends HgPlatformTest {
     HgLogProvider provider = findLogProvider(myProject);
 
     assertSameElements(Collections.singletonList(numberedBigBug),
-                       getFilteredCommits(provider, createTextFilter("Bug \\d+", true, true)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern("Bug \\d+", true, true)));
     assertSameElements(Collections.singletonList(bigBug),
-                       getFilteredCommits(provider, createTextFilter("BUG.*", true, true)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern("BUG.*", true, true)));
   }
 
   public void _testRegexpCaseInsensitive() throws Exception {
@@ -72,9 +72,9 @@ public class HgTextFilterTest extends HgPlatformTest {
     HgLogProvider provider = findLogProvider(myProject);
 
     assertSameElements(Arrays.asList(numberedSmallBug, numberedBigBug),
-                       getFilteredCommits(provider, createTextFilter("Bug \\d+", true, false)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern("Bug \\d+", true, false)));
     assertSameElements(Arrays.asList(numberedBigBug, numberedSmallBug, smallBug, bigBug),
-                       getFilteredCommits(provider, createTextFilter("BUG.*", true, false)));
+                       getFilteredCommits(provider, VcsLogFilterObject.fromPattern("BUG.*", true, false)));
   }
 
   @NotNull
