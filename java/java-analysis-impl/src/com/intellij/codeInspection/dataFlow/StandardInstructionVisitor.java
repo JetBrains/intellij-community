@@ -907,7 +907,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     long bLong = b.longValue();
     if (aLong != bLong) return aLong > bLong ? 1 : -1;
 
-    return Double.compare(a.doubleValue(), b.doubleValue());
+    return a.doubleValue() == 0.0 && b.doubleValue() == 0.0 ? 0 : Double.compare(a.doubleValue(), b.doubleValue());
   }
 
   private DfaInstructionState[] makeBooleanResultArray(BinopInstruction instruction,
