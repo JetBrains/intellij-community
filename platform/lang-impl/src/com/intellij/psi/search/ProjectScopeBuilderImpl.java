@@ -2,6 +2,7 @@
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreProjectScopeBuilder;
+import com.intellij.ide.scratch.RootType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
@@ -21,8 +22,21 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
 
   protected final Project myProject;
 
-  public ProjectScopeBuilderImpl(Project project) {
+  public ProjectScopeBuilderImpl(@NotNull Project project) {
     myProject = project;
+  }
+
+  @NotNull
+  @Override
+  public GlobalSearchScope buildEverythingScope() {
+    return new EverythingGlobalScope(myProject) {
+      @Override
+      public boolean contains(@NotNull VirtualFile file) {
+        RootType rootType = RootType.forFile(file);
+        if (rootType != null && (rootType.isHidden() || rootType.isIgnored(myProject, file))) return false;
+        return true;
+      }
+    };
   }
 
   @NotNull
