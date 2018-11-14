@@ -308,4 +308,13 @@ public interface EditorEx extends Editor {
    */
   @Nullable
   String getContextMenuGroupId();
+
+  /**
+   * If {@code cursor} parameter value is not {@code null}, sets custom cursor to {@link #getContentComponent() editor's content component},
+   * otherwise restores the default cursor in editor ({@code requestor} parameter value should be the same in both setting and resetting
+   * requests). If multiple requestors have currently set custom cursors, one of them will be used (it is unspecified, which one).
+   *
+   * @since 2019.1
+   */
+  void setCustomCursor(@NotNull Object requestor, @Nullable Cursor cursor);
 }
