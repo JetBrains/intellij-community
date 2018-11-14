@@ -5,10 +5,11 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.uast.UElement
 
 
-internal class PsiArrayToUElementListMappingView<T : UElement, R : PsiElement>(private val sourceList: Array<R>,
-                                                                               private val startIndex: Int,
-                                                                               endIndex: Int,
-                                                                               private val mapper: (R) -> T) : AbstractList<T>() {
+internal class PsiArrayToUElementListMappingView<T : UElement, R : PsiElement>(
+  private val sourceList: Array<R>,
+  private val startIndex: Int,
+  private val endIndex: Int,
+  private val mapper: (R) -> T) : AbstractList<T>() {
 
   constructor(sourceList: Array<R>, mapper: (R) -> T) : this(sourceList, 0, sourceList.size, mapper)
 
@@ -21,7 +22,11 @@ internal class PsiArrayToUElementListMappingView<T : UElement, R : PsiElement>(p
 
   override fun contains(element: T): Boolean {
     val sourcePsi = element.sourcePsi ?: return super.contains(element)
-    return sourceList.contains(sourcePsi)
+
+    for (i in startIndex until endIndex) {
+      if (sourceList[i] == sourcePsi) return true
+    }
+    return false
   }
 
   override fun subList(fromIndex: Int, toIndex: Int): List<T> =
