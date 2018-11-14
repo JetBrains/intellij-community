@@ -31,14 +31,14 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     CMD_STEP_RETURN, CMD_STEP_INTO_MY_CODE, CMD_THREAD_SUSPEND, CMD_RUN_TO_LINE, \
     CMD_ADD_EXCEPTION_BREAK, CMD_SMART_STEP_INTO, InternalConsoleExec, NetCommandFactory, \
     PyDBDaemonThread, _queue, ReaderThread, GetGlobalDebugger, get_global_debugger, \
-    set_global_debugger, WriterThread, pydevd_find_thread_by_id, pydevd_log, \
+    set_global_debugger, WriterThread, pydevd_log, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
     InternalSendCurrExceptionTraceProceeded
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
 from _pydevd_bundle.pydevd_trace_dispatch import trace_dispatch as _trace_dispatch, global_cache_skips, global_cache_frame_skips, show_tracing_warning
-from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, \
+from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, enable_cache_frames_without_breaks, \
     dummy_trace_dispatch, show_frame_eval_warning
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
@@ -182,6 +182,12 @@ class CheckOutputThread(PyDBDaemonThread):
         self.killReceived = True
 
 
+class CommunicationRole(object):
+    """The class that contains the constants of roles that `PyDB` can play in
+    the communication with the IDE.
+    """
+    CLIENT, SERVER = range(2)
+
 
 #=======================================================================================================================
 # PyDB
@@ -275,6 +281,11 @@ class PyDB:
         # this flag disables frame evaluation even if it's available
         self.do_not_use_frame_eval = False
 
+        self.process_created_msg_received_event = None
+
+        # the role PyDB plays in the communication with IDE
+        self.communication_role = None
+
     def get_plugin_lazy_init(self):
         if self.plugin is None and SUPPORT_PLUGINS:
             self.plugin = PluginManager(self)
@@ -334,8 +345,10 @@ class PyDB:
 
     def connect(self, host, port):
         if host:
+            self.communication_role = CommunicationRole.CLIENT
             s = start_client(host, port)
         else:
+            self.communication_role = CommunicationRole.SERVER
             s = start_server(port)
 
         self.initialize_network(s)
@@ -739,12 +752,35 @@ class PyDB:
         self.post_internal_command(int_cmd, thread_id)
         self.process_internal_commands()
 
-
     def send_process_created_message(self):
         """Sends a message that a new process has been created.
         """
         cmd = self.cmd_factory.make_process_created_message()
         self.writer.add_command(cmd)
+
+    def send_process_will_be_substituted(self):
+        """Sends a message that a new process is going to be created.
+        When `PyDB` works in server mode this method also waits for the
+        response from the IDE to be sure that the IDE received this message.
+
+        Waiting of the response in server mode is required because the current
+        process might become substituted before it actually sends the message
+        and the IDE will not try to connect to `PyDB` in this case.
+
+        Waiting of the response in client mode is not required because the
+        substituted process will try to connect to the IDE itself.
+        """
+        event = None
+
+        if self.communication_role == CommunicationRole.SERVER:
+            event = threading.Event()
+            self.process_created_msg_received_event = event
+
+        cmd = self.cmd_factory.make_process_created_message()
+        self.writer.add_command(cmd)
+
+        if self.communication_role == CommunicationRole.SERVER:
+            event.wait()
 
     def set_next_statement(self, frame, event, func_name, next_line):
         stop = False

@@ -83,6 +83,13 @@ public class ClientModeMultiProcessDebugger implements ProcessDebugger {
     RemoteDebugger debugger = new RemoteDebugger(myDebugProcess, myHost, myPort) {
       @Override
       protected void onProcessCreatedEvent() {
+        try {
+          ProcessCreatedMsgReceivedCommand command = new ProcessCreatedMsgReceivedCommand(this);
+          command.execute();
+        }
+        catch (PyDebuggerException e) {
+          LOG.info(e);
+        }
         myExecutor.incrementRequests();
       }
     };
