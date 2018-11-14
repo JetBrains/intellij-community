@@ -41,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -49,7 +50,7 @@ import java.util.Set;
  */
 public abstract class GoToSymbolProvider implements ChooseByNameContributor {
   // non-static to store modules accepted by different providers separately
-  private final Key<CachedValue<List<Module>>> ACCEPTABLE_MODULES = Key.create("ACCEPTABLE_MODULES_" + toString());
+  private final Key<CachedValue<Collection<Module>>> ACCEPTABLE_MODULES = Key.create("ACCEPTABLE_MODULES_" + toString());
 
   protected abstract void addNames(@NotNull Module module, Set<String> result);
 
@@ -63,11 +64,14 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
     }
   }
 
-  private List<Module> getAcceptableModules(final Project project) {
-    return CachedValuesManager.getManager(project).getCachedValue(project, ACCEPTABLE_MODULES, () -> {
-      List<Module> result = ContainerUtil.findAll(ModuleManager.getInstance(project).getModules(), module -> acceptModule(module));
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-    }, false);
+  private Collection<Module> getAcceptableModules(final Project project) {
+    return CachedValuesManager.getManager(project).getCachedValue(project, ACCEPTABLE_MODULES, () ->
+      CachedValueProvider.Result.create(calcAcceptableModules(project), PsiModificationTracker.MODIFICATION_COUNT), false);
+  }
+
+  @NotNull
+  protected Collection<Module> calcAcceptableModules(@NotNull Project project) {
+    return ContainerUtil.findAll(ModuleManager.getInstance(project).getModules(), module -> acceptModule(module));
   }
 
   @Override
@@ -159,7 +163,6 @@ public abstract class GoToSymbolProvider implements ChooseByNameContributor {
         }
 
         @Override
-        @Nullable
         public String getLocationString() {
           return '(' + myPsiElement.getContainingFile().getName() + ')';
         }
