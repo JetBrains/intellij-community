@@ -95,7 +95,7 @@ private fun createReviewForDev(root: File, context: Context, user: String, email
       PlainOldReview(branch, UPSOURCE_DEV_PROJECT_ID)
     }
     else {
-      val review = createReview(UPSOURCE_DEV_PROJECT_ID, branch, commits.commitMessage(), commitsForReview)
+      val review = createReview(UPSOURCE_DEV_PROJECT_ID, branch, commitsForReview)
       addReviewer(UPSOURCE_DEV_PROJECT_ID, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
       postVerificationResultToReview(verificationPassed, review)
       review
@@ -118,7 +118,7 @@ private fun createReviewForIcons(root: File, context: Context, user: String, ema
   val repos = listOf(context.iconsRepo)
   return withTmpBranch(repos) { branch ->
     val commitsForReview = commitAndPush(branch, user, email, commits.commitMessage(), repos)
-    val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commits.commitMessage(), commitsForReview)
+    val review = createReview(UPSOURCE_ICONS_PROJECT_ID, branch, commitsForReview)
     commits.values.parallelStream()
       .flatMap { it.stream() }
       .map { it.committerEmail }
@@ -170,11 +170,6 @@ private fun commitAndPush(branch: String, user: String, email: String, message: 
   commitAndPush(it, branch, message)
 }
 
-private fun createReview(project: String, branch: String,
-                         message: String, commits: Collection<String>) = createReview(project, branch, commits).also {
-  postComment(project, it, message)
-}
-
 private fun sendNotification(investigator: Investigator?, context: Context) {
   callSafely {
     if (isNotificationRequired(context)) {
@@ -206,7 +201,7 @@ internal fun Context.report(slack: Boolean = false): String {
       val link = buildConfReportableLink(DEV_REPO_SYNC_BUILD_CONF).let {
         if (slack) slackLink("this build", it) else it
       }
-      "To sync $devRepoName run $link"
+      "To sync $devRepoName run $link\n"
     }
     else -> ""
   }
@@ -221,7 +216,7 @@ private fun notifySlackChannel(investigator: Investigator?, context: Context) {
   }
 
   val reaction = if (context.isFail()) ":scream:" else ":white_check_mark:"
-  val build = slackLink("See build log", thisBuildReportableLink())
+  val build = "See " + slackLink("build log", thisBuildReportableLink())
   val text = "*${context.devRepoName}* $reaction\n" + investigation + context.report(slack = true) + build
   val response = post(CHANNEL_WEB_HOOK, """{ "text": "$text" }""")
   if (response != "ok") error("$CHANNEL_WEB_HOOK responded with $response")
