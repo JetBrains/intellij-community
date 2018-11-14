@@ -864,6 +864,7 @@ private string_literal_as_reference ::= '('                                     
 }
 private application_argument_start ::= IDENTIFIER
                                      | simple_literal_tokens
+                                     | GSTRING_BEGIN
                                      | primitive_type
                                      | '~' | '!'
                                      | 'this' | 'super'

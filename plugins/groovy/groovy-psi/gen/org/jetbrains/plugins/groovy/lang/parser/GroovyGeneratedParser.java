@@ -809,6 +809,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // IDENTIFIER
   //                                      | simple_literal_tokens
+  //                                      | GSTRING_BEGIN
   //                                      | primitive_type
   //                                      | '~' | '!'
   //                                      | 'this' | 'super'
@@ -818,6 +819,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeTokenFast(b, IDENTIFIER);
     if (!r) r = simple_literal_tokens(b, l + 1);
+    if (!r) r = consumeTokenFast(b, GSTRING_BEGIN);
     if (!r) r = parsePrimitiveType(b, l + 1);
     if (!r) r = consumeTokenFast(b, T_BNOT);
     if (!r) r = consumeTokenFast(b, T_NOT);
