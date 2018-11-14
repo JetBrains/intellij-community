@@ -29,6 +29,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -372,7 +373,7 @@ public class FileManagerImpl implements FileManager {
   @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    LOG.assertTrue(vFile.isValid(), "Invalid file");
+    if (!vFile.isValid()) throw new InvalidVirtualFileAccessException(vFile);
     if (myDisposed) {
       LOG.error("Project is already disposed: " + myManager.getProject());
     }
