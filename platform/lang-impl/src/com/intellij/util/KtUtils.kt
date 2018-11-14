@@ -12,3 +12,5 @@ operator fun <A> JBPair<*, A>.component2(): A = second
 fun <A : Any, B : Any> JBPair<A?, B?>.toNotNull(): Pair<A, B> {
   return requireNotNull(first) to requireNotNull(second)
 }
+
+fun <T> lazyPub(initializer: () -> T) = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
