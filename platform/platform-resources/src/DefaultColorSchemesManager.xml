@@ -71,6 +71,7 @@
       <option name="ScrollBar.Thumb.NonOpaque.background" value="73737333" mac="00000000"/>
       <option name="ScrollBar.Thumb.NonOpaque.Hovered.foreground" value="59595947" mac="00000080"/>
       <option name="ScrollBar.Thumb.NonOpaque.Hovered.background" value="73737347" mac="00000080"/>
+      <option name="ScrollBar.NonOpaque.background" value="80808000"/>
       <option name="ScrollBar.NonOpaque.Hovered.background" value="8080801A"/>
     </colors>
 
@@ -1207,14 +1208,15 @@
 
       <option name="ScrollBar.foreground" value="3F4244"/>
       <option name="ScrollBar.background" value="3F4244"/>
-      <option name="ScrollBar.Thumb.foreground" value="26262659"/>
-      <option name="ScrollBar.Thumb.background" value="80808059"/>
-      <option name="ScrollBar.Thumb.Hovered.foreground" value="2626268C"/>
-      <option name="ScrollBar.Thumb.Hovered.background" value="8080808C"/>
-      <option name="ScrollBar.Thumb.NonOpaque.foreground" value="26262600"/>
-      <option name="ScrollBar.Thumb.NonOpaque.background" value="80808000"/>
-      <option name="ScrollBar.Thumb.NonOpaque.Hovered.foreground" value="2626268C"/>
-      <option name="ScrollBar.Thumb.NonOpaque.Hovered.background" value="8080808C"/>
+      <option name="ScrollBar.Thumb.foreground" value="38383847" mac="26262659"/>
+      <option name="ScrollBar.Thumb.background" value="A6A6A647" mac="80808059"/>
+      <option name="ScrollBar.Thumb.Hovered.foreground" value="38383859" mac="2626268C"/>
+      <option name="ScrollBar.Thumb.Hovered.background" value="A6A6A659" mac="8080808C"/>
+      <option name="ScrollBar.Thumb.NonOpaque.foreground" value="38383847" mac="26262600"/>
+      <option name="ScrollBar.Thumb.NonOpaque.background" value="A6A6A647" mac="80808000"/>
+      <option name="ScrollBar.Thumb.NonOpaque.Hovered.foreground" value="38383859" mac="2626268C"/>
+      <option name="ScrollBar.Thumb.NonOpaque.Hovered.background" value="A6A6A659" mac="8080808C"/>
+      <option name="ScrollBar.NonOpaque.background" value="80808000"/>
       <option name="ScrollBar.NonOpaque.Hovered.background" value="8080801A"/>
     </colors>
     <attributes>

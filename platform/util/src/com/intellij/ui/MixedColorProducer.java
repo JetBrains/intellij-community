@@ -58,6 +58,12 @@ public final class MixedColorProducer implements NotNullProducer<Color> {
   }
 
   @NotNull
+  public Color produce(double mixer) {
+    setMixer(mixer);
+    return produce();
+  }
+
+  @NotNull
   @Override
   public Color produce() {
     if (mixer <= 0) return couple.first;

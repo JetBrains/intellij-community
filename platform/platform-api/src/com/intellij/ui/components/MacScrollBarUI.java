@@ -60,12 +60,12 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   boolean isBorderNeeded(JComponent c) {
-    return !isOpaque(c) && myTrackAnimator.myValue > 0 && myThumbAnimator.myValue > 0;
+    return !isOpaque(c) && myTrack.animator.myValue > 0 && myThumb.animator.myValue > 0;
   }
 
   @Override
   boolean isTrackClickable() {
-    return isOpaque(myScrollBar) || (myTrackAnimator.myValue > 0 && myThumbAnimator.myValue > 0);
+    return isOpaque(myScrollBar) || (myTrack.animator.myValue > 0 && myThumb.animator.myValue > 0);
   }
 
   @Override
@@ -77,14 +77,14 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   void onTrackHover(boolean hover) {
     myTrackHovered = hover;
     if (myScrollBar != null && isOpaque(myScrollBar)) {
-      myTrackAnimator.start(hover);
-      myThumbAnimator.start(hover);
+      myTrack.animator.start(hover);
+      myThumb.animator.start(hover);
     }
     else if (hover) {
-      myTrackAnimator.start(true);
+      myTrack.animator.start(true);
     }
     else {
-      myThumbAnimator.start(false);
+      myThumb.animator.start(false);
     }
   }
 
@@ -100,21 +100,21 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
     if (isOpaque(c)) {
-      paint(myThumbPainter, g, x, y, width, height, c, myThumbAnimator.myValue, true);
+      paint(myThumb, g, x, y, width, height, c, myThumb.animator.myValue, true);
     }
-    else if (myThumbAnimator.myValue > 0) {
-      paint(myThumbPainter, g, x, y, width, height, c, myThumbAnimator.myValue, false);
+    else if (myThumb.animator.myValue > 0) {
+      paint(myThumb, g, x, y, width, height, c, myThumb.animator.myValue, false);
     }
   }
 
   @Override
   void onThumbMove() {
     if (myScrollBar != null && myScrollBar.isShowing() && !isOpaque(myScrollBar)) {
-      if (!myTrackHovered && myThumbAnimator.myValue == 0) myTrackAnimator.rewind(false);
-      myThumbAnimator.rewind(true);
+      if (!myTrackHovered && myThumb.animator.myValue == 0) myTrack.animator.rewind(false);
+      myThumb.animator.rewind(true);
       myAlarm.cancelAllRequests();
       if (!myTrackHovered) {
-        myAlarm.addRequest(() -> myThumbAnimator.start(false), 700);
+        myAlarm.addRequest(() -> myThumb.animator.start(false), 700);
       }
     }
   }
@@ -162,7 +162,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
       Object object = bar == null ? null : bar.getUI();
       if (object instanceof MacScrollBarUI) {
         MacScrollBarUI ui = (MacScrollBarUI)object;
-        if (0 < ui.myThumbAnimator.myValue) ui.onThumbMove();
+        if (0 < ui.myThumb.animator.myValue) ui.onThumbMove();
       }
     }
   });

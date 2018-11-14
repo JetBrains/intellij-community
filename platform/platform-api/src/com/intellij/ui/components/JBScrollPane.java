@@ -40,6 +40,7 @@ public class JBScrollPane extends JScrollPane {
    * @see UIUtil#putClientProperty
    * @see UIUtil#isUnderDarcula
    */
+  @Deprecated
   public static final Key<Boolean> BRIGHTNESS_FROM_VIEW = Key.create("JB_SCROLL_PANE_BRIGHTNESS_FROM_VIEW");
 
   @Deprecated

@@ -483,7 +483,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     new FoldingPopupManager(this);
 
     myEditorComponent = new EditorComponentImpl(this);
-    myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
     myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
     if (shouldScrollBarBeOpaque()) myVerticalScrollBar.setOpaque(true);
     myPanel = new JPanel();
