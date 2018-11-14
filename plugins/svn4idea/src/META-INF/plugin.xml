@@ -35,9 +35,6 @@
     <action id="Subversion.TogglePropertiesDiff" class="com.intellij.openapi.actionSystem.EmptyAction" popup="true"
             icon="AllIcons.Actions.Preview"/>
 
-    <action id="PropertiesDiff" class="org.jetbrains.idea.svn.actions.ShowPropertiesDiffAction" popup="true" icon="SvnIcons.PropertiesDiff">
-      <add-to-group group-id="Vcs.RepositoryChangesBrowserToolbar" anchor="last"/>
-    </action>
     <action id="EditCommitMessage" class="org.jetbrains.idea.svn.history.SvnEditCommitMessageAction" popup="true"
             icon="AllIcons.Actions.Edit"
             text="Edit Revision Comment" description="Edit revision comment. Previous message is rewritten.">
