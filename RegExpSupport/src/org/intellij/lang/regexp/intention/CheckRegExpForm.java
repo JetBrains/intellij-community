@@ -123,23 +123,7 @@ public class CheckRegExpForm {
 
         IdeFocusManager.getGlobalInstance().requestFocus(mySampleText, true);
 
-        final AnAction sampleTextFocusAction = new AnAction() {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            IdeFocusManager.findInstance().requestFocus(myRegExp.getFocusTarget(), true);
-          }
-        };
-        sampleTextFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText);
-        sampleTextFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), mySampleText);
-
-        final AnAction regExpFocusAction = new AnAction() {
-          @Override
-          public void actionPerformed(@NotNull AnActionEvent e) {
-            IdeFocusManager.findInstance().requestFocus(mySampleText.getFocusTarget(), true);
-          }
-        };
-        regExpFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), myRegExp);
-        regExpFocusAction.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), myRegExp);
+        defineFocusCycle(myRegExp, mySampleText);
 
         updater = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
         DocumentListener documentListener = new DocumentListener() {
@@ -153,6 +137,23 @@ public class CheckRegExpForm {
 
         update();
         mySampleText.selectAll();
+      }
+
+      private void defineFocusCycle(EditorTextField... fields) {
+        for (int i = 0, n = fields.length; i < n; i++) {
+          onShortcutFocus(fields[i], "shift TAB", fields[(i + n - 1) % n]);
+          onShortcutFocus(fields[i], "TAB", fields[(i + 1) % n]);
+        }
+      }
+
+      private void onShortcutFocus(EditorTextField source, String shortcut, EditorTextField target) {
+        AnAction action = new AnAction() {
+          @Override
+          public void actionPerformed(@NotNull AnActionEvent e) {
+            IdeFocusManager.findInstance().requestFocus(target.getFocusTarget(), true);
+          }
+        };
+        action.registerCustomShortcutSet(CustomShortcutSet.fromString(shortcut), source);
       }
 
       public void update() {
