@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
@@ -191,13 +192,13 @@ public class CtrlMouseHandler {
       }
 
       Editor editor = e.getEditor();
-      if (editor.getProject() != null && editor.getProject() != myProject) return;
+      if (!(editor instanceof EditorEx) || editor.getProject() != null && editor.getProject() != myProject) return;
       Point point = new Point(mouseEvent.getPoint());
       if (editor.getInlayModel().getElementAt(point) != null) {
         disposeHighlighter();
         return;
       }
-      myTooltipProvider = new TooltipProvider(editor, editor.xyToLogicalPosition(point));
+      myTooltipProvider = new TooltipProvider((EditorEx)editor, editor.xyToLogicalPosition(point));
       myTooltipProvider.execute(browseMode);
     }
   };
@@ -651,14 +652,14 @@ public class CtrlMouseHandler {
 
 
   private class TooltipProvider {
-    @NotNull private final Editor myHostEditor;
+    @NotNull private final EditorEx myHostEditor;
     @NotNull private final LogicalPosition myHostPosition;
     private BrowseMode myBrowseMode;
     private boolean myDisposed;
     private final ProgressIndicator myProgress = new ProgressIndicatorBase();
     private CompletableFuture myExecutionProgress;
 
-    TooltipProvider(@NotNull Editor hostEditor, @NotNull LogicalPosition hostPos) {
+    TooltipProvider(@NotNull EditorEx hostEditor, @NotNull LogicalPosition hostPos) {
       myHostEditor = hostEditor;
       myHostPosition = hostPos;
     }
@@ -717,7 +718,7 @@ public class CtrlMouseHandler {
     private ReadTask.Continuation doExecute() {
       if (isTaskOutdated(myHostEditor)) return null;
 
-      Editor editor = getPossiblyInjectedEditor();
+      EditorEx editor = getPossiblyInjectedEditor();
       int offset = editor.logicalPositionToOffset(getPosition(editor));
 
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
@@ -743,11 +744,12 @@ public class CtrlMouseHandler {
     }
 
     @NotNull
-    private Editor getPossiblyInjectedEditor() {
+    private EditorEx getPossiblyInjectedEditor() {
       final Document document = myHostEditor.getDocument();
       if (PsiDocumentManager.getInstance(myProject).isCommitted(document)) {
         PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myHostEditor, psiFile, myHostEditor.logicalPositionToOffset(myHostPosition));
+        return (EditorEx)InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myHostEditor, psiFile,
+                                                                                   myHostEditor.logicalPositionToOffset(myHostPosition));
       }
       return myHostEditor;
     }
@@ -761,9 +763,8 @@ public class CtrlMouseHandler {
       return editor instanceof EditorWindow ? ((EditorWindow)editor).hostToInjected(myHostPosition) : myHostPosition;
     }
 
-    private void showHint(@NotNull Info info, @NotNull DocInfo docInfo, @NotNull Editor editor) {
+    private void showHint(@NotNull Info info, @NotNull DocInfo docInfo, @NotNull EditorEx editor) {
       if (myDisposed || editor.isDisposed()) return;
-      Component internalComponent = editor.getContentComponent();
       if (myHighlighter != null) {
         if (!info.isSimilarTo(myHighlighter.getStoredInfo())) {
           disposeHighlighter();
@@ -771,7 +772,7 @@ public class CtrlMouseHandler {
         else {
           // highlighter already set
           if (info.isNavigatable()) {
-            internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            editor.setCustomCursor(CtrlMouseHandler.class, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           }
           return;
         }
@@ -876,13 +877,11 @@ public class CtrlMouseHandler {
   }
 
   @NotNull
-  private HighlightersSet installHighlighterSet(@NotNull Info info, @NotNull Editor editor) {
-    final JComponent internalComponent = editor.getContentComponent();
-    internalComponent.addKeyListener(myEditorKeyListener);
+  private HighlightersSet installHighlighterSet(@NotNull Info info, @NotNull EditorEx editor) {
+    editor.getContentComponent().addKeyListener(myEditorKeyListener);
     editor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
-    final Cursor cursor = internalComponent.getCursor();
     if (info.isNavigatable()) {
-      internalComponent.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      editor.setCustomCursor(CtrlMouseHandler.class, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     }
     myFileEditorManager.addFileEditorManagerListener(myFileEditorManagerListener);
 
@@ -899,7 +898,7 @@ public class CtrlMouseHandler {
       highlighters.add(highlighter);
     }
 
-    return new HighlightersSet(highlighters, editor, cursor, info);
+    return new HighlightersSet(highlighters, editor, info);
   }
 
   @TestOnly
@@ -913,17 +912,14 @@ public class CtrlMouseHandler {
 
   private class HighlightersSet {
     @NotNull private final List<? extends RangeHighlighter> myHighlighters;
-    @NotNull private final Editor myHighlighterView;
-    @NotNull private final Cursor myStoredCursor;
+    @NotNull private final EditorEx myHighlighterView;
     @NotNull private final Info myStoredInfo;
 
     private HighlightersSet(@NotNull List<? extends RangeHighlighter> highlighters,
-                            @NotNull Editor highlighterView,
-                            @NotNull Cursor storedCursor,
+                            @NotNull EditorEx highlighterView,
                             @NotNull Info storedInfo) {
       myHighlighters = highlighters;
       myHighlighterView = highlighterView;
-      myStoredCursor = storedCursor;
       myStoredInfo = storedInfo;
     }
 
@@ -932,9 +928,8 @@ public class CtrlMouseHandler {
         highlighter.dispose();
       }
 
-      Component internalComponent = myHighlighterView.getContentComponent();
-      internalComponent.setCursor(myStoredCursor);
-      internalComponent.removeKeyListener(myEditorKeyListener);
+      myHighlighterView.setCustomCursor(CtrlMouseHandler.class, null);
+      myHighlighterView.getContentComponent().removeKeyListener(myEditorKeyListener);
       myHighlighterView.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
       myFileEditorManager.removeFileEditorManagerListener(myFileEditorManagerListener);
     }

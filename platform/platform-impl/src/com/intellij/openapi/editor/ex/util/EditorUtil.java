@@ -289,6 +289,10 @@ public final class EditorUtil {
     return offset - start + shift;
   }
 
+  /**
+   * @deprecated use {@link EditorEx#setCustomCursor(Object, Cursor)} instead.
+   */
+  @Deprecated
   public static void setHandCursor(@NotNull Editor view) {
     Cursor c = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
     // XXX: Workaround, simply view.getContentComponent().setCursor(c) doesn't work
