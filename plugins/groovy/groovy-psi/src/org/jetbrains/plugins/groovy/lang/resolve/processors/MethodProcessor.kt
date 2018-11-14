@@ -11,13 +11,11 @@ import com.intellij.psi.scope.JavaScopeProcessorEvent
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.ProcessorWithHints
 import com.intellij.psi.scope.PsiScopeProcessor.Event
-import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.util.SmartList
 import com.intellij.util.containers.isNullOrEmpty
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.util.elementInfo
 import org.jetbrains.plugins.groovy.lang.resolve.MethodResolveResult
-import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.getName
 import org.jetbrains.plugins.groovy.lang.resolve.impl.*
@@ -80,11 +78,7 @@ class MethodProcessor(
   private fun computeApplicableCandidates(): Pair<List<GroovyMethodResult>, Boolean> {
     return myCandidates
       .correctStaticScope()
-      .applicable(erasedArgumentTypes, place)
-  }
-
-  private val erasedArgumentTypes by lazy {
-    arguments?.map(Argument::topLevelType)?.map(TypeConversionUtil::erasure)?.toTypedArray()
+      .findApplicable()
   }
 
   val applicableCandidates: List<GroovyMethodResult>?

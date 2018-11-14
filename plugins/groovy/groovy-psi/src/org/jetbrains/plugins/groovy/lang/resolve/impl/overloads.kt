@@ -1,11 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.impl
 
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiType
 import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isApplicableConcrete
 import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.filterSameSignatureCandidates
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability.canBeApplicable
@@ -28,12 +25,12 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
  */
 typealias ApplicabilitiesResult = Pair<List<GroovyMethodResult>, Boolean>
 
-fun List<GroovyMethodResult>.applicable(argumentTypes: Array<out PsiType?>?, place: PsiElement): ApplicabilitiesResult {
+fun List<GroovyMethodResult>.findApplicable(): ApplicabilitiesResult {
   if (isEmpty()) return ApplicabilitiesResult(emptyList(), true)
   val results = SmartList<GroovyMethodResult>()
   var canSelectOverload = true
   for (result in this) {
-    val applicability = isApplicableConcrete(argumentTypes, result.element, result.contextSubstitutor, place, true)
+    val applicability = result.applicability
     if (applicability == inapplicable) {
       continue
     }

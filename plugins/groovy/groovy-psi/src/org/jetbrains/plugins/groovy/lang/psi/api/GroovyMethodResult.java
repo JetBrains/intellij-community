@@ -5,6 +5,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate;
 
 public interface GroovyMethodResult extends GroovyResolveResult {
@@ -16,6 +17,11 @@ public interface GroovyMethodResult extends GroovyResolveResult {
   @NotNull
   default PsiSubstitutor getContextSubstitutor() {
     return getPartialSubstitutor();
+  }
+
+  @NotNull
+  default Applicability getApplicability() {
+    return isApplicable() ? Applicability.applicable : Applicability.inapplicable;
   }
 
   @NotNull

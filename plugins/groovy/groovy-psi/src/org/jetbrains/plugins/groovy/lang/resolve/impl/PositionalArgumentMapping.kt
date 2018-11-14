@@ -1,0 +1,107 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.plugins.groovy.lang.resolve.impl
+
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiSubstitutor
+import com.intellij.psi.util.TypeConversionUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.canAssign
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
+import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
+import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
+import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+
+class PositionalArgumentMapping(
+  method: PsiMethod,
+  erasureSubstitutor: PsiSubstitutor,
+  arguments: Arguments,
+  context: PsiElement
+) : ArgumentMapping {
+
+  private val parameterToArgument: Map<PsiParameter, Argument?>? by lazy {
+    mapByPosition(arguments, method.parameterList.parameters.toList(), PsiParameter::isOptional, false)
+  }
+
+  override val applicability: Applicability by lazy(fun(): Applicability {
+    val map = parameterToArgument ?: return Applicability.inapplicable
+
+    for ((parameter, argument) in map) {
+      if (argument == null) {
+        // no argument passed for parameter
+        require(parameter.isOptional)
+        continue
+      }
+
+      val argumentType = TypeConversionUtil.erasure(argument.topLevelType)
+      if (argumentType == null) {
+        // argument passed but we cannot infer its type
+        return Applicability.canBeApplicable
+      }
+
+      val parameterType = TypeConversionUtil.erasure(parameter.type, erasureSubstitutor)
+      val assignability = canAssign(parameterType, argumentType, context, METHOD_PARAMETER)
+      if (assignability == ConversionResult.ERROR) {
+        return Applicability.inapplicable
+      }
+    }
+
+    return Applicability.applicable
+  })
+}
+
+// foo(a?, b, c?, d?, e)
+// foo(1, 2)          => 1:b, 2:e
+// foo(1, 2, 3)       => 1:a, 2:b, 3:e
+// foo(1, 2, 3, 4)    => 1:a, 2:b, 3:c, 4:e
+// foo(1, 2, 3, 4, 5) => 1:a, 2:b, 3:c, 4:d, 5:e
+private fun <Arg, Param> mapByPosition(arguments: List<Arg>,
+                                       parameters: List<Param>,
+                                       isOptional: (Param) -> Boolean,
+                                       @Suppress("SameParameterValue") partial: Boolean): Map<Param, Arg?>? {
+  val argumentsCount = arguments.size
+  val parameterCount = parameters.size
+  val optionalParametersCount = parameters.count(isOptional)
+  val requiredParametersCount = parameterCount - optionalParametersCount
+  if (!partial && argumentsCount !in requiredParametersCount..parameterCount) {
+    // too little or too many arguments
+    return null
+  }
+
+  val result = LinkedHashMap<Param, Arg?>(parameterCount)
+  val argumentIterator = arguments.iterator()
+  var optionalArgsLeft = argumentsCount - requiredParametersCount
+  for (parameter in parameters) {
+    val optional = isOptional(parameter)
+    if (argumentIterator.hasNext()) {
+      if (!optional) {
+        result[parameter] = argumentIterator.next()
+      }
+      else if (optionalArgsLeft > 0) {
+        optionalArgsLeft--
+        result[parameter] = argumentIterator.next()
+      }
+      else {
+        // No argument passed for this parameter.
+        // Don't call next() on argument iterator, so current argument will be used for next parameter.
+        result[parameter] = null
+      }
+    }
+    else {
+      require(optionalArgsLeft == 0)
+      require(optional || partial) {
+        "argumentsCount < requiredParameters. This should happen only in partial mode"
+      }
+      result[parameter] = null
+    }
+  }
+  require(!argumentIterator.hasNext() || partial) {
+    "argumentsCount > parametersCount. This should happen only in partial mode."
+  }
+
+  require(result.size == parameterCount)
+  return result
+}

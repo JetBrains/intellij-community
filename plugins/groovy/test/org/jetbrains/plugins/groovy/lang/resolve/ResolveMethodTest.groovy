@@ -2050,7 +2050,7 @@ class B {
 ''', PsiMethod)
     PsiClass clazz = method.containingClass
     assertNotNull(clazz)
-    assertEquals('C', clazz.qualifiedName)
+    assertEquals('B', clazz.qualifiedName)
   }
 
   void testUseVSStaticImport() {

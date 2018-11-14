@@ -4,10 +4,16 @@ package org.jetbrains.plugins.groovy.lang.resolve
 import com.intellij.psi.*
 import com.intellij.util.lazyPub
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.groovy.extensions.GroovyApplicabilityProvider
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
+import org.jetbrains.plugins.groovy.lang.psi.util.isEffectivelyVarArgs
+import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
+import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
+import org.jetbrains.plugins.groovy.lang.resolve.impl.EmptyArgumentsMapping
+import org.jetbrains.plugins.groovy.lang.resolve.impl.PositionalArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildQualifier
@@ -24,6 +30,48 @@ class MethodResolveResult(
 
   override fun getContextSubstitutor(): PsiSubstitutor {
     return super.getSubstitutor()
+  }
+
+  private fun erasedArguments(arguments: Arguments) = arguments.map(::ErasedArgument)
+
+  private val myArgumentMapping by lazyPub {
+    if (arguments == null) {
+      // no arguments => no mapping
+      null
+    }
+    else if (element.isEffectivelyVarArgs) {
+      TODO()
+    }
+    else if (arguments.isEmpty()) {
+      EmptyArgumentsMapping(element)
+    }
+    else {
+      PositionalArgumentMapping(element, contextSubstitutor, arguments, place)
+    }
+  }
+
+  private val providersApplicability by lazyPub {
+    arguments?.let {
+      GroovyApplicabilityProvider.checkProviders(erasedArguments(arguments), method)
+    }
+  }
+
+  private val oldApplicability by lazyPub {
+    if (methodCandidate.isApplicable(contextSubstitutor)) {
+      Applicability.applicable
+    }
+    else {
+      Applicability.inapplicable
+    }
+  }
+
+  override fun getApplicability(): Applicability {
+    return providersApplicability ?: if (element.isEffectivelyVarArgs) {
+      oldApplicability
+    }
+    else {
+      myArgumentMapping?.applicability ?: Applicability.canBeApplicable
+    }
   }
 
   private val siteSubstitutor by lazyPub {
@@ -67,14 +115,10 @@ class MethodResolveResult(
 
   override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor
 
-  private val applicability by lazy {
-    methodCandidate.isApplicable(contextSubstitutor)
-  }
-
-  override fun isApplicable(): Boolean = applicability
+  override fun isApplicable(): Boolean = applicability != Applicability.inapplicable
 
   val applicabilityDelegate: Lazy<*>
-    @TestOnly get() = ::applicability.apply { isAccessible = true }.getDelegate() as Lazy<*>
+    @TestOnly get() = ::oldApplicability.apply { isAccessible = true }.getDelegate() as Lazy<*>
 
   val fullSubstitutorDelegate: Lazy<*>
     @TestOnly get() = ::fullSubstitutor.apply { isAccessible = true }.getDelegate() as Lazy<*>
