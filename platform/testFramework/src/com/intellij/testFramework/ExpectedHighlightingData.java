@@ -437,26 +437,14 @@ public class ExpectedHighlightingData {
   }
 
   public void checkResult(Collection<HighlightInfo> infos, String text, @Nullable String filePath) {
-    String fileName = myFile == null ? "" : myFile.getName() + ": ";
     StringBuilder failMessage = new StringBuilder();
 
-    for (HighlightInfo info : reverseCollection(infos)) {
-      if (!expectedInfosContainsInfo(info) && !myIgnoreExtraHighlighting) {
-        int startOffset = info.startOffset;
-        int endOffset = info.endOffset;
-        String s = text.substring(startOffset, endOffset);
-        String desc = info.getDescription();
-
-        if (failMessage.length() > 0) {
-          failMessage.append('\n');
+    if (!myIgnoreExtraHighlighting) {
+      for (HighlightInfo info : reverseCollection(infos)) {
+        if (!expectedInfosContainsInfo(info)) {
+          reportProblem(failMessage, text, info, "extra ");
+          failMessage.append(" [").append(info.type).append(']');
         }
-        failMessage.append(fileName).append("extra ")
-          .append(rangeString(text, startOffset, endOffset))
-          .append(": '").append(s).append('\'');
-        if (desc != null) {
-          failMessage.append(" (").append(desc).append(')');
-        }
-        failMessage.append(" [").append(info.type).append(']');
       }
     }
 
@@ -465,20 +453,7 @@ public class ExpectedHighlightingData {
       Set<HighlightInfo> expInfos = highlightingSet.infos;
       for (HighlightInfo expectedInfo : expInfos) {
         if (!infosContainsExpectedInfo(infos, expectedInfo) && highlightingSet.enabled) {
-          int startOffset = expectedInfo.startOffset;
-          int endOffset = expectedInfo.endOffset;
-          String s = text.substring(startOffset, endOffset);
-          String desc = expectedInfo.getDescription();
-
-          if (failMessage.length() > 0) {
-            failMessage.append('\n');
-          }
-          failMessage.append(fileName).append("missing ")
-            .append(rangeString(text, startOffset, endOffset))
-            .append(": '").append(s).append('\'');
-          if (desc != null) {
-            failMessage.append(" (").append(desc).append(")");
-          }
+          reportProblem(failMessage, text, expectedInfo, "missing ");
         }
       }
     }
@@ -493,6 +468,27 @@ public class ExpectedHighlightingData {
 
       failMessage.append('\n');
       compareTexts(infos, text, failMessage.toString(), filePath);
+    }
+  }
+
+  private void reportProblem(@NotNull StringBuilder failMessage,
+                             @NotNull String text,
+                             @NotNull HighlightInfo info,
+                             @NotNull String messageType) {
+    String fileName = myFile == null ? "" : myFile.getName() + ": ";
+    int startOffset = info.startOffset;
+    int endOffset = info.endOffset;
+    String s = text.substring(startOffset, endOffset);
+    String desc = info.getDescription();
+
+    if (failMessage.length() > 0) {
+      failMessage.append('\n');
+    }
+    failMessage.append(fileName).append(messageType)
+      .append(rangeString(text, startOffset, endOffset))
+      .append(": '").append(s).append('\'');
+    if (desc != null) {
+      failMessage.append(" (").append(desc).append(')');
     }
   }
 
