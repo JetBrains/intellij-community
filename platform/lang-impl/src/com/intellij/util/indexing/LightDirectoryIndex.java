@@ -89,6 +89,8 @@ public final class LightDirectoryIndex<T> {
     
     for (VirtualFile each = file; each != null; each = each.getParent()) {
       int id = ((VirtualFileWithId)each).getId();
+      if (id < 0) return myDefValue;
+
       if (!myNonInterestingIds.get(id)) {
         T info = myRootInfos.get(each);
         if (info != null) {
