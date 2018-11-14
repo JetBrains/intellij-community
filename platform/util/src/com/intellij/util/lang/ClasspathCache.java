@@ -46,6 +46,11 @@ public class ClasspathCache {
     private final int[] myClassPackageHashes;
     private final NameFilter myNameFilter;
 
+    @Deprecated
+    LoaderData() {
+      this(new int[0], new int[0], null);
+    }
+    
     LoaderData(int[] resourcePackageHashes, int[] classPackageHashes, NameFilter nameFilter) {
       myResourcePackageHashes = resourcePackageHashes;
       myClassPackageHashes = classPackageHashes;
