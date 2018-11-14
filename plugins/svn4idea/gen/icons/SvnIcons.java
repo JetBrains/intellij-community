@@ -35,6 +35,5 @@ public final class SvnIcons {
   public static final Icon Notintegrated = load("/icons/Notintegrated.png"); // 16x16
   public static final Icon PropertiesDiff = load("/icons/PropertiesDiff.png"); // 16x16
   public static final Icon ShowIntegratedFrom = load("/icons/ShowIntegratedFrom.png"); // 16x16
-  public static final Icon ShowWorkingCopies = load("/icons/ShowWorkingCopies.png"); // 16x16
   public static final Icon UndoIntegrateToBranch = load("/icons/UndoIntegrateToBranch.png"); // 16x16
 }

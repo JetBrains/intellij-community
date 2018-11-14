@@ -299,7 +299,6 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     svnGroup.add(myFilterMerged);
     svnGroup.add(myFilterNotMerged);
     svnGroup.add(myFilterAlien);
-    svnGroup.add(ActionManager.getInstance().getAction("Svn.Show.Working.Copies"));
     svnGroup.add(new MyRefresh());
     return svnGroup;
   }
