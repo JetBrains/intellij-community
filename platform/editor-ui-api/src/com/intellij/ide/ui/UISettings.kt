@@ -245,8 +245,11 @@ class UISettings(private val notRoamableOptions: NotRoamableUiSettings) : Persis
       state.editorTabPlacement = value
     }
 
-  val editorTabLimit: Int
+  var editorTabLimit: Int
     get() = state.editorTabLimit
+    set(value) {
+      state.editorTabLimit = value
+    }
 
   val recentFilesLimit: Int
     get() = state.recentFilesLimit
