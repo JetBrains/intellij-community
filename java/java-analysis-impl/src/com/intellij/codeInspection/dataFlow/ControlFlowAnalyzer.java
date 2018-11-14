@@ -1520,6 +1520,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiExpression operand = operands[i];
       operand.accept(this);
       generateBoxingUnboxingInstructionFor(operand, exprType);
+      finishElement(operand); // rewrite finish to point after boxing/unboxing
       if (!shortCircuit) {
         if (i > 0) {
           combineStackBooleans(and, operand);
