@@ -56,7 +56,8 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
                                           private val account: GithubAccount)
     : OnePixelSplitter("Github.PullRequests.Component", 0.33f), Disposable, DataProvider {
 
-    private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote)
+    private val dataLoader = GithubPullRequestsDataLoader(project, progressManager, git, requestExecutor, repository, remote,
+                                                          account.server, repoDetails.fullPath)
 
     private val changes = GithubPullRequestChangesComponent(project).apply {
       diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
@@ -79,7 +80,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
 
       list.selectionModel.addChangesListener(object : SelectionChangedListener {
         override fun selectionChanged() {
-          val dataProvider = list.selectionModel.current?.let(dataLoader::getDataProvider)
+          val dataProvider = list.selectionModel.current?.number?.let(dataLoader::getDataProvider)
           preview.setPreviewDataProvider(dataProvider)
         }
       }, preview)
@@ -90,7 +91,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
             if (Disposer.isDisposed(preview)) return@runInEdt
             val selection = list.selectionModel.current
             if (selection != null && selection.number == pullRequestNumber) {
-              preview.setPreviewDataProvider(dataLoader.getDataProvider(selection))
+              preview.setPreviewDataProvider(dataLoader.getDataProvider(pullRequestNumber))
             }
           }
         }
@@ -120,7 +121,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
         GithubPullRequestKeys.PULL_REQUESTS_COMPONENT.`is`(dataId) -> this
         GithubPullRequestKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> list.selectionModel.current
         GithubPullRequestKeys.SELECTED_PULL_REQUEST_DATA_PROVIDER.`is`(dataId) ->
-          list.selectionModel.current?.let(dataLoader::getDataProvider)
+          list.selectionModel.current?.number?.let(dataLoader::getDataProvider)
         else -> null
       }
     }

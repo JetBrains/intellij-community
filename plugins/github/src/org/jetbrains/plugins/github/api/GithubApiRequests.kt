@@ -210,6 +210,10 @@ object GithubApiRequests {
       fun get(url: String) = Get.json<GithubPullRequestDetailed>(url).withOperationName("get pull request")
 
       @JvmStatic
+      fun getHtml(serverPath: GithubServerPath, username: String, repoName: String, number: Long) =
+        getHtml(getUrl(serverPath, Repos.urlSuffix, "/$username/$repoName", urlSuffix, "/$number"))
+
+      @JvmStatic
       fun getHtml(url: String) = Get.json<GithubPullRequestDetailedWithHtml>(url, GithubApiContentHelper.V3_HTML_JSON_MIME_TYPE)
         .withOperationName("get pull request")
 

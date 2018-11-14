@@ -21,8 +21,9 @@ import git4idea.repo.GitRepository
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.GithubFullPath
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
-import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.*
@@ -35,7 +36,9 @@ internal class GithubPullRequestsDataLoader(private val project: Project,
                                             private val git: Git,
                                             private val requestExecutor: GithubApiRequestExecutor,
                                             private val repository: GitRepository,
-                                            private val remote: GitRemote) : Disposable {
+                                            private val remote: GitRemote,
+                                            private val serverPath: GithubServerPath,
+                                            private val repoPath: GithubFullPath) : Disposable {
 
   private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
@@ -63,12 +66,12 @@ internal class GithubPullRequestsDataLoader(private val project: Project,
   }
 
   @CalledInAwt
-  fun getDataProvider(githubSearchedIssue: GithubSearchedIssue): GithubPullRequestDataProvider {
+  fun getDataProvider(number: Long): GithubPullRequestDataProvider {
     if (isDisposed) throw IllegalStateException("Already disposed")
 
-    return cache.get(githubSearchedIssue.number) {
+    return cache.get(number) {
       val indicator = NonReusableEmptyProgressIndicator()
-      val task = DataTask(githubSearchedIssue.pullRequestLinks!!.url, indicator)
+      val task = DataTask(serverPath, repoPath.user, repoPath.repository, number, indicator)
       progressManager.runProcessWithProgressAsynchronously(task, indicator)
       task
     }
@@ -77,7 +80,11 @@ internal class GithubPullRequestsDataLoader(private val project: Project,
   fun addProviderChangesListener(listener: ProviderChangedListener, disposable: Disposable) =
     invalidationEventDispatcher.addListener(listener, disposable)
 
-  private inner class DataTask(private val url: String, private val progressIndicator: ProgressIndicator)
+  private inner class DataTask(private val serverPath: GithubServerPath,
+                               private val username: String,
+                               private val repositoryName: String,
+                               private val number: Long,
+                               private val progressIndicator: ProgressIndicator)
     : Task.Backgroundable(project, "Load Pull Request Data", true), GithubPullRequestDataProvider {
 
     override val detailsRequest = CompletableFuture<GithubPullRequestDetailedWithHtml>()
@@ -87,7 +94,8 @@ internal class GithubPullRequestsDataLoader(private val project: Project,
 
     override fun run(indicator: ProgressIndicator) {
       runPartialTask(detailsRequest, indicator) {
-        requestExecutor.execute(progressIndicator, GithubApiRequests.Repos.PullRequests.getHtml(url))
+        requestExecutor.execute(indicator,
+                                GithubApiRequests.Repos.PullRequests.getHtml(serverPath, username, repositoryName, number))
       }
 
       runPartialTask(branchFetchRequest, indicator) {
