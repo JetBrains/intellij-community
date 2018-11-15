@@ -183,8 +183,8 @@ class DefaultScrollBarUI extends ScrollBarUI {
   @Override
   public void installUI(JComponent c) {
     myScrollBar = (JScrollBar)c;
-    ScrollColorProducer.setBackground(c);
-    ScrollColorProducer.setForeground(c);
+    ScrollBarPainter.setBackground(c);
+    ScrollBarPainter.setForeground(c);
     myScrollBar.setOpaque(false);
     myScrollBar.setFocusable(false);
     myScrollBar.addMouseListener(myListener);
@@ -286,9 +286,9 @@ class DefaultScrollBarUI extends ScrollBarUI {
           trailing.setBounds(bounds.x + bounds.width, bounds.y, size, bounds.height);
         }
       }
-      if (parent instanceof JScrollPane) {
+      if (parent instanceof JScrollPane && isBorderNeeded(c)) {
         Color foreground = c.getForeground();
-        if (foreground != null && !foreground.equals(background) && isBorderNeeded(c)) {
+        if (foreground != null && !foreground.equals(background)) {
           g.setColor(foreground);
           switch (alignment) {
             case TOP:
