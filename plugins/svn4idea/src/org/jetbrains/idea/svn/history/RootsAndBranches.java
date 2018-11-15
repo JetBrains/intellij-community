@@ -60,11 +60,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private boolean myHighlightingOn;
   private JPanel myPanelWrapper;
   private final MergePanelFiltering myStrategy;
-  private final CommonFilter myFilterMerged =
-    new CommonFilter(message("tab.repository.merge.panel.filter.plus"), SvnIcons.FilterIntegrated);
-  private final CommonFilter myFilterNotMerged =
-    new CommonFilter(message("tab.repository.merge.panel.filter.minus"), SvnIcons.FilterNotIntegrated);
-  private final CommonFilter myFilterAlien = new CommonFilter(message("tab.repository.merge.panel.filter.others"), SvnIcons.FilterOthers);
+  private final CommonFilter myFilterMerged = new CommonFilter(message("tab.repository.merge.panel.filter.plus"));
+  private final CommonFilter myFilterNotMerged = new CommonFilter(message("tab.repository.merge.panel.filter.minus"));
+  private final CommonFilter myFilterAlien = new CommonFilter(message("tab.repository.merge.panel.filter.others"));
   private final IntegrateChangeListsAction myIntegrateAction;
   private final IntegrateChangeListsAction myUndoIntegrateChangeListsAction;
   private JComponent myToolbarComponent;
@@ -291,15 +289,16 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
   private DefaultActionGroup createActions() {
+    DefaultActionGroup presentationGroup = new DefaultActionGroup(new HighlightFrom(), myFilterMerged, myFilterNotMerged, myFilterAlien);
+    presentationGroup.setPopup(true);
+    presentationGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Show);
+
     final DefaultActionGroup svnGroup = new DefaultActionGroup();
-    svnGroup.add(new HighlightFrom());
+    svnGroup.add(presentationGroup);
     svnGroup.add(myIntegrateAction);
     svnGroup.add(myUndoIntegrateChangeListsAction);
     svnGroup.add(new MarkAsMerged(true));
     svnGroup.add(new MarkAsMerged(false));
-    svnGroup.add(myFilterMerged);
-    svnGroup.add(myFilterNotMerged);
-    svnGroup.add(myFilterAlien);
     svnGroup.add(new MyRefresh());
     return svnGroup;
   }
@@ -404,7 +403,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private class HighlightFrom extends DumbAwareToggleAction {
     private HighlightFrom() {
       super(message("committed.changes.action.enable.merge.highlighting"),
-            message("committed.changes.action.enable.merge.highlighting.description.text"), SvnIcons.ShowIntegratedFrom);
+            message("committed.changes.action.enable.merge.highlighting.description.text"), null);
     }
 
     @Override
@@ -426,8 +425,8 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   private class CommonFilter extends DumbAwareToggleAction {
     boolean mySelected;
 
-    protected CommonFilter(final String text, final Icon icon) {
-      super(text, null, icon);
+    protected CommonFilter(final String text) {
+      super(text);
     }
 
     @Override

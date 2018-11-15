@@ -22,9 +22,6 @@ public final class SvnIcons {
   public static final Icon Conflictp = load("/icons/conflictp.png"); // 16x16
   public static final Icon Conflictt = load("/icons/conflictt.png"); // 16x16
   public static final Icon Conflicttp = load("/icons/conflicttp.png"); // 16x16
-  public static final Icon FilterIntegrated = load("/icons/FilterIntegrated.png"); // 16x16
-  public static final Icon FilterNotIntegrated = load("/icons/FilterNotIntegrated.png"); // 16x16
-  public static final Icon FilterOthers = load("/icons/FilterOthers.png"); // 16x16
   public static final Icon Integrated = load("/icons/Integrated.png"); // 16x16
   public static final Icon IntegrationStatusUnknown = load("/icons/IntegrationStatusUnknown.png"); // 16x16
   public static final Icon MarkAsMerged = load("/icons/MarkAsMerged.png"); // 16x16
