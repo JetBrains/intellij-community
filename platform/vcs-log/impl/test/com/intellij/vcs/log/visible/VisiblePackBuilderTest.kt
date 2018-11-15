@@ -86,12 +86,10 @@ class VisiblePackBuilderTest {
     }
 
     val func = Function<VcsLogFilterCollection, MutableList<TimedVcsCommit>> {
-      ArrayList(listOf(2, 3, 4).map {
-        val id = it
-        val commit = graph.commits.firstOrNull {
-          it.id == id
-        }
-        commit!!.toVcsCommit(graph.hashMap)
+      ArrayList(listOf(2, 3, 4).map { commitId ->
+        graph.commits.firstOrNull { commit ->
+          commit.id == commitId
+        }!!.toVcsCommit(graph.hashMap)
       })
     }
 
@@ -105,7 +103,7 @@ class VisiblePackBuilderTest {
 
   private fun GraphCommit<Int>.toVcsCommit(storage: VcsLogStorage) = TimedVcsCommitImpl(storage.getCommitId(this.id)!!.hash, storage.getHashes(this.parents), 1)
 
-  fun assertDoesNotContain(graph: VisibleGraph<Int>, id: Int) {
+  private fun assertDoesNotContain(graph: VisibleGraph<Int>, id: Int) {
     assertNull((1..graph.visibleCommitCount).firstOrNull { graph.getRowInfo(it - 1).commit == id })
   }
 
@@ -150,14 +148,14 @@ class VisiblePackBuilderTest {
       return builder.filter(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }
 
-    fun generateHashMap(num: Int, refs: Set<Ref>, root: VirtualFile): ConstantVcsLogStorage {
+    private fun generateHashMap(num: Int, refs: Set<Ref>, root: VirtualFile): ConstantVcsLogStorage {
       val hashes = HashMap<Int, Hash>()
       for (i in 1..num) {
-        hashes.put(i, HashImpl.build(i.toString()))
+        hashes[i] = HashImpl.build(i.toString())
       }
-      val vcsRefs = refs.mapTo(ArrayList<VcsRef>(), {
+      val vcsRefs = refs.mapTo(ArrayList<VcsRef>()) {
         VcsRefImpl(hashes[it.commit]!!, it.name, BRANCH_TYPE, root)
-      })
+      }
       return ConstantVcsLogStorage(hashes, vcsRefs.indices.map { Pair(it, vcsRefs[it]) }.toMap(), root)
     }
 
@@ -165,7 +163,7 @@ class VisiblePackBuilderTest {
 
   fun VcsLogStorage.getHashes(ids: List<Int>) = ids.map { getCommitId(it)!!.hash }
 
-  fun graph(f: GraphBuilder.() -> Unit): Graph {
+  private fun graph(f: GraphBuilder.() -> Unit): Graph {
     val builder = GraphBuilder()
     builder.f()
     return builder.done()
