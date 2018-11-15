@@ -1300,11 +1300,16 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         new UnsupportedExpressionException(DebuggerBundle.message("evaluation.error.method.reference.evaluation.not.supported")));
     }
 
-    private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) throws EvaluateException {
+    private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) {
       TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, code, imports, StdFileTypes.JAVA);
       JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(text, context, context.getProject());
-      ExpressionEvaluator evaluator = new Builder(myPosition).buildElement(codeFragment);
-      return evaluationContext -> evaluator.evaluate(evaluationContext);
+      try {
+        ExpressionEvaluator evaluator = new Builder(myPosition).buildElement(codeFragment);
+        return evaluationContext -> evaluator.evaluate(evaluationContext);
+      }
+      catch (EvaluateException e) {
+        throw new EvaluateRuntimeException(e);
+      }
     }
 
     @Override
@@ -1457,6 +1462,19 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
                                                  null,
                                                  myResult);
       }
+    }
+
+    @Override
+    public void visitAssertStatement(PsiAssertStatement statement) {
+      PsiExpression condition = statement.getAssertCondition();
+      if (condition == null) {
+        throwEvaluateException("Assert condition expected in: " + statement.getText());
+      }
+      PsiExpression description = statement.getAssertDescription();
+      String descriptionText = description != null ? description.getText() : "";
+      myResult = new AssertStatementEvaluator(buildFromJavaCode("if (!(" + condition.getText() + ")) { " +
+                                                                "throw new java.lang.AssertionError(" + descriptionText + ");}",
+                                                                "", statement));
     }
 
     @Nullable
