@@ -93,17 +93,17 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
   }
 
   @Override
-  void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    if (isBorderNeeded(c)) super.paintTrack(g, x, y, width, height, c);
+  void paintTrack(Graphics2D g, JComponent c) {
+    if (isBorderNeeded(c)) super.paintTrack(g, c);
   }
 
   @Override
-  void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
+  void paintThumb(Graphics2D g, JComponent c) {
     if (isOpaque(c)) {
-      paint(myThumb, g, x, y, width, height, c, myThumb.animator.myValue, true);
+      paint(myThumb, g, c, true);
     }
     else if (myThumb.animator.myValue > 0) {
-      paint(myThumb, g, x, y, width, height, c, myThumb.animator.myValue, false);
+      paint(myThumb, g, c, false);
     }
   }
 

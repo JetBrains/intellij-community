@@ -114,18 +114,23 @@ class DefaultScrollBarUI extends ScrollBarUI {
     myThumb.animator.start(hover);
   }
 
-  void paintTrack(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    paint(myTrack, g, x, y, width, height, c, myTrack.animator.myValue, false);
+  void paintTrack(Graphics2D g, JComponent c) {
+    paint(myTrack, g, c, false);
   }
 
-  void paintThumb(Graphics2D g, int x, int y, int width, int height, JComponent c) {
-    paint(myThumb, g, x, y, width, height, c, myThumb.animator.myValue, ScrollSettings.isThumbSmallIfOpaque() && isOpaque(c));
+  void paintThumb(Graphics2D g, JComponent c) {
+    paint(myThumb, g, c, ScrollSettings.isThumbSmallIfOpaque() && isOpaque(c));
   }
 
   void onThumbMove() {
   }
 
-  void paint(RegionPainter<Float> p, Graphics2D g, int x, int y, int width, int height, JComponent c, float value, boolean small) {
+  void paint(ScrollBarPainter p, Graphics2D g, JComponent c, boolean small) {
+    int x = p.bounds.x;
+    int y = p.bounds.y;
+    int width = p.bounds.width;
+    int height = p.bounds.height;
+
     Alignment alignment = Alignment.get(c);
     if (alignment == Alignment.LEFT || alignment == Alignment.RIGHT) {
       int offset = getTrackOffset(width - getMinimalThickness());
@@ -147,7 +152,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
       width -= 2;
       height -= 2;
     }
-    p.paint(g, x, y, width, height, value);
+    p.paint(g, x, y, width, height, p.animator.myValue);
   }
 
   private int getTrackOffset(int offset) {
@@ -314,7 +319,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
       }
       myTrack.bounds.setBounds(bounds);
       updateThumbBounds();
-      if (!isOpaque(c)) paintTrack((Graphics2D)g, myTrack.bounds.x, myTrack.bounds.y, myTrack.bounds.width, myTrack.bounds.height, c);
+      if (!isOpaque(c)) paintTrack((Graphics2D)g, c);
       // process additional drawing on the track
       RegionPainter<Object> track = UIUtil.getClientProperty(c, JBScrollBar.TRACK);
       if (track != null && myTrack.bounds.width > 0 && myTrack.bounds.height > 0) {
@@ -322,7 +327,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
       }
       // process drawing the thumb
       if (myThumb.bounds.width > 0 && myThumb.bounds.height > 0) {
-        paintThumb((Graphics2D)g, myThumb.bounds.x, myThumb.bounds.y, myThumb.bounds.width, myThumb.bounds.height, c);
+        paintThumb((Graphics2D)g, c);
       }
     }
   }
