@@ -33,7 +33,7 @@ from _pydevd_bundle.pydevd_comm import CMD_SET_BREAK, CMD_SET_NEXT_STATEMENT, CM
     PyDBDaemonThread, _queue, ReaderThread, GetGlobalDebugger, get_global_debugger, \
     set_global_debugger, WriterThread, pydevd_log, \
     start_client, start_server, InternalGetBreakpointException, InternalSendCurrExceptionTrace, \
-    InternalSendCurrExceptionTraceProceeded
+    InternalSendCurrExceptionTraceProceeded, CommunicationRole
 from _pydevd_bundle.pydevd_custom_frames import CustomFramesContainer, custom_frames_container_init
 from _pydevd_bundle.pydevd_frame_utils import add_exception_to_frame
 from _pydevd_bundle.pydevd_kill_all_pydevd_threads import kill_all_pydev_threads
@@ -180,13 +180,6 @@ class CheckOutputThread(PyDBDaemonThread):
 
     def do_kill_pydev_thread(self):
         self.killReceived = True
-
-
-class CommunicationRole(object):
-    """The class that contains the constants of roles that `PyDB` can play in
-    the communication with the IDE.
-    """
-    CLIENT, SERVER = range(2)
 
 
 #=======================================================================================================================
