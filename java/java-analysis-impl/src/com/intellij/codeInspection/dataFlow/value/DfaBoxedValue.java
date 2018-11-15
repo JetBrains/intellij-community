@@ -18,7 +18,6 @@ package com.intellij.codeInspection.dataFlow.value;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -92,19 +91,7 @@ public class DfaBoxedValue extends DfaValue {
       if (value instanceof DfaBoxedValue) {
         return ((DfaBoxedValue)value).getWrappedValue();
       }
-      if (value instanceof DfaFactMapValue) {
-        SpecialFieldValue sfValue = ((DfaFactMapValue)value).get(DfaFactType.SPECIAL_FIELD_VALUE);
-        if (sfValue != null && sfValue.getField() == SpecialField.UNBOX) {
-          return sfValue.toConstant(myFactory);
-        }
-      }
-      if (value instanceof DfaConstValue) {
-        return TypeConversionUtil.isPrimitiveAndNotNull(((DfaConstValue)value).getType()) ? value : DfaUnknownValue.getInstance();
-      }
-      if (value instanceof DfaVariableValue) {
-        return SpecialField.UNBOX.createValue(myFactory, value, targetType);
-      }
-      return DfaUnknownValue.getInstance();
+      return SpecialField.UNBOX.createValue(myFactory, value, targetType);
     }
 
   }

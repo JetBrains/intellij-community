@@ -32,7 +32,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
@@ -914,7 +913,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     } else if (type == RelationType.GT) {
       if (!applyLessThanRelation(dfaRight, dfaLeft)) return false;
     } else {
-      if (!isNegated && !applyDependentFieldsEquivalence(dfaLeft, dfaRight)) {
+      if (!isNegated && !applySpecialFieldEquivalence(dfaLeft, dfaRight)) {
         return false;
       }
       if (!applyRelation(dfaLeft, dfaRight, isNegated)) return false;
@@ -925,33 +924,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return applyUnboxedRelation(dfaLeft, dfaRight, isNegated);
   }
 
-  @Nullable
-  private Couple<DfaValue> getDependentPair(DfaValue left, DfaValue right) {
-    if (left instanceof DfaVariableValue) {
-      return getSpecialEquivalencePair((DfaVariableValue)left, right);
-    }
-    if (right instanceof DfaVariableValue) {
-      return getSpecialEquivalencePair((DfaVariableValue)right, left);
-    }
-    return null;
-  }
-
   private Couple<DfaValue> getSpecialEquivalencePair(DfaVariableValue left, DfaValue right) {
-    if (right instanceof DfaConstValue && TypeUtils.isJavaLangString(left.getType())) {
-      return Couple.of(SpecialField.STRING_LENGTH.createValue(myFactory, left),
-                       SpecialField.STRING_LENGTH.createValue(myFactory, right));
-    }
-    if (right instanceof DfaFactMapValue) {
-      SpecialFieldValue value = ((DfaFactMapValue)right).get(DfaFactType.SPECIAL_FIELD_VALUE);
-      if (value != null) {
-        return Couple.of(value.getField().createValue(myFactory, left), value.toConstant(myFactory));
-      }
-    }
-    return null;
+    if (right instanceof DfaVariableValue) return null;
+    SpecialField field = SpecialField.fromQualifierType(left.getType());
+    if (field == null) return null;
+    DfaValue leftValue = field.createValue(myFactory, left);
+    DfaValue rightValue = field.createValue(myFactory, right);
+    return rightValue.equals(field.getDefaultValue(myFactory)) ? null : Couple.of(leftValue, rightValue);
   }
 
-  private boolean applyDependentFieldsEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
-    Couple<DfaValue> pair = getDependentPair(left, right);
+  private boolean applySpecialFieldEquivalence(@NotNull DfaValue left, @NotNull DfaValue right) {
+    Couple<DfaValue> pair = left instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)left, right) : 
+                            right instanceof DfaVariableValue ? getSpecialEquivalencePair((DfaVariableValue)right, left) : null;
     return pair == null || applyCondition(myFactory.createCondition(pair.getFirst(), RelationType.EQ, pair.getSecond()));
   }
 
@@ -1267,6 +1251,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
       doFlush(value, shouldMarkFlushed(value));
     }
+    myStack.replaceAll(val -> {
+      if (val instanceof DfaFactMapValue) {
+        DfaFactMapValue factMapValue = (DfaFactMapValue)val;
+        SpecialFieldValue sfValue = factMapValue.get(DfaFactType.SPECIAL_FIELD_VALUE);
+        if (sfValue != null && !sfValue.getField().isStable() && factMapValue.get(DfaFactType.MUTABILITY) != Mutability.UNMODIFIABLE) {
+          return factMapValue.withFact(DfaFactType.SPECIAL_FIELD_VALUE, null);
+        }
+      }
+      return val;
+    });
   }
 
   private boolean shouldMarkFlushed(@NotNull DfaVariableValue value) {

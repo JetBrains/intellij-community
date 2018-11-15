@@ -1811,29 +1811,30 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
 
       addConditionalRuntimeThrow();
-      addInstruction(new MethodCallInstruction(expression, null, constructor == null ? Collections.emptyList() : JavaMethodContractUtil
-        .getMethodContracts(constructor)));
+      DfaValue precalculatedNewValue = getPrecalculatedNewValue(expression);
+      List<? extends MethodContract> contracts = constructor == null ? Collections.emptyList() : JavaMethodContractUtil.getMethodContracts(constructor);
+      addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
 
       if (shouldHandleException()) {
         addMethodThrows(constructor, expression);
       }
-      setEmptyCollectionSize(expression);
     }
 
     finishElement(expression);
   }
-
-  private void setEmptyCollectionSize(PsiNewExpression expression) {
-    DfaVariableValue var = getTargetVariable(expression);
-    if (var != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
-      DfaValue collectionValue =
-        myFactory.withFact(myFactory.createTypeValue(expression.getType(), Nullability.NOT_NULL), DfaFactType.LOCALITY, true);
-      SpecialField sizeField =
-        InheritanceUtil.isInheritor(expression.getType(), JAVA_UTIL_MAP) ? SpecialField.MAP_SIZE : SpecialField.COLLECTION_SIZE;
-      new CFGBuilder(this).pop()
-                          .assign(var, collectionValue)
-                          .assignAndPop(sizeField.createValue(myFactory, var), myFactory.getInt(0));
+  
+  private DfaValue getPrecalculatedNewValue(PsiNewExpression expression) {
+    PsiType type = expression.getType();
+    if (type != null && ConstructionUtils.isEmptyCollectionInitializer(expression)) {
+      SpecialField sizeField = InheritanceUtil.isInheritor(type, JAVA_UTIL_MAP) ? SpecialField.MAP_SIZE : SpecialField.COLLECTION_SIZE;
+      DfaFactMap facts = DfaFactMap.EMPTY
+        .with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.exact(myFactory.createDfaType(type)))
+        .with(DfaFactType.NULLABILITY, DfaNullability.NOT_NULL)
+        .with(DfaFactType.LOCALITY, true)
+        .with(DfaFactType.SPECIAL_FIELD_VALUE, sizeField.withValue(0, PsiType.INT));
+      return myFactory.getFactFactory().createValue(facts);
     }
+    return null;
   }
 
   private void initializeSmallArray(PsiArrayType type, DfaVariableValue var, PsiExpression[] dimensions) {
