@@ -35,7 +35,10 @@ abstract class PyCharmPropertiesBase extends ProductProperties {
     tasks.zipSourcesOfModules(["intellij.python.community", "intellij.python.psi"], "$targetDirectory/lib/src/pycharm-openapi-src.zip")
 
     context.ant.copy(todir: "$targetDirectory/helpers") {
-      fileset(dir: "$context.paths.communityHome/python/helpers")
+      fileset(dir: "$context.paths.communityHome/python/helpers") {
+        exclude(name: "**/setup.py")
+        exclude(name: "pydev/test**/**")
+      }
     }
     context.ant.copy(todir: "$targetDirectory/help", failonerror: false) {
       fileset(dir: "$context.paths.projectHome/python/help") {
