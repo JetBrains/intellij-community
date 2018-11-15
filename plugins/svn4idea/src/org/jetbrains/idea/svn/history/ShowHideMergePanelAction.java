@@ -18,7 +18,7 @@ public class ShowHideMergePanelAction extends DumbAwareToggleAction {
 
   public ShowHideMergePanelAction(final DecoratorManager manager, final ChangeListFilteringStrategy strategy) {
     super("Show Integrate Panel", message("committed.changes.action.enable.merge.highlighting.description.text"),
-          SvnIcons.ShowIntegratedFrom);
+          SvnIcons.PreviewDetailsLeft);
     myManager = manager;
     myStrategy = strategy;
   }

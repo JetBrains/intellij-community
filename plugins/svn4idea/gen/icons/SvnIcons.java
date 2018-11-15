@@ -14,19 +14,19 @@ public final class SvnIcons {
     return IconLoader.getIcon(path, SvnIcons.class);
   }
 
-  public static final Icon Common = load("/icons/Common.png"); // 16x16
-  public static final Icon Conflictc = load("/icons/conflictc.png"); // 16x16
-  public static final Icon Conflictcp = load("/icons/conflictcp.png"); // 16x16
-  public static final Icon Conflictct = load("/icons/conflictct.png"); // 16x16
-  public static final Icon Conflictctp = load("/icons/conflictctp.png"); // 16x16
-  public static final Icon Conflictp = load("/icons/conflictp.png"); // 16x16
-  public static final Icon Conflictt = load("/icons/conflictt.png"); // 16x16
-  public static final Icon Conflicttp = load("/icons/conflicttp.png"); // 16x16
-  public static final Icon Integrated = load("/icons/Integrated.png"); // 16x16
-  public static final Icon IntegrationStatusUnknown = load("/icons/IntegrationStatusUnknown.png"); // 16x16
-  public static final Icon MarkAsMerged = load("/icons/MarkAsMerged.png"); // 16x16
-  public static final Icon MarkAsNotMerged = load("/icons/MarkAsNotMerged.png"); // 16x16
-  public static final Icon Notintegrated = load("/icons/Notintegrated.png"); // 16x16
-  public static final Icon ShowIntegratedFrom = load("/icons/ShowIntegratedFrom.png"); // 16x16
-  public static final Icon UndoIntegrateToBranch = load("/icons/UndoIntegrateToBranch.png"); // 16x16
+  public static final Icon Common = load("/icons/Common.svg"); // 16x16
+  public static final Icon Conflictc = load("/icons/conflictc.svg"); // 16x16
+  public static final Icon Conflictcp = load("/icons/conflictcp.svg"); // 16x16
+  public static final Icon Conflictct = load("/icons/conflictct.svg"); // 16x16
+  public static final Icon Conflictctp = load("/icons/conflictctp.svg"); // 16x16
+  public static final Icon Conflictp = load("/icons/conflictp.svg"); // 16x16
+  public static final Icon Conflictt = load("/icons/conflictt.svg"); // 16x16
+  public static final Icon Conflicttp = load("/icons/conflicttp.svg"); // 16x16
+  public static final Icon Integrated = load("/icons/Integrated.svg"); // 16x16
+  public static final Icon IntegrationStatusUnknown = load("/icons/IntegrationStatusUnknown.svg"); // 16x16
+  public static final Icon MarkAsMerged = load("/icons/MarkAsMerged.svg"); // 16x16
+  public static final Icon MarkAsNotMerged = load("/icons/MarkAsNotMerged.svg"); // 16x16
+  public static final Icon Notintegrated = load("/icons/Notintegrated.svg"); // 16x16
+  public static final Icon PreviewDetailsLeft = load("/icons/previewDetailsLeft.svg"); // 16x16
+  public static final Icon UndoIntegrateToBranch = load("/icons/UndoIntegrateToBranch.svg"); // 16x16
 }
