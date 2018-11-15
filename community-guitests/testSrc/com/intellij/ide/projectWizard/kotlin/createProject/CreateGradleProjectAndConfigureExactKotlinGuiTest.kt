@@ -51,11 +51,6 @@ class CreateGradleProjectAndConfigureExactKotlinGuiTest(private val testParamete
     fun data(): Collection<TestParameters> {
       return listOf(
         TestParameters(
-          projectName = "gradle_cfg_jvm_1161",
-          expectedFacet = expectedFacet11,
-          kotlinVersion = "1.1.61"
-        ),
-        TestParameters(
           projectName = "gradle_cfg_jvm_1271",
           expectedFacet = expectedFacet12,
           kotlinVersion = "1.2.71"
