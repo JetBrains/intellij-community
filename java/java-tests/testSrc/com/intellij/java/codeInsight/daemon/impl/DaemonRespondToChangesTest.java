@@ -1222,7 +1222,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       backspace();
     }).usesAllCPUCores().assertTiming();
   }
-
+                                                                                 
   public void testExpressionListsWithManyStringLiteralsHighlightingPerformance() {
     String listBody = StringUtil.join(Collections.nCopies(2000, "\"foo\""), ",\n");
     String text = "class S { " +
@@ -1231,7 +1231,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
                   "}";
     configureByText(StdFileTypes.JAVA, text);
 
-    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 15_000, () -> {
+    PlatformTestUtil.startPerformanceTest("highlighting many string literals", 10_000, () -> {
       assertEmpty(highlightErrors());
 
       type("k");
