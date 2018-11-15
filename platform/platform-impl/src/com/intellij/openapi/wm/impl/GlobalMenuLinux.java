@@ -37,7 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 interface GlobalMenuLib extends Library {
   void startWatchDbus(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
-  void stopWatchDbus();
 
   void runMainLoop(JLogger jlogger, JRunnable onAppmenuServiceAppeared, JRunnable onAppmenuServiceVanished);
 
@@ -76,7 +75,6 @@ interface GlobalMenuLib extends Library {
     void run();
   }
 
-  int LOG_LEVEL_ERROR = 10;
   int LOG_LEVEL_INFO = 5;
 
   int EVENT_OPENED = 0;
@@ -96,14 +94,14 @@ interface GlobalMenuLib extends Library {
 
 public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static final SimpleDateFormat ourDtf = new SimpleDateFormat("hhmmss.SSS"); // for debug only
-  private static final boolean TRACE_SYSOUT               = Registry.is("linux.native.menu.debug.trace.sysout", false);
-  private static final boolean TRACE_DISABLED             = Registry.is("linux.native.menu.debug.trace.disabled", true);
-  private static final boolean TRACE_SYNC_STATS           = Registry.is("linux.native.menu.debug.trace.sync-stats", false);
-  private static final boolean TRACE_EVENTS               = Registry.is("linux.native.menu.debug.trace.events", false);
-  private static final boolean TRACE_EVENT_FILTER         = Registry.is("linux.native.menu.debug.trace.event-filter", false);
-  private static final boolean TRACE_CLEARING             = Registry.is("linux.native.menu.debug.trace.clearing", false);
-  private static final boolean TRACE_HIERARCHY_MISMATCHES = Registry.is("linux.native.menu.debug.trace.hierarchy.mismatches", false);
-  private static final boolean SHOW_SWING_MENU            = Registry.is("linux.native.menu.debug.show.frame.menu", false);
+  private static final boolean TRACE_SYSOUT               = System.getProperty("linux.native.menu.debug.trace.sysout",            "false").equals("true");
+  private static final boolean TRACE_DISABLED             = System.getProperty("linux.native.menu.debug.trace.disabled",          "true").equals("true");
+  private static final boolean TRACE_SYNC_STATS           = System.getProperty("linux.native.menu.debug.trace.sync-stats",        "false").equals("true");
+  private static final boolean TRACE_EVENTS               = System.getProperty("linux.native.menu.debug.trace.events",            "false").equals("true");
+  private static final boolean TRACE_EVENT_FILTER         = System.getProperty("linux.native.menu.debug.trace.event-filter",      "false").equals("true");
+  private static final boolean TRACE_CLEARING             = System.getProperty("linux.native.menu.debug.trace.clearing",          "false").equals("true");
+  private static final boolean TRACE_HIERARCHY_MISMATCHES = System.getProperty("linux.native.menu.debug.trace.hierarchy.mismatches","false").equals("true");
+  private static final boolean SHOW_SWING_MENU            = System.getProperty("linux.native.menu.debug.show.frame.menu",         "false").equals("true");
 
   private static final Logger LOG = Logger.getInstance(GlobalMenuLinux.class);
   private static final GlobalMenuLib ourLib;
@@ -169,9 +167,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
 
       // NOTE: linux implementation of javaFX starts native main loop with GtkApplication._runLoop()
       try {
-        PlatformImpl.startup(() -> {
-          ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished);
-        });
+        PlatformImpl.startup(()->ourLib.startWatchDbus(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
       } catch (Throwable e) {
         LOG.info("can't start main loop via javaFX (will run it manualy): " + e.getMessage());
         final Thread glibMain = new Thread(()->ourLib.runMainLoop(ourGLogger, ourOnAppmenuServiceAppeared, ourOnAppmenuServiceVanished));
@@ -469,7 +465,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       return;
 
     // sort
-    mi.children.sort((i0, i1) -> i0.position - i1.position);
+    mi.children.sort(Comparator.comparingInt(MenuItemInternal::getPosition));
 
     // remove marked items
     Iterator<MenuItemInternal> i = mi.children.iterator();
@@ -558,8 +554,9 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         if (TRACE_SYNC_STATS) _trace("opened %s '%s', spent (in EDT) %d ms, stats: %s", (mi.isRoot() ? "root menu" : "submenu"), String.valueOf(mi.txt), elapsedMs, _stats2str(stats));
 
         _processChildren(mi);
-      } else if (eventType == GlobalMenuLib.EVENT_CLOSED) {
+      } else {
         // glib main-loop thread
+        // process GlobalMenuLib.EVENT_CLOSED
         mi.scheduleClearSwing();
       }
 
@@ -650,6 +647,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       this.action = action;
     }
 
+    int getPosition() { return position; }
     boolean isRoot() { return rootPos >= 0; }
     boolean isToggleable() { return type == GlobalMenuLib.ITEM_CHECK || type == GlobalMenuLib.ITEM_RADIO; }
 
@@ -713,8 +711,6 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     }
 
     MenuItemInternal findCorrespondingChild(@NotNull Component target) {
-      if (target == null)
-        return null;
       if (children.isEmpty())
         return null;
 
@@ -757,21 +753,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       return null;
     }
 
-    String printKids() {
-      final StringBuilder res = new StringBuilder();
-      printKids(res, 0);
-      return res.toString();
-    }
-
-    void printKids(StringBuilder out, int indent) {
-      for (MenuItemInternal kid: children) {
-        if (out.length() > 0)
-          out.append('\n');
-        for (int c = 0; c < indent; ++c) out.append('\t');
-        out.append(kid.toString());
-      }
-    }
-
+    @SuppressWarnings("unused")
     String printHierarchy() {
       final StringBuilder res = new StringBuilder();
       printHierarchy(res, 0);
@@ -792,14 +774,14 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     public String toString() {
       String res = String.format("'%s' (uid=%d, act=%s)", txt, uid, String.valueOf(action));
       if (position == -1)
-        res = res + " [toDelele]";
+        res += " [toDelele]";
       return res;
     }
 
     String toStringShort() {
       String res = String.format("'%s'", txt);
       if (position == -1)
-        res = res + " [D]";
+        res += " [D]";
       if (isRoot())
         res = "Root " + res;
       else
@@ -807,22 +789,15 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
       return res;
     }
 
-    synchronized void scheduleClearSwing() {
+    void scheduleClearSwing() {
       // exec at glib main-loop thread
       if (timerClearSwing != null)
         timerClearSwing.stop();
 
-      timerClearSwing = new Timer(300, (e) -> {
-        _clearSwing();
-      });
+      timerClearSwing = new Timer(300, (e)->_clearSwing());
       timerClearSwing.setRepeats(false);
       timerClearSwing.start();
       if (TRACE_CLEARING) _trace("\t scheduled (300 ms later) to clear '%s'", toStringShort());
-    }
-
-    synchronized void cancelClearSwing() {
-      // exec at glib main-loop thread
-      timerClearSwing = null;
     }
 
     private void _clearSwing() {
@@ -849,7 +824,8 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private class EventFilter {
     private Timer myTimer;
     private long myLastFirstRootEventMs = 0;
-    private GlobalMenuLib.JRunnable myGlibLoopRunnable;
+    @SuppressWarnings("unused")
+    private GlobalMenuLib.JRunnable myGlibLoopRunnable; // holds runnable object
 
     boolean check(int uid, int eventType, @NotNull MenuItemInternal mi) {
       final long timeMs = System.currentTimeMillis();
@@ -918,9 +894,9 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     return res.toString();
   }
 
-  private static <T> Object _getField(@NotNull Class<T> aClass, @NotNull String name, @NotNull T object) {
+  private static Object _getPeerField(@NotNull Component object) {
     try {
-      Field field = aClass.getDeclaredField(name);
+      Field field = Component.class.getDeclaredField("peer");
       field.setAccessible(true);
       return field.get(object);
     } catch (IllegalAccessException | NoSuchFieldException e) {
@@ -932,7 +908,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
   private static long _getX11WindowXid(@NotNull Window frame) {
     try {
       // getPeer method was removed in jdk9, but 'peer' field still exists
-      final ComponentPeer wndPeer = (ComponentPeer)_getField(Component.class, "peer", frame);
+      final ComponentPeer wndPeer = (ComponentPeer)_getPeerField(frame);
       if (wndPeer == null) {
         // wait a little for X11-peer to be connected
         LOG.info("frame peer is null, wait for connection");
@@ -981,7 +957,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
         continue;
 
       for (int c = 0; c < indent; ++c) out.append('\t');
-      String txt = each instanceof JSeparator ? "--separ--" : ((JMenuItem)each).getText();
+      String txt = ((JMenuItem)each).getText();
       if (txt == null || txt.isEmpty())
         txt = "null";
       out.append(txt);
@@ -1004,6 +980,7 @@ public class GlobalMenuLinux implements GlobalMenuLib.EventHandler, Disposable {
     if (TRACE_DISABLED)
       return;
     if (TRACE_SYSOUT)
+      //noinspection UseOfSystemOutOrSystemErr
       System.out.println(ourDtf.format(new Date()) + ": " + msg);
     else
       LOG.info(msg);
