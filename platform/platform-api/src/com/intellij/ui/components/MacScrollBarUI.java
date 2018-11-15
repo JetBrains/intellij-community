@@ -21,11 +21,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.Alarm;
-import com.intellij.util.Producer;
+import com.intellij.util.NotNullProducer;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Pointer;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -217,7 +217,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     return invoke(name, "new");
   }
 
-  private static <T> T callMac(Producer<? extends T> producer) {
+  private static <T> T callMac(NotNullProducer<? extends T> producer) {
     if (SystemInfo.isMac) {
       NSAutoreleasePool pool = new NSAutoreleasePool();
       try {
@@ -237,7 +237,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     NextPage, JumpToSpot;
 
     private static final Native<Behavior> CURRENT = new Native<Behavior>() {
-      @Nullable
+      @NotNull
       @Override
       public Behavior produce() {
         ID defaults = invoke("NSUserDefaults", "standardUserDefaults");
@@ -285,7 +285,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
         }
       }
 
-      @Nullable
+      @NotNull
       @Override
       public Style produce() {
         ID style = invoke(getObjcClass("NSScroller"), "preferredScrollerStyle");
@@ -312,7 +312,7 @@ final class MacScrollBarUI extends DefaultScrollBarUI {
     };
   }
 
-  private static abstract class Native<T> implements Callback, Runnable, Producer<T> {
+  private static abstract class Native<T> implements Callback, Runnable, NotNullProducer<T> {
     private T myValue;
 
     Native() {
