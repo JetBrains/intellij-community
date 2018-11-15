@@ -290,7 +290,7 @@ public final class EditorUtil {
   }
 
   /**
-   * @deprecated use {@link EditorEx#setCustomCursor(Object, Cursor)} instead.
+   * @deprecated use {@link EditorEx#setCustomCursor(Object, Cursor)} instead. To be removed in 2020.1.
    */
   @Deprecated
   public static void setHandCursor(@NotNull Editor view) {
