@@ -2388,7 +2388,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
-    UIUtil.setCursor(myEditorComponent, ObjectUtils.notNull(customCursor, myDefaultCursor));
+    UIUtil.setCursor(myEditorComponent, customCursor == null ? myDefaultCursor : customCursor);
     myCursorSetExternally = false;
   }
 
