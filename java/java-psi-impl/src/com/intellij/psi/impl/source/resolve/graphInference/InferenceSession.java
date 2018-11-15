@@ -412,12 +412,8 @@ public class InferenceSession {
         final PsiSubstitutor nestedSubstitutor = myInferenceSessionContainer.findNestedSubstitutor(arg, myInferenceSubstitution);
         final PsiType parameterType = nestedSubstitutor.substitute(getParameterType(parameters, i, siteSubstitutor, varargs));
         if (!isPertinentToApplicability(arg, parentMethod)) {
-          if (arg instanceof PsiLambdaExpression && ignoreConstraintTree(ignoredConstraints, arg, parameterType)) {
-            continue;
-          }
-
           ExpressionCompatibilityConstraint compatibilityConstraint = new ExpressionCompatibilityConstraint(arg, parameterType);
-          if (dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
+          if (arg instanceof PsiLambdaExpression && ignoreConstraintTree(arg) || dependsOnIgnoredConstraint(ignoredConstraints, compatibilityConstraint)) {
             ignoredConstraints.add(compatibilityConstraint);
             continue;
           }
@@ -461,7 +457,7 @@ public class InferenceSession {
     return false;
   }
   
-  private static boolean ignoreConstraintTree(Set<? super ConstraintFormula> ignoredConstraints, PsiExpression arg, PsiType parameterType) {
+  private static boolean ignoreConstraintTree(PsiExpression arg) {
     for (Object expr : MethodCandidateInfo.ourOverloadGuard.currentStack()) {
       if (PsiTreeUtil.getParentOfType((PsiElement)expr, PsiLambdaExpression.class) == arg) {
         return true;
@@ -470,7 +466,6 @@ public class InferenceSession {
 
     for (Object expr : LambdaUtil.ourParameterGuard.currentStack()) {
       if (expr instanceof PsiParameter && ((PsiParameter)expr).getDeclarationScope() == arg) {
-        ignoredConstraints.add(new ExpressionCompatibilityConstraint(arg, parameterType));
         return true;
       }
     }

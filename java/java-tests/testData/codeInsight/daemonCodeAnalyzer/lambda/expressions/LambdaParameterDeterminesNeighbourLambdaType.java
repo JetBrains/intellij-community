@@ -10,9 +10,8 @@ class TestClass {
 }
 
 class A {
-    static B getB(A a) {
-        return null;
-    }
+    static B getB(A a) { return null; }
+    static B getB(String a) { return null; }
 }
 
 interface B {
