@@ -9,8 +9,14 @@ import com.siyeh.ig.style.ArrayCanBeReplacedWithEnumValuesInspection;
 public class ArrayCanBeReplacedWithEnumValuesFixTest extends IGQuickFixesTestCase {
 
   public void testClassWithEnum() { doTest("TestEnum"); }
+
+  public void testEnumWithField() {doTest("TestEnum");}
+
   public void testNotEnumInit() { assertQuickfixNotAvailable(); }
+
   public void testNotEnumMulti() { assertQuickfixNotAvailable(); }
+
+  public void testEnumRevOrder() { assertQuickfixNotAvailable();}
 
 
   @Override
