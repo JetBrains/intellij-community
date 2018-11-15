@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class RunContentManagerImpl implements RunContentManager, Disposable {
   public static final Key<Boolean> ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY");
@@ -49,7 +50,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
   private final Project myProject;
   private final Map<String, ContentManager> myToolwindowIdToContentManagerMap = new THashMap<>();
   private final Map<String, Icon> myToolwindowIdToBaseIconMap = new THashMap<>();
-  private final LinkedList<String> myToolwindowIdZBuffer = new LinkedList<>();
+  private final ConcurrentLinkedDeque<String> myToolwindowIdZBuffer = new ConcurrentLinkedDeque<>();
 
   public RunContentManagerImpl(@NotNull Project project, @NotNull DockManager dockManager) {
     myProject = project;
