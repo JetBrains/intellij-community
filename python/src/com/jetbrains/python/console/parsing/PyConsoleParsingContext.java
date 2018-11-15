@@ -6,7 +6,6 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
-import com.jetbrains.python.parsing.ParsingScope;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
@@ -21,7 +20,8 @@ public class PyConsoleParsingContext extends ParsingContext {
   public PyConsoleParsingContext(final PsiBuilder builder,
                                  LanguageLevel languageLevel,
                                  StatementParsing.FUTURE futureFlag,
-                                 PythonConsoleData pythonConsoleData, boolean startsWithIPythonSymbol) {
+                                 PythonConsoleData pythonConsoleData,
+                                 boolean startsWithIPythonSymbol) {
     super(builder, languageLevel, futureFlag);
     stmtParser = new ConsoleStatementParsing(this, futureFlag, startsWithIPythonSymbol, pythonConsoleData);
     if (pythonConsoleData.isIPythonEnabled()) {
@@ -144,40 +144,6 @@ public class PyConsoleParsingContext extends ParsingContext {
       ipythonCommand.done(PyElementTypes.EMPTY_EXPRESSION);
     }
 
-    @Override
-    protected void checkEndOfStatement() {
-      if (myPythonConsoleData.isIPythonEnabled()) {
-        PsiBuilder builder = myContext.getBuilder();
-        if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
-          builder.advanceLexer();
-        }
-        else if (builder.getTokenType() == PyTokenTypes.SEMICOLON) {
-          final ParsingScope scope = getParsingContext().getScope();
-          if (!scope.isSuite()) {
-            builder.advanceLexer();
-            if (builder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
-              builder.advanceLexer();
-            }
-          }
-        }
-        else if (builder.eof()) {
-          return;
-        }
-        else {
-          if (builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK && builder.rawLookup(-1) == PyTokenTypes.IDENTIFIER) {
-            builder.advanceLexer();
-            if (builder.getTokenType() == PyConsoleTokenTypes.QUESTION_MARK) {
-              builder.advanceLexer();
-            }
-            return;
-          }
-          builder.error("End of statement expected");
-        }
-      }
-      else {
-        super.checkEndOfStatement();
-      }
-    }
   }
 
   public static class ConsoleExpressionParsing extends ExpressionParsing {

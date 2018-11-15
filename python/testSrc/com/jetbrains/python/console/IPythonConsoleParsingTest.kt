@@ -4,20 +4,21 @@ package com.jetbrains.python.console
 import com.intellij.lang.ASTFactory
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.project.Project
 import com.intellij.testFramework.ParsingTestCase
 import com.jetbrains.python.*
-import com.jetbrains.python.console.parsing.PyConsoleParser
-import com.jetbrains.python.console.parsing.PythonConsoleData
-import com.jetbrains.python.console.parsing.PythonConsoleLexer
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PythonASTFactory
 
+/**
+ * Test parsing that is specific for IPython console.
+ *
+ * For the details see:
+ *  https://ipython.readthedocs.io/en/stable/interactive/python-ipython-diff.html
+ */
 class IPythonConsoleParsingTest : ParsingTestCase(
   "psi",
   "py",
   true,
-  PyConsoleParsingDefinition()
+  PyConsoleParsingDefinition(true)
 ) {
 
   override fun setUp() {
@@ -82,12 +83,4 @@ class IPythonConsoleParsingTest : ParsingTestCase(
 
   private fun doTestInternal(ensureNoErrorElements: Boolean = true) = doTest(true, ensureNoErrorElements)
 
-}
-
-private class PyConsoleParsingDefinition : PythonParserDefinition() {
-  override fun createLexer(project: Project) = PythonConsoleLexer()
-  override fun createParser(project: Project) = PyConsoleParser(
-    PythonConsoleData().apply { isIPythonEnabled = true },
-    LanguageLevel.getDefault()
-  )
 }
