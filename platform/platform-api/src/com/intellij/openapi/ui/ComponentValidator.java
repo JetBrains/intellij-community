@@ -245,7 +245,7 @@ public class ComponentValidator {
     }
   }
 
-  private static Border getBorder() {
+  public static Border getBorder() {
     Insets i = UIManager.getInsets("ValidationTooltip.borderInsets");
     return i != null ? new JBEmptyBorder(i) : JBUI.Borders.empty(4, 8);
   }
