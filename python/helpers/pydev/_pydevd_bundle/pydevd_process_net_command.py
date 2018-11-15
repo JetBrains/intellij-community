@@ -710,10 +710,11 @@ def process_net_command(py_db, cmd_id, seq, text):
                     pydevd_dont_trace.trace_filter(mode)
 
             elif cmd_id == CMD_PROCESS_CREATED_MSG_RECEIVED:
-                event = py_db.process_created_msg_received_event
+                original_seq = int(text)
+
+                event = py_db.process_created_msg_received_events.pop(original_seq, None)
 
                 if event:
-                    py_db.process_created_msg_received_event = None
                     event.set()
 
             else:

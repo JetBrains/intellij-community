@@ -281,7 +281,8 @@ class PyDB:
         # this flag disables frame evaluation even if it's available
         self.do_not_use_frame_eval = False
 
-        self.process_created_msg_received_event = None
+        # sequence id of `CMD_PROCESS_CREATED` command -> threading.Event
+        self.process_created_msg_received_events = dict()
 
         # the role PyDB plays in the communication with IDE
         self.communication_role = None
@@ -759,27 +760,24 @@ class PyDB:
         self.writer.add_command(cmd)
 
     def send_process_will_be_substituted(self):
-        """Sends a message that a new process is going to be created.
-        When `PyDB` works in server mode this method also waits for the
+        """When `PyDB` works in server mode this method sends a message that a
+        new process is going to be created. After that it waits for the
         response from the IDE to be sure that the IDE received this message.
+        Waiting for the response is required because the current process might
+        become substituted before it actually sends the message and the IDE
+        will not try to connect to `PyDB` in this case.
 
-        Waiting of the response in server mode is required because the current
-        process might become substituted before it actually sends the message
-        and the IDE will not try to connect to `PyDB` in this case.
-
-        Waiting of the response in client mode is not required because the
+        When `PyDB` works in client mode this method does nothing because the
         substituted process will try to connect to the IDE itself.
         """
-        event = None
-
         if self.communication_role == CommunicationRole.SERVER:
+            cmd = self.cmd_factory.make_process_created_message()
+            # register event before putting command to the message queue
             event = threading.Event()
-            self.process_created_msg_received_event = event
-
-        cmd = self.cmd_factory.make_process_created_message()
-        self.writer.add_command(cmd)
-
-        if self.communication_role == CommunicationRole.SERVER:
+            self.process_created_msg_received_events[cmd.seq] = event
+            # put command to the message queue
+            self.writer.add_command(cmd)
+            # wait for the reply
             event.wait()
 
     def set_next_statement(self, frame, event, func_name, next_line):
