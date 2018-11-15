@@ -47,7 +47,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
     if (isContextMenu && place!= null) {
       data.put("place", place);
     }
-    FeatureUsageLogger.INSTANCE.log("actions", key, data);
+    FeatureUsageLogger.INSTANCE.log("actions.v2", key, data);
 
     Integer count = state.myValues.get(key);
     int value = count == null ? 1 : count + 1;
