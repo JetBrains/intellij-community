@@ -546,7 +546,7 @@ public class RemoteDebugger implements ProcessDebugger {
         myDebugProcess.consoleInputRequested(ProtocolParser.parseInputCommand(frame.getPayload()));
       }
       else if (ProcessCreatedCommand.isProcessCreatedCommand(frame.getCommand())) {
-        onProcessCreatedEvent();
+        onProcessCreatedEvent(frame.getSequence());
       }
       else if (AbstractCommand.isShowWarningCommand(frame.getCommand())) {
         myDebugProcess.showCythonWarning();
@@ -736,7 +736,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
-  protected void onProcessCreatedEvent() {
+  protected void onProcessCreatedEvent(int commandSequence) {
   }
 
   protected void fireCloseEvent() {
