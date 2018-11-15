@@ -45,71 +45,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
       @Override
       @NotNull
       public Map<String, String> map(@NotNull FileContent inputData) {
-        final FileType fileType = inputData.getFileType();
-        if (fileType != JsonFileType.INSTANCE
-            && fileType != Json5FileType.INSTANCE) return ContainerUtil.newHashMap();
-        final HashMap<String, String> map = ContainerUtil.newHashMap();
-        final Lexer lexer = fileType == Json5FileType.INSTANCE ? new Json5Lexer() : new JsonLexer();
-        lexer.start(inputData.getContentAsText());
-
-        // We only care about properties at the root level having the form of "property" : "value".
-        int nesting = 0;
-        boolean idFound = false;
-        boolean schemaFound = false;
-        while (!(idFound && schemaFound) && lexer.getCurrentPosition().getOffset() < lexer.getBufferEnd()) {
-          IElementType token = lexer.getTokenType();
-          // Nesting level can only change at curly braces.
-          if (token == JsonElementTypes.L_CURLY) {
-            nesting++;
-          }
-          else if (token == JsonElementTypes.R_CURLY) {
-            nesting--;
-          }
-          else if (nesting == 1 &&
-                   (token == JsonElementTypes.DOUBLE_QUOTED_STRING
-                    || token == JsonElementTypes.SINGLE_QUOTED_STRING
-                    || token == JsonElementTypes.IDENTIFIER)) {
-            // We are looking for two special properties at the root level.
-            switch (lexer.getTokenText()) {
-              case "$id":
-              case "\"$id\"":
-              case "'$id'":
-                idFound |= captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
-                break;
-              case "$schema":
-              case "\"$schema\"":
-              case "'$schema'":
-                schemaFound |= captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
-                break;
-            }
-          }
-          lexer.advance();
-        }
-        return map;
-      }
-
-      private boolean captureValueIfString(Lexer lexer, HashMap<String, String> destMap, String key) {
-        IElementType token;
-        lexer.advance();
-        token = skipWhitespacesAndGetTokenType(lexer);
-        if (token == JsonElementTypes.COLON) {
-          lexer.advance();
-          token = skipWhitespacesAndGetTokenType(lexer);
-          if (token == JsonElementTypes.DOUBLE_QUOTED_STRING || token == JsonElementTypes.SINGLE_QUOTED_STRING) {
-            destMap.put(key, lexer.getTokenText().substring(1, lexer.getTokenText().length() - 1));
-            return true;
-          }
-        }
-        return false;
-      }
-
-      private IElementType skipWhitespacesAndGetTokenType(Lexer lexer) {
-        while (lexer.getTokenType() == TokenType.WHITE_SPACE ||
-               lexer.getTokenType() == JsonElementTypes.LINE_COMMENT ||
-               lexer.getTokenType() == JsonElementTypes.BLOCK_COMMENT) {
-          lexer.advance();
-        }
-        return lexer.getTokenType();
+        return readTopLevelProps(inputData.getFileType(), inputData.getContentAsText());
       }
     };
 
@@ -166,5 +102,80 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
     }
 
     return null;
+  }
+
+  @NotNull
+  static Map<String, String> readTopLevelProps(@NotNull FileType fileType, @NotNull CharSequence content) {
+    if (fileType != JsonFileType.INSTANCE && fileType != Json5FileType.INSTANCE) return ContainerUtil.newHashMap();
+
+    Lexer lexer = fileType == Json5FileType.INSTANCE ? new Json5Lexer() : new JsonLexer();
+    final HashMap<String, String> map = ContainerUtil.newHashMap();
+    lexer.start(content);
+
+    // We only care about properties at the root level having the form of "property" : "value".
+    int nesting = 0;
+    boolean idFound = false;
+    boolean obsoleteIdFound = false;
+    boolean schemaFound = false;
+    while (!(idFound && schemaFound && obsoleteIdFound) && lexer.getCurrentPosition().getOffset() < lexer.getBufferEnd()) {
+      IElementType token = lexer.getTokenType();
+      // Nesting level can only change at curly braces.
+      if (token == JsonElementTypes.L_CURLY) {
+        nesting++;
+      }
+      else if (token == JsonElementTypes.R_CURLY) {
+        nesting--;
+      }
+      else if (nesting == 1 &&
+               (token == JsonElementTypes.DOUBLE_QUOTED_STRING
+                || token == JsonElementTypes.SINGLE_QUOTED_STRING
+                || token == JsonElementTypes.IDENTIFIER)) {
+        // We are looking for two special properties at the root level.
+        switch (lexer.getTokenText()) {
+          case "$id":
+          case "\"$id\"":
+          case "'$id'":
+            idFound |= captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
+            break;
+          case "id":
+          case "\"id\"":
+          case "'id'":
+            obsoleteIdFound |= captureValueIfString(lexer, map, JsonCachedValues.OBSOLETE_ID_CACHE_KEY);
+            break;
+          case "$schema":
+          case "\"$schema\"":
+          case "'$schema'":
+            schemaFound |= captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
+            break;
+        }
+      }
+      lexer.advance();
+    }
+    return map;
+  }
+
+  private static boolean captureValueIfString(@NotNull Lexer lexer, @NotNull HashMap<String, String> destMap, @NotNull String key) {
+    IElementType token;
+    lexer.advance();
+    token = skipWhitespacesAndGetTokenType(lexer);
+    if (token == JsonElementTypes.COLON) {
+      lexer.advance();
+      token = skipWhitespacesAndGetTokenType(lexer);
+      if (token == JsonElementTypes.DOUBLE_QUOTED_STRING || token == JsonElementTypes.SINGLE_QUOTED_STRING) {
+        destMap.put(key, lexer.getTokenText().substring(1, lexer.getTokenText().length() - 1));
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static IElementType skipWhitespacesAndGetTokenType(@NotNull Lexer lexer) {
+    while (lexer.getTokenType() == TokenType.WHITE_SPACE ||
+           lexer.getTokenType() == JsonElementTypes.LINE_COMMENT ||
+           lexer.getTokenType() == JsonElementTypes.BLOCK_COMMENT) {
+      lexer.advance();
+    }
+    return lexer.getTokenType();
   }
 }
