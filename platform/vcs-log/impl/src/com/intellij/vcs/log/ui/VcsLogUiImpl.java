@@ -31,8 +31,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 public class VcsLogUiImpl extends AbstractVcsLogUi {
   private static final String HELP_ID = "reference.changesToolWindow.log";
 
@@ -122,12 +120,13 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
                        pack -> pack.getFilters().isEmpty());
       }
     });
-    if (VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(getId())) {
+    VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
+    VcsLogManager logManager = projectLog.getLogManager();
+    if (logManager != null && logManager.getDataManager() == myLogData) {
       runnables.add(new NamedRunnable("View in New Tab") {
         @Override
         public void run() {
-          VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
-          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(notNull(projectLog.getLogManager()), true);
+          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(logManager, true);
           ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create()),
                             pack -> pack.getFilters().isEmpty());
         }
