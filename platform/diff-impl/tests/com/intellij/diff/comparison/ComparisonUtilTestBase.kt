@@ -247,7 +247,6 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     }
 
     fun testTrim() {
-      if (type == TestType.CHAR) return // not supported
       run(ComparisonPolicy.TRIM_WHITESPACES)
     }
 

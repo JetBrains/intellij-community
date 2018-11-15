@@ -82,14 +82,14 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("x_" - "")
       ("--" - "").default()
-      ("- " - "").ignore()
+      ("- " - "").trim()
       testAll()
     }
 
     chars {
       ("" - "x_")
       ("" - "--").default()
-      ("" - "- ").ignore()
+      ("" - "- ").trim()
       testAll()
     }
 
@@ -154,6 +154,7 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       (" x y z " - "xyz")
       ("- - - -" - "   ").default()
+      ("  - -  " - "   ").trim()
       ("       " - "   ").ignore()
       testAll()
     }
@@ -161,6 +162,7 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("xyz" - " x y z ")
       ("   " - "- - - -").default()
+      ("   " - "  - -  ").trim()
       ("   " - "       ").ignore()
       testAll()
     }
@@ -168,28 +170,28 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("x " - "x")
       (" -" - " ").default()
-      ("  " - " ").ignore()
+      ("  " - " ").trim()
       testAll()
     }
 
     chars {
       ("x" - " x")
       (" " - "- ").default()
-      (" " - "  ").ignore()
+      (" " - "  ").trim()
       testAll()
     }
 
     chars {
       (" x " - "x")
       ("- -" - " ").default()
-      ("   " - " ").ignore()
+      ("   " - " ").trim()
       testAll()
     }
 
     chars {
       ("x" - " x ")
       (" " - "- -").default()
-      (" " - "   ").ignore()
+      (" " - "   ").trim()
       testAll()
     }
   }
@@ -198,28 +200,28 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       (" x " - "z")
       ("---" - "-").default()
-      (" - " - "-").ignore()
+      (" - " - "-").trim()
       testAll()
     }
 
     chars {
       ("x" - " z ")
       ("-" - "---").default()
-      ("-" - " - ").ignore()
+      ("-" - " - ").trim()
       testAll()
     }
 
     chars {
       (" x" - "z\t")
       ("--" - "--").default()
-      (" -" - "- ").ignore()
+      (" -" - "- ").trim()
       testAll()
     }
 
     chars {
       ("x " - "\tz")
       ("--" - "--").default()
-      ("- " - " -").ignore()
+      ("- " - " -").trim()
       testAll()
     }
   }
@@ -241,7 +243,7 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("x y z" - "x y m ")
       ("    -" - "    --").default()
-      ("    -" - "    - ").ignore()
+      ("    -" - "    - ").trim()
       testAll()
     }
 
@@ -254,7 +256,7 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("x y z" - " m y z")
       ("-    " - "--    ").default()
-      ("-    " - " -    ").ignore()
+      ("-    " - " -    ").trim()
       testAll()
     }
 
@@ -370,8 +372,10 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       (" x _ y _ z " - "x z")
       ("-  ------ -" - "   ").default()
+      ("   ------  " - "   ").trim() // TODO: handle inner newlines
       ("     -     " - "   ").ignore()
       default(del(0, 0, 1), del(3, 2, 6), del(10, 3, 1))
+      trim(del(3, 2, 6))
       ignore(del(5, 2, 1))
       testAll()
     }
@@ -379,8 +383,10 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       ("x z" - " x _ y _ z ")
       ("   " - "-  ------ -").default()
+      ("   " - "   ------  ").trim()
       ("   " - "     -     ").ignore()
       default(ins(0, 0, 1), ins(2, 3, 6), ins(3, 10, 1))
+      trim(ins(2, 3, 6))
       ignore(ins(2, 5, 1))
       testAll()
     }
