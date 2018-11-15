@@ -4,6 +4,8 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -67,18 +69,21 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
       }
 
       final PsiExpression[] initializers = expression.getInitializers();
-      if (initializers.length < 2) {return;}
+      if (initializers.length < 2) {
+        return;
+      }
 
       for (PsiExpression initV : initializers) {
-        if (initV instanceof PsiArrayInitializerExpression) {
+        PsiType initVType = initV.getType();
+        if (initV instanceof PsiArrayInitializerExpression || initVType == null) {
           return;
         }
-        if (!(Objects.requireNonNull(initV.getType()).equals(initType))) {
+        if (!(Objects.requireNonNull(initVType).equals(initType))) {
           return;
         }
       }
 
-      List<String> enumValues = StreamEx.of(initClass.getAllFields())
+      List<String> enumValues = StreamEx.of(initClass.getFields())
         .select(PsiEnumConstant.class)
         .map(PsiEnumConstant::getName)
         .toCollection(LinkedList::new);
@@ -95,7 +100,7 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
       int i = 0;
       for (String value : enumValues) {
         String referenceName = ((PsiReferenceExpressionImpl)initializers[i]).getReferenceName();
-        if (referenceName != null && referenceName.equals(value)) {
+        if (referenceName != null && (referenceName).equals(value)) {
           i++;
         }
         else {
@@ -105,23 +110,23 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
 
       final PsiElement parent = expression.getParent();
       if (i == nValues) {
-        final String typeText = ((PsiArrayType)type).getComponentType().getPresentableText();
-        registerError(parent, typeText);
+        final String enumName = ((PsiClassReferenceType)initType).getReference().getText();
+        registerError(parent, enumName);
       }
     }
 
     private static class ArrayToEnumValueFix extends InspectionGadgetsFix {
-      private final String myType;
+      private final String enumName;
 
       private ArrayToEnumValueFix(String enumType) {
-        this.myType = enumType;
+        this.enumName = enumType;
       }
 
       @Nls
       @NotNull
       @Override
       public String getName() {
-        return InspectionGadgetsBundle.message("array.can.be.replaced.with.enum.values.quickfix", myType);
+        return InspectionGadgetsBundle.message("array.can.be.replaced.with.enum.values.quickfix", enumName);
       }
 
       @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -135,12 +140,10 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
       @Override
       protected void doFix(Project project, ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement();
-        if (element instanceof PsiNewExpression) {
+        if (element instanceof PsiNewExpressionImpl) {
           final PsiNewExpression newExpression = (PsiNewExpression)element;
-          final PsiType type = newExpression.getType();
-          if (type != null) {
-            final String enumType = ((PsiArrayType)type).getComponentType().getPresentableText();
-            PsiReplacementUtil.replaceExpression(newExpression, enumType + ".values()");
+          if (enumName != null) {
+            PsiReplacementUtil.replaceExpression(newExpression, enumName + ".values()");
           }
         }
       }

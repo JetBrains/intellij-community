@@ -22,6 +22,8 @@ public class ArrayCanBeReplacedWithEnumValuesFixTest extends IGQuickFixesTestCas
 
   public void testMultiDArrayNoError() {assertQuickfixNotAvailable();}
 
+  public void testInnerEnum() {doTest("TestEnum.Inner");}
+
 
 
   @Override
