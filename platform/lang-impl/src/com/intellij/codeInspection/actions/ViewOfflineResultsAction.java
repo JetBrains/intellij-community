@@ -37,10 +37,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -106,23 +108,29 @@ public class ViewOfflineResultsAction extends AnAction {
         //for non project directories ensure refreshed directory 
         VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile);
         final VirtualFile[] files = virtualFile.getChildren();
-        for (final VirtualFile inspectionFile : files) {
-          if (inspectionFile.isDirectory()) continue;
-          final String shortName = inspectionFile.getNameWithoutExtension();
-          final String extension = inspectionFile.getExtension();
-          File inspectionIoFile = VfsUtilCore.virtualToIoFile(inspectionFile);
-          try {
-            if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
-              profileName[0] = ReadAction.compute(() -> OfflineViewParseUtil.parseProfileName(inspectionIoFile));
+        try {
+          for (final VirtualFile inspectionFile : files) {
+            if (inspectionFile.isDirectory()) continue;
+            final String shortName = inspectionFile.getNameWithoutExtension();
+            final String extension = inspectionFile.getExtension();
+            File inspectionIoFile = VfsUtilCore.virtualToIoFile(inspectionFile);
+            try {
+              if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
+                profileName[0] = ReadAction.compute(() -> OfflineViewParseUtil.parseProfileName(inspectionIoFile));
+              }
+              else if (XML_EXTENSION.equals(extension)) {
+                resMap.put(shortName, ReadAction.compute(() -> OfflineViewParseUtil.parse(inspectionIoFile)));
+              }
             }
-            else if (XML_EXTENSION.equals(extension)) {
-              resMap.put(shortName, ReadAction.compute(() -> OfflineViewParseUtil.parse(inspectionIoFile)));
+            catch (Exception e) {
+              throw new RuntimeException("Can't read file: " + inspectionFile.getName(), e);
             }
           }
-          catch (Exception e) {
-            LOG.error("Can't read file: " + inspectionFile.getName(), e);
-            ExceptionUtil.rethrow(e);
-          }
+        }
+        catch (final Exception e) {  //all parse exceptions
+          ApplicationManager.getApplication()
+            .invokeLater(() -> Messages.showInfoMessage(ExceptionUtil.getThrowableText(e), InspectionsBundle.message("offline.view.parse.exception.title")));
+          throw new ProcessCanceledException(e); //cancel process
         }
       }
 
