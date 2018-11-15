@@ -19,7 +19,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import org.junit.Test
 import java.util.*
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
+import kotlin.test.assertNull
 
 class VisiblePackBuilderTest {
 
@@ -106,7 +106,7 @@ class VisiblePackBuilderTest {
   private fun GraphCommit<Int>.toVcsCommit(storage: VcsLogStorage) = TimedVcsCommitImpl(storage.getCommitId(this.id)!!.hash, storage.getHashes(this.parents), 1)
 
   fun assertDoesNotContain(graph: VisibleGraph<Int>, id: Int) {
-    assertTrue(null == (1..graph.visibleCommitCount).firstOrNull { graph.getRowInfo(it - 1).commit == id })
+    assertNull((1..graph.visibleCommitCount).firstOrNull { graph.getRowInfo(it - 1).commit == id })
   }
 
   data class Ref(val name: String, val commit: Int)
