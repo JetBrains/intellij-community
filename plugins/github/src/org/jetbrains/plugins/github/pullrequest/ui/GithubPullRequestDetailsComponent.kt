@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.UIUtil
+import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import java.awt.BorderLayout
@@ -17,13 +18,14 @@ internal class GithubPullRequestDetailsComponent(iconProviderFactory: CachingGit
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
     isOpaque = false
   }
+  private val backgroundLoadingPanel = ProgressStripe(loadingPanel, this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS)
 
   init {
     isOpaque = true
 
     detailsPanel.emptyText.text = DEFAULT_EMPTY_TEXT
     loadingPanel.add(detailsPanel)
-    setContent(loadingPanel)
+    setContent(backgroundLoadingPanel)
     Disposer.register(this, detailsPanel)
   }
 
@@ -45,11 +47,16 @@ internal class GithubPullRequestDetailsComponent(iconProviderFactory: CachingGit
 
   override fun setBusy(busy: Boolean) {
     if (busy) {
-      detailsPanel.emptyText.clear()
-      loadingPanel.startLoading()
+      if(detailsPanel.details == null) {
+        detailsPanel.emptyText.clear()
+        loadingPanel.startLoading()
+      } else {
+        backgroundLoadingPanel.startLoading()
+      }
     }
     else {
       loadingPanel.stopLoading()
+      backgroundLoadingPanel.stopLoading()
     }
   }
 

@@ -82,7 +82,7 @@
               class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshListAction"/>
     </group>
     <action id="Github.PullRequest.Preview.Refresh"
-            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshPreviewAction"
+            class="org.jetbrains.plugins.github.pullrequest.action.GithubPullRequestRefreshDetailsAction"
             internal="true"/>
   </actions>
 </idea-plugin>

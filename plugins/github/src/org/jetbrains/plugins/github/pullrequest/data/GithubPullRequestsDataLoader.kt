@@ -5,6 +5,7 @@ import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.EventDispatcher
 import git4idea.commands.Git
@@ -28,7 +29,7 @@ internal class GithubPullRequestsDataLoader(private val project: Project,
   private var isDisposed = false
   private val cache = CacheBuilder.newBuilder()
     .removalListener<Long, GithubPullRequestDataProviderImpl> {
-      it.value.cancel()
+      Disposer.dispose(it.value)
       invalidationEventDispatcher.multicaster.providerChanged(it.key)
     }
     .maximumSize(5)
