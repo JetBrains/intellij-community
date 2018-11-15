@@ -41,20 +41,10 @@ class ActionUpdater {
    * @return actions from the given and nested non-popup groups that are visible after updating
    */
   List<AnAction> expandActionGroup(ActionGroup group, boolean hideDisabled, boolean transparentOnly) {
-    Presentation presentation = myFactory.getPresentation(group);
-    AnActionEvent e = new AnActionEvent(
-      null,
-      myDataContext,
-      myPlace,
-      presentation,
-      ActionManager.getInstance(),
-      0,
-      myContextMenuAction,
-      myToolbarAction
-    );
-    if (!doUpdate(myModalContext, group, e, presentation)) return Collections.emptyList();
+    AnActionEvent e = createActionEvent(group);
+    if (!doUpdate(myModalContext, group, e)) return Collections.emptyList();
 
-    if (!presentation.isVisible()) { // don't process invisible groups
+    if (!e.getPresentation().isVisible()) { // don't process invisible groups
       return Collections.emptyList();
     }
 
@@ -69,15 +59,14 @@ class ActionUpdater {
         continue;
       }
 
-      presentation = myFactory.getPresentation(child);
-      AnActionEvent e1 = new AnActionEvent(null, myDataContext, myPlace, presentation, ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction);
-      e1.setInjectedContext(child.isInInjectedContext());
+      AnActionEvent e1 = createActionEvent(child);
 
       if (!transparentOnly || child.isTransparentUpdate()) {
-        if (!doUpdate(myModalContext, child, e1, presentation)) continue;
+        if (!doUpdate(myModalContext, child, e1)) continue;
       }
 
-      if (!presentation.isVisible() || (!presentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
+      Presentation childPresentation = e1.getPresentation();
+      if (!childPresentation.isVisible() || (!childPresentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
         continue;
       }
       if (child instanceof ActionGroup) {
@@ -92,7 +81,7 @@ class ActionUpdater {
             if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
               continue;
             }
-            presentation.setEnabled(actionGroup.canBePerformed(myDataContext) || visibleChildren);
+            childPresentation.setEnabled(actionGroup.canBePerformed(myDataContext) || visibleChildren);
           }
 
 
@@ -117,6 +106,13 @@ class ActionUpdater {
     return result;
   }
 
+  private AnActionEvent createActionEvent(AnAction action) {
+    AnActionEvent event = new AnActionEvent(null, myDataContext, myPlace, myFactory.getPresentation(action),
+                                            ActionManager.getInstance(), 0, myContextMenuAction, myToolbarAction);
+    event.setInjectedContext(action.isInInjectedContext());
+    return event;
+  }
+
   private boolean hasEnabledChildren(ActionGroup group) {
     return hasChildrenWithState(group, false, true);
   }
@@ -130,8 +126,7 @@ class ActionUpdater {
       return true;
     }
 
-    AnActionEvent event = new AnActionEvent(null, myDataContext, myPlace, myFactory.getPresentation(group), ActionManager.getInstance(), 0);
-    event.setInjectedContext(group.isInInjectedContext());
+    AnActionEvent event = createActionEvent(group);
     for (AnAction anAction : group.getChildren(event)) {
       if (anAction == null) {
         LOG.error("Null action found in group " + group + ", " + myFactory.getPresentation(group));
@@ -180,7 +175,7 @@ class ActionUpdater {
   }
 
   // returns false if exception was thrown and handled
-  static boolean doUpdate(boolean isInModalContext, AnAction action, AnActionEvent e, Presentation presentation) {
+  static boolean doUpdate(boolean isInModalContext, AnAction action, AnActionEvent e) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
 
     long startTime = System.currentTimeMillis();
@@ -192,7 +187,7 @@ class ActionUpdater {
       throw ex;
     }
     catch (Throwable exc) {
-      handleUpdateException(action, presentation, exc);
+      handleUpdateException(action, e.getPresentation(), exc);
       return false;
     }
     long endTime = System.currentTimeMillis();

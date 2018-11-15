@@ -106,7 +106,7 @@ public class Utils{
   public static void updateGroupChild(DataContext context, String place, AnAction anAction, final Presentation presentation) {
     AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
     event1.setInjectedContext(anAction.isInInjectedContext());
-    ActionUpdater.doUpdate(false, anAction, event1, presentation);
+    ActionUpdater.doUpdate(false, anAction, event1);
   }
 
   public static void fillMenu(@NotNull final ActionGroup group,
