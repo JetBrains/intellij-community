@@ -240,9 +240,10 @@ public class HintManagerImpl extends HintManager {
     int yOffset = location.y - oldRectangle.y;
     location = new Point(newRectangle.x + xOffset, newRectangle.y + yOffset);
 
-    Rectangle newBounds = new Rectangle(location.x - 5, location.y - 5, size.width + 10, size.height + 10);
+    Rectangle newBounds = new Rectangle(location.x, location.y, size.width, size.height);
+    Rectangle newBoundsForIntersectionCheck = new Rectangle(location.x - 5, location.y - 5, size.width + 10, size.height + 10);
 
-    final boolean okToUpdateBounds = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBounds);
+    final boolean okToUpdateBounds = hideIfOutOfEditor ? oldRectangle.contains(newBounds) : oldRectangle.intersects(newBoundsForIntersectionCheck);
     if (okToUpdateBounds || hint.vetoesHiding()) {
       hint.setLocation(new RelativePoint(editor.getContentComponent(), location));
     }
