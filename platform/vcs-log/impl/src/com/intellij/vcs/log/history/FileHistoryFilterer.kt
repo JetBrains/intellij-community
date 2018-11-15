@@ -34,7 +34,6 @@ import com.intellij.vcs.log.visible.VcsLogFiltererImpl
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl.matchesNothing
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
-import com.intellij.vcs.log.visible.filters.createFilterCollection
 
 internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
   private val project = logData.project
@@ -235,7 +234,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         revision != null -> VcsLogFilterObject.fromCommit(CommitId(revision, root))
         else -> VcsLogFilterObject.fromBranch("HEAD")
       }
-      return createFilterCollection(fileFilter, revisionFilter)
+      return VcsLogFilterObject.collection(fileFilter, revisionFilter)
     }
   }
 }

@@ -38,8 +38,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import java.util.*;
 
-import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
-
 /**
  *
  */
@@ -122,14 +120,14 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       getFiltersFromTextArea(myTextFilterModel.getFilter(),
                              myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_REGEX),
                              myUiProperties.get(MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE));
-    return createFilterCollection(myBranchFilterModel.getFilter(), myUserFilterModel.getFilter(), filtersFromText.second,
-                                  myDateFilterModel.getFilter(), filtersFromText.first,
-                                  myStructureFilterModel.getFilter() == null
-                                  ? null
-                                  : myStructureFilterModel.getFilter().getStructureFilter(),
-                                  myStructureFilterModel.getFilter() == null
-                                  ? null
-                                  : myStructureFilterModel.getFilter().getRootFilter());
+    return VcsLogFilterObject.collection(myBranchFilterModel.getFilter(), myUserFilterModel.getFilter(), filtersFromText.second,
+                                         myDateFilterModel.getFilter(), filtersFromText.first,
+                                         myStructureFilterModel.getFilter() == null
+                                         ? null
+                                         : myStructureFilterModel.getFilter().getStructureFilter(),
+                                         myStructureFilterModel.getFilter() == null
+                                         ? null
+                                         : myStructureFilterModel.getFilter().getRootFilter());
   }
 
   @NotNull

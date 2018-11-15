@@ -165,16 +165,17 @@ object VcsLogFilterObject {
   fun fromRoots(roots: Collection<VirtualFile>): VcsLogRootFilter {
     return VcsLogRootFilterImpl(roots)
   }
-}
 
-fun createFilterCollection(vararg filters: VcsLogFilter?): VcsLogFilterCollection {
-  val filterSet = createFilterSet()
-  for (f in filters) {
-    if (f != null) {
-      if (filterSet.replace(f)) LOG.warn("Two filters with the same key ${f.key} in filter collection. Keeping only ${f}.")
+  @JvmStatic
+  fun collection(vararg filters: VcsLogFilter?): VcsLogFilterCollection {
+    val filterSet = createFilterSet()
+    for (f in filters) {
+      if (f != null) {
+        if (filterSet.replace(f)) LOG.warn("Two filters with the same key ${f.key} in filter collection. Keeping only ${f}.")
+      }
     }
+    return MyVcsLogFilterCollectionImpl(filterSet)
   }
-  return MyVcsLogFilterCollectionImpl(filterSet)
 }
 
 fun VcsLogFilterCollection.with(filter: VcsLogFilter?): VcsLogFilterCollection {

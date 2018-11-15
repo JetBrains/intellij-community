@@ -3,19 +3,18 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
-
 public class VcsLogFilterCollectionImpl implements VcsLogFilterCollection {
-  @NotNull public static final VcsLogFilterCollection EMPTY = createFilterCollection();
+  @NotNull public static final VcsLogFilterCollection EMPTY = VcsLogFilterObject.collection();
   @NotNull private final Map<FilterKey, VcsLogFilter> myFilters = new TreeMap<>(Comparator.comparing(key -> key.getName()));
 
   /**
-   * @deprecated use {@link com.intellij.vcs.log.visible.filters.VcsLogFiltersKt#createFilterCollection}
+   * @deprecated use {@link VcsLogFilterObject#collection}
    */
   @SuppressWarnings("unused")
   @Deprecated

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromHashes;
-import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
 
 public class VcsLogFiltererImpl implements VcsLogFilterer {
   private static final Logger LOG = Logger.getInstance(VcsLogFiltererImpl.class);
@@ -190,7 +189,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       }
     }
     VcsLogTextFilter textFilter = VcsLogFilterObject.fromPatternsList(ContainerUtil.newArrayList(hashes), false);
-    FilterByDetailsResult textFilterResult = filterByDetails(dataPack, createFilterCollection(textFilter),
+    FilterByDetailsResult textFilterResult = filterByDetails(dataPack, VcsLogFilterObject.collection(textFilter),
                                                              commitCount, dataPack.getLogProviders().keySet(), null);
     if (hashFilterResult.isEmpty() && matchesNothing(textFilterResult.matchingCommits)) return null;
     Set<Integer> filterResult = textFilterResult.matchingCommits == null ? hashFilterResult :
@@ -198,7 +197,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
 
     VisibleGraph<Integer> visibleGraph = dataPack.getPermanentGraph().createVisibleGraph(sortType, null, filterResult);
     VisiblePack visiblePack = new VisiblePack(dataPack, visibleGraph, textFilterResult.canRequestMore,
-                                              createFilterCollection(fromHashes(hashes), textFilter));
+                                              VcsLogFilterObject.collection(fromHashes(hashes), textFilter));
     return Pair.create(visiblePack, textFilterResult.commitCount);
   }
 

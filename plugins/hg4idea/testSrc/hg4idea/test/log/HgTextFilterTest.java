@@ -19,7 +19,6 @@ import java.util.List;
 
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.overwrite;
-import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
 import static hg4idea.test.HgExecutor.hg;
 import static hg4idea.test.log.HgUserFilterTest.findLogProvider;
 
@@ -79,7 +78,7 @@ public class HgTextFilterTest extends HgPlatformTest {
 
   @NotNull
   private List<String> getFilteredCommits(@NotNull HgLogProvider provider, @NotNull VcsLogTextFilter filter) throws VcsException {
-    VcsLogFilterCollection filterCollection = createFilterCollection(filter);
+    VcsLogFilterCollection filterCollection = VcsLogFilterObject.collection(filter);
     List<TimedVcsCommit> commits = provider.getCommitsMatchingFilter(myProject.getBaseDir(), filterCollection, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }

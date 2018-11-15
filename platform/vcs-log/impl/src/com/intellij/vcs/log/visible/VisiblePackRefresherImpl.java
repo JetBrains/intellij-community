@@ -21,6 +21,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +31,6 @@ import java.util.Objects;
 import java.util.concurrent.Future;
 
 import static com.intellij.vcs.log.visible.VcsLogFiltererImpl.areFiltersAffectedByIndexing;
-import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
 
 public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposable {
   private static final Logger LOG = Logger.getInstance(VisiblePackRefresherImpl.class);
@@ -49,7 +49,7 @@ public class VisiblePackRefresherImpl implements VisiblePackRefresher, Disposabl
                                   @NotNull PermanentGraph.SortType initialSortType,
                                   @NotNull VcsLogFilterer builder,
                                   @NotNull String logId) {
-    this(project, logData, createFilterCollection(), initialSortType, builder, logId);
+    this(project, logData, VcsLogFilterObject.collection(), initialSortType, builder, logId);
   }
 
   public VisiblePackRefresherImpl(@NotNull Project project,

@@ -9,16 +9,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcs.log.util.UserNameRegex;
-import com.intellij.vcs.log.visible.filters.VcsLogUserFilterImpl;
+import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
 
-import static com.intellij.vcs.log.visible.filters.VcsLogFiltersKt.createFilterCollection;
 import static java.util.Collections.*;
 
 public abstract class VcsLogUserFilterTest {
@@ -218,7 +216,7 @@ public abstract class VcsLogUserFilterTest {
 
   @NotNull
   private List<String> getFilteredHashes(@NotNull VcsLogUserFilter filter) throws VcsException {
-    VcsLogFilterCollection filters = createFilterCollection(filter);
+    VcsLogFilterCollection filters = VcsLogFilterObject.collection(filter);
     List<TimedVcsCommit> commits = myLogProvider.getCommitsMatchingFilter(myProject.getBaseDir(), filters, -1);
     return ContainerUtil.map(commits, commit -> commit.getId().asString());
   }
