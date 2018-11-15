@@ -217,7 +217,9 @@ class DiffPreviewPanel implements PreviewPanel {
     for (SimpleThreesideDiffChange change : myViewer.getChanges()) {
       int startLine = change.getStartLine(side);
       int endLine = change.getEndLine(side);
-      if (DiffUtil.isSelectedByLine(line, startLine, endLine)) return change;
+      if (DiffUtil.isSelectedByLine(line, startLine, endLine) && change.isChange(side)) {
+        return change;
+      }
     }
     return null;
   }
