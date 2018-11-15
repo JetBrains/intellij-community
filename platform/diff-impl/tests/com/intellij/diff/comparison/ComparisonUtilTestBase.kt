@@ -79,6 +79,16 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     if (expected != null) checkDiffChanges(fragments, expected)
   }
 
+  private fun doCharRawTest(text: Couple<Document>, matchings: Couple<BitSet>?, expected: List<Couple<IntPair>>?) {
+    val before = text.first
+    val after = text.second
+    val iterable = ByChar.compare(before.charsSequence, after.charsSequence, INDICATOR)
+    val fragments = ComparisonManagerImpl.convertIntoDiffFragments(iterable)
+    checkConsistency(fragments, before, after)
+    if (matchings != null) checkDiffMatching(fragments, matchings)
+    if (expected != null) checkDiffChanges(fragments, expected)
+  }
+
   private fun doSplitterTest(text: Couple<Document>,
                              squash: Boolean,
                              trim: Boolean,
@@ -175,7 +185,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
   //
 
   internal enum class TestType {
-    LINE, LINE_INNER, WORD, CHAR, SPLITTER
+    LINE, LINE_INNER, WORD, CHAR, CHAR_SMART, CHAR_RAW, SPLITTER
   }
 
   internal inner class TestBuilder(private val type: TestType) {
@@ -209,7 +219,16 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
               doWordTest(text, matchings, changes, policy)
             }
             TestType.WORD -> doWordTest(text, matchings, changes, policy)
-            TestType.CHAR -> doCharTest(text, matchings, changes, policy)
+            TestType.CHAR -> {
+              doCharTest(text, matchings, changes, policy)
+              if (policy == ComparisonPolicy.DEFAULT) doCharRawTest(text, matchings, changes)
+            }
+            TestType.CHAR_SMART -> {
+              doCharTest(text, matchings, changes, policy)
+            }
+            TestType.CHAR_RAW -> {
+              if (policy == ComparisonPolicy.DEFAULT) doCharRawTest(text, matchings, changes)
+            }
             TestType.SPLITTER -> {
               assertNull(matchings)
               doSplitterTest(text, shouldSquash, shouldTrim, changes, policy)
@@ -343,6 +362,10 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
   internal fun words(f: TestBuilder.() -> Unit): Unit = doTest(TestType.WORD, f)
 
   internal fun chars(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR, f)
+
+  internal fun chars_raw(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR_RAW, f)
+
+  internal fun chars_smart(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR_SMART, f)
 
   internal fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit) {
     doTest(TestType.SPLITTER, {

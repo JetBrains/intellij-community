@@ -18,6 +18,7 @@ package com.intellij.diff.comparison;
 import com.intellij.diff.comparison.ByLine.Line;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
+import com.intellij.diff.util.IntPair;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import gnu.trove.TIntArrayList;
@@ -67,14 +68,19 @@ abstract class ChangeCorrector {
     for (Range ch : myChanges.iterateUnchanged()) {
       int count = ch.end1 - ch.start1;
       for (int i = 0; i < count; i++) {
-        int index1 = getOriginalIndex1(ch.start1 + i);
-        int index2 = getOriginalIndex2(ch.start2 + i);
+        IntPair range1 = getOriginalRange1(ch.start1 + i);
+        IntPair range2 = getOriginalRange2(ch.start2 + i);
 
-        matchGap(last1, index1, last2, index2);
-        myBuilder.markEqual(index1, index2);
+        int start1 = range1.val1;
+        int start2 = range2.val1;
+        int end1 = range1.val2;
+        int end2 = range2.val2;
 
-        last1 = index1 + 1;
-        last2 = index2 + 1;
+        matchGap(last1, start1, last2, start2);
+        myBuilder.markEqual(start1, start2, end1, end2);
+
+        last1 = end1;
+        last2 = end2;
       }
     }
     matchGap(last1, myLength1, last2, myLength2);
@@ -83,9 +89,9 @@ abstract class ChangeCorrector {
   // match elements in range [start1 - end1) -> [start2 - end2)
   protected abstract void matchGap(int start1, int end1, int start2, int end2);
 
-  protected abstract int getOriginalIndex1(int index);
+  protected abstract IntPair getOriginalRange1(int index);
 
-  protected abstract int getOriginalIndex2(int index);
+  protected abstract IntPair getOriginalRange2(int index);
 
   //
   // Implementations
@@ -112,29 +118,27 @@ abstract class ChangeCorrector {
 
     @Override
     protected void matchGap(int start1, int end1, int start2, int end2) {
-      Range expand = expand(myText1, myText2, start1, start2, end1, end2);
-
-      CharSequence inner1 = myText1.subSequence(expand.start1, expand.end1);
-      CharSequence inner2 = myText2.subSequence(expand.start2, expand.end2);
+      CharSequence inner1 = myText1.subSequence(start1, end1);
+      CharSequence inner2 = myText2.subSequence(start2, end2);
       FairDiffIterable innerChanges = ByChar.compare(inner1, inner2, myIndicator);
 
-      myBuilder.markEqual(start1, start2, expand.start1, expand.start2);
-
       for (Range chunk : innerChanges.iterateUnchanged()) {
-        myBuilder.markEqual(expand.start1 + chunk.start1, expand.start2 + chunk.start2, chunk.end1 - chunk.start1);
+        myBuilder.markEqual(start1 + chunk.start1, start2 + chunk.start2, chunk.end1 - chunk.start1);
       }
-
-      myBuilder.markEqual(expand.end1, expand.end2, end1, end2);
     }
 
     @Override
-    protected int getOriginalIndex1(int index) {
-      return myChars1.offsets[index];
+    protected IntPair getOriginalRange1(int index) {
+      int startOffset = myChars1.charOffset(index);
+      int endOffset = myChars1.charOffsetAfter(index);
+      return new IntPair(startOffset, endOffset);
     }
 
     @Override
-    protected int getOriginalIndex2(int index) {
-      return myChars2.offsets[index];
+    protected IntPair getOriginalRange2(int index) {
+      int startOffset = myChars2.charOffset(index);
+      int endOffset = myChars2.charOffsetAfter(index);
+      return new IntPair(startOffset, endOffset);
     }
   }
 
@@ -175,13 +179,15 @@ abstract class ChangeCorrector {
     }
 
     @Override
-    protected int getOriginalIndex1(int index) {
-      return myIndexes1.get(index);
+    protected IntPair getOriginalRange1(int index) {
+      int offset = myIndexes1.get(index);
+      return new IntPair(offset, offset + 1);
     }
 
     @Override
-    protected int getOriginalIndex2(int index) {
-      return myIndexes2.get(index);
+    protected IntPair getOriginalRange2(int index) {
+      int offset = myIndexes2.get(index);
+      return new IntPair(offset, offset + 1);
     }
   }
 }

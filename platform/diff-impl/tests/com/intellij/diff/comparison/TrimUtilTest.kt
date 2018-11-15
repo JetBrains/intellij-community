@@ -34,6 +34,7 @@ class TrimUtilTest : DiffTestCase() {
     assertIsAlpha("АБВ汉语日ひรไ", true)
     assertIsAlpha("óèäñĀ", true)
     assertIsAlpha("\r_\u0001", true)
+    assertIsAlpha("$chSmile$chMan", true)
 
     assertIsContinuous("12_ABZ", false)
     assertIsContinuous("АБВ", false)
@@ -47,6 +48,7 @@ class TrimUtilTest : DiffTestCase() {
     assertIsContinuous("ひらがなカタカナ日本語", true)
     assertIsContinuous("汉语漢語", true)
     assertIsContinuous("☺♥", true)
+    assertIsContinuous("$chSmile$chMan", true)
     assertIsContinuous("\u200e\u200f\u061c", true)
   }
 

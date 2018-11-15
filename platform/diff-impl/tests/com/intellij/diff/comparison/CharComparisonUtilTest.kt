@@ -403,4 +403,101 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
       testAll()
     }
   }
+
+  fun testTwoSteps() {
+    chars_smart {
+      ("  a" - "a  ")
+      ("-- " - " --").default()
+      testDefault()
+    }
+
+    chars_raw {
+      ("  a" - "a  ")
+      ("  -" - "-  ").default()
+      testDefault()
+    }
+
+    chars_smart {
+      ("bba" - "abb")
+      ("  -" - "-  ").default()
+      testDefault()
+    }
+
+    chars_raw {
+      ("bba" - "abb")
+      ("  -" - "-  ").default()
+      testDefault()
+    }
+
+    chars_smart {
+      ("$chSmile$chFace $chMan" - " $chGun$chFace$chMan ")
+      ("--  -  " - "---    -").default()
+      testDefault()
+    }
+
+    chars_raw {
+      ("$chSmile$chFace $chMan" - " $chGun$chFace$chMan ")
+      ("--   --" - "---  -- ").default()
+      testDefault()
+    }
+  }
+
+  fun testHighSurrogates() {
+    chars {
+      (chSmile - chSmile)
+      ("  " - "  ").default()
+      testAll()
+    }
+
+    chars {
+      (chSmile - chMan)
+      ("--" - "--").default()
+      testAll()
+    }
+
+    chars {
+      (chSmile - chGun)
+      ("--" - "--").default()
+      testAll()
+    }
+
+    chars {
+      (chFace - chGun)
+      ("--" - "--").default()
+      testAll()
+    }
+
+    chars {
+      ("$chSmile$chGun$chMan$chFace" - "$chGun$chMan$chFace$chSmile")
+      ("--      " - "      --").default()
+      testAll()
+    }
+
+    chars {
+      (chSmile - chGun)
+      ("--" - "--").default()
+      testAll()
+    }
+
+    chars {
+      (chFace - chGun)
+      ("--" - "--").default()
+      testAll()
+    }
+
+    chars {
+      ("$chSmile " - chGun)
+      ("---" - "--").default()
+      ("-- " - "--").trim()
+      testAll()
+    }
+
+    chars {
+      (" $chSmile$chFace $chMan" - "$chGun$chFace$chMan")
+      ("---  -  " - "--    ").default()
+      (" --  -  " - "--    ").trim()
+      (" --     " - "--    ").ignore()
+      testAll()
+    }
+  }
 }
