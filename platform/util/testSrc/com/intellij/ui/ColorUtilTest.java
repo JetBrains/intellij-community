@@ -33,6 +33,23 @@ public class ColorUtilTest extends TestCase {
     assertEquals(withAlpha(Color.GRAY, .17), mix(withAlpha(Color.WHITE, .17), withAlpha(Color.BLACK, .17), .5));
   }
 
+  public void testColorMixWrapping() {
+    assertEquals(Color.class, mix(Color.BLACK, Color.WHITE, .5).getClass());
+    assertEquals(JBColor.class, mix(Color.BLACK, JBColor.WHITE, .5).getClass());
+    assertEquals(JBColor.class, mix(JBColor.BLACK, JBColor.WHITE, .5).getClass());
+    assertEquals(JBColor.class, mix(JBColor.BLACK, Color.WHITE, .5).getClass());
+  }
+
+  public void testColorMixOutOfRange() {
+    assertSame(Color.BLACK, mix(Color.BLACK, Color.WHITE, Double.NEGATIVE_INFINITY));
+    assertSame(Color.BLACK, mix(Color.BLACK, Color.WHITE, -Double.MAX_VALUE));
+    assertSame(Color.BLACK, mix(Color.BLACK, Color.WHITE, -Double.MIN_VALUE));
+    assertSame(Color.BLACK, mix(Color.BLACK, Color.WHITE, 0));
+    assertSame(Color.WHITE, mix(Color.BLACK, Color.WHITE, 1));
+    assertSame(Color.WHITE, mix(Color.BLACK, Color.WHITE, Double.MAX_VALUE));
+    assertSame(Color.WHITE, mix(Color.BLACK, Color.WHITE, Double.POSITIVE_INFINITY));
+  }
+
   public void testBlackFromHex() {
     for (String hex : asList("000", "#000", "0x000",
                              "000F", "#000F", "0x000F",

@@ -291,7 +291,9 @@ public class ColorUtil {
 
   @NotNull
   public static Color mix(@NotNull final Color c1, @NotNull final Color c2, double balance) {
-    final double b = Math.min(1, Math.max(0, balance));
-    return new JBColor(new MixedColorProducer(c1, c2, b));
+    if (balance <= 0) return c1;
+    if (balance >= 1) return c2;
+    NotNullProducer<Color> func = new MixedColorProducer(c1, c2, balance);
+    return c1 instanceof JBColor || c2 instanceof JBColor ? new JBColor(func) : func.produce();
   }
 }
