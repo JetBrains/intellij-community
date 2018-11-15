@@ -21,8 +21,7 @@ import com.intellij.util.indexing.FileContentImpl;
 
 import java.util.Map;
 
-import static com.jetbrains.jsonSchema.impl.JsonCachedValues.ID_CACHE_KEY;
-import static com.jetbrains.jsonSchema.impl.JsonCachedValues.URL_CACHE_KEY;
+import static com.jetbrains.jsonSchema.impl.JsonCachedValues.*;
 
 public class JsonSchemaFileValuesIndexTest extends JsonTestCase {
 
@@ -63,5 +62,6 @@ public class JsonSchemaFileValuesIndexTest extends JsonTestCase {
     Map<String, String> map = new JsonSchemaFileValuesIndex().getIndexer().map(FileContentImpl.createByFile(file));
     assertEquals("the-schema", map.get(URL_CACHE_KEY));
     assertEquals("the-id", map.get(ID_CACHE_KEY));
+    assertEquals("the-obsolete-id", map.get(OBSOLETE_ID_CACHE_KEY));
   }
 }
