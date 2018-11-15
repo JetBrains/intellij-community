@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-includeTargets << new File("tests_in_community.gant")
+File testsInCommunityDefault = new File("tests_in_community.gant")
+File originalGantScript = testsInCommunityDefault.exists() ? testsInCommunityDefault : new File("build/scripts/tests_in_community.gant")
+includeTargets << originalGantScript
 includeTool << gant.tools.Execute
 
 /**
