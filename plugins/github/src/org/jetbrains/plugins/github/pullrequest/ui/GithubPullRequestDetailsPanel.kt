@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.roots.ui.componentsList.components.ScrollablePanel
 import com.intellij.openapi.util.Disposer
@@ -19,6 +20,7 @@ import org.jetbrains.plugins.github.api.data.GithubIssueState
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import java.awt.BorderLayout
 import java.awt.FlowLayout
@@ -182,15 +184,32 @@ internal class GithubPullRequestDetailsPanel(iconProviderFactory: CachingGithubA
       stateLabel.text = ""
       stateLabel.icon = null
       val details = details
-      if (details != null && details.state == GithubIssueState.closed)
-        if (details.merged) {
-          stateLabel.icon = GithubIcons.PullRequestClosed
-          stateLabel.text = "Pull request is merged"
+      if (details != null) {
+        if (details.state == GithubIssueState.closed) {
+          if (details.merged) {
+            stateLabel.icon = GithubIcons.PullRequestClosed
+            stateLabel.text = "Pull request is merged"
+          }
+          else {
+            stateLabel.icon = GithubIcons.PullRequestClosed
+            stateLabel.text = "Pull request is closed"
+          }
+        } else {
+          val mergeable = details.mergeable
+          if(mergeable == null) {
+            stateLabel.icon = AllIcons.RunConfigurations.TestNotRan
+            stateLabel.text = "Checking for ability to merge automatically..."
+          } else {
+            if(mergeable) {
+              stateLabel.icon = AllIcons.RunConfigurations.TestPassed
+              stateLabel.text = "Branch has no conflicts with base branch"
+            } else {
+              stateLabel.icon = AllIcons.RunConfigurations.TestFailed
+              stateLabel.text = "Branch has conflicts that must be resolved"
+            }
+          }
         }
-        else {
-          stateLabel.icon = GithubIcons.PullRequestClosed
-          stateLabel.text = "Pull request is closed"
-        }
+      }
     }
 
     private fun createLabel() = JLabel().apply {

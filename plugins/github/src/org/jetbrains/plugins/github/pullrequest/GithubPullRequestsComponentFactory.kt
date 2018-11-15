@@ -62,7 +62,7 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     private val changes = GithubPullRequestChangesComponent(project).apply {
       diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
     }
-    private val details = GithubPullRequestDetailsComponent(avatarIconsProviderFactory)
+    private val details = GithubPullRequestDetailsComponent(dataLoader, avatarIconsProviderFactory)
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 
     private val listLoader = GithubPullRequestsLoader(progressManager, requestExecutor, account.server, repoDetails.fullPath)

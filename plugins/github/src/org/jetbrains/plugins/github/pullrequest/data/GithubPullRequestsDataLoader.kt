@@ -42,6 +42,11 @@ internal class GithubPullRequestsDataLoader(private val project: Project,
   }
 
   @CalledInAwt
+  fun reloadDetails(number: Long) {
+    cache.getIfPresent(number)?.reloadDetails()
+  }
+
+  @CalledInAwt
   fun invalidateData(number: Long) {
     cache.invalidate(number)
   }

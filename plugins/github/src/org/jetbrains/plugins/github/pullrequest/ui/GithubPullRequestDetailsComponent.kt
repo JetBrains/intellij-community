@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.SimpleTextAttributes
@@ -10,9 +12,11 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import java.awt.BorderLayout
 
-internal class GithubPullRequestDetailsComponent(iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubPullRequestsDataLoader,
+                                                 iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
   : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
   private val detailsPanel = GithubPullRequestDetailsPanel(iconProviderFactory)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
@@ -36,6 +40,11 @@ internal class GithubPullRequestDetailsComponent(iconProviderFactory: CachingGit
 
   override fun handleResult(result: GithubPullRequestDetailedWithHtml) {
     detailsPanel.details = result
+    if (!result.merged && result.mergeable == null) {
+      ApplicationManager.getApplication().invokeLater {
+        dataLoader.reloadDetails(result.number)
+      }
+    }
   }
 
   override fun handleError(error: Throwable) {
