@@ -462,9 +462,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     List<LibraryOrderEntry> unresolvableDep = getModuleLibDeps("project.main", "Gradle: some:unresolvable-lib:0.1");
     assertEquals(1, unresolvableDep.size());
     LibraryOrderEntry unresolvableEntry = unresolvableDep.iterator().next();
-    if(isGradle40orNewer()) {
-      assertTrue(unresolvableEntry.isModuleLevel());
-    }
     assertEquals(DependencyScope.COMPILE, unresolvableEntry.getScope());
     String[] unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
     assertEquals(1, unresolvableEntryUrls.length);
@@ -498,6 +495,57 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
 
   private static void assertUnresolvedEntryUrl(String entryUrl, String artifactNotation) {
     assertTrue(entryUrl.contains("Could not find " + artifactNotation) || entryUrl.contains("Could not resolve " + artifactNotation));
+  }
+
+  @Test
+  public void testSourceSetOutputDirsAsArtifactDependencies() throws Exception {
+    createSettingsFile("rootProject.name = 'server'\n" +
+                       "include 'api'\n" +
+                       "include 'modules:X'\n" +
+                       "include 'modules:Y'");
+    importProject(
+      "configure(subprojects - project(':modules')) {\n" +
+      "    group 'server'\n" +
+      "    version '1.0-SNAPSHOT'\n" +
+      "    apply plugin: 'java'\n" +
+      "    sourceCompatibility = 1.8\n" +
+      "}\n" +
+      "\n" +
+      "project(':api') {\n" +
+      "    sourceSets {\n" +
+      "        webapp\n" +
+      "    }\n" +
+      "    configurations {\n" +
+      "        webappConf {\n" +
+      "            afterEvaluate {\n" +
+      "                sourceSets.webapp.output.each {\n" +
+      "                    outgoing.artifact(it) {\n" +
+      "                        builtBy(sourceSets.webapp.output)\n" +
+      "                    }\n" +
+      "                }\n" +
+      "            }\n" +
+      "        }\n" +
+      "    }\n" +
+      "}\n" +
+      "\n" +
+      "def webProjects = [project(':modules:X'), project(':modules:Y')]\n" +
+      "configure(webProjects) {\n" +
+      "    dependencies {\n" +
+      "        compile project(path: ':api', configuration: 'webappConf')\n" +
+      "    }\n" +
+      "}"
+    );
+
+    assertModules("server", "server.modules",
+                  "server.X", "server.X.main", "server.X.test",
+                  "server.Y", "server.Y.main", "server.Y.test",
+                  "server.api", "server.api.main", "server.api.test", "server.api.webapp");
+
+    assertModuleModuleDeps("server.X.main", "server.api.webapp", "server.api.webapp");
+    assertModuleModuleDepScope("server.X.main", "server.api.webapp", DependencyScope.COMPILE);
+
+    assertModuleModuleDeps("server.Y.main", "server.api.webapp", "server.api.webapp");
+    assertModuleModuleDepScope("server.Y.main", "server.api.webapp", DependencyScope.COMPILE);
   }
 
   @Test

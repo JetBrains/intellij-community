@@ -190,6 +190,9 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           }
         }
         artifacts.addAll(sourceSet.getArtifacts());
+        for (ExternalSourceDirectorySet directorySet : sourceSet.getSources().values()) {
+          artifacts.addAll(directorySet.getGradleOutputDirs());
+        }
         sourceSetData.setArtifacts(ContainerUtil.newArrayList(artifacts));
 
         DataNode<GradleSourceSetData> sourceSetDataNode = mainModuleNode.createChild(GradleSourceSetData.KEY, sourceSetData);
