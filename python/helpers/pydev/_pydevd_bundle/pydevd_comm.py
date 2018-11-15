@@ -238,6 +238,15 @@ VERSION_STRING = "@@BUILD_NUMBER@@"
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
 file_system_encoding = getfilesystemencoding()
 
+
+class CommunicationRole(object):
+    """The class that contains the constants of roles that `PyDB` can play in
+    the communication with the IDE.
+    """
+    CLIENT = 0
+    SERVER = 1
+
+
 #--------------------------------------------------------------------------------------------------- UTILITIES
 
 #=======================================================================================================================
