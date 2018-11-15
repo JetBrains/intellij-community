@@ -224,6 +224,22 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
       ("- " - " -").trim()
       testAll()
     }
+
+    chars {
+      ("x y z" - "xy\nz")
+      (" - - " - "  - ").default()
+      (" - - " - "    ").trim()
+      ("     " - "    ").ignore()
+      testAll()
+    }
+
+    chars {
+      ("x y \n z" - "xy\nz")
+      (" - - - " - "    ").default()
+      (" -     " - "    ").trim()
+      ("     " - "    ").ignore()
+      testAll()
+    }
   }
 
   fun testIgnoreInnerWhitespaces() {
@@ -372,22 +388,18 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
     chars {
       (" x _ y _ z " - "x z")
       ("-  ------ -" - "   ").default()
-      ("   ------  " - "   ").trim() // TODO: handle inner newlines
-      ("     -     " - "   ").ignore()
+      ("     -     " - "   ").trim()
       default(del(0, 0, 1), del(3, 2, 6), del(10, 3, 1))
-      trim(del(3, 2, 6))
-      ignore(del(5, 2, 1))
+      trim(del(5, 2, 1))
       testAll()
     }
 
     chars {
       ("x z" - " x _ y _ z ")
       ("   " - "-  ------ -").default()
-      ("   " - "   ------  ").trim()
-      ("   " - "     -     ").ignore()
+      ("   " - "     -     ").trim()
       default(ins(0, 0, 1), ins(2, 3, 6), ins(3, 10, 1))
-      trim(ins(2, 3, 6))
-      ignore(ins(2, 5, 1))
+      trim(ins(2, 5, 1))
       testAll()
     }
   }

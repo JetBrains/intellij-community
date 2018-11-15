@@ -130,7 +130,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
   }
 
   private fun doTestChar(seed: Long, runs: Int, maxLength: Int) {
-    val ignorePolicies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.IGNORE_WHITESPACES)
+    val ignorePolicies = listOf(ComparisonPolicy.DEFAULT, ComparisonPolicy.TRIM_WHITESPACES, ComparisonPolicy.IGNORE_WHITESPACES)
 
     doTest(seed, runs, maxLength, ignorePolicies) { text1, text2, ignorePolicy, debugData ->
       val sequence1 = text1.charsSequence
