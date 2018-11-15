@@ -149,7 +149,9 @@ public class ShelveChangesManager implements PersistentStateComponent<Element>, 
     myPathMacroSubstitutor = PathMacroManager.getInstance(project);
     myProject = project;
     myBus = bus;
-    mySchemeManager = createShelveSchemeManager(project, VcsConfiguration.getInstance(project).CUSTOM_SHELF_PATH);
+    VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
+    mySchemeManager =
+      createShelveSchemeManager(project, vcsConfiguration.USE_CUSTOM_SHELF_PATH ? vcsConfiguration.CUSTOM_SHELF_PATH : null);
 
     myCleaningFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> cleanDeletedOlderOneWeek(), 1, 1, TimeUnit.DAYS);
     Disposer.register(project, new Disposable() {
