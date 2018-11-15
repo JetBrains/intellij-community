@@ -25,23 +25,4 @@ class CreateGradleProjectAndConfigureOldKotlinGuiTest : KotlinGuiTestCase() {
       )
     )
   }
-
-  @Test
-  @JvmName("gradle_cfg_jvm_old1161")
-  fun createGradleAndConfigureKotlinJvmOldVersion1161() {
-    KotlinTestProperties.kotlin_artifact_version = "1.1.61"
-    testCreateGradleAndConfigureKotlin(
-      kotlinVersion = KotlinTestProperties.kotlin_artifact_version,
-      project = kotlinProjects.getValue(Projects.GradleGProjectJvm),
-      expectedFacet = FacetStructure(
-        targetPlatform = TargetPlatform.JVM18,
-        languageVersion = LanguageVersion.L11,
-        apiVersion = LanguageVersion.L11,
-        jvmOptions = FacetStructureJVM()
-      ),
-      gradleOptions = NewProjectDialogModel.GradleProjectOptions(
-        artifact = testMethod.methodName
-      )
-    )
-  }
 }
