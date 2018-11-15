@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
@@ -62,8 +63,11 @@ public class GutterIntentionMenuContributor implements IntentionMenuContributor 
     }
     List<HighlightInfo.IntentionActionDescriptor> list = new ArrayList<>();
     AtomicInteger order = new AtomicInteger();
-    for (AnAction action : new AnAction[]{r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction(),
-      r.getPopupMenuActions()}) {
+    AnAction[] actions = new AnAction[] {r.getClickAction(), r.getMiddleButtonClickAction(), r.getRightButtonClickAction()};
+    if (r.getPopupMenuActions() != null) {
+      actions = ArrayUtil.mergeArrays(actions, r.getPopupMenuActions().getChildren(null));
+    }
+    for (AnAction action : actions) {
       if (action != null) {
         addActions(action, list, r, order, event);
       }
