@@ -311,8 +311,9 @@ public interface EditorEx extends Editor {
 
   /**
    * If {@code cursor} parameter value is not {@code null}, sets custom cursor to {@link #getContentComponent() editor's content component},
-   * otherwise restores the default cursor in editor ({@code requestor} parameter value should be the same in both setting and resetting
-   * requests). If multiple requestors have currently set custom cursors, one of them will be used (it is unspecified, which one).
+   * otherwise restores default editor cursor management logic ({@code requestor} parameter value should be the same in both setting and
+   * restoring requests). 'Restoring' call for a requestor, which hasn't set a cursor previously, has no effect. If multiple requestors have
+   * currently set custom cursors, one of them will be used (it is unspecified, which one).
    *
    * @since 2019.1
    */
