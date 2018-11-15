@@ -402,6 +402,7 @@ public class GradleProjectResolverUtil {
     }
   }
 
+  @Deprecated
   @SuppressWarnings("unchecked")
   public static Collection<DependencyData> getIdeDependencies(@NotNull ProjectResolverContext resolverCtx,
                                                               @NotNull DataNode<? extends ModuleData> moduleDataNode,
