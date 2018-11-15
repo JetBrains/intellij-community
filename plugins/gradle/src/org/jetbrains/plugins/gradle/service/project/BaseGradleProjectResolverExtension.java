@@ -180,14 +180,6 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
           if (defaultArtifacts != null) {
             artifacts.addAll(defaultArtifacts);
           }
-          if (externalProject.getArtifactsByConfiguration().get("archives") != null) {
-            final Set<File> archivesArtifacts = ContainerUtil.newHashSet(externalProject.getArtifactsByConfiguration().get("archives"));
-            final Set<File> testsArtifacts = externalProject.getArtifactsByConfiguration().get("tests");
-            if (testsArtifacts != null) {
-              archivesArtifacts.removeAll(testsArtifacts);
-            }
-            artifacts.addAll(archivesArtifacts);
-          }
         }
         else {
           if ("test".equals(sourceSet.getName())) {
