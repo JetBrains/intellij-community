@@ -463,11 +463,6 @@ public class BaseGradleProjectResolverExtension implements GradleProjectResolver
     excludedContentRootData.storePath(ExternalSystemSourceType.EXCLUDED, ideaOutDir.getAbsolutePath());
   }
 
-  @Nullable
-  private static File selectCompileOutputDir(@Nullable File outputDir, @NotNull String projectPath, String path) {
-    return outputDir != null ? outputDir : new File(projectPath, path);
-  }
-
   @Override
   public void populateModuleDependencies(@NotNull IdeaModule gradleModule,
                                          @NotNull DataNode<ModuleData> ideModule,
