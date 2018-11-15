@@ -18,6 +18,11 @@ public class ArrayCanBeReplacedWithEnumValuesFixTest extends IGQuickFixesTestCas
 
   public void testEnumRevOrder() { assertQuickfixNotAvailable();}
 
+  public void testErrorInMultiDArray() { assertQuickfixNotAvailable();}
+
+  public void testMultiDArrayNoError() {assertQuickfixNotAvailable();}
+
+
 
   @Override
   protected void doTest(String hint) {

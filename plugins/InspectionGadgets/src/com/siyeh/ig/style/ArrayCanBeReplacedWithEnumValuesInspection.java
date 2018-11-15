@@ -66,6 +66,18 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
         return;
       }
 
+      final PsiExpression[] initializers = expression.getInitializers();
+      if (initializers.length < 2) {return;}
+
+      for (PsiExpression initV : initializers) {
+        if (initV instanceof PsiArrayInitializerExpression) {
+          return;
+        }
+        if (!(Objects.requireNonNull(initV.getType()).equals(initType))) {
+          return;
+        }
+      }
+
       List<String> enumValues = StreamEx.of(initClass.getAllFields())
         .select(PsiEnumConstant.class)
         .map(PsiEnumConstant::getName)
@@ -75,9 +87,6 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
         return;
       }
 
-
-      final PsiExpression[] initializers = expression.getInitializers();
-
       int nValues = enumValues.size();
       if (nValues != initializers.length) {
         return;
@@ -86,7 +95,7 @@ public class ArrayCanBeReplacedWithEnumValuesInspection extends BaseInspection {
       int i = 0;
       for (String value : enumValues) {
         String referenceName = ((PsiReferenceExpressionImpl)initializers[i]).getReferenceName();
-        if (referenceName !=null && referenceName.equals(value)) {
+        if (referenceName != null && referenceName.equals(value)) {
           i++;
         }
         else {

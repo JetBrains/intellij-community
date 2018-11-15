@@ -1,7 +1,7 @@
 class NotEnumInit {
 
   public static void foo() {
-    testMethod(new TestEnum[]<caret>{"", TestEnum.ONE});
+    testMethod(new TestEnum[]<caret>{"", "", TestEnum.ONE});
   }
 
   private static void testMethod(TestEnum[] values) { }
