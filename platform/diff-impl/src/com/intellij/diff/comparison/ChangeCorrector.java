@@ -98,20 +98,20 @@ abstract class ChangeCorrector {
   //
 
   public static class DefaultCharChangeCorrector extends ChangeCorrector {
-    @NotNull private final ByChar.CharOffsets myChars1;
-    @NotNull private final ByChar.CharOffsets myChars2;
+    @NotNull private final ByChar.CodePointsOffsets myCodePoints1;
+    @NotNull private final ByChar.CodePointsOffsets myCodePoints2;
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
 
-    public DefaultCharChangeCorrector(@NotNull ByChar.CharOffsets chars1,
-                                      @NotNull ByChar.CharOffsets chars2,
+    public DefaultCharChangeCorrector(@NotNull ByChar.CodePointsOffsets codePoints1,
+                                      @NotNull ByChar.CodePointsOffsets codePoints2,
                                       @NotNull CharSequence text1,
                                       @NotNull CharSequence text2,
                                       @NotNull FairDiffIterable changes,
                                       @NotNull ProgressIndicator indicator) {
       super(text1.length(), text2.length(), changes, indicator);
-      myChars1 = chars1;
-      myChars2 = chars2;
+      myCodePoints1 = codePoints1;
+      myCodePoints2 = codePoints2;
       myText1 = text1;
       myText2 = text2;
     }
@@ -129,15 +129,15 @@ abstract class ChangeCorrector {
 
     @Override
     protected IntPair getOriginalRange1(int index) {
-      int startOffset = myChars1.charOffset(index);
-      int endOffset = myChars1.charOffsetAfter(index);
+      int startOffset = myCodePoints1.charOffset(index);
+      int endOffset = myCodePoints1.charOffsetAfter(index);
       return new IntPair(startOffset, endOffset);
     }
 
     @Override
     protected IntPair getOriginalRange2(int index) {
-      int startOffset = myChars2.charOffset(index);
-      int endOffset = myChars2.charOffsetAfter(index);
+      int startOffset = myCodePoints2.charOffset(index);
+      int endOffset = myCodePoints2.charOffsetAfter(index);
       return new IntPair(startOffset, endOffset);
     }
   }
