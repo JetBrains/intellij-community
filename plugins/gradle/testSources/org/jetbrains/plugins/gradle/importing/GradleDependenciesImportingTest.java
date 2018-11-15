@@ -498,6 +498,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("3.3+") // org.gradle.api.artifacts.ConfigurationPublications was introduced since 3.3
   public void testSourceSetOutputDirsAsArtifactDependencies() throws Exception {
     createSettingsFile("rootProject.name = 'server'\n" +
                        "include 'api'\n" +
@@ -541,10 +542,10 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                   "server.Y", "server.Y.main", "server.Y.test",
                   "server.api", "server.api.main", "server.api.test", "server.api.webapp");
 
-    assertModuleModuleDeps("server.X.main", "server.api.webapp", "server.api.webapp");
+    assertModuleModuleDeps("server.X.main", "server.api.webapp");
     assertModuleModuleDepScope("server.X.main", "server.api.webapp", DependencyScope.COMPILE);
 
-    assertModuleModuleDeps("server.Y.main", "server.api.webapp", "server.api.webapp");
+    assertModuleModuleDeps("server.Y.main", "server.api.webapp");
     assertModuleModuleDepScope("server.Y.main", "server.api.webapp", DependencyScope.COMPILE);
   }
 
