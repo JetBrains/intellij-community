@@ -284,47 +284,53 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
       }
 
       fun default() {
+        assertNull(matchings.default)
         matchings.default = parseMatching(before, after, base)
       }
 
       fun trim() {
+        assertNull(matchings.trim)
         matchings.trim = parseMatching(before, after, base)
       }
 
       fun ignore() {
+        assertNull(matchings.ignore)
         matchings.ignore = parseMatching(before, after, base)
       }
 
       private fun parseMatching(before: String, after: String, base: String?): Data<BitSet> {
+        val builder = this@TestBuilder
         if (type == TestType.LINE) {
-          val builder = this@TestBuilder
           return Data(parseLineMatching(before, builder.text.before!!),
                       if (base != null) parseLineMatching(base, builder.text.base!!) else null,
                       parseLineMatching(after, builder.text.after!!))
         }
         else {
-          return Data(parseMatching(before),
-                      if (base != null) parseMatching(base) else null,
-                      parseMatching(after))
+          return Data(parseMatching(before, builder.text.before!!),
+                      if (base != null) parseMatching(base, builder.text.base!!) else null,
+                      parseMatching(after, builder.text.after!!))
         }
       }
     }
 
 
-    fun default(vararg expected: Couple<IntPair>): Unit {
+    fun default(vararg expected: Couple<IntPair>) {
+      assertNull(changes.default)
       changes.default = ContainerUtil.list(*expected).map { Data(it.first, it.second) }
     }
 
-    fun trim(vararg expected: Couple<IntPair>): Unit {
+    fun trim(vararg expected: Couple<IntPair>) {
+      assertNull(changes.trim)
       changes.trim = ContainerUtil.list(*expected).map { Data(it.first, it.second) }
     }
 
-    fun ignore(vararg expected: Couple<IntPair>): Unit {
+    fun ignore(vararg expected: Couple<IntPair>) {
+      assertNull(changes.ignore)
       changes.ignore = ContainerUtil.list(*expected).map { Data(it.first, it.second) }
     }
 
 
-    fun postprocess(squash: Boolean, trim: Boolean): Unit {
+    fun postprocess(squash: Boolean, trim: Boolean) {
       shouldSquash = squash
       shouldTrim = trim
     }
@@ -338,7 +344,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
 
   internal fun chars(f: TestBuilder.() -> Unit): Unit = doTest(TestType.CHAR, f)
 
-  internal fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit): Unit {
+  internal fun splitter(squash: Boolean = false, trim: Boolean = false, f: TestBuilder.() -> Unit) {
     doTest(TestType.SPLITTER, {
       postprocess(squash, trim)
       f()

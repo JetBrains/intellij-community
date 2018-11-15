@@ -213,20 +213,20 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
 
     chars {
       (" x" - "z\t")
-      ("--" - "--").default()
-      (" -" - "- ").trim()
+      ("--" - "-.-").default()
+      (" -" - "-. ").trim()
       testAll()
     }
 
     chars {
       ("x " - "\tz")
-      ("--" - "--").default()
-      ("- " - " -").trim()
+      ("--" - ".--").default()
+      ("- " - ". -").trim()
       testAll()
     }
 
     chars {
-      ("x y z" - "xy\nz")
+      ("x y z" - "xy_z")
       (" - - " - "  - ").default()
       (" - - " - "    ").trim()
       ("     " - "    ").ignore()
@@ -235,9 +235,9 @@ class CharComparisonUtilTest : ComparisonUtilTestBase() {
 
     chars {
       ("x y \n z" - "xy\nz")
-      (" - - - " - "    ").default()
-      (" -     " - "    ").trim()
-      ("     " - "    ").ignore()
+      (" - -. - " - "  .  ").default()
+      (" -  .   " - "  .  ").trim()
+      ("    .   " - "  .  ").ignore()
       testAll()
     }
   }

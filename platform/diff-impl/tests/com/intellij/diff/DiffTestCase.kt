@@ -264,9 +264,12 @@ abstract class DiffTestCase : TestCase() {
 
     fun parseSource(string: CharSequence): String = string.toString().replace('_', '\n')
 
-    fun parseMatching(matching: String): BitSet {
+    fun parseMatching(matching: String, text: Document): BitSet {
+      val pattern = matching.filterNot { it == '.' }
+      assertEquals(pattern.length, text.charsSequence.length)
+
       val set = BitSet()
-      matching.filterNot { it == '.' }.forEachIndexed { i, c -> if (c != ' ') set.set(i) }
+      pattern.forEachIndexed { i, c -> if (c != ' ') set.set(i) }
       return set
     }
 
