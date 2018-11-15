@@ -51,7 +51,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   JScrollBar myScrollBar;
 
   final ScrollBarPainter.Track myTrack = new ScrollBarPainter.Track(() -> myScrollBar);
-  final ScrollBarPainter.Thumb myThumb = new ScrollBarPainter.Thumb(() -> myScrollBar);
+  final ScrollBarPainter.Thumb myThumb = new ScrollBarPainter.Thumb(() -> myScrollBar, false);
 
   private boolean isValueCached;
   private int myCachedValue;

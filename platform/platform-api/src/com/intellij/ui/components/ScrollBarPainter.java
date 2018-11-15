@@ -142,14 +142,18 @@ abstract class ScrollBarPainter implements RegionPainter<Float> {
     private final MixedColorProducer fillProducer;
     private final MixedColorProducer drawProducer;
 
-    Thumb(@NotNull Supplier<? extends Component> supplier) {
+    Thumb(@NotNull Supplier<? extends Component> supplier, boolean opaque) {
       super(supplier);
       fillProducer = new MixedColorProducer(
-        getColor(supplier, THUMB_BACKGROUND, THUMB_OPAQUE_BACKGROUND),
-        getColor(supplier, THUMB_HOVERED_BACKGROUND, THUMB_OPAQUE_HOVERED_BACKGROUND));
+        opaque ? getColor(supplier, THUMB_OPAQUE_BACKGROUND)
+               : getColor(supplier, THUMB_BACKGROUND, THUMB_OPAQUE_BACKGROUND),
+        opaque ? getColor(supplier, THUMB_OPAQUE_HOVERED_BACKGROUND)
+               : getColor(supplier, THUMB_HOVERED_BACKGROUND, THUMB_OPAQUE_HOVERED_BACKGROUND));
       drawProducer = new MixedColorProducer(
-        getColor(supplier, THUMB_FOREGROUND, THUMB_OPAQUE_FOREGROUND),
-        getColor(supplier, THUMB_HOVERED_FOREGROUND, THUMB_OPAQUE_HOVERED_FOREGROUND));
+        opaque ? getColor(supplier, THUMB_OPAQUE_FOREGROUND)
+               : getColor(supplier, THUMB_FOREGROUND, THUMB_OPAQUE_FOREGROUND),
+        opaque ? getColor(supplier, THUMB_OPAQUE_HOVERED_FOREGROUND)
+               : getColor(supplier, THUMB_HOVERED_FOREGROUND, THUMB_OPAQUE_HOVERED_FOREGROUND));
     }
 
     @Override
