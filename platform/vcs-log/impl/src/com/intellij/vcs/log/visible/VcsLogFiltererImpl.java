@@ -326,8 +326,13 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
       }
 
       Set<FilePath> filesForRoot = VcsLogUtil.getFilteredFilesForRoot(root, filterCollection);
-      VcsLogStructureFilter structureFilter = filesForRoot.isEmpty() ? null : VcsLogFilterObject.fromPaths(filesForRoot);
-      VcsLogFilterCollection rootSpecificCollection = VcsLogFiltersKt.with(filterCollection, structureFilter);
+      VcsLogFilterCollection rootSpecificCollection;
+      if (filesForRoot.isEmpty()) {
+        rootSpecificCollection = VcsLogFiltersKt.without(filterCollection, VcsLogFilterCollection.STRUCTURE_FILTER);
+      }
+      else {
+        rootSpecificCollection = VcsLogFiltersKt.with(filterCollection, VcsLogFilterObject.fromPaths(filesForRoot));
+      }
 
       List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, rootSpecificCollection, maxCount);
       commits.addAll(ContainerUtil.map(matchingCommits, commit -> new CommitId(commit.getId(), root)));
