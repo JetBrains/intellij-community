@@ -16,6 +16,8 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,21 +34,41 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
   private static final String DEFAULT_ID = "third.party.plugin.action";
   private final Set<String> myJBActions = new THashSet<>();
 
+  private static final HashMap<String, String> ourPrefixesBlackList = new HashMap<>();
+  static {
+    ourPrefixesBlackList.put("RemoteTool_", "Remote External Tool");
+    ourPrefixesBlackList.put("Tool_", "External Tool");
+    ourPrefixesBlackList.put("Macro.", "Invoke Macro");
+  }
+
+  @Override
   public void record(@Nullable String actionId, @NotNull Class context) {
     if (actionId == null) return;
 
     State state = getState();
     if (state == null) return;
 
+    String key = toReportedId(actionId, context);
+    FeatureUsageLogger.INSTANCE.log("actions", key);
+    final Integer count = state.myValues.get(key);
+    int value = count == null ? 1 : count + 1;
+    state.myValues.put(key, value);
+  }
+
+  @NotNull
+  private String toReportedId(@NotNull String actionId, @NotNull Class context) {
     String key = ConvertUsagesUtil.escapeDescriptorName(actionId);
     if (!myJBActions.contains(key)) {
       key = isDevelopedByJetBrains(context) ? key : DEFAULT_ID;
       myJBActions.add(key);
     }
-    FeatureUsageLogger.INSTANCE.log("actions", key);
-    final Integer count = state.myValues.get(key);
-    int value = count == null ? 1 : count + 1;
-    state.myValues.put(key, value);
+
+    for (Map.Entry<String, String> prefix : ourPrefixesBlackList.entrySet()) {
+      if (key.startsWith(prefix.getKey())) {
+        return prefix.getValue();
+      }
+    }
+    return key;
   }
 
   private static boolean isDevelopedByJetBrains(@NotNull Class aClass) {
