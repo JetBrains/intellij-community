@@ -80,7 +80,7 @@ private val constructorOrMethodCall = setOf(UastCallKind.CONSTRUCTOR_CALL, UastC
 private fun isCallExpressionParameter(argumentExpression: UElement,
                                       parameterIndex: Int,
                                       callPattern: ElementPattern<UCallExpression>): Boolean {
-  val call = argumentExpression.uastParent.getUCallExpression() as? UCallExpressionEx ?: return false
+  val call = argumentExpression.uastParent.getUCallExpression(searchLimit = 2) as? UCallExpressionEx ?: return false
   if (call.kind !in constructorOrMethodCall) return false
   return call.getArgumentForParameter(parameterIndex) == argumentExpression && callPattern.accepts(call)
 }
