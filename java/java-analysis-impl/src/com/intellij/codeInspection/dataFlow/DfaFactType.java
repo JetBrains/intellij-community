@@ -168,7 +168,8 @@ public abstract class DfaFactType<T> extends Key<T> {
     LongRangeSet calcFromVariable(@NotNull DfaVariableValue var) {
       DfaVariableSource source = var.getSource();
       if(source instanceof SpecialField) {
-        LongRangeSet fromSpecialField = ((SpecialField)source).getRange();
+        DfaValue defaultValue = ((SpecialField)source).getDefaultValue(var.getFactory());
+        LongRangeSet fromSpecialField = LongRangeSet.fromDfaValue(defaultValue);
         if (fromSpecialField != null) {
           return fromSpecialField;
         }
