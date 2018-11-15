@@ -27,7 +27,7 @@ public final class MixedColorProducer implements NotNullProducer<Color> {
   }
 
   public void setMixer(double value) {
-    if (value < 0 || 1 < value) throw new IllegalArgumentException("mixer[0..1] is " + value);
+    if (Double.isNaN(value) || value < 0 || 1 < value) throw new IllegalArgumentException("mixer[0..1] is " + value);
     if (mixer != value) {
       mixer = value;
       cached = null;

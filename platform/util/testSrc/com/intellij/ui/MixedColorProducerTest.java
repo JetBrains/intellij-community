@@ -36,6 +36,46 @@ public final class MixedColorProducerTest {
   }
 
 
+  private static void testInvalidValue(double mixer) {
+    try {
+      getTransparentRed(mixer);
+      Assert.fail("invalid value: " + mixer);
+    }
+    catch (IllegalArgumentException ignore) {
+    }
+  }
+
+  @Test
+  public void testMinNegativeValue() {
+    testInvalidValue(-Double.MIN_VALUE);
+  }
+
+  @Test
+  public void testMaxNegativeValue() {
+    testInvalidValue(-Double.MAX_VALUE);
+  }
+
+  @Test
+  public void testMaxPositiveValue() {
+    testInvalidValue(Double.MAX_VALUE);
+  }
+
+  @Test
+  public void testNegativeInfinity() {
+    testInvalidValue(Double.NEGATIVE_INFINITY);
+  }
+
+  @Test
+  public void testPositiveInfinity() {
+    testInvalidValue(Double.POSITIVE_INFINITY);
+  }
+
+  @Test
+  public void testNaN() {
+    testInvalidValue(Double.NaN);
+  }
+
+
   @NotNull
   private static MixedColorProducer getBlackWhite(double mixer) {
     return new MixedColorProducer(Color.BLACK, Color.WHITE, mixer);
