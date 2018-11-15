@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -547,6 +548,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   public GrAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) {
     return createElementFromText(annotationText, context, ANNOTATION, GrAnnotation.class);
+  }
+
+  @NotNull
+  @Override
+  public GrAnnotationNameValuePair createAnnotationAttribute(@NotNull String text, @Nullable PsiElement context) {
+    return createElementFromText(text, context, ANNOTATION_MEMBER_VALUE_PAIR, GrAnnotationNameValuePair.class);
   }
 
   @NotNull

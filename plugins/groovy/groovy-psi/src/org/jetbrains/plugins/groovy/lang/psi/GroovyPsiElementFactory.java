@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocMemberReference;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -243,6 +244,9 @@ public abstract class GroovyPsiElementFactory implements JVMElementFactory {
   @NotNull
   @Override
   public abstract GrAnnotation createAnnotationFromText(@NotNull @NonNls String annotationText, @Nullable PsiElement context) throws IncorrectOperationException;
+
+  @NotNull
+  public abstract GrAnnotationNameValuePair createAnnotationAttribute(@NotNull String text, @Nullable PsiElement context);
 
   @NotNull
   public abstract GrMethod createMethodFromSignature(@NotNull String name, @NotNull GrSignature signature);

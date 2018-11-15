@@ -169,12 +169,9 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
 
   public void addAttribute(@Nullable String name, @NotNull String value) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
-    String annotationText = name != null ? "@A(" + name + "=" + value + ")"
-                                         : "@A(" + value + ")";
-    GrAnnotation annotation = factory.createAnnotationFromText(annotationText, this);
-    myAnnotationArgList.addAttribute(annotation.getParameterList().getAttributes()[0]);
+    String text = name != null ? name + "=" + value : value;
+    myAnnotationArgList.addAttribute(factory.createAnnotationAttribute(text, this));
   }
-
 
   private class GrLightAnnotationArgumentList extends LightElement implements GrAnnotationArgumentList {
     private List<GrAnnotationNameValuePair> myAttributes = null;
