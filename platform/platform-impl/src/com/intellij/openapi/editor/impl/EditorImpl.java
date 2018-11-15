@@ -129,7 +129,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private static final int MIN_FONT_SIZE = 8;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorImpl");
   private static final Key DND_COMMAND_KEY = Key.create("DndCommand");
+  /**
+   * @deprecated Use {@link EditorMouseHoverPopupControl} instead. To be removed in 2020.1.
+   */
   @NonNls
+  @Deprecated
   public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
@@ -4696,11 +4700,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         MouseEvent e = event.getMouseEvent();
         final Component c = e.getComponent();
         if (c != null && c.isShowing()) {
-          popupMenu.getComponent().show(c, e.getX(), e.getY());
+          JPopupMenu popupComponent = popupMenu.getComponent();
+          disableHoverPopupsWhileShowing(popupComponent);
+          popupComponent.show(c, e.getX(), e.getY());
         }
         e.consume();
       }
     }
+  }
+
+  private void disableHoverPopupsWhileShowing(Component popupComponent) {
+    new UiNotifyConnector.Once(popupComponent, new Activatable.Adapter() {
+      @Override
+      public void showNotify() {
+        EditorMouseHoverPopupControl.disablePopups(EditorImpl.this);
+        new UiNotifyConnector.Once(popupComponent, new Adapter() {
+          @Override
+          public void hideNotify() {
+            EditorMouseHoverPopupControl.enablePopups(EditorImpl.this);
+          }
+        });
+      }
+    });
   }
 
   @Override
