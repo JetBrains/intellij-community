@@ -1424,4 +1424,25 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     }
     assertMergedModuleCompileLibDepScope("project", depName);
   }
+  
+  @Test
+  @TargetVersions("4.6+")
+  public void testAnnotationProcessorDependencies() throws Exception {
+    importProject(
+      "apply plugin: 'java'\n" +
+    "\n" +
+    "repositories {\n" +
+    "    mavenCentral()\n" +
+    "}\n" +
+    "\n" +
+    "dependencies {\n" +
+    "    compileOnly 'org.projectlombok:lombok:1.16.2'\n" +
+    "    testCompileOnly 'org.projectlombok:lombok:1.16.2'\n" +
+    "    annotationProcessor 'org.projectlombok:lombok:1.16.2'\n" +
+    "}\n");
+
+    final String depName = "Gradle: org.projectlombok:lombok:1.16.2";
+    assertModuleLibDepScope("project.main", depName, DependencyScope.PROVIDED);
+
+  }
 }
