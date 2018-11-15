@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.EventDispatcher
 import git4idea.commands.Git
 import git4idea.repo.GitRemote
@@ -36,10 +35,6 @@ internal class GithubPullRequestsDataLoader(private val project: Project,
     .build<Long, GithubPullRequestDataProviderImpl>()
 
   private val invalidationEventDispatcher = EventDispatcher.create(ProviderChangedListener::class.java)
-
-  init {
-    LowMemoryWatcher.register(Runnable { invalidateAllData() }, this)
-  }
 
   @CalledInAwt
   fun reloadDetails(number: Long) {
