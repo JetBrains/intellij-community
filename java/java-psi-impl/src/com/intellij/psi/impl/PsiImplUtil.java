@@ -636,7 +636,7 @@ public class PsiImplUtil {
    * Returns enclosing label statement for given label expression
    *
    * @param expression switch label expression
-   * @return enclosing label statement or null if given expression is not a label statement
+   * @return enclosing label statement or null if given expression is not a label statement expression
    */
   @Nullable
   public static PsiSwitchLabelStatementBase getSwitchLabel(@NotNull PsiExpression expression) {
