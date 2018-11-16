@@ -9,6 +9,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+/**
+ * A special field with associated information about its value
+ */
 public final class SpecialFieldValue {
   private final @NotNull SpecialField myField;
   private final @Nullable Object myValue;
