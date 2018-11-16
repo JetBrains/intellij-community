@@ -45,6 +45,10 @@ class ActionUpdater {
    * @return actions from the given and nested non-popup groups that are visible after updating
    */
   List<AnAction> expandActionGroup(ActionGroup group, boolean hideDisabled, boolean transparentOnly) {
+    return removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled, transparentOnly));
+  }
+
+  private List<AnAction> doExpandActionGroup(ActionGroup group, boolean hideDisabled, boolean transparentOnly) {
     AnActionEvent e = createActionEvent(group);
     if (!doUpdate(myModalContext, group, e)) return Collections.emptyList();
 
@@ -52,11 +56,7 @@ class ActionUpdater {
       return Collections.emptyList();
     }
 
-    List<AnAction> result = new ArrayList<>();
-    for (AnAction child : getGroupChildren(group, e)) {
-      result.addAll(expandGroupChild(child, hideDisabled, transparentOnly));
-    }
-    return removeUnnecessarySeparators(result);
+    return ContainerUtil.concat(getGroupChildren(group, e), child -> expandGroupChild(child, hideDisabled, transparentOnly));
   }
 
   private static List<AnAction> getGroupChildren(ActionGroup group, AnActionEvent e) {
@@ -96,7 +96,7 @@ class ActionUpdater {
         return Collections.singletonList(child);
       }
 
-      return expandActionGroup((ActionGroup)child, hideDisabled || actionGroup instanceof CompactActionGroup, false);
+      return doExpandActionGroup((ActionGroup)child, hideDisabled || actionGroup instanceof CompactActionGroup, false);
     }
 
     return Collections.singletonList(child);
