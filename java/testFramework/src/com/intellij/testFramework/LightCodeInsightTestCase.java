@@ -42,7 +42,8 @@ public abstract class LightCodeInsightTestCase extends LightPlatformCodeInsightT
     if (matcher.find()) {
       LanguageLevel level = LanguageLevel.parse(matcher.group(1));
       if (level != null) {
-        if (!matcher.group(2).isEmpty()) {
+        String group = matcher.group(2);
+        if (group != null) {
           level = LanguageLevel.valueOf(level + "_PREVIEW");
         }
         return level;
