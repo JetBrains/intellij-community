@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -24,59 +24,15 @@ public class Status {
   private StatusType myContentsStatus;
   private StatusType myPropertiesStatus;
   private StatusType myRemoteContentsStatus;
-  private StatusType myRemoteNodeStatus;
   private StatusType myRemotePropertiesStatus;
   private boolean myIsLocked;
   private boolean myIsCopied;
   private boolean myIsSwitched;
-  private Url myCopyFromURL;
   @Nullable private Lock myRemoteLock;
   @Nullable private Lock myLocalLock;
   private Revision myRemoteRevision;
   private String myChangelistName;
-  @Nullable private TreeConflictDescription myTreeConflict;
   private boolean myIsConflicted;
-
-  private StatusType myNodeStatus;
-  private Url myRepositoryRootURL;
-
-  public Status(Url url,
-                File file,
-                @NotNull NodeKind kind,
-                @Nullable Revision revision,
-                @Nullable Revision committedRevision,
-                StatusType contentsStatus,
-                StatusType propertiesStatus,
-                StatusType remoteContentsStatus,
-                StatusType remotePropertiesStatus,
-                boolean isLocked,
-                boolean isCopied,
-                boolean isSwitched,
-                Url copyFromURL,
-                @Nullable Lock remoteLock,
-                @Nullable Lock localLock,
-                String changelistName,
-                @Nullable TreeConflictDescription treeConflict) {
-    myURL = url;
-    myFile = file;
-    myKind = kind;
-    myRevision = revision == null ? Revision.UNDEFINED : revision;
-    myCommittedRevision = committedRevision == null ? Revision.UNDEFINED : committedRevision;
-    myContentsStatus = contentsStatus == null ? StatusType.STATUS_NONE : contentsStatus;
-    myPropertiesStatus = propertiesStatus == null ? StatusType.STATUS_NONE : propertiesStatus;
-    myRemoteContentsStatus = remoteContentsStatus == null ? StatusType.STATUS_NONE : remoteContentsStatus;
-    myRemotePropertiesStatus = remotePropertiesStatus == null ? StatusType.STATUS_NONE : remotePropertiesStatus;
-    myRemoteNodeStatus = StatusType.STATUS_NONE;
-    myIsLocked = isLocked;
-    myIsCopied = isCopied;
-    myIsSwitched = isSwitched;
-    myCopyFromURL = copyFromURL;
-    myRemoteLock = remoteLock;
-    myLocalLock = localLock;
-    myChangelistName = changelistName;
-    myTreeConflict = treeConflict;
-    myRemoteRevision = Revision.UNDEFINED;
-  }
 
   public Status() {
     setRevision(Revision.UNDEFINED);
@@ -152,7 +108,7 @@ public class Status {
 
   @Nullable
   public Url getCopyFromURL() {
-    return myCopyFromURL;
+    return null;
   }
 
   @Nullable
@@ -175,7 +131,7 @@ public class Status {
 
   @Nullable
   public TreeConflictDescription getTreeConflict() {
-    return myTreeConflict;
+    return null;
   }
 
   public boolean isConflicted() {
@@ -183,18 +139,15 @@ public class Status {
   }
 
   public StatusType getRemoteNodeStatus() {
-    return myRemoteNodeStatus;
+    return null;
   }
 
   public StatusType getNodeStatus() {
-    if (myNodeStatus == null) {
-      return myContentsStatus;
-    }
-    return myNodeStatus;
+    return myContentsStatus;
   }
 
   public Url getRepositoryRootURL() {
-    return myRepositoryRootURL;
+    return null;
   }
 
   public void setURL(Url uRL) {
@@ -259,21 +212,5 @@ public class Status {
 
   public void setIsConflicted(boolean isConflicted) {
     myIsConflicted = isConflicted;
-  }
-
-  public void setRemoteNodeStatus(StatusType remoteNodeStatus) {
-    myRemoteNodeStatus = remoteNodeStatus;
-  }
-
-  public void setNodeStatus(StatusType nodeStatus) {
-    myNodeStatus = nodeStatus;
-  }
-
-  public void setRepositoryRootURL(Url repositoryRootURL) {
-    myRepositoryRootURL = repositoryRootURL;
-  }
-
-  public void setRemoteRevision(Revision remoteRevision) {
-    myRemoteRevision = remoteRevision;
   }
 }

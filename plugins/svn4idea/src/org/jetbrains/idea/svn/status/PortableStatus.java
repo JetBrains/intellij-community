@@ -9,11 +9,8 @@ import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.lock.Lock;
 
 import java.io.File;
-import java.util.Date;
-import java.util.Map;
 
 /**
  * TODO: Merge PortableStatus and Status to single class.
@@ -28,72 +25,6 @@ public class PortableStatus extends Status {
   private Info myInfo;
   private String myPath;
   private boolean myFileExists;
-
-  /**
-   * Constructs an <b>SVNStatus</b> object filling it with status information
-   * details.
-   * <p/>
-   * <p/>
-   * Used by SVNKit internals to construct and initialize an <b>SVNStatus</b>
-   * object. It's not intended for users (from an API point of view).
-   *
-   * @param url                    item's repository location
-   * @param file                   item's path in a File representation
-   * @param kind                   item's node kind
-   * @param revision               item's working revision
-   * @param committedRevision      item's last changed revision
-   * @param committedDate          item's last changed date
-   * @param author                 item's last commit author
-   * @param contentsStatus         local status of item's contents
-   * @param propertiesStatus       local status of item's properties
-   * @param remoteContentsStatus   status of item's contents against a repository
-   * @param remotePropertiesStatus status of item's properties against a repository
-   * @param isLocked               if the item is locked by the driver (not a user lock)
-   * @param isCopied               if the item is added with history
-   * @param isSwitched             if the item is switched to a different URL
-   * @param isFileExternal         tells if the item is an external file
-   * @param conflictNewFile        temp file with latest changes from the repository
-   * @param conflictOldFile        temp file just as the conflicting one was at the BASE revision
-   * @param conflictWrkFile        temp file with all user's current local modifications
-   * @param projRejectFile         temp file describing properties conflicts
-   * @param copyFromURL            url of the item's ancestor from which the item was copied
-   * @param copyFromRevision       item's ancestor revision from which the item was copied
-   * @param remoteLock             item's lock in the repository
-   * @param localLock              item's local lock
-   * @param entryProperties        item's SVN specific '&lt;entry' properties
-   * @param changelistName         changelist name which the item belongs to
-   * @param wcFormatVersion        working copy format number
-   * @param treeConflict           tree conflict description
-   * @since 1.3
-   */
-  public PortableStatus(Url url,
-                        File file,
-                        @NotNull NodeKind kind,
-                        Revision revision,
-                        Revision committedRevision,
-                        Date committedDate,
-                        String author,
-                        StatusType contentsStatus,
-                        StatusType propertiesStatus,
-                        StatusType remoteContentsStatus,
-                        StatusType remotePropertiesStatus,
-                        boolean isLocked,
-                        boolean isCopied,
-                        boolean isSwitched,
-                        boolean isFileExternal,
-                        @Nullable Lock remoteLock,
-                        @Nullable Lock localLock,
-                        Map entryProperties,
-                        String changelistName,
-                        int wcFormatVersion,
-                        boolean isConflicted,
-                        Getter<Info> infoGetter) {
-    super(url, file, kind, revision, committedRevision, contentsStatus, propertiesStatus, remoteContentsStatus,
-          remotePropertiesStatus, isLocked, isCopied, isSwitched, null, remoteLock,
-          localLock, changelistName, null);
-    myConflicted = isConflicted;
-    myInfoGetter = infoGetter == null ? () -> null : infoGetter;
-  }
 
   public PortableStatus() {
     myInfoGetter = () -> null;
