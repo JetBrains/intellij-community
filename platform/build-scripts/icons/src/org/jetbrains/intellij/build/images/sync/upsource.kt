@@ -68,7 +68,9 @@ internal fun createReview(projectId: String, branch: String, commits: Collection
       "reviewId" : "$reviewId"
     }
   }""")
-  return UpsourceReview(reviewId, projectId, "$UPSOURCE/$projectId/review/$reviewId")
+  val review = UpsourceReview(reviewId, projectId, "$UPSOURCE/$projectId/review/$reviewId")
+  postComment(projectId, review, "Please review changes and run cherry-pick (don't forget to delete tmp branch $branch)")
+  return review
 }
 
 private fun getBranchRevisions(projectId: String, branch: String, commits: Collection<String>) = commits.parallelStream().map {
