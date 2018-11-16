@@ -155,6 +155,15 @@ public class MethodEvaluator implements Evaluator {
       if (jdiMethod == null) {
         throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.no.instance.method", methodName));
       }
+      if (myMustBeVararg && !jdiMethod.isVarArgs()) {
+        // try to find the correct varargs method
+        for (Method m : _refType.allMethods()) {
+          if (m.isVarArgs() && m.name().equals(myMethodName) && m.signature().equals(signature)) {
+            jdiMethod = m;
+            break;
+          }
+        }
+      }
       if (requiresSuperObject) {
         return debugProcess.invokeInstanceMethod(context, objRef, jdiMethod, args, ObjectReference.INVOKE_NONVIRTUAL);
       }
