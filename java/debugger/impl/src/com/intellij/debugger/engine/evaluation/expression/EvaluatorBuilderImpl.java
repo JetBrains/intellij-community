@@ -228,6 +228,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitStatement(PsiStatement statement) {
+      LOG.error(DebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
       throwEvaluateException(DebuggerBundle.message("evaluation.error.statement.not.supported", statement.getText()));
     }
 
