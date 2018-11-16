@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -18,12 +19,12 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
   private static final int USED_FOR_WRITING_MASK = 0x20000;
   private static final int ASSIGNED_ONLY_IN_INITIALIZER_MASK = 0x40000;
 
-  RefFieldImpl(@NotNull RefClass ownerClass, UField field, PsiElement psi, RefManager manager) {
+  RefFieldImpl(@NotNull RefElement owner, UField field, PsiElement psi, RefManager manager) {
     super(field, psi, manager);
 
-    ((RefClassImpl)ownerClass).add(this);
+    ((WritableRefEntity)owner).add(this);
 
-    if (ownerClass.isInterface()) {
+    if (owner instanceof RefClass && ((RefClass)owner).isInterface()) {
       setIsStatic(true);
       setIsFinal(true);
     }
@@ -141,7 +142,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
 
   @Override
   public RefClass getOwnerClass() {
-    return (RefClass) getOwner();
+    return ObjectUtils.tryCast(getOwner(), RefClass.class);
   }
 
   @Override
