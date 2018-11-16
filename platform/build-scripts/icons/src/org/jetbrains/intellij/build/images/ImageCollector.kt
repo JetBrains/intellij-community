@@ -198,7 +198,7 @@ internal class ImageCollector(private val projectHome: Path, private val iconsOn
   private data class DeprecatedEntry(val matcher: Pattern, val data: DeprecationData)
   private data class OwnDeprecatedIcon(val relativeFile: String, val data: DeprecationData)
 
-  private inner class IconRobotsData(private val parent: IconRobotsData? = null) {
+  internal inner class IconRobotsData(private val parent: IconRobotsData? = null) {
     private val skip: MutableList<Pattern> = ArrayList()
     private val used: MutableList<Pattern> = ArrayList()
     private val deprecated: MutableList<DeprecatedEntry> = ArrayList()

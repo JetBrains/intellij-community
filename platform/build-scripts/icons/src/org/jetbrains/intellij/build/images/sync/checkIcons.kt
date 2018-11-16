@@ -84,9 +84,9 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
 private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
 
 private fun readIconsRepo(iconsRepo: File, iconsRepoDir: String) = protectStdErr {
-  listGitObjects(iconsRepo, iconsRepoDir) {
+  listGitObjects(iconsRepo, iconsRepoDir) { file, _ ->
     // read icon hashes
-    isValidIcon(it.toPath())
+    isValidIcon(file.toPath())
   }.also {
     if (it.isEmpty()) error("Icons repo doesn't contain icons")
   }
@@ -98,9 +98,9 @@ private fun readDevRepo(devRepoRoot: File, devRepoDir: String,
   log("Found ${testRoots.size} test roots")
   if (skipDirsPattern != null) log("Using pattern $skipDirsPattern to skip dirs")
   val skipDirsRegex = skipDirsPattern?.toRegex()
-  val devRepoIconFilter = { file: File ->
+  val devRepoIconFilter = { file: File, repo: File ->
     // read icon hashes skipping test roots
-    !inTestRoot(file, testRoots, skipDirsRegex) && isValidIcon(file.toPath())
+    !doSkip(file, repo, testRoots, skipDirsRegex) && isValidIcon(file.toPath())
   }
   val devIcons = if (devRepoVcsRoots.size == 1
                      && devRepoVcsRoots.contains(devRepoRoot)) {
@@ -160,18 +160,24 @@ private fun isValidIcon(file: Path) = protectStdErr {
   }
 }
 
-private val skippedDirs = mutableSetOf<File>()
+@Volatile
+private var skippedDirs = emptySet<File>()
+private var skippedDirsGuard = Any()
 
-private fun inTestRoot(file: File, testRoots: Set<File>, skipDirsRegex: Regex?): Boolean {
-  val inTestRoot = file.isDirectory &&
-                   // is test root
-                   (testRoots.contains(file) ||
-                    // or matches pattern
-                    skipDirsRegex != null && file.name.matches(skipDirsRegex))
-  if (inTestRoot) skippedDirs += file
-  return inTestRoot
+private fun doSkip(file: File, repo: File, testRoots: Set<File>, skipDirsRegex: Regex?): Boolean {
+  val skipDir = file.isDirectory &&
+                // is test root
+                (testRoots.contains(file) ||
+                 // or matches skip dir pattern
+                 skipDirsRegex != null && file.name.matches(skipDirsRegex))
+  if (skipDir) synchronized(skippedDirsGuard) {
+    skippedDirs += file
+  }
+  return skipDir ||
+         // or skipped in icon-robots.txt
+         IconRobotsDataReader.isSkipped(file, repo) ||
          // or check parent
-         || file.parentFile != null && inTestRoot(file.parentFile, testRoots, skipDirsRegex)
+         file.parentFile != null && doSkip(file.parentFile, repo, testRoots, skipDirsRegex)
 }
 
 private fun removedByDesigners(addedByDev: Collection<String>,

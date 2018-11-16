@@ -92,3 +92,7 @@ internal fun <T> retry(maxRetries: Int = 20,
   }
   error("Unable to complete")
 }
+
+internal fun File.isAncestor(file: File): Boolean = this == file ||
+                                                    file.parentFile != null &&
+                                                    this.isAncestor(file.parentFile)

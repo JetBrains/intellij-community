@@ -24,13 +24,13 @@ private val GIT = (System.getenv("TEAMCITY_GIT_PATH") ?: System.getenv("GIT") ?:
  */
 internal fun listGitObjects(
   repo: File, dirToList: String?,
-  fileFilter: (File) -> Boolean = { true }
+  fileFilter: (File, File) -> Boolean = { _, _ -> true }
 ): Map<String, GitObject> = listGitTree(repo, dirToList, fileFilter)
   .collect(Collectors.toMap({ it.first }, { it.second }))
 
 private fun listGitTree(
   repo: File, dirToList: String?,
-  fileFilter: (File) -> Boolean
+  fileFilter: (File, File) -> Boolean
 ): Stream<Pair<String, GitObject>> {
   val relativeDirToList = dirToList?.let {
     File(it).relativeTo(repo).path
@@ -54,7 +54,7 @@ private fun listGitTree(
         .let { it[0].splitWithSpace() + it[1] }
         .also { if (it.size != 4) error(line) }
     }
-    .filter { fileFilter(repo.resolve(it[3])) }
+    .filter { fileFilter(repo.resolve(it[3]), repo) }
     // <file>, <object>, repo
     .map { GitObject(it[3], it[2], repo) }
     .map { it.path.removePrefix("$relativeDirToList/") to it }
@@ -67,7 +67,7 @@ private fun listGitTree(
  */
 internal fun listGitObjects(
   root: File, repos: List<File>,
-  fileFilter: (File) -> Boolean = { true }
+  fileFilter: (File, File) -> Boolean = { _, _ -> true }
 ): Map<String, GitObject> = repos.parallelStream().flatMap { repo ->
   listGitTree(repo, null, fileFilter).map {
     // root relative <file> path to git object
