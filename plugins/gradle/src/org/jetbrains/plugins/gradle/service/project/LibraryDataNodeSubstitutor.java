@@ -27,6 +27,10 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.fin
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachGradleSdkSources;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachSourcesAndJavadocFromGradleCacheIfNeeded;
 
+/**
+ * {@link LibraryDataNodeSubstitutor} provides the facility to replace library dependencies with the related module dependencies
+ * based on artifacts and source compilation output mapping
+ */
 @ApiStatus.Experimental
 public class LibraryDataNodeSubstitutor {
   private @Nullable final File gradleUserHomeDir;
