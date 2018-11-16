@@ -1112,10 +1112,10 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "aapt-proto-jarjar",
+    name = "aapt-proto",
     visibility = ["//visibility:public"],
-    exports = ["//tools/base/sdk-common/aapt-proto-jar-generator:aapt-proto-jarjar"],
-    runtime_deps = ["//tools/base/sdk-common/aapt-proto-jar-generator:aapt-proto-jarjar"],
+    exports = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/aapt2-proto/0.3.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/com/android/tools/build/aapt2-proto/0.3.1:jar"],
 )
 
 # managed by go/iml_to_build
