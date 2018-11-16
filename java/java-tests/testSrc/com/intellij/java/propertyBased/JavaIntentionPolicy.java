@@ -173,13 +173,15 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
     while (true) {
       PsiExpression expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
       if (expression == null) break;
+      if (PsiTreeUtil.getParentOfType(expression, PsiAnnotationMethod.class, true, PsiStatement.class) != null) {
+        break;
+      }
       while (shouldParenthesizeParent(expression)) {
         expression = (PsiExpression)expression.getParent();
       }
       PsiElement parent = expression.getParent();
       if (ExpressionUtils.isVoidContext(expression) ||
           parent instanceof PsiNameValuePair ||
-          parent instanceof PsiAnnotationMethod ||
           parent instanceof PsiArrayInitializerMemberValue ||
           parent instanceof PsiSwitchLabelStatement) {
         break;
