@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_KEY
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DELEGATES_TO_STRATEGY_KEY
+import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 
 /**
  * Created by Nikita.Skvortsov
@@ -27,6 +28,10 @@ class GradleIdeaSettingsContributor : GradleMethodContextContributor {
 
   override fun process(methodCallInfo: MutableList<String>, processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
     if (!Registry.`is`(ConfigurationDataService.EXTERNAL_SYSTEM_CONFIGURATION_IMPORT_ENABLED)) {
+      return true
+    }
+
+    if (!processor.shouldProcessMethods()) {
       return true
     }
 
