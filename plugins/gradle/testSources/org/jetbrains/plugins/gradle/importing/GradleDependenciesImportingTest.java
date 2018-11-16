@@ -1383,10 +1383,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     importProject(
       "apply plugin: 'java'\n" +
     "\n" +
-    "repositories {\n" +
-    "    mavenCentral()\n" +
-    "}\n" +
-    "\n" +
     "dependencies {\n" +
     "    compileOnly 'org.projectlombok:lombok:1.16.2'\n" +
     "    testCompileOnly 'org.projectlombok:lombok:1.16.2'\n" +
