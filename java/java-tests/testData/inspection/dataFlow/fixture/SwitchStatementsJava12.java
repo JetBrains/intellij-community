@@ -39,4 +39,19 @@ public class SwitchStatementsJava12 {
       }
     }
   }
+  
+  void testOnlyBranch(int x) {
+    if (x > 1) return;
+    switch (x) {
+      case 0 -> System.out.println("zero");
+      case 1 -> System.out.println("one");
+      case <warning descr="Switch label '2' is unreachable">2</warning> -> System.out.println("two");
+    }
+    if (x < 1) return;
+    switch (x) {
+      case 0 -> System.out.println("zero");
+      case <warning descr="Switch label '1' is the only reachable in the whole switch">1</warning> -> System.out.println("one");
+      case 2 -> System.out.println("two");
+    }
+  }
 }

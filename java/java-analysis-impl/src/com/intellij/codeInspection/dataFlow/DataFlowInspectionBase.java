@@ -317,7 +317,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(SwitchUtils.getLabelStatementForLabel(label));
       PsiSwitchBlock statement = labelStatement.getEnclosingSwitchBlock();
       if (statement == null) continue;
-      if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatement.class))
+      if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
         .skip(1).map(PsiSwitchLabelStatementBase::getCaseValues)
         .nonNull().flatArray(PsiExpressionList::getExpressions).allMatch(falseLabels::contains)) {
         continue;
