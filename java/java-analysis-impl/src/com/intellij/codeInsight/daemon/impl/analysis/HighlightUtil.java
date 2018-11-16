@@ -2565,6 +2565,7 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
+  @Nullable
   static HighlightInfo createIncompatibleTypeHighlightInfo(PsiType lType, PsiType rType, @NotNull TextRange textRange, int navigationShift) {
     Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> lTypeData = typeData(lType);
     Trinity<PsiType, PsiTypeParameter[], PsiSubstitutor> rTypeData = typeData(rType);
