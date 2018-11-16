@@ -401,9 +401,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitBreakStatement(PsiBreakStatement statement) {
     startElement(statement);
+    jumpOut(statement.findExitedStatement());
+    finishElement(statement);
+  }
 
-    PsiStatement exitedStatement = statement.findExitedStatement();
-
+  private void jumpOut(PsiElement exitedStatement) {
     if (exitedStatement != null && PsiTreeUtil.isAncestor(myCodeFragment, exitedStatement, false)) {
       controlTransfer(new InstructionTransfer(getEndOffset(exitedStatement), getVariablesInside(exitedStatement)),
                       getTrapsInsideElement(exitedStatement));
@@ -411,8 +413,6 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       // Jumping out of analyzed code fragment
       controlTransfer(ReturnTransfer.INSTANCE, getTrapsInsideElement(myCodeFragment));
     }
-
-    finishElement(statement);
   }
 
   private void controlTransfer(@NotNull TransferTarget target, FList<Trap> traps) {
@@ -844,6 +844,19 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
+  @Override
+  public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
+    startElement(statement);
+    PsiStatement body = statement.getBody();
+    if (body != null) {
+      body.accept(this);
+      if (!(body instanceof PsiThrowStatement)) {
+        jumpOut(statement.getEnclosingSwitchBlock());
+      }
+    }
+    finishElement(statement);
+  }
+
   @Override public void visitSwitchStatement(PsiSwitchStatement switchStmt) {
     startElement(switchStmt);
     PsiExpression caseExpression = switchStmt.getExpression();
@@ -889,34 +902,38 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
-      PsiSwitchLabelStatement defaultLabel = null;
       ControlFlowOffset offset = null;
+      PsiSwitchLabelStatementBase defaultLabel = null;
       for (PsiStatement statement : statements) {
-        if (statement instanceof PsiSwitchLabelStatement) {
-          PsiSwitchLabelStatement psiLabelStatement = (PsiSwitchLabelStatement)statement;
+        if (statement instanceof PsiSwitchLabelStatementBase) {
+          PsiSwitchLabelStatementBase psiLabelStatement = (PsiSwitchLabelStatementBase)statement;
           if (psiLabelStatement.isDefaultCase()) {
             defaultLabel = psiLabelStatement;
           }
           else {
             try {
               offset = getStartOffset(statement);
-              PsiExpression caseValue = psiLabelStatement.getCaseValue();
+              PsiExpressionList values = psiLabelStatement.getCaseValues();
+              if (values != null) {
+                for (PsiExpression caseValue : values.getExpressions()) {
 
-              if (enumValues != null && caseValue instanceof PsiReferenceExpression) {
-                //noinspection SuspiciousMethodCalls
-                enumValues.remove(((PsiReferenceExpression)caseValue).resolve());
-              }
+                  if (enumValues != null && caseValue instanceof PsiReferenceExpression) {
+                    //noinspection SuspiciousMethodCalls
+                    enumValues.remove(((PsiReferenceExpression)caseValue).resolve());
+                  }
 
-              if (caseValue != null && expressionValue != null) {
-                addInstruction(new PushInstruction(expressionValue, null));
-                caseValue.accept(this);
-                addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
-              }
-              else {
-                pushUnknown();
-              }
+                  if (caseValue != null && expressionValue != null) {
+                    addInstruction(new PushInstruction(expressionValue, null));
+                    caseValue.accept(this);
+                    addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, PsiType.BOOLEAN));
+                  }
+                  else {
+                    pushUnknown();
+                  }
 
-              addInstruction(new ConditionalGotoInstruction(offset, false, statement));
+                  addInstruction(new ConditionalGotoInstruction(offset, false, caseValue));
+                }
+              }
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);

@@ -1,7 +1,7 @@
 class Scratch {
   public static void main(String[] args) {
     switch("ping") {
-      <warning descr="Switch label 'case \"ping\":' is the only reachable in the whole switch">case "ping":</warning>
+      case <warning descr="Switch label '\"ping\"' is the only reachable in the whole switch">"ping"</warning>:
         System.out.println("ping");
         break;
       case "pong":
@@ -17,7 +17,7 @@ class Scratch {
       case "pong":
         System.out.println("pong");
         break;
-      <warning descr="Switch label 'case \"ping\":' is the only reachable in the whole switch">case "ping":</warning>
+      case <warning descr="Switch label '\"ping\"' is the only reachable in the whole switch">"ping"</warning>:
         System.out.println("ping");
         break;
       case "simple":
@@ -33,7 +33,7 @@ class Scratch {
       case "simple":
         System.out.println("simple");
         break;
-      <warning descr="Switch label 'case \"ping\":' is the only reachable in the whole switch">case "ping":</warning>
+      case <warning descr="Switch label '\"ping\"' is the only reachable in the whole switch">"ping"</warning>:
         System.out.println("ping");
         break;
       default:

@@ -17,7 +17,7 @@ class StringEquality {
     switch(s) {
       case "bar":
       case "baz":
-      <warning descr="Switch label 'case \"foo\":' is unreachable">case "foo":</warning>
+      case <warning descr="Switch label '\"foo\"' is unreachable">"foo"</warning>:
     }
   }
 

@@ -305,25 +305,30 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   private void reportUnreachableSwitchBranches(Set<Instruction> trueSet, Set<Instruction> falseSet, ProblemsHolder holder) {
-    Set<PsiSwitchStatement> coveredSwitches = new HashSet<>();
-    Set<PsiSwitchLabelStatement> trueLabels = StreamEx.of(trueSet).select(BranchingInstruction.class)
-      .map(BranchingInstruction::getPsiAnchor).select(PsiSwitchLabelStatement.class).toSet();
-    Set<PsiSwitchLabelStatement> falseLabels = StreamEx.of(falseSet).select(BranchingInstruction.class)
-      .map(BranchingInstruction::getPsiAnchor).select(PsiSwitchLabelStatement.class).toSet();
+    Set<PsiSwitchBlock> coveredSwitches = new HashSet<>();
+    Set<PsiExpression> trueLabels = StreamEx.of(trueSet).select(ConditionalGotoInstruction.class)
+      .map(ConditionalGotoInstruction::getPsiAnchor).select(PsiExpression.class)
+      .filter(e -> SwitchUtils.getLabelStatementForLabel(e) != null).toSet();
+    Set<PsiExpression> falseLabels = StreamEx.of(falseSet).select(ConditionalGotoInstruction.class)
+      .map(ConditionalGotoInstruction::getPsiAnchor).select(PsiExpression.class)
+      .filter(e -> SwitchUtils.getLabelStatementForLabel(e) != null).toSet();
 
-    for (PsiSwitchLabelStatement label : trueLabels) {
-      PsiSwitchStatement statement = label.getEnclosingSwitchStatement();
+    for (PsiExpression label : trueLabels) {
+      PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(SwitchUtils.getLabelStatementForLabel(label));
+      PsiSwitchBlock statement = labelStatement.getEnclosingSwitchBlock();
       if (statement == null) continue;
-      if (!StreamEx.iterate(label, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatement.class))
-        .skip(1).allMatch(falseLabels::contains)) {
+      if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatement.class))
+        .skip(1).map(PsiSwitchLabelStatementBase::getCaseValues)
+        .nonNull().flatArray(PsiExpressionList::getExpressions).allMatch(falseLabels::contains)) {
         continue;
       }
       coveredSwitches.add(statement);
       holder.registerProblem(label, InspectionsBundle.message("dataflow.message.only.switch.label"),
                              createUnwrapSwitchLabelFix());
     }
-    for (PsiSwitchLabelStatement label : falseLabels) {
-      if (!coveredSwitches.contains(label.getEnclosingSwitchStatement())) {
+    for (PsiExpression label : falseLabels) {
+      PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(SwitchUtils.getLabelStatementForLabel(label));
+      if (!coveredSwitches.contains(labelStatement.getEnclosingSwitchBlock())) {
         holder.registerProblem(label, InspectionsBundle.message("dataflow.message.unreachable.switch.label"),
                                new DeleteSwitchLabelFix(label));
       }
@@ -724,7 +729,9 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         reportConstantBoolean(holder, psiAnchor, reportedAnchors, true);
       }
     }
-    else if (psiAnchor != null && !(psiAnchor instanceof PsiSwitchLabelStatement) && !isFlagCheck(psiAnchor)) {
+    else if (psiAnchor != null && 
+             (!(psiAnchor instanceof PsiExpression) || SwitchUtils.getLabelStatementForLabel((PsiExpression)psiAnchor) == null) && 
+             !isFlagCheck(psiAnchor)) {
       boolean evaluatesToTrue = trueSet.contains(instruction);
       final PsiElement parent = psiAnchor.getParent();
       if (parent instanceof PsiAssignmentExpression &&
