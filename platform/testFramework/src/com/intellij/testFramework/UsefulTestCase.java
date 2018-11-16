@@ -749,9 +749,13 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertSameLines(@NotNull String expected, @NotNull String actual) {
+    assertSameLines(null, expected, actual);
+  }
+
+  public static void assertSameLines(@Nullable String message, @NotNull String expected, @NotNull String actual) {
     String expectedText = StringUtil.convertLineSeparators(expected.trim());
     String actualText = StringUtil.convertLineSeparators(actual.trim());
-    Assert.assertEquals(expectedText, actualText);
+    Assert.assertEquals(message, expectedText, actualText);
   }
 
   public static void assertExists(@NotNull File file){
