@@ -16,7 +16,6 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,26 +62,10 @@ public class Utils{
                                        @NotNull DataContext context,
                                        String place,
                                        ActionManager actionManager){
-    expandActionGroup(isInModalContext, group, list, presentationFactory, context, place, actionManager, false, group instanceof CompactActionGroup);
+    expandActionGroup(isInModalContext, group, list, presentationFactory, context,
+                      place, actionManager, false, group instanceof CompactActionGroup, false, false);
   }
 
-
-  /**
-   * @param list this list contains expanded actions.
-   * @param actionManager manager
-   */
-  private static void expandActionGroup(boolean isInModalContext,
-                                        @NotNull ActionGroup group,
-                                        List<? super AnAction> list,
-                                        PresentationFactory presentationFactory,
-                                        DataContext context,
-                                        @NotNull String place,
-                                        ActionManager actionManager,
-                                        boolean transparentOnly,
-                                        boolean hideDisabled) {
-    expandActionGroup(isInModalContext , group, list, presentationFactory, context,
-                      place, actionManager, transparentOnly, hideDisabled, false, false);
-  }
 
   /**
    * @param list this list contains expanded actions.
@@ -109,17 +92,15 @@ public class Utils{
     ActionUpdater.doUpdate(false, anAction, event1);
   }
 
-  public static void fillMenu(@NotNull final ActionGroup group,
-                              final JComponent component,
-                              final boolean enableMnemonics,
-                              final PresentationFactory presentationFactory,
-                              @NotNull DataContext context,
-                              final String place,
-                              final boolean isWindowMenu,
-                              final boolean mayDataContextBeInvalid,
-                              boolean isInModalContext,
-                              final boolean useDarkIcons) {
-    final ActionCallback menuBuilt = new ActionCallback();
+  static void fillMenu(@NotNull ActionGroup group,
+                       JComponent component,
+                       boolean enableMnemonics,
+                       PresentationFactory presentationFactory,
+                       @NotNull DataContext context,
+                       String place,
+                       boolean isWindowMenu,
+                       boolean isInModalContext,
+                       boolean useDarkIcons) {
     final boolean checked = group instanceof CheckedActionGroup;
 
     ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false);
@@ -195,11 +176,7 @@ public class Utils{
             ((ActionMenuItem)each).prepare();
           }
         }
-        menuBuilt.setDone();
       });
-    }
-    else {
-      menuBuilt.setDone();
     }
   }
 }
