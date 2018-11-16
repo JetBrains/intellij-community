@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -10,7 +9,6 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SizedIcon;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NonNls;
@@ -113,8 +111,7 @@ public class ActionStepBuilder extends PresentationFactory {
   }
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
-    List<AnAction> newVisibleActions = ContainerUtil.newArrayListWithCapacity(100);
-    Utils.expandActionGroup(false, actionGroup, newVisibleActions, this, myDataContext, myActionPlace, ActionManager.getInstance());
+    List<AnAction> newVisibleActions = Utils.expandActionGroup(false, actionGroup, this, myDataContext, myActionPlace);
     for (AnAction action : newVisibleActions) {
       if (action == null) {
         LOG.error("null action in group " + actionGroup);

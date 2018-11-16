@@ -52,18 +52,17 @@ public class Utils{
   };
 
   /**
-   * @param list this list contains expanded actions.
-   * @param actionManager manager
+   * @return actions from the given and nested non-popup groups that are visible after updating
    */
-  public static void expandActionGroup(boolean isInModalContext,
-                                       @NotNull ActionGroup group,
-                                       List<? super AnAction> list,
-                                       PresentationFactory presentationFactory,
-                                       @NotNull DataContext context,
-                                       String place,
-                                       ActionManager actionManager){
+  public static List<AnAction> expandActionGroup(boolean isInModalContext,
+                                                 @NotNull ActionGroup group,
+                                                 PresentationFactory presentationFactory,
+                                                 @NotNull DataContext context,
+                                                 String place){
+    ArrayList<AnAction> list = new ArrayList<>();
     expandActionGroup(isInModalContext, group, list, presentationFactory, context,
-                      place, actionManager, false, group instanceof CompactActionGroup, false, false);
+                      place, null, false, group instanceof CompactActionGroup, false, false);
+    return list;
   }
 
 
