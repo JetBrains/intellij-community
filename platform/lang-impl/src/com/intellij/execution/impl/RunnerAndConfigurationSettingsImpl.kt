@@ -183,16 +183,6 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
       configuration.name = element.getAttributeValue(NAME_ATTR) ?: return
     }
 
-    wasSingletonSpecifiedExplicitly = false
-    val singletonStr = element.getAttributeValue(SINGLETON)
-    if (singletonStr.isNullOrEmpty()) {
-      configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
-    }
-    else {
-      wasSingletonSpecifiedExplicitly = true
-      configuration.isAllowRunningInParallel = !singletonStr!!.toBoolean()
-    }
-
     _configuration = configuration
     uniqueId = null
 
@@ -207,6 +197,17 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: 
     }
 
     deserializeConfigurationFrom(configuration, element)
+
+    // must be after deserializeConfigurationFrom
+    wasSingletonSpecifiedExplicitly = false
+    val singletonStr = element.getAttributeValue(SINGLETON)
+    if (singletonStr.isNullOrEmpty()) {
+      configuration.isAllowRunningInParallel = factory.singletonPolicy.isAllowRunningInParallel
+    }
+    else {
+      wasSingletonSpecifiedExplicitly = true
+      configuration.isAllowRunningInParallel = !singletonStr!!.toBoolean()
+    }
 
     runnerSettings.loadState(element)
     configurationPerRunnerSettings.loadState(element)
