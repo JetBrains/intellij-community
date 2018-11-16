@@ -21,7 +21,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -67,7 +66,7 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     XmlTag tag = getTag(editor, file);
-    return tag != null && !tag.isEmpty() && tag.getSubTags().length == 0 && tag.getValue().getTrimmedText().isEmpty() &&
+    return tag != null && !tag.isEmpty() && tag.getSubTags().length == 0 && tag.getValue().getChildren().length == 0 &&
            CheckTagEmptyBodyInspection.isCollapsibleTag(tag);
   }
 
