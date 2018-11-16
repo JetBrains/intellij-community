@@ -23,10 +23,10 @@ import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIcons
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestChangesComponent
-import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestDetailsComponent
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestPreviewComponent
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListComponent
 import org.jetbrains.plugins.github.pullrequest.ui.GithubPullRequestsListSelectionModel.SelectionChangedListener
+import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsComponent
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
 import javax.swing.JComponent
@@ -62,7 +62,8 @@ internal class GithubPullRequestsComponentFactory(private val project: Project,
     private val changes = GithubPullRequestChangesComponent(project).apply {
       diffAction.registerCustomShortcutSet(this@GithubPullRequestsComponent, this@GithubPullRequestsComponent)
     }
-    private val details = GithubPullRequestDetailsComponent(dataLoader, avatarIconsProviderFactory)
+    private val details = GithubPullRequestDetailsComponent(dataLoader,
+                                                            avatarIconsProviderFactory)
     private val preview = GithubPullRequestPreviewComponent(changes, details)
 
     private val listLoader = GithubPullRequestsLoader(progressManager, requestExecutor, account.server, repoDetails.fullPath)

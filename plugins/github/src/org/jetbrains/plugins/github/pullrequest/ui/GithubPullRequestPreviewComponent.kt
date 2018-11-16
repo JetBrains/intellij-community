@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.ui
 import com.intellij.openapi.Disposable
 import com.intellij.ui.OnePixelSplitter
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestDataProvider
+import org.jetbrains.plugins.github.pullrequest.ui.details.GithubPullRequestDetailsComponent
 
 internal class GithubPullRequestPreviewComponent(private val changes: GithubPullRequestChangesComponent,
                                                  private val details: GithubPullRequestDetailsComponent)

@@ -1,9 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.github.pullrequest.ui
+package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.SimpleTextAttributes
@@ -13,6 +12,7 @@ import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.ui.GithubDataLoadingComponent
 import java.awt.BorderLayout
 
 internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubPullRequestsDataLoader,
@@ -56,10 +56,11 @@ internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubP
 
   override fun setBusy(busy: Boolean) {
     if (busy) {
-      if(detailsPanel.details == null) {
+      if (detailsPanel.details == null) {
         detailsPanel.emptyText.clear()
         loadingPanel.startLoading()
-      } else {
+      }
+      else {
         backgroundLoadingPanel.startLoading()
       }
     }
