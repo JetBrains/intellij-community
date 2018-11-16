@@ -34,9 +34,9 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
                             modifiedByDev.isNotEmpty() ||
                             removedByDev.isNotEmpty()
 
-  fun devSyncRequired() = addedByDesigners.isNotEmpty() ||
-                          modifiedByDesigners.isNotEmpty() ||
-                          doSyncRemovedIconsInDev && removedByDesigners.isNotEmpty()
+  private fun devSyncRequired() = addedByDesigners.isNotEmpty() ||
+                                  modifiedByDesigners.isNotEmpty() ||
+                                  doSyncRemovedIconsInDev && removedByDesigners.isNotEmpty()
 
   fun devReview(): Review? = createdReviews.firstOrNull { it.projectId == UPSOURCE_DEV_PROJECT_ID }
   fun iconsReview(): Review? = createdReviews.firstOrNull { it.projectId == UPSOURCE_ICONS_PROJECT_ID }

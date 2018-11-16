@@ -180,7 +180,6 @@ private fun sendNotification(investigator: Investigator?, context: Context) {
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
 private val ICONS_REPO_SYNC_RUN_CONF = System.getProperty("intellij.icons.sync.run.conf")
-private val DEV_REPO_SYNC_BUILD_CONF = System.getProperty("intellij.icons.dev.sync.build.conf")
 
 internal fun Context.report(slack: Boolean = false): String {
   val iconsSync = when {
@@ -191,20 +190,10 @@ internal fun Context.report(slack: Boolean = false): String {
     }
     else -> "Use 'Icons processing/*$ICONS_REPO_SYNC_RUN_CONF*' IDEA Ultimate run configuration\n"
   }
-  val devSync = when {
-    !devSyncRequired() -> ""
-    devReview() != null -> devReview()!!.let {
-      val link = if (slack) slackLink(it.id, it.url) else it.url
-      "To sync $devRepoName see $link\n"
-    }
-    DEV_REPO_SYNC_BUILD_CONF != null -> {
-      val link = buildConfReportableLink(DEV_REPO_SYNC_BUILD_CONF).let {
-        if (slack) slackLink("this build", it) else it
-      }
-      "To sync $devRepoName run $link\n"
-    }
-    else -> ""
-  }
+  val devSync = devReview()?.let {
+    val link = if (slack) slackLink(it.id, it.url) else it.url
+    "To sync $devRepoName see $link\n"
+  } ?: ""
   return iconsSync + devSync
 }
 
@@ -214,7 +203,6 @@ private fun notifySlackChannel(investigator: Investigator?, context: Context) {
     investigator.isAssigned -> "Investigation is assigned to ${investigator.email}\n"
     else -> "Unable to assign investigation to ${investigator.email}\n"
   }
-
   val reaction = if (context.isFail()) ":scream:" else ":white_check_mark:"
   val build = "See " + slackLink("build log", thisBuildReportableLink())
   val text = "*${context.devRepoName}* $reaction\n" + investigation + context.report(slack = true) + build

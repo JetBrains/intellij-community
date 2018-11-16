@@ -87,19 +87,19 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
   catch (e: Exception) {
     log("Unable to assign investigation to ${investigator.email}, ${e.message}")
   }
-  return if (!investigator.isAssigned && investigator.email != DEFAULT_INVESTIGATOR) {
-    Investigator(DEFAULT_INVESTIGATOR, investigator.commits).also {
-      assignInvestigation(it, context)
+  return when {
+    !investigator.isAssigned && investigator.email != investigator.email.toLowerCase() -> {
+      assignInvestigation(Investigator(investigator.email.toLowerCase(), investigator.commits), context)
     }
+    !investigator.isAssigned && investigator.email != DEFAULT_INVESTIGATOR -> {
+      assignInvestigation(Investigator(DEFAULT_INVESTIGATOR, investigator.commits), context)
+    }
+    else -> investigator
   }
-  else investigator
 }
 
 internal fun thisBuildReportableLink() =
   "${System.getProperty("intellij.icons.report.buildserver")}/viewLog.html?buildId=$BUILD_ID&buildTypeId=$BUILD_CONF"
-
-internal fun buildConfReportableLink(buildTypeId: String) =
-  "${System.getProperty("intellij.icons.report.buildserver")}/viewType.html?buildTypeId=$buildTypeId"
 
 internal fun triggeredBy() = System.getProperty("teamcity.build.triggeredBy.username")
   ?.takeIf { it.isNotBlank() }
