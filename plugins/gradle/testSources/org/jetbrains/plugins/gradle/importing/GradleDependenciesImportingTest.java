@@ -606,6 +606,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  @TargetVersions("3.4+")
   public void testSourceSetOutputDirsAsDependenciesOfDependantModules() throws Exception {
     createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
     importProject(
