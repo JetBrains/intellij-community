@@ -17,7 +17,7 @@ import org.jetbrains.idea.svn.checkin.CommitInfo;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.CmdStatusClient;
-import org.jetbrains.idea.svn.status.PortableStatus;
+import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
 import org.junit.Test;
 
@@ -93,7 +93,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     final String osChecked = readText(getTestData());
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     parser.parse(new ByteArrayInputStream(osChecked.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
-    final MultiMap<String,PortableStatus> changes = handler.getCurrentListChanges();
+    final MultiMap<String, Status> changes = handler.getCurrentListChanges();
   }
 
   private String changePathsIfNix(String s) {
@@ -138,7 +138,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     }));
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     parser.parse(inputStream(getTestData()), handler.get());
-    final MultiMap<String, PortableStatus> changes = handler.get().getCurrentListChanges();
+    final MultiMap<String, Status> changes = handler.get().getCurrentListChanges();
   }
 
   @Test
@@ -146,7 +146,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     final SvnStatusHandler[] handlerArr = new SvnStatusHandler[1];
     final boolean isWindows = SystemInfo.isWindows;
     final String basePath = isWindows ? "C:/base/" : "/base33729/";
-    final Set<PortableStatus> statuses = new HashSet<>();
+    final Set<Status> statuses = new HashSet<>();
     final SvnStatusHandler handler = new
       SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
@@ -193,7 +193,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
       expected[i] = FileUtil.toSystemDependentName(expected[i]);
     }
     int cntMatched = 0;
-    for (PortableStatus status : statuses) {
+    for (Status status : statuses) {
       assertTrue(status.isSwitched());
       final String path = FileUtil.toSystemDependentName(status.getPath());
       for (String s1 : expected) {
@@ -211,13 +211,13 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     final SvnStatusHandler[] handlerArr = new SvnStatusHandler[1];
     final boolean isWindows = SystemInfo.isWindows;
     final String basePath = isWindows ? "C:/base/" : "/base33729/";
-    final Set<PortableStatus> statuses = new HashSet<>();
+    final Set<Status> statuses = new HashSet<>();
     final String[] clName = new String[1];
     final SvnStatusHandler handler = new
       SvnStatusHandler(new SvnStatusHandler.ExternalDataCallback() {
       @Override
       public void switchPath() {
-        final PortableStatus pending = handlerArr[0].getPending();
+        final Status pending = handlerArr[0].getPending();
         pending.setChangelistName(clName[0]);
         statuses.add(pending);
         pending.getKind();
@@ -258,7 +258,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     parser.parse(new ByteArrayInputStream(osChecked.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
 
     assertEquals(1, statuses.size());
-    final PortableStatus next = statuses.iterator().next();
+    final Status next = statuses.iterator().next();
     assertEquals("a.txt", next.getPath());
     assertEquals("target", next.getChangelistName());
   }

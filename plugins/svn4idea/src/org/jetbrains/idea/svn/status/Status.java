@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
+import com.intellij.openapi.util.Getter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -8,6 +9,7 @@ import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.lock.Lock;
 
 import java.io.File;
@@ -18,6 +20,8 @@ import java.io.File;
 public class Status {
   private Url myURL;
   private File myFile;
+  private String myPath;
+  private boolean myFileExists;
   private @NotNull NodeKind myKind;
   @NotNull private Revision myRevision;
   @NotNull private Revision myCommittedRevision;
@@ -33,28 +37,81 @@ public class Status {
   private Revision myRemoteRevision;
   private String myChangelistName;
   private boolean myIsConflicted;
+  private Info myInfo;
+  private Getter<Info> myInfoGetter;
 
   public Status() {
     setRevision(Revision.UNDEFINED);
     myRemoteRevision = Revision.UNDEFINED;
+    myInfoGetter = () -> null;
+    setCommittedRevision(Revision.UNDEFINED);
   }
 
   public Url getURL() {
-    return myURL;
+    Url url = myURL;
+
+    if (url == null) {
+      Info info = initInfo();
+      url = info != null ? info.getUrl() : url;
+    }
+
+    return url;
   }
 
   public File getFile() {
-    return myFile;
+    File file = myFile;
+
+    if (file == null) {
+      Info info = initInfo();
+      file = info != null ? info.getFile() : file;
+    }
+
+    return file;
+  }
+
+  public String getPath() {
+    return myPath;
+  }
+
+  public void setInfoGetter(Getter<Info> infoGetter) {
+    myInfoGetter = infoGetter;
+  }
+
+  private Info initInfo() {
+    if (myInfo == null) {
+      final StatusType contentsStatus = getContentsStatus();
+      if (contentsStatus == null || StatusType.UNKNOWN.equals(contentsStatus)) {
+        return null;
+      }
+      myInfo = myInfoGetter.get();
+    }
+    return myInfo;
+  }
+
+  public Info getInfo() {
+    return initInfo();
   }
 
   @NotNull
   public NodeKind getKind() {
-    return myKind;
+    if (myFileExists) return myKind;
+    Info info = initInfo();
+    return info != null ? info.getNodeKind() : myKind;
   }
 
   @NotNull
   public Revision getRevision() {
-    return myRevision;
+    final Revision revision = myRevision;
+    if (revision.isValid()) return revision;
+
+    final StatusType status = getContentsStatus();
+    if (StatusType.STATUS_NONE.equals(status) || StatusType.STATUS_UNVERSIONED.equals(status) ||
+        StatusType.STATUS_ADDED.equals(status)) {
+      return revision;
+    }
+
+    final Info info = initInfo();
+    return info == null ? revision : info.getRevision();
   }
 
   @NotNull
@@ -108,7 +165,9 @@ public class Status {
 
   @Nullable
   public Url getCopyFromURL() {
-    return null;
+    if (!isCopied()) return null;
+    Info info = initInfo();
+    return info != null ? info.getCopyFromUrl() : null;
   }
 
   @Nullable
@@ -131,7 +190,9 @@ public class Status {
 
   @Nullable
   public TreeConflictDescription getTreeConflict() {
-    return null;
+    if (!isConflicted()) return null;
+    Info info = initInfo();
+    return info != null ? info.getTreeConflict() : null;
   }
 
   public boolean isConflicted() {
@@ -146,8 +207,10 @@ public class Status {
     return myContentsStatus;
   }
 
+  @Nullable
   public Url getRepositoryRootURL() {
-    return null;
+    Info info = initInfo();
+    return info != null ? info.getRepositoryRootUrl() : null;
   }
 
   public void setURL(Url uRL) {
@@ -156,6 +219,15 @@ public class Status {
 
   public void setFile(File file) {
     myFile = file;
+  }
+
+  public void setPath(String path) {
+    myPath = path;
+  }
+
+  public void setKind(boolean exists, @NotNull NodeKind kind) {
+    myFileExists = exists;
+    setKind(kind);
   }
 
   public void setKind(@NotNull NodeKind kind) {

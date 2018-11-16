@@ -80,7 +80,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           // </status>
           // so it does not contain any <entry> element and current parsing logic returns null
 
-          PortableStatus status = new PortableStatus();
+          Status status = new Status();
           status.setFile(path);
           status.setPath(path.getAbsolutePath());
           status.setContentsStatus(StatusType.STATUS_NORMAL);
@@ -122,7 +122,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                                               @NotNull StatusConsumer handler,
                                               @NotNull File base,
                                               @Nullable Info infoBase,
-                                              @NotNull Supplier<PortableStatus> statusSupplier) {
+                                              @NotNull Supplier<Status> statusSupplier) {
     SvnStatusHandler.ExternalDataCallback callback = createStatusCallback(handler, base, infoBase, statusSupplier);
 
     return new SvnStatusHandler(callback, base, createInfoGetter(revision));
@@ -144,14 +144,14 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   public static SvnStatusHandler.ExternalDataCallback createStatusCallback(@NotNull StatusConsumer handler,
                                                                            @NotNull File base,
                                                                            @Nullable Info infoBase,
-                                                                           @NotNull Supplier<? extends PortableStatus> statusSupplier) {
+                                                                           @NotNull Supplier<? extends Status> statusSupplier) {
     Map<File, Info> externalsMap = newHashMap();
     Ref<String> changelistName = Ref.create();
 
     return new SvnStatusHandler.ExternalDataCallback() {
       @Override
       public void switchPath() {
-        PortableStatus pending = statusSupplier.get();
+        Status pending = statusSupplier.get();
         pending.setChangelistName(changelistName.get());
         try {
           File pendingFile = new File(pending.getPath());
