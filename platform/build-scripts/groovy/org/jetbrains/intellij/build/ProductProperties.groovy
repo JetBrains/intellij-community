@@ -72,7 +72,7 @@ abstract class ProductProperties {
 
   /**
    * Now file containing information about third-party libraries is bundled and shown inside IDE.
-   * If {@code true} html file of third-party libraries will be placed alongside with build artifacts.
+   * If {@code true} html & json files of third-party libraries will be placed alongside with build artifacts.
    */
   boolean generateLibrariesLicensesTable = true
 

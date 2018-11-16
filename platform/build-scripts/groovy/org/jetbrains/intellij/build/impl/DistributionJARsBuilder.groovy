@@ -231,8 +231,10 @@ class DistributionJARsBuilder {
 
     if (productProperties.generateLibrariesLicensesTable) {
       String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      buildContext.ant.copy(file: getThirdPartyLibrariesFilePath(),
+      buildContext.ant.copy(file: getThirdPartyLibrariesHtmlFilePath(),
                             tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.html")
+      buildContext.ant.copy(file: getThirdPartyLibrariesJsonFilePath(),
+                            tofile: "$buildContext.paths.artifacts/$artifactNamePrefix-third-party-libraries.json")
     }
 
     if (productProperties.scrambleMainJar) {
@@ -251,13 +253,21 @@ class DistributionJARsBuilder {
 
   private void buildThirdPartyLibrariesList() {
     buildContext.messages.block("Generate table of licenses for used third-party libraries") {
-      def generator = new LibraryLicensesListGenerator(buildContext.messages, buildContext.project, buildContext.productProperties.allLibraryLicenses)
-      generator.generateLicensesTable(getThirdPartyLibrariesFilePath(), usedModules)
+      def generator = LibraryLicensesListGenerator.create(buildContext.messages,
+                                                          buildContext.project,
+                                                          buildContext.productProperties.allLibraryLicenses,
+                                                          usedModules)
+      generator.generateHtml(getThirdPartyLibrariesHtmlFilePath())
+      generator.generateJson(getThirdPartyLibrariesJsonFilePath())
     }
   }
 
-  private String getThirdPartyLibrariesFilePath() {
+  private String getThirdPartyLibrariesHtmlFilePath() {
     "$buildContext.paths.distAll/$THIRD_PARTY_LIBRARIES_FILE_PATH"
+  }
+
+  private String getThirdPartyLibrariesJsonFilePath() {
+    "$buildContext.paths.temp/third-party-libraries.json"
   }
 
   private void buildLib() {
