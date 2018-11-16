@@ -6,6 +6,7 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.GithubPullRequestsComponentFactory
@@ -29,6 +30,8 @@ object GithubPullRequestKeys {
   val REMOTE = DataKey.create<GitRemote>("org.jetbrains.plugins.github.pullrequest.remote")
   @JvmStatic
   val REPO_DETAILS = DataKey.create<GithubRepoDetailed>("org.jetbrains.plugins.github.pullrequest.remote.repo.details")
+  @JvmStatic
+  val ACCOUNT_DETAILS = DataKey.create<GithubAuthenticatedUser>("org.jetbrains.plugins.github.pullrequest.remote.account.details")
   @JvmStatic
   val SERVER_PATH = DataKey.create<GithubServerPath>("org.jetbrains.plugins.github.pullrequest.server.path")
 }

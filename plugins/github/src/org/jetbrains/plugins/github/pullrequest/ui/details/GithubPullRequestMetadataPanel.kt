@@ -14,6 +14,7 @@ import org.jetbrains.plugins.github.api.data.GithubIssueLabel
 import org.jetbrains.plugins.github.api.data.GithubPullRequest
 import org.jetbrains.plugins.github.api.data.GithubUser
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.pullrequest.ui.WrapLayout
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
@@ -23,7 +24,8 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
-internal class GithubPullRequestMetadataPanel(private val iconsProvider: CachingGithubAvatarIconsProvider) : JPanel() {
+internal class GithubPullRequestMetadataPanel(stateService: GithubPullRequestsStateService,
+                                              private val iconsProvider: CachingGithubAvatarIconsProvider) : JPanel() {
   private val directionPanel = DirectionPanel()
   var direction: Pair<GithubPullRequest.Tag, GithubPullRequest.Tag>?
     get() = directionPanel.direction
@@ -31,7 +33,7 @@ internal class GithubPullRequestMetadataPanel(private val iconsProvider: Caching
       directionPanel.direction = value
     }
 
-  private val statePanel = GithubPullRequestStatePanel()
+  private val statePanel = GithubPullRequestStatePanel(stateService)
   var state: GithubPullRequestStatePanel.State?
     get() = statePanel.state
     set(value) {

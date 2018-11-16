@@ -7,14 +7,20 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.*
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
+import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import java.awt.BorderLayout
 import java.awt.Graphics
 import kotlin.properties.Delegates
 
 
-internal class GithubPullRequestDetailsPanel(iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+internal class GithubPullRequestDetailsPanel(private val stateService: GithubPullRequestsStateService,
+                                             iconProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                             private val accountDetails: GithubAuthenticatedUser,
+                                             private val repoDetails: GithubRepoDetailed)
   : Wrapper(), ComponentWithEmptyText, Disposable {
 
   private val emptyText = object : StatusText(this) {
@@ -22,7 +28,7 @@ internal class GithubPullRequestDetailsPanel(iconProviderFactory: CachingGithubA
   }
   private val iconsProvider = iconProviderFactory.create(JBValue.UIInteger("Profile.Icon.Size", 20), this)
 
-  private val metaPanel = GithubPullRequestMetadataPanel(iconsProvider).apply {
+  private val metaPanel = GithubPullRequestMetadataPanel(stateService, iconsProvider).apply {
     border = JBUI.Borders.empty(4, 8, 4, 8)
   }
   private val descriptionPanel = GithubPullRequestDescriptionPanel().apply {
@@ -38,7 +44,9 @@ internal class GithubPullRequestDetailsPanel(iconProviderFactory: CachingGithubA
     by Delegates.observable<GithubPullRequestDetailedWithHtml?>(null) { _, _, newValue ->
       descriptionPanel.description = newValue?.bodyHtml
       metaPanel.direction = newValue?.let { it.base to it.head }
-      metaPanel.state = newValue?.let { GithubPullRequestStatePanel.State.fromDetails(it) }
+      metaPanel.state = newValue?.let {
+        GithubPullRequestStatePanel.State.create(accountDetails, repoDetails, it, stateService.isBusy(it.number))
+      }
       metaPanel.reviewers = newValue?.requestedReviewers
       metaPanel.assignees = newValue?.assignees
       metaPanel.labels = newValue?.labels
@@ -53,6 +61,11 @@ internal class GithubPullRequestDetailsPanel(iconProviderFactory: CachingGithubA
       isOpaque = false
     })
     details = null
+
+    stateService.addPullRequestBusyStateListener(this) {
+      if (it == metaPanel.state?.number)
+        metaPanel.state = metaPanel.state?.copy(busy = stateService.isBusy(it))
+    }
 
     Disposer.register(this, iconsProvider)
   }

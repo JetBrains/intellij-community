@@ -9,16 +9,22 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.ui.frame.ProgressStripe
+import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubPullRequestDetailedWithHtml
+import org.jetbrains.plugins.github.api.data.GithubRepoDetailed
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsDataLoader
+import org.jetbrains.plugins.github.pullrequest.data.service.GithubPullRequestsStateService
 import org.jetbrains.plugins.github.pullrequest.ui.GithubDataLoadingComponent
 import java.awt.BorderLayout
 
 internal class GithubPullRequestDetailsComponent(private val dataLoader: GithubPullRequestsDataLoader,
-                                                 iconProviderFactory: CachingGithubAvatarIconsProvider.Factory)
+                                                 stateService: GithubPullRequestsStateService,
+                                                 iconProviderFactory: CachingGithubAvatarIconsProvider.Factory,
+                                                 accountDetails: GithubAuthenticatedUser,
+                                                 repoDetails: GithubRepoDetailed)
   : GithubDataLoadingComponent<GithubPullRequestDetailedWithHtml>(), Disposable {
-  private val detailsPanel = GithubPullRequestDetailsPanel(iconProviderFactory)
+  private val detailsPanel = GithubPullRequestDetailsPanel(stateService, iconProviderFactory, accountDetails, repoDetails)
   private val loadingPanel = JBLoadingPanel(BorderLayout(), this, ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS).apply {
     isOpaque = false
   }
