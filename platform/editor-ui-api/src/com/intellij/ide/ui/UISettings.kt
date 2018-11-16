@@ -106,9 +106,6 @@ class UISettings : BaseState(), PersistentStateComponent<UISettings> {
   var smoothScrolling by property(SystemInfo.isMac && (SystemInfo.isJetBrainsJvm || SystemInfo.IS_AT_LEAST_JAVA9))
   @get:OptionTag("NAVIGATE_TO_PREVIEW") var navigateToPreview by property(false)
 
-  // Android Studio: added by Change Idf66eeec / commit 024afac
-  @get:OptionTag("LANGUAGE_FLAGS") var languageFlags by property(false)
-
   @get:OptionTag("SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY") var sortLookupElementsLexicographically by property(false)
   @get:OptionTag("MERGE_EQUAL_STACKTRACES") var mergeEqualStackTraces by property(true)
   @get:OptionTag("SORT_BOOKMARKS") var sortBookmarks by property(false)

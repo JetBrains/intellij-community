@@ -201,7 +201,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     settings.setMoveMouseOnDefaultButton(myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected());
     settings.setHideNavigationOnFocusLoss(myComponent.myHideNavigationPopupsCheckBox.isSelected());
     settings.setDndWithPressedAltOnly(myComponent.myAltDNDCheckBox.isSelected());
-    settings.setLanguageFlags(myComponent.myShowFlagsForLanguagesCheckBox.isSelected());
 
     update |= settings.getDisableMnemonics() != myComponent.myDisableMnemonics.isSelected();
     settings.setDisableMnemonics(myComponent.myDisableMnemonics.isSelected());
@@ -357,7 +356,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.getMoveMouseOnDefaultButton());
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.getHideNavigationOnFocusLoss());
     myComponent.myAltDNDCheckBox.setSelected(settings.getDndWithPressedAltOnly());
-    myComponent.myShowFlagsForLanguagesCheckBox.setSelected(settings.getLanguageFlags());
     myComponent.myLafComboBox.setSelectedItem(LafManager.getInstance().getCurrentLookAndFeel());
     myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
     myComponent.myOverrideLAFFonts.setSelected(settings.getOverrideLafFonts());
@@ -452,7 +450,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.getMoveMouseOnDefaultButton();
     isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.getHideNavigationOnFocusLoss();
     isModified |= myComponent.myAltDNDCheckBox.isSelected() != settings.getDndWithPressedAltOnly();
-    isModified |= myComponent.myShowFlagsForLanguagesCheckBox.isSelected() != settings.getLanguageFlags();
     isModified |= !Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), LafManager.getInstance().getCurrentLookAndFeel());
     isModified |= isModified(myComponent.myDarkWindowHeaders, Registry.is("ide.mac.allowDarkWindowDecorations"));
     if (WindowManagerEx.getInstanceEx().isAlphaModeSupported()) {
@@ -518,7 +515,6 @@ public class AppearanceConfigurable implements SearchableConfigurable {
     private JSlider myInitialTooltipDelaySlider;
     private ComboBox myPresentationModeFontSize;
     private JCheckBox mySmoothScrollingCheckBox;
-    private JCheckBox myShowFlagsForLanguagesCheckBox;
     private JCheckBox myNavigateToPreviewCheckBox;
     private JCheckBox mySupportScreenReadersCheckBox;
     private ColorBlindnessPanel myColorBlindnessPanel;
