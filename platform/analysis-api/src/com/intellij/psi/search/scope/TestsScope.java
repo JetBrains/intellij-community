@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.FilteredPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.ui.Colored;
+import com.intellij.ui.FileColorName;
 import com.intellij.ui.OffsetIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,8 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  * @author Sergey Malenkov
  */
-@Colored(colorName="Green", color = "e7fadb", darkColor = "425444")
-public final class TestsScope extends NamedScope {
+public final class TestsScope extends NamedScope implements FileColorName {
   public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
   public static final TestsScope INSTANCE = new TestsScope();
 
@@ -28,5 +27,10 @@ public final class TestsScope extends NamedScope {
         return TestSourcesFilter.isTestSources(file, project);
       }
     });
+  }
+
+  @Override
+  public String colorName() {
+    return "Green";
   }
 }

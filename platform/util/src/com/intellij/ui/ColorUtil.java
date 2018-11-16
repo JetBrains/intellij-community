@@ -247,19 +247,6 @@ public class ColorUtil {
     }
   }
 
-  @Nullable
-  public static Color getColor(@NotNull Class<?> cls) {
-    final Colored colored = cls.getAnnotation(Colored.class);
-    return colored != null ? JBColor.namedColor("FileColor." + colored.colorName(),
-                                                new JBColor(fromHex(colored.color()), fromHex(colored.darkColor()))) : null;
-  }
-
-  @Nullable
-  public static String getColorName(@NotNull Class<?> cls) {
-    Colored colored = cls.getAnnotation(Colored.class);
-    return colored != null ? colored.colorName() : null;
-  }
-
   /**
    * @param c color to check
    * @return dark or not

@@ -15,33 +15,9 @@
  */
 package com.intellij.ui;
 
-import org.intellij.lang.annotations.RegExp;
-
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
-import static java.lang.annotation.ElementType.TYPE;
-
 /**
- * Associates an entity with some color in hex-format
- *
  * @author Konstantin Bulenkov
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target({TYPE})
-public @interface Colored {
+public interface FileColorName {
   String colorName();
-
-  /**
-   * @return color as hex-string
-   */
-  @RegExp(prefix = "[0-9a-f]{6}")
-  String color();
-
-  /**
-   * @return color as hex-string
-   */
-  @RegExp(prefix = "[0-9a-f]{6}")
-  String darkColor();
 }

@@ -26,6 +26,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.FileColorName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -128,15 +129,15 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     Object item = myScopeComboBox.getSelectedItem();
     if (item instanceof String) {
       Color color = myConfiguration == null ? null : ColorUtil.fromHex(myConfiguration.getColorName(), null);
-      Class<?> cls = myScopeNames.get(item).getClass();
+      NamedScope scope = myScopeNames.get(item);
+      String colorName = scope instanceof FileColorName ? ((FileColorName)scope).colorName() : null;
 
-      if (color == null) {
-        color = ColorUtil.getColor(cls);
+      if (color == null && StringUtil.isNotEmpty(colorName)) {
+        color = myManager.getColor(colorName);
       }
 
       if (color != null) {
-        String colorName = ColorUtil.getColorName(cls);
-        if (colorName != null) {
+        if (StringUtil.isNotEmpty(colorName) && color.equals(myManager.getColor(colorName))) {
           myColorSelectionComponent.setSelectedColor(colorName);
         } else {
           myColorSelectionComponent.setCustomButtonColor(color);
