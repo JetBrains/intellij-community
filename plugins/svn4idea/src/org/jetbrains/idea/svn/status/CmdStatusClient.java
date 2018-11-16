@@ -33,7 +33,7 @@ import static org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingPare
 public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
-  public long doStatus(@NotNull File path,
+  public void doStatus(@NotNull File path,
                        @Nullable Revision revision,
                        @NotNull Depth depth,
                        boolean remote,
@@ -49,7 +49,6 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
     CommandExecutor command = execute(myVcs, Target.on(path), SvnCommandName.st, parameters, null);
     parseResult(path, revision, handler, base, infoBase, command);
-    return 0;
   }
 
   private void parseResult(@NotNull File path,
