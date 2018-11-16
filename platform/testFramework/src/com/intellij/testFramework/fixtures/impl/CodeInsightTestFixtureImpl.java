@@ -161,6 +161,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   private boolean myAllowDirt;
   private boolean myCaresAboutInjection = true;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+  private boolean myCheckDuplicateReports = true;
 
   public CodeInsightTestFixtureImpl(@NotNull IdeaProjectTestFixture projectFixture, @NotNull TempDirTestFixture tempDirTestFixture) {
     myProjectFixture = projectFixture;
@@ -187,10 +188,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private static void removeDuplicatedRangesForInjected(@NotNull List<HighlightInfo> infos) {
-    Collections.sort(infos, (o1, o2) -> {
-      final int i = o2.startOffset - o1.startOffset;
-      return i != 0 ? i : o1.getSeverity().myVal - o2.getSeverity().myVal;
-    });
     HighlightInfo prevInfo = null;
     for (Iterator<HighlightInfo> it = infos.iterator(); it.hasNext();) {
       final HighlightInfo info = it.next();
@@ -204,6 +201,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       prevInfo = info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT ? info : null;
     }
   }
+
+  private final static Comparator<HighlightInfo> HIGHLIGHT_INFO_COMPARATOR =
+    Comparator.<HighlightInfo>comparingInt(info -> info.startOffset)
+      .thenComparingInt(info -> info.endOffset)
+      .thenComparingInt(info -> info.getSeverity().myVal)
+      .thenComparing(info -> StringUtil.notNullize(info.getDescription()));
+
 
   @NotNull
   @TestOnly
@@ -1451,6 +1455,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<HighlightInfo> infos;
     try {
       infos = doHighlighting();
+      Collections.sort(infos, HIGHLIGHT_INFO_COMPARATOR);
       removeDuplicatedRangesForInjected(infos);
     }
     finally {
@@ -1464,9 +1469,34 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       Document document = getDocument(getFile());
       data.checkLineMarkers(DaemonCodeAnalyzerImpl.getLineMarkers(document, getProject()), document.getText());
     }
+    if (myCheckDuplicateReports) {
+      checkDuplicateReports(infos);
+    }
     //noinspection ResultOfMethodCallIgnored
     hardRefToFileElement.hashCode(); // use it so gc won't collect it
     return elapsed;
+  }
+
+  private static void checkDuplicateReports(List<HighlightInfo> infos) {
+    if (infos.isEmpty()) return;
+    Iterator<HighlightInfo> iterator = infos.iterator();
+    HighlightInfo prev = iterator.next();
+    final TreeMap<HighlightInfo, Integer> duplicateCounts = new TreeMap<>(HIGHLIGHT_INFO_COMPARATOR);
+    while (iterator.hasNext()) {
+      final HighlightInfo next = iterator.next();
+      if (next.getDescription() != null && HIGHLIGHT_INFO_COMPARATOR.compare(prev, next) == 0) {
+        duplicateCounts.put(prev, duplicateCounts.getOrDefault(prev, 1) + 1);
+      }
+      prev = next;
+    }
+
+    if (!duplicateCounts.isEmpty()) {
+      fail("duplicate reports:" + duplicateCounts.entrySet().stream().map(e -> {
+        final HighlightInfo info = e.getKey();
+        return "[" + info.startOffset + ", " + info.endOffset + "] '" + info.getDescription() + "'"
+               + " reported " + e.getValue() + " times";
+      }).collect(Collectors.joining()));
+    }
   }
 
   public void setVirtualFileFilter(@Nullable VirtualFileFilter filter) {
@@ -1981,4 +2011,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myProjectFixture.getTestRootDisposable();
   }
 
+
+  public boolean isCheckDuplicateReports() {
+    return myCheckDuplicateReports;
+  }
+
+  public void setCheckDuplicateReports(boolean checkDuplicateReports) {
+    this.myCheckDuplicateReports = checkDuplicateReports;
+  }
 }
