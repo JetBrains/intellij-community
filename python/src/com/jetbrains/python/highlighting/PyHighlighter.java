@@ -61,6 +61,7 @@ public class PyHighlighter extends SyntaxHighlighterBase {
   }
 
   public static final TextAttributesKey PY_KEYWORD = TextAttributesKey.createTextAttributesKey("PY.KEYWORD", KEYWORD);
+  public static final TextAttributesKey PY_CONTROL_KEYWORD = TextAttributesKey.createTextAttributesKey("PY.KEYWORD.CONTROL", CONTROL_KEYWORD);
 
   public static final TextAttributesKey PY_BYTE_STRING = TextAttributesKey.createTextAttributesKey("PY.STRING.B", STRING);
   public static final TextAttributesKey PY_UNICODE_STRING = TextAttributesKey.createTextAttributesKey("PY.STRING.U", STRING);
@@ -122,7 +123,8 @@ public class PyHighlighter extends SyntaxHighlighterBase {
     myLanguageLevel = languageLevel;
     keys = new HashMap<>();
 
-    fillMap(keys, PythonDialectsTokenSetProvider.INSTANCE.getKeywordTokens(), PY_KEYWORD);
+    fillMap(keys, PythonDialectsTokenSetProvider.INSTANCE.getNonControlKeywordTokens(), PY_KEYWORD);
+    fillMap(keys, PythonDialectsTokenSetProvider.INSTANCE.getControlKeywordTokens(), PY_CONTROL_KEYWORD);
     fillMap(keys, PyTokenTypes.OPERATIONS, PY_OPERATION_SIGN);
 
     keys.put(PyTokenTypes.INTEGER_LITERAL, PY_NUMBER);

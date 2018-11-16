@@ -30,9 +30,11 @@ public class JavaHighlightingColors {
     = TextAttributesKey.createTextAttributesKey("JAVA_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
   public static final TextAttributesKey DOC_COMMENT 
     = TextAttributesKey.createTextAttributesKey("JAVA_DOC_COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT);
-  public static final TextAttributesKey KEYWORD 
+  public static final TextAttributesKey KEYWORD
     = TextAttributesKey.createTextAttributesKey("JAVA_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
-  public static final TextAttributesKey NUMBER 
+  public static final TextAttributesKey CONTROL_KEYWORD
+    = TextAttributesKey.createTextAttributesKey("JAVA_CONTROL_KEYWORD", DefaultLanguageHighlighterColors.CONTROL_KEYWORD);
+  public static final TextAttributesKey NUMBER
     = TextAttributesKey.createTextAttributesKey("JAVA_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
   public static final TextAttributesKey STRING 
     = TextAttributesKey.createTextAttributesKey("JAVA_STRING", DefaultLanguageHighlighterColors.STRING);

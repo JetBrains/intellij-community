@@ -40,10 +40,16 @@ public interface PythonDialectsTokenSetContributor {
   TokenSet getExpressionTokens();
 
   /**
-   * Returns element types that are language keywords.
+   * Returns element types that are language non-control keywords.
    */
   @NotNull
-  TokenSet getKeywordTokens();
+  TokenSet getNonControlKeywordTokens();
+
+  /**
+   * Returns element types that are language control keywords.
+   */
+  @NotNull
+  TokenSet getControlKeywordTokens();
 
   /**
    * Returns element types that are subclasses of {@link com.jetbrains.python.psi.PyParameter}.

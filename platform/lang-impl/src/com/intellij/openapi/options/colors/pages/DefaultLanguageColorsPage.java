@@ -40,6 +40,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     TAG_HIGHLIGHTING_MAP.put("identifier", DefaultLanguageHighlighterColors.IDENTIFIER);
     TAG_HIGHLIGHTING_MAP.put("number", DefaultLanguageHighlighterColors.NUMBER);
     TAG_HIGHLIGHTING_MAP.put("keyword", DefaultLanguageHighlighterColors.KEYWORD);
+    TAG_HIGHLIGHTING_MAP.put("control_keyword", DefaultLanguageHighlighterColors.CONTROL_KEYWORD);
     TAG_HIGHLIGHTING_MAP.put("string", DefaultLanguageHighlighterColors.STRING);
     TAG_HIGHLIGHTING_MAP.put("line_comment", DefaultLanguageHighlighterColors.LINE_COMMENT);
     TAG_HIGHLIGHTING_MAP.put("block_comment", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
@@ -92,6 +93,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       OptionsBundle.message("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.keyword"), DefaultLanguageHighlighterColors.KEYWORD),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.keyword.control"), DefaultLanguageHighlighterColors.CONTROL_KEYWORD),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.identifier"), DefaultLanguageHighlighterColors.IDENTIFIER),
     new AttributesDescriptor(
@@ -203,6 +206,7 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     return
       "Bad characters: <bad_char>????</bad_char>\n" +
       "<keyword>Keyword</keyword>\n" +
+      "<control_keyword>Control keyword</control_keyword>\n" +
       "<identifier>Identifier</identifier>\n" +
       "<string>'String <valid_esc_seq>\\n</valid_esc_seq><invalid_esc_seq>\\?</invalid_esc_seq>'</string>\n" +
       "<number>12345</number>\n" +

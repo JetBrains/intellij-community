@@ -30,7 +30,8 @@ import java.util.Map;
 public class PythonColorsPage implements RainbowColorSettingsPage, InspectionColorSettingsPage, DisplayPrioritySortable {
   private static final AttributesDescriptor[] ATTRS = new AttributesDescriptor[] {
     new AttributesDescriptor("Number", PyHighlighter.PY_NUMBER),
-    new AttributesDescriptor("Keyword", PyHighlighter.PY_KEYWORD),
+    new AttributesDescriptor("Keywords//Keyword", PyHighlighter.PY_KEYWORD),
+    new AttributesDescriptor("Keywords//Control keyword", PyHighlighter.PY_CONTROL_KEYWORD),
     new AttributesDescriptor("Line Comment", PyHighlighter.PY_LINE_COMMENT),
 
     new AttributesDescriptor("String//Binary (bytes)", PyHighlighter.PY_BYTE_STRING),
@@ -142,6 +143,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
       "    \n" +
       "    def <funcDef>makeSense</funcDef>(<self>self</self>, <param>whatever</param>):\n" +
       "        <self>self</self>.sense = <param>whatever</param>\n" +
+      "        return \"sense\"\n" +
       "\n" +
       "<localVar>x</localVar> = <builtin>len</builtin>('abc')\n" +
       "print(f.<predefinedUsage>__doc__</predefinedUsage>)"

@@ -36,7 +36,13 @@ public abstract class PythonDialectsTokenSetContributorBase implements PythonDia
 
   @NotNull
   @Override
-  public TokenSet getKeywordTokens() {
+  public TokenSet getNonControlKeywordTokens() {
+    return TokenSet.EMPTY;
+  }
+
+  @NotNull
+  @Override
+  public TokenSet getControlKeywordTokens() {
     return TokenSet.EMPTY;
   }
 

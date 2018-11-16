@@ -15,6 +15,8 @@ public class PythonDialectsTokenSetProvider {
   private final TokenSet myStatementTokens;
   private final TokenSet myExpressionTokens;
   private final TokenSet myKeywordTokens;
+  private final TokenSet myNonControlKeywordTokens;
+  private final TokenSet myControlKeywordTokens;
   private final TokenSet myParameterTokens;
   private final TokenSet myFunctionDeclarationTokens;
   private final TokenSet myUnbalancedBracesRecoveryTokens;
@@ -23,7 +25,8 @@ public class PythonDialectsTokenSetProvider {
   private PythonDialectsTokenSetProvider() {
     TokenSet stmts = TokenSet.EMPTY;
     TokenSet exprs = TokenSet.EMPTY;
-    TokenSet keywords = TokenSet.EMPTY;
+    TokenSet nonControlKeywords = TokenSet.EMPTY;
+    TokenSet controlKeywords = TokenSet.EMPTY;
     TokenSet parameters = TokenSet.EMPTY;
     TokenSet functionDeclarations = TokenSet.EMPTY;
     TokenSet recoveryTokens = TokenSet.EMPTY;
@@ -31,7 +34,8 @@ public class PythonDialectsTokenSetProvider {
     for(PythonDialectsTokenSetContributor contributor: PythonDialectsTokenSetContributor.EP_NAME.getExtensionList()) {
       stmts = TokenSet.orSet(stmts, contributor.getStatementTokens());
       exprs = TokenSet.orSet(exprs, contributor.getExpressionTokens());
-      keywords = TokenSet.orSet(keywords, contributor.getKeywordTokens());
+      nonControlKeywords = TokenSet.orSet(nonControlKeywords, contributor.getNonControlKeywordTokens());
+      controlKeywords = TokenSet.orSet(controlKeywords, contributor.getControlKeywordTokens());
       parameters = TokenSet.orSet(parameters, contributor.getParameterTokens());
       functionDeclarations = TokenSet.orSet(functionDeclarations, contributor.getFunctionDeclarationTokens());
       recoveryTokens = TokenSet.orSet(recoveryTokens, contributor.getUnbalancedBracesRecoveryTokens());
@@ -39,7 +43,9 @@ public class PythonDialectsTokenSetProvider {
     }
     myStatementTokens = stmts;
     myExpressionTokens = exprs;
-    myKeywordTokens = keywords;
+    myKeywordTokens = TokenSet.orSet(nonControlKeywords, controlKeywords);
+    myNonControlKeywordTokens = nonControlKeywords;
+    myControlKeywordTokens = controlKeywords;
     myParameterTokens = parameters;
     myFunctionDeclarationTokens = functionDeclarations;
     myUnbalancedBracesRecoveryTokens = recoveryTokens;
@@ -65,6 +71,20 @@ public class PythonDialectsTokenSetProvider {
    */
   public TokenSet getKeywordTokens() {
     return myKeywordTokens;
+  }
+
+  /**
+   * Returns all element types of Python dialects that are language non-control keywords.
+   */
+  public TokenSet getNonControlKeywordTokens() {
+    return myNonControlKeywordTokens;
+  }
+
+  /**
+   * Returns all element types of Python dialects that are language control keywords.
+   */
+  public TokenSet getControlKeywordTokens() {
+    return myControlKeywordTokens;
   }
 
   /**

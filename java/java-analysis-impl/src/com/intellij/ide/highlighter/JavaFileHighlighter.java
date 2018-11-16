@@ -28,7 +28,8 @@ public class JavaFileHighlighter extends SyntaxHighlighterBase {
     ourMap1 = new HashMap<>();
     ourMap2 = new HashMap<>();
 
-    fillMap(ourMap1, ElementType.KEYWORD_BIT_SET, JavaHighlightingColors.KEYWORD);
+    fillMap(ourMap1, ElementType.NON_CONTROL_KEYWORD_BIT_SET, JavaHighlightingColors.KEYWORD);
+    fillMap(ourMap1, ElementType.CONTROL_KEYWORD_BIT_SET, JavaHighlightingColors.CONTROL_KEYWORD);
     fillMap(ourMap1, ElementType.LITERAL_BIT_SET, JavaHighlightingColors.KEYWORD);
     fillMap(ourMap1, ElementType.OPERATION_BIT_SET, JavaHighlightingColors.OPERATION_SIGN);
 

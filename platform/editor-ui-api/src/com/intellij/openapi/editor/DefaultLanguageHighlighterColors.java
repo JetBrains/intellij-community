@@ -13,6 +13,10 @@ public class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey IDENTIFIER = TextAttributesKey.createTextAttributesKey("DEFAULT_IDENTIFIER", HighlighterColors.TEXT);
   public static final TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey("DEFAULT_NUMBER");
   public static final TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey("DEFAULT_KEYWORD");
+  /**
+   * @since 2018.3
+   */
+  public static final TextAttributesKey CONTROL_KEYWORD = TextAttributesKey.createTextAttributesKey("DEFAULT_CONTROL_KEYWORD", KEYWORD);
   public static final TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey("DEFAULT_STRING");
   public static final TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey("DEFAULT_BLOCK_COMMENT");
   public static final TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey("DEFAULT_LINE_COMMENT");
