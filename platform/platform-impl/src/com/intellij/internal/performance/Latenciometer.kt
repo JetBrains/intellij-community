@@ -21,8 +21,10 @@ class LatencyRecord {
   var totalLatency: Long = 0L
   var maxLatency: Int = 0
   val samples = TIntArrayList()
+  var samplesSorted = false
 
   fun update(latencyInMS: Int) {
+    samplesSorted = false
     samples.add(latencyInMS)
     totalLatency += latencyInMS
     if (latencyInMS > maxLatency) {
@@ -33,6 +35,10 @@ class LatencyRecord {
   val averageLatency: Long get() = totalLatency / samples.size()
 
   fun percentile(n: Int): Int {
+    if (!samplesSorted) {
+      samples.sort()
+      samplesSorted = true
+    }
     val index = (samples.size() * n / 100).coerceAtMost(samples.size() - 1)
     return samples[index]
   }
