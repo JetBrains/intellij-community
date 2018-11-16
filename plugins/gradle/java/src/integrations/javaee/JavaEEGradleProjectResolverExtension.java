@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.integrations.javaee;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
@@ -37,6 +36,7 @@ import org.jetbrains.plugins.gradle.model.data.*;
 import org.jetbrains.plugins.gradle.model.ear.EarConfiguration;
 import org.jetbrains.plugins.gradle.model.web.WebConfiguration;
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension;
+import org.jetbrains.plugins.gradle.service.project.LibraryDataNodeSubstitutor;
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -215,9 +215,11 @@ public class JavaEEGradleProjectResolverExtension extends AbstractProjectResolve
     DataNode fakeNode = new DataNode(moduleDataNode.getKey(), moduleDataNode.getData(), null);
     buildDependencies(resolverCtx, sourceSetMap, allArtifactsMap, fakeNode, dependencies, null);
 
+    LibraryDataNodeSubstitutor librarySubstitutor =
+      new LibraryDataNodeSubstitutor(null, null, null, sourceSetMap, moduleOutputsMap, artifactsMap);
     final Collection<DataNode<LibraryDependencyData>> libraryDependencies = findAllRecursively(fakeNode, ProjectKeys.LIBRARY_DEPENDENCY);
     for (DataNode<LibraryDependencyData> libraryDependencyDataNode : libraryDependencies) {
-      substitute(null, null, null, sourceSetMap, moduleOutputsMap, allArtifactsMap, libraryDependencyDataNode);
+      librarySubstitutor.run(libraryDependencyDataNode);
     }
 
     final Collection<DataNode<?>> dataNodes = findAllRecursively(fakeNode, node -> node.getData() instanceof DependencyData);
