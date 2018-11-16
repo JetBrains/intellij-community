@@ -23,8 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -239,21 +237,6 @@ public class SwitchUtils {
       }
       val++;
     }
-  }
-
-  /**
-   * Returns enclosing label statement for given label expression
-   * 
-   * @param expression switch label expression
-   * @return enclosing label statement or null if given expression is not a label statement
-   */
-  @Contract("null -> null")
-  @Nullable
-  public static PsiSwitchLabelStatementBase getLabelStatementForLabel(PsiExpression expression) {
-    if (expression == null) return null;
-    PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiExpressionList)) return null;
-    return ObjectUtils.tryCast(parent.getParent(), PsiSwitchLabelStatementBase.class);
   }
 
   private static boolean checkForLabel(String name, PsiElement ancestor) {

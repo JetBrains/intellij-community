@@ -632,6 +632,12 @@ public class PsiImplUtil {
     }
   }
 
+  /**
+   * Returns enclosing label statement for given label expression
+   *
+   * @param expression switch label expression
+   * @return enclosing label statement or null if given expression is not a label statement
+   */
   @Nullable
   public static PsiSwitchLabelStatementBase getSwitchLabel(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());

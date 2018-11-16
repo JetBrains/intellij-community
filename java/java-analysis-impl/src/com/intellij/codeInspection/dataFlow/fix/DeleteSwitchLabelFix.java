@@ -5,13 +5,13 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
 
   public DeleteSwitchLabelFix(@NotNull PsiExpression label) {
     myName = label.getText();
-    PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(SwitchUtils.getLabelStatementForLabel(label));
+    PsiSwitchLabelStatementBase labelStatement = Objects.requireNonNull(PsiImplUtil.getSwitchLabel(label));
     PsiExpressionList values = labelStatement.getCaseValues();
     boolean multiple = values != null && values.getExpressionCount() > 1;
     myBranch = !multiple && shouldRemoveBranch(labelStatement);
@@ -63,7 +63,7 @@ public class DeleteSwitchLabelFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiExpression expression = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
     if (expression == null) return;
-    PsiSwitchLabelStatementBase label = SwitchUtils.getLabelStatementForLabel(expression);
+    PsiSwitchLabelStatementBase label = PsiImplUtil.getSwitchLabel(expression);
     if (label == null) return;
     PsiExpressionList values = label.getCaseValues();
     if (values != null && values.getExpressionCount() == 1) {

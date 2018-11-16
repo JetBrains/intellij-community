@@ -7,10 +7,10 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiExpression label = ObjectUtils.tryCast(descriptor.getStartElement(), PsiExpression.class);
     if (label == null) return;
-    PsiSwitchLabelStatementBase labelStatement = SwitchUtils.getLabelStatementForLabel(label);
+    PsiSwitchLabelStatementBase labelStatement = PsiImplUtil.getSwitchLabel(label);
     if (labelStatement == null) return;
     PsiSwitchStatement statement = labelStatement.getEnclosingSwitchStatement();
     if (statement == null) return;
