@@ -117,7 +117,10 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         if (index != -1) {
           VirtualFile file = myWindow.getFileAt(index);
           if (file != null) {
-            return getTabAt(myWindow.calcIndexToSelect(file, index));
+            int indexToSelect = myWindow.calcIndexToSelect(file, index);
+            if (indexToSelect >= 0 && indexToSelect < getTabs().size()) {
+              return getTabAt(indexToSelect);
+            }
           }
         }
         return super.getToSelectOnRemoveOf(info);
