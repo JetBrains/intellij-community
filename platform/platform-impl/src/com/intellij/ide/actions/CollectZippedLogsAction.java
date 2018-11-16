@@ -17,6 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.settingsSummary.ProblemType;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.Compressor;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,12 +49,13 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
           }
         );
       }
+      final StringBuilder settings = collectInfoFromExtensions(project);
       final File zippedLogsFile =
         ProgressManager.getInstance().run(new Task.WithResult<File, IOException>(project, "Collecting Log Files", false) {
           @Override
           protected File compute(@NotNull ProgressIndicator indicator) throws IOException {
             indicator.setIndeterminate(true);
-            return createZip(project);
+            return createZip(settings);
           }
         });
       if (ShowFilePathAction.isSupported()) {
@@ -69,17 +71,13 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static File createZip(@Nullable Project project) throws IOException {
+  private static File createZip(@Nullable StringBuilder settings) throws IOException {
     File zippedLogsFile = FileUtil.createTempFile("logs-" + getDate(), ".zip");
 
     try (Compressor zip = new Compressor.Zip(zippedLogsFile)) {
       zip.addDirectory(new File(PathManager.getLogPath()));
 
-      if (project != null) {
-        StringBuilder settings = new StringBuilder();
-        for (ProblemType problemType : ProblemType.EP_SETTINGS.getExtensions()) {
-          settings.append(problemType.collectInfo(project)).append('\n');
-        }
+      if (settings != null) {
         zip.addFile("settings.txt", settings.toString().getBytes(StandardCharsets.UTF_8));
       }
 
@@ -93,6 +91,19 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     }
 
     return zippedLogsFile;
+  }
+
+  @Nullable
+  @CalledInAwt
+  private static StringBuilder collectInfoFromExtensions(@Nullable Project project) {
+    StringBuilder settings = null;
+    if (project != null) {
+      settings = new StringBuilder();
+      for (ProblemType problemType : ProblemType.EP_SETTINGS.getExtensions()) {
+        settings.append(problemType.collectInfo(project)).append('\n');
+      }
+    }
+    return settings;
   }
 
   private static File[] getJavaErrorLogs() {
