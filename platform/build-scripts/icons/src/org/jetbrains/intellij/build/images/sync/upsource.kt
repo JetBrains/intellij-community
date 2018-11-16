@@ -13,14 +13,14 @@ private val UPSOURCE = System.getProperty("upsource.url")
 internal val UPSOURCE_ICONS_PROJECT_ID = System.getProperty("intellij.icons.upsource.project.id")
 internal val UPSOURCE_DEV_PROJECT_ID = System.getProperty("intellij.icons.upsource.dev.project.id")
 
-private fun upsourceGet(method: String, args: String): String {
+private fun upsourceGet(method: String, args: String = "", type: String = "rpc"): String {
   val params = if (args.isEmpty()) "" else "?params=${URLEncoder.encode(args, Charsets.UTF_8.name())}"
-  return get("$UPSOURCE/~rpc/$method$params") {
+  return get("$UPSOURCE/~$type/$method$params") {
     upsourceAuthAndLog(method, args)
   }
 }
 
-private fun upsourcePost(method: String, args: String) = post("$UPSOURCE/~rpc/$method", args) {
+private fun upsourcePost(method: String, args: String, type: String = "rpc") = post("$UPSOURCE/~$type/$method", args) {
   upsourceAuthAndLog(method, args)
   addHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.toString())
 }
@@ -41,6 +41,7 @@ internal fun createReview(projectId: String, branch: String, commits: Collection
   val timeout = 30L
   var revisions = emptyList<Revision>()
   loop@ for (i in 1..max) {
+    log(refreshVcs(projectId) ?: "VCS refresh failed")
     revisions = getBranchRevisions(projectId, branch, commits)
     when {
       revisions.isNotEmpty() -> break@loop
@@ -130,4 +131,8 @@ internal fun postComment(projectId: String, review: Review, comment: String) {
       "text" : "$comment",
       "anchor" : {}
   }""")
+}
+
+private fun refreshVcs(projectId: String) = callSafely {
+  upsourceGet(method = projectId, type = "vcs")
 }
