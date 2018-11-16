@@ -606,6 +606,59 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
+  public void testSourceSetOutputDirsAsDependenciesOfDependantModules() throws Exception {
+    createSettingsFile("include 'projectA', 'projectB', 'projectC' ");
+    importProject(
+      "subprojects { \n" +
+      "    apply plugin: \"java\" \n" +
+      "}\n" +
+      "project(':projectA') {\n" +
+      "  sourceSets.main.output.dir file('/generated/projectA')\n" +
+      "}\n" +
+      "project(':projectB') {\n" +
+      "  sourceSets.main.output.dir file('/generated/projectB')\n" +
+      "  dependencies {\n" +
+      "    implementation project(':projectA')\n" +
+      "  }\n" +
+      "}\n" +
+      "project(':projectC') {\n" +
+      "  dependencies {\n" +
+      "    implementation project(':projectB')\n" +
+      "  }\n" +
+      "}"
+    );
+
+    assertModules("project",
+                  "project.projectA", "project.projectA.main", "project.projectA.test",
+                  "project.projectB", "project.projectB.main", "project.projectB.test",
+                  "project.projectC", "project.projectC.main", "project.projectC.test");
+
+    assertModuleModuleDepScope("project.projectB.main", "project.projectA.main", DependencyScope.COMPILE);
+    assertModuleModuleDepScope("project.projectC.main", "project.projectA.main", DependencyScope.RUNTIME);
+    assertModuleModuleDepScope("project.projectC.main", "project.projectB.main", DependencyScope.COMPILE);
+
+    final String pathA = "/generated/projectA";
+    final String classesPathA = "file://" + pathA;
+    final String depNameA = PathUtil.toPresentableUrl(pathA);
+    final String pathB = "/generated/projectB";
+    final String classesPathB = "file://" + pathB;
+    final String depNameB = PathUtil.toPresentableUrl(pathB);
+
+    assertModuleLibDep("project.projectA.main", depNameA, classesPathA);
+    assertModuleLibDepScope("project.projectA.main", depNameA, DependencyScope.RUNTIME);
+
+    assertModuleLibDep("project.projectB.main", depNameA, classesPathA);
+    assertModuleLibDepScope("project.projectB.main", depNameA, DependencyScope.COMPILE);
+    assertModuleLibDep("project.projectB.main", depNameB, classesPathB);
+    assertModuleLibDepScope("project.projectB.main", depNameB, DependencyScope.RUNTIME);
+
+    assertModuleLibDep("project.projectC.main", depNameA, classesPathA);
+    assertModuleLibDepScope("project.projectC.main", depNameA, DependencyScope.RUNTIME);
+    assertModuleLibDep("project.projectC.main", depNameB, classesPathB);
+    assertModuleLibDepScope("project.projectC.main", depNameB, DependencyScope.COMPILE);
+  }
+
+  @Test
   public void testProjectArtifactDependencyInTestAndArchivesConfigurations() throws Exception {
     createSettingsFile("include 'api', 'impl' ");
 
