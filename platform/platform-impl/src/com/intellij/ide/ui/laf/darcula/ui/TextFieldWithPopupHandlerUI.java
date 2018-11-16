@@ -69,7 +69,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a search icon in one of the four states or {@code null} to hide it
    */
   protected Icon getSearchIcon(boolean hovered, boolean clickable) {
-    return AllIcons.Actions.Search;
+    return clickable ? AllIcons.Actions.SearchWithHistory : AllIcons.Actions.Search;
   }
 
   /**

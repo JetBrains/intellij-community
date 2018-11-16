@@ -104,9 +104,10 @@ public class AllIcons {
     public static final Icon Run_anything = IconLoader.getIcon("/actions/run_anything.svg"); // 16x16
     public static final Icon RunToCursor = IconLoader.getIcon("/actions/runToCursor.svg"); // 16x16
     public static final Icon Scratch = IconLoader.getIcon("/actions/scratch.svg"); // 16x16
-    public static final Icon Search = IconLoader.getIcon("/actions/search.png"); // 16x16
+    public static final Icon Search = IconLoader.getIcon("/actions/search.svg"); // 16x16
     public static final Icon SearchNewLine = IconLoader.getIcon("/actions/searchNewLine.svg"); // 16x16
     public static final Icon SearchNewLineHover = IconLoader.getIcon("/actions/searchNewLineHover.svg"); // 16x16
+    public static final Icon SearchWithHistory = IconLoader.getIcon("/actions/searchWithHistory.svg"); // 16x16
     public static final Icon Selectall = IconLoader.getIcon("/actions/selectall.svg"); // 16x16
     public static final Icon SetDefault = IconLoader.getIcon("/actions/setDefault.svg"); // 16x16
     public static final Icon Share = IconLoader.getIcon("/actions/share.png"); // 14x14
