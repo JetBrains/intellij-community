@@ -8,9 +8,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,57 +53,63 @@ class ActionUpdater {
     }
 
     List<AnAction> result = new ArrayList<>();
+    for (AnAction child : getGroupChildren(group, e)) {
+      result.addAll(expandGroupChild(child, hideDisabled, transparentOnly));
+    }
+    return removeUnnecessarySeparators(result);
+  }
 
+  private static List<AnAction> getGroupChildren(ActionGroup group, AnActionEvent e) {
     AnAction[] children = group.getChildren(e);
-    for (int i = 0; i < children.length; i++) {
-      AnAction child = children[i];
-      if (child == null) {
-        String groupId = ActionManager.getInstance().getId(group);
-        LOG.error("action is null: i=" + i + " group=" + group + " group id=" + groupId);
-        continue;
-      }
+    int nullIndex = ArrayUtil.indexOf(children, null);
+    if (nullIndex < 0) return Arrays.asList(children);
 
-      AnActionEvent e1 = createActionEvent(child);
+    LOG.error("action is null: i=" + nullIndex + " group=" + group + " group id=" + ActionManager.getInstance().getId(group));
+    return ContainerUtil.filter(children, Conditions.notNull());
+  }
 
-      if (!transparentOnly || child.isTransparentUpdate()) {
-        if (!doUpdate(myModalContext, child, e1)) continue;
-      }
+  private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabled, boolean transparentOnly) {
+    AnActionEvent e = createActionEvent(child);
 
-      Presentation childPresentation = e1.getPresentation();
-      if (!childPresentation.isVisible() || (!childPresentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
-        continue;
+    if (!transparentOnly || child.isTransparentUpdate()) {
+      if (!doUpdate(myModalContext, child, e)) return Collections.emptyList();
+    }
+
+    Presentation childPresentation = e.getPresentation();
+    if (!childPresentation.isVisible() || (!childPresentation.isEnabled() && hideDisabled)) { // don't create invisible items in the menu
+      return Collections.emptyList();
+    }
+    if (child instanceof ActionGroup) {
+      ActionGroup actionGroup = (ActionGroup)child;
+      if (hideDisabled && !hasEnabledChildren(actionGroup)) {
+        return Collections.emptyList();
       }
-      if (child instanceof ActionGroup) {
-        ActionGroup actionGroup = (ActionGroup)child;
-        boolean skip = hideDisabled && !hasEnabledChildren(actionGroup);
-        if (skip) {
-          continue;
-        }
-        if (actionGroup.isPopup()) { // popup menu has its own presentation
-          if (actionGroup.disableIfNoVisibleChildren()) {
-            final boolean visibleChildren = hasVisibleChildren(actionGroup);
-            if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
-              continue;
-            }
-            childPresentation.setEnabled(actionGroup.canBePerformed(myDataContext) || visibleChildren);
+      if (actionGroup.isPopup()) { // popup menu has its own presentation
+        if (actionGroup.disableIfNoVisibleChildren()) {
+          boolean visibleChildren = hasVisibleChildren(actionGroup);
+          if (actionGroup.hideIfNoVisibleChildren() && !visibleChildren) {
+            return Collections.emptyList();
           }
-
-
-          result.add(child);
+          childPresentation.setEnabled(actionGroup.canBePerformed(myDataContext) || visibleChildren);
         }
-        else {
-          result.addAll(expandActionGroup((ActionGroup)child, hideDisabled || actionGroup instanceof CompactActionGroup, false));
-        }
+
+        return Collections.singletonList(child);
       }
-      else if (child instanceof Separator) {
+
+      return expandActionGroup((ActionGroup)child, hideDisabled || actionGroup instanceof CompactActionGroup, false);
+    }
+
+    return Collections.singletonList(child);
+  }
+
+  private static List<AnAction> removeUnnecessarySeparators(List<AnAction> visible) {
+    List<AnAction> result = new ArrayList<>();
+    for (AnAction child : visible) {
+      if (child instanceof Separator) {
         if (!StringUtil.isEmpty(((Separator)child).getText()) || (!result.isEmpty() && !(result.get(result.size() - 1) instanceof Separator))) {
           result.add(child);
         }
-      }
-      else {
-        if (hideDisabled && !hasEnabledChildren(new DefaultActionGroup(child))) {
-          continue;
-        }
+      } else {
         result.add(child);
       }
     }
@@ -127,11 +137,7 @@ class ActionUpdater {
     }
 
     AnActionEvent event = createActionEvent(group);
-    for (AnAction anAction : group.getChildren(event)) {
-      if (anAction == null) {
-        LOG.error("Null action found in group " + group + ", " + myFactory.getPresentation(group));
-        continue;
-      }
+    for (AnAction anAction : getGroupChildren(group, event)) {
       if (anAction instanceof Separator) {
         continue;
       }
