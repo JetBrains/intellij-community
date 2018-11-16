@@ -43,7 +43,7 @@ public class ModuleExtendedModelBuilderImplTest extends AbstractModelBuilderTest
 
   public ModuleExtendedModelBuilderImplTest(@NotNull String gradleVersion) {
     super(gradleVersion);
-    is50OrBetter = GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("5.0-SNAPSHOT")) >= 0;
+    is50OrBetter = GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("5.0-rc-1")) >= 0;
   }
 
   @Test
