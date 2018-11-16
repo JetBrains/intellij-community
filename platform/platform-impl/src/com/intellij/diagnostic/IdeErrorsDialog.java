@@ -854,9 +854,17 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   /**
    * @return (plugin name, version)
+   * @deprecated use {@link #getPlugin(IdeaLoggingEvent)} instead and take the plugin id, name and version from the returned instance
    */
   @Nullable
+  @Deprecated
   public static Pair<String, String> getPluginInfo(@NotNull IdeaLoggingEvent event) {
+    IdeaPluginDescriptor plugin = getPlugin(event);
+    return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
+  }
+
+  @Nullable
+  public static IdeaPluginDescriptor getPlugin(@NotNull IdeaLoggingEvent event) {
     IdeaPluginDescriptor plugin = null;
     if (event instanceof IdeaReportingEvent) {
       plugin = ((IdeaReportingEvent)event).getPlugin();
@@ -867,7 +875,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         plugin = PluginManager.getPlugin(findPluginId(t));
       }
     }
-    return plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate()) ? pair(plugin.getName(), plugin.getVersion()) : null;
+    return plugin;
   }
 
   @Nullable
