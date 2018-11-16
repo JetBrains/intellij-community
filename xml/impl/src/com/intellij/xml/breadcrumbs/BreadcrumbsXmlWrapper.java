@@ -117,7 +117,7 @@ public class BreadcrumbsXmlWrapper extends JComponent implements Disposable {
 
     myBreadcrumbsCollector = findBreadcrumbsCollector();
     if (myFile != null) {
-      myBreadcrumbsCollector.watchForChanges(myFile, this, () -> queueUpdate());
+      myBreadcrumbsCollector.watchForChanges(myFile, editor, this, () -> queueUpdate());
     }
 
     breadcrumbs.onHover(this::itemHovered);
