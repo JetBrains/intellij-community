@@ -524,10 +524,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   public static void substitute(@Nullable File gradleUserHomeDir,
                                 @Nullable File gradleHomeDir,
                                 @Nullable GradleVersion gradleVersion,
-                                Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
-                                Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap,
-                                Map<String, String> artifactsMap,
-                                DataNode<LibraryDependencyData> libraryDependencyDataNode) {
+                                @NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
+                                @NotNull Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap,
+                                @NotNull Map<String, String> artifactsMap,
+                                @NotNull DataNode<LibraryDependencyData> libraryDependencyDataNode) {
     final DataNode<?> libraryNodeParent = libraryDependencyDataNode.getParent();
     if (libraryNodeParent == null) return;
 
