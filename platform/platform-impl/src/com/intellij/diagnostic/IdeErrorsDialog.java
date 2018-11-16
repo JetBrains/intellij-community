@@ -446,7 +446,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     StringBuilder info = new StringBuilder();
 
     if (pluginId != null) {
-      info.append(DiagnosticBundle.message("error.list.message.blame.plugin", plugin != null ? plugin.getName() : pluginId));
+      String versionText = plugin != null && (!plugin.isBundled() || plugin.allowBundledUpdate())
+                           ? DiagnosticBundle.message("error.list.message.plugin.version", plugin.getVersion())
+                           : "";
+      info.append(DiagnosticBundle.message("error.list.message.blame.plugin", plugin != null ? plugin.getName() : pluginId, versionText));
     }
     else if (t instanceof AbstractMethodError) {
       info.append(DiagnosticBundle.message("error.list.message.blame.unknown.plugin"));
