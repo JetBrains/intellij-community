@@ -189,9 +189,21 @@ class RetypeSession(
     queueNextOrStop()
   }
 
-  private fun compareTexts(expectedText: String) =
-    document.text.replace(" ","").replace(")","").replace("]","").replace("}", "") !=
-     expectedText.replace(" ","").replace(")","").replace("]","").replace("}", "")
+  private fun compareTexts(expectedText: String): Boolean {
+    val text = document.text
+    var i = 0;
+    var j = 0
+    while (i < text.length && j < expectedText.length) {
+      while (i < text.length && isSkipped(text[i])) i++
+      while (j < expectedText.length && isSkipped(expectedText[j])) j++
+      if (text[i] != originalText[j]) return false
+      i++
+      j++
+    }
+    return i == text.length && j == expectedText.length
+  }
+
+  private fun isSkipped(c: Char) = c == ' ' || c == ')' || c == ']' || c == '}'
 
   private fun queueNextOrStop() {
     if (pos < endPos) {
