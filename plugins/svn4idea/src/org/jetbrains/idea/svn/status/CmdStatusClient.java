@@ -7,7 +7,10 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.*;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ErrorCode;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
 import org.xml.sax.SAXException;
@@ -34,7 +37,6 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
   public void doStatus(@NotNull File path,
-                       @Nullable Revision revision,
                        @NotNull Depth depth,
                        boolean remote,
                        boolean reportAll,
@@ -42,17 +44,16 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                        boolean collectParentExternals,
                        @NotNull StatusConsumer handler) throws SvnBindException {
     File base = requireExistingParent(path);
-    Info infoBase = myFactory.createInfoClient().doInfo(base, revision);
+    Info infoBase = myFactory.createInfoClient().doInfo(base, null);
     List<String> parameters = newArrayList();
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored);
 
     CommandExecutor command = execute(myVcs, Target.on(path), SvnCommandName.st, parameters, null);
-    parseResult(path, revision, handler, base, infoBase, command);
+    parseResult(path, handler, base, infoBase, command);
   }
 
   private void parseResult(@NotNull File path,
-                           @Nullable Revision revision,
                            @NotNull StatusConsumer handler,
                            @NotNull File base,
                            @Nullable Info infoBase,
@@ -65,7 +66,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
     try {
       Ref<SvnStatusHandler> parsingHandler = Ref.create();
-      parsingHandler.set(createStatusHandler(revision, handler, base, infoBase, () -> parsingHandler.get().getPending()));
+      parsingHandler.set(createStatusHandler(handler, base, infoBase, () -> parsingHandler.get().getPending()));
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.parse(new ByteArrayInputStream(result.trim().getBytes(CharsetToolkit.UTF8_CHARSET)), parsingHandler.get());
       if (!parsingHandler.get().isAnythingReported()) {
@@ -83,7 +84,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           status.setFile(path);
           status.setPath(path.getAbsolutePath());
           status.setContentsStatus(StatusType.STATUS_NORMAL);
-          status.setInfoGetter(() -> createInfoGetter(null).convert(path));
+          status.setInfoGetter(() -> createInfoGetter().convert(path));
           handler.consume(status);
         }
       }
@@ -117,21 +118,20 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   }
 
   @NotNull
-  public SvnStatusHandler createStatusHandler(@Nullable Revision revision,
-                                              @NotNull StatusConsumer handler,
+  public SvnStatusHandler createStatusHandler(@NotNull StatusConsumer handler,
                                               @NotNull File base,
                                               @Nullable Info infoBase,
                                               @NotNull Supplier<Status> statusSupplier) {
     SvnStatusHandler.ExternalDataCallback callback = createStatusCallback(handler, base, infoBase, statusSupplier);
 
-    return new SvnStatusHandler(callback, base, createInfoGetter(revision));
+    return new SvnStatusHandler(callback, base, createInfoGetter());
   }
 
   @NotNull
-  private Convertor<File, Info> createInfoGetter(@Nullable Revision revision) {
+  private Convertor<File, Info> createInfoGetter() {
     return file -> {
       try {
-        return myFactory.createInfoClient().doInfo(file, revision);
+        return myFactory.createInfoClient().doInfo(file, null);
       }
       catch (SvnBindException e) {
         throw new SvnExceptionWrapper(e);
@@ -183,7 +183,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
   @Override
   public Status doStatus(@NotNull File path, boolean remote) throws SvnBindException {
     Ref<Status> status = Ref.create();
-    doStatus(path, Revision.UNDEFINED, Depth.EMPTY, remote, false, false, false, status::set);
+    doStatus(path, Depth.EMPTY, remote, false, false, false, status::set);
     return status.get();
   }
 }

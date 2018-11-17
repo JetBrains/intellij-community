@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn.status;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
@@ -12,7 +11,6 @@ import java.io.File;
 
 public interface StatusClient extends SvnClient {
   void doStatus(@NotNull File path,
-                @Nullable Revision revision,
                 @NotNull Depth depth,
                 boolean remote,
                 boolean reportAll,
