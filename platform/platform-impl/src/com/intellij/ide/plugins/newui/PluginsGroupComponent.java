@@ -60,6 +60,10 @@ public class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.setSelection(component);
   }
 
+  public void setSelection(@NotNull List<CellPluginComponent> components) {
+    myEventHandler.setSelection(components);
+  }
+
   public void addGroup(@NotNull PluginsGroup group) {
     addGroup(group, -1);
   }

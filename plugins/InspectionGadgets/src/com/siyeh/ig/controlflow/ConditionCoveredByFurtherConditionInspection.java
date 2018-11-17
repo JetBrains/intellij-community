@@ -7,6 +7,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -26,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(ConditionCoveredByFurtherConditionInspection.class);
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -133,8 +137,13 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         Object value = DfaUtil.computeValue(operands.get(0));
         return Boolean.valueOf(and).equals(value) ? new int[]{0} : ArrayUtil.EMPTY_INT_ARRAY;
       }
-      PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)JavaPsiFacade.getElementFactory(context.getProject())
-        .createExpressionFromText(StreamEx.ofReversed(operands).map(PsiElement::getText).joining(and ? " && " : " || "), context);
+      String text = StreamEx.ofReversed(operands).map(PsiElement::getText).joining(and ? " && " : " || ");
+      PsiExpression expression = JavaPsiFacade.getElementFactory(context.getProject()).createExpressionFromText(text, context);
+      if (!(expression instanceof PsiPolyadicExpression)) {
+        LOG.error("Unexpected expression type: " + expression.getClass().getName(), new Attachment("reversed.txt", text));
+        return ArrayUtil.EMPTY_INT_ARRAY;
+      }
+      PsiPolyadicExpression expressionToAnalyze = (PsiPolyadicExpression)expression;
       List<PsiExpression> reversedOperands = Arrays.asList(expressionToAnalyze.getOperands());
       DataFlowRunner runner = new StandardDataFlowRunner(false, context);
       Map<PsiExpression, ThreeState> values = new HashMap<>();

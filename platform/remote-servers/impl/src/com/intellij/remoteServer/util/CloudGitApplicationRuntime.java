@@ -96,7 +96,7 @@ public class CloudGitApplicationRuntime extends CloudApplicationRuntime {
         if (password == null) {
           return;
         }
-        if (password.equals(getServerRuntime().getConfiguration().getPassword())) {
+        if (password.equals(getServerRuntime().getConfiguration().getPasswordSafe())) {
           confirmed.set(true);
           return;
         }

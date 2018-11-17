@@ -21,17 +21,17 @@ class MavenRepositoriesDataService: AbstractProjectDataService<MavenRepositoryDa
                                modelsProvider: IdeModelsProvider) {
 
     projectData?.apply {
-      GradleSettings
-        .getInstance(project)
-        .linkedProjectsSettings
-        .find { settings -> settings.externalProjectPath == linkedExternalProjectPath }
-        ?.let {
-          if (!it.isResolveExternalAnnotations) {
-            return@onSuccessImport
-          }
-        }
-    }
+      val importRepositories =
+        GradleSettings
+          .getInstance(project)
+          .linkedProjectsSettings
+          .find { settings -> settings.externalProjectPath == linkedExternalProjectPath }
+          ?.isResolveExternalAnnotations ?: false
 
+      if (!importRepositories) {
+        return
+      }
+    }
 
     val repositoriesConfiguration = RemoteRepositoriesConfiguration.getInstance(project)
 

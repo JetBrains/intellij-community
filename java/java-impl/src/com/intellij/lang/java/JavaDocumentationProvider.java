@@ -4,6 +4,7 @@ package com.intellij.lang.java;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.codeInsight.documentation.QuickDocUtil;
@@ -23,6 +24,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -41,7 +44,6 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +51,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * @author Maxim.Mossienko
@@ -753,11 +757,17 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       relPath = packageName.replace('.', '/') + '/' + qName.substring(packageName.length() + 1) + HTML_EXTENSION;
     }
 
-    return findUrlForVirtualFile(file.getProject(), virtualFile, relPath);
+    return doFindUrlForVirtualFile(file.getProject(), virtualFile, relPath);
+  }
+
+  /** @deprecated internal method; use {@link #findUrlForClass}/{@link #findUrlForPackage} instead (removed in IDEA 2019.1) */
+  @Deprecated
+  public static List<String> findUrlForVirtualFile(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull String relPath) {
+    return doFindUrlForVirtualFile(project, virtualFile, relPath);
   }
 
   @Nullable
-  public static List<String> findUrlForVirtualFile(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull String relPath) {
+  private static List<String> doFindUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module module = fileIndex.getModuleForFile(virtualFile);
     if (module == null) {
@@ -779,25 +789,40 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     }
 
     for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
+      String altRelPath = null;
+      if (orderEntry instanceof JdkOrderEntry && JavaSdkVersionUtil.isAtLeast(((JdkOrderEntry)orderEntry).getJdk(), JavaSdkVersion.JDK_11)) {
+        PsiJavaModule javaModule = JavaModuleGraphUtil.findDescriptorByFile(virtualFile, project);
+        if (javaModule != null) {
+          altRelPath = javaModule.getName() + '/' + relPath;
+        }
+      }
+
       for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
         if (root.getFileSystem() == JarFileSystem.getInstance()) {
           VirtualFile file = root.findFileByRelativePath(relPath);
-          List<Url> urls = file == null ? null : BuiltInWebBrowserUrlProviderKt.getBuiltInServerUrls(file, project, null);
-          if (!ContainerUtil.isEmpty(urls)) {
-            List<String> result = new SmartList<>();
-            for (Url url : urls) {
-              result.add(url.toExternalForm());
+          if (file == null && altRelPath != null) file = root.findFileByRelativePath(altRelPath);
+          if (file != null) {
+            List<Url> urls = BuiltInWebBrowserUrlProviderKt.getBuiltInServerUrls(file, project, null);
+            if (!urls.isEmpty()) {
+              return ContainerUtil.map(urls, Url::toExternalForm);
             }
-            return result;
           }
         }
       }
 
-      List<String> httpRoot = PlatformDocumentationUtil.getHttpRoots(JavadocOrderRootType.getUrls(orderEntry), relPath);
-      if (httpRoot != null) {
-        return httpRoot;
+      String[] webUrls = JavadocOrderRootType.getUrls(orderEntry);
+      if (webUrls.length > 0) {
+        List<String> httpRoots = new ArrayList<>();
+        if (altRelPath != null) {
+          httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, altRelPath), Collections.emptyList()));
+        }
+        httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, relPath), Collections.emptyList()));
+        if (!httpRoots.isEmpty()) {
+          return httpRoots;
+        }
       }
     }
+
     return null;
   }
 
@@ -806,7 +831,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     String qName = aPackage.getQualifiedName();
     qName = qName.replace('.', '/') + '/' + PACKAGE_SUMMARY_FILE;
     for (PsiDirectory directory : aPackage.getDirectories()) {
-      List<String> url = findUrlForVirtualFile(aPackage.getProject(), directory.getVirtualFile(), qName);
+      List<String> url = doFindUrlForVirtualFile(aPackage.getProject(), directory.getVirtualFile(), qName);
       if (url != null) {
         return url;
       }

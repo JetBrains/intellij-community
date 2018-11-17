@@ -9,11 +9,10 @@ import com.intellij.ide.ExceptionRegistry;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.StackTrace;
-import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
@@ -28,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author kir
@@ -49,6 +46,11 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     if (ourLoggerBroken) return false;
 
     try {
+      final Application app = ApplicationManager.getApplication();
+      if (app.isDisposed() || app.isDisposeInProgress()) {
+        return false;
+      }
+
       UpdateChecker.checkForUpdate(event);
 
       boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
@@ -58,19 +60,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
       boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
       boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
-      String key = "ide.error";
-      if(isOOM){
-        key+=".oom";
-      }
-      if(isMappingFailed){
-        key+=".mappingFailed";
-      }
-
-      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, key);
-      Map<String, Object> values = new HashMap<>();
-      values.put("oom",isOOM);
-      values.put("mappingFailed",isMappingFailed);
-      FeatureUsageLogger.INSTANCE.log("lifecycle",  "ide.error", values);
+      AppLifecycleUsageTriggerCollector.onError(isOOM, isMappingFailed);
 
       return notificationEnabled ||
              showPluginError ||

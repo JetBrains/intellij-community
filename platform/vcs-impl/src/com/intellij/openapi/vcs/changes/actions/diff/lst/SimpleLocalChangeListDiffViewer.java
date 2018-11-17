@@ -138,20 +138,20 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
         return applyNotification(DiffNotifications.createError()); // DiffRequest is out of date
       }
 
-      if (data.diffData == null &&
-          data.affectedChangelist.size() == 1 &&
-          data.affectedChangelist.contains(myChangelistId)) {
-        // tracker is waiting for initialisation
-        // there are only one changelist, so it's safe to fallback to default logic
-        Runnable callback = super.performRediff(indicator);
-        return () -> {
-          callback.run();
-          getStatusPanel().setBusy(true);
-        };
-      }
-
       TrackerDiffData diffData = data.diffData;
+
       if (diffData == null || diffData.ranges == null) {
+        if (data.affectedChangelist.size() == 1 &&
+            data.affectedChangelist.contains(myChangelistId)) {
+          // tracker is waiting for initialisation
+          // there are only one changelist, so it's safe to fallback to default logic
+          Runnable callback = super.performRediff(indicator);
+          return () -> {
+            callback.run();
+            getStatusPanel().setBusy(true);
+          };
+        }
+
         scheduleRediff();
         throw new ProcessCanceledException();
       }

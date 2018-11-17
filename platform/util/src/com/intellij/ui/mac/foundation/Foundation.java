@@ -11,8 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author spleaner
@@ -264,6 +264,10 @@ public class Foundation {
     }
   }
 
+  public static ID autorelease(ID id){
+    return Foundation.invoke(id, "autorelease");
+  }
+
   public static boolean isMainThread() {
     return invoke("NSThread", "isMainThread").intValue() > 0;
   }
@@ -370,11 +374,14 @@ public class Foundation {
     public NSArray keys() { return new NSArray(invoke(myDelegate, "allKeys")); }
 
     @NotNull
-    public static Map<String, String> toStringMap(ID delegate) {
-      NSDictionary dict = new NSDictionary(delegate);
-
-      NSArray keys = dict.keys();
+    public static Map<String, String> toStringMap(@Nullable ID delegate) {
       Map<String, String> result = new HashMap<String, String>();
+      if (isNil(delegate)) {
+        return result;
+      }
+
+      NSDictionary dict = new NSDictionary(delegate);
+      NSArray keys = dict.keys();
 
       for (int i = 0; i < keys.count(); i++) {
         String key = toStringViaUTF8(keys.at(i));

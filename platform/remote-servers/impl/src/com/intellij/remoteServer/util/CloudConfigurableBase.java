@@ -3,7 +3,6 @@ package com.intellij.remoteServer.util;
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remoteServer.RemoteServerConfigurable;
 import com.intellij.remoteServer.ServerType;
@@ -40,21 +39,26 @@ public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> e
   @Override
   public boolean isModified() {
     return !getEmailTextField().getText().equals(myConfiguration.getEmail())
-           || !new String(getPasswordField().getPassword()).equals(myConfiguration.getPassword());
+           || !new String(getPasswordField().getPassword()).equals(myConfiguration.getPasswordSafe())
+           || !myConfiguration.isPasswordSafe();
   }
 
   @Override
   public void apply() throws ConfigurationException {
-    applyCoreTo(myConfiguration);
+    applyCoreTo(myConfiguration, false);
   }
 
   @Override
   public void reset() {
     getEmailTextField().setText(myConfiguration.getEmail());
-    getPasswordField().setText(myConfiguration.getPassword());
+    getPasswordField().setText(myConfiguration.getPasswordSafe());
   }
 
   protected void applyCoreTo(SC configuration) throws ConfigurationException {
+    applyCoreTo(configuration, false);
+  }
+
+  protected void applyCoreTo(SC configuration, boolean forComparison) throws ConfigurationException {
     String email = getEmailTextField().getText();
     if (StringUtil.isEmpty(email)) {
       throw new RuntimeConfigurationError("Email required");
@@ -65,12 +69,17 @@ public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> e
     }
 
     configuration.setEmail(email);
-    configuration.setPassword(password);
+    if (forComparison) {
+      configuration.setPassword(password);
+    }
+    else {
+      configuration.setPasswordSafe(password);
+    }
   }
 
   protected boolean isCoreConfigEqual(SC configuration1, SC configuration2) {
     return Comparing.equal(configuration1.getEmail(), configuration2.getEmail())
-           && Comparing.equal(configuration1.getPassword(), configuration2.getPassword());
+           && Comparing.equal(configuration1.getPasswordSafe(), configuration2.getPasswordSafe());
   }
 
   private String generateServerName() {
@@ -84,11 +93,15 @@ public abstract class CloudConfigurableBase<SC extends CloudConfigurationBase> e
     });
   }
 
+  /**
+   * This method is not used anymore and will be removed in 2019.1
+   */
+  @Deprecated
   protected final RemoteServer<SC> createTempServer() {
     RemoteServer<SC> tempServer = RemoteServersManager.getInstance().createServer(myCloudType, generateServerName());
     SC newConfiguration = tempServer.getConfiguration();
     try {
-      applyCoreTo(newConfiguration);
+      applyCoreTo(newConfiguration, true);
     }
     catch (ConfigurationException e) {
       return null;

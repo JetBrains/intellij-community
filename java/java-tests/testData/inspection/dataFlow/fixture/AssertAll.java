@@ -58,4 +58,8 @@ public class AssertAll {
               }
     );
   }
+  
+  void testEmpty() {
+    Assertions.assertAll();
+  }
 }

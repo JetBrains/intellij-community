@@ -21,8 +21,11 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.ui.JBColor.namedColor;
+
 public class MergeCommitsHighlighter implements VcsLogHighlighter {
-  public static final JBColor MERGE_COMMIT_FOREGROUND = new JBColor(Gray._128, Gray._96);
+  public static final JBColor MERGE_COMMIT_FOREGROUND = namedColor("VersionControl.Log.Commit.unmatchedForeground",
+                                                                   new JBColor(Gray._128, Gray._96));
   @NotNull private final VcsLogUi myLogUi;
 
   public MergeCommitsHighlighter(@NotNull VcsLogUi logUi) {

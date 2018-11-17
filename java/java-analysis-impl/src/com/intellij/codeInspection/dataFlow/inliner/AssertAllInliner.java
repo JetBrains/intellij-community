@@ -54,7 +54,8 @@ public class AssertAllInliner implements CallInliner {
     builder.push(result)
            .ifConditionIs(true)
            .doThrow(throwable)
-           .end();
+           .end()
+           .pushUnknown(); // void method result
     return true;
   }
 }
