@@ -182,6 +182,27 @@ class CheckOutputThread(PyDBDaemonThread):
         self.killReceived = True
 
 
+class TrackedLock(object):
+    """The lock that tracks if it has been acquired by the current thread
+    """
+    def __init__(self):
+        self._lock = thread.allocate_lock()
+        # thread-local storage
+        self._tls = threading.local()
+        self._tls.is_lock_acquired = False
+
+    def acquire(self):
+        self._lock.acquire()
+        self._tls.is_lock_acquired = True
+
+    def release(self):
+        self._lock.release()
+        self._tls.is_lock_acquired = False
+
+    def is_acquired_by_current_thread(self):
+        return self._tls.is_lock_acquired
+
+
 #=======================================================================================================================
 # PyDB
 #=======================================================================================================================
@@ -221,7 +242,7 @@ class PyDB:
         self.break_on_caught_exceptions = {}
 
         self.ready_to_run = False
-        self._main_lock = thread.allocate_lock()
+        self._main_lock = TrackedLock()
         self._lock_running_thread_ids = thread.allocate_lock()
         self._py_db_command_thread_event = threading.Event()
         CustomFramesContainer._py_db_command_thread_event = self._py_db_command_thread_event
@@ -764,13 +785,17 @@ class PyDB:
         substituted process will try to connect to the IDE itself.
         """
         if self.communication_role == CommunicationRole.SERVER:
+            if self._main_lock.is_acquired_by_current_thread():
+                # if `_main_lock` is acquired by the current thread then `event.wait()` would stuck
+                # because the corresponding call of `event.set()` is made under the same `_main_lock`
+                pydev_log.debug("Skip sending process substitution notification\n")
+                return
+
             cmd = self.cmd_factory.make_process_created_message()
             # register event before putting command to the message queue
             event = threading.Event()
             self.process_created_msg_received_events[cmd.seq] = event
-            # put command to the message queue
             self.writer.add_command(cmd)
-            # wait for the reply
             event.wait()
 
     def set_next_statement(self, frame, event, func_name, next_line):
