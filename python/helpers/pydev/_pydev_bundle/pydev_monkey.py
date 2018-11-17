@@ -64,6 +64,10 @@ def _on_set_trace_for_new_thread(global_debugger):
 #===============================================================================
 # Things related to monkey-patching
 #===============================================================================
+def is_python_args(args):
+    return len(args) > 0 and is_python(args[0])
+
+
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path) - 1]
@@ -340,7 +344,8 @@ def create_execl(original_name):
         """
         import os
         args = patch_args(args)
-        send_process_will_be_substituted()
+        if is_python_args(args):
+            send_process_will_be_substituted()
         return getattr(os, original_name)(path, *args)
     return new_execl
 
@@ -352,7 +357,8 @@ def create_execv(original_name):
         os.execvp(file, args)
         """
         import os
-        send_process_will_be_substituted()
+        if is_python_args(args):
+            send_process_will_be_substituted()
         return getattr(os, original_name)(path, patch_args(args))
     return new_execv
 
@@ -364,7 +370,8 @@ def create_execve(original_name):
     """
     def new_execve(path, args, env):
         import os
-        send_process_will_be_substituted()
+        if is_python_args(args):
+            send_process_will_be_substituted()
         return getattr(os, original_name)(path, patch_args(args), env)
     return new_execve
 
