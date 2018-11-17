@@ -34,6 +34,38 @@ $some_long_variable_name<caret>
 '''
   }
 
+  void testLooping() {
+    myFixture.configureByText "a.txt", '''
+String word = name.substring(wordStart, index);
+wor<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+String word = name.substring(wordStart, index);
+wordStart<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+String word = name.substring(wordStart, index);
+word<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+String word = name.substring(wordStart, index);
+wor<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+String word = name.substring(wordStart, index);
+wordStart<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+String word = name.substring(wordStart, index);
+word<caret>
+'''
+  }
+
   void testFromAnotherFile() {
     myFixture.configureByText "b.txt", '''
 $some_local = 1;
