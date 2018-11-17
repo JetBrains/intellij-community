@@ -1264,6 +1264,10 @@
       <add-to-group group-id="Internal.Performance" anchor="last"/>
     </action>
 
+    <action id="CompletionQualityStats" text="Completion Quality Stats" class="com.intellij.internal.CompletionQualityStatsAction" internal="true">
+      <add-to-group group-id="Internal" anchor="last"/>
+    </action>
+
     <action id="ShowControlFlowAction" class="com.intellij.internal.cfgView.ShowControlFlowAction"
             text="Show control flow" internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
