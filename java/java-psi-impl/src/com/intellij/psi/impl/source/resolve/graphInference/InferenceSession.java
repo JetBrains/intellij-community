@@ -387,7 +387,7 @@ public class InferenceSession {
         if (o instanceof PsiExpressionList) {
           final PsiExpressionList element = (PsiExpressionList)o;
           for (PsiExpression expression : element.getExpressions()) {
-            if (expression == myContext) {
+            if (PsiUtil.skipParenthesizedExprDown(expression) == myContext) {
               return true;
             }
           }
