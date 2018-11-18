@@ -3,10 +3,7 @@ package com.intellij.lang.java;
 
 import com.intellij.codeInsight.daemon.impl.focusMode.FocusModeProvider;
 import com.intellij.openapi.util.Segment;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,6 +15,10 @@ public class JavaFocusModeProvider implements FocusModeProvider {
     return SyntaxTraverser.psiTraverser(file)
       .postOrderDfsTraversal()
       .filter(e -> e instanceof PsiClass || e instanceof PsiMethod)
+      .filter(e -> {
+        PsiElement parent = e.getParent();
+        return parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass);
+      })
       .map(e -> e.getTextRange()).toList();
   }
 }
