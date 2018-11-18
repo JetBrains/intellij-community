@@ -31,8 +31,12 @@ private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
 private val NOTIFICATIONS_MIN_INTERVAL_HOURS = System.getProperty("notifications.min.interval.hours")?.toInt() ?: 12
 
 internal fun isNotificationRequired(context: Context): Boolean {
+  val calendar = Calendar.getInstance()
+  if (calendar.get(Calendar.DAY_OF_WEEK).let {
+      it == Calendar.SATURDAY || it == Calendar.SUNDAY
+    }) return false
   val request = "builds?locator=buildType:$BUILD_CONF,count:1"
-  val intervalStart = DATE_FORMAT.format(Calendar.getInstance().apply {
+  val intervalStart = DATE_FORMAT.format(calendar.apply {
     add(Calendar.HOUR, -NOTIFICATIONS_MIN_INTERVAL_HOURS)
     time
   }).let { URLEncoder.encode(it, Charsets.UTF_8.name()) }
