@@ -377,7 +377,7 @@ private data class Completion(val path: String,
                               val charsToWin: Int,
                               val callsCount: Int,
                               val totalTime: Long) {
-  val id = path.hashCode() + offset.hashCode()
+  val id = (path + ":" + offset.toString()).hashCode()
 }
 
 private data class CompletionStats(val timestamp: Long) {
