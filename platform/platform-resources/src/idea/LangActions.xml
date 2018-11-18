@@ -1264,7 +1264,7 @@
       <add-to-group group-id="Internal.Performance" anchor="last"/>
     </action>
 
-    <action id="CompletionQualityStats" text="Completion Quality Stats" class="com.intellij.internal.CompletionQualityStatsAction" internal="true">
+    <action id="CompletionQualityStats" text="Completion Quality Statistics" class="com.intellij.internal.CompletionQualityStatsAction" internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
 
