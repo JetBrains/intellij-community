@@ -139,3 +139,13 @@ internal fun getOpenIconsReviewTitles(projectId: String) = upsourceGet("getRevie
   }""").run {
   extractAll(this, Regex(""""title":"([^"]+)""""))
 }
+
+internal fun closeReview(projectId: String, review: Review) {
+  upsourcePost("closeReview", """{
+      "isFlagged" : true,
+      "reviewId": {
+      	"projectId" : "$projectId",
+      	"reviewId": "${review.id}"
+      }
+  }""")
+}

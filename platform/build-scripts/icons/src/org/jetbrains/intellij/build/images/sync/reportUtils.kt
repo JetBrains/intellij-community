@@ -82,15 +82,22 @@ private fun createReviewForDev(root: File, context: Context, user: String, email
   }
   return withTmpBranch(repos) { branch ->
     val commitsForReview = commitAndPush(branch, user, email, commits.commitMessage(), repos)
-    if (UPSOURCE_DEV_PROJECT_ID.isNullOrEmpty()) {
+    val projectId = UPSOURCE_DEV_PROJECT_ID
+    if (projectId.isNullOrEmpty()) {
       log("WARNING: unable to create Upsource review for ${context.devRepoName}, just plain old branch review")
-      PlainOldReview(branch, UPSOURCE_DEV_PROJECT_ID)
+      PlainOldReview(branch, projectId)
     }
     else {
-      val review = createReview(UPSOURCE_DEV_PROJECT_ID, branch, commitsForReview)
-      addReviewer(UPSOURCE_DEV_PROJECT_ID, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
-      postVerificationResultToReview(verificationPassed, review)
-      review
+      val review = createReview(projectId, branch, commitsForReview)
+      try {
+        addReviewer(projectId, review, triggeredBy() ?: DEFAULT_INVESTIGATOR)
+        postVerificationResultToReview(verificationPassed, review)
+        review
+      }
+      catch (e: Exception) {
+        closeReview(projectId, review)
+        throw e
+      }
     }
   }
 }
@@ -151,9 +158,9 @@ private fun findCommitsByRepo(
   val commits = findCommits(root, changes.asSequence()).toList()
   if (commits.isEmpty()) return emptyMap()
   val alreadyInReview = getOpenIconsReviewTitles(projectId)
-  return commits
-    .filter { !alreadyInReview.contains(it.hash) }
-    .groupBy(CommitInfo::repo)
+  return commits.filter { commit ->
+    alreadyInReview.none { it.contains(commit.hash) }
+  }.groupBy(CommitInfo::repo)
 }
 
 private fun findCommits(root: File, changes: Sequence<String>) = changes
