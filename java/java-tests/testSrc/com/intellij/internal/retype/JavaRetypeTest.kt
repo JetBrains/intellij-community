@@ -3,12 +3,15 @@ package com.intellij.internal.retype
 
 import com.intellij.JavaTestUtil
 import com.intellij.ide.IdeEventQueue
+import com.intellij.idea.Bombed
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import java.util.*
 
 /**
  * @author yole
  */
+@Bombed(user = "yole", day = 20, month = Calendar.NOVEMBER)
 class JavaRetypeTest : LightCodeInsightFixtureTestCase() {
   override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath()
 
