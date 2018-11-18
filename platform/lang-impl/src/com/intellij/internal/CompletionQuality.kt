@@ -2,10 +2,16 @@
 package com.intellij.internal
 
 import com.google.common.collect.Lists
+import com.google.gson.Gson
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.execution.ExecutionManager
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.filters.TextConsoleBuilderFactory
+import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -26,6 +32,7 @@ import com.intellij.openapi.fileTypes.impl.FileTypeRenderer
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
@@ -36,6 +43,8 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.layout.*
+import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.ui.UIUtil
 import java.util.*
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
@@ -56,7 +65,7 @@ class CompletionQualityStatsAction : AnAction() {
 
     val stats = CompletionStats(System.currentTimeMillis())
 
-    val task = object : Task.Modal(project, "Emulating completion", true) {
+    val task = object : Task.Backgroundable(project, "Emulating completion", true) {
       override fun run(indicator: ProgressIndicator) {
         val files = ReadAction.compute<Collection<VirtualFile>, Exception> {
           FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)
@@ -77,6 +86,9 @@ class CompletionQualityStatsAction : AnAction() {
           }
 
           if (completionAttempts.isNotEmpty()) {
+            val semaphore = Semaphore()
+            semaphore.down()
+
             val application = ApplicationManager.getApplication()
             application.invokeAndWait(Runnable {
               val newEditor = WriteAction.compute<Editor, Exception> {
@@ -86,27 +98,43 @@ class CompletionQualityStatsAction : AnAction() {
                 EditorFactory.getInstance().createEditor(newDocument!!, project, fileType, false)
               }
 
-              val modalityState = ModalityState.current()
-
               val text = document.text
 
               application.executeOnPooledThread {
                 try {
                   for (pair in completionAttempts) {
-                    evalCompletionAt(project, file, newEditor, text, pair.first, pair.second, stats, modalityState)
+                    if (indicator.isCanceled) {
+                      break
+                    }
+                    evalCompletionAt(project, file, newEditor, text, pair.first, pair.second, stats, indicator)
                   }
                 }
                 finally {
+                  semaphore.up()
                 }
               }
-            }, ModalityState.defaultModalityState())
+            }, ModalityState.NON_MODAL)
+
+            semaphore.waitFor()
           }
         }
         stats.finished = true
+
+        var gson = Gson()
+
+        UIUtil.invokeLaterIfNeeded {  createConsoleAndPrint(project, gson.toJson(stats)) }
       }
     }
 
-    ProgressManager.getInstance().run(task)
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, BackgroundableProcessIndicator(task))
+  }
+
+  private fun createConsoleAndPrint(project: Project, text: String) {
+    val consoleBuilder = TextConsoleBuilderFactory.getInstance().createBuilder(project)
+    val console = consoleBuilder.console
+    val descriptor = RunContentDescriptor(console, null, console.component, "Completion Quality Statistics")
+    ExecutionManager.getInstance(project).contentManager.showRunContent(DefaultRunExecutor.getRunExecutorInstance(), descriptor)
+    console.print(text, ConsoleViewContentType.NORMAL_OUTPUT)
   }
 
   private fun getCompletionAttempts(file: PsiFile): List<Pair<Int, String>> {
@@ -139,24 +167,34 @@ class CompletionQualityStatsAction : AnAction() {
                                startIndex: Int,
                                existingCompletion: String,
                                stats: CompletionStats,
-                               modalityState: ModalityState) {
-    val rank0 = findCorrectElementRank(editor, text, startIndex, project, existingCompletion, file, modalityState)
-    val rank1 = findCorrectElementRank(editor, text, startIndex + 1, project, existingCompletion, file, modalityState)
-    val rank3 = findCorrectElementRank(editor, text, startIndex + 3, project, existingCompletion, file, modalityState)
+                               indicator: ProgressIndicator) {
+    val rank0 = findCorrectElementRank(editor, text, startIndex, 0, project, existingCompletion, file)
+    if (indicator.isCanceled) {
+      return
+    }
+    val rank1 = findCorrectElementRank(editor, text, startIndex, 1, project, existingCompletion, file)
+    if (indicator.isCanceled) {
+      return
+    }
+    val rank3 = findCorrectElementRank(editor, text, startIndex, 3, project, existingCompletion, file)
+    if (indicator.isCanceled) {
+      return
+    }
 
     val charsToWin = when {
-      rank0 == 1 -> 0
-      rank1 == 1 -> 1
-      rank3 == 1 -> {
-        val rank2 = findCorrectElementRank(editor, text, startIndex + 2, project, existingCompletion, file, modalityState)
-        if (rank2 == 1) {
+      rank0 == 0 -> 0
+      rank1 == 0 -> 1
+      rank3 == 0 -> {
+        val rank2 = findCorrectElementRank(editor, text, startIndex, 2, project, existingCompletion, file)
+        if (rank2 == 0) {
           2
-        } else {
+        }
+        else {
           3
         }
       }
       else -> {
-        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, modalityState, 4)
+        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, 4)
       }
     }
 
@@ -169,10 +207,13 @@ class CompletionQualityStatsAction : AnAction() {
                                      project: Project,
                                      existingCompletion: String,
                                      file: VirtualFile,
-                                     modalityState: ModalityState,
+                                     indicator: ProgressIndicator,
                                      offset: Int): Int {
     for (i in offset..10) {
-      val ranki = findCorrectElementRank(editor, text, startIndex + i, project, existingCompletion, file, modalityState)
+      if (indicator.isCanceled) {
+        return -1
+      }
+      val ranki = findCorrectElementRank(editor, text, startIndex, i, project, existingCompletion, file)
       if (ranki == 1) {
         return i
       }
@@ -183,17 +224,20 @@ class CompletionQualityStatsAction : AnAction() {
   private fun findCorrectElementRank(editor: Editor,
                                      text: String,
                                      startIndex: Int,
+                                     charsTyped: Int,
                                      project: Project,
                                      existingCompletion: String,
-                                     file: VirtualFile,
-                                     modalityState: ModalityState): Int {
-    val newText = text.substring(0, startIndex + 1) + text.substring(startIndex + existingCompletion.length + 1)
+                                     file: VirtualFile): Int {
+    if (charsTyped > existingCompletion.length) {
+      return -2
+    }
+    val newText = text.substring(0, startIndex + 1 + charsTyped) + text.substring(startIndex + existingCompletion.length + 1)
 
-    val result = Ref.create<Int>(-1)
+    val result = Ref.create(-1)
     ApplicationManager.getApplication().invokeAndWait(Runnable {
       WriteAction.run<Exception> {
         editor.document.setText(newText)
-        editor.caretModel.moveToOffset(startIndex + 1)
+        editor.caretModel.moveToOffset(startIndex + 1 + charsTyped)
       }
 
       val ref: Ref<List<LookupElement>> = Ref.create()
@@ -214,7 +258,7 @@ class CompletionQualityStatsAction : AnAction() {
       else {
         LOG.info("Lookup is null at ${file.path}:$startIndex")
       }
-    }, modalityState)
+    }, ModalityState.NON_MODAL)
 
     return result.get()
   }
@@ -302,7 +346,7 @@ private data class Completion(val path: String, val offset: Int, val rank0: Int,
 
 private data class CompletionStats(val timestamp: Long) {
   var finished: Boolean = false
-  val completions =  Lists.newArrayList<Completion>()
+  val completions = Lists.newArrayList<Completion>()
 }
 
 
