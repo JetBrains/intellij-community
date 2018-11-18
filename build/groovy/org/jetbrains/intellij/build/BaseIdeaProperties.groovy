@@ -71,8 +71,7 @@ abstract class BaseIdeaProperties extends ProductProperties {
     "intellij.xml.langInjection",
     "intellij.java.langInjection.jps",
     "intellij.java.debugger.streams",
-    "intellij.android.smali",
-    "intellij.statsCollector"
+    "intellij.android.smali"
   ]
 
   BaseIdeaProperties() {
