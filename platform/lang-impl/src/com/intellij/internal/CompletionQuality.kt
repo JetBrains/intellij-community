@@ -1,29 +1,37 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
+import com.google.common.collect.Lists
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
+import com.intellij.codeInsight.completion.CompletionProgressIndicator
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.fileTypes.FileTypes
-import com.intellij.openapi.fileTypes.NativeFileType
+import com.intellij.openapi.fileTypes.*
 import com.intellij.openapi.fileTypes.impl.FileTypeRenderer
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
@@ -48,57 +56,123 @@ class CompletionQualityStatsAction : AnAction() {
 
     val stats = CompletionStats()
 
-    for (it in FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)) {
-      calcCompletionQuality(project, it, stats)
+    val task = object : Task.Modal(project, "Emulating completion", true) {
+      override fun run(indicator: ProgressIndicator) {
+        val files = ReadAction.compute<Collection<VirtualFile>, Exception> {
+          FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)
+        }
+
+        for (file in files) {
+          if (indicator.isCanceled) {
+            stats.finished = false
+            return
+          }
+
+          indicator.text = file.path
+
+          val document = ReadAction.compute<Document, Exception> { FileDocumentManager.getInstance().getDocument(file) }
+
+          val completionAttempts = ReadAction.compute<List<Pair<Int, String>>, Exception> {
+            getCompletionAttempts(PsiManager.getInstance(project).findFile(file)!!)
+          }
+
+          if (completionAttempts.isNotEmpty()) {
+            val application = ApplicationManager.getApplication()
+            application.invokeAndWait(Runnable {
+              val newEditor = WriteAction.compute<Editor, Exception> {
+                val newPsiFile = PsiFileFactory.getInstance(project).createFileFromText(file.path, (fileType as LanguageFileType).language,
+                                                                                        "", true, false)
+                val newDocument = PsiDocumentManager.getInstance(project).getDocument(newPsiFile)
+                EditorFactory.getInstance().createEditor(newDocument!!, project, fileType, false)
+              }
+
+              val modalityState = ModalityState.current()
+
+              val text = document.text
+
+              application.executeOnPooledThread {
+                try {
+                  for (pair in completionAttempts) {
+                    evalCompletionAt(project, file, newEditor, text, pair.first, pair.second, stats, modalityState)
+                  }
+                }
+                finally {
+                }
+              }
+            }, ModalityState.defaultModalityState())
+          }
+        }
+        stats.finished = true
+      }
     }
+
+    ProgressManager.getInstance().run(task)
   }
 
-  private fun calcCompletionQuality(project: Project,
-                                    file: VirtualFile,
-                                    stats: CompletionStats) {
-    val document = FileDocumentManager.getInstance().getDocument(file)
+  private fun getCompletionAttempts(file: PsiFile): List<Pair<Int, String>> {
+    val res = Lists.newArrayList<Pair<Int, String>>()
+
     var startIndex = 0
-    if (document == null) {
-      return
-    }
+    val text = file.text
     do {
-      startIndex = document.text.indexOf(".", startIndex)
+      startIndex = text.indexOf(".", startIndex)
       if (startIndex != -1) {
-        evalCompletionAt(project, file, document, startIndex, existingCompletion(startIndex, document.text), stats)
-        startIndex +=1
+
+        val el = file.findElementAt(startIndex)
+
+        if (el != null && el !is PsiComment && el.text == ".") {
+          res.add(Pair(startIndex, existingCompletion(startIndex, text)))
+        }
+
+        startIndex += 1
       }
-    } while (startIndex != -1)
+    }
+    while (startIndex != -1)
+
+    return res
   }
 
   private fun evalCompletionAt(project: Project,
                                file: VirtualFile,
-                               document: Document,
+                               editor: Editor,
+                               text: String,
                                startIndex: Int,
                                existingCompletion: String,
-                               stats: CompletionStats) {
-    val newText = document.text.substring(0, startIndex) + document.text.substring(startIndex + existingCompletion.length)
-    val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
-    if (psiFile != null) {
-      val newDocument = EditorFactory.getInstance().createDocument(newText)
-      val editor = EditorFactory.getInstance().createEditor(newDocument, project)
-      editor.caretModel.moveToOffset(startIndex+1)
-      CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(project, editor)
-      val lookup = LookupManager.getActiveLookup(editor)
-      if (lookup != null) {
-        for (item in lookup.items) {
-          println(item)
+                               stats: CompletionStats,
+                               modalityState: ModalityState) {
+    val newText = text.substring(0, startIndex+1) + text.substring(startIndex + existingCompletion.length + 1)
+    ApplicationManager.getApplication().invokeAndWait(Runnable {
+      WriteAction.run<Exception> {
+        editor.document.setText(newText)
+        editor.caretModel.moveToOffset(startIndex + 1)
+      }
+
+      val ref: Ref<List<LookupElement>> = Ref.create()
+
+      CommandProcessor.getInstance().executeCommand(project, {
+        val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC) {
+          override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
+            ref.set(indicator.lookup!!.items)
+            super.completionFinished(indicator, hasModifiers)
+          }
         }
-      } else {
+        handler.invokeCompletion(project, editor, 1)
+      }, null, null, editor.document)
+
+      if (!ref.isNull) {
+        for (item in ref.get()) {
+          println(item) //TODO to be continued
+        }
+      }
+      else {
         LOG.info("Lookup is null at ${file.path}:$startIndex")
       }
-    } else {
-      LOG.info("PSIFile is null for " + file.path)
-    }
+    }, modalityState)
   }
 
   private fun existingCompletion(startIndex: Int, text: String): String {
     var i = startIndex + 1
-    while (Character.isJavaIdentifierPart(text[i]) && i<text.length) {
+    while (Character.isJavaIdentifierPart(text[i]) && i < text.length) {
       i++
     }
     return text.substring(startIndex + 1, i)
@@ -176,7 +250,7 @@ class CompletionQualityDialog(project: Project, private val editor: Editor?) : D
 }
 
 class CompletionStats {
-
+  var finished: Boolean = false
 }
 
 
