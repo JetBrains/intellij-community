@@ -54,7 +54,7 @@ class CompletionQualityStatsAction : AnAction() {
     if (!dialog.showAndGet()) return
     val fileType = dialog.fileType
 
-    val stats = CompletionStats()
+    val stats = CompletionStats(System.currentTimeMillis())
 
     val task = object : Task.Modal(project, "Emulating completion", true) {
       override fun run(indicator: ProgressIndicator) {
@@ -140,7 +140,56 @@ class CompletionQualityStatsAction : AnAction() {
                                existingCompletion: String,
                                stats: CompletionStats,
                                modalityState: ModalityState) {
-    val newText = text.substring(0, startIndex+1) + text.substring(startIndex + existingCompletion.length + 1)
+    val rank0 = findCorrectElementRank(editor, text, startIndex, project, existingCompletion, file, modalityState)
+    val rank1 = findCorrectElementRank(editor, text, startIndex + 1, project, existingCompletion, file, modalityState)
+    val rank3 = findCorrectElementRank(editor, text, startIndex + 3, project, existingCompletion, file, modalityState)
+
+    val charsToWin = when {
+      rank0 == 1 -> 0
+      rank1 == 1 -> 1
+      rank3 == 1 -> {
+        val rank2 = findCorrectElementRank(editor, text, startIndex + 2, project, existingCompletion, file, modalityState)
+        if (rank2 == 1) {
+          2
+        } else {
+          3
+        }
+      }
+      else -> {
+        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, modalityState, 4)
+      }
+    }
+
+    stats.completions.add(Completion(file.path, startIndex, rank0, rank1, rank3, charsToWin))
+  }
+
+  private fun findNumberOfCharsToWin(editor: Editor,
+                                     text: String,
+                                     startIndex: Int,
+                                     project: Project,
+                                     existingCompletion: String,
+                                     file: VirtualFile,
+                                     modalityState: ModalityState,
+                                     offset: Int): Int {
+    for (i in offset..10) {
+      val ranki = findCorrectElementRank(editor, text, startIndex + i, project, existingCompletion, file, modalityState)
+      if (ranki == 1) {
+        return i
+      }
+    }
+    return -1
+  }
+
+  private fun findCorrectElementRank(editor: Editor,
+                                     text: String,
+                                     startIndex: Int,
+                                     project: Project,
+                                     existingCompletion: String,
+                                     file: VirtualFile,
+                                     modalityState: ModalityState): Int {
+    val newText = text.substring(0, startIndex + 1) + text.substring(startIndex + existingCompletion.length + 1)
+
+    val result = Ref.create<Int>(-1)
     ApplicationManager.getApplication().invokeAndWait(Runnable {
       WriteAction.run<Exception> {
         editor.document.setText(newText)
@@ -160,14 +209,14 @@ class CompletionQualityStatsAction : AnAction() {
       }, null, null, editor.document)
 
       if (!ref.isNull) {
-        for (item in ref.get()) {
-          println(item) //TODO to be continued
-        }
+        result.set(ref.get().indexOfFirst { it.lookupString == existingCompletion })
       }
       else {
         LOG.info("Lookup is null at ${file.path}:$startIndex")
       }
     }, modalityState)
+
+    return result.get()
   }
 
   private fun existingCompletion(startIndex: Int, text: String): String {
@@ -249,8 +298,11 @@ class CompletionQualityDialog(project: Project, private val editor: Editor?) : D
   }
 }
 
-class CompletionStats {
+private data class Completion(val path: String, val offset: Int, val rank0: Int, val rank1: Int, val rank3: Int, val charsToWin: Int)
+
+private data class CompletionStats(val timestamp: Long) {
   var finished: Boolean = false
+  val completions =  Lists.newArrayList<Completion>()
 }
 
 
