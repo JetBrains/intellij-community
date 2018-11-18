@@ -50,6 +50,7 @@ import javax.swing.DefaultComboBoxModel
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
+import kotlin.collections.HashSet
 
 /**
  * @author traff
@@ -71,6 +72,8 @@ class CompletionQualityStatsAction : AnAction() {
           FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)
         }
 
+        val wordSet = HashSet<String>() // we don't want to complete the same words more than once
+
         for (file in files) {
           if (indicator.isCanceled) {
             stats.finished = false
@@ -82,7 +85,7 @@ class CompletionQualityStatsAction : AnAction() {
           val document = ReadAction.compute<Document, Exception> { FileDocumentManager.getInstance().getDocument(file) }
 
           val completionAttempts = ReadAction.compute<List<Pair<Int, String>>, Exception> {
-            getCompletionAttempts(PsiManager.getInstance(project).findFile(file)!!)
+            getCompletionAttempts(PsiManager.getInstance(project).findFile(file)!!, wordSet)
           }
 
           if (completionAttempts.isNotEmpty()) {
@@ -139,7 +142,7 @@ class CompletionQualityStatsAction : AnAction() {
     console.print(text, ConsoleViewContentType.NORMAL_OUTPUT)
   }
 
-  private fun getCompletionAttempts(file: PsiFile): List<Pair<Int, String>> {
+  private fun getCompletionAttempts(file: PsiFile, wordSet: HashSet<String>): List<Pair<Int, String>> {
     val res = Lists.newArrayList<Pair<Int, String>>()
 
     var startIndex = 0
@@ -151,7 +154,11 @@ class CompletionQualityStatsAction : AnAction() {
         val el = file.findElementAt(startIndex)
 
         if (el != null && el !is PsiComment && el.text == ".") {
-          res.add(Pair(startIndex, existingCompletion(startIndex, text)))
+          val word = existingCompletion(startIndex, text)
+          if (word !in wordSet) {
+            res.add(Pair(startIndex, word))
+            wordSet.add(word)
+          }
         }
 
         startIndex += 1
@@ -201,7 +208,7 @@ class CompletionQualityStatsAction : AnAction() {
       }
     }
 
-    stats.completions.add(Completion(file.path, startIndex, rank0, rank1, rank3, charsToWin, completionTime.cnt, completionTime.time))
+    stats.completions.add(Completion(file.path, startIndex, existingCompletion, rank0, rank1, rank3, charsToWin, completionTime.cnt, completionTime.time))
   }
 
   private fun findNumberOfCharsToWin(editor: Editor,
@@ -363,6 +370,7 @@ class CompletionQualityDialog(project: Project, private val editor: Editor?) : D
 
 private data class Completion(val path: String,
                               val offset: Int,
+                              val word: String,
                               val rank0: Int,
                               val rank1: Int,
                               val rank3: Int,
