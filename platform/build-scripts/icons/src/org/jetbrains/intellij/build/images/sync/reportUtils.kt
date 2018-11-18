@@ -8,16 +8,8 @@ import kotlin.streams.toList
 
 internal fun report(context: Context, root: File, devIcons: Int, icons: Int, skipped: Int, consistent: Collection<String>) {
   if (isUnderTeamCity()) {
-    val isInvestigationAssigned = isInvestigationAssigned()
-    if (isInvestigationAssigned) {
-      log("Skipping review creation since investigation is assigned")
-    }
-    else {
-      createReviews(root, context)
-    }
-    val investigator = if (context.isFail() &&
-                           context.assignInvestigation &&
-                           !isInvestigationAssigned) {
+    createReviews(root, context)
+    val investigator = if (context.isFail() && context.assignInvestigation) {
       assignInvestigation(root, context)
     }
     else null
@@ -72,7 +64,7 @@ private fun createReviewForDev(root: File, context: Context, user: String, email
     .map { findGitRepoRoot(it, silent = true) }
     .distinct()
     .toList()
-  val commits = findCommitsByRepo(File(context.iconsRepoDir), changes.asSequence())
+  val commits = findCommitsByRepo(UPSOURCE_DEV_PROJECT_ID, File(context.iconsRepoDir), changes)
   if (commits.isEmpty()) return null
   val verificationPassed = try {
     context.verifyDevIcons()
@@ -113,7 +105,7 @@ private fun createReviewForIcons(root: File, context: Context, user: String, ema
   if (!context.doSyncIconsAndCreateReview) return null
   val changes = context.addedByDev + context.removedByDev + context.modifiedByDev
   if (changes.isEmpty()) return null
-  val commits = findCommitsByRepo(root, changes.asSequence())
+  val commits = findCommitsByRepo(UPSOURCE_ICONS_PROJECT_ID, root, changes)
   if (commits.isEmpty()) return null
   val repos = listOf(context.iconsRepo)
   return withTmpBranch(repos) { branch ->
@@ -147,23 +139,28 @@ private fun assignInvestigation(root: File, context: Context): Investigator? =
   }
 
 private fun findInvestigator(root: File, changes: Sequence<String>): Investigator {
-  val commits = findCommits(root, changes).toList()
-  return commits.groupBy { it.committerEmail }
-           .maxBy { it.value.size }
-           ?.let { entry ->
-             Investigator(entry.key, commits.asSequence()
-               .distinctBy { it.hash }
-               .groupBy { it.repo })
-           } ?: Investigator()
+  val commits = findCommits(root, changes)
+  return commits.maxBy(CommitInfo::timestamp)?.let {
+    Investigator(it.committerEmail, commits.groupBy(CommitInfo::repo))
+  } ?: Investigator()
 }
 
-private fun findCommitsByRepo(root: File, changes: Sequence<String>) =
-  findCommits(root, changes).distinctBy { it.hash }.groupBy { it.repo }
+private fun findCommitsByRepo(
+  projectId: String, root: File, changes: Collection<String>
+): Map<File, Collection<CommitInfo>> {
+  val commits = findCommits(root, changes.asSequence()).toList()
+  if (commits.isEmpty()) return emptyMap()
+  val alreadyInReview = getOpenIconsReviewTitles(projectId)
+  return commits
+    .filter { !alreadyInReview.contains(it.hash) }
+    .groupBy(CommitInfo::repo)
+}
 
 private fun findCommits(root: File, changes: Sequence<String>) = changes
   .map { File(root, it).absolutePath }
   .map { latestChangeCommit(it) }
   .filterNotNull()
+  .distinctBy(CommitInfo::hash)
 
 private fun commitAndPush(branch: String, user: String, email: String, message: String, repos: Collection<File>) = repos.map {
   initGit(it, user, email)

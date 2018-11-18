@@ -28,25 +28,21 @@ private fun HttpRequestBase.teamCityAuth() {
 }
 
 private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
+private val NOTIFICATIONS_MIN_INTERVAL_HOURS = System.getProperty("notifications.min.interval.hours")?.toInt() ?: 12
 
 internal fun isNotificationRequired(context: Context): Boolean {
   val request = "builds?locator=buildType:$BUILD_CONF,count:1"
-  return if (!context.isFail()) {
-    // notify on fail -> success
-    val previousBuild = teamCityGet(request)
-    previousBuild.contains("status=\"FAILURE\"")
-  }
-  else {
-    val dayAgo = DATE_FORMAT.format(Calendar.getInstance().let { calendar ->
-      calendar.add(Calendar.HOUR, -12)
-      calendar.time
-    })
-    // remind of failure once per day
-    val previousBuild = teamCityGet("$request,sinceDate:${URLEncoder.encode(dayAgo, Charsets.UTF_8.name())}")
-    previousBuild.contains("count=\"0\"")
-  }
+  val intervalStart = DATE_FORMAT.format(Calendar.getInstance().apply {
+    add(Calendar.HOUR, -NOTIFICATIONS_MIN_INTERVAL_HOURS)
+    time
+  }).let { URLEncoder.encode(it, Charsets.UTF_8.name()) }
+  val noNotificationsSinceIntervalStart = teamCityGet("$request,sinceDate:$intervalStart").contains("count=\"0\"")
+  return noNotificationsSinceIntervalStart &&
+         // remind of failure
+         (context.isFail() ||
+          // or check previous build and notify on fail -> success
+          teamCityGet(request).contains("status=\"FAILURE\""))
 }
-
 
 internal val DEFAULT_INVESTIGATOR by lazy {
   System.getProperty("intellij.icons.sync.default.investigator")?.takeIf { it.isNotBlank() } ?: error("Specify default investigator")
@@ -55,10 +51,6 @@ internal val DEFAULT_INVESTIGATOR by lazy {
 internal class Investigator(val email: String = DEFAULT_INVESTIGATOR,
                             val commits: Map<File, Collection<CommitInfo>> = emptyMap(),
                             var isAssigned: Boolean = false)
-
-internal fun isInvestigationAssigned() = teamCityGet("investigations?locator=buildType:$BUILD_CONF").run {
-  contains("assignee") && !contains("GIVEN_UP")
-}
 
 internal fun assignInvestigation(investigator: Investigator, context: Context): Investigator {
   try {
