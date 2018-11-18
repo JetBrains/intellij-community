@@ -116,13 +116,15 @@ class CompletionQualityStatsAction : AnAction() {
             }, ModalityState.NON_MODAL)
 
             semaphore.waitFor()
+
+            stats.totalFiles += 1
           }
         }
         stats.finished = true
 
-        var gson = Gson()
+        val gson = Gson()
 
-        UIUtil.invokeLaterIfNeeded {  createConsoleAndPrint(project, gson.toJson(stats)) }
+        UIUtil.invokeLaterIfNeeded { createConsoleAndPrint(project, gson.toJson(stats)) }
       }
     }
 
@@ -168,15 +170,16 @@ class CompletionQualityStatsAction : AnAction() {
                                existingCompletion: String,
                                stats: CompletionStats,
                                indicator: ProgressIndicator) {
-    val rank0 = findCorrectElementRank(editor, text, startIndex, 0, project, existingCompletion, file)
+    val completionTime = CompletionTime(0, 0)
+    val rank0 = findCorrectElementRank(editor, text, startIndex, 0, project, existingCompletion, completionTime)
     if (indicator.isCanceled) {
       return
     }
-    val rank1 = findCorrectElementRank(editor, text, startIndex, 1, project, existingCompletion, file)
+    val rank1 = findCorrectElementRank(editor, text, startIndex, 1, project, existingCompletion, completionTime)
     if (indicator.isCanceled) {
       return
     }
-    val rank3 = findCorrectElementRank(editor, text, startIndex, 3, project, existingCompletion, file)
+    val rank3 = findCorrectElementRank(editor, text, startIndex, 3, project, existingCompletion, completionTime)
     if (indicator.isCanceled) {
       return
     }
@@ -185,7 +188,7 @@ class CompletionQualityStatsAction : AnAction() {
       rank0 == 0 -> 0
       rank1 == 0 -> 1
       rank3 == 0 -> {
-        val rank2 = findCorrectElementRank(editor, text, startIndex, 2, project, existingCompletion, file)
+        val rank2 = findCorrectElementRank(editor, text, startIndex, 2, project, existingCompletion, completionTime)
         if (rank2 == 0) {
           2
         }
@@ -194,11 +197,11 @@ class CompletionQualityStatsAction : AnAction() {
         }
       }
       else -> {
-        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, 4)
+        findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, 4, 10, completionTime)
       }
     }
 
-    stats.completions.add(Completion(file.path, startIndex, rank0, rank1, rank3, charsToWin))
+    stats.completions.add(Completion(file.path, startIndex, rank0, rank1, rank3, charsToWin, completionTime.cnt, completionTime.time))
   }
 
   private fun findNumberOfCharsToWin(editor: Editor,
@@ -208,18 +211,31 @@ class CompletionQualityStatsAction : AnAction() {
                                      existingCompletion: String,
                                      file: VirtualFile,
                                      indicator: ProgressIndicator,
-                                     offset: Int): Int {
-    for (i in offset..10) {
+                                     from: Int,
+                                     to: Int,
+                                     timeStats: CompletionTime): Int {
+    if (from < to) {
+      val mid = (from + to)/2
       if (indicator.isCanceled) {
         return -1
       }
-      val ranki = findCorrectElementRank(editor, text, startIndex, i, project, existingCompletion, file)
-      if (ranki == 1) {
-        return i
+      val rank = findCorrectElementRank(editor, text, startIndex, mid, project, existingCompletion, timeStats)
+
+      if (rank == 0 || rank == -2) {
+        if (from>=mid-1) {
+          return mid
+        } else {
+          return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, from, mid - 1, timeStats)
+        }
+      } else {
+        return findNumberOfCharsToWin(editor, text, startIndex, project, existingCompletion, file, indicator, mid+1, to, timeStats)
       }
+    } else {
+      return -1
     }
-    return -1
   }
+
+  private data class CompletionTime(var cnt: Int, var time: Long)
 
   private fun findCorrectElementRank(editor: Editor,
                                      text: String,
@@ -227,9 +243,12 @@ class CompletionQualityStatsAction : AnAction() {
                                      charsTyped: Int,
                                      project: Project,
                                      existingCompletion: String,
-                                     file: VirtualFile): Int {
+                                     timeStats: CompletionTime): Int {
     if (charsTyped > existingCompletion.length) {
       return -2
+    }
+    if (charsTyped == existingCompletion.length) {
+      return 0
     }
     val newText = text.substring(0, startIndex + 1 + charsTyped) + text.substring(startIndex + existingCompletion.length + 1)
 
@@ -242,6 +261,7 @@ class CompletionQualityStatsAction : AnAction() {
 
       val ref: Ref<List<LookupElement>> = Ref.create()
 
+      val start = System.currentTimeMillis()
       CommandProcessor.getInstance().executeCommand(project, {
         val handler = object : CodeCompletionHandlerBase(CompletionType.BASIC) {
           override fun completionFinished(indicator: CompletionProgressIndicator, hasModifiers: Boolean) {
@@ -255,9 +275,8 @@ class CompletionQualityStatsAction : AnAction() {
       if (!ref.isNull) {
         result.set(ref.get().indexOfFirst { it.lookupString == existingCompletion })
       }
-      else {
-        LOG.info("Lookup is null at ${file.path}:$startIndex")
-      }
+      timeStats.cnt += 1
+      timeStats.time += System.currentTimeMillis() - start
     }, ModalityState.NON_MODAL)
 
     return result.get()
@@ -293,7 +312,7 @@ class CompletionQualityDialog(project: Project, private val editor: Editor?) : D
 
 
   init {
-    title = "Completion Quality Stats"
+    title = "Completion Quality Statistics"
 
     fileTypeCombo = createFileTypesCombo()
 
@@ -342,11 +361,21 @@ class CompletionQualityDialog(project: Project, private val editor: Editor?) : D
   }
 }
 
-private data class Completion(val path: String, val offset: Int, val rank0: Int, val rank1: Int, val rank3: Int, val charsToWin: Int)
+private data class Completion(val path: String,
+                              val offset: Int,
+                              val rank0: Int,
+                              val rank1: Int,
+                              val rank3: Int,
+                              val charsToWin: Int,
+                              val callsCount: Int,
+                              val totalTime: Long) {
+  val id = path.hashCode() + offset.hashCode()
+}
 
 private data class CompletionStats(val timestamp: Long) {
   var finished: Boolean = false
   val completions = Lists.newArrayList<Completion>()
+  var totalFiles = 0
 }
 
 
