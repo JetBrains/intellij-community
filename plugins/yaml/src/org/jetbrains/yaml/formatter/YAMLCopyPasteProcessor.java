@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 
 public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
-  private final static String CONFIG_KEY_SEQUENCE_PATTERN = "([^\\s{}\\[\\].][^\\s.]*\\.)+[^\\s{}\\[\\].][^\\s.]*:?\\s*";
+  private final static String CONFIG_KEY_SEQUENCE_PATTERN = "\\.*([^\\s{}\\[\\].][^\\s.]*\\.)+[^\\s{}\\[\\].][^\\s.]*:?\\s*";
 
   @Nullable
   @Override
@@ -241,6 +241,13 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
   private static List<String> separateCompositeKey(@NotNull String text) {
     text = text.trim();
     text = StringUtil.trimEnd(text, ':');
-    return StringUtil.split(text, ".");
+    int leadingDotsNumber = StringUtil.countChars(text, '.', 0, true);
+    String dotPrefix = text.substring(0, leadingDotsNumber);
+    text = text.substring(leadingDotsNumber);
+    List<String> sequence = StringUtil.split(text, ".");
+    if (!dotPrefix.isEmpty() && sequence.size() > 0) {
+      sequence.set(0, dotPrefix + sequence.get(0));
+    }
+    return sequence;
   }
 }

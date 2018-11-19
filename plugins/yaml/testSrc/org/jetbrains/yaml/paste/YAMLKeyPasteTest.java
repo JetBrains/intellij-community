@@ -119,6 +119,11 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("workspace{w1}/next.^sub[Key]*(%magic%)");
   }
 
+  // It is disputable behaviour
+  public void testPasteKeysWithLeadingDot() {
+    doTest(".leading.subKey");
+  }
+
   private void doTest(@NotNull String pasteText) {
     String testName = getTestName(true);
     String fileName = ObjectUtils.notNull(StringUtil.substringBefore(testName, "_"), testName);
