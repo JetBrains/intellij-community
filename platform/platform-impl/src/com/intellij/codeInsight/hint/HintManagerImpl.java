@@ -683,10 +683,15 @@ public class HintManagerImpl extends HintManager {
 
   @Override
   public void showErrorHint(@NotNull Editor editor, @NotNull String text, short position) {
+    showErrorHint(editor, text, position, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING);
+  }
+
+  @Override
+  public void showErrorHint(@NotNull Editor editor, @NotNull String text, short position, int flags) {
     JComponent label = HintUtil.createErrorLabel(text);
     LightweightHint hint = new LightweightHint(label);
     Point p = getHintPosition(hint, editor, position);
-    showEditorHint(hint, editor, p, HIDE_BY_ANY_KEY | HIDE_BY_TEXT_CHANGE | HIDE_BY_SCROLLING, 0, false, position);
+    showEditorHint(hint, editor, p, flags, 0, false, position);
   }
 
   @Override

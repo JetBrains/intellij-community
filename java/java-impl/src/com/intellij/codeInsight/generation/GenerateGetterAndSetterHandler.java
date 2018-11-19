@@ -16,9 +16,12 @@
 package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.IncorrectOperationException;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,6 +58,23 @@ public class GenerateGetterAndSetterHandler extends GenerateGetterSetterHandlerB
     }
 
     return array.toArray(GenerationInfo.EMPTY_ARRAY);
+  }
+
+  @Override
+  protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project, Editor editor) {
+    ClassMember[] chosen = super.chooseOriginalMembers(aClass, project, editor);
+    if (chosen == null || chosen.length == 0) {
+      return chosen;
+    }
+
+    boolean foundReadOnlyField = StreamEx.of(chosen)
+      .select(PsiFieldMember.class)
+      .anyMatch(fm -> GetterSetterPrototypeProvider.isReadOnlyProperty(fm.getElement()));
+    if (foundReadOnlyField) {
+      HintManager.getInstance().showErrorHint(editor, myGenerateSetterHandler.getNothingAcceptedMessage(), HintManager.ABOVE, 0);
+    }
+
+    return chosen;
   }
 
   @Override

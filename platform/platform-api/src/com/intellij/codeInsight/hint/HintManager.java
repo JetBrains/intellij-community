@@ -66,6 +66,7 @@ public abstract class HintManager {
 
   public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text);
   public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text, @PositionFlags short position);
+  public abstract void showErrorHint(@NotNull Editor editor, @NotNull String text, @PositionFlags short position, int flags);
 
   public abstract void showInformationHint(@NotNull Editor editor, @NotNull String text);
 
