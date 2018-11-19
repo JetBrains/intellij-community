@@ -78,6 +78,11 @@ public class YAMLKeyPasteTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("some. strange. text");
   }
 
+  // Ambiguity in dot splitting
+  public void testDoNotPasteKeysWithBadPattern3() {
+    doTest("some.strange..text");
+  }
+
   public void testDoNotPasteArrayAsKeys() {
     doTest("[x.y]");
   }
