@@ -136,7 +136,10 @@ public class MethodEvaluator implements Evaluator {
           }
         }
       } else if (myMustBeVararg && jdiMethod != null && !jdiMethod.isVarArgs()) {
-        // try to find the correct varargs method
+        // this is a workaround for jdk bugs when bridge or proxy methods does not have ACC_VARARGS flags
+        // see IDEA-129869 and IDEA-202380
+        // we try to find the matching varargs method in the base classes/interfaces
+        // this may not work well for INVOKE_NONVIRTUAL case, which will be fixed later
         for (Method m : _refType.allMethods()) {
           if (m.isVarArgs() && m.name().equals(myMethodName) && m.signature().equals(signature)) {
             jdiMethod = m;
