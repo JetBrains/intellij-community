@@ -594,8 +594,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     RangeMarker startMarker = findFocusMarker(caret.getSelectionStart(), data);
     if (startMarker != null) {
       RangeMarker endMarker = findFocusMarker(caret.getSelectionEnd(), data);
-      applyFocusMode(endMarker == null ? startMarker : new TextRange(startMarker.getStartOffset(), endMarker.getEndOffset()));
+      applyFocusMode(enlargeFocusRangeIfNeeded(endMarker == null ? startMarker : new TextRange(startMarker.getStartOffset(), endMarker.getEndOffset())));
     }
+  }
+
+  @NotNull
+  private Segment enlargeFocusRangeIfNeeded(Segment range) {
+    int originalStart = range.getStartOffset();
+    int start = DocumentUtil.getLineStartOffset(originalStart, myDocument);
+    if (start < originalStart) {
+      range = new TextRange(start, range.getEndOffset());
+    }
+    int originalEnd = range.getEndOffset();
+    int end = DocumentUtil.getLineEndOffset(originalEnd, myDocument);
+    if (end >= originalEnd) {
+      range = new TextRange(range.getStartOffset(), end < myDocument.getTextLength() ? end + 1 : end);
+    }
+    return range;
   }
 
   private void applyFocusMode(@NotNull Segment focusRange) {
