@@ -148,8 +148,9 @@ class ActionUpdater {
         continue;
       }
 
-      final Presentation presentation = myFactory.getPresentation(anAction);
-      Utils.updateGroupChild(myDataContext, myPlace, anAction, presentation);
+      AnActionEvent childEvent = createActionEvent(anAction);
+      doUpdate(false, anAction, childEvent);
+      Presentation presentation = childEvent.getPresentation();
       if (anAction instanceof ActionGroup) {
         ActionGroup childGroup = (ActionGroup)anAction;
 
