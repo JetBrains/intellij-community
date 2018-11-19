@@ -252,6 +252,9 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     field.setFontInheritedFromLAF(false);
 
     field.addSettingsProvider(uEditor -> {
+      uEditor.setVerticalScrollbarVisible(true);
+      uEditor.setHorizontalScrollbarVisible(true);
+
       uEditor.setRendererMode(true);
       uEditor.setBorder(null);
 
@@ -320,9 +323,9 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     @NotNull private final Editor myEditor;
 
     PopupPanel(@NotNull Editor editor,
-                      @NotNull ActionToolbar toolbar,
-                      @Nullable JComponent editorComponent,
-                      @Nullable JComponent additionalInfo) {
+               @NotNull ActionToolbar toolbar,
+               @Nullable JComponent editorComponent,
+               @Nullable JComponent additionalInfo) {
       super(new BorderLayout());
       setOpaque(false);
 
