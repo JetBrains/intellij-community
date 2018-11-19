@@ -59,37 +59,10 @@ public class Utils{
                                                  PresentationFactory presentationFactory,
                                                  @NotNull DataContext context,
                                                  String place){
-    ArrayList<AnAction> list = new ArrayList<>();
-    expandActionGroup(isInModalContext, group, list, presentationFactory, context,
-                      place, null, false, group instanceof CompactActionGroup, false, false);
-    return list;
+    return new ActionUpdater(isInModalContext, presentationFactory, context, place, false, false, false)
+      .expandActionGroup(group, group instanceof CompactActionGroup);
   }
 
-
-  /**
-   * @param list this list contains expanded actions.
-   * @param actionManager manager
-   */
-  public static void expandActionGroup(boolean isInModalContext,
-                                       @NotNull ActionGroup group,
-                                       List<? super AnAction> list,
-                                       PresentationFactory presentationFactory,
-                                       DataContext context,
-                                       @NotNull String place,
-                                       ActionManager actionManager,
-                                       boolean transparentOnly,
-                                       boolean hideDisabled,
-                                       boolean isContextMenuAction,
-                                       boolean isToolbarAction) {
-    list.addAll(new ActionUpdater(isInModalContext, presentationFactory, context, place, isContextMenuAction, isToolbarAction, transparentOnly)
-      .expandActionGroup(group, hideDisabled));
-  }
-
-  public static void updateGroupChild(DataContext context, String place, AnAction anAction, final Presentation presentation) {
-    AnActionEvent event1 = new AnActionEvent(null, context, place, presentation, ActionManager.getInstance(), 0);
-    event1.setInjectedContext(anAction.isInInjectedContext());
-    ActionUpdater.doUpdate(false, anAction, event1);
-  }
 
   static void fillMenu(@NotNull ActionGroup group,
                        JComponent component,
