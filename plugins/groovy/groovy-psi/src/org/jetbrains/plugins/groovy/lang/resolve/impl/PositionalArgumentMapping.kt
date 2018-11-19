@@ -36,7 +36,7 @@ class PositionalArgumentMapping(
         continue
       }
 
-      val argumentType = TypeConversionUtil.erasure(argument.topLevelType)
+      val argumentType = argument.runtimeType
       if (argumentType == null) {
         // argument passed but we cannot infer its type
         return Applicability.canBeApplicable
