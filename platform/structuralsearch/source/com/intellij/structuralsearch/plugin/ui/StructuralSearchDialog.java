@@ -59,10 +59,8 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.textCompletion.TextCompletionUtil;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -966,7 +964,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   private static Icon getShowHistoryIcon() {
-    return ObjectUtils.coalesce(UIManager.getIcon("TextField.darcula.searchWithHistory.icon"), LafIconLookup.getIcon("searchWithHistory"));
+    return AllIcons.Actions.SearchWithHistory;
   }
 
   private class SwitchAction extends AnAction implements DumbAware {
