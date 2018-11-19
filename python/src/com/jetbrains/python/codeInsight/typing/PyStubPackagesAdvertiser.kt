@@ -29,6 +29,7 @@ import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyImportElement
+import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.sdk.PythonSdkType
 import javax.swing.JComponent
 
@@ -69,16 +70,23 @@ class PyStubPackagesAdvertiser : PyInspection() {
 
     override fun visitPyFromImportStatement(node: PyFromImportStatement) {
       super.visitPyFromImportStatement(node)
-      processQName(node.importSourceQName)
+      processImport(node.importSource, node.importSourceQName)
     }
 
     override fun visitPyImportElement(node: PyImportElement) {
       super.visitPyImportElement(node)
-      processQName(node.importedQName)
+      processImport(node.importReferenceExpression, node.importedQName)
     }
 
-    private fun processQName(qualifiedName: QualifiedName?) {
-      qualifiedName?.firstComponent?.let(sources::add)
+    private fun processImport(ref: PyReferenceExpression?, qName: QualifiedName?) {
+      if (qName == null) return
+
+      if (ref != null &&
+          ref.getReference(resolveContext).multiResolve(false).asSequence().mapNotNull { it.element }.any { isInStubPackage(it) }) {
+        return
+      }
+
+      qName.firstComponent?.let(sources::add)
     }
   }
 
@@ -197,9 +205,9 @@ class PyStubPackagesAdvertiser : PyInspection() {
     }
   }
 
-  private fun whiteListedSourcesToProcess(sources: Set<String>): Set<String> = sources.filterTo(mutableSetOf()) { it in WHITE_LIST }
+  private fun whiteListedSourcesToProcess(sources: Set<String>) = sources.filterTo(mutableSetOf()) { it in WHITE_LIST }
 
-  private fun notWhiteListedSourcesToProcess(sources: Set<String>): Set<String> = sources.filterNotTo(mutableSetOf()) { it in WHITE_LIST }
+  private fun notWhiteListedSourcesToProcess(sources: Set<String>) = sources.filterNotTo(mutableSetOf()) { it in WHITE_LIST }
 
   private fun splitIntoNotCachedAndCached(sources: Set<String>,
                                           cache: Cache<String, Set<RepoPackage>>): Pair<Set<String>, Set<RepoPackage>> {

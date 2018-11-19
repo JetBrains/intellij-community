@@ -170,7 +170,7 @@ private fun isUserFile(element: PsiElement, module: Module?) =
 /**
  * See [findStubPackage] and [transferStubPackageMarker].
  */
-private fun isInStubPackage(element: PsiElement) = element.getUserData(STUB_PACKAGE_KEY) == true
+fun isInStubPackage(element: PsiElement) = element.getUserData(STUB_PACKAGE_KEY) == true
 
 private fun isInTypeShed(element: PsiElement) =
   pyi(element) && (element as? PsiFileSystemItem)?.virtualFile.let { it != null && PyTypeShed.isInside(it) }
