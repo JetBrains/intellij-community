@@ -41,6 +41,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.Semaphore
@@ -68,8 +69,10 @@ class CompletionQualityStatsAction : AnAction() {
 
     val task = object : Task.Backgroundable(project, "Emulating completion", true) {
       override fun run(indicator: ProgressIndicator) {
-        val files = ReadAction.compute<Collection<VirtualFile>, Exception> {
+        val files = if (dialog.scope is GlobalSearchScope) { ReadAction.compute<Collection<VirtualFile>, Exception> {
           FileTypeIndex.getFiles(fileType, dialog.scope as GlobalSearchScope)
+        }} else {
+          (dialog.scope as LocalSearchScope).virtualFiles.asList()
         }
 
         val wordSet = HashSet<String>() // we don't want to complete the same words more than once
