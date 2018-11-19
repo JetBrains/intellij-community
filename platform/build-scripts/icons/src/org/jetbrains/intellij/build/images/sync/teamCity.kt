@@ -92,11 +92,19 @@ internal fun assignInvestigation(investigator: Investigator, context: Context): 
     !investigator.isAssigned && investigator.email != investigator.email.toLowerCase() -> {
       assignInvestigation(Investigator(investigator.email.toLowerCase(), investigator.commits), context)
     }
+    !investigator.isAssigned && investigator.email != tryToMapEmailFromGitToTeamCity(investigator.email) -> {
+      assignInvestigation(Investigator(tryToMapEmailFromGitToTeamCity(investigator.email), investigator.commits), context)
+    }
     !investigator.isAssigned && investigator.email != DEFAULT_INVESTIGATOR -> {
       assignInvestigation(Investigator(DEFAULT_INVESTIGATOR, investigator.commits), context)
     }
     else -> investigator
   }
+}
+
+private fun tryToMapEmailFromGitToTeamCity(email: String): String {
+  val (username, domain) = email.split("@")
+  return username.splitNotBlank(".").joinToString(".", transform = String::capitalize) + "@$domain"
 }
 
 internal fun thisBuildReportableLink() =
