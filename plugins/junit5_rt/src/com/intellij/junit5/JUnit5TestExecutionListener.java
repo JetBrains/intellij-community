@@ -253,7 +253,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           ComparisonFailureData.registerSMAttributes(failureData, getTrace(ex), ex.getMessage(), attrs, ex, "Comparison Failure: ", "expected: <");
         }
         else {
-          ComparisonFailureData.registerSMAttributes(failureData, "", "", attrs, ex, "", "expected: <");
+          ComparisonFailureData.registerSMAttributes(failureData, "", ex.getMessage(), attrs, ex, "Comparison Failure: ", "expected: <");
         }
       }
     }
