@@ -24,6 +24,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -793,6 +795,8 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     String altRelPath = javaModule != null ? javaModule.getName() + '/' + relPath : null;
 
     for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(virtualFile)) {
+      boolean altUrl = orderEntry instanceof JdkOrderEntry && JavaSdkVersionUtil.isAtLeast(((JdkOrderEntry)orderEntry).getJdk(), JavaSdkVersion.JDK_11);
+
       for (VirtualFile root : orderEntry.getFiles(JavadocOrderRootType.getInstance())) {
         if (root.getFileSystem() == JarFileSystem.getInstance()) {
           VirtualFile file = root.findFileByRelativePath(relPath);
@@ -809,7 +813,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       String[] webUrls = JavadocOrderRootType.getUrls(orderEntry);
       if (webUrls.length > 0) {
         List<String> httpRoots = new ArrayList<>();
-        if (altRelPath != null) {
+        if (altUrl && altRelPath != null) {
           httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, altRelPath), Collections.emptyList()));
         }
         httpRoots.addAll(notNull(PlatformDocumentationUtil.getHttpRoots(webUrls, relPath), Collections.emptyList()));
