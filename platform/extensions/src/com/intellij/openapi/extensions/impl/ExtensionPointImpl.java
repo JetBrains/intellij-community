@@ -390,14 +390,16 @@ public final class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   public synchronized void addExtensionPointListener(@NotNull final ExtensionPointListener<T> listener,
                                                      final boolean invokeForLoadedExtensions,
-                                                     @NotNull Disposable parentDisposable) {
+                                                     @Nullable Disposable parentDisposable) {
     if (invokeForLoadedExtensions) {
       addExtensionPointListener(listener);
     }
     else {
       addListener(listener);
     }
-    Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener, invokeForLoadedExtensions));
+    if (parentDisposable != null) {
+      Disposer.register(parentDisposable, () -> removeExtensionPointListener(listener, invokeForLoadedExtensions));
+    }
   }
 
   // true if added
