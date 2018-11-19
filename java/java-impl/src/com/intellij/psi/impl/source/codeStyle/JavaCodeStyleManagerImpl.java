@@ -977,7 +977,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   @NotNull
   @Override
   public String suggestUniqueVariableName(@NotNull String baseName, PsiElement place, boolean lookForward) {
-    return suggestUniqueVariableName(baseName, place, lookForward, false, v -> false);
+    return suggestUniqueVariableName(baseName, place, lookForward, false, v -> place instanceof PsiParameter && !PsiTreeUtil.isAncestor(((PsiParameter)place).getDeclarationScope(), v, false));
   }
 
   @NotNull
