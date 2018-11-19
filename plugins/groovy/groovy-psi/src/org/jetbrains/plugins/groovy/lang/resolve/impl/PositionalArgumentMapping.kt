@@ -5,10 +5,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiSubstitutor
-import com.intellij.psi.util.TypeConversionUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil.canAssign
-import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter.ApplicableTo.METHOD_PARAMETER
 import org.jetbrains.plugins.groovy.lang.psi.util.isOptional
 import org.jetbrains.plugins.groovy.lang.resolve.api.Applicability
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument
@@ -26,31 +22,12 @@ class PositionalArgumentMapping(
     mapByPosition(arguments, method.parameterList.parameters.toList(), PsiParameter::isOptional, false)
   }
 
-  override val applicability: Applicability by lazy(fun(): Applicability {
-    val map = parameterToArgument ?: return Applicability.inapplicable
-
-    for ((parameter, argument) in map) {
-      if (argument == null) {
-        // no argument passed for parameter
-        require(parameter.isOptional)
-        continue
-      }
-
-      val argumentType = argument.runtimeType
-      if (argumentType == null) {
-        // argument passed but we cannot infer its type
-        return Applicability.canBeApplicable
-      }
-
-      val parameterType = TypeConversionUtil.erasure(parameter.type, erasureSubstitutor)
-      val assignability = canAssign(parameterType, argumentType, context, METHOD_PARAMETER)
-      if (assignability == ConversionResult.ERROR) {
-        return Applicability.inapplicable
-      }
+  override val applicability: Applicability by lazy {
+    parameterToArgument?.let {
+      mapApplicability(it, erasureSubstitutor, context)
     }
-
-    return Applicability.applicable
-  })
+    ?: Applicability.inapplicable
+  }
 }
 
 // foo(a?, b, c?, d?, e)

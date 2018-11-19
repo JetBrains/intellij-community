@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.Arguments
 import org.jetbrains.plugins.groovy.lang.resolve.api.ErasedArgument
 import org.jetbrains.plugins.groovy.lang.resolve.impl.EmptyArgumentsMapping
 import org.jetbrains.plugins.groovy.lang.resolve.impl.PositionalArgumentMapping
+import org.jetbrains.plugins.groovy.lang.resolve.impl.VarargArgumentMapping
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GroovyInferenceSessionBuilder
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.MethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.buildQualifier
@@ -40,7 +41,7 @@ class MethodResolveResult(
       null
     }
     else if (element.isEffectivelyVarArgs) {
-      TODO()
+      VarargArgumentMapping(element, contextSubstitutor, arguments, place)
     }
     else if (arguments.isEmpty()) {
       EmptyArgumentsMapping(element)
@@ -56,22 +57,10 @@ class MethodResolveResult(
     }
   }
 
-  private val oldApplicability by lazyPub {
-    if (methodCandidate.isApplicable(contextSubstitutor)) {
-      Applicability.applicable
-    }
-    else {
-      Applicability.inapplicable
-    }
-  }
-
   override fun getApplicability(): Applicability {
-    return providersApplicability ?: if (element.isEffectivelyVarArgs) {
-      oldApplicability
-    }
-    else {
-      myArgumentMapping?.applicability ?: Applicability.canBeApplicable
-    }
+    return providersApplicability
+           ?: myArgumentMapping?.applicability
+           ?: Applicability.canBeApplicable
   }
 
   private val siteSubstitutor by lazyPub {
@@ -116,9 +105,6 @@ class MethodResolveResult(
   override fun getSubstitutor(): PsiSubstitutor = fullSubstitutor
 
   override fun isApplicable(): Boolean = applicability != Applicability.inapplicable
-
-  val applicabilityDelegate: Lazy<*>
-    @TestOnly get() = ::oldApplicability.apply { isAccessible = true }.getDelegate() as Lazy<*>
 
   val fullSubstitutorDelegate: Lazy<*>
     @TestOnly get() = ::fullSubstitutor.apply { isAccessible = true }.getDelegate() as Lazy<*>
