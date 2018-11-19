@@ -22,6 +22,8 @@ import org.jetbrains.idea.svn.lock.Lock
 import java.io.File
 import javax.xml.bind.JAXBException
 import javax.xml.bind.annotation.*
+import javax.xml.bind.annotation.adapters.XmlAdapter
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter
 
 private val LOG = logger<CmdInfoClient>()
 
@@ -36,7 +38,7 @@ private fun parseResult(handler: InfoConsumer, base: File?, result: String) {
         val repositoryRootUrl = entry.repository?.root?.let { createUrl(it) }
         val copyFromUrl = entry.workingCopyInfo?.copyFromUrl?.let { createUrl(it) }
 
-        val info = Info(file, url, Revision.of(entry.revisionNumber), entry.nodeKind, repositoryRootUrl, entry.repository?.uuid,
+        val info = Info(file, url, Revision.of(entry.revisionNumber ?: -1L), entry.nodeKind, repositoryRootUrl, entry.repository?.uuid,
                         entry.commit?.build(), entry.workingCopyInfo?.schedule, entry.workingCopyInfo?.depth, copyFromUrl,
                         Revision.of(entry.workingCopyInfo?.copyFromRevision ?: -1L), entry.lock?.build(), entry.conflict?.previousBaseFile,
                         entry.conflict?.currentBaseFile, entry.conflict?.previousWorkingCopyFile, entry.treeConflict?.build(base!!))
@@ -130,6 +132,15 @@ class CmdInfoClient : BaseSvnClient(), InfoClient {
   }
 }
 
+private class RevisionNumberAdapter : XmlAdapter<String, Long>() {
+  override fun marshal(v: Long) = throw UnsupportedOperationException()
+
+  override fun unmarshal(v: String) = when (v) {
+    "Resource is not under version control." -> -1L
+    else -> v.toLong()
+  }
+}
+
 @XmlRootElement(name = "info")
 @XmlAccessorType(XmlAccessType.NONE)
 private class InfoRoot {
@@ -145,8 +156,9 @@ private class Entry {
   @XmlAttribute(name = "kind", required = true)
   var nodeKind = NodeKind.UNKNOWN
 
+  @XmlJavaTypeAdapter(RevisionNumberAdapter::class)
   @XmlAttribute(name = "revision", required = true)
-  var revisionNumber = -1L
+  var revisionNumber: Long? = null
 
   var url: String? = null
   var repository: Repository? = null

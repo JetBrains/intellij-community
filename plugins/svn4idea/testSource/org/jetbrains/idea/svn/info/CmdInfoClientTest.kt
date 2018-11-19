@@ -16,6 +16,7 @@ import org.jetbrains.idea.svn.conflict.ConflictAction
 import org.jetbrains.idea.svn.conflict.ConflictOperation
 import org.jetbrains.idea.svn.conflict.ConflictReason
 import org.jetbrains.idea.svn.conflict.ConflictVersion
+import org.junit.Before
 import org.junit.Test
 import java.io.File
 import java.nio.file.Path
@@ -26,15 +27,23 @@ import kotlin.test.fail
 private val REPOSITORY_URL = createUrl("http://abc.com")
 private val FILE_URL = REPOSITORY_URL.appendPath("file.txt")
 private val FILE1_URL = REPOSITORY_URL.appendPath("file1.txt")
+private val FOLDER_URL = REPOSITORY_URL.appendPath("folder")
 private val COMMIT_DATE = parseDate("2018-01-01T12:00:00.000000Z")
 private val LOCK_DATE = parseDate("2018-01-01T15:00:00.000000Z")
 
 @TestDataPath("\$CONTENT_ROOT/../testData/parse/")
 class CmdInfoClientTest : AbstractJunitVcsTestCase() {
+
+  private lateinit var base: File
+
+  @Before
+  fun setUp() {
+    base = File(testName)
+  }
+
   @Test
   fun `parse info`() {
-    val base = File(testName)
-    val actual = CmdInfoClient.parseResult(base, getTestData().readText()) ?: fail("Could not parse info")
+    val actual = parseTestData()
 
     assertEquals(File(base, "file1.txt"), actual.file)
     assertEquals(FILE1_URL, actual.url)
@@ -64,6 +73,21 @@ class CmdInfoClientTest : AbstractJunitVcsTestCase() {
     assert(REPOSITORY_URL, "file1.txt", 10, NodeKind.FILE, actual.treeConflict?.sourceRightVersion)
   }
 
+  /* "revision" attribute does not contain long value */
+  @Test
+  fun `parse info for unversioned`() {
+    val actual = parseTestData()
+
+    assertEquals(File(base, "folder"), actual.file)
+    assertEquals(FOLDER_URL, actual.url)
+    assertEquals(Revision.UNDEFINED, actual.revision)
+    assertEquals(NodeKind.DIR, actual.nodeKind)
+    assertEquals(REPOSITORY_URL, actual.repositoryRootUrl)
+    assertEquals("id1", actual.repositoryId)
+    assertEquals(Info.SCHEDULE_ADD, actual.schedule)
+    assertEquals(Depth.INFINITY, actual.depth)
+  }
+
   @Suppress("SameParameterValue")
   private fun assert(repositoryRoot: Url, path: String, pegRevision: Long, nodeKind: NodeKind, actual: ConflictVersion?) {
     assertEquals(repositoryRoot, actual?.repositoryRoot)
@@ -71,6 +95,8 @@ class CmdInfoClientTest : AbstractJunitVcsTestCase() {
     assertEquals(pegRevision, actual?.pegRevision)
     assertEquals(nodeKind, actual?.nodeKind)
   }
+
+  private fun parseTestData() = CmdInfoClient.parseResult(base, getTestData().readText()) ?: fail("Could not parse info")
 
   private fun getTestData(): Path {
     val fileName = PlatformTestUtil.getTestName(testName.removePrefix("parse").trim(), true)
