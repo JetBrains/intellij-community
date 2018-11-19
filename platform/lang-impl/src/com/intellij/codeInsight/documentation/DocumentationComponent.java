@@ -146,6 +146,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private final MyScrollPane myScrollPane;
   private final JEditorPane myEditorPane;
   private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
+  private String myDecoratedText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
   private final JComponent myControlPanel;
   private boolean myControlPanelVisible;
   private int myHighlightedLink = -1;
@@ -251,6 +252,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     DataProvider helpDataProvider = dataId -> PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
     myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
+    myDecoratedText = "";
     myEditorPane.setEditable(false);
     myEditorPane.setCaret(new DefaultCaret() {
       @Override
@@ -769,12 +771,14 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
     highlightLink(-1);
 
-    setTextFast(myEditorPane, decorate(text));
+    myDecoratedText = decorate(text);
+    setTextFast(myEditorPane, myDecoratedText);
     applyFontProps();
 
     showHint();
 
     myText = text;
+    myDecoratedText = text;
 
     myEditorPane.setCaretPosition(caretPosition);
     myEditorPane.scrollRectToVisible(viewRect);
@@ -822,7 +826,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       width = width < 0 ? preferredSize.width : width;
       width = Math.min(maxWidth, Math.max(JBUI.scale(300), width));
       myEditorPane.setBounds(0, 0, width, MAX_DEFAULT.height);
-      myEditorPane.setText(myEditorPane.getText());
+      myEditorPane.setText(myDecoratedText);
       preferredSize = myEditorPane.getPreferredSize();
 
       int height = preferredSize.height + (needsToolbar() ? myControlPanel.getPreferredSize().height : 0);
