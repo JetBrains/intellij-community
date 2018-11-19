@@ -120,7 +120,7 @@ public class FileTypesTest extends PlatformTestCase {
 
   public void testAddNewExtension() {
     FileTypeAssocTable<FileType> associations = new FileTypeAssocTable<>();
-    associations.addAssociation(FileTypeManager.parseFromString("*.java"), FileTypes.ARCHIVE);
+    associations.addAssociation(FileTypeManager.parseFromString("*.java"), ArchiveFileType.INSTANCE);
     associations.addAssociation(FileTypeManager.parseFromString("*.xyz"), StdFileTypes.XML);
     associations.addAssociation(FileTypeManager.parseFromString("SomeSpecial*.java"), StdFileTypes.XML); // patterns should have precedence over extensions
     assertEquals(StdFileTypes.XML, associations.findAssociatedFileType("sample.xyz"));
