@@ -604,5 +604,11 @@ public class CaptureConfigurable implements SearchableConfigurable {
         .toArray(ArrayUtil.EMPTY_STRING_ARRAY);
       super.doOKAction();
     }
+
+    @Nullable
+    @Override
+    protected String getHelpId() {
+      return "reference.idesettings.debugger.customAsyncAnnotations";
+    }
   }
 }
