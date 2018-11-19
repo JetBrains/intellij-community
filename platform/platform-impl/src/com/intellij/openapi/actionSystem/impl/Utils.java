@@ -81,8 +81,8 @@ public class Utils{
                                        boolean hideDisabled,
                                        boolean isContextMenuAction,
                                        boolean isToolbarAction) {
-    list.addAll(new ActionUpdater(isInModalContext, presentationFactory, context, place, isContextMenuAction, isToolbarAction)
-      .expandActionGroup(group, hideDisabled, transparentOnly));
+    list.addAll(new ActionUpdater(isInModalContext, presentationFactory, context, place, isContextMenuAction, isToolbarAction, transparentOnly)
+      .expandActionGroup(group, hideDisabled));
   }
 
   public static void updateGroupChild(DataContext context, String place, AnAction anAction, final Presentation presentation) {
@@ -102,8 +102,8 @@ public class Utils{
                        boolean useDarkIcons) {
     final boolean checked = group instanceof CheckedActionGroup;
 
-    ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false);
-    List<AnAction> list = updater.expandActionGroup(group, group instanceof CompactActionGroup, false);
+    ActionUpdater updater = new ActionUpdater(isInModalContext, presentationFactory, context, place, true, false, false);
+    List<AnAction> list = updater.expandActionGroup(group, group instanceof CompactActionGroup);
 
     final boolean fixMacScreenMenu = SystemInfo.isMacSystemMenu && isWindowMenu && Registry.is("actionSystem.mac.screenMenuNotUpdatedFix");
     final ArrayList<Component> children = new ArrayList<>();

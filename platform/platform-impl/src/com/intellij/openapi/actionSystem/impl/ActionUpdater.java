@@ -27,28 +27,30 @@ class ActionUpdater {
   private final String myPlace;
   private final boolean myContextMenuAction;
   private final boolean myToolbarAction;
+  private final boolean myTransparentOnly;
 
   ActionUpdater(boolean isInModalContext,
                 PresentationFactory presentationFactory,
                 DataContext dataContext,
                 String place,
-                boolean isContextMenuAction, boolean isToolbarAction) {
+                boolean isContextMenuAction, boolean isToolbarAction, boolean transparentOnly) {
     myModalContext = isInModalContext;
     myFactory = presentationFactory;
     myDataContext = dataContext;
     myPlace = place;
     myContextMenuAction = isContextMenuAction;
     myToolbarAction = isToolbarAction;
+    myTransparentOnly = transparentOnly;
   }
 
   /**
    * @return actions from the given and nested non-popup groups that are visible after updating
    */
-  List<AnAction> expandActionGroup(ActionGroup group, boolean hideDisabled, boolean transparentOnly) {
-    return removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled, transparentOnly));
+  List<AnAction> expandActionGroup(ActionGroup group, boolean hideDisabled) {
+    return removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled));
   }
 
-  private List<AnAction> doExpandActionGroup(ActionGroup group, boolean hideDisabled, boolean transparentOnly) {
+  private List<AnAction> doExpandActionGroup(ActionGroup group, boolean hideDisabled) {
     AnActionEvent e = createActionEvent(group);
     if (!doUpdate(myModalContext, group, e)) return Collections.emptyList();
 
@@ -56,7 +58,7 @@ class ActionUpdater {
       return Collections.emptyList();
     }
 
-    return ContainerUtil.concat(getGroupChildren(group, e), child -> expandGroupChild(child, hideDisabled, transparentOnly));
+    return ContainerUtil.concat(getGroupChildren(group, e), child -> expandGroupChild(child, hideDisabled));
   }
 
   private static List<AnAction> getGroupChildren(ActionGroup group, AnActionEvent e) {
@@ -68,10 +70,10 @@ class ActionUpdater {
     return ContainerUtil.filter(children, Conditions.notNull());
   }
 
-  private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabled, boolean transparentOnly) {
+  private List<AnAction> expandGroupChild(AnAction child, boolean hideDisabled) {
     AnActionEvent e = createActionEvent(child);
 
-    if (!transparentOnly || child.isTransparentUpdate()) {
+    if (!myTransparentOnly || child.isTransparentUpdate()) {
       if (!doUpdate(myModalContext, child, e)) return Collections.emptyList();
     }
 
@@ -96,7 +98,7 @@ class ActionUpdater {
         return Collections.singletonList(child);
       }
 
-      return doExpandActionGroup((ActionGroup)child, hideDisabled || actionGroup instanceof CompactActionGroup, false);
+      return doExpandActionGroup((ActionGroup)child, hideDisabled || actionGroup instanceof CompactActionGroup);
     }
 
     return Collections.singletonList(child);
