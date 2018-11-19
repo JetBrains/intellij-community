@@ -147,7 +147,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     PluginManagerMain.suggestToEnableInstalledDependantPlugins(this, pluginsToInstall);
     needRestart = true;
 
-    installPlugin(pluginsToInstall, getAllPlugins(), this, prepareToInstall(descriptor, install));
+    installPlugin(pluginsToInstall, getAllRepoPlugins(), this, prepareToInstall(descriptor, install));
   }
 
   private static void installPlugin(@NotNull List<PluginNode> pluginsToInstall,
