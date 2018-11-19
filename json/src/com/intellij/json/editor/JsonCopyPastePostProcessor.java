@@ -147,11 +147,16 @@ public class JsonCopyPastePostProcessor extends CopyPastePostProcessor<TextBlock
       final PsiElement property = getParentPropertyOrArrayItem(endElement);
       if (endElement instanceof PsiErrorElement || property != null && skipWhitespaces(property.getNextSibling()) instanceof PsiErrorElement) {
         PsiElement finalEndElement1 = endElement;
-        ApplicationManager.getApplication().runWriteAction(() -> bounds.getDocument().insertString(property != null ? property.getTextRange().getEndOffset()
-                                                                                                                    : finalEndElement1.getTextOffset(), ","));
+        ApplicationManager.getApplication().runWriteAction(() -> bounds.getDocument().insertString(getOffset(property, finalEndElement1), ","));
         manager.commitDocument(bounds.getDocument());
       }
     }
+  }
+
+  private static int getOffset(@Nullable PsiElement property, @Nullable PsiElement finalEndElement1) {
+    if (finalEndElement1 instanceof PsiErrorElement) return finalEndElement1.getTextOffset();
+    assert finalEndElement1 != null;
+    return property != null ? property.getTextRange().getEndOffset() : finalEndElement1.getTextOffset();
   }
 
   @Nullable
