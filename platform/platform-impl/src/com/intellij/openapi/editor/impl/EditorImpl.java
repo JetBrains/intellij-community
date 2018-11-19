@@ -633,7 +633,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusModeMarkup.add(markupModel.addRangeHighlighter(end, textLength, layer, ERASE_MARKER, EXACT_RANGE));
     myFocusModeMarkup.add(markupModel.addRangeHighlighter(end, textLength, layer, attributes, EXACT_RANGE));
 
-    myFocusModeRange = focusRange;
+    myFocusModeRange = myDocument.createRangeMarker(focusRange.getStartOffset(), focusRange.getEndOffset());
   }
 
   @Nullable
@@ -650,7 +650,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void clearFocusMode() {
     myFocusModeMarkup.forEach(myMarkupModel::removeHighlighter);
     myFocusModeMarkup.clear();
-    myFocusModeRange = null;
+    if (myFocusModeRange != null) {
+      myFocusModeRange.dispose();
+      myFocusModeRange = null;
+    }
   }
 
   public boolean isInFocusMode(FoldRegion region) {
@@ -668,7 +671,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Key<List<RangeMarker>> FOCUS_MODE_RANGES = Key.create("focus.mode.ranges");
   public static final Key<TextAttributes> FOCUS_MODE_ATTRIBUTES = Key.create("editor.focus.mode.attributes");
   private final List<RangeHighlighter> myFocusModeMarkup = ContainerUtil.newSmartList();
-  private Segment myFocusModeRange;
+  private RangeMarker myFocusModeRange;
 
   private boolean canImpactGutterSize(@NotNull RangeHighlighterEx highlighter) {
     if (highlighter.getGutterIconRenderer() != null) return true;
