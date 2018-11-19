@@ -1606,17 +1606,21 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
     startElement(expression);
     PsiExpression operand = expression.getOperand();
+    operand.accept(this);
     PsiTypeElement checkType = expression.getCheckType();
-    if (checkType != null) {
-      operand.accept(this);
-      PsiType type = checkType.getType();
-      if (type instanceof PsiClassType) {
-        type = ((PsiClassType)type).rawType();
-      }
+    PsiType type = checkType != null ? checkType.getType() : null;
+    if (type instanceof PsiClassType) {
+      type = ((PsiClassType)type).rawType();
+    }
+    boolean validInstanceOf = type != null &&
+                              (!(type.getDeepComponentType() instanceof PsiClassType) ||
+                               PsiUtil.resolveClassInType(type.getDeepComponentType()) != null);
+    if (validInstanceOf) {
       addInstruction(new PushInstruction(myFactory.createTypeValue(type, Nullability.NOT_NULL), null));
       addInstruction(new InstanceofInstruction(expression, operand, type));
     }
     else {
+      addInstruction(new PopInstruction());
       pushUnknown();
     }
 
