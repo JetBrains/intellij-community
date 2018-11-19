@@ -70,8 +70,8 @@ class ExecutorAction private constructor(private val origin: AnAction,
   override fun update(e: AnActionEvent) {
     val name = getActionName(e.dataContext)
     e.presentation.isEnabledAndVisible = name != null
-    origin.update(e)
     e.presentation.text = name
+    origin.update(e)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
