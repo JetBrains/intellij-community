@@ -30,6 +30,8 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
   var removedByDesigners: MutableCollection<String> = mutableListOf()
   var modifiedByDesigners: MutableCollection<String> = mutableListOf()
   var createdReviews: Collection<Review> = emptyList()
+  lateinit var icons: Map<String, GitObject>
+  lateinit var devIcons: Map<String, GitObject>
   fun iconsSyncRequired() = addedByDev.isNotEmpty() ||
                             modifiedByDev.isNotEmpty() ||
                             removedByDev.isNotEmpty()

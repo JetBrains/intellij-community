@@ -16,9 +16,6 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 import kotlin.streams.toList
 
-private lateinit var icons: Map<String, GitObject>
-private lateinit var devIcons: Map<String, GitObject>
-
 fun main(args: Array<String>) = try {
   checkIcons()
 }
@@ -29,14 +26,14 @@ catch (e: Throwable) {
 internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<String> = Consumer { println(it) }) {
   logger = loggerImpl
   context.iconsRepo = findGitRepoRoot(context.iconsRepoDir)
-  icons = readIconsRepo(context.iconsRepo, context.iconsRepoDir)
+  context.icons = readIconsRepo(context.iconsRepo, context.iconsRepoDir)
   val devRepoRoot = findGitRepoRoot(context.devRepoDir)
   val devRepoVcsRoots = vcsRoots(devRepoRoot)
-  devIcons = readDevRepo(devRepoRoot, context.devRepoDir, devRepoVcsRoots, context.skipDirsPattern)
-  val devIconsTmp = HashMap(devIcons)
+  context.devIcons = readDevRepo(devRepoRoot, context.devRepoDir, devRepoVcsRoots, context.skipDirsPattern)
+  val devIconsTmp = HashMap(context.devIcons)
   val modified = mutableListOf<String>()
   val consistent = mutableListOf<String>()
-  icons.forEach { icon, gitObject ->
+  context.icons.forEach { icon, gitObject ->
     if (!devIconsTmp.containsKey(icon)) {
       context.addedByDesigners += icon
     }
@@ -51,11 +48,11 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
   context.addedByDev = devIconsTmp.keys
   callWithTimer("Searching for changed icons..") {
     Stream.of(
-      { SearchType.MODIFIED to modifiedByDev(modified) },
-      { SearchType.REMOVED_BY_DEV to removedByDev(context.addedByDesigners, devRepoVcsRoots, File(context.devRepoDir)) },
+      { SearchType.MODIFIED to modifiedByDev(context, modified) },
+      { SearchType.REMOVED_BY_DEV to removedByDev(context, context.addedByDesigners, devRepoVcsRoots, File(context.devRepoDir)) },
       {
         val iconsDir = File(context.iconsRepoDir).relativeTo(context.iconsRepo).path.let { if (it.isEmpty()) "" else "$it/" }
-        SearchType.REMOVED_BY_DESIGNERS to removedByDesigners(context.addedByDev, context.iconsRepo, iconsDir)
+        SearchType.REMOVED_BY_DESIGNERS to removedByDesigners(context, context.addedByDev, context.iconsRepo, iconsDir)
       }
     ).parallel().map { it() }.toList().forEach {
       val (searchType, searchResult) = it
@@ -77,8 +74,8 @@ internal fun checkIcons(context: Context = Context(), loggerImpl: Consumer<Strin
       }
     }
   }
-  syncIcons(context, devIcons, icons)
-  report(context, devRepoRoot, devIcons.size, icons.size, skippedDirs.size, consistent)
+  syncIcons(context)
+  report(context, devRepoRoot, skippedDirs.size, consistent)
 }
 
 private enum class SearchType { MODIFIED, REMOVED_BY_DEV, REMOVED_BY_DESIGNERS }
@@ -180,19 +177,19 @@ private fun doSkip(file: File, repo: File, testRoots: Set<File>, skipDirsRegex: 
          file.parentFile != null && doSkip(file.parentFile, repo, testRoots, skipDirsRegex)
 }
 
-private fun removedByDesigners(addedByDev: Collection<String>,
+private fun removedByDesigners(context: Context, addedByDev: Collection<String>,
                                iconsRepo: File, iconsDir: String) = addedByDev.parallelStream().filter {
   val byDesigners = latestChangeTime("$iconsDir$it", iconsRepo)
   // latest changes are made by designers
-  byDesigners > 0 && latestChangeTime(devIcons[it]) < byDesigners
+  byDesigners > 0 && latestChangeTime(context.devIcons[it]) < byDesigners
 }.toList()
 
-private fun removedByDev(addedByDesigners: Collection<String>,
+private fun removedByDev(context: Context, addedByDesigners: Collection<String>,
                          devRepos: Collection<File>,
                          devRepoDir: File) = addedByDesigners.parallelStream().filter {
   val byDev = latestChangeTime(File(devRepoDir, it).absolutePath, devRepos)
   // latest changes are made by developers
-  byDev > 0 && latestChangeTime(icons[it]) < byDev
+  byDev > 0 && latestChangeTime(context.icons[it]) < byDev
 }.toList()
 
 private fun latestChangeTime(file: String, repos: Collection<File>): Long {
@@ -206,9 +203,9 @@ private fun latestChangeTime(file: String, repos: Collection<File>): Long {
   return -1
 }
 
-private fun modifiedByDev(modified: Collection<String>) = modified.parallelStream()
+private fun modifiedByDev(context: Context, modified: Collection<String>) = modified.parallelStream()
   // latest changes are made by developers
-  .filter { latestChangeTime(icons[it]) < latestChangeTime(devIcons[it]) }
+  .filter { latestChangeTime(context.icons[it]) < latestChangeTime(context.devIcons[it]) }
   .collect(Collectors.toList())
 
 private fun latestChangeTime(obj: GitObject?) =

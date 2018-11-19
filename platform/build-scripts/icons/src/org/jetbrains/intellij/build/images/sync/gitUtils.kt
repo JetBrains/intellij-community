@@ -109,22 +109,31 @@ internal fun findGitRepoRoot(path: String, silent: Boolean = false): File {
   }
 }
 
-internal fun addChangesToGit(files: List<String>, repo: File) {
+internal fun unstageFiles(files: List<String>, repo: File) {
   // OS has argument length limit
-  splitAndTry(1000, files, repo)
+  splitAndTry(1000, files, repo) {
+    execute(repo, GIT, "reset", "HEAD", *it.toTypedArray())
+  }
 }
 
-private fun splitAndTry(factor: Int, files: List<String>, repo: File) {
+internal fun stageFiles(files: List<String>, repo: File) {
+  // OS has argument length limit
+  splitAndTry(1000, files, repo) {
+    execute(repo, GIT, "add", "--ignore-errors", *it.toTypedArray())
+  }
+}
+
+private fun splitAndTry(factor: Int, files: List<String>, repo: File, block: (files: List<String>) -> Unit) {
   files.split(factor).forEach {
     try {
-      execute(repo, GIT, "add", "--ignore-errors", *it.toTypedArray())
+      block(it)
     }
     catch (e: Exception) {
       if (e.message?.contains("did not match any files") == true) return
       val finerFactor: Int = factor / 2
       if (finerFactor < 1) throw e
       log("Git add command failed with ${e.message}")
-      splitAndTry(finerFactor, files, repo)
+      splitAndTry(finerFactor, files, repo, block)
     }
   }
 }
