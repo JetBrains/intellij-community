@@ -16,12 +16,8 @@
 
 package com.intellij.codeInsight.editorActions.enter;
 
-import com.intellij.codeInsight.editorActions.EnterHandler;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
-import com.intellij.lang.Commenter;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -47,15 +43,10 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
                                 @NotNull final Ref<Integer> caretAdvance,
                                 @NotNull final DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
-    final Language language = EnterHandler.getLanguage(dataContext);
-    if (language == null) return Result.Continue;
-
-    final Commenter languageCommenter = LanguageCommenters.INSTANCE.forLanguage(language);
-    final CodeDocumentationAwareCommenter commenter = languageCommenter instanceof CodeDocumentationAwareCommenter
-                                                      ? (CodeDocumentationAwareCommenter)languageCommenter : null;
+    CodeDocumentationAwareCommenter commenter = EnterInCommentUtil.getDocumentationAwareCommenter(dataContext);
     if (commenter == null) return Result.Continue;
 
-    int caretOffset = caretOffsetRef.get().intValue();
+    int caretOffset = caretOffsetRef.get();
     int lineCommentStartOffset = getLineCommentStartOffset(editor, caretOffset, commenter);
     if (lineCommentStartOffset < 0) return Result.Continue;
 
