@@ -161,6 +161,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     if (ourPlatformPrefixInitialized) {
       return;
     }
+    if (System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) != null) {
+      ourPlatformPrefixInitialized = true;
+      return;
+    }
     for (String candidate : PREFIX_CANDIDATES) {
       String markerPath = candidate != null ? "META-INF/" + candidate + "Plugin.xml" : "idea/ApplicationInfo.xml";
       URL resource = PlatformTestCase.class.getClassLoader().getResource(markerPath);
