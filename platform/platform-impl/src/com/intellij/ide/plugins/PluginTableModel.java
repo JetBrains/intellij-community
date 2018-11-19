@@ -201,11 +201,21 @@ public abstract class PluginTableModel extends AbstractTableModel implements Sor
   }
 
   public List<IdeaPluginDescriptor> getAllPlugins() {
+    List<IdeaPluginDescriptor> list = ContainerUtil.newArrayListWithCapacity(view.size() + filtered.size());
+    list.addAll(view);
+    list.addAll(filtered);
+    return list;
+  }
+
+  public List<IdeaPluginDescriptor> getAllRepoPlugins() {
     try {
-      //TODO: this returns plugins only from default repository and not custom.
-      return RepositoryHelper.loadCachedPlugins();
-    } catch (IOException ex) {
-      return Collections.emptyList();
+      List<IdeaPluginDescriptor> list = RepositoryHelper.loadCachedPlugins();
+      if (list != null) {
+        return list;
+      }
     }
+    catch (IOException ignored) {
+    }
+    return Collections.emptyList();
   }
 }
