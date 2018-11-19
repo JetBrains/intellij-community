@@ -36,7 +36,7 @@ internal fun isNotificationRequired(context: Context): Boolean {
       it == Calendar.SATURDAY || it == Calendar.SUNDAY
     }) return false
   val request = "builds?locator=buildType:$BUILD_CONF,count:1"
-  val intervalStart = DATE_FORMAT.format(calendar.apply {
+  val intervalStart = DATE_FORMAT.format(with(calendar) {
     add(Calendar.HOUR, -NOTIFICATIONS_MIN_INTERVAL_HOURS)
     time
   }).let { URLEncoder.encode(it, Charsets.UTF_8.name()) }
