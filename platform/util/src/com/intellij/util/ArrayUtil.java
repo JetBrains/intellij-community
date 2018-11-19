@@ -933,6 +933,15 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure = true)
+  public static int max(int[] values) {
+    int max = Integer.MIN_VALUE;
+    for (int value : values) {
+      if (value > max) max = value;
+    }
+    return max;
+  }
+
+  @Contract(pure = true)
   public static int[] mergeSortedArrays(int[] a1, int[] a2, boolean mergeEqualItems) {
     int newSize = a1.length + a2.length;
     if (newSize == 0) return EMPTY_INT_ARRAY;

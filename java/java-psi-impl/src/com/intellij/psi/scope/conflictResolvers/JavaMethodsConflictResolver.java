@@ -749,6 +749,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
              isFunctionalTypeMoreSpecific(((PsiConditionalExpression)expr).getElseExpression(), sType, tType);
     }
 
+    if (expr instanceof PsiSwitchExpression) {
+      return PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)expr).stream().allMatch(resultExpr -> isFunctionalTypeMoreSpecific(resultExpr, sType, tType));
+    }
+
     if (expr instanceof PsiFunctionalExpression) {
 
       if (expr instanceof PsiLambdaExpression && !((PsiLambdaExpression)expr).hasFormalParameterTypes()) {

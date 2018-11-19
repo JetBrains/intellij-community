@@ -18,6 +18,7 @@ public class PsiPolyExpressionUtil {
     return !(expression instanceof PsiFunctionalExpression) &&
            !(expression instanceof PsiParenthesizedExpression) &&
            !(expression instanceof PsiConditionalExpression) &&
+           !(expression instanceof PsiSwitchExpression) &&
            !(expression instanceof PsiCallExpression);
   }
 
@@ -43,6 +44,9 @@ public class PsiPolyExpressionUtil {
       if (conditionalKind == null) {
         return isInAssignmentOrInvocationContext(expression);
       }
+    }
+    if (expression instanceof PsiSwitchExpression) {
+      return isInAssignmentOrInvocationContext(expression);
     }
     return false;
   }
@@ -159,6 +163,9 @@ public class PsiPolyExpressionUtil {
       final PsiMethod method = ((PsiMethodCallExpression)arg).resolveMethod();
       return method != null && method.getReturnType() instanceof PsiPrimitiveType;
     }
+    else if (arg instanceof PsiSwitchExpression) {
+      return isBooleanOrNumeric(arg) != null;
+    }
     else {
       assert false : arg;
       return false;
@@ -200,6 +207,25 @@ public class PsiPolyExpressionUtil {
       final ConditionalKind elseKind = isBooleanOrNumeric(elseExpression);
       if (thenKind == elseKind || elseKind == ConditionalKind.NULL) return thenKind;
       if (thenKind == ConditionalKind.NULL) return elseKind;
+    }
+    
+    if (expr instanceof PsiSwitchExpression) {
+      ConditionalKind switchKind = null;
+      for (PsiExpression resultExpression : PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)expr)) {
+        ConditionalKind resultKind = isBooleanOrNumeric(resultExpression);
+        if (resultKind == null) return null;
+        if (switchKind == null) {
+          switchKind = resultKind;
+        }
+        else if (switchKind != resultKind) {
+          if (switchKind == ConditionalKind.NULL) {
+            switchKind = resultKind;
+          }
+          else if (resultKind != ConditionalKind.NULL) {
+            return null;
+          }
+        }
+      }
     }
     return null;
   }

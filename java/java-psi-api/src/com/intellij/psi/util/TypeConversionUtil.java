@@ -40,8 +40,8 @@ public class TypeConversionUtil {
   public static final int CHAR_RANK = 3;
   public static final int INT_RANK = 4;
   public static final int LONG_RANK = 5;
-  private static final int FLOAT_RANK = 6;
-  private static final int DOUBLE_RANK = 7;
+  public static final int FLOAT_RANK = 6;
+  public static final int DOUBLE_RANK = 7;
   private static final int BOOL_RANK = 10;
   private static final int STRING_RANK = 100;
   private static final int MAX_NUMERIC_RANK = DOUBLE_RANK;

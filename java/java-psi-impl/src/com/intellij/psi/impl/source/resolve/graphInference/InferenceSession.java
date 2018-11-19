@@ -528,6 +528,11 @@ public class InferenceSession {
       processReturnExpression(additionalConstraints, ignoredConstraints, ((PsiConditionalExpression)returnExpression).getThenExpression(), functionalType, addConstraint, initialSubstitutor);
       processReturnExpression(additionalConstraints, ignoredConstraints, ((PsiConditionalExpression)returnExpression).getElseExpression(), functionalType, addConstraint, initialSubstitutor);
     }
+    else if (returnExpression instanceof PsiSwitchExpression) {
+      for (PsiExpression resultExpression : PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)returnExpression)) {
+        processReturnExpression(additionalConstraints, ignoredConstraints, resultExpression, functionalType, addConstraint, initialSubstitutor);
+      }
+    }
     else if (returnExpression instanceof PsiLambdaExpression) {
       collectLambdaReturnExpression(additionalConstraints, ignoredConstraints, (PsiLambdaExpression)returnExpression, functionalType, myErased, initialSubstitutor);
     }
@@ -796,9 +801,13 @@ public class InferenceSession {
     }
     return false;
   }
-  
+
   public static PsiType getTargetType(final PsiElement context) {
-    return getTargetTypeFromParent(context, new Ref<>(), true);
+    PsiType targetType = getTargetTypeFromParent(context, new Ref<>(), true);
+    if (targetType instanceof PsiClassType) {
+      return ((PsiClassType)targetType).setLanguageLevel(PsiUtil.getLanguageLevel(context));
+    }
+    return targetType;
   }
 
   /**
@@ -1886,6 +1895,11 @@ public class InferenceSession {
       final PsiExpression elseExpression = ((PsiConditionalExpression)arg).getElseExpression();
       return argConstraints(thenExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor) &&
              argConstraints(elseExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor);
+    }
+
+    if (arg instanceof PsiSwitchExpression) {
+      return PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)arg).stream()
+        .allMatch(resultExpression -> argConstraints(resultExpression, session, sInterfaceMethod, sSubstitutor, tInterfaceMethod, tSubstitutor));
     }
     return false;
   }

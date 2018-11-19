@@ -33,6 +33,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author ik, dsl
@@ -255,6 +257,12 @@ public class MethodCandidateInfo extends CandidateInfo{
       if (thenCompatible == ThreeState.UNSURE || elseCompatible == ThreeState.UNSURE) {
         return ThreeState.UNSURE;
       }
+    }
+    else if (expression instanceof PsiSwitchExpression) {
+      Set<ThreeState> states =
+        PsiUtil.getSwitchResultExpressions((PsiSwitchExpression)expression).stream().map(expr -> isPotentialCompatible(expr, formalType, method)).collect(Collectors.toSet());
+      if (states.contains(ThreeState.NO)) return ThreeState.NO;
+      if (states.contains(ThreeState.UNSURE)) return ThreeState.UNSURE;
     }
     return ThreeState.YES;
   }
