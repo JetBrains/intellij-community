@@ -206,7 +206,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
     if (myErrorPopup != null && myErrorPopup.isVisible() && myErrorPopup.getContent().getParent() != null) {
       myErrorLabel.setText(item.errorTooltip);
-      showErrorPopup(row, event.getX(), true);
+      showErrorPopup(row, true);
       return;
     }
 
@@ -220,12 +220,12 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
     myErrorPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(myErrorLabel, null)
       .setBorderColor(JBUI.CurrentTheme.Validator.errorBorderColor()).setShowShadow(false).createPopup();
 
-    showErrorPopup(row, event.getX(), false);
+    showErrorPopup(row, false);
   }
 
-  private void showErrorPopup(int row, int x, boolean update) {
+  private void showErrorPopup(int row, boolean update) {
     Rectangle cellRect = myTable.getCellRect(row, 0, false);
-    Point location = new Point(x, cellRect.y - myErrorLabel.getPreferredSize().height - JBUI.scale(4));
+    Point location = new Point(cellRect.x + JBUI.scale(40), cellRect.y - myErrorLabel.getPreferredSize().height - JBUI.scale(4));
     SwingUtilities.convertPointToScreen(location, myTable);
 
     if (update) {
